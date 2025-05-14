@@ -17,6 +17,9 @@ import {
   SystemDateFormatSettings,
   getThemeById,
   AngularMeta,
+  PluginLoadingStrategy,
+  PluginDependencies,
+  PluginExtensions,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -26,6 +29,7 @@ export interface AzureSettings {
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
   userIdentityFallbackCredentialsEnabled: boolean;
+  azureEntraPasswordCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -39,6 +43,15 @@ export type AppPluginConfig = {
   version: string;
   preload: boolean;
   angular: AngularMeta;
+  loadingStrategy: PluginLoadingStrategy;
+  dependencies: PluginDependencies;
+  extensions: PluginExtensions;
+  moduleHash?: string;
+};
+
+export type PreinstalledPlugin = {
+  id: string;
+  version: string;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -60,6 +73,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
+  externalUserMngAnalytics = false;
+  externalUserMngAnalyticsParams = '';
   allowOrgCreate = false;
   feedbackLinksEnabled = true;
   disableLoginForm = false;
@@ -113,17 +128,20 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
     customEndpoint: '',
     apiKey: '',
+    allInstrumentationsEnabled: false,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
-  customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
@@ -131,6 +149,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -165,18 +184,26 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
   rudderstackIntegrationsUrl: undefined;
+  analyticsConsoleReporting = false;
+  dashboardPerformanceMetrics: string[] = [];
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
+  defaultDatasourceManageAlertsUiToggle = true;
 
   tokenExpirationDayLimit: undefined;
-  disableFrontendSandboxForPlugins: string[] = [];
+  enableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+  cloudMigrationFeedbackURL = '';
+  cloudMigrationPollIntervalMs = 2000;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset = '1h';
+  exploreHideLogsDownload: boolean | undefined;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
@@ -255,7 +282,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   // Although most flags can not be changed from the URL in production,
   // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI', 'dashboardSceneSolo']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {

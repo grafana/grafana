@@ -32,7 +32,7 @@ You can enable debug log messages for rendering in the Grafana configuration fil
 filters = rendering:debug
 ```
 
-You can also enable more logs in image renderer service itself by enabling [debug logging]({{< relref "#enable-debug-logging" >}}).
+You can also enable more logs in image renderer service itself by enabling [debug logging](#enable-debug-logging).
 
 ## Missing libraries
 
@@ -49,7 +49,7 @@ are not installed in your system:
 
 ```bash
 cd <grafana-image-render plugin directory>
-ldd chrome-linux/chrome
+ldd chrome-headless-shell/linux-132.0.6781.0/chrome-headless-shell-linux64/chrome-headless-shell
       linux-vdso.so.1 (0x00007fff1bf65000)
       libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f2047945000)
       libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f2047924000)
@@ -131,6 +131,22 @@ If this happens, then you have to add the certificate to the trust store. If you
 
 ```
 certutil –addstore "Root" <path>/internal-root-ca.crt.pem
+```
+
+**Container:**
+
+```Dockerfile
+FROM grafana/grafana-image-renderer:latest
+
+USER root
+
+RUN apk add --no-cache nss-tools
+
+USER grafana
+
+COPY internal-root-ca.crt.pem /etc/pki/tls/certs/internal-root-ca.crt.pem
+RUN mkdir -p /home/grafana/.pki/nssdb
+RUN certutil -d sql:/home/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
 ```
 
 ## Custom Chrome/Chromium

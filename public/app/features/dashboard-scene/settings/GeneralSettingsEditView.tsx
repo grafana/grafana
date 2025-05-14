@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -12,8 +12,10 @@ import {
   Label,
   RadioButtonGroup,
   Stack,
+  Switch,
   TagsInput,
   TextArea,
+  WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -121,10 +123,8 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onWeekStartChange = (value: string) => {
-    this.getTimeRange().setState({
-      weekStart: value,
-    });
+  public onWeekStartChange = (value?: WeekStart) => {
+    this.getTimeRange().setState({ weekStart: value });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
@@ -159,6 +159,10 @@ export class GeneralSettingsEditView
 
   public onTooltipChange = (value: number) => {
     this.getCursorSync()?.setState({ sync: value });
+  };
+
+  public onPreloadChange = (preload: boolean) => {
+    this._dashboard.setState({ preload });
   };
 
   public onDeleteDashboard = () => {};
@@ -254,7 +258,7 @@ export class GeneralSettingsEditView
             nowDelay={nowDelay || ''}
             liveNow={liveNow}
             timezone={timeZone || ''}
-            weekStart={weekStart || ''}
+            weekStart={weekStart}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
@@ -270,6 +274,20 @@ export class GeneralSettingsEditView
               )}
             >
               <RadioButtonGroup onChange={model.onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
+            </Field>
+
+            <Field
+              label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
+              description={t(
+                'dashboard-settings.general.panels-preload-description',
+                'When enabled all panels will start loading as soon as the dashboard has been loaded.'
+              )}
+            >
+              <Switch
+                id="preload-panels-dashboards-toggle"
+                value={dashboard.state.preload}
+                onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
+              />
             </Field>
           </CollapsableSection>
 

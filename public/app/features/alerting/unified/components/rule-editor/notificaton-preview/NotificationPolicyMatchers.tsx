@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -7,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { MatcherFormatter } from '../../../utils/matchers';
 import { Matchers } from '../../notification-policies/Matchers';
 
-import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
+import { RouteWithPath, hasEmptyMatchers, isDefaultPolicy } from './route';
 
 interface Props {
   route: RouteWithPath;

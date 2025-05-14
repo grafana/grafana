@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	alertingHttp "github.com/grafana/alerting/http"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/stages"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
@@ -17,6 +19,7 @@ import (
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -91,7 +94,8 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
+	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles,
+) (*alertmanager, error) {
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
@@ -120,6 +124,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
+	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
+	action := stages.Disabled
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStageStopPipeline) {
+			action = stages.StopPipeline
+		} else {
+			action = stages.LogOnly
+		}
+		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
+	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		ExternalURL:        cfg.AppURL,
@@ -127,10 +141,14 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
+		Limits: alertingNotify.Limits{
+			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
+			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
+		},
+		PipelineAndStateTimestampsMismatchAction: action,
 	}
 
-	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
-	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
+	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +165,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		logger:              l,
 
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
-		withAutogen: withAutogen,
+		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
 	}
 
 	return am, nil
@@ -279,7 +297,7 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
+func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, cfgSize int) {
 	var amu AggregateMatchersUsage
 	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
 	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
@@ -291,6 +309,10 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	am.ConfigMetrics.ConfigHash.
 		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
 		Set(hashAsMetricValue(am.Base.ConfigHash()))
+
+	am.ConfigMetrics.ConfigSizeBytes.
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(float64(cfgSize))
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -348,7 +370,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		return false, err
 	}
 
-	am.updateConfigMetrics(cfg)
+	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
 }
 
@@ -376,7 +398,7 @@ func (am *alertmanager) AppURL() string {
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, am.decryptFn)
+	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
 	if err != nil {
 		return nil, err
 	}
@@ -387,9 +409,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		tmpl,
 		img,
 		LoggerFactory,
-		func(n receivers.Metadata) (receivers.WebhookSender, error) {
-			return s, nil
-		},
+		alertingHttp.DefaultClientConfiguration,
 		func(n receivers.Metadata) (receivers.EmailSender, error) {
 			return s, nil
 		},

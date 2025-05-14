@@ -1,11 +1,9 @@
 package user
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
@@ -49,6 +47,8 @@ type User struct {
 	Created    time.Time
 	Updated    time.Time
 	LastSeenAt time.Time
+
+	IsProvisioned bool `xorm:"is_provisioned"`
 }
 
 type CreateUserCommand struct {
@@ -66,6 +66,7 @@ type CreateUserCommand struct {
 	SkipOrgSetup     bool
 	DefaultOrgRole   string
 	IsServiceAccount bool
+	IsProvisioned    bool
 }
 
 type GetUserByLoginQuery struct {
@@ -100,6 +101,12 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
+type ListUserResult struct {
+	Users      []*User
+	ContinueID int64
+	RV         int64
+}
+
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
@@ -110,7 +117,8 @@ type SearchUsersQuery struct {
 	SortOpts     []model.SortOption
 	Filters      []Filter
 
-	IsDisabled *bool
+	IsDisabled    *bool
+	IsProvisioned *bool
 }
 
 type SearchUserQueryResult struct {
@@ -122,7 +130,7 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
-	UID           string               `json:"uid" xorm:"id"`
+	UID           string               `json:"uid" xorm:"uid"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -133,6 +141,7 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
+	IsProvisioned bool                 `json:"-" xorm:"is_provisioned"`
 }
 
 type GetUserProfileQuery struct {
@@ -157,6 +166,7 @@ type UserProfileDTO struct {
 	CreatedAt                      time.Time       `json:"createdAt"`
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
+	IsProvisioned                  bool            `json:"-"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)
@@ -208,6 +218,10 @@ type GetUserByIDQuery struct {
 	ID int64
 }
 
+type GetUserByUIDQuery struct {
+	UID string
+}
+
 type StartVerifyEmailCommand struct {
 	User   User
 	Email  string
@@ -217,27 +231,6 @@ type StartVerifyEmailCommand struct {
 type CompleteEmailVerifyCommand struct {
 	User identity.Requester
 	Code string
-}
-
-type ErrCaseInsensitiveLoginConflict struct {
-	Users []User
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.Users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.Users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
 }
 
 type Filter interface {
@@ -276,6 +269,7 @@ const (
 
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
+	UID     string `json:"uid"`
 	Message string `json:"message"`
 }
 

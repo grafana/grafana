@@ -1,9 +1,10 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button, Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../../types/rule-form';
+import { isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -14,6 +15,17 @@ interface LabelsFieldInFormProps {
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const { watch } = useFormContext<RuleFormValues>();
   const labels = watch('labels');
+  const type = watch('type');
+
+  const isRecordingRule = type ? isRecordingRuleByType(type) : false;
+
+  const text = isRecordingRule
+    ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
+    : t(
+        'alerting.alertform.labels.alerting',
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+      );
+
   const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);
 
   return (
@@ -22,7 +34,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         <Text element="h5">Labels</Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
-            Add labels to your rule for searching, silencing, or routing to a notification policy.
+            {text}
           </Text>
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts.
@@ -40,7 +52,14 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
             <Text>No labels selected</Text>
-            <Button icon="plus" type="button" variant="secondary" onClick={onEditClick} size="sm">
+            <Button
+              icon="plus"
+              type="button"
+              variant="secondary"
+              onClick={onEditClick}
+              size="sm"
+              data-testid="add-labels-button"
+            >
               Add labels
             </Button>
           </Stack>

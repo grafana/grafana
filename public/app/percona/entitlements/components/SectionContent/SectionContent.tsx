@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Advisor } from '../Advisor/Advisor';
 
 import { Messages } from './SectionContent.messages';

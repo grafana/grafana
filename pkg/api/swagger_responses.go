@@ -52,6 +52,11 @@ type NotFoundError GenericError
 // swagger:response badRequestError
 type BadRequestError GenericError
 
+// NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.
+//
+// swagger:response notAcceptableError
+type NotAcceptableError GenericError
+
 // ConflictError
 //
 // swagger:response conflictError
@@ -77,10 +82,20 @@ type InternalServerError GenericError
 // swagger:response unauthorisedError
 type UnauthorizedError GenericError
 
+// GoneError is returned when the requested endpoint was removed.
+//
+// swagger:response goneError
+type GoneError GenericError
+
 // AcceptedResponse
 //
 // swagger:response acceptedResponse
 type AcceptedResponse GenericError
+
+// StatusMovedPermanently
+//
+// swagger:response statusMovedPermanently
+type StatusMovedPermanentlyRedirect GenericError
 
 // documentation for PublicError defined in errutil.Error
 

@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';
@@ -276,6 +276,65 @@ describe('align frames', () => {
               201,
               95,
             ],
+          },
+        ]
+      `);
+    });
+
+    it('should perform an inner join with empty values', () => {
+      const out = joinDataFrames({
+        frames: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'A',
+                type: FieldType.string,
+                values: [],
+              },
+              {
+                name: 'B',
+                type: FieldType.string,
+                values: [],
+              },
+            ],
+          }),
+          toDataFrame({
+            fields: [
+              {
+                name: 'A',
+                type: FieldType.string,
+                values: [],
+              },
+              {
+                name: 'C',
+                type: FieldType.string,
+                values: [],
+              },
+            ],
+          }),
+        ],
+        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('A'),
+        mode: JoinMode.inner,
+      })!;
+
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "A",
+            "values": [],
+          },
+          {
+            "name": "B",
+            "values": [],
+          },
+          {
+            "name": "C",
+            "values": [],
           },
         ]
       `);

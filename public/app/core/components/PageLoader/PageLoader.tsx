@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Box, LoadingPlaceholder } from '@grafana/ui';
 
 interface Props {

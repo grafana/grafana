@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
 import { Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui/src';

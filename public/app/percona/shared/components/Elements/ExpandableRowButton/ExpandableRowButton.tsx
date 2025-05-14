@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './ExpandableRowButton.styles';

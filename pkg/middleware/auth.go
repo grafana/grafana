@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -44,14 +44,26 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		return
 	}
 
-	writeRedirectCookie(c)
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+	}
 
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		if !c.UseSessionStorageRedirect {
+			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+			return
+		}
+
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login")
+	if !c.UseSessionStorageRedirect {
+		c.Redirect(setting.AppSubUrl + "/login")
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
@@ -66,8 +78,13 @@ func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 		return
 	}
 
-	writeRedirectCookie(c)
-	c.Redirect(setting.AppSubUrl + "/login")
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+		c.Redirect(setting.AppSubUrl + "/login")
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func writeRedirectCookie(c *contextmodel.ReqContext) {
@@ -81,13 +98,28 @@ func writeRedirectCookie(c *contextmodel.ReqContext) {
 	}
 
 	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
+	redirectTo = RemoveForceLoginParams(redirectTo)
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+}
+
+func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = strings.TrimPrefix(redirectTo, setting.AppSubUrl)
+	}
+
+	if redirectTo == "/" {
+		return ""
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = RemoveForceLoginParams(redirectTo)
+	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
 
-func removeForceLoginParams(str string) string {
+func RemoveForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
@@ -98,11 +130,14 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 			accessForbidden(c)
 			return
 		}
+		if c.AllowAnonymous && !c.IsSignedIn && shouldForceLogin(c) {
+			notAuthorized(c)
+			return
+		}
 	}
 }
 
-func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
-	logger log.Logger) func(c *contextmodel.ReqContext) {
+func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, logger log.Logger) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
@@ -126,12 +161,11 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 			}
 
 			if normalizeIncludePath(u.Path) == path {
-				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
+				if i.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break
-				} else if !useRBAC && !c.HasUserRole(i.Role) {
+				} else if !i.RequiresRBACAction() && !c.HasUserRole(i.Role) {
 					permitted = false
 					break
 				}
@@ -198,9 +232,9 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// SnapshotPublicModeOrSignedIn creates a middleware that allows access
-// if snapshot public mode is enabled or if user is signed in.
-func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
+// SnapshotPublicModeOrCreate creates a middleware that allows access
+// if snapshot public mode is enabled or if user has creation permission.
+func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
@@ -210,6 +244,25 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 			notAuthorized(c)
 			return
 		}
+
+		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsCreate))
+	}
+}
+
+// SnapshotPublicModeOrDelete creates a middleware that allows access
+// if snapshot public mode is enabled or if user has delete permission.
+func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		if cfg.SnapshotPublicMode {
+			return
+		}
+
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
+		}
+
+		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsDelete))
 	}
 }
 

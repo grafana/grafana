@@ -4,7 +4,8 @@ import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
-import { DashboardModel, PanelModel } from '../../dashboard/state';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 import { variableAdapters } from '../adapters';
 import { isAdHoc } from '../guard';
 import { VariableModel } from '../types';

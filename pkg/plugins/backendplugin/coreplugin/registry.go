@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/jaeger"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -34,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 const (
@@ -55,6 +57,8 @@ const (
 	Grafana         = "grafana"
 	Pyroscope       = "grafana-pyroscope-datasource"
 	Parca           = "parca"
+	Zipkin          = "zipkin"
+	Jaeger          = "jaeger"
 )
 
 func init() {
@@ -93,7 +97,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -115,6 +119,8 @@ func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cl
 		Grafana:         asBackendPlugin(graf),
 		Pyroscope:       asBackendPlugin(pyroscope),
 		Parca:           asBackendPlugin(parca),
+		Zipkin:          asBackendPlugin(zipkin),
+		Jaeger:          asBackendPlugin(jaeger),
 	})
 }
 
@@ -183,8 +189,9 @@ func (l *logWrapper) Level() sdklog.Level {
 }
 
 func (l *logWrapper) With(args ...any) sdklog.Logger {
-	l.logger = l.logger.New(args...)
-	return l
+	return &logWrapper{
+		logger: l.logger.New(args...),
+	}
 }
 
 func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
@@ -216,13 +223,13 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider, tracer)
+		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider, features)
 	case Loki:
-		svc = loki.ProvideService(httpClientProvider, features, tracer)
+		svc = loki.ProvideService(httpClientProvider, tracer)
 	case OpenTSDB:
 		svc = opentsdb.ProvideService(httpClientProvider)
 	case Prometheus:
@@ -239,6 +246,10 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 		svc = pyroscope.ProvideService(httpClientProvider)
 	case Parca:
 		svc = parca.ProvideService(httpClientProvider)
+	case Zipkin:
+		svc = zipkin.ProvideService(httpClientProvider)
+	case Jaeger:
+		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}
@@ -254,7 +265,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	if backendFactory == nil {
 		return nil, ErrCorePluginNotFound
 	}
-	bp, err := backendFactory(p.ID, p.Logger(), nil)
+	bp, err := backendFactory(p.ID, p.Logger(), tracer, nil)
 	if err != nil {
 		return nil, err
 	}

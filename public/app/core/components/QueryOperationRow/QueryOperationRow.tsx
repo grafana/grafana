@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -159,13 +160,13 @@ export function QueryOperationRow({
 
 const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    content: css`
-      margin-top: ${theme.spacing(0.5)};
-      margin-left: ${theme.spacing(3)};
-    `,
+    wrapper: css({
+      marginBottom: theme.spacing(2),
+    }),
+    content: css({
+      marginTop: theme.spacing(0.5),
+      marginLeft: theme.spacing(3),
+    }),
   };
 };
 

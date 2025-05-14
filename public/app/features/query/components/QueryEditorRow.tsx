@@ -2,12 +2,12 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { PureComponent, ReactNode } from 'react';
+import * as React from 'react';
+import { PureComponent, ReactNode } from 'react';
 
 // Utils & Services
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
@@ -19,10 +19,12 @@ import {
   PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
+  getDataSourceRef,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -33,12 +35,14 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { RowActionComponents } from './QueryActionComponent';
+import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
+
+import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
@@ -59,13 +63,15 @@ export interface Props<TQuery extends DataQuery> {
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
   app?: CoreApp;
+  range: TimeRange;
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
-  alerting?: boolean;
+  hideActionButtons?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
+  hideRefId?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -267,7 +273,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -292,7 +298,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               onRunQuery={onRunQuery}
               onAddQuery={onAddQuery}
               data={data}
-              range={getTimeSrv().timeRange()}
+              range={range}
               queries={queries}
               app={app}
               history={history}
@@ -363,7 +369,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
-      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+      query.datasource = getDataSourceRef(this.props.dataSource);
     }
 
     this.props.onChange({
@@ -385,7 +391,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
-  renderWarnings = (): JSX.Element | null => {
+  renderWarnings = (type: string): JSX.Element | null => {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
 
@@ -394,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 
@@ -405,16 +411,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
+    const key = 'query-' + type + 's';
+    const colour = type === 'warning' ? 'orange' : 'blue';
+    const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
+
     const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
 
     return (
       <Badge
-        key="query-warning"
-        color="orange"
-        icon="exclamation-triangle"
+        key={key}
+        color={colour}
+        icon={iconName}
         text={
           <>
-            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+            {uniqueWarnings.length} {pluralize(type, uniqueWarnings.length)}
           </>
         }
         tooltip={serializedWarnings}
@@ -423,9 +433,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderExtraActions = () => {
-    const { query, queries, data, onAddQuery, dataSource } = this.props;
+    const { query, queries, data, onAddQuery, dataSource, app } = this.props;
 
-    const extraActions = RowActionComponents.getAllExtraRenderAction()
+    const unscopedActions = RowActionComponents.getAllExtraRenderAction();
+
+    let scopedActions: QueryActionComponent[] = [];
+
+    if (app !== undefined) {
+      scopedActions = RowActionComponents.getScopedExtraRenderAction(app);
+    }
+
+    const extraActions = [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
           query,
@@ -438,7 +456,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       )
       .filter(Boolean);
 
-    extraActions.push(this.renderWarnings());
+    extraActions.push(this.renderWarnings('info'));
+    extraActions.push(this.renderWarnings('warning'));
 
     return extraActions;
   };
@@ -470,6 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        <MaybeQueryLibrarySaveButton query={query} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -498,7 +518,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
 
     return (
       <QueryEditorRowHeader
@@ -511,13 +531,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
-        alerting={alerting}
+        alerting={app === CoreApp.UnifiedAlerting}
+        hideRefId={hideRefId}
       />
     );
   };
 
   render() {
-    const { query, index, visualization, collapsable } = this.props;
+    const { query, index, visualization, collapsable, hideActionButtons } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -538,11 +559,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
-          draggable={true}
+          draggable={!hideActionButtons}
           collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
-          actions={this.renderActions}
+          actions={hideActionButtons ? undefined : this.renderActions}
           onOpen={this.onOpen}
         >
           <div className={rowClasses} id={this.id}>
@@ -636,4 +657,10 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     errors: error ? [error] : undefined,
     timeRange,
   };
+}
+
+// Will render anything only if query library is enabled
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
+  const { renderSaveQueryButton } = useQueryLibraryContext();
+  return renderSaveQueryButton(props.query);
 }

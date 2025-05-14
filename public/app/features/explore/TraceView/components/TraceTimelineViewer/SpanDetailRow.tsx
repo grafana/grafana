@@ -14,16 +14,16 @@
 
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React from 'react';
+import { PureComponent } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, TraceLink, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -32,43 +32,42 @@ import TimelineRow from './TimelineRow';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    expandedAccent: css`
-      cursor: pointer;
-      height: 100%;
-      overflow: hidden;
-      position: absolute;
-      width: 100%;
-      &::before {
-        border-left: 1px solid;
-        pointer-events: none;
-        width: 1000px;
-      }
-      &::after {
-        border-right: 1000px solid;
-        border-color: inherit;
-        cursor: pointer;
-        opacity: 0.2;
-      }
+    expandedAccent: css({
+      cursor: 'pointer',
+      height: '100%',
+      overflow: 'hidden',
+      position: 'absolute',
+      width: '100%',
+      '&::before': {
+        borderLeft: '1px solid',
+        pointerEvents: 'none',
+        width: '1000px',
+      },
+      '&::after': {
+        borderRight: '1000px solid',
+        borderColor: 'inherit',
+        cursor: 'pointer',
+        opacity: 0.2,
+      },
 
       /* border-color inherit must come AFTER other border declarations for accent */
-      &::before,
-      &::after {
-        border-color: inherit;
-        content: ' ';
-        position: absolute;
-        height: 100%;
-      }
+      '&::before, &::after': {
+        borderColor: 'inherit',
+        content: '" "',
+        position: 'absolute',
+        height: '100%',
+      },
 
-      &:hover::after {
-        opacity: 0.35;
-      }
-    `,
-    infoWrapper: css`
-      label: infoWrapper;
-      border: 1px solid ${autoColor(theme, '#d3d3d3')};
-      border-top: 3px solid;
-      padding: 0.75rem;
-    `,
+      '&:hover::after': {
+        opacity: 0.35,
+      },
+    }),
+    infoWrapper: css({
+      label: 'infoWrapper',
+      border: `1px solid ${autoColor(theme, '#d3d3d3')}`,
+      borderTop: '3px solid',
+      padding: '0.75rem',
+    }),
   };
 });
 
@@ -104,9 +103,11 @@ export type SpanDetailRowProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
-export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
+export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
   _detailToggle = () => {
     this.props.onDetailToggled(this.props.span.spanID);
   };
@@ -147,6 +148,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      timeRange,
+      app,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -194,6 +197,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}
+              timeRange={timeRange}
+              app={app}
             />
           </div>
         </TimelineRow.Cell>

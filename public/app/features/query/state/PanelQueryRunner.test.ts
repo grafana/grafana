@@ -160,6 +160,7 @@ function describeQueryRunnerScenario(
           raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
+        panelName: 'PanelName',
         queries: [{ refId: 'A' }],
       } as QueryRunnerOptions;
 
@@ -197,6 +198,11 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.scopedVars.server!.text).toBe('Server1');
       expect(ctx.queryCalledWith?.scopedVars.__interval!.text).toBe('5m');
       expect(ctx.queryCalledWith?.scopedVars.__interval_ms!.text).toBe('300000');
+    });
+
+    it('should pass the panel id and name', async () => {
+      expect(ctx.queryCalledWith?.panelId).toBe(1);
+      expect(ctx.queryCalledWith?.panelName).toBe('PanelName');
     });
   });
 

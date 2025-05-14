@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { stylesFactory, withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types/theme';
+import { t } from '../../utils/i18n';
+import { Tab, TabsBar } from '../Tabs';
 import { PopoverContentProps } from '../Tooltip';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
@@ -16,7 +19,6 @@ export type ColorPickerChangeHandler = (color: string) => void;
 export interface ColorPickerProps extends Themeable2 {
   color: string;
   onChange: ColorPickerChangeHandler;
-
   enableNamedColors?: boolean;
 }
 
@@ -44,11 +46,6 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
       activePicker: 'palette',
     };
   }
-
-  getTabClassName = (tabName: PickerType | keyof T) => {
-    const { activePicker } = this.state;
-    return `ColorPickerPopover__tab ${activePicker === tabName && 'ColorPickerPopover__tab--active'}`;
-  };
 
   handleChange = (color: string) => {
     const { onChange, enableNamedColors, theme } = this.props;
@@ -99,11 +96,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
     return (
       <>
         {Object.keys(customPickers).map((key) => {
-          return (
-            <button className={this.getTabClassName(key)} onClick={this.onTabChange(key)} key={key} type="button">
-              {customPickers[key].name}
-            </button>
-          );
+          return <Tab label={customPickers[key].name} onChangeTab={this.onTabChange(key)} key={key} />;
         })}
       </>
     );
@@ -111,7 +104,10 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
 
   render() {
     const { theme } = this.props;
+    const { activePicker } = this.state;
+
     const styles = getStyles(theme);
+
     return (
       <FocusScope contain restoreFocus autoFocus>
         {/*
@@ -119,15 +115,19 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
           see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
         */}
         <div tabIndex={-1} className={styles.colorPickerPopover}>
-          <div className={styles.colorPickerPopoverTabs}>
-            <button className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')} type="button">
-              Colors
-            </button>
-            <button className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')} type="button">
-              Custom
-            </button>
+          <TabsBar>
+            <Tab
+              label={t('grafana-ui.color-picker-popover.palette-tab', 'Colors')}
+              onChangeTab={this.onTabChange('palette')}
+              active={activePicker === 'palette'}
+            />
+            <Tab
+              label={t('grafana-ui.color-picker-popover.spectrum-tab', 'Custom')}
+              onChangeTab={this.onTabChange('spectrum')}
+              active={activePicker === 'spectrum'}
+            />
             {this.renderCustomPickerTabs()}
-          </div>
+          </TabsBar>
           <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
         </div>
       </FocusScope>
@@ -143,34 +143,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     colorPickerPopover: css({
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
+      padding: theme.spacing(0.5),
       border: `1px solid ${theme.colors.border.weak}`,
-
-      '.ColorPickerPopover__tab': {
-        width: '50%',
-        textAlign: 'center',
-        padding: theme.spacing(1, 0),
-        background: theme.colors.background.secondary,
-        color: theme.colors.text.secondary,
-        fontSize: theme.typography.bodySmall.fontSize,
-        cursor: 'pointer',
-        border: 'none',
-
-        '&:focus:not(:focus-visible)': {
-          outline: 'none',
-          boxShadow: 'none',
-        },
-
-        ':focus-visible': {
-          position: 'relative',
-        },
-      },
-
-      '.ColorPickerPopover__tab--active': {
-        color: theme.colors.text.primary,
-        fontWeight: theme.typography.fontWeightMedium,
-        background: theme.colors.background.primary,
-      },
     }),
     colorPickerPopoverContent: css({
       width: '246px',

@@ -1,4 +1,4 @@
-import { Observable, defer, finalize, map, of } from 'rxjs';
+import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -7,9 +7,19 @@ import {
   DataSourceInstanceSettings,
   TestDataSourceResponse,
   ScopedVar,
+  DataTopic,
+  PanelData,
+  DataFrame,
+  LoadingState,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import {
+  activateSceneObjectAndParentTree,
+  findOriginalVizPanelByKey,
+  getVizPanelKeyForPanelId,
+} from 'app/features/dashboard-scene/utils/utils';
+
+import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { DashboardQuery } from './types';
 
@@ -28,10 +38,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
     let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
-
-    if (options.requestId.indexOf('mixed') > -1) {
-      throw new Error('Dashboard data source cannot be used with Mixed data source.');
-    }
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -69,25 +75,81 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = sourceDataProvider!.activate();
+      const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         map((result) => {
           return {
-            data: result.data.series,
+            data: this.getDataFramesForQueryTopic(result.data, query),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
             key: 'source-ds-provider',
           };
         }),
-        finalize(cleanUp)
+        this.emitFirstLoadedDataIfMixedDS(options.requestId),
+        finalize(() => cleanUp?.())
       );
     });
   }
 
+  private getDataFramesForQueryTopic(data: PanelData, query: DashboardQuery): DataFrame[] {
+    const annotations = data.annotations ?? [];
+    if (query.topic === DataTopic.Annotations) {
+      return annotations.map((frame) => ({
+        ...frame,
+        meta: {
+          ...frame.meta,
+          dataTopic: DataTopic.Series,
+        },
+      }));
+    } else {
+      return [...data.series, ...annotations];
+    }
+  }
+
   private findSourcePanel(scene: SceneObject, panelId: number) {
-    return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
+    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+  }
+
+  private emitFirstLoadedDataIfMixedDS(
+    requestId: string
+  ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
+    return (source: Observable<DataQueryResponse>) => {
+      if (requestId.includes(MIXED_REQUEST_PREFIX)) {
+        let count = 0;
+
+        return source.pipe(
+          /*
+           * We can have the following piped values scenarios:
+           * Loading -> Done         - initial load
+           * Done -> Loading -> Done - refresh
+           * Done                    - adding another query in editor
+           *
+           * When we see Done as a first element this is because of ReplaySubject in SceneQueryRunner
+           *
+           * we use first(...) below to emit correct result which is last value with Done/Error states
+           *
+           * to avoid emitting first Done/Error (due to ReplaySubject) we selectively debounce only first value with such states
+           */
+          debounce((val) => {
+            if ([LoadingState.Done, LoadingState.Error].includes(val.state!) && count === 0) {
+              count++;
+              // in the refresh scenario we need to debounce first Done/Error until Loading arrives
+              //   400ms here is a magic number that was sufficient enough with the 20x cpu throttle
+              //   this still might affect slower machines but the issue affects only panel view/edit modes
+              return interval(400);
+            }
+            count++;
+            return interval(0);
+          }),
+          first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
+        );
+      }
+
+      return source;
+    };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

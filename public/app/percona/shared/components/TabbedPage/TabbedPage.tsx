@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Tab, TabsBar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -19,6 +19,7 @@ export const TabbedPage: FC<TabbedPageProps> = ({ children, isLoading, vertical,
         <TabsBar className={styles.TabsBar} hideBorder={vertical}>
           {tabs.map((child, index) => (
             <Tab
+              aria-label={`Tab ${child.text}`}
               label={child.text}
               active={child.active}
               key={`${child.url}-${index}`}

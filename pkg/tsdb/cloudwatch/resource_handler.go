@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
@@ -38,7 +37,7 @@ type handleFn func(ctx context.Context, pluginCtx backend.PluginContext, paramet
 func handleResourceReq(handleFunc handleFn, logger log.Logger) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		pluginContext := httpadapter.PluginConfigFromContext(ctx)
+		pluginContext := backend.PluginConfigFromContext(ctx)
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))

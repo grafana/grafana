@@ -1,17 +1,36 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React from 'react';
+
+import { render } from '../../../test/test-utils';
 
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { SecondaryActions } from './SecondaryActions';
 
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve({}),
+      getList: () => [],
+      getInstanceSettings: () => {},
+    }),
+  };
+});
+
 describe('SecondaryActions', () => {
-  it('should render component with three buttons', () => {
-    render(<SecondaryActions onClickAddQueryRowButton={noop} onClickQueryInspectorButton={noop} />);
+  it('should render component with two buttons', () => {
+    render(
+      <QueryLibraryContextProviderMock>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
@@ -23,27 +42,13 @@ describe('SecondaryActions', () => {
           richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
 
     expect(screen.queryByRole('button', { name: /Add query/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
-  });
-
-  it('should not render query history button when query library is available', () => {
-    render(
-      <QueriesDrawerContextProviderMock queryLibraryAvailable={true}>
-        <SecondaryActions
-          richHistoryRowButtonHidden={false}
-          onClickAddQueryRowButton={noop}
-          onClickQueryInspectorButton={noop}
-        />
-      </QueriesDrawerContextProviderMock>
-    );
-
-    expect(screen.queryByRole('button', { name: /Query history/i })).not.toBeInTheDocument();
   });
 
   it('should disable add row button if addQueryRowButtonDisabled=true', () => {
@@ -52,11 +57,11 @@ describe('SecondaryActions', () => {
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
         onClickQueryInspectorButton={noop}
+        onSelectQueryFromLibrary={noop}
       />
     );
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
   });
 
@@ -72,16 +77,13 @@ describe('SecondaryActions', () => {
         <SecondaryActions
           onClickAddQueryRowButton={onClickAddRow}
           onClickQueryInspectorButton={onClickQueryInspector}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
 
     await user.click(screen.getByRole('button', { name: /Add query/i }));
     expect(onClickAddRow).toBeCalledTimes(1);
-
-    await user.click(screen.getByRole('button', { name: /Query history/i }));
-    expect(onClickHistory).toBeCalledTimes(1);
-    expect(onClickHistory).toBeCalledWith(true);
 
     await user.click(screen.getByRole('button', { name: /Query inspector/i }));
     expect(onClickQueryInspector).toBeCalledTimes(1);

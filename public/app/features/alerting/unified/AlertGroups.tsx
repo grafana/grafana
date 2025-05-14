@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 
-import { Alert, LoadingPlaceholder, Text, Box } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -19,6 +19,7 @@ import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const AlertGroups = () => {
   const { selectedAlertmanager } = useAlertmanager();
@@ -71,7 +72,7 @@ const AlertGroups = () => {
       {results &&
         filteredAlertGroups.map((group, index) => {
           return (
-            <React.Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
+            <Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
               {((index === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
                 (index === 0 && Object.keys(group.labels).length > 0)) && (
                 <Box paddingY={2}>
@@ -81,7 +82,7 @@ const AlertGroups = () => {
                 </Box>
               )}
               <AlertGroup alertManagerSourceName={selectedAlertmanager || ''} group={group} />
-            </React.Fragment>
+            </Fragment>
           );
         })}
       {results && !filteredAlertGroups.length && <p>No results.</p>}
@@ -89,10 +90,12 @@ const AlertGroups = () => {
   );
 };
 
-const AlertGroupsPage = () => (
-  <AlertmanagerPageWrapper navId="groups" accessType="instance">
-    <AlertGroups />
-  </AlertmanagerPageWrapper>
-);
+function AlertGroupsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="groups" accessType="instance">
+      <AlertGroups />
+    </AlertmanagerPageWrapper>
+  );
+}
 
-export default AlertGroupsPage;
+export default withPageErrorBoundary(AlertGroupsPage);

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useId, useMemo, useRef } from 'react';
+import { useCallback, useId, useMemo, useRef } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -159,9 +160,13 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   }
 
   if (item.kind !== 'folder') {
+    const itemKind = item.kind;
+    const itemUID = item.uid;
     return process.env.NODE_ENV !== 'production' ? (
       <span style={virtualStyles} className={styles.row}>
-        Non-folder {item.kind} {item.uid}
+        <Trans i18nKey="browse-dashboards.folder-picker.non-folder-item">
+          Non-folder {{ itemKind }} {{ itemUID }}
+        </Trans>
       </span>
     ) : null;
   }

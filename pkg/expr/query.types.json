@@ -56,7 +56,7 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1709915979242",
+        "resourceVersion": "1722250145266",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -79,14 +79,15 @@
               "type": "string"
             },
             "reducer": {
-              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
               "enum": [
                 "sum",
                 "mean",
                 "min",
                 "max",
                 "count",
-                "last"
+                "last",
+                "median"
               ],
               "type": "string",
               "x-enum-description": {}
@@ -141,7 +142,7 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1709915973363",
+        "resourceVersion": "1722250145266",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -157,14 +158,15 @@
           "description": "QueryType = resample",
           "properties": {
             "downsampler": {
-              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
               "enum": [
                 "sum",
                 "mean",
                 "min",
                 "max",
                 "count",
-                "last"
+                "last",
+                "median"
               ],
               "type": "string",
               "x-enum-description": {}
@@ -226,7 +228,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1709915973363",
+        "resourceVersion": "1723675389127",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -271,7 +273,8 @@
                       "type": {
                         "enum": [
                           "and",
-                          "or"
+                          "or",
+                          "logic-or"
                         ],
                         "type": "string",
                         "x-enum-description": {}
@@ -392,8 +395,14 @@
                         "enum": [
                           "gt",
                           "lt",
+                          "eq",
+                          "ne",
+                          "gte",
+                          "lte",
                           "within_range",
-                          "outside_range"
+                          "outside_range",
+                          "within_range_included",
+                          "outside_range_included"
                         ],
                         "type": "string",
                         "x-enum-description": {}
@@ -424,8 +433,14 @@
                         "enum": [
                           "gt",
                           "lt",
+                          "eq",
+                          "ne",
+                          "gte",
+                          "lte",
                           "within_range",
-                          "outside_range"
+                          "outside_range",
+                          "within_range_included",
+                          "outside_range_included"
                         ],
                         "type": "string",
                         "x-enum-description": {}

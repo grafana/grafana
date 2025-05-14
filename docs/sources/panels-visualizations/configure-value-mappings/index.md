@@ -105,13 +105,24 @@ Value mappings bypass unit formatting set in the **Standard options** section of
 
 You can configure value mappings for the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+
+{{< /column-list >}}
 
 ## Types of value mappings
 
@@ -185,3 +196,6 @@ The following image shows a table visualization with value mappings. If you want
 1. Click **Update** to save the value mapping.
 
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
+
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.

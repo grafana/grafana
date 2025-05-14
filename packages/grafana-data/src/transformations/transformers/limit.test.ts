@@ -1,7 +1,6 @@
-import { DataTransformerConfig } from '@grafana/data';
-
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types';
+import { FieldType, Field } from '../../types/dataFrame';
+import { DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -13,7 +12,7 @@ describe('Limit transformer', () => {
     mockTransformationsRegistry([limitTransformer]);
   });
 
-  it('should limit the number of items', async () => {
+  it('should limit the number of items by removing from the end if the number is positive', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -49,6 +48,50 @@ describe('Limit transformer', () => {
           name: 'values',
           type: FieldType.number,
           values: [1, 2, 2],
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should limit the number of items by removing from the front if the limit is negative', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<LimitTransformerOptions> = {
+      id: DataTransformerID.limit,
+      options: {
+        limitField: -3,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000, 7000, 8000],
+          config: {},
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['three', 'three', 'three'],
+          config: {},
+        },
+        {
+          name: 'values',
+          type: FieldType.number,
+          values: [3, 3, 3],
           config: {},
         },
       ];

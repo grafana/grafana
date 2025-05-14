@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -16,8 +14,9 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
-import { config } from '../../../../core/config';
+import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getActiveGrafanaAlertsScene } from '../insights/grafana/Active';
@@ -96,16 +95,26 @@ export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
-const namespace = config.bootData.settings.namespace;
+const namespace = getAPINamespace();
 
-export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
+export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
-export function getInsightsScenes() {
+const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
 
   [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
     ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
   });
+  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
+};
+
+export const insightsIsAvailable = () => {
+  const [_, cloudUsageDs, __] = getInsightsDataSources();
+  return cloudUsageDs.settings;
+};
+
+export function getInsightsScenes() {
+  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
 
   const categories = [];
 
@@ -165,7 +174,28 @@ export function getInsightsScenes() {
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
-        props: { children: <div>Monitor the status of your system.</div> },
+        props: {
+          children: (
+            <>
+              <Text>
+                Monitor the status of your system{' '}
+                <Tooltip
+                  content={
+                    <div>
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                      <br />
+                      <br />
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </div>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Text>
+            </>
+          ),
+        },
       }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),

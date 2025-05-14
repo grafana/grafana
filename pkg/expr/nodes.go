@@ -112,6 +112,12 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}
 
+	if commandType == TypeSQL {
+		if !toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
+			return nil, fmt.Errorf("sql expressions are disabled")
+		}
+	}
+
 	node := &CMDNode{
 		baseNode: baseNode{
 			id:    rn.idx,
@@ -185,6 +191,8 @@ type DSNode struct {
 	intervalMS int64
 	maxDP      int64
 	request    Request
+
+	isInputToSQLExpr bool
 }
 
 func (dn *DSNode) String() string {
@@ -325,7 +333,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			}
 
 			for _, dn := range nodeGroup {
-				dataFrames, err := getResponseFrame(resp, dn.refID)
+				dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 				if err != nil {
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
 					instrument(err, "")
@@ -333,7 +341,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -395,13 +403,50 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
-	dataFrames, err := getResponseFrame(resp, dn.refID)
+	dataFrames, err := getResponseFrame(logger, resp, dn.refID)
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
 	var result mathexp.Results
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+	// If the datasource node is an input to a SQL expression,
+	// the data must be in the Long format
+	if dn.isInputToSQLExpr {
+		var needsConversion bool
+		// Convert it if Multi:
+		if len(dataFrames) > 1 {
+			needsConversion = true
+		}
+
+		// Convert it if Wide (has labels):
+		if len(dataFrames) == 1 {
+			for _, field := range dataFrames[0].Fields {
+				if len(field.Labels) > 0 {
+					needsConversion = true
+					break
+				}
+			}
+		}
+
+		if needsConversion {
+			convertedFrames, err := ConvertToLong(dataFrames)
+			if err != nil {
+				return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
+			}
+			result.Values = mathexp.Values{
+				mathexp.TableData{Frame: convertedFrames[0]},
+			}
+			return result, nil
+		}
+
+		// Otherwise it is already Long format; return as is
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: dataFrames[0]},
+		}
+		return result, nil
+	}
+
+	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}

@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { locationService } from '@grafana/runtime';
 import { DbAgent } from 'app/percona/shared/services/services/Services.types';
 
 import { ServiceAgentStatus } from '../../Inventory.types';
@@ -29,9 +27,9 @@ describe('StatusLink', () => {
 
     const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusLink agentsStatus={agentsStatus} type="services" strippedId="service_id_1" />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.getByText('OK')).toBeInTheDocument();
     expect(screen.queryByText('Failed')).not.toBeInTheDocument();
@@ -53,9 +51,9 @@ describe('StatusLink', () => {
     ];
     const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusLink agentsStatus={agentsStatus} type="services" strippedId="service_id_1" />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
@@ -77,9 +75,9 @@ describe('StatusLink', () => {
     ];
     const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <StatusLink agentsStatus={agentsStatus} type="services" strippedId="service_id_1" />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();

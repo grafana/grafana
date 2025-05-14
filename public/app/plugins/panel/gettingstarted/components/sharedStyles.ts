@@ -9,31 +9,31 @@ export const cardStyle = (theme: GrafanaTheme2, complete: boolean) => {
 
   const borderGradient = theme.isDark ? darkThemeGradients : lightThemeGradients;
 
-  return `
-      background-color: ${theme.colors.background.secondary};
-      margin-right: ${theme.spacing(4)};
-      border: 1px solid ${theme.colors.border.weak};
-      border-bottom-left-radius: ${theme.shape.borderRadius(2)};
-      border-bottom-right-radius: ${theme.shape.borderRadius(2)};
-      position: relative;
-      max-height: 230px;
+  return {
+    backgroundColor: theme.colors.background.secondary,
+    marginRight: theme.spacing(4),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderBottomLeftRadius: theme.shape.borderRadius(2),
+    borderBottomRightRadius: theme.shape.borderRadius(2),
+    position: 'relative',
+    maxHeight: '230px',
 
-      ${theme.breakpoints.down('xxl')} {
-        margin-right: ${theme.spacing(2)};
-      }
-      &::before {
-        display: block;
-        content: ' ';
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 2px;
-        top: 0;
-        background-image: ${borderGradient};
-      }
-`;
+    [theme.breakpoints.down('xxl')]: {
+      marginRight: theme.spacing(2),
+    },
+    '&::before': {
+      display: 'block',
+      content: "' '",
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: '2px',
+      top: 0,
+      backgroundImage: borderGradient,
+    },
+  } as const;
 };
 
-export const cardContent = css`
-  padding: 16px;
-`;
+export const cardContent = css({
+  padding: '16px',
+});

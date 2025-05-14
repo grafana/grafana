@@ -6,14 +6,14 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -49,8 +49,8 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
-	if alertState.Image != nil && alertState.Image.Token != "" {
-		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+	if alertState.Image != nil {
+		attachImageAnnotations(alertState.Image, nA)
 	}
 
 	if alertState.StateReason != "" {
@@ -73,7 +73,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	state := alertState.State
-	if alertState.Resolved {
+	if alertState.ResolvedAt != nil {
 		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
 		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
 		// ensure to modify it appropriately.
@@ -139,27 +139,6 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
-	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*State
-	ts := time.Now()
-
-	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
-			continue
-		}
-		alert := StateToPostableAlert(alertState, appURL)
-		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
-		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
-			continue
-		}
-		alertState.LastSentAt = ts
-		sentAlerts = append(sentAlerts, alertState.State)
-	}
-	stateManager.Put(sentAlerts)
-	return alerts
-}
-
 // FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
 // and converts them to models.PostableAlert with EndsAt set to time.Now
 func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
@@ -174,4 +153,14 @@ func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.U
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
 	return alerts
+}
+
+// attachImageAnnotations attaches image annotations to the alert.
+func attachImageAnnotations(image *ngModels.Image, a data.Labels) {
+	if image.Token != "" {
+		a[alertingModels.ImageTokenAnnotation] = image.Token
+	}
+	if image.URL != "" {
+		a[alertingModels.ImageURLAnnotation] = image.URL
+	}
 }

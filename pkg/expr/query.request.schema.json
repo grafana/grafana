@@ -213,7 +213,7 @@
                 "type": "string"
               },
               "reducer": {
-                "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
                 "type": "string",
                 "enum": [
                   "sum",
@@ -221,7 +221,8 @@
                   "min",
                   "max",
                   "count",
-                  "last"
+                  "last",
+                  "median"
                 ],
                 "x-enum-description": {}
               },
@@ -367,7 +368,7 @@
                 "additionalProperties": false
               },
               "downsampler": {
-                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
                 "type": "string",
                 "enum": [
                   "sum",
@@ -375,7 +376,8 @@
                   "min",
                   "max",
                   "count",
-                  "last"
+                  "last",
+                  "median"
                 ],
                 "x-enum-description": {}
               },
@@ -557,7 +559,8 @@
                           "type": "string",
                           "enum": [
                             "and",
-                            "or"
+                            "or",
+                            "logic-or"
                           ],
                           "x-enum-description": {}
                         }
@@ -751,8 +754,14 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
+                            "ne",
+                            "gte",
+                            "lte",
                             "within_range",
-                            "outside_range"
+                            "outside_range",
+                            "within_range_included",
+                            "outside_range_included"
                           ],
                           "x-enum-description": {}
                         }
@@ -783,8 +792,14 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
+                            "ne",
+                            "gte",
+                            "lte",
                             "within_range",
-                            "outside_range"
+                            "outside_range",
+                            "within_range_included",
+                            "outside_range_included"
                           ],
                           "x-enum-description": {}
                         }

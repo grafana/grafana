@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { config } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime/src/services/LocationService';
 import { useStyles2 } from '@grafana/ui';

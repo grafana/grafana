@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button, Card, EmptyState } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 

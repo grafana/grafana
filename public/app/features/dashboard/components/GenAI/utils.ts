@@ -1,10 +1,12 @@
 import { pick } from 'lodash';
 
-import { llms } from '@grafana/experimental';
+import { openai } from '@grafana/llm';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
+import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 
@@ -16,12 +18,12 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = llms.openai.Message;
+export type Message = openai.Message;
 
 export enum QuickFeedbackType {
   Shorter = 'Even shorter',
   MoreDescriptive = 'More descriptive',
-  Regenerate = 'Regenerate',
+  Regenerate = 'Please, regenerate',
 }
 
 /**
@@ -78,7 +80,7 @@ export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
   llmHealthCheck = new Promise((resolve) => {
-    llms.openai.health().then((response) => {
+    openai.health().then((response) => {
       if (!response.ok) {
         // Health check fail clear cached promise so we can try again later
         llmHealthCheck = undefined;
@@ -111,11 +113,7 @@ export const getFeedbackMessage = (previousResponse: string, feedback: string | 
  * @returns String for inclusion in prompts stating what the dashboard's panels are
  */
 export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
-  const getPanelString = (panel: PanelModel, idx: number) =>
-    `- Panel ${idx}
-- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
-
-  const panelStrings: string[] = dashboard.panels.map(getPanelString);
+  const panelStrings: string[] = getPanelStrings(dashboard);
   let panelPrompt: string;
 
   if (panelStrings.length <= 10) {
@@ -158,3 +156,22 @@ export function getFilteredPanelString(panel: Panel): string {
 
   return JSON.stringify(filteredPanel, null, 2);
 }
+
+export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
+  'To generate this content your dashboard must contain at least one panel with a valid title or description.';
+
+export function getPanelStrings(dashboard: DashboardModel): string[] {
+  const panelStrings = dashboard.panels
+    .filter(
+      (panel) =>
+        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
+        (panel.description && panel.description.length > 0)
+    )
+    .map(getPanelString);
+
+  return panelStrings;
+}
+
+const getPanelString = (panel: PanelModel, idx: number) =>
+  `- Panel ${idx}
+- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;

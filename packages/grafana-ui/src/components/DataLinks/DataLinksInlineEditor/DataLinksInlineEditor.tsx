@@ -1,116 +1,31 @@
-import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
-
-import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-
-import { useStyles2 } from '../../../themes';
-import { Button } from '../../Button/Button';
-import { Modal } from '../../Modal/Modal';
+import { DataLink, VariableSuggestion } from '@grafana/data';
 
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
-import { DataLinksListItem } from './DataLinksListItem';
+import { DataLinksInlineEditorBase, DataLinksInlineEditorBaseProps } from './DataLinksInlineEditorBase';
 
-interface DataLinksInlineEditorProps {
+type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<DataLink>, 'children' | 'type' | 'items'> & {
   links?: DataLink[];
-  onChange: (links: DataLink[]) => void;
+  showOneClick?: boolean;
   getSuggestions: () => VariableSuggestion[];
-  data: DataFrame[];
-}
-
-export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }: DataLinksInlineEditorProps) => {
-  const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [isNew, setIsNew] = useState(false);
-
-  const styles = useStyles2(getDataLinksInlineEditorStyles);
-  const linksSafe: DataLink[] = links ?? [];
-  const isEditing = editIndex !== null;
-
-  const onDataLinkChange = (index: number, link: DataLink) => {
-    if (isNew) {
-      if (link.title.trim() === '' && link.url.trim() === '') {
-        setIsNew(false);
-        setEditIndex(null);
-        return;
-      } else {
-        setEditIndex(null);
-        setIsNew(false);
-      }
-    }
-    const update = cloneDeep(linksSafe);
-    update[index] = link;
-    onChange(update);
-    setEditIndex(null);
-  };
-
-  const onDataLinkAdd = () => {
-    let update = cloneDeep(linksSafe);
-    setEditIndex(update.length);
-    setIsNew(true);
-  };
-
-  const onDataLinkCancel = (index: number) => {
-    if (isNew) {
-      setIsNew(false);
-    }
-    setEditIndex(null);
-  };
-
-  const onDataLinkRemove = (index: number) => {
-    const update = cloneDeep(linksSafe);
-    update.splice(index, 1);
-    onChange(update);
-  };
-
-  return (
-    <>
-      {linksSafe.length > 0 && (
-        <div className={styles.wrapper}>
-          {linksSafe.map((l, i) => {
-            return (
-              <DataLinksListItem
-                key={`${l.title}/${i}`}
-                index={i}
-                link={l}
-                onChange={onDataLinkChange}
-                onEdit={() => setEditIndex(i)}
-                onRemove={() => onDataLinkRemove(i)}
-                data={data}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {isEditing && editIndex !== null && (
-        <Modal
-          title="Edit link"
-          isOpen={true}
-          closeOnBackdropClick={false}
-          onDismiss={() => {
-            onDataLinkCancel(editIndex);
-          }}
-        >
-          <DataLinkEditorModalContent
-            index={editIndex}
-            link={isNew ? { title: '', url: '' } : linksSafe[editIndex]}
-            data={data}
-            onSave={onDataLinkChange}
-            onCancel={onDataLinkCancel}
-            getSuggestions={getSuggestions}
-          />
-        </Modal>
-      )}
-
-      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
-        Add link
-      </Button>
-    </>
-  );
 };
 
-const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    marginBottom: theme.spacing(2),
-  }),
-});
+export const DataLinksInlineEditor = ({
+  links,
+  getSuggestions,
+  showOneClick = false,
+  ...rest
+}: DataLinksInlineEditorProps) => (
+  <DataLinksInlineEditorBase<DataLink> type="link" items={links} {...rest}>
+    {(item, index, onSave, onCancel) => (
+      <DataLinkEditorModalContent
+        index={index}
+        link={item ?? { title: '', url: '' }}
+        data={rest.data}
+        onSave={onSave}
+        onCancel={onCancel}
+        getSuggestions={getSuggestions}
+        showOneClick={showOneClick}
+      />
+    )}
+  </DataLinksInlineEditorBase>
+);

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaConfig, locationUtil } from '@grafana/data';
 
@@ -48,5 +48,18 @@ describe('TextLink', () => {
       </MemoryRouter>
     );
     expect(screen.getByRole('link')).toHaveAttribute('href', '/after-sub-url');
+  });
+  it('should fire onclick', async () => {
+    const onClick = jest.fn();
+
+    render(
+      <MemoryRouter>
+        <TextLink onClick={onClick} href={link}>
+          Link to Grafana
+        </TextLink>
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByRole('link'));
+    expect(onClick).toHaveBeenCalled();
   });
 });

@@ -1,5 +1,4 @@
 import { render, screen, within } from '@testing-library/react';
-import React from 'react';
 
 import { FieldType, FormattedValue, toDataFrame } from '@grafana/data/src';
 

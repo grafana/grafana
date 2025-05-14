@@ -1,15 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
-import {
-  DataSourcesResponse,
-  setupGrafanaManagedServer,
-  withExternalOnlySetting,
-} from './components/settings/__mocks__/server';
+import DataSourcesResponse from './components/settings/__mocks__/api/datasources.json';
+import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/__mocks__/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 
@@ -50,10 +46,8 @@ describe('Alerting settings', () => {
   it('should render the page with Built-in only enabled, others disabled', async () => {
     render(<SettingsPage />);
 
-    await waitFor(() => {
-      expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument();
-      expect(ui.otherAlertmanagerSection.get()).toBeInTheDocument();
-    });
+    expect(await ui.builtInAlertmanagerSection.find()).toBeInTheDocument();
+    expect(ui.otherAlertmanagerSection.get()).toBeInTheDocument();
 
     // check internal alertmanager configuration
     expect(ui.builtInAlertmanagerCard.get()).toBeInTheDocument();
@@ -98,7 +92,7 @@ describe('Alerting settings', () => {
     expect(ui.saveConfigurationButton.get()).toBeDisabled();
 
     await waitFor(() => {
-      expect(ui.saveConfigurationButton.get()).not.toBeDisabled();
+      expect(ui.saveConfigurationButton.get()).toBeEnabled();
     });
   });
 

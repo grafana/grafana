@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 
 import { Icon, Tooltip } from '@grafana/ui';
 
@@ -10,7 +10,7 @@ export interface FunctionEditorControlsProps {
   onRemove: (func: FuncInstance) => void;
 }
 
-const FunctionDescription = React.lazy(async () => {
+const FunctionDescription = lazy(async () => {
   return {
     default(props: { description?: string }) {
       return <div>{props.description}</div>;

@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useRef } from 'react';
+import { FC, useMemo, useRef } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { generateId } from 'app/percona/shared/helpers/utils';

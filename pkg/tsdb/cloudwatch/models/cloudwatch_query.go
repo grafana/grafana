@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type (
@@ -27,13 +26,13 @@ type (
 )
 
 const (
-	MetricEditorModeBuilder = dataquery.MetricEditorModeN0
-	MetricEditorModeRaw     = dataquery.MetricEditorModeN1
+	MetricEditorModeBuilder = dataquery.MetricEditorModeBuilder
+	MetricEditorModeRaw     = dataquery.MetricEditorModeCode
 )
 
 const (
-	MetricQueryTypeSearch = dataquery.MetricQueryTypeN0
-	MetricQueryTypeQuery  = dataquery.MetricQueryTypeN1
+	MetricQueryTypeSearch = dataquery.MetricQueryTypeSearch
+	MetricQueryTypeQuery  = dataquery.MetricQueryTypeInsights
 )
 
 const (
@@ -62,6 +61,8 @@ type sqlExpression struct {
 
 type CloudWatchQuery struct {
 	logger            log.Logger
+	StartTime         time.Time
+	EndTime           time.Time
 	RefId             string
 	Region            string
 	Id                string
@@ -251,10 +252,12 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
+			StartTime:         startTime,
+			EndTime:           endTime,
 			RefId:             refId,
-			Id:                utils.Depointerizer(mdq.Id),
-			Region:            utils.Depointerizer(mdq.Region),
-			Namespace:         utils.Depointerizer(mdq.Namespace),
+			Id:                mdq.Id,
+			Region:            mdq.Region,
+			Namespace:         mdq.Namespace,
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
@@ -310,7 +313,7 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
 	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
-		return fmt.Errorf("query must have either statistic or statistics field")
+		return backend.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"))
 	}
 
 	var err error
@@ -331,7 +334,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		q.AccountId = metricsDataQuery.AccountId
 	}
 
-	if utils.Depointerizer(metricsDataQuery.Id) == "" {
+	if metricsDataQuery.Id == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
@@ -384,7 +387,11 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 func getStatistic(query metricsDataQuery) string {
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if query.Statistic == nil {
-		return query.Statistics[0]
+		if len(query.Statistics) > 0 {
+			return query.Statistics[0]
+		}
+		// if there isn't a statistic property in the legacy format fall back to Average
+		return "Average"
 	}
 	return *query.Statistic
 }
@@ -480,16 +487,14 @@ func getRetainedPeriods(timeSince time.Duration) []int {
 	}
 }
 
-func parseDimensions(dimensions map[string]any) (map[string][]string, error) {
+func parseDimensions(dimensions dataquery.Dimensions) (map[string][]string, error) {
 	parsedDimensions := make(map[string][]string)
 	for k, v := range dimensions {
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
-		if value, ok := v.(string); ok {
-			parsedDimensions[k] = []string{value}
-		} else if values, ok := v.([]any); ok {
-			for _, value := range values {
-				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
-			}
+		if v.String != nil {
+			parsedDimensions[k] = []string{*v.String}
+		} else if len(v.ArrayOfString) > 0 {
+			parsedDimensions[k] = append(parsedDimensions[k], v.ArrayOfString...)
 		} else {
 			return nil, errors.New("unknown type as dimension value")
 		}

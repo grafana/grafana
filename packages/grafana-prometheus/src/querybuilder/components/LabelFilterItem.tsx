@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx
 import debounce from 'debounce-promise';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { AsyncSelect, Select } from '@grafana/ui';
 
 import { truncateResult } from '../../language_utils';
@@ -46,6 +46,7 @@ export function LabelFilterItem({
   // instead, we explicitly control the menu visibility and prevent showing it until the options have fully loaded
   const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
   const [labelValuesMenuOpen, setLabelValuesMenuOpen] = useState(false);
+  const [allLabels, setAllLabels] = useState<SelectableValue[]>([]);
 
   const isMultiSelect = (operator = item.op) => {
     return operators.find((op) => op.label === operator)?.isMultiValue;
@@ -73,13 +74,25 @@ export function LabelFilterItem({
     debounceDuration
   );
 
+  /**
+   * Debounce a search through all the labels possible and truncate by .
+   */
+  const labelNamesSearch = debounce((query: string) => {
+    // we limit the select to show 1000 options,
+    // but we still search through all the possible options
+    const results = allLabels.filter((label) => {
+      return label.value.includes(query);
+    });
+    return truncateResult(results);
+  }, debounceDuration);
+
   const itemValue = item?.value ?? '';
 
   return (
     <div key={itemValue} data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         {/* Label name select, loads all values at once */}
-        <Select
+        <AsyncSelect
           placeholder="Select label"
           data-testid={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
@@ -89,15 +102,20 @@ export function LabelFilterItem({
           onOpenMenu={async () => {
             setState({ isLoadingLabelNames: true });
             const labelNames = await onGetLabelNames(item);
+            // store all label names to allow for full label searching by typing in the select option, see loadOptions function labelNamesSearch
+            setAllLabels(labelNames);
             setLabelNamesMenuOpen(true);
-            setState({ labelNames, isLoadingLabelNames: undefined });
+            // truncate the results the same amount as the metric select
+            const truncatedLabelNames = truncateResult(labelNames);
+            setState({ labelNames: truncatedLabelNames, isLoadingLabelNames: undefined });
           }}
           onCloseMenu={() => {
             setLabelNamesMenuOpen(false);
           }}
           isOpen={labelNamesMenuOpen}
           isLoading={state.isLoadingLabelNames ?? false}
-          options={state.labelNames}
+          loadOptions={labelNamesSearch}
+          defaultOptions={state.labelNames}
           onChange={(change) => {
             if (change.label) {
               onChange({

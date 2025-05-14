@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -8,7 +8,7 @@ import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {
@@ -40,8 +40,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
       cacheTimeout: datasourceSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
       dataSource: {
         default: datasourceSettings?.isDefault,
-        type: datasourceSettings?.type,
-        uid: datasourceSettings?.uid,
+        ...(datasourceSettings ? getDataSourceRef(datasourceSettings) : { type: undefined, uid: undefined }),
       },
       queryCachingTTL: datasourceSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       queries: panel.targets,

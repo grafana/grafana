@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Upload sources
-        uses: crowdin/github-action@v1
+        uses: crowdin/github-action@v2
         with:
           upload_sources: true
           upload_sources_args: '--dest=public/locales/en-US/grafana.json'

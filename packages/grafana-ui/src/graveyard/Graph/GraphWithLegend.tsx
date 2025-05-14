@@ -1,7 +1,7 @@
 // Libraries
 
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';

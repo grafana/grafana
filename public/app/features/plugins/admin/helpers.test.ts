@@ -92,10 +92,8 @@ describe('Plugins/Helpers', () => {
     test('core plugins should be fullyInstalled in cloud', () => {
       const corePluginId = 'plugin-core';
 
-      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
       const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
 
       const merged = mergeLocalsAndRemotes({
@@ -109,17 +107,14 @@ describe('Plugins/Helpers', () => {
       expect(findMerged(corePluginId)?.isCore).toBe(true);
       expect(findMerged(corePluginId)?.isFullyInstalled).toBe(true);
 
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
     test('plugins should be fully installed if they are installed and it is provisioned', () => {
       const pluginId = 'plugin-1';
 
-      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
       const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
 
       const merged = mergeLocalsAndRemotes({
@@ -133,15 +128,12 @@ describe('Plugins/Helpers', () => {
       expect(findMerged(pluginId)).not.toBeUndefined();
       expect(findMerged(pluginId)?.isFullyInstalled).toBe(true);
 
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
     test('plugins should have update when instance version is different from remote version', () => {
-      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
       const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
-      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
 
       const pluginId = 'plugin-1';
@@ -162,7 +154,6 @@ describe('Plugins/Helpers', () => {
       expect(findMerged(pluginId)).not.toBeUndefined();
       expect(findMerged(pluginId)?.hasUpdate).toBe(true);
 
-      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
   });
@@ -203,15 +194,21 @@ describe('Plugins/Helpers', () => {
         isInstalled: false,
         isDeprecated: false,
         isPublished: true,
+        latestVersion: '4.1.5',
+        isManaged: false,
+        isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,
         publishedAt: '2016-04-06T20:23:41.000Z',
         signature: 'valid',
+        signatureOrg: 'Alexander Zobnin',
+        signatureType: 'community',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         isFullyInstalled: false,
         angularDetected: false,
+        url: 'https://github.com/alexanderzobnin/grafana-zabbix',
       });
     });
 
@@ -280,6 +277,8 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: false,
         isDeprecated: false,
+        isManaged: false,
+        isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0,
@@ -331,7 +330,10 @@ describe('Plugins/Helpers', () => {
         isEnterprise: false,
         isInstalled: true,
         isPublished: true,
+        latestVersion: '4.1.5',
         isDeprecated: false,
+        isManaged: false,
+        isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,
@@ -344,6 +346,7 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        url: 'https://github.com/alexanderzobnin/grafana-zabbix',
       });
     });
 

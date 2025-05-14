@@ -26,6 +26,14 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
+					common.OptionsWithLegend
+
+					//// trying to set nested default, not working
+					//common.OptionsWithLegend | *{
+					//	legend: common.VizLegendOptions | *{
+					//		showLegend: false
+					//	}
+					//}
 					common.SingleStatBaseOptions
 					displayMode:   common.BarGaugeDisplayMode & (*"gradient" | _)
 					valueMode:     common.BarGaugeValueMode & (*"color" | _)

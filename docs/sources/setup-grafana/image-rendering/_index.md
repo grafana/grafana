@@ -18,33 +18,37 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
-
-> **Note:** Image rendering of dashboards is not supported at this time.
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export](../../dashboards/create-reports/#export-dashboard-as-pdf), and [Reporting](../../dashboards/create-reports/). PDF Export and Reporting are available only in [Grafana Enterprise](../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime](../configure-grafana/#temp_data_lifetime) setting.
 
-You can also render a PNG by hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
+You can also render a PNG by hovering over the panel to display the actions menu in the top-right corner, and then clicking **Share > Share link**. The **Render image** option is displayed in the link settings.
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots]({{< relref "../configure-grafana#max_concurrent_screenshots" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots](../configure-grafana/#max_concurrent_screenshots).
 
 ## Install Grafana Image Renderer plugin
 
 {{% admonition type="note" %}}
-Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
+All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{% /admonition %}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
+
+### Memory requirements
+
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Grafana recommends a minimum of 16GB of free memory on the system rendering images.
+
+Rendering multiple images in parallel requires an even bigger memory footprint. You can use the remote rendering service in order to render images on a remote system, so your local system resources are not affected.
 
 ## Configuration
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file](../configure-grafana/#plugingrafana-image-renderer).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -82,13 +86,15 @@ AUTH_TOKEN=-
 
 ```json
 {
-  "security": {
-    "authToken": "-"
+  "service": {
+    "security": {
+      "authToken": "-"
+    }
   }
 }
 ```
 
-See [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
+See [Grafana configuration](../configure-grafana/#renderer_token) for how to configure the token in Grafana.
 
 ### Rendering mode
 
@@ -158,7 +164,7 @@ RENDERING_MODE=reusable
 
 #### Optimize the performance, CPU and memory usage of the image renderer
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "./monitoring" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service](monitoring/).
 
 With no concurrent requests, the different modes show very similar performance and CPU / memory usage.
 
@@ -207,9 +213,63 @@ HTTP_PORT=0
 }
 ```
 
+#### HTTP protocol
+
+{{% admonition type="note" %}}
+HTTPS protocol is supported in the image renderer v3.11.0 and later.
+{{% /admonition %}}
+
+Change the protocol of the server, it can be `http` or `https`. Default is `http`.
+
+```bash
+HTTP_PROTOCOL=https
+```
+
+```json
+{
+  "service": {
+    "protocol": "https"
+  }
+}
+```
+
+#### HTTPS certificate and key file
+
+Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```bash
+HTTP_CERT_FILE=./path/to/cert
+HTTP_CERT_KEY=./path/to/key
+```
+
+```json
+{
+  "service": {
+    "certFile": "./path/to/cert",
+    "certKey": "./path/to/key"
+  }
+}
+```
+
+#### HTTPS min TLS version
+
+Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```bash
+HTTP_MIN_TLS_VERSION=TLSv1.2
+```
+
+```json
+{
+  "service": {
+    "minTLSVersion": "TLSv1.2"
+  }
+}
+```
+
 #### Enable Prometheus metrics
 
-You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint]({{< relref "./monitoring#enable-prometheus-metrics-endpoint" >}}) for details.
+You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint](monitoring/#enable-prometheus-metrics-endpoint) for details.
 
 Default is `false`.
 
@@ -517,6 +577,24 @@ RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
 {
   "rendering": {
     "pageZoomLevel": 1
+  }
+}
+```
+
+#### Tracing
+
+Enable OpenTelemetry Tracing by setting the tracing URL. Default is empty (disabled).
+
+```bash
+RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
+```
+
+```json
+{
+  "rendering": {
+    "tracing": {
+      "url": "http://localhost:4318/v1/traces"
+    }
   }
 }
 ```

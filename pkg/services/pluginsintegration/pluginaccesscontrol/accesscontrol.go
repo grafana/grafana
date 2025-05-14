@@ -1,6 +1,9 @@
 package pluginaccesscontrol
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,6 +26,16 @@ var (
 	// Protects access to the Configuration > Plugins page
 	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionWrite), ac.EvalPermission(ActionInstall))
 )
+
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []plugins.RoleRegistration) error
+}
+
+// ActionSetRegistry handles the plugin RBAC actionsets
+type ActionSetRegistry interface {
+	RegisterActionSets(ctx context.Context, ID string, registrations []plugins.ActionSet) error
+}
 
 func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool {
 	// Legacy handler that protects access to the Configuration > Plugins page
@@ -69,8 +82,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	if !cfg.PluginAdminEnabled ||
-		(cfg.PluginAdminExternalManageEnabled && !features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall)) {
+	if !cfg.PluginAdminEnabled {
 		PluginsMaintainer.Grants = []string{}
 	}
 

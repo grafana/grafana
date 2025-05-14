@@ -22,9 +22,8 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import store from 'app/core/store';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -55,7 +54,6 @@ import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/expl
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
-import { visualisationTypeKey } from '../Logs/utils/logs';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
@@ -530,7 +528,10 @@ interface RunQueriesOptions {
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
-    dispatch(cancelQueries(exploreId));
+    // Running cancel queries when Explore is scanning will cancel the scanning state
+    if (!getState().explore?.panes[exploreId]?.scanning) {
+      dispatch(cancelQueries(exploreId));
+    }
 
     const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
       getState(),
@@ -656,24 +657,16 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
           const exploreState = getState().explore.panes[exploreId];
-          if (data.logsResult !== null && data.state === LoadingState.Done) {
-            reportInteraction('grafana_explore_logs_result_displayed', {
-              datasourceType: datasourceInstance.type,
-              visualisationType:
-                exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
-              length: data.logsResult.rows.length,
-              defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
-            });
-          }
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
           // Keep scanning for results if this was the last scanning transaction
           if (exploreState!.scanning) {
+            console.log(data.series);
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, exploreState!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
               dispatch(runQueries({ exploreId }));
-            } else {
+            } else if (data.series[0]?.length > 0 || data.state === LoadingState.Done) {
               // We can stop scanning if we have a result
               dispatch(scanStopAction({ exploreId }));
             }
@@ -1314,10 +1307,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
-export const processQueryResponse = (
-  state: ExploreItemState,
-  action: PayloadAction<QueryEndedPayload>
-): ExploreItemState => {
+const processQueryResponse = (state: ExploreItemState, action: PayloadAction<QueryEndedPayload>): ExploreItemState => {
   const { response } = action.payload;
   const {
     request,

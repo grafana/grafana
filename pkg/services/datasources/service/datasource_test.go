@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -103,6 +105,27 @@ func TestService_AddDataSource(t *testing.T) {
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
 	})
 
+	t.Run("should fail if the datasource managed permissions fail", func(t *testing.T) {
+		dsService := initDSService(t)
+		enableRBACManagedPermissions(t, dsService.cfg)
+		dsService.permissionsService = &actest.FakePermissionsService{
+			ExpectedErr: errors.New("failed to set datasource permissions"),
+		}
+		dsService.pluginStore = &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{},
+		}
+
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Type:  datasources.DS_TESTDATA,
+			Name:  "test",
+		}
+
+		ds, err := dsService.AddDataSource(context.Background(), cmd)
+		assert.Nil(t, ds)
+		assert.ErrorContains(t, err, "failed to set datasource permissions")
+	})
+
 	t.Run("if a plugin has an API version defined (EXPERIMENTAL)", func(t *testing.T) {
 		t.Run("should success to run admission hooks", func(t *testing.T) {
 			dsService := initDSService(t)
@@ -110,10 +133,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -130,10 +152,30 @@ func TestService_AddDataSource(t *testing.T) {
 						ObjectBytes: req.ObjectBytes,
 					}, nil
 				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
 			}
+			cmd := &datasources.AddDataSourceCommand{
+				OrgID:      1,
+				Type:       "test", // required to validate apiserver
+				Name:       "test",
+				APIVersion: "v1",
+			}
+			_, err := dsService.AddDataSource(context.Background(), cmd)
+			require.NoError(t, err)
+			require.True(t, validateExecuted)
+		})
+
+		t.Run("should ignore if AdmissionHandler is not implemented for v0alpha1", func(t *testing.T) {
+			dsService := initDSService(t)
+			dsService.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
+					},
+				}},
+			}
+			dsService.pluginClient = &pluginfakes.FakePluginClient{}
 			cmd := &datasources.AddDataSourceCommand{
 				OrgID:      1,
 				Type:       "test", // required to validate apiserver
@@ -142,7 +184,6 @@ func TestService_AddDataSource(t *testing.T) {
 			}
 			_, err := dsService.AddDataSource(context.Background(), cmd)
 			require.NoError(t, err)
-			require.True(t, validateExecuted)
 		})
 
 		t.Run("should fail at validation", func(t *testing.T) {
@@ -150,10 +191,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -181,9 +221,6 @@ func TestService_AddDataSource(t *testing.T) {
 				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 					return nil, fmt.Errorf("not implemented")
 				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
 				OrgID:      1,
@@ -200,10 +237,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -224,9 +260,6 @@ func TestService_AddDataSource(t *testing.T) {
 						Allowed:     true,
 						ObjectBytes: pb,
 					}, err
-				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
 				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
@@ -491,10 +524,9 @@ func TestService_UpdateDataSource(t *testing.T) {
 		dsService.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
 				JSONData: plugins.JSONData{
-					ID:         "test",
-					Type:       plugins.TypeDataSource,
-					Name:       "test",
-					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				},
 			}},
 		}
@@ -513,9 +545,6 @@ func TestService_UpdateDataSource(t *testing.T) {
 					Allowed:     true,
 					ObjectBytes: req.ObjectBytes,
 				}, nil
-			},
-			ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-				return nil, fmt.Errorf("not implemented")
 			},
 		}
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -539,6 +568,196 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.True(t, validateExecuted)
 		require.True(t, mutateExecuted)
 		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
+	})
+
+	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures()
+
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+		// Verify that the datasource was created with the correct JsonData
+		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: ds.OrgID,
+			ID:    ds.ID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdDS.JsonData)
+		createdRules := createdDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, createdRules)
+
+		// Update the datasource with new LBAC rules from API
+		newRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team2",
+			},
+		}
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"teamHttpHeaders": newRules,
+			}),
+			AllowLBACRuleUpdates: true,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are updated
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, newRules, updatedRules)
+	})
+	t.Run("Should preserve LBAC rules when not updating from API", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures()
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+		// Verify that the datasource was created with the correct JsonData
+		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: ds.OrgID,
+			ID:    ds.ID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdDS.JsonData)
+		createdRules := createdDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, createdRules)
+
+		// Update the datasource without LBAC rules in the command
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"someOtherSetting": "value",
+			}),
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are preserved
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, updatedRules)
+	})
+
+	t.Run("Should not remove stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures()
+
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+
+		// Update the datasource without any LBAC rules in the command
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:                   ds.ID,
+			OrgID:                ds.OrgID,
+			Name:                 "updated-datasource",
+			Type:                 "prometheus",
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are preserved
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, updatedRules)
+	})
+
+	t.Run("Should not populate empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures()
+
+		// Create a datasource with empty LBAC rules
+		jsonData := simplejson.New()
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+
+		// Update the datasource with new LBAC rules but without AllowLBACRuleUpdates
+		newRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team2",
+			},
+		}
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"teamHttpHeaders": newRules,
+			}),
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are still empty
+		updatedRules, ok := updatedDS.JsonData.CheckGet("teamHttpHeaders")
+		require.False(t, ok)
+		require.Nil(t, updatedRules)
 	})
 }
 
@@ -573,8 +792,9 @@ func TestService_DeleteDataSource(t *testing.T) {
 		permissionSvc := acmock.NewMockedPermissionsService()
 		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		cfg := &setting.Cfg{}
+		enableRBACManagedPermissions(t, cfg)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		// First add the datasource
@@ -1504,13 +1724,19 @@ func initDSService(t *testing.T) *Service {
 				ObjectBytes: req.ObjectBytes,
 			}, nil
 		},
-		ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-			return nil, fmt.Errorf("not implemented")
-		},
 	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
 
 	return dsService
+}
+
+func enableRBACManagedPermissions(t testing.TB, cfg *setting.Cfg) {
+	t.Helper()
+	f := ini.Empty()
+	f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("datasource")
+	tempCfg, err := setting.NewCfgFromINIFile(f)
+	cfg.RBAC = tempCfg.RBAC
+	require.NoError(t, err)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----

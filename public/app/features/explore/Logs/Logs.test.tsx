@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
+import { Provider } from 'react-redux';
 
 import {
   DataFrame,
   EventBusSrv,
-  ExploreLogsPanelState,
   ExplorePanelsState,
   LoadingState,
   LogLevel,
@@ -13,24 +13,21 @@ import {
   standardTransformersRegistry,
   toUtc,
   createDataFrame,
+  ExploreLogsPanelState,
+  DataQuery,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
-import store from 'app/core/store';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
+import { configureStore } from 'app/store/configureStore';
+
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
-
-jest.mock('app/core/store', () => {
-  return {
-    getBool: jest.fn(),
-    getObject: jest.fn((_a, b) => b),
-    get: jest.fn(),
-    set: jest.fn(),
-  };
-});
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -45,26 +42,23 @@ jest.mock('app/core/utils/shortLinks', () => ({
   createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
 }));
 
-jest.mock('app/store/store', () => ({
-  getState: jest.fn().mockReturnValue({
-    explore: {
-      panes: {
-        left: {
-          datasource: 'id',
-          queries: [{ refId: 'A', expr: '', queryType: 'range', datasource: { type: 'loki', uid: 'id' } }],
-          range: { raw: { from: 'now-1h', to: 'now' } },
-        },
-      },
-    },
-  }),
-  dispatch: jest.fn(),
-}));
-
-const changePanelState = jest.fn();
+const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
   changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
-    return changePanelState(exploreId, panel, panelState);
+    return fakeChangePanelState(exploreId, panel, panelState);
+  },
+}));
+
+const fakeChangeQueries = jest.fn().mockReturnValue({ type: 'fakeChangeQueries' });
+const fakeRunQueries = jest.fn().mockReturnValue({ type: 'fakeRunQueries' });
+jest.mock('../state/query', () => ({
+  ...jest.requireActual('../state/query'),
+  changeQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeChangeQueries(args);
+  },
+  runQueries: (args: { queries: DataQuery[]; exploreId: string | undefined }) => {
+    return fakeRunQueries(args);
   },
 }));
 
@@ -72,6 +66,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    localStorage.clear();
     jest.clearAllMocks();
   });
 
@@ -120,6 +115,7 @@ describe('Logs', () => {
     ];
 
     const testDataFrame = dataFrame ?? getMockLokiFrame();
+
     return (
       <Logs
         exploreId={'left'}
@@ -157,8 +153,23 @@ describe('Logs', () => {
       />
     );
   };
+
   const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, dataFrame?: DataFrame, logs?: LogRowModel[]) => {
-    return render(getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs));
+    const fakeStore = configureStore({
+      explore: {
+        ...initialExploreState,
+        panes: {
+          left: makeExplorePaneState(),
+        },
+      },
+    });
+
+    const rendered = render(
+      <Provider store={fakeStore}>
+        {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
+      </Provider>
+    );
+    return { ...rendered, store: fakeStore };
   };
 
   describe('scrolling behavior', () => {
@@ -216,40 +227,47 @@ describe('Logs', () => {
 
   it('should render a load more button', () => {
     const scanningStarted = jest.fn();
+    const store = configureStore({
+      explore: {
+        ...initialExploreState,
+      },
+    });
     render(
-      <Logs
-        exploreId={'left'}
-        splitOpen={() => undefined}
-        logsVolumeEnabled={true}
-        onSetLogsVolumeEnabled={() => null}
-        onClickFilterLabel={() => null}
-        onClickFilterOutLabel={() => null}
-        logsVolumeData={undefined}
-        loadLogsVolumeData={() => undefined}
-        logRows={[]}
-        onStartScanning={scanningStarted}
-        timeZone={'utc'}
-        width={50}
-        loading={false}
-        loadingState={LoadingState.Done}
-        absoluteRange={{
-          from: toUtc('2019-01-01 10:00:00').valueOf(),
-          to: toUtc('2019-01-01 16:00:00').valueOf(),
-        }}
-        range={{
-          from: toUtc('2019-01-01 10:00:00'),
-          to: toUtc('2019-01-01 16:00:00'),
-          raw: { from: 'now-1h', to: 'now' },
-        }}
-        addResultsToCache={() => {}}
-        onChangeTime={() => {}}
-        clearCache={() => {}}
-        getFieldLinks={() => {
-          return [];
-        }}
-        eventBus={new EventBusSrv()}
-        isFilterLabelActive={jest.fn()}
-      />
+      <Provider store={store}>
+        <Logs
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          onStartScanning={scanningStarted}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          addResultsToCache={() => {}}
+          onChangeTime={() => {}}
+          clearCache={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
+      </Provider>
     );
     const button = screen.getByRole('button', {
       name: /scan for older logs/i,
@@ -259,40 +277,47 @@ describe('Logs', () => {
   });
 
   it('should render a stop scanning button', () => {
+    const store = configureStore({
+      explore: {
+        ...initialExploreState,
+      },
+    });
     render(
-      <Logs
-        exploreId={'left'}
-        splitOpen={() => undefined}
-        logsVolumeEnabled={true}
-        onSetLogsVolumeEnabled={() => null}
-        onClickFilterLabel={() => null}
-        onClickFilterOutLabel={() => null}
-        logsVolumeData={undefined}
-        loadLogsVolumeData={() => undefined}
-        logRows={[]}
-        scanning={true}
-        timeZone={'utc'}
-        width={50}
-        loading={false}
-        loadingState={LoadingState.Done}
-        absoluteRange={{
-          from: toUtc('2019-01-01 10:00:00').valueOf(),
-          to: toUtc('2019-01-01 16:00:00').valueOf(),
-        }}
-        range={{
-          from: toUtc('2019-01-01 10:00:00'),
-          to: toUtc('2019-01-01 16:00:00'),
-          raw: { from: 'now-1h', to: 'now' },
-        }}
-        addResultsToCache={() => {}}
-        onChangeTime={() => {}}
-        clearCache={() => {}}
-        getFieldLinks={() => {
-          return [];
-        }}
-        eventBus={new EventBusSrv()}
-        isFilterLabelActive={jest.fn()}
-      />
+      <Provider store={store}>
+        <Logs
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          scanning={true}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          addResultsToCache={() => {}}
+          onChangeTime={() => {}}
+          clearCache={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
+      </Provider>
     );
 
     expect(
@@ -304,42 +329,48 @@ describe('Logs', () => {
 
   it('should render a stop scanning button', () => {
     const scanningStopped = jest.fn();
-
+    const store = configureStore({
+      explore: {
+        ...initialExploreState,
+      },
+    });
     render(
-      <Logs
-        exploreId={'left'}
-        splitOpen={() => undefined}
-        logsVolumeEnabled={true}
-        onSetLogsVolumeEnabled={() => null}
-        onClickFilterLabel={() => null}
-        onClickFilterOutLabel={() => null}
-        logsVolumeData={undefined}
-        loadLogsVolumeData={() => undefined}
-        logRows={[]}
-        scanning={true}
-        onStopScanning={scanningStopped}
-        timeZone={'utc'}
-        width={50}
-        loading={false}
-        loadingState={LoadingState.Done}
-        absoluteRange={{
-          from: toUtc('2019-01-01 10:00:00').valueOf(),
-          to: toUtc('2019-01-01 16:00:00').valueOf(),
-        }}
-        range={{
-          from: toUtc('2019-01-01 10:00:00'),
-          to: toUtc('2019-01-01 16:00:00'),
-          raw: { from: 'now-1h', to: 'now' },
-        }}
-        addResultsToCache={() => {}}
-        onChangeTime={() => {}}
-        clearCache={() => {}}
-        getFieldLinks={() => {
-          return [];
-        }}
-        eventBus={new EventBusSrv()}
-        isFilterLabelActive={jest.fn()}
-      />
+      <Provider store={store}>
+        <Logs
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          scanning={true}
+          onStopScanning={scanningStopped}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          addResultsToCache={() => {}}
+          onChangeTime={() => {}}
+          clearCache={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
+      </Provider>
     );
 
     const button = screen.getByRole('button', {
@@ -358,17 +389,39 @@ describe('Logs', () => {
     expect(logRows.length).toBe(3);
     expect(logRows[0].textContent).toContain('log message 1');
     expect(logRows[2].textContent).toContain('log message 3');
+    expect(fakeRunQueries).not.toHaveBeenCalled();
+  });
+
+  it('should sync the query direction when changing the order of loki queries', async () => {
+    const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).toHaveBeenCalledWith({
+      exploreId: 'left',
+      queries: [{ ...query, direction: LokiQueryDirection.Forward }],
+    });
+    expect(fakeRunQueries).toHaveBeenCalledWith({ exploreId: 'left' });
+  });
+
+  it('should not change the query direction when changing the order of non-loki queries', async () => {
+    fakeChangeQueries.mockClear();
+    const query = { refId: 'B' };
+    setup({ logsQueries: [query] });
+    const oldestFirstSelection = screen.getByLabelText('Oldest first');
+    await userEvent.click(oldestFirstSelection);
+    expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 
   describe('for permalinking', () => {
     it('should dispatch a `changePanelState` event without the id', () => {
       const panelState = { logs: { id: '1' } };
-      const { rerender } = setup({ loading: false, panelState });
+      const { rerender, store } = setup({ loading: false, panelState });
 
-      rerender(getComponent({ loading: true, exploreId: 'right', panelState }));
-      rerender(getComponent({ loading: false, exploreId: 'right', panelState }));
+      rerender(<Provider store={store}>{getComponent({ loading: true, exploreId: 'right', panelState })}</Provider>);
+      rerender(<Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>);
 
-      expect(changePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
+      expect(fakeChangePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
     });
 
     it('should scroll the scrollElement into view if rows contain id', () => {
@@ -411,12 +464,14 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
-      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
       const rows = [
-        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
-        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1 }),
-        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2 }),
-        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2 }),
+        makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: '1' } }),
+        makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 1, labels: { field: '2' } }),
+        makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 2, labels: { field: '3' } }),
+        makeLog({ uid: '4', rowId: 'id3', timeEpochMs: 2, labels: { field: '4' } }),
       ];
       setup({ loading: false, panelState, logRows: rows });
 
@@ -432,6 +487,7 @@ describe('Logs', () => {
         )
       );
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('displayedFields%22:%5B%22field'));
     });
 
     it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
@@ -463,6 +519,19 @@ describe('Logs', () => {
     });
   });
 
+  describe('displayed fields', () => {
+    it('should sync displayed fields from the URL', async () => {
+      const panelState: Partial<ExplorePanelsState> = {
+        logs: { id: 'not-included', visualisationType: 'logs', displayedFields: ['field'] },
+      };
+      const rows = [makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1, labels: { field: 'field value' } })];
+      setup({ loading: false, panelState, logRows: rows });
+
+      expect(await screen.findByText('field=field value')).toBeInTheDocument();
+      expect(screen.queryByText(/log message/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('with table visualisation', () => {
     let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
 
@@ -491,23 +560,17 @@ describe('Logs', () => {
     });
 
     it('should use default state from localstorage - table', async () => {
-      const oldGet = store.get;
-      store.get = jest.fn().mockReturnValue('table');
       localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
       const table = await screen.findByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
-      store.get = oldGet;
     });
 
     it('should use default state from localstorage - logs', async () => {
-      const oldGet = store.get;
-      store.get = jest.fn().mockReturnValue('logs');
       localStorage.setItem(visualisationTypeKey, 'logs');
       setup({});
       const table = await screen.findByTestId('logRows');
       expect(table).toBeInTheDocument();
-      store.get = oldGet;
     });
 
     it('should change visualisation to table on toggle (elastic)', async () => {

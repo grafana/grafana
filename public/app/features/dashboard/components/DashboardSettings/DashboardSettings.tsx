@@ -1,6 +1,6 @@
 import * as H from 'history';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -134,7 +134,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  if (dashboard.id && dashboard.meta.canSave) {
+  if (dashboard.uid && dashboard.meta.canSave) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
       id: 'versions',
@@ -145,7 +145,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   const permissionsTitle = t('dashboard-settings.permissions.title', 'Permissions');
 
-  if (dashboard.id && dashboard.meta.canAdmin) {
+  if (dashboard.uid && dashboard.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
@@ -199,7 +199,7 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.node);
+  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.main);
 
   main.parentItem = pageNavWithSectionParent;
 

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -54,6 +53,7 @@ function GraphiteQueryEditorContent() {
         icon="pen"
         variant="secondary"
         aria-label="Toggle editor mode"
+        tooltip={state?.queryModel?.error}
         onClick={() => {
           dispatch(actions.toggleEditorMode());
         }}
@@ -64,14 +64,14 @@ function GraphiteQueryEditorContent() {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-    `,
-    visualEditor: css`
-      flex-grow: 1;
-    `,
-    toggleButton: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+    }),
+    visualEditor: css({
+      flexGrow: 1,
+    }),
+    toggleButton: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 }

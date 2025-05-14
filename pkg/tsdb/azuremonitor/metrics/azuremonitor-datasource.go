@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
@@ -51,15 +52,15 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+	for _, query := range originalQueries {
+		azureQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, url)
+		if err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -68,151 +69,146 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
-	azureMonitorQueries := []*types.AzureMonitorQuery{}
+func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
+	var target string
+	queryJSONModel := dataquery.AzureMonitorQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+	}
 
-	for _, query := range queries {
-		var target string
-		queryJSONModel := dataquery.AzureMonitorQuery{}
-		err := json.Unmarshal(query.JSON, &queryJSONModel)
+	azJSONModel := queryJSONModel.AzureMonitor
+	// Legacy: If only MetricDefinition is set, use it as namespace
+	if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
+		azJSONModel.MetricNamespace != nil && *azJSONModel.MetricNamespace == "" {
+		azJSONModel.MetricNamespace = azJSONModel.MetricDefinition
+	}
+
+	azJSONModel.DimensionFilters = MigrateDimensionFilters(azJSONModel.DimensionFilters)
+
+	alias := ""
+	if azJSONModel.Alias != nil {
+		alias = *azJSONModel.Alias
+	}
+	azureURL := ""
+	if queryJSONModel.Subscription != nil {
+		azureURL = BuildSubscriptionMetricsURL(*queryJSONModel.Subscription)
+	}
+	filterInBody := true
+	resourceIDs := []string{}
+	resourceMap := map[string]dataquery.AzureMonitorResource{}
+	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
+		ub := urlBuilder{
+			ResourceURI: azJSONModel.ResourceUri,
+			// Alternative, used to reconstruct resource URI if it's not present
+			DefaultSubscription: &dsInfo.Settings.SubscriptionId,
+			Subscription:        queryJSONModel.Subscription,
+			ResourceGroup:       resourceGroup,
+			MetricNamespace:     azJSONModel.MetricNamespace,
+			ResourceName:        resourceName,
+		}
+
+		// Construct the resourceURI (for legacy query objects pre Grafana 9)
+		resourceUri, err := ub.buildResourceURI()
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+			return nil, err
 		}
 
-		azJSONModel := queryJSONModel.AzureMonitor
-		// Legacy: If only MetricDefinition is set, use it as namespace
-		if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
-			azJSONModel.MetricNamespace != nil && *azJSONModel.MetricNamespace == "" {
-			azJSONModel.MetricNamespace = azJSONModel.MetricDefinition
+		// POST requests are only supported at the subscription level
+		filterInBody = false
+		if resourceUri != nil {
+			azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
+			resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 		}
-
-		azJSONModel.DimensionFilters = MigrateDimensionFilters(azJSONModel.DimensionFilters)
-
-		alias := ""
-		if azJSONModel.Alias != nil {
-			alias = *azJSONModel.Alias
-		}
-		azureURL := ""
-		if queryJSONModel.Subscription != nil {
-			azureURL = BuildSubscriptionMetricsURL(*queryJSONModel.Subscription)
-		}
-		filterInBody := true
-		resourceIDs := []string{}
-		resourceMap := map[string]dataquery.AzureMonitorResource{}
-		if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
+	} else {
+		for _, r := range azJSONModel.Resources {
 			ub := urlBuilder{
-				ResourceURI: azJSONModel.ResourceUri,
-				// Alternative, used to reconstruct resource URI if it's not present
 				DefaultSubscription: &dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       resourceGroup,
+				ResourceGroup:       r.ResourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        resourceName,
+				ResourceName:        r.ResourceName,
 			}
-
-			// Construct the resourceURI (for legacy query objects pre Grafana 9)
 			resourceUri, err := ub.buildResourceURI()
 			if err != nil {
 				return nil, err
 			}
 
-			// POST requests are only supported at the subscription level
-			filterInBody = false
 			if resourceUri != nil {
-				azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
-				resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
+				resourceMap[*resourceUri] = r
 			}
-		} else {
-			for _, r := range azJSONModel.Resources {
-				ub := urlBuilder{
-					DefaultSubscription: &dsInfo.Settings.SubscriptionId,
-					Subscription:        queryJSONModel.Subscription,
-					ResourceGroup:       r.ResourceGroup,
-					MetricNamespace:     azJSONModel.MetricNamespace,
-					ResourceName:        r.ResourceName,
-				}
-				resourceUri, err := ub.buildResourceURI()
-				if err != nil {
-					return nil, err
-				}
-
-				if resourceUri != nil {
-					resourceMap[*resourceUri] = r
-				}
-				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", *resourceUri))
-			}
+			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", *resourceUri))
 		}
-
-		// old model
-		dimension := ""
-		if azJSONModel.Dimension != nil {
-			dimension = strings.TrimSpace(*azJSONModel.Dimension)
-		}
-		dimensionFilter := ""
-		if azJSONModel.DimensionFilter != nil {
-			dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
-		}
-
-		dimSB := strings.Builder{}
-
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
-			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-		} else {
-			for i, filter := range azJSONModel.DimensionFilters {
-				if len(filter.Filters) == 0 {
-					dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
-				} else {
-					dimSB.WriteString(types.ConstructFiltersString(filter))
-				}
-				if i != len(azJSONModel.DimensionFilters)-1 {
-					dimSB.WriteString(" and ")
-				}
-			}
-		}
-
-		filterString := strings.Join(resourceIDs, " or ")
-
-		if dimSB.String() != "" {
-			if filterString != "" {
-				filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimSB.String())
-			} else {
-				filterString = dimSB.String()
-			}
-		}
-
-		params, err := getParams(azJSONModel, query)
-		if err != nil {
-			return nil, err
-		}
-		target = params.Encode()
-
-		sub := ""
-		if queryJSONModel.Subscription != nil {
-			sub = *queryJSONModel.Subscription
-		}
-
-		query := &types.AzureMonitorQuery{
-			URL:          azureURL,
-			Target:       target,
-			Params:       params,
-			RefID:        query.RefID,
-			Alias:        alias,
-			TimeRange:    query.TimeRange,
-			Dimensions:   azJSONModel.DimensionFilters,
-			Resources:    resourceMap,
-			Subscription: sub,
-		}
-		if filterString != "" {
-			if filterInBody {
-				query.BodyFilter = filterString
-			} else {
-				query.Params.Add("$filter", filterString)
-			}
-		}
-		azureMonitorQueries = append(azureMonitorQueries, query)
 	}
 
-	return azureMonitorQueries, nil
+	// old model
+	dimension := ""
+	if azJSONModel.Dimension != nil {
+		dimension = strings.TrimSpace(*azJSONModel.Dimension)
+	}
+	dimensionFilter := ""
+	if azJSONModel.DimensionFilter != nil {
+		dimensionFilter = strings.TrimSpace(*azJSONModel.DimensionFilter)
+	}
+
+	dimSB := strings.Builder{}
+
+	if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
+		dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+	} else {
+		for i, filter := range azJSONModel.DimensionFilters {
+			if len(filter.Filters) == 0 {
+				dimSB.WriteString(fmt.Sprintf("%s eq '*'", *filter.Dimension))
+			} else {
+				dimSB.WriteString(types.ConstructFiltersString(filter))
+			}
+			if i != len(azJSONModel.DimensionFilters)-1 {
+				dimSB.WriteString(" and ")
+			}
+		}
+	}
+
+	filterString := strings.Join(resourceIDs, " or ")
+
+	if dimSB.String() != "" {
+		if filterString != "" {
+			filterString = fmt.Sprintf("(%s) and (%s)", filterString, dimSB.String())
+		} else {
+			filterString = dimSB.String()
+		}
+	}
+
+	params, err := getParams(azJSONModel, query)
+	if err != nil {
+		return nil, err
+	}
+	target = params.Encode()
+
+	sub := ""
+	if queryJSONModel.Subscription != nil {
+		sub = *queryJSONModel.Subscription
+	}
+
+	azureQuery := &types.AzureMonitorQuery{
+		URL:          azureURL,
+		Target:       target,
+		Params:       params,
+		RefID:        query.RefID,
+		Alias:        alias,
+		TimeRange:    query.TimeRange,
+		Dimensions:   azJSONModel.DimensionFilters,
+		Resources:    resourceMap,
+		Subscription: sub,
+	}
+	if filterString != "" {
+		if filterInBody {
+			azureQuery.BodyFilter = filterString
+		} else {
+			azureQuery.Params.Add("$filter", filterString)
+		}
+	}
+
+	return azureQuery, nil
 }
 
 func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery) (url.Values, error) {
@@ -273,7 +269,11 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to request subscription details: %s", err)
+		err = fmt.Errorf("failed to request subscription details: %s", err)
+		if backend.IsDownstreamHTTPError(err) {
+			err = backend.DownstreamError(err)
+		}
+		return "", err
 	}
 
 	defer func() {
@@ -288,7 +288,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	}
 
 	if res.StatusCode/100 != 2 {
-		return "", fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
+		return "", utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.SubscriptionsResponse
@@ -325,7 +325,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 
 	defer func() {
@@ -370,7 +370,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.Az
 	}
 
 	if res.StatusCode/100 != 2 {
-		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
+		return types.AzureMonitorResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data types.AzureMonitorResponse
@@ -424,10 +424,9 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
-		if _, ok := labels[resourceIdLabel]; ok {
-			delete(labels, resourceIdLabel)
-			labels["resourceName"] = resourceName
-		}
+
+		delete(labels, resourceIdLabel)
+		labels["resourceName"] = resourceName
 
 		if query.Alias != "" {
 			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)

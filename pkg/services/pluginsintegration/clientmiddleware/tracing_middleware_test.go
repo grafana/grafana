@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -16,8 +17,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
@@ -30,13 +29,13 @@ func TestTracingMiddleware(t *testing.T) {
 
 	for _, tc := range []struct {
 		name        string
-		run         func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error
+		run         func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error
 		expSpanName string
 	}{
 		{
 			name: "QueryData",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 				})
 				return err
@@ -45,8 +44,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "CallResource",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				return cdt.Decorator.CallResource(context.Background(), &backend.CallResourceRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				return cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 				}, nopCallResourceSender)
 			},
@@ -54,8 +53,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "CheckHealth",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				_, err := cdt.Decorator.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				_, err := cdt.MiddlewareHandler.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 				})
 				return err
@@ -64,8 +63,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "CollectMetrics",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				_, err := cdt.Decorator.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				_, err := cdt.MiddlewareHandler.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{
 					PluginContext: pluginCtx,
 				})
 				return err
@@ -74,8 +73,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "SubscribeStream",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				_, err := cdt.Decorator.SubscribeStream(context.Background(), &backend.SubscribeStreamRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				_, err := cdt.MiddlewareHandler.SubscribeStream(context.Background(), &backend.SubscribeStreamRequest{
 					PluginContext: pluginCtx,
 				})
 				return err
@@ -84,8 +83,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "PublishStream",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				_, err := cdt.Decorator.PublishStream(context.Background(), &backend.PublishStreamRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				_, err := cdt.MiddlewareHandler.PublishStream(context.Background(), &backend.PublishStreamRequest{
 					PluginContext: pluginCtx,
 				})
 				return err
@@ -94,8 +93,8 @@ func TestTracingMiddleware(t *testing.T) {
 		},
 		{
 			name: "RunStream",
-			run: func(pluginCtx backend.PluginContext, cdt *clienttest.ClientDecoratorTest) error {
-				return cdt.Decorator.RunStream(context.Background(), &backend.RunStreamRequest{
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				return cdt.MiddlewareHandler.RunStream(context.Background(), &backend.RunStreamRequest{
 					PluginContext: pluginCtx,
 				}, &backend.StreamSender{})
 			},
@@ -107,9 +106,9 @@ func TestTracingMiddleware(t *testing.T) {
 				spanRecorder := tracetest.NewSpanRecorder()
 				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
-				cdt := clienttest.NewClientDecoratorTest(
+				cdt := handlertest.NewHandlerMiddlewareTest(
 					t,
-					clienttest.WithMiddlewares(NewTracingMiddleware(tracer)),
+					handlertest.WithMiddlewares(NewTracingMiddleware(tracer)),
 				)
 
 				err := tc.run(pluginCtx, cdt)
@@ -126,9 +125,9 @@ func TestTracingMiddleware(t *testing.T) {
 				spanRecorder := tracetest.NewSpanRecorder()
 				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
-				cdt := clienttest.NewClientDecoratorTest(
+				cdt := handlertest.NewHandlerMiddlewareTest(
 					t,
-					clienttest.WithMiddlewares(
+					handlertest.WithMiddlewares(
 						NewTracingMiddleware(tracer),
 						newAlwaysErrorMiddleware(errors.New("ops")),
 					),
@@ -150,9 +149,9 @@ func TestTracingMiddleware(t *testing.T) {
 				spanRecorder := tracetest.NewSpanRecorder()
 				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
-				cdt := clienttest.NewClientDecoratorTest(
+				cdt := handlertest.NewHandlerMiddlewareTest(
 					t,
-					clienttest.WithMiddlewares(
+					handlertest.WithMiddlewares(
 						NewTracingMiddleware(tracer),
 						newAlwaysPanicMiddleware("panic!"),
 					),
@@ -314,12 +313,12 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 			spanRecorder := tracetest.NewSpanRecorder()
 			tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
-			cdt := clienttest.NewClientDecoratorTest(
+			cdt := handlertest.NewHandlerMiddlewareTest(
 				t,
-				clienttest.WithMiddlewares(NewTracingMiddleware(tracer)),
+				handlertest.WithMiddlewares(NewTracingMiddleware(tracer)),
 			)
 
-			_, err := cdt.Decorator.QueryData(ctx, req)
+			_, err := cdt.MiddlewareHandler.QueryData(ctx, req)
 			require.NoError(t, err)
 			spans := spanRecorder.Ended()
 			require.Len(t, spans, 1, "must have 1 span")
@@ -398,13 +397,13 @@ func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *ba
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *alwaysErrorFuncMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return nil, m.f()
 }
 
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
-func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func newAlwaysErrorMiddleware(err error) backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &alwaysErrorFuncMiddleware{func() error {
 			return err
 		}}
@@ -412,8 +411,8 @@ func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
 }
 
 // newAlwaysPanicMiddleware returns a new middleware that always panics with the specified message,
-func newAlwaysPanicMiddleware(message string) plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func newAlwaysPanicMiddleware(message string) backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &alwaysErrorFuncMiddleware{func() error {
 			panic(message)
 		}}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -39,6 +39,14 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return nil, errPasswordAuthFailed.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	}
 
+	ok, err = c.loginAttempts.ValidateIPAddress(ctx, web.RemoteAddr(r.HTTPRequest))
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
+	}
+
 	if len(password) == 0 {
 		return nil, errPasswordAuthFailed.Errorf("no password provided")
 	}
@@ -56,8 +64,9 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return identity, nil
 	}
 
-	if errors.Is(clientErrs, errInvalidPassword) {
-		_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
+	err = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", clientErrs)

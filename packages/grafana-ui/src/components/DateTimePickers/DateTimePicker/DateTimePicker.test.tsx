@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
@@ -15,7 +14,7 @@ afterAll(() => {
   return setTimeZoneResolver(() => defaultTimeZone);
 });
 
-const renderDatetimePicker = (props?: Props) => {
+const renderDatetimePicker = (props?: Partial<Props>) => {
   const combinedProps = Object.assign(
     {
       date: dateTimeForTimeZone(getTimeZone(), '2021-05-05 12:00:00'),
@@ -87,23 +86,16 @@ describe('Date time picker', () => {
 
       // open the time of day overlay
       await userEvent.click(screen.getAllByRole('textbox')[1]);
+      const hourList = screen.getAllByRole('list')[0];
 
       // change the hour
-      await userEvent.click(
-        screen.getAllByRole('button', {
-          name: '00',
-        })[0]
-      );
+      await userEvent.click(within(hourList).getByText('00'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // change the hour
-      await userEvent.click(
-        screen.getAllByRole('button', {
-          name: '23',
-        })[0]
-      );
+      await userEvent.click(within(hourList).getByText('23'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
@@ -124,7 +116,6 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByRole('button', { name: 'May 15, 2021' }));
 
       const timeInput = screen.getAllByRole('textbox')[1];
-      expect(timeInput).toHaveClass('rc-time-picker-input');
       expect(timeInput).not.toHaveDisplayValue('00:00:00');
     }
   );
@@ -217,9 +208,7 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getAllByRole('textbox')[1]);
 
       // check the hour element is visible
-      const hourElement = screen.getAllByRole('button', {
-        name: '00',
-      })[0];
+      const hourElement = screen.getAllByText('00')[0];
       expect(hourElement).toBeVisible();
 
       // select the hour value and check it's still visible
@@ -228,11 +217,23 @@ describe('Date time picker', () => {
 
       // click outside the overlay and check the hour element is no longer visible
       await userEvent.click(document.body);
-      expect(
-        screen.queryByRole('button', {
-          name: '00',
-        })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText('00')).not.toBeInTheDocument();
     }
   );
+
+  it('should be able to use a custom timeZone', async () => {
+    renderDatetimePicker({
+      timeZone: 'America/New_York',
+      date: dateTimeForTimeZone(getTimeZone({ timeZone: 'utc' }), '2024-07-01 02:00:00'),
+    });
+
+    const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
+    expect(dateTimeInput).toHaveDisplayValue('2024-06-30 22:00:00');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+    // Check that calendar date is set correctly
+    expect(screen.getByRole('button', { name: `June 30, 2024` })).toHaveClass('react-calendar__tile--active');
+    // Check that time is set correctly
+    expect(screen.getAllByRole('textbox')[1]).toHaveValue('22:00:00');
+  });
 });

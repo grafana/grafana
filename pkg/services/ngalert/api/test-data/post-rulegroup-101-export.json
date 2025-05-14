@@ -108,7 +108,6 @@
           ],
           "noDataState": "NoData",
           "execErrState": "Alerting",
-          "for": "0s",
           "isPaused": false,
           "notification_settings":{
             "receiver":"Test-Receiver",
@@ -117,6 +116,66 @@
             "group_interval":"5s",
             "repeat_interval":"5m",
             "mute_time_intervals":["test-mute"]
+          }
+        },
+        {
+          "title": "recording rule",
+          "data": [
+            {
+              "refId": "query",
+              "relativeTimeRange": {
+                "from": 18000,
+                "to": 10800
+              },
+              "datasourceUid": "000000002",
+              "model": {
+                "expr": "http_request_duration_microseconds_count",
+                "hide": false,
+                "interval": "",
+                "intervalMs": 1000,
+                "legendFormat": "",
+                "maxDataPoints": 100,
+                "refId": "query"
+              }
+            },
+            {
+              "refId": "reduced",
+              "relativeTimeRange": {
+                "from": 18000,
+                "to": 10800
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "query",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 100,
+                "reducer": "mean",
+                "refId": "reduced",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "condition",
+              "relativeTimeRange": {
+                "from": 18000,
+                "to": 10800
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "expression": "$reduced \u003e 10",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 100,
+                "refId": "condition",
+                "type": "math"
+              }
+            }
+          ],
+          "isPaused": false,
+          "record": {
+            "metric": "test_metric",
+            "from": "condition"
           }
         }
       ]

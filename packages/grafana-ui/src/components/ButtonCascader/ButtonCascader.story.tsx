@@ -1,7 +1,6 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
 
-import { ButtonCascader } from '@grafana/ui';
+import { ButtonCascader } from './ButtonCascader';
 
 const meta: Meta<typeof ButtonCascader> = {
   title: 'Forms/Cascader/ButtonCascader',

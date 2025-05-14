@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { SupplementaryResultError } from './SupplementaryResultError';
 
@@ -27,5 +26,11 @@ describe('SupplementaryResultError', () => {
     const button = screen.getByText('Show details');
     await userEvent.click(button);
     expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it('allows arbitrary components in the message', async () => {
+    const error = { data: { message: 'error' } };
+    render(<SupplementaryResultError error={error} message={<div data-testid="custom-stuff" />} title={'Error'} />);
+    expect(screen.getByTestId('custom-stuff')).toBeInTheDocument();
   });
 });

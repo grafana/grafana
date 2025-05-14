@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
@@ -90,9 +90,10 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { jsonText } = model.useState();
 
     const onSave = async (overwrite: boolean) => {
-      const result = await onSaveDashboard(dashboard, JSON.parse(model.state.jsonText), {
+      const result = await onSaveDashboard(dashboard, {
         folderUid: dashboard.state.meta.folderUid,
         overwrite,
+        rawDashboardJSON: JSON.parse(model.state.jsonText),
       });
 
       setIsSaving(true);

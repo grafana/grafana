@@ -1,9 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-import { Button, ButtonProps } from '@grafana/ui/src/components/Button';
+import { Button, ButtonProps, useStyles2 } from '@grafana/ui';
 
 type Props = Omit<ButtonProps, 'variant' | 'size'>;
 

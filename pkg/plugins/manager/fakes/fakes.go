@@ -8,32 +8,33 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 type FakePluginInstaller struct {
-	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error
 	// Remove removes a plugin from the store.
-	RemoveFunc func(ctx context.Context, pluginID string) error
+	RemoveFunc func(ctx context.Context, pluginID, version string) error
 }
 
-func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
 	if i.AddFunc != nil {
 		return i.AddFunc(ctx, pluginID, version, opts)
 	}
 	return nil
 }
 
-func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
 	if i.RemoveFunc != nil {
-		return i.RemoveFunc(ctx, pluginID)
+		return i.RemoveFunc(ctx, pluginID, version)
 	}
 	return nil
 }
@@ -72,7 +73,7 @@ type FakePluginClient struct {
 	backend.CallResourceHandlerFunc
 	backend.MutateAdmissionFunc
 	backend.ValidateAdmissionFunc
-	backend.ConvertObjectFunc
+	backend.ConvertObjectsFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -123,6 +124,10 @@ func (pc *FakePluginClient) IsDecommissioned() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.decommissioned
+}
+
+func (pc *FakePluginClient) Target() backendplugin.Target {
+	return "test-target"
 }
 
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
@@ -185,9 +190,9 @@ func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.Ad
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if pc.ConvertObjectFunc != nil {
-		return pc.ConvertObjectFunc(ctx, req)
+func (pc *FakePluginClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if pc.ConvertObjectsFunc != nil {
+		return pc.ConvertObjectsFunc(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
@@ -231,7 +236,7 @@ type FakePluginRepo struct {
 	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
-	PluginVersionFunc         func(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
+	PluginVersionFunc         func(_ context.Context, pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -260,11 +265,23 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 	return &repo.PluginArchiveInfo{}, nil
 }
 
-func (r *FakePluginRepo) PluginVersion(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
+func (r *FakePluginRepo) PluginVersion(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
 	if r.PluginVersionFunc != nil {
-		return r.PluginVersionFunc(pluginID, version, compatOpts)
+		return r.PluginVersionFunc(ctx, pluginID, version, compatOpts)
 	}
 	return repo.VersionData{}, nil
+}
+
+func (r *FakePluginRepo) PluginInfo(ctx context.Context, pluginID string) (*repo.PluginInfo, error) {
+	return &repo.PluginInfo{}, nil
+}
+
+type fakeTracerProvider struct {
+	noop.TracerProvider
+}
+
+func InitializeNoopTracerForTest() trace.Tracer {
+	return fakeTracerProvider{}.Tracer("test")
 }
 
 type FakePluginStorage struct {
@@ -340,7 +357,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
@@ -391,35 +408,55 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 	return f.ExpectedErr
 }
 
-type FakePluginFiles struct {
+type FakeActionSetRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeActionSetRegistry() *FakeActionSetRegistry {
+	return &FakeActionSetRegistry{}
+}
+
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
+	return f.ExpectedErr
+}
+
+type FakePluginFS struct {
 	OpenFunc   func(name string) (fs.File, error)
 	RemoveFunc func() error
+	RelFunc    func(string) (string, error)
 
 	base string
 }
 
-func NewFakePluginFiles(base string) *FakePluginFiles {
-	return &FakePluginFiles{
+func NewFakePluginFS(base string) *FakePluginFS {
+	return &FakePluginFS{
 		base: base,
 	}
 }
 
-func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+func (f *FakePluginFS) Open(name string) (fs.File, error) {
 	if f.OpenFunc != nil {
 		return f.OpenFunc(name)
 	}
 	return nil, nil
 }
 
-func (f *FakePluginFiles) Base() string {
+func (f *FakePluginFS) Rel(_ string) (string, error) {
+	if f.RelFunc != nil {
+		return f.RelFunc(f.base)
+	}
+	return "", nil
+}
+
+func (f *FakePluginFS) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Files() ([]string, error) {
+func (f *FakePluginFS) Files() ([]string, error) {
 	return []string{}, nil
 }
 
-func (f *FakePluginFiles) Remove() error {
+func (f *FakePluginFS) Remove() error {
 	if f.RemoveFunc != nil {
 		return f.RemoveFunc()
 	}
@@ -457,7 +494,7 @@ func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
 	return []string{}
 }
 
-func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+func (s *FakePluginSource) DefaultSignature(ctx context.Context, _ string) (plugins.Signature, bool) {
 	if s.DefaultSignatureFunc != nil {
 		return s.DefaultSignatureFunc(ctx)
 	}
@@ -483,7 +520,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *auth.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -615,4 +652,8 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
 }

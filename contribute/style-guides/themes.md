@@ -1,26 +1,28 @@
-# Theming Grafana
+# Work with Grafana themes
 
 ## Overview
 
-**Themes are implemented in Typescript.** That's because our goal is to share variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code. Theme definitions are located in the following files:
+Themes in Grafana are implemented in TypeScript. We chose the TypeScript language in part because it shares variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code.
+
+Theme definitions are located in the following files:
 
 - [packages/grafana-data/src/themes/createTheme.ts](../../packages/grafana-data/src/themes/createTheme.ts)
 - [packages/grafana-data/src/themes/createColors.ts](../../packages/grafana-data/src/themes/createColors.ts)
 
 ## Usage
 
-This section provides usage guidelines.
+This section provides usage guidelines for themes.
 
-### Using themes in React components
+### Use themes in React components
 
-Here's how to use Grafana themes in React components.
+The following section describes how to use Grafana themes in React components.
 
-#### useStyles2 hook
+#### The useStyles2 hook
 
-`useStyles2` memoizes the function and provides access to the theme.
+The `useStyles2` hook memoizes the function and provides access to the theme.
 
 ```tsx
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -38,8 +40,10 @@ const getStyles = (theme: GrafanaTheme2) =>
 
 #### Get the theme object
 
+Use code similar to the following to give your component access to the theme variables:
+
 ```tsx
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { useTheme2 } from '@grafana/ui';
 
 const Foo: FC<FooProps> = () => {
@@ -49,12 +53,22 @@ const Foo: FC<FooProps> = () => {
 };
 ```
 
-## Picking the right variable
+## Select a variable
+
+This section explains how to select the correct variables in your theme.
 
 ### The rich color object and the state colors
 
-The theme.colors object has 6 rich color objects for `primary`, `secondary`, `info`, `success`, `warning` and `error`. These all
-have the same sub colors that have different use cases.
+The `theme.colors` object has six rich color objects:
+
+- `primary`
+- `secondary`
+- `info`
+- `success`
+- `warning`
+- `error`
+
+All these objects use the same secondary colors which are associated with different use cases.
 
 | Property     | When to use                                                |
 | ------------ | ---------------------------------------------------------- |
@@ -66,9 +80,9 @@ have the same sub colors that have different use cases.
 
 Example use cases:
 
-- Want a `red` background? Use `theme.colors.error.main`
-- Want `green` text? Use `theme.colors.success.text`
-- Want text to be visible when placed inside a background that uses `theme.colors.error.main` then use `theme.colors.error.contrastText`.
+- Want a red background? Use `theme.colors.error.main`.
+- Want green text? Use `theme.colors.success.text`.
+- Want text to be visible when placed inside a background that uses `theme.colors.error.main`? Use `theme.colors.error.contrastText`.
 
 ### Text colors
 
@@ -76,17 +90,18 @@ Example use cases:
 | ----------------------------- | ------------------------------------------------------------------------------ |
 | theme.colors.text.primary     | The default text color                                                         |
 | theme.colors.text.secondary   | Text color for things that should be a bit less prominent                      |
-| theme.colors.text.disabled    | Text color for disabled / faint things                                         |
+| theme.colors.text.disabled    | Text color for disabled or faint things                                        |
 | theme.colors.text.link        | Text link color                                                                |
 | theme.colors.text.maxContrast | Maximum contrast (absolute white in dark theme, absolute black in white theme) |
 
 ### Background colors
 
-| Property                          | When to use                                                                                       |
-| --------------------------------- | ------------------------------------------------------------------------------------------------- |
-| theme.colors.background.canvas    | Think dashboard background. A background surface for panels and panes that use primary background |
-| theme.colors.background.primary   | The default content background for content panes and panels                                       |
-| theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background  |
+| Property                          | When to use                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| theme.colors.background.canvas    | Dashboard background. A background surface for panels and panes that use primary background                                                                                                  |
+| theme.colors.background.primary   | The default content background for content panes and panels                                                                                                                                  |
+| theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background                                                                                             |
+| theme.colors.background.elevated  | For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark themes it has a brighter shade to help give it contrast against the primary background |
 
 ### Borders
 
@@ -121,9 +136,11 @@ Example use cases:
 
 ### Typography
 
-For font family, font sizes and line heights use the variables under `theme.typography`.
+To customize font family, font sizes, and line heights, use the variables under `theme.typography`.
 
-#### Using `ThemeContext` directly
+#### Set the context directly
+
+Use `ThemeContext` like this:
 
 ```tsx
 import { ThemeContext } from '@grafana/data';
@@ -131,9 +148,9 @@ import { ThemeContext } from '@grafana/data';
 <ThemeContext.Consumer>{(theme) => <Foo theme={theme} />}</ThemeContext.Consumer>;
 ```
 
-#### Using `withTheme` higher-order component (HOC)
+#### Use `withTheme` higher-order component
 
-With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via `theme` prop. Components used with `withTheme` must implement the `Themeable` interface.
+With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via the `theme` prop. Components used with `withTheme` must implement the `Themeable` interface.
 
 ```ts
 import  { ThemeContext, Themeable } from '@grafana/ui';
@@ -145,10 +162,9 @@ const Foo: React.FunctionComponent<FooProps> = () => ...
 export default withTheme2(Foo);
 ```
 
-### Using theme in tests
+### Use a theme in tests
 
-If you need to pass a theme object to a function under test just import `createTheme` and call it without
-any arguments.
+If you need to pass a theme object to a function that you are testing, then import `createTheme` and call it without any arguments. For example:
 
 ```tsx
 import { createTheme } from '@grafana/data';
@@ -161,17 +177,14 @@ describe('MyComponent', () => {
 });
 ```
 
-## FAQ
+### Modify Sass variables
 
-This section provides insight into frequently-asked questions.
+If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction).
 
-### How can I modify Sass variable files?
+For the following variables to apply, you need to run this `yarn dev` task:
 
-**If possible, migrate styles to Emotion**
+- `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available.
 
-> For the following to apply you need to run `yarn dev` task.
+If you need to modify the Sass variable files, be sure to update the files that end with `.tmpl.ts` and not the `.generated.scss` files.
 
-`[_variables|_variables.dark|_variables.light].generated.scss` files are the ones that are referenced in the main Sass files for Sass variables to be available. **These files are automatically generated and should never be modified by hand!**
-
-If you need to modify the sass variable files be sure to update the files that end with `.tmpl.ts` and
-not the `.generated.scss` files.
+> **Important:** These variable files are automatically generated and should never be modified by hand.

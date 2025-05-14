@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -127,8 +129,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
 			userIdentities: []*authn.Identity{
-				{ID: identity.MustParseNamespaceID("user:1"), OrgID: -1, Permissions: map[int64]map[string][]string{}},
-				{ID: identity.MustParseNamespaceID("user:1"), OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
+				{ID: "1", OrgID: -1, Permissions: map[int64]map[string][]string{}},
+				{ID: "1", OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
 			},
 			authnErrors:    []error{nil, nil},
 			expectedStatus: http.StatusOK,
@@ -140,8 +142,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
 			userIdentities: []*authn.Identity{
-				{ID: identity.MustParseNamespaceID("user:1"), OrgID: -1, Permissions: map[int64]map[string][]string{}},
-				{ID: identity.MustParseNamespaceID("user:1"), OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"folders:read": {"folders:*"}}}},
+				{ID: "1", OrgID: -1, Permissions: map[int64]map[string][]string{}},
+				{ID: "1", OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"folders:read": {"folders:*"}}}},
 			},
 			authnErrors:    []error{nil, nil},
 			expectedStatus: http.StatusForbidden,
@@ -155,7 +157,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
 			expectedIdentity := &authn.Identity{
-				ID:          authn.NewNamespaceID(authn.NamespaceUser, tc.ctxSignedInUser.UserID),
+				ID:          strconv.FormatInt(tc.ctxSignedInUser.UserID, 10),
+				Type:        claims.TypeUser,
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}

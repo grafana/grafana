@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -127,7 +127,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
               percent: percentOfTotal,
               text:
                 hideFromViz || isNaN(fractionOfTotal)
-                  ? props.fieldConfig.defaults.noValue ?? '-'
+                  ? (props.fieldConfig.defaults.noValue ?? '-')
                   : percentOfTotal.toFixed(value.field.decimals ?? 0) + '%',
               title: valuesToShow.length > 1 ? 'Percent' : '',
             });

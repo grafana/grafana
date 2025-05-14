@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,6 +37,19 @@ func TestTupleLabelsToLabels(t *testing.T) {
 
 		_, err := tupleLablesToLabels(in)
 		require.Error(t, err)
+	})
+}
+
+func TestInstanceLabelsFingerprint(t *testing.T) {
+	t.Run("returns labels fingerprint", func(t *testing.T) {
+		labels := InstanceLabels{
+			"foo": "bar",
+			"baz": "qux",
+		}
+
+		fingerprint := labels.Fingerprint()
+		expectedFingerprint := data.Labels(labels).Fingerprint()
+		require.Equal(t, expectedFingerprint, fingerprint)
 	})
 }
 

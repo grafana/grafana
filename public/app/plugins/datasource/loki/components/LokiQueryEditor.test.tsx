@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import React from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { QueryEditorMode } from '@grafana/experimental';
+import { QueryEditorMode } from '@grafana/plugin-ui';
 
 import { createLokiDatasource } from '../__mocks__/datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
@@ -16,6 +15,9 @@ import { LokiQueryEditorProps } from './types';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
+    getAppEvents: jest.fn().mockReturnValue({
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+    }),
     reportInteraction: jest.fn(),
   };
 });

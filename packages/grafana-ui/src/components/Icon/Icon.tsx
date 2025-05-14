@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
+import { spin } from '../../utils/keyframes';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
@@ -33,6 +34,11 @@ const getIconStyles = (theme: GrafanaTheme2) => {
     orange: css({
       fill: theme.v1.palette.orange,
     }),
+    spin: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${spin} 2s infinite linear`,
+      },
+    }),
   };
 };
 
@@ -58,7 +64,9 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
       styles.icon,
       className,
       type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
-      iconName === 'spinner' && 'fa-spin'
+      {
+        [styles.spin]: iconName === 'spinner',
+      }
     );
 
     return (
@@ -77,6 +85,20 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
         title={title}
         className={composedClassName}
         style={style}
+        // render an empty div with the correct dimensions while loading
+        // this prevents content layout shift whilst the icon asynchronously loads
+        // which happens even if the icon is in the cache(!)
+        loader={
+          <div
+            className={cx(
+              css({
+                width: svgWid,
+                height: svgHgt,
+              }),
+              composedClassName
+            )}
+          />
+        }
         {...rest}
       />
     );

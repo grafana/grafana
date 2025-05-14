@@ -448,6 +448,7 @@ describe('logParser', () => {
         },
         title: 'test',
         target: '_self',
+        variables: [],
       };
 
       const fieldWithVarLink: FieldDef = {

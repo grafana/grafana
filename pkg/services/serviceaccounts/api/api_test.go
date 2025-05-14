@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -87,7 +88,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				OrgRole: tt.basicRole, OrgID: 1, IsAnonymous: true,
-				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
@@ -124,7 +125,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t)
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), nil)
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
 
@@ -165,7 +166,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 				a.service = &satests.FakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d", tt.id))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
@@ -228,7 +229,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			})
 
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
@@ -282,7 +283,7 @@ func TestServiceAccountsAPI_MigrateApiKeysToServiceAccounts(t *testing.T) {
 			})
 
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/migrate", nil)
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: tt.orgId, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: tt.orgId, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 

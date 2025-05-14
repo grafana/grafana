@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual, map } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
@@ -37,7 +37,7 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 
 type Props = PromQueryEditorProps;
 
-export const PromQueryEditorSelector = React.memo<Props>((props) => {
+export const PromQueryEditorSelector = memo<Props>((props) => {
   const {
     onChange,
     onRunQuery,
@@ -94,6 +94,13 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     setExplain(e.currentTarget.checked);
   };
 
+  const handleOpenQueryPatternsModal = useCallback(() => {
+    reportInteraction('grafana_prometheus_open_kickstart_clicked', {
+      app: app ?? '',
+    });
+    setQueryPatternsModalOpen(true);
+  }, [app]);
+
   return (
     <>
       <ConfirmModal
@@ -121,7 +128,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           data-testid={selectors.components.QueryBuilder.queryPatterns}
           variant="secondary"
           size="sm"
-          onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}
+          onClick={handleOpenQueryPatternsModal}
         >
           Kick start your query
         </Button>

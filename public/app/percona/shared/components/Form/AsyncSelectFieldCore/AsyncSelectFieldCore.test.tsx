@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { FormWrapper } from 'app/percona/shared/helpers/utils';
 import { validators } from 'app/percona/shared/helpers/validatorsForm';

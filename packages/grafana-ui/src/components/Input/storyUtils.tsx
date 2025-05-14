@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { toIconName } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';

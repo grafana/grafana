@@ -1,6 +1,14 @@
 import { extend } from 'lodash';
 
-import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import {
+  AnalyticsSettings,
+  OrgRole,
+  rangeUtil,
+  WithAccessControlMetadata,
+  userHasPermission,
+  userHasPermissionInMetadata,
+  userHasAnyPermission,
+} from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
@@ -11,6 +19,7 @@ import config from '../../core/config';
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
 export const AutoRefreshInterval = 'auto';
+export const RedirectToUrlKey = 'redirectTo';
 
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
@@ -111,10 +120,20 @@ export class ContextSrv {
    * Indicate the user has been logged out
    */
   setLoggedOut() {
+    this.setRedirectToUrl();
     this.cancelTokenRotationJob();
     this.user.isSignedIn = false;
     this.isSignedIn = false;
     window.location.reload();
+  }
+
+  setRedirectToUrl() {
+    if (config.featureToggles.useSessionStorageForRedirection) {
+      window.sessionStorage.setItem(
+        RedirectToUrlKey,
+        encodeURIComponent(window.location.href.substring(window.location.origin.length))
+      );
+    }
   }
 
   hasRole(role: string) {
@@ -131,12 +150,12 @@ export class ContextSrv {
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
-    return !!object.accessControl?.[action];
+    return userHasPermissionInMetadata(action, object);
   }
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
-    return !!this.user.permissions?.[action];
+    return userHasPermission(action, this.user);
   }
 
   isGrafanaVisible() {
@@ -171,7 +190,7 @@ export class ContextSrv {
 
   // evaluates access control permissions, granting access if the user has any of them
   evaluatePermission(actions: string[]) {
-    if (actions.some((action) => this.hasPermission(action))) {
+    if (userHasAnyPermission(actions, this.user)) {
       return [];
     }
     // Hack to reject when user does not have permission
@@ -189,9 +208,8 @@ export class ContextSrv {
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
       const expiresWithDistribution = expires - Math.floor(Math.random() * (20 - 1) + 1);
 
-      // nextRun is when the job should be scheduled for
-      let nextRun = expiresWithDistribution * 1000 - Date.now();
-
+      // nextRun is when the job should be scheduled for in ms. setTimeout ms has a max value of 2147483647.
+      let nextRun = Math.min(expiresWithDistribution * 1000 - Date.now(), 2147483647);
       // @ts-ignore
       this.tokenRotationJobId = setTimeout(() => {
         // if we have a new expiry time from the expiry cookie another tab have already performed the rotation

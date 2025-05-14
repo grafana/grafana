@@ -97,9 +97,8 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 }
 
 func removeDuplicates(strs []string) []string {
-	var res []string
-	found := map[string]bool{}
-
+	found := make(map[string]bool, len(strs))
+	res := make([]string, 0, len(strs))
 	for _, str := range strs {
 		if found[str] {
 			continue

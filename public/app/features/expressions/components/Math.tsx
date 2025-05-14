@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack } from '@grafana/ui';
@@ -151,41 +152,41 @@ const DocumentedFunction = ({ name, description }: DocumentedFunctionProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  documentationHeader: css`
-    font-size: ${theme.typography.h5.fontSize};
-    font-weight: ${theme.typography.h5.fontWeight};
-  `,
-  documentationLink: css`
-    color: ${theme.colors.text.link};
-  `,
-  documentationContainer: css`
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: ${theme.spacing(2)};
+  documentationHeader: css({
+    fontSize: theme.typography.h5.fontSize,
+    fontWeight: theme.typography.h5.fontWeight,
+  }),
+  documentationLink: css({
+    color: theme.colors.text.link,
+  }),
+  documentationContainer: css({
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'column',
+    gap: theme.spacing(2),
 
-    padding: ${theme.spacing(1)} ${theme.spacing(2)};
-  `,
-  documentationFunctions: css`
-    display: grid;
-    grid-template-columns: max-content auto;
-    column-gap: ${theme.spacing(2)};
-  `,
-  info: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    cursor: pointer;
-    gap: ${theme.spacing(1)};
-  `,
+    padding: theme.spacing(1, 2),
+  }),
+  documentationFunctions: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content auto',
+    columnGap: theme.spacing(2),
+  }),
+  info: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: theme.spacing(1),
+  }),
 });
 
 const getDocumentedFunctionStyles = (theme: GrafanaTheme2) => ({
-  name: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  description: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    color: ${theme.colors.text.disabled};
-  `,
+  name: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  description: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.disabled,
+  }),
 });

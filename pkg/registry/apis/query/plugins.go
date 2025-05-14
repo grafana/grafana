@@ -3,13 +3,12 @@ package query
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 )
 
 type pluginsStorage struct {
-	resourceInfo   *common.ResourceInfo
+	resourceInfo   *utils.ResourceInfo
 	tableConverter rest.TableConvertor
 	registry       query.DataSourceApiServerRegistry
 

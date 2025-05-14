@@ -4,7 +4,7 @@
 //      "type": "timeseries-wide",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "executedQueryString": "SELECT floor(extract(epoch from \"time\")/300)*300 AS \"time\",c,avg(v) AS \"v\" FROM tbl GROUP BY 1,2 ORDER BY 1,2"
 //  }
@@ -35,7 +35,7 @@
           "type": "timeseries-wide",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "executedQueryString": "SELECT floor(extract(epoch from \"time\")/300)*300 AS \"time\",c,avg(v) AS \"v\" FROM tbl GROUP BY 1,2 ORDER BY 1,2"
         },

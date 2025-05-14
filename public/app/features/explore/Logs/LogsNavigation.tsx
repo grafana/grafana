@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
+import { t, Trans } from 'app/core/internationalization';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 
@@ -19,6 +20,7 @@ type Props = {
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
+  scrollToBottomLogs?: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
 };
@@ -35,6 +37,7 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
+  scrollToBottomLogs,
   visibleRange,
   queries,
   clearCache,
@@ -126,7 +129,7 @@ function LogsNavigation({
     >
       <div className={styles.navButtonContent}>
         {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />}
-        Older logs
+        <Trans i18nKey={'logs.logs-navigation.older-logs'}>Older logs</Trans>
       </div>
     </Button>
   );
@@ -156,7 +159,9 @@ function LogsNavigation({
       <div className={styles.navButtonContent}>
         {loading && <Spinner />}
         {onFirstPage || loading ? null : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
-        {onFirstPage ? 'Start of range' : 'Newer logs'}
+        {onFirstPage
+          ? t('logs.logs-navigation.start-of-range', 'Start of range')
+          : t('logs.logs-navigation.newer-logs', 'Newer logs')}
       </div>
     </Button>
   );
@@ -178,6 +183,11 @@ function LogsNavigation({
     scrollToTopLogs();
   }, [scrollToTopLogs]);
 
+  const onScrollToBottomClick = useCallback(() => {
+    reportInteraction('grafana_explore_logs_scroll_bottom_clicked');
+    scrollToBottomLogs?.();
+  }, [scrollToBottomLogs]);
+
   return (
     <div className={styles.navContainer}>
       {!config.featureToggles.logsInfiniteScrolling && (
@@ -194,12 +204,23 @@ function LogsNavigation({
           {oldestLogsFirst ? newerLogsButton : olderLogsButton}
         </>
       )}
+      {scrollToBottomLogs && (
+        <Button
+          data-testid="scrollToBottom"
+          className={styles.scrollToBottomButton}
+          variant="secondary"
+          onClick={onScrollToBottomClick}
+          title={t('logs.logs-navigation.scroll-bottom', 'Scroll to bottom')}
+        >
+          <Icon name="arrow-down" size="lg" />
+        </Button>
+      )}
       <Button
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
         variant="secondary"
         onClick={onScrollToTopClick}
-        title="Scroll to top"
+        title={t('logs.logs-navigation.scroll-top', 'Scroll to top')}
       >
         <Icon name="arrow-up" size="lg" />
       </Button>
@@ -212,43 +233,56 @@ export default memo(LogsNavigation);
 const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
   const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`;
   return {
-    navContainer: css`
-      max-height: ${navContainerHeight};
-      display: flex;
-      flex-direction: column;
-      ${config.featureToggles.logsInfiniteScrolling
-        ? `justify-content: flex-end;`
-        : `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`}
-      position: sticky;
-      top: ${theme.spacing(2)};
-      right: 0;
-    `,
-    navButton: css`
-      width: 58px;
-      height: 68px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      line-height: 1;
-    `,
-    navButtonContent: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      white-space: normal;
-    `,
-    scrollToTopButton: css`
-      width: 40px;
-      height: 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      margin-top: ${theme.spacing(1)};
-    `,
+    navContainer: css({
+      maxHeight: navContainerHeight,
+      width: oldestLogsFirst && !config.featureToggles.newLogsPanel ? '58px' : 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: config.featureToggles.logsInfiniteScrolling
+        ? 'flex-end'
+        : oldestLogsFirst
+          ? 'flex-start'
+          : 'space-between',
+      position: 'sticky',
+      top: theme.spacing(2),
+      right: 0,
+    }),
+    navButton: css({
+      width: '58px',
+      height: '68px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      lineHeight: 1,
+    }),
+    navButtonContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
+      whiteSpace: 'normal',
+    }),
+    scrollToBottomButton: css({
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      top: 0,
+    }),
+    scrollToTopButton: css({
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: theme.spacing(1),
+    }),
   };
 };

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { clamp, throttle } from 'lodash';
-import React, { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { ComponentSize } from '../../types';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
@@ -20,6 +22,10 @@ export interface UseSplitterOptions {
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
+
+  // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
+  // pushing the left pane content left.
+  handleSize?: ComponentSize;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -44,7 +50,7 @@ const propsForDirection = {
 export function useSplitter(options: UseSplitterOptions) {
   const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged } = options;
 
-  const handleSize = 16;
+  const handleSize = getPixelSize(options.handleSize);
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
   const secondPaneRef = useRef<HTMLDivElement | null>(null);
@@ -299,6 +305,16 @@ export function useSplitter(options: UseSplitterOptions) {
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
   const id = useId();
 
+  const primaryStyles: React.CSSProperties = {
+    flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+    [minDimProp]: 'min-content',
+  };
+
+  const secondaryStyles: React.CSSProperties = {
+    flexGrow: clamp(1 - initialSize, 0, 1),
+    [minDimProp]: 'min-content',
+  };
+
   return {
     containerProps: {
       ref: containerRef,
@@ -307,18 +323,12 @@ export function useSplitter(options: UseSplitterOptions) {
     primaryProps: {
       ref: firstPaneRef,
       className: styles.panel,
-      style: {
-        [minDimProp]: 'min-content',
-        flexGrow: clamp(initialSize ?? 0.5, 0, 1),
-      },
+      style: primaryStyles,
     },
     secondaryProps: {
       ref: secondPaneRef,
       className: styles.panel,
-      style: {
-        flexGrow: clamp(1 - initialSize, 0, 1),
-        [minDimProp]: 'min-content',
-      },
+      style: secondaryStyles,
     },
     splitterProps: {
       onPointerUp,
@@ -407,4 +417,13 @@ function getStyles(theme: GrafanaTheme2, direction: UseSplitterOptions['directio
     }),
     panel: css({ display: 'flex', position: 'relative', flexBasis: 0 }),
   };
+}
+
+function getPixelSize(size: ComponentSize = 'md') {
+  return {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 32,
+  }[size];
 }

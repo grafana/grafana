@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,9 +23,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		req.Header.Set(otherHeader, "test")
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -33,7 +33,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -43,7 +43,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nopCallResourceSender)
@@ -53,7 +53,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -64,9 +64,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -74,7 +74,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not attach delete headers middleware when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -84,7 +84,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not attach delete headers middleware when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nopCallResourceSender)
@@ -94,7 +94,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -110,9 +110,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
 			req := req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
@@ -126,7 +126,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -137,7 +137,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nopCallResourceSender)
@@ -148,7 +148,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -160,9 +160,9 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
 			req := req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
@@ -176,7 +176,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should attach delete headers middleware when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})
@@ -187,7 +187,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should attach delete headers middleware when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"test"}},
 				}, nopCallResourceSender)
@@ -198,7 +198,7 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should attach delete headers middleware when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "test"},
 				})

@@ -1,10 +1,7 @@
-import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -30,25 +27,6 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     dashboardUid: 'kFlxbd37k',
     isEnabled: true,
     slug: 'new-dashboard',
-  },
-];
-
-const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
-  {
-    uid: 'SdZwuCZVz2',
-    accessToken: 'beeaf92f6ab3467f80b2be922c7741ab',
-    title: '',
-    dashboardUid: '',
-    isEnabled: false,
-    slug: '',
-  },
-  {
-    uid: 'EuiEbd3nz2',
-    accessToken: '8687b0498ccf4babb2f92810d8563b33',
-    title: '',
-    dashboardUid: '',
-    isEnabled: true,
-    slug: '',
   },
 ];
 
@@ -89,15 +67,7 @@ afterEach(() => {
 const selectors = e2eSelectors.pages.PublicDashboards;
 
 const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
-  const context = getGrafanaContextMock();
-
-  render(
-    <TestProvider grafanaContext={context}>
-      <BrowserRouter>
-        <PublicDashboardListTable />
-      </BrowserRouter>
-    </TestProvider>
-  );
+  render(<PublicDashboardListTable />);
 
   waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[0], { timeout: 3000 }));
 };
@@ -163,26 +133,6 @@ describe('Delete public dashboard', () => {
     await renderPublicDashboardTable(true);
 
     expect(screen.getAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(publicDashboardListResponse.length);
-  });
-});
-
-describe('Orphaned public dashboard', () => {
-  it('renders orphaned and non orphaned public dashboards items correctly', async () => {
-    const response: PublicDashboardListWithPaginationResponse = {
-      ...paginationResponse,
-      publicDashboards: [...publicDashboardListResponse, ...orphanedDashboardListResponse],
-    };
-    server.use(
-      http.get('/api/dashboards/public-dashboards', () => {
-        return HttpResponse.json(response);
-      })
-    );
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-
-    await renderPublicDashboardTable(true);
-    response.publicDashboards.forEach((pd, idx) => {
-      renderPublicDashboardItemCorrectly(pd, idx, true);
-    });
   });
 });
 

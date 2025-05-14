@@ -1,10 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { OrgRole } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
@@ -26,9 +25,9 @@ const setup = (role = OrgRole.Admin, isAuthorized = true) => {
       } as StoreState)}
     >
       {wrapWithGrafanaContextMock(
-        <Router history={locationService.getHistory()}>
+        <MemoryRouter>
           <AlertRuleFromTemplate />
-        </Router>
+        </MemoryRouter>
       )}
     </Provider>
   );

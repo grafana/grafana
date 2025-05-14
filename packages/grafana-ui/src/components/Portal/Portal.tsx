@@ -1,7 +1,12 @@
-﻿import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import { css } from '@emotion/css';
+import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 
-import { useTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
   className?: string;
@@ -36,6 +41,7 @@ export function Portal(props: PropsWithChildren<Props>) {
     };
   }, [portalRoot]);
 
+  // @PERCONA
   return ReactDOM.createPortal(
     <div style={{ zIndex: 1061, position: 'relative' }} ref={forwardedRef}>
       {children}
@@ -51,8 +57,26 @@ export function getPortalContainer() {
 
 /** @internal */
 export function PortalContainer() {
-  return <div id="grafana-portal-container" />;
+  const styles = useStyles2(getStyles);
+  return (
+    <div
+      id="grafana-portal-container"
+      data-testid={selectors.components.Portal.container}
+      className={styles.grafanaPortalContainer}
+    />
+  );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    grafanaPortalContainer: css({
+      position: 'fixed',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.portal,
+    }),
+  };
+};
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;

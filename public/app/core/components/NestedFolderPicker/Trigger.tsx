@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
-import Skeleton from 'react-loading-skeleton';
+import { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
-import { focusCss, getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { Trans, t } from 'app/core/internationalization';
+
+import { FolderPickerSkeleton } from './Skeleton';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading: boolean;
@@ -27,6 +29,10 @@ function Trigger(
     }
   };
 
+  if (isLoading) {
+    return <FolderPickerSkeleton />;
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.inputWrapper}>
@@ -42,9 +48,7 @@ function Trigger(
           {...rest}
           ref={ref}
         >
-          {isLoading ? (
-            <Skeleton width={100} />
-          ) : label ? (
+          {label ? (
             <Text truncate>{label}</Text>
           ) : (
             <Text truncate color="secondary">
@@ -111,9 +115,7 @@ const getStyles = (theme: GrafanaTheme2, invalid = false) => {
           boxShadow: 'unset',
         },
 
-        '&:focus-visible': css`
-          ${focusCss(theme)}
-        `,
+        '&:focus-visible': getFocusStyles(theme),
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'nowrap',

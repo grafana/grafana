@@ -1,31 +1,29 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  SceneObjectBase,
+  QueryVariable,
   SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  sceneGraph,
   SceneVariableSet,
-  QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, Tooltip } from '@grafana/ui';
+import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
-import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
-import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
-import { LayoutType } from './ActionTabs/types';
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
+import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
+import { buildRelatedLogsScene } from './RelatedLogs/RelatedLogsScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
+import { getAutoQueriesForMetric } from './autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef, AutoQueryInfo } from './autoQuery/types';
 import { reportExploreMetrics } from './interactions';
 import {
   ActionViewDefinition,
@@ -33,33 +31,35 @@ import {
   getVariablesWithMetricConstant,
   MakeOptional,
   MetricSelectedEvent,
+  RefreshMetricsEvent,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
+const { exploreMetricsRelatedLogs } = config.featureToggles;
+
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
+  nativeHistogram?: boolean;
   actionView?: string;
-  layout: LayoutType;
 
   autoQuery: AutoQueryInfo;
   queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
-    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
+    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric, state.nativeHistogram);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
-      layout: state.layout ?? 'grid',
       ...state,
     });
 
@@ -68,12 +68,22 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   private _onActivate() {
     if (this.state.actionView === undefined) {
-      this.setActionView('overview');
+      this.setActionView('breakdown');
+    }
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      // Push the scopes change event to the tabs
+      // The event is not propagated because the tabs are not part of the scene graph
+      this._subs.add(
+        this.subscribeToEvent(RefreshMetricsEvent, (event) => {
+          this.state.body.state.selectedTab?.publishEvent(event);
+        })
+      );
     }
   }
 
   getUrlState() {
-    return { actionView: this.state.actionView, layout: this.state.layout };
+    return { actionView: this.state.actionView };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -86,13 +96,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
-    }
-
-    if (typeof values.layout === 'string') {
-      const newLayout = values.layout as LayoutType;
-      if (this.state.layout !== newLayout) {
-        this.setState({ layout: newLayout });
-      }
     }
   }
 
@@ -120,8 +123,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
-  { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
-  { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
+  { displayName: 'Breakdown', value: 'breakdown', getScene: buildLabelBreakdownActionScene },
   {
     displayName: 'Related metrics',
     value: 'related',
@@ -129,6 +131,15 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     description: 'Relevant metrics based on current label filters',
   },
 ];
+
+if (exploreMetricsRelatedLogs) {
+  actionViewsDefinitions.push({
+    displayName: 'Related logs',
+    value: 'related_logs',
+    getScene: buildRelatedLogsScene,
+    description: 'Relevant logs based on current label filters and time range',
+  });
+}
 
 export interface MetricActionBarState extends SceneObjectState {}
 
@@ -152,11 +163,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public openExploreLink = async () => {
     reportExploreMetrics('selected_metric_action_clicked', { action: 'open_in_explore' });
     this.getLinkToExplore().then((link) => {
-      // We need to ensure we prefix with the appSubUrl for environments that don't host grafana at the root.
-      const url = `${config.appSubUrl}${link}`;
       // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
       // if we precompute it we have to keep track of a lot of dependencies
-      window.open(url, '_blank');
+      window.open(link, '_blank');
     });
   };
 
@@ -186,7 +195,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               icon="compass"
               tooltip="Open in explore"
               onClick={model.openExploreLink}
-            ></ToolbarButton>
+            />
             <ShareTrailButton trail={trail} />
             <ToolbarButton
               variant={'canvas'}

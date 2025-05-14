@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { withinQueryHistory } from './setup';
+import { withinQueryHistory, withinQueryLibrary } from './setup';
 
 export const assertQueryHistoryExists = async (query: string) => {
   const selector = withinQueryHistory();
@@ -23,10 +23,10 @@ export const assertQueryHistory = async (expectedQueryTexts: string[]) => {
 };
 
 export const assertQueryLibraryTemplateExists = async (datasource: string, description: string) => {
-  const selector = withinQueryHistory();
+  const selector = withinQueryLibrary();
   await waitFor(() => {
-    const cell = selector.getByRole('cell', {
-      name: new RegExp(`query template for ${datasource.toLowerCase()}: ${description.toLowerCase()}`, 'i'),
+    const cell = selector.getByRole('radio', {
+      name: description,
     });
 
     expect(cell).toBeInTheDocument();
@@ -65,7 +65,7 @@ export const assertQueryHistoryComment = async (expectedQueryComments: string[])
 };
 
 export const assertQueryHistoryTabIsSelected = (tabName: 'Query history' | 'Starred' | 'Settings') => {
-  expect(withinQueryHistory().getByRole('tab', { name: `Tab ${tabName}`, selected: true })).toBeInTheDocument();
+  expect(withinQueryHistory().getByRole('tab', { name: tabName, selected: true })).toBeInTheDocument();
 };
 
 export const assertDataSourceFilterVisibility = (visible: boolean) => {

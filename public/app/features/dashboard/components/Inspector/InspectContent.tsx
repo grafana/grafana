@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import {
   CoreApp,
@@ -23,7 +23,8 @@ import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 interface Props {
   dashboard: DashboardModel;
@@ -93,7 +94,7 @@ export const InspectContent = ({
     >
       {activeTab === InspectTab.Data && (
         <InspectDataTab
-          dataName={panel.getDisplayTitle()}
+          dataName={panelTitle}
           panelPluginId={panel.type}
           fieldConfig={panel.fieldConfig}
           hasTransformations={Boolean(panel.transformations?.length)}

@@ -38,6 +38,16 @@ const (
 	ErrorTypeServerPanic        ErrorType = "server_panic"
 )
 
+// ErrorSource defines model for TestDataQuery.ErrorSource.
+// +enum
+type ErrorSource string
+
+// Defines values for ErrorSource.
+const (
+	ErrorSourcePlugin     ErrorSource = "plugin"
+	ErrorSourceDownstream ErrorSource = "downstream"
+)
+
 // TestDataQueryType defines model for TestDataQueryType.
 // +enum
 type TestDataQueryType string
@@ -50,6 +60,7 @@ const (
 	TestDataQueryTypeCsvFile                      TestDataQueryType = "csv_file"
 	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
+	TestDataQueryTypeErrorWithSource              TestDataQueryType = "error_with_source"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
 	TestDataQueryTypeGrafanaApi                   TestDataQueryType = "grafana_api"
@@ -92,21 +103,22 @@ type TestDataQuery struct {
 	Channel string `json:"channel,omitempty"`
 
 	// Drop percentage (the chance we will lose a point 0-100)
-	DropPercent     float64   `json:"dropPercent,omitempty"`
-	ErrorType       ErrorType `json:"errorType,omitempty"`
-	FlamegraphDiff  bool      `json:"flamegraphDiff,omitempty"`
-	LevelColumn     bool      `json:"levelColumn,omitempty"`
-	StartValue      float64   `json:"startValue,omitempty"`
-	Spread          float64   `json:"spread,omitempty"`
-	Noise           float64   `json:"noise,omitempty"`
-	Min             *float64  `json:"min,omitempty"`
-	Max             *float64  `json:"max,omitempty"`
-	WithNil         bool      `json:"withNil,omitempty"`
-	Lines           int64     `json:"lines,omitempty"`
-	Points          [][]any   `json:"points,omitempty"`
-	RawFrameContent string    `json:"rawFrameContent,omitempty"`
-	SeriesCount     int       `json:"seriesCount,omitempty"`
-	SpanCount       int       `json:"spanCount,omitempty"`
+	DropPercent     float64     `json:"dropPercent,omitempty"`
+	ErrorType       ErrorType   `json:"errorType,omitempty"`
+	FlamegraphDiff  bool        `json:"flamegraphDiff,omitempty"`
+	LevelColumn     bool        `json:"levelColumn,omitempty"`
+	StartValue      float64     `json:"startValue,omitempty"`
+	Spread          float64     `json:"spread,omitempty"`
+	Noise           float64     `json:"noise,omitempty"`
+	Min             *float64    `json:"min,omitempty"`
+	Max             *float64    `json:"max,omitempty"`
+	WithNil         bool        `json:"withNil,omitempty"`
+	Lines           int64       `json:"lines,omitempty"`
+	Points          [][]any     `json:"points,omitempty"`
+	RawFrameContent string      `json:"rawFrameContent,omitempty"`
+	SeriesCount     int         `json:"seriesCount,omitempty"`
+	SpanCount       int         `json:"spanCount,omitempty"`
+	ErrorSource     ErrorSource `json:"errorSource,omitempty"`
 
 	Nodes     *NodesQuery      `json:"nodes,omitempty"`
 	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -25,15 +25,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		}
 
 		t.Run("tracing headers are not set for query data", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})
@@ -43,15 +43,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		})
 
 		t.Run("tracing headers are not set for health check", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})
@@ -69,15 +69,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		}
 
 		t.Run("tracing headers are not set for query data", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})
@@ -87,15 +87,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		})
 
 		t.Run("tracing headers are not set for health check", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})
@@ -120,15 +120,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		}
 
 		t.Run("tracing headers are set for query data", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})
@@ -144,15 +144,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 		})
 
 		t.Run("tracing headers are set for health check", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewTracingHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
 			)
 
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 			})

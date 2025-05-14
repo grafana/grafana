@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<LivePanelOptions>(LivePanel).setPanelOptio
   builder
     .addRadio({
       path: 'display',
-      name: 'Show Message',
+      name: 'Show message',
       description: 'Display the last message received on this channel',
       settings: {
         options: [

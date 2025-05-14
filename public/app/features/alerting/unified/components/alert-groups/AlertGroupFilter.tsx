@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getFiltersFromUrlParams } from '../../utils/misc';
 
@@ -29,6 +29,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       groupBy: null,
       queryString: null,
       alertState: null,
+      contactPoint: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };

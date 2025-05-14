@@ -1,12 +1,9 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
-
-import { ConfirmButton } from '@grafana/ui';
 
 import { Button } from '../Button';
 
-import { Props } from './ConfirmButton';
+import { ConfirmButton, Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';
 import { DeleteButton } from './DeleteButton';
 

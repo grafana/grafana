@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
@@ -42,7 +42,7 @@ export const defaultStyleConfig: ButtonStyleConfig = {
 const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
   const styles = useStyles2(getStyles, data);
 
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const updateLoadingStateCallback = (loading: boolean) => {
     setIsLoading(loading);

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Spinner } from '@grafana/ui';
 
@@ -20,7 +19,7 @@ export const LoadingIndicator = ({ adjective = 'newer' }: Props) => {
   );
 };
 
-const loadingIndicatorStyles = css`
-  display: flex;
-  justify-content: center;
-`;
+const loadingIndicatorStyles = css({
+  display: 'flex',
+  justifyContent: 'center',
+});

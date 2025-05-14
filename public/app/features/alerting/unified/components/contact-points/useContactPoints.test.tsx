@@ -1,85 +1,102 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { ReactNode } from 'react';
+import { getWrapper } from 'test/test-utils';
 
-import alertmanagerMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import { config } from '@grafana/runtime';
+import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
+import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types';
 
-import { ONCALL_INTEGRATION_V2_FEATURE } from '../../api/onCallApi';
-import { mockApi, setupMswServer } from '../../mockApi';
-import { grantUserPermissions, onCallPluginMetaMock } from '../../mocks';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
 
-import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import { useContactPointsWithStatus } from './useContactPoints';
 
-const server = setupMswServer();
+const wrapper = ({ children }: { children: ReactNode }) => {
+  const ProviderWrapper = getWrapper({ renderWithRouter: true });
+  return <ProviderWrapper>{children}</ProviderWrapper>;
+};
+
+setupMswServer();
+
+const getHookResponse = async (featureToggleEnabled: boolean) => {
+  config.featureToggles.alertingApiServer = featureToggleEnabled;
+  const { result } = renderHook(
+    () =>
+      useContactPointsWithStatus({
+        alertmanager: GRAFANA_RULES_SOURCE_NAME,
+        fetchPolicies: true,
+        fetchStatuses: true,
+      }),
+    {
+      wrapper,
+    }
+  );
+
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  // Only return some properties, as we don't want to compare all
+  // RTK query properties in snapshots/comparison between k8s and non-k8s implementations
+  // (would include properties like requestId, fulfilled, etc.)
+  const { contactPoints, error, isLoading } = result.current;
+
+  return { contactPoints, error, isLoading };
+};
 
 describe('useContactPoints', () => {
   beforeEach(() => {
-    setupGrafanaManagedServer(server);
-  });
-
-  beforeAll(() => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
-  });
-
-  it('should return contact points with status', async () => {
-    mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-    mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-    mockApi(server).oncall.getOnCallIntegrations([
+    setOnCallIntegrations([
       {
         display_name: 'grafana-integration',
         value: 'ABC123',
         integration_url: 'https://oncall-endpoint.example.com',
       },
     ]);
-    mockApi(server).getContactPointsList(receivers);
-    const { result } = renderHook(() => useContactPointsWithStatus(), {
-      wrapper: ({ children }) => (
-        <TestProvider>
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={'grafana'}>
-            {children}
-          </AlertmanagerProvider>
-        </TestProvider>
-      ),
+  });
+
+  it('should return contact points with status', async () => {
+    disablePlugin(SupportedPlugin.OnCall);
+    const snapshot = await getHookResponse(false);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  it('returns ~matching responses with and without alertingApiServer', async () => {
+    // Compare the responses between the two implementations, but do not consider:
+    // - ID: k8s API will return id properties, but the AM config will fall back to the name of the contact point.
+    //       These will be different, so we don't want to compare them
+    // - Metadata: k8s API includes metadata, AM config does not
+
+    const snapshotAmConfig = await getHookResponse(false);
+    const snapshotAlertingApiServer = await getHookResponse(true);
+
+    const amContactPoints = snapshotAmConfig.contactPoints.map((receiver) => {
+      const { id, ...rest } = receiver;
+      return rest;
     });
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current).toMatchSnapshot();
+
+    const k8sContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
+      const { id, metadata, ...rest } = receiver;
+      return rest;
+    });
+
+    expect({
+      ...snapshotAmConfig,
+      contactPoints: amContactPoints,
+    }).toEqual({
+      ...snapshotAlertingApiServer,
+      contactPoints: k8sContactPoints,
     });
   });
+
   describe('when having oncall plugin installed and no alert manager config data', () => {
     it('should return contact points with oncall metadata', async () => {
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-      mockApi(server).oncall.getOnCallIntegrations([
-        {
-          display_name: 'grafana-integration',
-          value: 'ABC123',
-          integration_url: 'https://oncall-endpoint.example.com',
-        },
-      ]);
-      mockApi(server).getContactPointsList(receivers);
-      const { result } = renderHook(
-        () => useContactPointsWithStatus({ includePoliciesCount: false, receiverStatusPollingInterval: 0 }),
-        {
-          wrapper: ({ children }) => (
-            <TestProvider>
-              <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={'grafana'}>
-                {children}
-              </AlertmanagerProvider>
-            </TestProvider>
-          ),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current).toMatchSnapshot();
-      });
+      const snapshot = await getHookResponse(false);
+      expect(snapshot).toMatchSnapshot();
     });
   });
 });
-
-const receivers = JSON.parse(JSON.stringify(alertmanagerMock)).alertmanager_config.receivers;

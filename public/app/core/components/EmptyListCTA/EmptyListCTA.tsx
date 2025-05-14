@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import { Alert, Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   title: string;
@@ -48,7 +49,7 @@ const EmptyListCTA = ({
         {proTip ? (
           <span key="proTipFooter">
             <Icon name="rocket" />
-            <> ProTip: {proTip} </>
+            <Trans i18nKey="empty-list-cta.pro-tip">ProTip: {{ proTip }}</Trans>
             {proTipLink && (
               <a href={proTipLink} target={proTipTarget} className="text-link">
                 {proTipLinkTitle}
@@ -59,10 +60,9 @@ const EmptyListCTA = ({
           ''
         )}
         {infoBox ? (
-          <div key="infoBoxHtml" className={`grafana-info-box ${infoBoxStyles}`}>
-            {infoBoxTitle && <h5>{infoBoxTitle}</h5>}
+          <Alert severity="info" title={infoBoxTitle ?? ''} className={infoBoxStyles}>
             <div dangerouslySetInnerHTML={infoBox} />
-          </div>
+          </Alert>
         ) : (
           ''
         )}

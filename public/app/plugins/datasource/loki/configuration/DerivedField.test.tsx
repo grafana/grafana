@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,6 +13,7 @@ const validateMock = jest.fn();
 describe('DerivedField', () => {
   beforeEach(() => {
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get: jest.fn(),
       reload: jest.fn(),
       getInstanceSettings: jest.fn(),

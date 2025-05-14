@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { QueryEditorHelpProps } from '@grafana/data';
 
@@ -27,9 +27,9 @@ export default class CloudMonitoringCheatSheet extends PureComponent<
           <span>Patterns:</span>
           <br />
           <ul
-            className={css`
-              list-style: none;
-            `}
+            className={css({
+              listStyle: 'none',
+            })}
           >
             <li>
               <code>{`${'{{metric.type}}'}`}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time

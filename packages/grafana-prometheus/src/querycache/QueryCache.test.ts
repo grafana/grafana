@@ -6,8 +6,12 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { DatasourceProfileData, QueryCache } from './QueryCache';
-import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
+import { CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
+import {
+  differentDisplayNameFromDS,
+  trimmedFirstPointInPromFrames,
+  IncrementalStorageDataFrameScenarios,
+} from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
@@ -57,14 +61,6 @@ const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQu
   return {
     ...defaultRequest,
     ...request,
-  };
-};
-
-const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): DatasourceProfileData => {
-  return {
-    expr: targ.expr,
-    interval: targ.interval ?? request.interval,
-    datasource: 'prom',
   };
 };
 
@@ -132,7 +128,7 @@ describe('QueryCache: Generic', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       firstFrames
@@ -156,7 +152,7 @@ describe('QueryCache: Generic', function () {
       secondRequest,
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -192,7 +188,6 @@ describe('QueryCache: Prometheus', function () {
       const storage = new QueryCache<PromQuery>({
         getTargetSignature: getPrometheusTargetSignature,
         overlapString: '10m',
-        profileFunction: getPromProfileData,
       });
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
@@ -250,7 +245,7 @@ describe('QueryCache: Prometheus', function () {
         request,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         firstFrames
@@ -274,7 +269,7 @@ describe('QueryCache: Prometheus', function () {
         secondRequest,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         secondFrames
@@ -328,7 +323,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
 
     // Initial request with all data for time range
@@ -397,9 +391,9 @@ describe('QueryCache: Prometheus', function () {
       panelId: panelId,
     });
 
-    const requestInfo = {
+    const requestInfo: CacheRequestInfo<PromQuery> = {
       requests: [], // unused
-      targSigs: cache,
+      targetSignatures: cache,
       shouldCache: true,
     };
     const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
@@ -417,7 +411,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -425,10 +419,10 @@ describe('QueryCache: Prometheus', function () {
 
     const secondMergedLength = secondQueryResult[0].fields[0].values.length;
 
-    // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first two, so we should get the same length
-    expect(firstMergedLength).toEqual(secondMergedLength);
-    expect(firstQueryResult[0].fields[0].values[2]).toEqual(secondQueryResult[0].fields[0].values[0]);
-    expect(firstQueryResult[0].fields[0].values[0] + 30000).toEqual(secondQueryResult[0].fields[0].values[0]);
+    // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first one so we keep one datapoint before the new from so the first datapoint in view connects to the y-axis
+    expect(firstMergedLength + 1).toEqual(secondMergedLength);
+    expect(firstQueryResult[0].fields[0].values[1]).toEqual(secondQueryResult[0].fields[0].values[0]);
+    expect(firstQueryResult[0].fields[0].values[0] + 30000).toEqual(secondQueryResult[0].fields[0].values[1]);
 
     cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
 
@@ -440,7 +434,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       thirdFrames
@@ -448,7 +442,9 @@ describe('QueryCache: Prometheus', function () {
 
     const cachedAfterThird = storage.cache.get(targetIdentity);
     const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.length;
-    expect(storageLengthAfterThirdQuery).toEqual(20);
+
+    // Should have the 20 data points in the viz, plus one extra
+    expect(storageLengthAfterThirdQuery).toEqual(21);
   });
 
   it('Will build signature using target overrides', () => {
@@ -489,7 +485,6 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
@@ -501,11 +496,60 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+
+  it('should not modify the initial request', () => {
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+    });
+
+    const firstFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
+    // There are 6 values
+    expect(firstFrames[0].fields[1].values.length).toBe(6);
+    const expectedValueLength = firstFrames[0].fields[1].values.length;
+
+    const cache = new Map<string, string>();
+    const interval = 15000;
+    // start time of scenario
+    const firstFrom = dateTime(new Date(1726835104488));
+    const firstTo = dateTime(new Date(1726836004488));
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-15m',
+        to: 'now',
+      },
+    };
+    // Signifier definition
+    const dashboardId = `dashid`;
+    const panelId = 200;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+    const request = mockPromRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+    });
+
+    // we set a bigger interval than query interval
+    request.targets[0].interval = '1m';
+    const requestInfo: CacheRequestInfo<PromQuery> = {
+      requests: [], // unused
+      targetSignatures: cache,
+      shouldCache: true,
+    };
+    const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
+    cache.set(targetIdentity, targetSignature);
+
+    const firstQueryResult = storage.procFrames(request, requestInfo, firstFrames);
+
+    expect(firstQueryResult[0].fields[1].values.length).toBe(expectedValueLength);
   });
 
   it('Should modify request', () => {
@@ -513,10 +557,101 @@ describe('QueryCache: Prometheus', function () {
     const storage = new QueryCache<PromQuery>({
       getTargetSignature: getPrometheusTargetSignature,
       overlapString: '10m',
-      profileFunction: getPromProfileData,
     });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+
+  it('should always use the newest config information', () => {
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+    });
+
+    // Initial request with custom legend info {{org}}-customLegend
+    const firstFrames = differentDisplayNameFromDS.first.dataFrames as unknown as DataFrame[];
+
+    // Second request with legend __auto which results having no displayNameFromDS
+    const secondFrames = differentDisplayNameFromDS.second.dataFrames as unknown as DataFrame[];
+
+    const cache = new Map<string, string>();
+    const interval = 15000;
+
+    // start time of scenario
+    const firstFrom = dateTime(new Date(1726829205000));
+    const firstTo = dateTime(new Date(1726829832515));
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    };
+
+    const secondFrom = dateTime(new Date(1726829220000));
+    const secondTo = dateTime(new Date(1726829903931));
+    const secondRange: TimeRange = {
+      from: secondFrom,
+      to: secondTo,
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    };
+
+    // Signifier definition
+    const dashboardId = `dashid`;
+    const panelId = 200;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+    const request = mockPromRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+      app: 'first_app',
+    });
+
+    const requestInfo: CacheRequestInfo<PromQuery> = {
+      requests: [], // unused
+      targetSignatures: cache,
+      shouldCache: true,
+    };
+    const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
+    cache.set(targetIdentity, targetSignature);
+
+    const firstQueryResult = storage.procFrames(request, requestInfo, firstFrames);
+
+    expect(firstQueryResult[0].fields[1].config.displayNameFromDS).toBeDefined();
+    expect(firstQueryResult[0].fields[1].config.displayNameFromDS).toEqual('rutgerkerkhoffdevuseast-customLegend');
+
+    const secondQueryResult = storage.procFrames(
+      mockPromRequest({
+        range: secondRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+        app: 'second_app',
+      }),
+      {
+        requests: [], // unused
+        targetSignatures: cache,
+        shouldCache: true,
+      },
+      secondFrames
+    );
+
+    expect(secondQueryResult[0].fields[1].config.displayNameFromDS).not.toBeDefined();
+  });
+});
+
+describe('findDataPointStep', () => {
+  it('should interpolate custom interval', () => {
+    const mockApplyInterpolation = jest.fn().mockImplementation(() => '1m');
+    const req = mockPromRequest();
+    req.targets[0].interval = '$interval';
+    const respFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
+    findDatapointStep(req, respFrames, mockApplyInterpolation);
+    expect(mockApplyInterpolation).toBeCalledTimes(1);
   });
 });

@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -26,13 +27,14 @@ const (
 
 // Dashboard model
 type Dashboard struct {
-	ID       int64  `xorm:"pk autoincr 'id'"`
-	UID      string `xorm:"uid"`
-	Slug     string
-	OrgID    int64 `xorm:"org_id"`
-	GnetID   int64 `xorm:"gnet_id"`
-	Version  int
-	PluginID string `xorm:"plugin_id"`
+	ID         int64  `xorm:"pk autoincr 'id'"`
+	UID        string `xorm:"uid"`
+	Slug       string
+	OrgID      int64 `xorm:"org_id"`
+	GnetID     int64 `xorm:"gnet_id"`
+	Version    int
+	PluginID   string `xorm:"plugin_id"`
+	APIVersion string `xorm:"api_version"`
 
 	Created time.Time
 	Updated time.Time
@@ -138,6 +140,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	dash.APIVersion = cmd.APIVersion
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
@@ -202,6 +205,8 @@ type SaveDashboardCommand struct {
 	OrgID        int64            `json:"-" xorm:"org_id"`
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
+	APIVersion   string           `json:"-" xorm:"api_version"`
+
 	// Deprecated: use FolderUID instead
 	FolderID  int64  `json:"folderId" xorm:"folder_id"`
 	FolderUID string `json:"folderUid" xorm:"folder_uid"`
@@ -252,13 +257,16 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID    int64
-	UID   string
+	ID  int64
+	UID string
+	// Deprecated: this is no-longer a unique constraint and should not be used
 	Title *string
 	// Deprecated: use FolderUID instead
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+
+	IncludeDeleted bool // only supported when using unified storage
 }
 
 type DashboardTagCloudItem struct {
@@ -302,6 +310,7 @@ type SaveDashboardDTO struct {
 type DashboardSearchProjection struct {
 	ID       int64  `xorm:"id"`
 	UID      string `xorm:"uid"`
+	OrgID    int64  `xorm:"org_id"`
 	Title    string
 	Slug     string
 	Term     string
@@ -312,6 +321,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Tags        []string
 	Deleted     *time.Time
 }
 
@@ -355,6 +365,11 @@ type DeleteDashboardsInFolderRequest struct {
 	OrgID      int64
 }
 
+type GetAllDashboardsInFolderRequest struct {
+	FolderUIDs []string
+	OrgID      int64
+}
+
 //
 // DASHBOARD ACL
 //
@@ -387,10 +402,12 @@ type DashboardACLInfoDTO struct {
 	Updated time.Time `json:"updated"`
 
 	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserUID        string                         `json:"userUid"`
 	UserLogin      string                         `json:"userLogin"`
 	UserEmail      string                         `json:"userEmail"`
 	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
 	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamUID        string                         `json:"teamUid"`
 	TeamEmail      string                         `json:"teamEmail"`
 	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
 	Team           string                         `json:"team"`
@@ -422,5 +439,14 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
+	ManagedBy            utils.ManagerKind
+	ManagerIdentity      string
+	SourcePath           string
+	ManagerIdentityNotIn []string
+
 	Filters []any
+
+	// Skip access control checks. This field is used by OpenFGA search implementation.
+	// Should not be used anywhere else.
+	SkipAccessControlFilter bool
 }

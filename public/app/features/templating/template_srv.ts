@@ -51,7 +51,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   private regex = variableRegex;
   private index: any = {};
   private grafanaVariables = new Map<string, any>();
-  private timeRange?: TimeRange | null = null;
+  private _timeRange?: TimeRange | null = null;
   private _adhocFiltersDeprecationWarningLogged = new Map<string, boolean>();
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
@@ -60,7 +60,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   init(variables: any, timeRange?: TimeRange) {
     this._variables = variables;
-    this.timeRange = timeRange;
+    this._timeRange = timeRange;
     this.updateIndex();
   }
 
@@ -81,6 +81,16 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return this.dependencies.getVariables();
+  }
+
+  get timeRange(): TimeRange | null | undefined {
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      const sceneTimeRange = sceneGraph.getTimeRange(window.__grafanaSceneContext);
+
+      return sceneTimeRange.state.value;
+    }
+
+    return this._timeRange;
   }
 
   updateIndex() {
@@ -110,7 +120,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   updateTimeRange(timeRange: TimeRange) {
-    this.timeRange = timeRange;
+    this._timeRange = timeRange;
     this.updateIndex();
   }
 

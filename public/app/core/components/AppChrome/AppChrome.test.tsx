@@ -1,14 +1,15 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
 import { Page } from '../Page/Page';
 
@@ -16,7 +17,7 @@ import { AppChrome } from './AppChrome';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const searchData: DataFrame = {
@@ -95,7 +96,7 @@ describe('AppChrome', () => {
     const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('link', { name: 'Go to home' })).toHaveFocus();
+    expect(await screen.findByRole('button', { name: 'Open menu' })).toHaveFocus();
   });
 
   it('should not render a skip link if the page is chromeless', async () => {

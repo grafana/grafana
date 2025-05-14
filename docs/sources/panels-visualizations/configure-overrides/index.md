@@ -121,14 +121,26 @@ After you've set them, your overrides appear in both the **All** and **Overrides
 
 You can configure field overrides for the following visualizations:
 
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Heatmap](ref:heatmap)               | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | [XY chart](ref:xy-chart)             |
-| [Geomap](ref:geomap)           |                                      |                                      |
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Heatmap](ref:heatmap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
 
 ## Override rules
 
@@ -244,7 +256,8 @@ To add a field override, follow these steps:
 1. Select the field option that you want to apply.
 1. Continue to add overrides to this field by clicking **Add override property**.
 1. Add as many overrides as you need.
-1. When you're finished, click **Save** to save all panel edits to the dashboard.
+1. When you're finished, click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Edit a field override
 
@@ -259,5 +272,7 @@ To edit a field override, follow these steps:
    - Edit settings on existing overrides or field selection parameters.
    - Delete existing override properties by clicking the **X** next to the property.
    - Delete an override entirely by clicking the trash icon at the top-right corner.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 The changes you make take effect immediately.

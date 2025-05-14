@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
@@ -7,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
@@ -26,6 +27,7 @@ const saveDashboard = async (
     folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
     message: options.message,
     overwrite: options.overwrite,
+    k8s: dashboard.meta.k8s,
   });
 
   if ('error' in query) {
@@ -45,6 +47,8 @@ export const useDashboardSave = (isCopy = false) => {
         const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
 
+        // Altering the clone leads to an error due to the clone being immutable
+        clone = cloneDeep(clone);
         clone.version = result.version;
         dashboard.clearUnsavedChanges(clone, options);
 
@@ -70,7 +74,7 @@ export const useDashboardSave = (isCopy = false) => {
         const currentPath = locationService.getLocation().pathname;
         const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
-        if (newUrl !== currentPath) {
+        if (newUrl !== currentPath && result.url) {
           setTimeout(() => locationService.replace(newUrl));
         }
         if (dashboard.meta.isStarred) {

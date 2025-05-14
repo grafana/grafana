@@ -12,6 +12,13 @@ export function usePluginInteractionReporter(): typeof reportInteraction {
   const context = usePluginContext();
 
   return useMemo(() => {
+    // Happens when the hook is not used inside a plugin (e.g. in core Grafana)
+    if (!context) {
+      throw new Error(
+        `No PluginContext found. The usePluginInteractionReporter() hook can only be used from a plugin.`
+      );
+    }
+
     const info = isDataSourcePluginContext(context)
       ? createDataSourcePluginEventProperties(context.instanceSettings)
       : createPluginEventProperties(context.meta);

@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import React, { PureComponent } from 'react';
+import { createElement, PureComponent } from 'react';
 
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
@@ -77,7 +77,7 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
     return (
       <div ref={(element) => (this.element = element)}>
         {plugin.components.ConfigEditor &&
-          React.createElement(plugin.components.ConfigEditor, {
+          createElement(plugin.components.ConfigEditor, {
             options: dataSource,
             onOptionsChange: this.onModelChanged,
           })}

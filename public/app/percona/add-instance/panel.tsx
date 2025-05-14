@@ -1,8 +1,9 @@
 /* eslint-disable react/display-name,@typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import React, { MouseEventHandler, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { MouseEventHandler, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
@@ -42,13 +43,12 @@ const availableInstanceTypes: AvailableTypes[] = [
 const AddInstancePanel = () => {
   const { result: settings } = useSelector(getPerconaSettings);
   const { azureDiscoverEnabled } = settings!;
-  const { instanceType = '' } = useParams<AddInstanceRouteParams>();
+  const { instanceType = '' } = useParams() as AddInstanceRouteParams;
   const [selectedInstance, selectInstance] = useState<InstanceAvailable>({
     type: availableInstanceTypes.includes(instanceType as AvailableTypes) ? instanceType : '',
   });
   const [showSelection, setShowSelection] = useState(!instanceType);
   const [submitting, setSubmitting] = useState(false);
-  const history = useHistory();
   const styles = useStyles2(getStyles);
 
   const handleSubmit = async (submitPromise: Promise<void>) => {
@@ -86,16 +86,16 @@ const AddInstancePanel = () => {
 
   const handleCancel: MouseEventHandler = (e) => {
     if (showSelection) {
-      history.push('/inventory/services');
+      locationService.push('/inventory/services');
     } else {
-      history.push('/add-instance');
+      locationService.push('/add-instance');
     }
     selectInstance({ type: '' });
     setShowSelection(true);
   };
 
   const handleSelectInstance = (instance: InstanceAvailable) => {
-    history.push('/add-instance/' + instance.type);
+    locationService.push('/add-instance/' + instance.type);
     selectInstance(instance);
     setShowSelection(false);
   };
@@ -122,7 +122,7 @@ const AddInstancePanel = () => {
     >
       <PageToolbar
         title={showSelection ? Messages.pageTitleSelection : Messages.pageTitleConfiguration}
-        onGoBack={history.goBack}
+        onGoBack={() => locationService.getHistory().goBack()}
       >
         <ToolbarButton onClick={handleCancel} variant="canvas">
           {showSelection ? Messages.selectionStep.cancel : Messages.configurationStep.cancel}

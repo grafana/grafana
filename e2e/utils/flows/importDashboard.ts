@@ -49,9 +49,12 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
     dashboardToImport.panels.forEach((panel) => {
       // Look at the json data
       e2e.components.Panels.Panel.menu(panel.title).click({ force: true }); // force click because menu is hidden and show on hover
-      e2e.components.Panels.Panel.menuItems('Inspect').should('be.visible').click();
+      e2e.components.Panels.Panel.menuItems('Inspect').trigger('mouseover', { force: true });
+      e2e.components.Panels.Panel.menuItems('Data').click({ force: true });
       e2e.components.Tab.title('JSON').should('be.visible').click();
-      e2e.components.PanelInspector.Json.content().should('be.visible').contains('Panel JSON').click({ force: true });
+      e2e.components.PanelInspector.Json.content().should('be.visible');
+      e2e.components.ReactMonacoEditor.editorLazy().should('be.visible');
+      cy.contains('Panel JSON').click({ force: true });
       e2e.components.Select.option().should('be.visible').contains('Panel data').click();
 
       // ensures that panel has loaded without knowingly hitting an error

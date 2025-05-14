@@ -1,30 +1,36 @@
-import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
+import { Changelog } from '../components/Changelog';
+import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
+import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
+import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
+  info: PageInfoItem[];
   queryParams: UrlQueryMap;
   pageId: string;
+  showDetails: boolean;
 };
 
 type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
-export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
+export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
-
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -44,7 +50,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
-        className={cx(styles.readme, styles.container)}
+        className={styles.readme}
         dangerouslySetInnerHTML={{
           __html: plugin.details?.readme ?? 'No plugin help or readme markdown file was found',
         }}
@@ -54,16 +60,45 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.VERSIONS) {
     return (
-      <div className={styles.container}>
-        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
+      <div>
+        <VersionList
+          pluginId={plugin.id}
+          versions={plugin.details?.versions}
+          installedVersion={plugin.installedVersion}
+          disableInstallation={shouldDisablePluginInstall(plugin)}
+        />
       </div>
     );
   }
 
+  if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
+    return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
+  }
+
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
     return (
-      <div className={styles.container}>
+      <div>
         <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
+      </div>
+    );
+  }
+
+  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
+    return (
+      <div>
+        <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
+      </div>
+    );
+  }
+
+  if (
+    config.featureToggles.datasourceConnectionsTab &&
+    pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
+    plugin.type === PluginType.datasource
+  ) {
+    return (
+      <div>
+        <Connections plugin={plugin} />
       </div>
     );
   }
@@ -97,7 +132,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     for (const configPage of pluginConfig.configPages) {
       if (pageId === configPage.id) {
         return (
-          <div className={styles.container}>
+          <div>
             <PluginContextProvider meta={pluginConfig.meta}>
               <configPage.body plugin={pluginConfig} query={queryParams} />
             </PluginContextProvider>
@@ -109,7 +144,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.USAGE && pluginConfig) {
     return (
-      <div className={styles.container}>
+      <div className={styles.wrap}>
         <PluginUsage plugin={pluginConfig?.meta} />
       </div>
     );
@@ -117,22 +152,23 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.DASHBOARDS && pluginConfig) {
     return (
-      <div className={styles.container}>
+      <div>
         <PluginDashboards plugin={pluginConfig?.meta} />
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
+    <div>
       <p>Page not found.</p>
     </div>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    height: '100%',
+  wrap: css({
+    width: '100%',
+    height: '50vh',
   }),
   readme: css({
     '& img': {
@@ -149,6 +185,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       marginLeft: theme.spacing(2),
       '& > p': {
         margin: theme.spacing(1, 0),
+      },
+      code: {
+        whiteSpace: 'pre-wrap',
       },
     },
     a: {

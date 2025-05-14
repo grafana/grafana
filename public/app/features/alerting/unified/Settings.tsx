@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -8,8 +6,9 @@ import { useEditConfigurationDrawer } from './components/settings/ConfigurationD
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-export default function SettingsPage() {
+function SettingsPage() {
   return (
     <SettingsProvider>
       <SettingsContent />
@@ -49,3 +48,5 @@ function SettingsContent() {
     </AlertingPageWrapper>
   );
 }
+
+export default withPageErrorBoundary(SettingsPage);

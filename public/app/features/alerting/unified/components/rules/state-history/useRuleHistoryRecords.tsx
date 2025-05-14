@@ -3,19 +3,20 @@ import { useMemo } from 'react';
 
 import {
   DataFrame,
-  DataFrameJSON,
   Field as DataFrameField,
+  DataFrameJSON,
   FieldType,
-  getDisplayProcessor,
   GrafanaTheme2,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 
-import { extractCommonLabels, Line, LogRecord, omitLabels } from './common';
+import { Line, LogRecord, extractCommonLabels, omitLabels } from './common';
 
 export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   const theme = useTheme2();
@@ -50,7 +51,7 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: str
 
     const commonLabels = extractCommonLabels(groupLabelsArray);
 
-    const filterMatchers = filter ? parseMatchers(filter) : [];
+    const filterMatchers = filter ? parsePromQLStyleMatcherLooseSafe(filter) : [];
     const filteredGroupedLines = Object.entries(logRecordsByInstance).filter(([key]) => {
       const labels = JSON.parse(key);
       return labelsMatchMatchers(labels, filterMatchers);
@@ -108,7 +109,7 @@ export function logRecordsToDataFrame(
         values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
       },
       {
-        name: 'state',
+        name: 'State',
         type: FieldType.string,
         values: stateValues.map((_, i) => stateValues[timeIndex[i]]),
         config: {

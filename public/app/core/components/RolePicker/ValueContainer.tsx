@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, Icon, IconName, useStyles2, getSelectStyles } from '@grafana/ui';
@@ -27,14 +27,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: cx(
       prefix,
       multiValueContainer,
-      css`
-        position: relative;
-        padding: ${theme.spacing(0.5, 1, 0.5, 1)};
+      css({
+        position: 'relative',
+        padding: theme.spacing(0.5, 1, 0.5, 1),
 
-        svg {
-          margin-right: ${theme.spacing(0.5)};
-        }
-      `
+        svg: {
+          marginRight: theme.spacing(0.5),
+        },
+      })
     ),
   };
 };

@@ -62,8 +62,125 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     {
+      name: 'elasticsearch',
+      testDir: path.join(testDirRoot, '/elasticsearch'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'mysql',
       testDir: path.join(testDirRoot, '/mysql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'mssql',
+      testDir: path.join(testDirRoot, '/mssql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'extensions-test-app',
+      testDir: 'e2e/test-plugins/grafana-extensionstest-app',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'grafana-e2etest-datasource',
+      testDir: 'e2e/test-plugins/grafana-test-datasource',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'cloudwatch',
+      testDir: path.join(testDirRoot, '/cloudwatch'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'azuremonitor',
+      testDir: path.join(testDirRoot, '/azuremonitor'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'cloudmonitoring',
+      testDir: path.join(testDirRoot, '/cloudmonitoring'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'graphite',
+      testDir: path.join(testDirRoot, '/graphite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'influxdb',
+      testDir: path.join(testDirRoot, '/influxdb'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'opentsdb',
+      testDir: path.join(testDirRoot, '/opentsdb'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'jaeger',
+      testDir: path.join(testDirRoot, '/jaeger'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'grafana-postgresql-datasource',
+      testDir: path.join(testDirRoot, '/grafana-postgresql-datasource'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'zipkin',
+      testDir: path.join(testDirRoot, '/zipkin'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',

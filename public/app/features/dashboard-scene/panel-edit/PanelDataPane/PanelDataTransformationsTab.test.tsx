@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import {
   DataTransformerConfig,
@@ -20,7 +19,6 @@ import { DashboardDataDTO } from 'app/types';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
@@ -53,10 +51,9 @@ const mockData = {
 
 describe('PanelDataTransformationsModel', () => {
   it('can change transformations', () => {
-    const vizPanelManager = setupVizPanelManger('panel-1');
-    const model = new PanelDataTransformationsTab(vizPanelManager);
-    model.onChangeTransformations([{ id: 'calculateField', options: {} }]);
-    expect(model.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
+    const { transformsTab } = setupTabScene('panel-1');
+    transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
+    expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
   });
 });
 
@@ -170,15 +167,16 @@ describe('PanelDataTransformationsTab', () => {
   });
 });
 
-const setupVizPanelManger = (panelId: string) => {
+function setupTabScene(panelId: string) {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = VizPanelManager.createFor(panel);
+  const transformsTab = new PanelDataTransformationsTab({ panelRef: panel.getRef() });
+  transformsTab.activate();
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  return vizPanelManager;
-};
+  return { transformsTab };
+}

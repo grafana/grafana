@@ -76,6 +76,7 @@ export const testResponseDataFrameFields = toVectors([
   { name: 'startTime', values: [1605873894680.409, 1605873894680.587] },
   { name: 'duration', values: [1049.141, 1.847] },
   { name: 'logs', values: [[], []] },
+  { name: 'references', values: [[], []] },
   {
     name: 'tags',
     values: [

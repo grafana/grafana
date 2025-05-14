@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { createFieldConfigRegistry, SetFieldConfigOptionsArgs } from '@grafana/data';
 import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
@@ -81,14 +81,14 @@ function isOptionKey(key: string, options: TableSparklineCellOptions): key is Op
 }
 
 const getStyles = () => ({
-  field: css`
-    width: 100%;
+  field: css({
+    width: '100%',
 
     // @TODO don't show "scheme" option for custom gradient mode.
     // it needs thresholds to work, which are not supported
     // for area chart cell right now
-    [title='Use color scheme to define gradient'] {
-      display: none;
-    }
-  `,
+    "[title='Use color scheme to define gradient']": {
+      display: 'none',
+    },
+  }),
 });

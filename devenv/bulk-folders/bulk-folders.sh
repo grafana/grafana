@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "Deleting previous bulk folders"
 find ./bulk-folders -type d -name "Bulk Folder*" -exec rm -rf "{}" \;

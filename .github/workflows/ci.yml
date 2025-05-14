@@ -16,27 +16,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: percona-platform/checkout@v2
+        uses: actions/checkout@v4
+
       - name: Run with Node ${{ matrix.node-version }}
-        uses: percona-platform/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: Get Yarn cache directory
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-
-      - name: Use Yarn cache
-        uses: percona-platform/cache@v2
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Clean Yarn cache
-        run: yarn cache clean
+          cache: 'yarn'
 
       - name: Install dependencies
-        run: YARN_CHECKSUM_BEHAVIOR=update yarn install --immutable
+        run: yarn install --immutable
 
       - name: Run tests 
         run: yarn run ci:test-percona-frontend

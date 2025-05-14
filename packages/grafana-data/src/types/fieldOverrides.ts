@@ -1,22 +1,17 @@
 import { ComponentType } from 'react';
 
-import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
-import { GrafanaTheme2 } from '../themes';
-import {
-  MatcherConfig,
-  FieldConfig,
-  Field,
-  DataFrame,
-  TimeZone,
-  ScopedVars,
-  ValueLinkConfig,
-  LinkModel,
-  DataLink,
-} from '../types';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { StandardEditorContext, StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
+import { GrafanaTheme2 } from '../themes/types';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { ScopedVars } from './ScopedVars';
+import { DataFrame, Field, FieldConfig, ValueLinkConfig } from './dataFrame';
+import { DataLink, LinkModel } from './dataLink';
 import { OptionEditorConfig } from './options';
 import { InterpolateFunction } from './panel';
+import { TimeZone } from './time';
+import { MatcherConfig } from './transformations';
 
 export interface DynamicConfigValue {
   id: string;
@@ -142,12 +137,14 @@ export enum FieldConfigProperty {
   Unit = 'unit',
   Min = 'min',
   Max = 'max',
+  FieldMinMax = 'fieldMinMax',
   Decimals = 'decimals',
   DisplayName = 'displayName',
   NoValue = 'noValue',
   Thresholds = 'thresholds',
   Mappings = 'mappings',
   Links = 'links',
+  Actions = 'actions',
   Color = 'color',
   Filterable = 'filterable',
 }

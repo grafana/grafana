@@ -1,4 +1,6 @@
-import { LegacyAnnotation } from './types';
+import { AnnotationQuery, AnnotationSupport } from '@grafana/data';
+
+import { LegacyAnnotation, OpenTsdbQuery } from './types';
 
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
@@ -13,8 +15,10 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   return annotation;
 };
 
-// eslint-ignore-next-line
-export const prepareAnnotation = (json: any) => {
+export const prepareAnnotation: AnnotationSupport<
+  OpenTsdbQuery,
+  AnnotationQuery<OpenTsdbQuery>
+>['prepareAnnotation'] = (json) => {
   const resultingTarget = json.target && typeof json.target !== 'string' ? json.target : migrateLegacyAnnotation(json);
 
   json.target = resultingTarget;

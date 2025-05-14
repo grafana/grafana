@@ -93,7 +93,7 @@ describe('config from data', () => {
 
     const results = extractConfigFromQuery(options, [config, seriesA]);
     expect(results.length).toBe(1);
-    const thresholdConfig = results[0].fields[1].config.thresholds?.steps[1];
+    const thresholdConfig = results[0].fields[1].config.thresholds?.steps[0];
     expect(thresholdConfig).toBeDefined();
     expect(thresholdConfig?.color).toBe('orange');
     expect(thresholdConfig?.value).toBe(50);

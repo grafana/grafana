@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// ErrInvalidApiKey @PERCONA
 var ErrInvalidApiKey = errors.New("invalid Service Token/API key")
 
 type KeyGenResult struct {

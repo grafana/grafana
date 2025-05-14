@@ -1,19 +1,19 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
-import { Stack, Text } from '@grafana/ui';
+import { Box, Text } from '@grafana/ui';
 
 interface MigrationInfoProps {
   title: NonNullable<ReactNode>;
-  value: NonNullable<ReactNode>;
+  children: NonNullable<ReactNode>;
 }
 
-export function MigrationInfo({ title, value }: MigrationInfoProps) {
+export function MigrationInfo({ title, children }: MigrationInfoProps) {
   return (
-    <Stack direction="column">
+    <Box minWidth={{ xs: 0, xxl: 16 }} display="flex" direction="column">
       <Text variant="bodySmall" color="secondary">
         {title}
       </Text>
-      <Text variant="h4">{value}</Text>
-    </Stack>
+      <Text variant="h4">{children}</Text>
+    </Box>
   );
 }

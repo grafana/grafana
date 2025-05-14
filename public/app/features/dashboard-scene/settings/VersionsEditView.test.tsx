@@ -1,4 +1,4 @@
-import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -112,44 +112,47 @@ describe('VersionsEditView', () => {
 });
 
 function getVersions() {
-  return [
-    {
-      id: 4,
-      dashboardId: 1,
-      dashboardUID: '_U4zObQMz',
-      parentVersion: 3,
-      restoredFrom: 0,
-      version: 4,
-      created: '2017-02-22T17:43:01-08:00',
-      createdBy: 'admin',
-      message: '',
-      checked: false,
-    },
-    {
-      id: 3,
-      dashboardId: 1,
-      dashboardUID: '_U4zObQMz',
-      parentVersion: 1,
-      restoredFrom: 1,
-      version: 3,
-      created: '2017-02-22T17:43:01-08:00',
-      createdBy: 'admin',
-      message: '',
-      checked: false,
-    },
-    {
-      id: 2,
-      dashboardId: 1,
-      dashboardUID: '_U4zObQMz',
-      parentVersion: 1,
-      restoredFrom: 1,
-      version: 2,
-      created: '2017-02-23T17:43:01-08:00',
-      createdBy: 'admin',
-      message: '',
-      checked: false,
-    },
-  ];
+  return {
+    continueToken: '',
+    versions: [
+      {
+        id: 4,
+        dashboardId: 1,
+        dashboardUID: '_U4zObQMz',
+        parentVersion: 3,
+        restoredFrom: 0,
+        version: 4,
+        created: '2017-02-22T17:43:01-08:00',
+        createdBy: 'admin',
+        message: '',
+        checked: false,
+      },
+      {
+        id: 3,
+        dashboardId: 1,
+        dashboardUID: '_U4zObQMz',
+        parentVersion: 1,
+        restoredFrom: 1,
+        version: 3,
+        created: '2017-02-22T17:43:01-08:00',
+        createdBy: 'admin',
+        message: '',
+        checked: false,
+      },
+      {
+        id: 2,
+        dashboardId: 1,
+        dashboardUID: '_U4zObQMz',
+        parentVersion: 1,
+        restoredFrom: 1,
+        version: 2,
+        created: '2017-02-23T17:43:01-08:00',
+        createdBy: 'admin',
+        message: '',
+        checked: false,
+      },
+    ],
+  };
 }
 
 async function buildTestScene() {
@@ -162,9 +165,6 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [],
-    }),
     editview: versionsView,
   });
 

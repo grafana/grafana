@@ -1,7 +1,5 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { SELECTORS } from '../constants';
@@ -23,7 +21,7 @@ export const Selector = ({ refId, query, templateVariableOptions, onChange, data
         inputId={`${refId}-slo-selector`}
         width="auto"
         allowCustomValue
-        value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}
+        value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName)}
         options={[
           {
             label: 'Template Variables',

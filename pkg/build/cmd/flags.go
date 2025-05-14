@@ -21,10 +21,6 @@ var (
 		Usage: "Specify number of tries before failing",
 		Value: 1,
 	}
-	dryRunFlag = cli.BoolFlag{
-		Name:  "dry-run",
-		Usage: "Only simulate actions",
-	}
 	tagFlag = cli.StringFlag{
 		Name:  "tag",
 		Usage: "Grafana version tag",

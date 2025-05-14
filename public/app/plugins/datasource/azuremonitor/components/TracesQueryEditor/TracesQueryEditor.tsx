@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -17,7 +18,7 @@ import FormatAsField from '../shared/FormatAsField';
 
 import Filters from './Filters';
 import TraceTypeField from './TraceTypeField';
-import { setDefaultTracesQuery, setFormatAs, setQueryOperationId } from './setQueryValue';
+import { onLoad, setDefaultTracesQuery, setFormatAs, setQueryOperationId } from './setQueryValue';
 
 interface TracesQueryEditorProps {
   query: AzureMonitorQuery;
@@ -87,37 +88,35 @@ const TracesQueryEditor = ({
   return (
     <span data-testid={selectors.components.queryEditor.tracesQueryEditor.container.input}>
       <EditorRows>
-        {query.queryType !== AzureQueryType.TraceExemplar && (
-          <EditorRow>
-            <EditorFieldGroup>
-              <ResourceField
-                query={query}
-                datasource={datasource}
-                subscriptionId={subscriptionId}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-                selectableEntryTypes={[
-                  ResourceRowType.Subscription,
-                  ResourceRowType.ResourceGroup,
-                  ResourceRowType.Resource,
-                  ResourceRowType.Variable,
-                ]}
-                resources={query.azureTraces?.resources ?? []}
-                queryType="traces"
-                disableRow={disableRow}
-                renderAdvanced={(resources, onChange) => (
-                  // It's required to cast resources because the resource picker
-                  // specifies the type to string | AzureMonitorResource.
-                  // eslint-disable-next-line
-                  <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
-                )}
-                selectionNotice={() => 'You may only choose items of the same resource type.'}
-                range={range}
-              />
-            </EditorFieldGroup>
-          </EditorRow>
-        )}
+        <EditorRow>
+          <EditorFieldGroup>
+            <ResourceField
+              query={query}
+              datasource={datasource}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+              selectableEntryTypes={[
+                ResourceRowType.Subscription,
+                ResourceRowType.ResourceGroup,
+                ResourceRowType.Resource,
+                ResourceRowType.Variable,
+              ]}
+              resources={query.azureTraces?.resources ?? []}
+              queryType="traces"
+              disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMonitorResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+              )}
+              selectionNotice={() => 'You may only choose items of the same resource type.'}
+              range={range}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
         <EditorRow>
           <EditorFieldGroup>
             <TraceTypeField
@@ -168,6 +167,7 @@ const TracesQueryEditor = ({
               setFormatAs={setFormatAs}
               resultFormat={query.azureTraces?.resultFormat}
               range={range}
+              onLoad={onLoad}
             />
           </EditorFieldGroup>
         </EditorRow>

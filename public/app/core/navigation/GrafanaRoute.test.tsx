@@ -1,8 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import { History, Location } from 'history';
-import React, { ComponentType } from 'react';
-import { match } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { screen } from '@testing-library/react';
+import { lazy, ComponentType } from 'react';
+import { render } from 'test/test-utils';
 
 import { setEchoSrv } from '@grafana/runtime';
 
@@ -11,11 +9,15 @@ import { Echo } from '../services/echo/Echo';
 import { GrafanaRoute, Props } from './GrafanaRoute';
 import { GrafanaRouteComponentProps } from './types';
 
+const mockLocation = {
+  search: '?query=hello&test=asd',
+  pathname: '',
+  state: undefined,
+  hash: '',
+};
 function setup(overrides: Partial<Props>) {
   const props: Props = {
-    location: { search: '?query=hello&test=asd' } as Location,
-    history: {} as History,
-    match: {} as match,
+    location: mockLocation,
     route: {
       path: '/',
       component: () => <div />,
@@ -23,11 +25,7 @@ function setup(overrides: Partial<Props>) {
     ...overrides,
   };
 
-  render(
-    <TestProvider>
-      <GrafanaRoute {...props} />
-    </TestProvider>
-  );
+  render(<GrafanaRoute {...props} />);
 }
 
 describe('GrafanaRoute', () => {
@@ -47,7 +45,7 @@ describe('GrafanaRoute', () => {
   });
 
   it('Shows loading on lazy load', async () => {
-    const PageComponent = React.lazy(() => {
+    const PageComponent = lazy(() => {
       return new Promise<{ default: ComponentType }>(() => {});
     });
 

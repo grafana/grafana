@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 
@@ -100,5 +99,18 @@ describe('AdvancedResourcePicker', () => {
     expect(screen.getByDisplayValue('res1')).toBeInTheDocument();
     expect(screen.getByDisplayValue('rg2')).toBeInTheDocument();
     expect(screen.getByDisplayValue('res2')).toBeInTheDocument();
+  });
+
+  it('should display an error when the namespace field ends in a /', async () => {
+    const onChange = jest.fn();
+
+    render(
+      <AdvancedResourcePicker
+        onChange={onChange}
+        resources={[{ metricNamespace: 'Microsoft.OperationalInsights/workspaces/' }]}
+      />
+    );
+
+    expect(screen.getByText('Namespace cannot end with a "/"')).toBeInTheDocument();
   });
 });

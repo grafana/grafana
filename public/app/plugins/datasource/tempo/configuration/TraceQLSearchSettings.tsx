@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';

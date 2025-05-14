@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { config } from 'app/core/config';
@@ -25,6 +24,9 @@ const setup = (propOverrides?: object) => {
   };
 
   Object.assign(props, propOverrides);
+
+  config.externalUserMngLinkUrl = props.externalUserMngLinkUrl;
+  config.externalUserMngLinkName = props.externalUserMngLinkName;
 
   const { rerender } = render(<UsersActionBarUnconnected {...props} />);
 
@@ -54,11 +56,38 @@ describe('Render', () => {
 
   it('should show external user management button', () => {
     setup({
-      externalUserMngLinkUrl: 'some/url',
+      externalUserMngLinkUrl: 'http://some/url',
       externalUserMngLinkName: 'someUrl',
     });
 
-    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'some/url');
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'http://some/url');
+  });
+
+  it('should show external user management button with analytics values when configured', () => {
+    config.externalUserMngAnalytics = true;
+    config.externalUserMngAnalyticsParams = 'src=grafananet&other=value1';
+
+    setup({
+      externalUserMngLinkUrl: 'http://some/url',
+      externalUserMngLinkName: 'someUrl',
+    });
+
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute(
+      'href',
+      'http://some/url?src=grafananet&other=value1&cnt=manage-users'
+    );
+  });
+
+  it('should show external user management button without analytics values when disabled', () => {
+    config.externalUserMngAnalytics = false;
+    config.externalUserMngAnalyticsParams = 'src=grafananet&other=value1';
+
+    setup({
+      externalUserMngLinkUrl: 'http://some/url',
+      externalUserMngLinkName: 'someUrl',
+    });
+
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'http://some/url');
   });
 
   it('should not show invite button when externalUserMngInfo is set and disableLoginForm is true', () => {

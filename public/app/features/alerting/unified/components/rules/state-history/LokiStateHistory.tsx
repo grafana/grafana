@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 import { fromPairs, isEmpty, sortBy, take, uniq } from 'lodash';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Alert, Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { AlertLabels } from '../../AlertLabels';
-import { HoverCard } from '../../HoverCard';
+import { PopupCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
 import { LogTimelineViewer } from './LogTimelineViewer';
@@ -102,15 +103,15 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         <input type="submit" hidden />
       </form>
       {!isEmpty(commonLabels) && (
-        <div className={styles.commonLabels}>
-          <Stack gap={1} alignItems="center">
-            <strong>Common labels</strong>
+        <Stack gap={1} alignItems="center" wrap="wrap">
+          <Stack gap={0.5} alignItems="center" minWidth="fit-content">
+            <Text variant="bodySmall">Common labels</Text>
             <Tooltip content="Common labels are the ones attached to all of the alert instances">
-              <Icon name="info-circle" />
+              <Icon name="info-circle" size="sm" />
             </Tooltip>
-            <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
           </Stack>
-        </div>
+          <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
+        </Stack>
       )}
       {isEmpty(frameSubset) ? (
         <>
@@ -148,7 +149,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   );
 };
 
-function useFrameSubset(frames: DataFrame[]) {
+export function useFrameSubset(frames: DataFrame[]) {
   return useMemo(() => {
     const frameSubset = take(frames, MAX_TIMELINE_SERIES);
     const frameSubsetTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
@@ -185,7 +186,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
           <Label htmlFor="instancesSearchInput">
             <Stack gap={0.5}>
               <span>Filter instances</span>
-              <HoverCard
+              <PopupCard
                 content={
                   <>
                     Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
@@ -194,7 +195,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
                 }
               >
                 <Icon name="info-circle" size="sm" />
-              </HoverCard>
+              </PopupCard>
             </Stack>
           </Label>
         }
@@ -252,10 +253,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   moreInstancesWarning: css({
     color: theme.colors.warning.text,
     padding: theme.spacing(),
-  }),
-  commonLabels: css({
-    display: 'grid',
-    gridTemplateColumns: 'max-content auto',
   }),
   // we need !important here to override the list item default styles
   highlightedLogRecord: css({

@@ -6,10 +6,14 @@ const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
+const { EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
+const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
 
+const getEnvConfig = require('./env-util.js');
+const FeatureFlaggedSRIPlugin = require('./plugins/FeatureFlaggedSriPlugin');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
@@ -18,7 +22,10 @@ const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTarg
 const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
+  jsx: 'automatic',
 };
+
+const envConfig = getEnvConfig();
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -42,9 +49,12 @@ module.exports = (env = {}) =>
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: true,
         }),
       ],
+    },
+    output: {
+      crossOriginLoading: 'anonymous',
     },
     optimization: {
       nodeEnv: 'production',
@@ -65,6 +75,8 @@ module.exports = (env = {}) =>
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
+      new SubresourceIntegrityPlugin(),
+      new FeatureFlaggedSRIPlugin(),
       /**
        * I know we have two manifest plugins here.
        * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
@@ -72,6 +84,7 @@ module.exports = (env = {}) =>
       new WebpackAssetsManifest({
         entrypoints: true,
         integrity: true,
+        integrityHashes: ['sha384', 'sha512'],
         publicPath: true,
       }),
       new WebpackManifestPlugin({
@@ -86,5 +99,6 @@ module.exports = (env = {}) =>
           }
         });
       },
+      new EnvironmentPlugin(envConfig),
     ],
   });

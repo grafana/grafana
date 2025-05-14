@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useStyles } from '@grafana/ui';
 import { SecretToggler } from 'app/percona/shared/components/Elements/SecretToggler';

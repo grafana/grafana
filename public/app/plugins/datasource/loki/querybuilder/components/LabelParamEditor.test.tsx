@@ -1,9 +1,9 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
 import { DataSourceApi } from '@grafana/data';
-import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/experimental';
+import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';

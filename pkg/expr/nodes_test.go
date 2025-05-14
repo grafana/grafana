@@ -148,6 +148,7 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 	}
 
 	supportedDatasources := []string{
+		datasources.DS_DYNATRACE,
 		datasources.DS_GRAPHITE,
 		datasources.DS_TESTDATA,
 	}

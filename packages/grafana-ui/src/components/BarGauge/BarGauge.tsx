@@ -1,6 +1,7 @@
 // Library
 import { cx } from '@emotion/css';
-import React, { CSSProperties, PureComponent, ReactNode } from 'react';
+import { CSSProperties, PureComponent, ReactNode } from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -33,6 +34,7 @@ const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
+const VALUE_RIGHT_OVERFLOW_PADDING = 15;
 
 export interface Props extends Themeable2 {
   height: number;
@@ -51,6 +53,7 @@ export interface Props extends Themeable2 {
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
   namePlacement?: BarGaugeNamePlacement;
+  isOverflow: boolean;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -72,6 +75,7 @@ export class BarGauge extends PureComponent<Props> {
     },
     itemSpacing: 8,
     showUnfilled: true,
+    isOverflow: false,
   };
 
   render() {
@@ -144,6 +148,7 @@ export class BarGauge extends PureComponent<Props> {
       text,
       valueDisplayMode,
       theme,
+      isOverflow,
     } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
@@ -159,7 +164,15 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getTextValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
+    const valueStyles = getValueStyles(
+      valueToBaseSizeOn,
+      valueColor,
+      valueWidth,
+      valueHeight,
+      orientation,
+      isOverflow,
+      text
+    );
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -228,7 +241,7 @@ interface CellColors {
 
 interface TitleDimensions {
   fontSize: number;
-  placement: 'above' | 'left' | 'below';
+  placement: 'above' | 'left' | 'below' | 'hidden';
   width: number;
   height: number;
 }
@@ -243,6 +256,15 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };
+  }
+
+  if (namePlacement === BarGaugeNamePlacement.Hidden) {
+    return {
+      fontSize: 0,
+      width: 0,
+      height: 0,
+      placement: BarGaugeNamePlacement.Hidden,
+    };
   }
 
   if (isVertical(orientation)) {
@@ -315,18 +337,22 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
     alignSelf: 'center',
   };
 
-  if (isVertical(props.orientation)) {
-    wrapperStyles.flexDirection = 'column-reverse';
-    titleStyles.textAlign = 'center';
+  if (titleDim.placement === 'hidden') {
+    titleStyles.display = 'none';
   } else {
-    if (titleDim.placement === 'above') {
-      wrapperStyles.flexDirection = 'column';
+    if (isVertical(props.orientation)) {
+      wrapperStyles.flexDirection = 'column-reverse';
+      titleStyles.textAlign = 'center';
     } else {
-      wrapperStyles.flexDirection = 'row';
+      if (titleDim.placement === 'above') {
+        wrapperStyles.flexDirection = 'column';
+      } else {
+        wrapperStyles.flexDirection = 'row';
 
-      titleStyles.width = `${titleDim.width}px`;
-      titleStyles.textAlign = 'right';
-      titleStyles.paddingRight = '10px';
+        titleStyles.width = `${titleDim.width}px`;
+        titleStyles.textAlign = 'right';
+        titleStyles.paddingRight = '10px';
+      }
     }
   }
 
@@ -472,7 +498,7 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -482,7 +508,15 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const barColor = value.color ?? FALLBACK_COLOR;
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, textColor, valueWidth, valueHeight, orientation, text);
+  const valueStyles = getValueStyles(
+    valueToBaseSizeOn,
+    textColor,
+    valueWidth,
+    valueHeight,
+    orientation,
+    isOverflow,
+    text
+  );
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -649,6 +683,7 @@ function getValueStyles(
   width: number,
   height: number,
   orientation: VizOrientation,
+  isOverflow: boolean,
   text?: VizTextDisplayOptions
 ): CSSProperties {
   const styles: CSSProperties = {
@@ -657,6 +692,7 @@ function getValueStyles(
     width: `${width}px`,
     display: 'flex',
     alignItems: 'center',
+    textWrap: 'nowrap',
     lineHeight: VALUE_LINE_HEIGHT,
   };
 
@@ -673,7 +709,7 @@ function getValueStyles(
       calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
-    styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
+    styles.paddingRight = `${VALUE_LEFT_PADDING + (isOverflow ? VALUE_RIGHT_OVERFLOW_PADDING : 0)}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
   }

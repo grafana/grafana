@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,24 +23,22 @@ const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
 const XRealIPHeader = "X-Real-Ip"
 const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 
-// NewHostedGrafanaACHeaderMiddleware creates a new plugins.ClientMiddleware that will
+// NewHostedGrafanaACHeaderMiddleware creates a new backend.HandlerMiddleware that will
 // generate a random request ID, sign it using internal key and populate X-Grafana-Request-ID with the request ID
 // and X-Grafana-Signed-Request-ID with signed request ID. We can then use this to verify that the request
 // is coming from hosted Grafana and is not an external request. This is used for IP range access control.
-func NewHostedGrafanaACHeaderMiddleware(cfg *setting.Cfg) plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewHostedGrafanaACHeaderMiddleware(cfg *setting.Cfg) backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HostedGrafanaACHeaderMiddleware{
-			baseMiddleware: baseMiddleware{
-				next: next,
-			},
-			log: log.New("ip_header_middleware"),
-			cfg: cfg,
+			BaseHandler: backend.NewBaseHandler(next),
+			log:         log.New("ip_header_middleware"),
+			cfg:         cfg,
 		}
 	})
 }
 
 type HostedGrafanaACHeaderMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 	log log.Logger
 	cfg *setting.Cfg
 }
@@ -120,30 +117,30 @@ func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.
 
 func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return m.next.CallResource(ctx, req, sender)
+		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return m.next.CheckHealth(ctx, req)
+		return m.BaseHandler.CheckHealth(ctx, req)
 	}
 
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
-	return m.next.CheckHealth(ctx, req)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }

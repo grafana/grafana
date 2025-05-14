@@ -1,11 +1,9 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
-
-import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+import { Button } from '../Button';
 
-import { Layout, LayoutProps } from './Layout';
+import { HorizontalGroup, Layout, LayoutProps, VerticalGroup } from './Layout';
 import mdx from './Layout.mdx';
 
 const meta: Meta = {
@@ -63,8 +61,9 @@ export default meta;
 export const Horizontal: StoryFn<LayoutProps> = (args) => {
   return (
     <HorizontalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </HorizontalGroup>
   );
 };
@@ -72,8 +71,9 @@ export const Horizontal: StoryFn<LayoutProps> = (args) => {
 export const Vertical: StoryFn<LayoutProps> = (args) => {
   return (
     <VerticalGroup {...args}>
+      <Button variant="secondary">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
       <Button>Save</Button>
-      <Button>Cancel</Button>
     </VerticalGroup>
   );
 };

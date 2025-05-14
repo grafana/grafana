@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 
@@ -49,7 +49,14 @@ export const QueryEditor = (props: Props) => {
           extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} />}
+      {isCloudWatchLogsQuery(query) && (
+        <LogsQueryEditor
+          {...props}
+          query={query}
+          onChange={onChangeInternal}
+          extraHeaderElementLeft={setExtraHeaderElementLeft}
+        />
+      )}
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
@@ -139,9 +139,9 @@ function renderHeaderTitle(title: string, highlightText: NavModelItem['highlight
       {highlightText && (
         <ProBadge
           text={highlightText}
-          className={css`
-            vertical-align: middle;
-          `}
+          className={css({
+            verticalAlign: 'middle',
+          })}
         />
       )}
     </h1>
@@ -159,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(1),
   }),
-  headerCanvas: css`
-    background: ${theme.colors.background.canvas};
-  `,
+  headerCanvas: css({
+    background: theme.colors.background.canvas,
+  }),
 });

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PluginState } from '@grafana/data';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

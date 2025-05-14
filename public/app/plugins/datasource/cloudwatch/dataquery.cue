@@ -56,7 +56,7 @@ composableKinds: DataQuery: {
 
 					// Whether a query is a Metrics, Logs, or Annotations query
 					queryMode?: #CloudWatchQueryMode
-					// Whether to use a metric search or metric query. Metric query is referred to as "Metrics Insights" in the AWS console.
+					// Whether to use a metric search or metric insights query
 					metricQueryType?: #MetricQueryType
 					// Whether to use the query builder or code editor to create the query
 					metricEditorMode?: #MetricEditorMode
@@ -69,14 +69,14 @@ composableKinds: DataQuery: {
 					label?: string
 					// Math expression query
 					expression?: string
-					// When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
+					// When the metric query type is set to `Insights`, this field is used to specify the query string.
 					sqlExpression?: string
-					// When the metric query type is `metricQueryType` is set to `Query` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
+					// When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
 					sql?: #SQLExpression
 				} @cuetsy(kind="interface")
 
 				#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
-				#MetricQueryType:     0 | 1                              @cuetsy(kind="enum", memberNames="Search|Query")
+				#MetricQueryType:     0 | 1                              @cuetsy(kind="enum", memberNames="Search|Insights")
 				#MetricEditorMode:    0 | 1                              @cuetsy(kind="enum", memberNames="Builder|Code")
 				#SQLExpression: {
 					// SELECT part of the SQL expression
@@ -147,6 +147,8 @@ composableKinds: DataQuery: {
 
 				#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
+				#LogsQueryLanguage: "CWLI" | "SQL" | "PPL" @cuetsy(kind="enum")
+
 				// Shape of a CloudWatch Logs query
 				#CloudWatchLogsQuery: {
 					common.DataQuery
@@ -164,6 +166,8 @@ composableKinds: DataQuery: {
 					logGroups?: [...#LogGroup]
 					// @deprecated use logGroups
 					logGroupNames?: [...string]
+					// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+					queryLanguage?: #LogsQueryLanguage
 				} @cuetsy(kind="interface")
 				#LogGroup: {
 					// ARN of the log group

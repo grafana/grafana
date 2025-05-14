@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/build"
+	"github.com/grafana/grafana/pkg/build/cmd/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -66,7 +67,7 @@ func main() {
 			Name:      "publish-metrics",
 			Usage:     "Publish a set of metrics from stdin",
 			ArgsUsage: "<api-key>",
-			Action:    MaxArgCountWrapper(1, PublishMetrics),
+			Action:    util.MaxArgCountWrapper(1, PublishMetrics),
 		},
 		{
 			Name:   "verify-drone",
@@ -178,7 +179,7 @@ func main() {
 							Name:      "fetch",
 							Usage:     "Fetch Grafana Docker images",
 							ArgsUsage: "[version]",
-							Action:    MaxArgCountWrapper(1, FetchImages),
+							Action:    util.MaxArgCountWrapper(1, FetchImages),
 							Flags: []cli.Flag{
 								&editionFlag,
 							},
@@ -229,7 +230,7 @@ func main() {
 					Flags: []cli.Flag{
 						&editionFlag,
 						&buildIDFlag,
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "src-bucket",
 							Value: "grafana-downloads",
@@ -242,7 +243,7 @@ func main() {
 					Usage:  "Publish packages to GitHub releases",
 					Action: PublishGithub,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "path",
 							Usage: "Path to the asset to be published",
@@ -267,7 +268,7 @@ func main() {
 					Usage:  "Publish image to AWS Marketplace releases",
 					Action: PublishAwsMarketplace,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "version",
 							Usage: "Release version (default from metadata)",

@@ -15,7 +15,7 @@ describe('Team selectors', () => {
         groups: [],
       };
 
-      const team = getTeam(mockState, '1');
+      const team = getTeam(mockState, 'aaaaaa');
       expect(team).toEqual(mockTeam);
     });
   });

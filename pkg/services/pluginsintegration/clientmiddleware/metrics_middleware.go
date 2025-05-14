@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
@@ -24,7 +24,7 @@ type pluginMetrics struct {
 // MetricsMiddleware is a middleware that instruments plugin requests.
 // It tracks requests count, duration and size as prometheus metrics.
 type MetricsMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 	pluginMetrics
 	pluginRegistry registry.Service
 }
@@ -74,13 +74,14 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 }
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
-func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
-	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		imw.baseMiddleware = baseMiddleware{
-			next: next,
+func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) backend.HandlerMiddleware {
+	metrics := newMetricsMiddleware(promRegisterer, pluginRegistry)
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+		return &MetricsMiddleware{
+			BaseHandler:    backend.NewBaseHandler(next),
+			pluginMetrics:  metrics.pluginMetrics,
+			pluginRegistry: metrics.pluginRegistry,
 		}
-		return imw
 	})
 }
 
@@ -94,17 +95,18 @@ func (m *MetricsMiddleware) pluginTarget(ctx context.Context, pluginID, pluginVe
 }
 
 // instrumentPluginRequestSize tracks the size of the given request in the m.pluginRequestSize metric.
-func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, requestSize float64) error {
+func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, requestSize float64) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID, pluginCtx.PluginVersion)
 	if err != nil {
 		return err
 	}
-	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, target).Observe(requestSize)
+	endpoint := backend.EndpointFromContext(ctx)
+	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), target).Observe(requestSize)
 	return nil
 }
 
 // instrumentPluginRequest increments the m.pluginRequestCounter metric and tracks the duration of the given request.
-func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) (requestStatus, error)) error {
+func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, fn func(context.Context) (instrumentationutils.RequestStatus, error)) error {
 	target, err := m.pluginTarget(ctx, pluginCtx.PluginID, pluginCtx.PluginVersion)
 	if err != nil {
 		return err
@@ -115,11 +117,12 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	status, err := fn(ctx)
 	elapsed := time.Since(start)
 
-	statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
+	statusSource := backend.ErrorSourceFromContext(ctx)
+	endpoint := backend.EndpointFromContext(ctx)
 
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target, string(statusSource))
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, string(statusSource))
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
@@ -144,74 +147,108 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		requestSize += float64(len(v.JSON))
 	}
 
-	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointQueryData, requestSize); err != nil {
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
 		return nil, err
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (status requestStatus, innerErr error) {
-		resp, innerErr = m.next.QueryData(ctx, req)
-		return requestStatusFromQueryDataResponse(resp, innerErr), innerErr
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.QueryData(ctx, req)
+		return instrumentationutils.RequestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
 
 	return resp, err
 }
 
 func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, endpointCallResource, float64(len(req.Body))); err != nil {
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err
 	}
-	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (requestStatus, error) {
-		innerErr := m.next.CallResource(ctx, req, sender)
-		return requestStatusFromError(innerErr), innerErr
+	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.CallResource(ctx, req, sender)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 }
 
 func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	var result *backend.CheckHealthResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (status requestStatus, innerErr error) {
-		result, innerErr = m.next.CheckHealth(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+	var resp *backend.CheckHealthResult
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.CheckHealth(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
 func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	var result *backend.CollectMetricsResult
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (status requestStatus, innerErr error) {
-		result, innerErr = m.next.CollectMetrics(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+	var resp *backend.CollectMetricsResult
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.CollectMetrics(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
-	return result, err
+	return resp, err
+}
+
+func (m *MetricsMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	var resp *backend.SubscribeStreamResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.SubscribeStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return resp, err
+}
+
+func (m *MetricsMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	var resp *backend.PublishStreamResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.PublishStream(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return resp, err
+}
+
+func (m *MetricsMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.RunStream(ctx, req, sender)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+	})
+	return err
 }
 
 func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	var result *backend.ValidationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
-		result, innerErr = m.next.ValidateAdmission(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+	var resp *backend.ValidationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.ValidateAdmission(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
 func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	var result *backend.MutationResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
-		result, innerErr = m.next.MutateAdmission(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+	var resp *backend.MutationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.MutateAdmission(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }
 
-func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	var result *backend.ConversionResponse
-	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
-		result, innerErr = m.next.ConvertObject(ctx, req)
-		return requestStatusFromError(innerErr), innerErr
+func (m *MetricsMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var resp *backend.ConversionResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		var innerErr error
+		resp, innerErr = m.BaseHandler.ConvertObjects(ctx, req)
+		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
-	return result, err
+	return resp, err
 }

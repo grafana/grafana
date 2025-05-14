@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { format } from 'date-fns';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useStyles } from '@grafana/ui';
 

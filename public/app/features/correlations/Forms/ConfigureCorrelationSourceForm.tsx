@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -16,14 +15,43 @@ import { FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    max-width: ${theme.spacing(80)};
-  `,
-  variable: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
+  label: css({
+    maxWidth: theme.spacing(80),
+  }),
+  variable: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
 });
+
+const getFormText = (queryType: string, dataSourceName?: string) => {
+  if (queryType === 'query') {
+    return {
+      title: t(
+        'correlations.source-form.query-title',
+        'Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)',
+        { dataSourceName }
+      ),
+      descriptionPre: t(
+        'correlations.source-form.description-query-pre',
+        'You have used following variables in the target query:'
+      ),
+      heading: t('correlations.source-form.heading-query', 'Variables used in the target query'),
+    };
+  } else {
+    return {
+      title: t(
+        'correlations.source-form.external-title',
+        'Configure the data source that will use the URL (Step 3 of 3)'
+      ),
+      descriptionPre: t(
+        'correlations.source-form.description-external-pre',
+        'You have used following variables in the target URL:'
+      ),
+      heading: t('correlations.source-form.heading-external', 'Variables used in the target URL'),
+    };
+  }
+};
 
 export const ConfigureCorrelationSourceForm = () => {
   const { control, formState, register, getValues } = useFormContext<FormDTO>();
@@ -33,9 +61,13 @@ export const ConfigureCorrelationSourceForm = () => {
   const { correlation, readOnly } = useCorrelationsFormContext();
 
   const currentTargetQuery = getValues('config.target');
+  const currentType = getValues('type');
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
+  const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
+
+  const formText = getFormText(currentType, dataSourceName);
 
   function VariableList() {
     return (
@@ -50,16 +82,9 @@ export const ConfigureCorrelationSourceForm = () => {
     );
   }
 
-  const dataSourceName = getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name;
   return (
     <>
-      <FieldSet
-        label={t(
-          'correlations.source-form.title',
-          'Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)',
-          { dataSourceName }
-        )}
-      >
+      <FieldSet label={formText.title}>
         <Trans i18nKey="correlations.source-form.sub-text">
           <p>
             Define what data source will display the correlation, and what data will replace previously defined
@@ -118,14 +143,14 @@ export const ConfigureCorrelationSourceForm = () => {
         </Field>
         {variables.length > 0 && (
           <Card>
-            <Card.Heading>
-              <Trans i18nKey="correlations.source-form.heading">Variables used in the target query</Trans>
-            </Card.Heading>
+            <Card.Heading>{formText.heading}</Card.Heading>
             <Card.Description>
+              {formText.descriptionPre}
+              <VariableList />
+              <br />
               <Trans i18nKey="correlations.source-form.description">
-                You have used following variables in the target query: <VariableList />
-                <br />A data point needs to provide values to all variables as fields or as transformations output to
-                make the correlation button appear in the visualization.
+                A data point needs to provide values to all variables as fields or as transformations output to make the
+                correlation button appear in the visualization.
                 <br />
                 Note: Not every variable needs to be explicitly defined below. A transformation such as{' '}
                 <span className={styles.variable}>logfmt</span> will create variables for every key/value pair.

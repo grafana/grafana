@@ -4,6 +4,7 @@ const path = require('path');
 
 const benchmarkPlugin = require('./e2e/cypress/plugins/benchmark/index');
 const readProvisions = require('./e2e/cypress/plugins/readProvisions');
+const smtpTester = require('./e2e/cypress/plugins/smtpTester');
 const typescriptPreprocessor = require('./e2e/cypress/plugins/typescriptPreprocessor');
 
 module.exports = defineConfig({
@@ -25,6 +26,10 @@ module.exports = defineConfig({
 
       if (config.env['BENCHMARK_PLUGIN_ENABLED'] === true) {
         benchmarkPlugin.initialize(on, config);
+      }
+
+      if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
+        smtpTester.initialize(on, config);
       }
 
       on('task', {

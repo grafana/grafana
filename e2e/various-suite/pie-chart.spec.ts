@@ -11,9 +11,8 @@ describe('Pie Chart Panel', () => {
     // open Panel Tests - Pie Chart
     e2e.flows.openDashboard({ uid: 'lVE-2YFMz' });
 
-    cy.get(`[data-panelid=11] [data-testid^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`).should(
-      'have.length',
-      5
-    );
+    cy.get(
+      `[data-viz-panel-key="panel-11"] [data-testid^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`
+    ).should('have.length', 5);
   });
 });

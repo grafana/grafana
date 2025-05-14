@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import { upperFirst } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
 
@@ -55,7 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     colorLabel: css({
-      paddingLeft: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
     }),

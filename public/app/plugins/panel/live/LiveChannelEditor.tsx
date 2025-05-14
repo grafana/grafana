@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   LiveChannelScope,
@@ -15,7 +15,7 @@ import { getManagedChannelInfo } from 'app/features/live/info';
 
 import { LivePanelOptions } from './types';
 
-type Props = StandardEditorProps<Partial<LiveChannelAddress>, any, LivePanelOptions>;
+type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
 
 const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },
@@ -156,7 +156,7 @@ function findPathOption(paths: Array<SelectableValue<string>>, path?: string): S
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  dropWrap: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  dropWrap: css({
+    marginBottom: theme.spacing(1),
+  }),
 }));

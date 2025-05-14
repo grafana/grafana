@@ -1,5 +1,4 @@
 import { isFunction } from 'lodash';
-import React from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
@@ -85,12 +84,13 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks && (
+      {hasLinks ? (
         <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
+      ) : (
+        renderComponent({})
       )}
-      {!hasLinks && renderComponent({})}
     </div>
   );
 };

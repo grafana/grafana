@@ -5,7 +5,7 @@ import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
+import { AccessControlAction, TeamWithRoles, TeamMember, ThunkResult, Team } from 'app/types';
 
 import { buildNavModel } from './navModel';
 import {
@@ -46,9 +46,9 @@ export function loadTeams(initial = false): ThunkResult<void> {
       contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)
     ) {
       dispatch(rolesFetchBegin());
-      const teamIds = response?.teams.map((t: Team) => t.id);
+      const teamIds = response?.teams.map((t: TeamWithRoles) => t.id);
       const roles = await getBackendSrv().post(`/api/access-control/teams/roles/search`, { teamIds });
-      response.teams.forEach((t: Team) => {
+      response.teams.forEach((t: TeamWithRoles) => {
         t.roles = roles ? roles[t.id] || [] : [];
       });
       dispatch(rolesFetchEnd());
@@ -60,17 +60,17 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
 const loadTeamsWithDebounce = debounce((dispatch) => dispatch(loadTeams()), 500);
 
-export function loadTeam(id: number): ThunkResult<Promise<void>> {
+export function loadTeam(uid: string): ThunkResult<Promise<void>> {
   return async (dispatch) => {
-    const response = await getBackendSrv().get(`/api/teams/${id}`, accessControlQueryParam());
+    const response = await getBackendSrv().get(`/api/teams/${uid}`, accessControlQueryParam());
     dispatch(teamLoaded(response));
     dispatch(updateNavIndex(buildNavModel(response)));
   };
 }
 
-export function deleteTeam(id: number): ThunkResult<void> {
+export function deleteTeam(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/teams/${id}`);
+    await getBackendSrv().delete(`/api/teams/${uid}`);
     // Update users permissions in case they lost teams.read with the deletion
     await contextSrv.fetchUserPermissions();
     dispatch(loadTeams());
@@ -102,32 +102,16 @@ export function changeSort({ sortBy }: FetchDataArgs<Team>): ThunkResult<void> {
 export function loadTeamMembers(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    const response = await getBackendSrv().get(`/api/teams/${team.id}/members`);
+    const response = await getBackendSrv().get(`/api/teams/${team.uid}/members`);
     dispatch(teamMembersLoaded(response));
-  };
-}
-
-export function addTeamMember(id: number): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const team = getStore().team.team;
-    await getBackendSrv().post(`/api/teams/${team.id}/members`, { userId: id });
-    dispatch(loadTeamMembers());
-  };
-}
-
-export function removeTeamMember(id: number): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const team = getStore().team.team;
-    await getBackendSrv().delete(`/api/teams/${team.id}/members/${id}`);
-    dispatch(loadTeamMembers());
   };
 }
 
 export function updateTeam(name: string, email: string): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
-    await getBackendSrv().put(`/api/teams/${team.id}`, { name, email });
-    dispatch(loadTeam(team.id));
+    await getBackendSrv().put(`/api/teams/${team.uid}`, { name, email });
+    dispatch(loadTeam(team.uid));
   };
 }
 

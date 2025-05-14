@@ -21,7 +21,7 @@ describe('annotations', () => {
   it('should fetch annotation for an alertId', () => {
     const ALERT_ID = 'abc123';
     fetchAnnotations(ALERT_ID);
-    expect(get).toBeCalledWith('/api/annotations', { alertId: ALERT_ID });
+    expect(get).toBeCalledWith('/api/annotations', { alertUID: ALERT_ID });
   });
 });
 
@@ -29,7 +29,7 @@ describe(sortStateHistory, () => {
   describe('should stably sort', () => {
     describe('when timeEnd is different', () => {
       it('should not sort by rule id', () => {
-        let data: StateHistoryItem[] = [
+        const data: StateHistoryItem[] = [
           { timeEnd: 23, time: 22, id: 1 } as StateHistoryItem,
           { timeEnd: 22, time: 21, id: 3 } as StateHistoryItem,
           { timeEnd: 22, time: 22, id: 2 } as StateHistoryItem,
@@ -46,7 +46,7 @@ describe(sortStateHistory, () => {
 
     describe('when only the rule id is different', () => {
       it('should sort by rule id', () => {
-        let data: StateHistoryItem[] = [
+        const data: StateHistoryItem[] = [
           { timeEnd: 23, time: 22, id: 1 } as StateHistoryItem,
           { timeEnd: 23, time: 22, id: 3 } as StateHistoryItem,
           { timeEnd: 23, time: 22, id: 2 } as StateHistoryItem,

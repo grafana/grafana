@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { Field, Form } from 'react-final-form';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';

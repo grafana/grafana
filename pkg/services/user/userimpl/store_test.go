@@ -68,6 +68,19 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("error on duplicated user", func(t *testing.T) {
+		_, err := userStore.Insert(context.Background(),
+			&user.User{
+				Email:   "test@email.com",
+				Name:    "test1",
+				Login:   "test1",
+				Created: time.Now(),
+				Updated: time.Now(),
+			},
+		)
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+	})
+
 	t.Run("get user", func(t *testing.T) {
 		_, err := userStore.GetByEmail(context.Background(),
 			&user.GetUserByEmailQuery{Email: "test@email.com"},
@@ -99,6 +112,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "abcd", siu.UserUID)
+
+		query := user.GetUserByUIDQuery{UID: "abcd"}
+		result, err := userStore.GetByUID(context.Background(), query.UID)
+		require.Nil(t, err)
+		require.Equal(t, result.UID, "abcd")
+		require.Equal(t, result.Email, "next-test@email.com")
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {

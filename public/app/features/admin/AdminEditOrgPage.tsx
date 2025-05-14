@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { Trans } from 'app/core/internationalization';
 import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
@@ -16,10 +17,9 @@ interface OrgNameDTO {
   orgName: string;
 }
 
-interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
-
-const AdminEditOrgPage = ({ match }: Props) => {
-  const orgId = parseInt(match.params.id, 10);
+const AdminEditOrgPage = () => {
+  const { id = '' } = useParams();
+  const orgId = parseInt(id, 10);
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
   const canReadUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
 
@@ -57,8 +57,10 @@ const AdminEditOrgPage = ({ match }: Props) => {
 
   const renderMissingPermissionMessage = () => (
     <Alert severity="info" title="Access denied">
-      You do not have permission to see users in this organization. To update this organization, contact your server
-      administrator.
+      <Trans i18nKey="admin.edit-org.access-denied">
+        You do not have permission to see users in this organization. To update this organization, contact your server
+        administrator.
+      </Trans>
     </Alert>
   );
 
@@ -86,7 +88,9 @@ const AdminEditOrgPage = ({ match }: Props) => {
     <Page navId="global-orgs" pageNav={pageNav} subTitle="Manage settings for this specific org.">
       <Page.Contents>
         <>
-          <Legend>Edit organization</Legend>
+          <Legend>
+            <Trans i18nKey="admin.edit-org.heading">Edit Organization</Trans>
+          </Legend>
           {orgState.value && (
             <form onSubmit={handleSubmit(onUpdateOrgName)} style={{ maxWidth: '600px' }}>
               <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
@@ -97,13 +101,15 @@ const AdminEditOrgPage = ({ match }: Props) => {
                 />
               </Field>
               <Button type="submit" disabled={!canWriteOrg}>
-                Update
+                <Trans i18nKey="admin.edit-org.update-button">Update</Trans>
               </Button>
             </form>
           )}
 
           <div style={{ marginTop: '20px' }}>
-            <Legend>Organization users</Legend>
+            <Legend>
+              <Trans i18nKey="admin.edit-org.users-heading">Organization users</Trans>
+            </Legend>
             {!canReadUsers && renderMissingPermissionMessage()}
             {canReadUsers && !!users.length && (
               <OrgUsersTable

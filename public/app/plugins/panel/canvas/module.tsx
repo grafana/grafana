@@ -58,6 +58,16 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
           icon: true,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: false,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        settings: {
+          showOneClick: false,
+        },
+      },
     },
   })
   .setMigrationHandler(canvasMigrationHandler)

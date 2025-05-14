@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
@@ -64,12 +64,15 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
     });
   };
 
-  const buttonWidth = css`
-    width: 60px;
-  `;
+  const buttonWidth = css({
+    width: '75px',
+  });
 
   const isRange =
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
+    condition.evaluator.type === EvalFunction.IsWithinRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   return (
     <Stack>
@@ -140,23 +143,23 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const buttonStyle = css`
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `;
+  const buttonStyle = css({
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+  });
   return {
     buttonSelectText: buttonStyle,
     button: cx(
-      css`
-        display: flex;
-        align-items: center;
-        border-radius: ${theme.shape.radius.default};
-        font-weight: ${theme.typography.fontWeightMedium};
-        border: 1px solid ${theme.colors.border.weak};
-        white-space: nowrap;
-        padding: 0 ${theme.spacing(1)};
-        background-color: ${theme.colors.background.canvas};
-      `,
+      css({
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: theme.shape.radius.default,
+        fontWeight: theme.typography.fontWeightMedium,
+        border: `1px solid ${theme.colors.border.weak}`,
+        whiteSpace: 'nowrap',
+        padding: `0 ${theme.spacing(1)}`,
+        backgroundColor: theme.colors.background.canvas,
+      }),
       buttonStyle
     ),
   };

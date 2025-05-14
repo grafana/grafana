@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -36,7 +35,8 @@ export function DashboardChangedModal({ onDismiss, event }: Props) {
       className={styles.modal}
     >
       <div className={styles.description}>
-        The dashboad has been updated by another session. Do you want to continue editing or discard your local changes?
+        The dashboard has been updated by another session. Do you want to continue editing or discard your local
+        changes?
       </div>
       <Modal.ButtonRow>
         <Button onClick={onDismiss} variant="secondary" fill="outline">

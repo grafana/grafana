@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
@@ -9,9 +8,10 @@ import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 
 export interface TopNavBarMenuProps {
   node: NavModelItem;
+  children?: React.ReactNode;
 }
 
-export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
+export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(nodePlain), false);
 
@@ -38,6 +38,7 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
           <MenuItem icon={item.icon} onClick={item.onClick} label={item.text} key={item.id} />
         );
       })}
+      {children}
     </Menu>
   );
 }

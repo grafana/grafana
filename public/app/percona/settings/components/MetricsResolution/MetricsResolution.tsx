@@ -1,5 +1,5 @@
 import { FormApi } from 'final-form';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, Spinner, useStyles2 } from '@grafana/ui';

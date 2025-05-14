@@ -12,9 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -35,17 +37,39 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type TestEnvOptions struct {
+	featureToggles featuremgmt.FeatureToggles
+}
+
+type TestEnvOption func(*TestEnvOptions)
+
+func WithFeatureToggles(toggles featuremgmt.FeatureToggles) TestEnvOption {
+	return func(opts *TestEnvOptions) {
+		opts.featureToggles = toggles
+	}
+}
+
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
+
+	options := TestEnvOptions{
+		featureToggles: featuremgmt.WithFeatures(),
+	}
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: setting.SchedulerBaseInterval,
+		BaseInterval:          setting.SchedulerBaseInterval,
+		InitializationTimeout: 30 * time.Second,
 	}
 	// AlertNG database migrations run and the relative database tables are created only when it's enabled
 	cfg.UnifiedAlerting.Enabled = new(bool)
@@ -61,18 +85,18 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	bus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
-	features := featuremgmt.WithFeatures()
-	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, features, ac)
-	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac)
+	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, options.featureToggles, ac)
+	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
-		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
+		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(tb, err)
+
 	return ng, &store.DBstore{
-		FeatureToggles: features,
+		FeatureToggles: options.featureToggles,
 		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
@@ -80,6 +104,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 		FolderService:    folderService,
+		Bus:              bus,
 	}
 }
 
@@ -96,9 +121,12 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgID:          orgID,
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
+		Permissions: map[int64]map[string][]string{
+			orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
+		},
 	}
 
-	ctx = appcontext.WithUser(ctx, user)
+	ctx = identity.WithRequester(ctx, user)
 	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
 	// var foldr *folder.Folder
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
@@ -106,7 +134,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	}
 	require.NoError(t, err)
 
-	_, err = dbstore.InsertAlertRules(ctx, []models.AlertRule{
+	_, err = dbstore.InsertAlertRules(ctx, models.NewUserUID(user), []models.AlertRule{
 		{
 
 			ID:        0,

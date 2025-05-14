@@ -18,7 +18,8 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@20
+brew install node@22
+brew install corepack
 corepack enable
 ```
 
@@ -235,7 +236,7 @@ yarn e2e:dev
 
 #### To run the Playwright tests:
 
-**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to install it, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
 
 Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
 
@@ -243,22 +244,16 @@ Each version of Playwright needs specific versions of browser binaries to operat
 yarn playwright install chromium
 ```
 
-To run all tests in a headless Chromium browser and display results in the terminal:
+To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
 
 ```
 yarn e2e:playwright
 ```
 
-For a better developer experience, open the Playwright UI where you can visually walk through each step of the test and see what was happening before, during, and after each step.
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
-yarn e2e:playwright:ui
-```
-
-To open the HTML reporter for the last test run session:
-
-```
-yarn e2e:playwright:report
+yarn e2e:playwright:server
 ```
 
 ## Configure Grafana for development
@@ -323,7 +318,7 @@ Previously, Grafana used Yarn PnP to install frontend dependencies, which requir
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
+Depending on your environment, you may need to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -365,6 +360,58 @@ ulimit: open files: cannot modify limit: Operation not permitted
 ```
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (`~/.bashrc`, typically), to see if there's already an `ulimit` command that you can tweak.
+
+### System limit for number of file watchers reached while running `yarn start`
+
+Depending on your environment, you may need to increase the number of file watchers allowed by `inotify` package to monitor filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
+
+Edit the system config file to insert the new value for file watchers limit:
+
+On Linux:
+
+```bash
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+```
+
+On macOS:
+
+```bash
+sudo sysctl -w kern.maxfiles=524288
+```
+
+Check if the new value was applied. It must output `524288`:
+
+On Linux:
+
+```bash
+cat /proc/sys/fs/inotify/max_user_watches
+```
+
+On macOS:
+
+```bash
+sysctl kern.maxfiles
+```
+
+### JavaScript heap out of memory while running `yarn start`
+
+Running `yarn start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
+
+```bash
+node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'
+```
+
+Increase the default heap memory to something greater than the currently allocated memory. Make sure the value is a multiple of `1024`.
+
+```bash
+export NODE_OPTIONS="--max-old-space-size=8192"
+```
+
+Or on Windows:
+
+```
+Set NODE_OPTIONS="--max-old-space-size=8192"
+```
 
 ### Getting `AggregateError` when building frontend tests
 

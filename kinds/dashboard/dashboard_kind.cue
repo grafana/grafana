@@ -74,7 +74,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *39
+			schemaVersion: uint16 | *41
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
@@ -99,6 +99,9 @@ lineage: schemas: [{
 
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
+			// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
+			preload?: bool
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////
@@ -197,6 +200,8 @@ lineage: schemas: [{
 			current?: #VariableOption
 			// Whether multiple values can be selected or not from variable value list
 			multi?: bool | *false
+			// Allow custom values to be entered in the variable
+			allowCustomValue?: bool | *true
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			// Options to config when to refresh a variable
@@ -291,7 +296,8 @@ lineage: schemas: [{
 		// `textbox`: Display a free text input field with an optional default value.
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+		#VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
+			"system" | "snapshot" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 		// Continuous color interpolates a color using the percentage of a value relative to min and max.
@@ -453,6 +459,13 @@ lineage: schemas: [{
 			options: _
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
+		// Counterpart for TypeScript's TimeOption type.
+		#TimeOption: {
+			display: string
+			from:    string
+			to:      string
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
 		// Time picker configuration
 		// It defines the default config for the time picker and the refresh picker for the specific dashboard.
 		#TimePickerConfig: {
@@ -460,8 +473,8 @@ lineage: schemas: [{
 			hidden?: bool | *false
 			// Interval options available in the refresh picker dropdown.
 			refresh_intervals?: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-			time_options?: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+			// Quick ranges for time picker.
+			quick_ranges?: [...#TimeOption]
 			// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 			nowDelay?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
@@ -591,7 +604,7 @@ lineage: schemas: [{
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
-			// Sets panel queries cache timeout. 
+			// Sets panel queries cache timeout.
 			cacheTimeout?: string
 
 			// Overrides the data source configured time-to-live for a query cache item in milliseconds

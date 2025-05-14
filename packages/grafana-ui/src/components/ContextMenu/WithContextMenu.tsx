@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { ContextMenu } from '../ContextMenu/ContextMenu';
 
@@ -21,7 +22,7 @@ export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true 
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,
-            y: e.pageY,
+            y: e.pageY - window.scrollY,
           });
         },
       })}

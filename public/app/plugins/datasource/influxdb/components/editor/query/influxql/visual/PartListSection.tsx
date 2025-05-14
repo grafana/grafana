@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { useTheme2 } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
@@ -77,7 +77,7 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
         const loadOptions =
           options !== null ? () => options().then((items) => items.map(toSelectableValue)) : undefined;
         return (
-          <React.Fragment key={i}>
+          <Fragment key={i}>
             <Seg
               allowCustomValue
               value={value}
@@ -88,7 +88,7 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
               }}
             />
             {!isLast && ','}
-          </React.Fragment>
+          </Fragment>
         );
       })}
       )
@@ -106,7 +106,7 @@ export const PartListSection = ({
   return (
     <>
       {parts.map((part, index) => (
-        <React.Fragment key={index}>
+        <Fragment key={index}>
           <Part
             name={part.name}
             params={part.params}
@@ -126,7 +126,7 @@ export const PartListSection = ({
               onRemovePart(index);
             }}
           />
-        </React.Fragment>
+        </Fragment>
       ))}
       <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>

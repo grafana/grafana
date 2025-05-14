@@ -1,4 +1,4 @@
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { StandardEditorProps, ThresholdsConfig, ThresholdsMode, ThresholdsFieldConfigSettings } from '@grafana/data';
 
@@ -6,7 +6,7 @@ import { ThresholdsEditor } from './ThresholdsEditor';
 
 type Props = StandardEditorProps<ThresholdsConfig, ThresholdsFieldConfigSettings>;
 
-export class ThresholdsValueEditor extends React.PureComponent<Props> {
+export class ThresholdsValueEditor extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }

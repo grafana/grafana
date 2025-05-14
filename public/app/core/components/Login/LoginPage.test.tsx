@@ -1,10 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import * as runtimeMock from '@grafana/runtime';
 
-import { LoginPage } from './LoginPage';
+import LoginPage from './LoginPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -14,6 +13,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     auth: {
       disableLogin: false,
     },

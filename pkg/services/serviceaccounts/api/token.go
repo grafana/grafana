@@ -112,7 +112,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response
 }
 
 // @PERCONA
-// swagger:route GET /auth/serviceaccount serviceaccounts retrieveServiceAccount
+// swagger:route GET /auth/serviceaccount serviceaccounts
 //
 // # CurrentServiceAccount get current service account info
 //
@@ -129,7 +129,12 @@ func (api *ServiceAccountsAPI) CurrentServiceAccount(ctx *contextmodel.ReqContex
 		return response.Error(http.StatusBadRequest, "Auth method is not service account token", errors.New("failed to get service account info"))
 	}
 
-	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, ctx.UserID)
+	query := serviceaccounts.GetServiceAccountQuery{
+		OrgID: ctx.OrgID,
+		ID:    ctx.UserID,
+	}
+
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &query)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -164,7 +169,10 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	}
 
 	// confirm service account exists
-	if _, err = api.service.RetrieveServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID); err != nil {
+	if _, err = api.service.RetrieveServiceAccount(c.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: c.SignedInUser.GetOrgID(),
+		ID:    saID,
+	}); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 
@@ -237,7 +245,10 @@ func (api *ServiceAccountsAPI) DeleteToken(c *contextmodel.ReqContext) response.
 	}
 
 	// confirm service account exists
-	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID); err != nil {
+	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: c.SignedInUser.GetOrgID(),
+		ID:    saID,
+	}); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 

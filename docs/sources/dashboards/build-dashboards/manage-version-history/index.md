@@ -21,28 +21,38 @@ weight: 400
 
 # Manage dashboard version history
 
-Whenever you save a version of your dashboard, a copy of that version is saved so that previous versions of your dashboard are never lost. A list of these versions is available by entering the dashboard settings and then selecting "Versions" in the left side menu.
+Whenever you save a version of your dashboard, a copy of that version is saved so that previous versions of your dashboard are never lost. You can see a list of dashboard versions in the **Versions** tab of the dashboard settings:
 
-![Dashboards versions list](/media/docs/grafana/dashboards/screenshot-dashboard-versions-list.png)
+![Dashboards versions list](/media/docs/grafana/dashboards/screenshot-dashboard-version-list-11.2.png)
 
 The dashboard version history feature lets you compare and restore to previously saved dashboard versions.
 
-## Comparing two dashboard versions
+## Compare two dashboard versions
 
-To compare two dashboard versions, select the two versions from the list that you wish to compare. Once selected, the "Compare versions" button will become clickable. Click the button to view the diff between the two versions.
+To compare two dashboard versions, follow these steps:
 
-![Dashboard versions selected](/media/docs/grafana/dashboards/screenshot-dashboard-versions-select.png)
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
+1. Go to the **Versions** tab.
+1. Select the two dashboard versions that you want to compare.
+1. Click **Compare versions** to view the diff between the two versions.
+1. Review the text descriptions of the differences between the versions.
+1. (Optional) Expand the **View JSON Diff** section of the page to see the diff of the raw JSON that represents your dashboard.
+1. When you've finished comparing versions, click **Back to dashboard** and **Exit edit**.
 
-Upon clicking the button, you'll be brought to the diff view. By default, you'll see a textual summary of the changes, like in the image below.
+When you're comparing versions, if one of the versions you've selected is the latest version, a button to restore the previous version is also displayed, so you can restore a version from the compare view:
 
-![Dashboards versions diff](/media/docs/grafana/dashboards/screenshot-dashboard-versions-diff-basic.png)
+![Dashboards versions diff](/media/docs/grafana/dashboards/screenshot-dashboard-compare-versions-restore-11.2.png)
 
-If you want to view the diff of the raw JSON that represents your dashboard, you can do that as well by clicking the expand icon for the View JSON Diff section at the bottom.
+## Restore a previously dashboard version
 
-## Restoring to a previously saved dashboard version
+To restore to a previously saved dashboard version, follow these steps:
 
-If you need to restore to a previously saved dashboard version, you can do so by either clicking the "Restore" button on the right of a row in the dashboard version list, or by clicking the **Restore to version \<x\>** button appearing in the diff view. Clicking the button will bring up the following popup prompting you to confirm the restoration.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
+1. Go to the **Versions** tab.
+1. Click the **Restore** button next to the version.
 
-![Restore dashboard version](/media/docs/grafana/dashboards/screenshot-dashboard-versions-restore.png)
+When you restore a version, the dashboard is immediately saved and you're no longer in edit mode.
 
-After restoring to a previous version, a new version will be created containing the same exact data as the previous version, only with a different version number. This is indicated in the "Notes column" for the row in the new dashboard version. This is done simply to ensure your previous dashboard versions are not affected by the change.
+After you restore a previous version, a new version of the dashboard is created containing the same exact data as the previous version, but with a different version number. This is indicated in the **Notes column** in the **Versions** tab of the dashboard settings. This is done simply to ensure your previous dashboard versions are not affected by the change.

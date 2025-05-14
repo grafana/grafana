@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -19,11 +20,12 @@ type corePlugin struct {
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,
@@ -143,10 +145,10 @@ func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if cp.AdmissionHandler != nil {
+func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if cp.ConversionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.AdmissionHandler.ConvertObject(ctx, req)
+		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }

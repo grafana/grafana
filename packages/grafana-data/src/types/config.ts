@@ -1,12 +1,14 @@
-import { SystemDateFormatSettings } from '../datetime';
+import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
-import { GrafanaTheme2 } from '../themes';
+import { GrafanaTheme2 } from '../themes/types';
 
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
+import { IconName } from './icon';
+import { NavLinkDTO } from './navModel';
+import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
-
-import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme } from './theme';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -60,6 +62,7 @@ export interface GrafanaJavascriptAgentConfig {
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
 }
 
@@ -167,6 +170,8 @@ export interface GrafanaConfig {
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
+  externalUserMngAnalytics: boolean;
+  externalUserMngAnalyticsParams: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;
@@ -205,7 +210,6 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
-  customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
@@ -223,6 +227,8 @@ export interface GrafanaConfig {
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
+  analyticsConsoleReporting: boolean;
+  dashboardPerformanceMetrics: string[];
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
@@ -230,6 +236,9 @@ export interface GrafanaConfig {
   cloudMigrationIsTarget?: boolean;
   listDashboardScopesEndpoint?: string;
   listScopesEndpoint?: string;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset?: string;
+  exploreHideLogsDownload?: boolean;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
@@ -273,5 +282,6 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
 }

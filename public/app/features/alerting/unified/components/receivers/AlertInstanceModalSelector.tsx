@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  clearButtonStyles,
   FilterInput,
+  Icon,
   LoadingPlaceholder,
   Modal,
-  Tooltip,
-  useStyles2,
-  Icon,
   Tag,
+  Tooltip,
+  clearButtonStyles,
+  useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -56,10 +57,17 @@ export function AlertInstanceModalSelector({
     const rules: Record<string, AlertmanagerAlert[]> = {};
     if (!loading && result) {
       result.forEach((instance) => {
-        if (!rules[instance.labels['alertname']]) {
-          rules[instance.labels['alertname']] = [];
+        if (!rules[instance.labels.alertname]) {
+          rules[instance.labels.alertname] = [];
         }
-        rules[instance.labels['alertname']].push(instance);
+        const filteredAnnotations = Object.fromEntries(
+          Object.entries(instance.annotations).filter(([key]) => !key.startsWith('__'))
+        );
+        const filteredLabels = Object.fromEntries(
+          Object.entries(instance.labels).filter(([key]) => !key.startsWith('__'))
+        );
+        instance = { ...instance, annotations: filteredAnnotations, labels: filteredLabels };
+        rules[instance.labels.alertname].push(instance);
       });
     }
     return rules;
@@ -106,7 +114,7 @@ export function AlertInstanceModalSelector({
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
         <div className={styles.alertFolder}>
           <>
-            <Icon name="folder" /> {filteredRules[ruleName][0].labels['grafana_folder'] ?? ''}
+            <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
           </>
         </div>
       </button>
@@ -151,7 +159,7 @@ export function AlertInstanceModalSelector({
         })}
         onClick={handleSelectInstances}
       >
-        <div className={styles.rowButtonTitle} title={alert.labels['alertname']}>
+        <div className={styles.rowButtonTitle} title={alert.labels.alertname}>
           <Tooltip placement="bottom" content={<pre>{JSON.stringify(alert, null, 2)}</pre>} theme={'info'}>
             <div>
               {tags.map((tag, index) => (
@@ -259,7 +267,7 @@ export function AlertInstanceModalSelector({
         </div>
         <Modal.ButtonRow>
           <Button type="button" variant="secondary" onClick={onDismiss}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
           <Button
             type="button"

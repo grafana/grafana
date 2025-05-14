@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
@@ -54,7 +54,7 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   const allLayersEditorFragment = (
     <InlineFieldRow>
       <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
-        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} />
+        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} value={value.layer} />
       </InlineField>
     </InlineFieldRow>
   );

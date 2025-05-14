@@ -52,18 +52,31 @@ func Test_ReadPluginJSON(t *testing.T) {
 					Updated:  "2015-02-10",
 					Keywords: []string{"test"},
 				},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
 				Dependencies: Dependencies{
 					GrafanaVersion: "3.x.x",
 					Plugins: []Dependency{
 						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 					},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
 				},
+
 				Includes: []*Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: ActionAppAccess},
 				},
 				Backend: false,
 			},
@@ -94,10 +107,24 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "grafana-piechart-panel",
 				Type: TypePanel,
 				Name: "Pie Chart (old)",
+
+				Extensions: Extensions{
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
 				Dependencies: Dependencies{
 					GrafanaVersion: "*",
 					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
 				},
+
 				Includes: []*Includes{
 					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
 				},
@@ -117,29 +144,263 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:       "grafana-pyroscope-datasource",
 				AliasIDs: []string{"phlare"}, // Hardcoded from the parser
 				Type:     TypeDataSource,
+
+				Extensions: Extensions{
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
 				Dependencies: Dependencies{
 					GrafanaDependency: "",
 					GrafanaVersion:    "*",
 					Plugins:           []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
 				},
 			},
 		},
 		{
-			name: "do not allow alias except for our hardcoded set",
+			name: "can read the latest versions of extensions information (v2)",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
-					"id": "my-custom-app",
+					"id": "myorg-extensions-app",
+					"name": "Extensions App",
 					"type": "app",
-					"aliasIDs": ["phlare"]
+					"extensions": {
+						"addedLinks": [
+							{
+								"title": "Added link 1",
+								"description": "Added link 1 description",
+								"targets": ["grafana/dashboard/panel/menu"]
+							}
+						],
+						"addedComponents": [
+							{
+								"title": "Added component 1",
+								"description": "Added component 1 description",
+								"targets": ["grafana/user/profile/tab"]
+							}
+						],
+						"exposedComponents": [
+							{
+								"title": "Exposed component 1",
+								"description": "Exposed component 1 description",
+								"id": "myorg-extensions-app/component-1/v1"
+							}
+						],
+						"addedFunctions": [
+              {"targets": ["foo/bar"], "title":"some hook"}
+            ],
+						"extensionPoints": [
+							{
+								"title": "Extension point 1",
+								"description": "Extension points 1 description",
+								"id": "myorg-extensions-app/extensions-point-1/v1"
+							}
+						]
+					}
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
-			err: ErrUnsupportedAlias,
 			expected: JSONData{
-				ID:           "my-custom-app",
-				AliasIDs:     []string{"phlare"}, // Hardcoded from the parser
-				Type:         "app",
-				Dependencies: Dependencies{},
+				ID:   "myorg-extensions-app",
+				Name: "Extensions App",
+				Type: TypeApp,
+
+				Extensions: Extensions{
+					AddedLinks: []AddedLink{
+						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
+					},
+					AddedComponents: []AddedComponent{
+
+						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
+					},
+					ExposedComponents: []ExposedComponent{
+						{Id: "myorg-extensions-app/component-1/v1", Title: "Exposed component 1", Description: "Exposed component 1 description"},
+					},
+					ExtensionPoints: []ExtensionPoint{
+						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
+					},
+					AddedFunctions: []AddedFunction{
+						{Targets: []string{"foo/bar"}, Title: "some hook"},
+					},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read deprecated extensions info (v1) and parse it as v2",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-extensions-app",
+					"name": "Extensions App",
+					"type": "app",
+					"extensions": [
+						{
+							"extensionPointId": "grafana/dashboard/panel/menu",
+							"title": "Added link 1",
+							"description": "Added link 1 description",
+							"type": "link"
+						},
+						{
+							"extensionPointId": "grafana/dashboard/panel/menu",
+							"title": "Added link 2",
+							"description": "Added link 2 description",
+							"type": "link"
+						},
+						{
+							"extensionPointId": "grafana/user/profile/tab",
+							"title": "Added component 1",
+							"description": "Added component 1 description",
+							"type": "component"
+						}
+					]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:   "myorg-extensions-app",
+				Name: "Extensions App",
+				Type: TypeApp,
+
+				Extensions: Extensions{
+					AddedLinks: []AddedLink{
+						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
+						{Title: "Added link 2", Description: "Added link 2 description", Targets: []string{"grafana/dashboard/panel/menu"}},
+					},
+					AddedComponents: []AddedComponent{
+						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
+					},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "works if extensions info is empty",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-extensions-app",
+					"name": "Extensions App",
+					"type": "app",
+					"extensions": []
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:   "myorg-extensions-app",
+				Name: "Extensions App",
+				Type: TypeApp,
+
+				Extensions: Extensions{
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "works if extensions info is completely missing",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-extensions-app",
+					"name": "Extensions App",
+					"type": "app"
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:   "myorg-extensions-app",
+				Name: "Extensions App",
+				Type: TypeApp,
+
+				Extensions: Extensions{
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read extensions related dependencies",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-extensions-app",
+					"name": "Extensions App",
+					"type": "app",
+					"dependencies": {
+						"grafanaDependency": "10.0.0",
+						"extensions": {
+							"exposedComponents": ["myorg-extensions-app/component-1/v1"]
+						}
+					}
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:   "myorg-extensions-app",
+				Name: "Extensions App",
+				Type: TypeApp,
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion:    "*",
+					GrafanaDependency: "10.0.0",
+					Plugins:           []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{"myorg-extensions-app/component-1/v1"},
+					},
+				},
 			},
 		},
 	}
@@ -148,12 +409,25 @@ func Test_ReadPluginJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := tt.pluginJSON(t)
 			got, err := ReadPluginJSON(p)
+
+			// Check if the test returns the same error as expected
+			// (unneccary to check further if there is an error at this point)
+			if tt.err == nil && err != nil {
+				t.Errorf("Error while reading pluginJSON: %+v", err)
+				return
+			}
+
+			// Check if the test returns the same error as expected
 			if tt.err != nil {
 				require.ErrorIs(t, err, tt.err)
 			}
+
+			// Check if the test returns the expected pluginJSONData
 			if !cmp.Equal(got, tt.expected) {
 				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
 			}
+
+			// Should be able to close the reader
 			require.NoError(t, p.Close())
 		})
 	}

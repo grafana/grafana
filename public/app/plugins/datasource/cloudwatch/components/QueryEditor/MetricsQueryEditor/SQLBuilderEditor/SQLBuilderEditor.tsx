@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
-import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
+import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
@@ -25,7 +26,7 @@ export const SQLBuilderEditor = ({ query, datasource, onChange }: React.PropsWit
   const onQueryChange = useCallback(
     (query: CloudWatchMetricsQuery) => {
       const sqlGenerator = new SQLGenerator();
-      const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
+      const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {}, query.accountId);
       const fullQuery = {
         ...query,
         sqlExpression: sqlString,
@@ -39,7 +40,7 @@ export const SQLBuilderEditor = ({ query, datasource, onChange }: React.PropsWit
   const [sqlPreview, setSQLPreview] = useState<string | undefined>();
   useEffect(() => {
     const sqlGenerator = new SQLGenerator();
-    const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
+    const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {}, query.accountId);
     if (sqlPreview !== sqlString) {
       setSQLPreview(sqlString);
     }

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { ReactElement } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -143,8 +143,8 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
 }
 
 const getStyles = () => ({
-  tableContainer: css`
-    overflow: scroll;
-    width: 100%;
-  `,
+  tableContainer: css({
+    overflow: 'scroll',
+    width: '100%',
+  }),
 });

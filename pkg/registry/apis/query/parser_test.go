@@ -15,6 +15,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -29,7 +30,7 @@ type parserTestObject struct {
 func TestQuerySplitting(t *testing.T) {
 	ctx := context.Background()
 	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-		&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest())
+		&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), log.NewNopLogger())
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
@@ -45,7 +46,7 @@ func TestQuerySplitting(t *testing.T) {
 		require.Empty(t, split.Requests)
 	})
 
-	t.Run("applies default time range", func(t *testing.T) {
+	t.Run("applies zero time range if time range is missing", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
 			QueryDataRequest: data.QueryDataRequest{
 				TimeRange: data.TimeRange{}, // missing
@@ -62,10 +63,61 @@ func TestQuerySplitting(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
-		require.Equal(t, "now-6h", split.Requests[0].Request.From)
+		require.Equal(t, "0", split.Requests[0].Request.From)
+		require.Equal(t, "0", split.Requests[0].Request.To)
+	})
+	t.Run("applies query time range if present", func(t *testing.T) {
+		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{}, // missing
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "x",
+							UID:  "abc",
+						},
+						TimeRange: &data.TimeRange{
+							From: "now-1d",
+							To:   "now",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, split.Requests, 1)
+		require.Equal(t, "now-1d", split.Requests[0].Request.From)
 		require.Equal(t, "now", split.Requests[0].Request.To)
 	})
 
+	t.Run("applies query time range if all time ranges are present", func(t *testing.T) {
+		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{
+					From: "now-1h",
+					To:   "now",
+				},
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "x",
+							UID:  "abc",
+						},
+						TimeRange: &data.TimeRange{
+							From: "now-1d",
+							To:   "now",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, split.Requests, 1)
+		require.Equal(t, "now-1d", split.Requests[0].Request.From)
+		require.Equal(t, "now", split.Requests[0].Request.To)
+	})
 	t.Run("verify tests", func(t *testing.T) {
 		files, err := os.ReadDir("testdata")
 		require.NoError(t, err)

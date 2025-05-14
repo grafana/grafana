@@ -53,4 +53,10 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   mouseEvents: Subject<FeatureLike | undefined>;
 }
 
-export { Options, MapViewConfig, TooltipOptions, TooltipMode, defaultMapViewConfig } from './panelcfg.gen';
+export {
+  type Options,
+  type MapViewConfig,
+  type TooltipOptions,
+  TooltipMode,
+  defaultMapViewConfig,
+} from './panelcfg.gen';

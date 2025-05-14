@@ -35,11 +35,12 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimeRangeProvider } from './DateTimePickers/TimeRangeContext';
 export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart, isWeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -84,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,
@@ -167,6 +169,10 @@ export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './Menu/Menu
 export { MenuItem, type MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export {
   DataLinksContextMenu,
@@ -216,6 +222,7 @@ export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
 export { Grid } from './Layout/Grid/Grid';
 export { Space } from './Layout/Space';
+export { ScrollContainer } from './ScrollContainer/ScrollContainer';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -229,14 +236,21 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 // Select
+// Note - Select is nearly deprecated in favor of Combobox
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
+export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
+
+export { Combobox } from './Combobox/Combobox';
+export { MultiCombobox } from './Combobox/MultiCombobox';
+export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
 export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonDot } from './Forms/RadioButtonList/RadioButtonDot';
 export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
@@ -261,6 +275,7 @@ export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
+export { UsersIndicator, type UsersIndicatorProps } from './UsersIndicator/UsersIndicator';
 export { type UserView } from './UsersIndicator/types';
 export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
@@ -315,3 +330,10 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+  type ElementSelectionContextItem,
+} from './ElementSelectionContext/ElementSelectionContext';

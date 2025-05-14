@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
@@ -16,18 +15,16 @@ const forwardedProxyFilterMiddlewareName = "forwarded-x-proxy-filter"
 
 // NewPerconaForwarderHTTPClientMiddleware creates a new plugins.ClientMiddleware
 // that will forward plugin request headers as outgoing HTTP headers.
-func NewPerconaForwarderHTTPClientMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewPerconaForwarderHTTPClientMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &PerconaForwarderHTTPClientMiddleware{
-			baseMiddleware: baseMiddleware{
-				next: next,
-			},
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type PerconaForwarderHTTPClientMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) applyHeaders(ctx context.Context, pReq *backend.QueryDataRequest) context.Context {
@@ -55,34 +52,34 @@ func (m *PerconaForwarderHTTPClientMiddleware) applyHeaders(ctx context.Context,
 
 func (m *PerconaForwarderHTTPClientMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return m.next.QueryData(ctx, req)
+		return m.BaseHandler.QueryData(ctx, req)
 	}
 
 	ctx = m.applyHeaders(ctx, req)
 
-	return m.next.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return m.next.CallResource(ctx, req, sender)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.next.CheckHealth(ctx, req)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
+	return m.BaseHandler.CollectMetrics(ctx, req)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
+	return m.BaseHandler.SubscribeStream(ctx, req)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
+	return m.BaseHandler.PublishStream(ctx, req)
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
+	return m.BaseHandler.RunStream(ctx, req, sender)
 }

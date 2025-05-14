@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -106,7 +106,10 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                getDataLinks={(seriesIdx, dataIdx) =>
+                  alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                }
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
@@ -128,9 +131,12 @@ export const TimeSeriesPanel = ({
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
+                      hideZeros={options.tooltip.hideZeros}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
+                      dataLinks={dataLinks}
                     />
                   );
                 }}
@@ -153,6 +159,7 @@ export const TimeSeriesPanel = ({
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (

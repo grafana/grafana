@@ -31,6 +31,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       panelId: 0,
       panelPluginId: data.request?.panelPluginId,
       duration: data.request.endTime! - data.request.startTime,
+      ...(data?.request?.panelId && Number.isInteger(data.request.panelId) && { panelId: data.request.panelId }),
+      ...(data?.request?.panelName && { panelName: data.request.panelName }),
     };
 
     enrichWithInfo(eventData, data);
@@ -62,9 +64,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     eventData.totalQueries = Object.keys(queryCacheStatus).length;
     eventData.cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
-    if (data.request && Number.isInteger(data.request.panelId)) {
-      eventData.panelId = data.request.panelId;
-    }
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
@@ -78,7 +77,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
 function enrichWithErrorData(eventData: DataRequestEventPayload, data: PanelData) {
   if (data.errors?.length) {
-    eventData.error = data.errors.join(', ');
+    eventData.error = data.errors.map((e) => e.message).join(', ');
   } else if (data.error) {
     eventData.error = data.error.message;
   }

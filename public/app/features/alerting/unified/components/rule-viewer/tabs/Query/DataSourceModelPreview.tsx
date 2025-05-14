@@ -1,5 +1,5 @@
 import { dump } from 'js-yaml';
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { AlertDataQuery } from 'app/types/unified-alerting-dto';
@@ -7,7 +7,7 @@ import { AlertDataQuery } from 'app/types/unified-alerting-dto';
 import { DataSourceType } from '../../../../utils/datasource';
 import { isPromOrLokiQuery } from '../../../../utils/rule-form';
 
-import { isSQLLikeQuery, SQLQueryPreview } from './SQLQueryPreview';
+import { SQLQueryPreview, isSQLLikeQuery } from './SQLQueryPreview';
 
 const PrometheusQueryPreview = React.lazy(() => import('./PrometheusQueryPreview'));
 const LokiQueryPreview = React.lazy(() => import('./LokiQueryPreview'));

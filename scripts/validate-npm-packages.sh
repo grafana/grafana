@@ -7,6 +7,10 @@ ARTIFACTS_DIR="./npm-artifacts"
 
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
+
+  # Ignore named-exports for now as builds aren't compatible yet.
+  yarn dlx @arethetypeswrong/cli "$file" --ignore-rules "named-exports"
+
   # get filename then strip everything after package name.
   dir_name=$(basename "$file" .tgz | sed -E 's/@([a-zA-Z0-9-]+)-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9-]+)?/\1/')
   mkdir -p "./npm-artifacts/$dir_name"
@@ -39,14 +43,14 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   fi
 
   # Assert commonjs builds
-  if [ ! -d dist ] || [ ! -f dist/index.js ] || [ ! -f dist/index.d.ts ]; then
+  if [ ! -d dist ] || [ ! -f dist/cjs/index.cjs ] || [ ! -f dist/cjs/index.d.cts ]; then
     echo -e "❌ Failed: Missing 'dist' directory or required commonjs files in package $dir_name.\n"
     exit 1
   fi
 
-  if [ "$(jq -r '.main' package.json)" != "dist/index.js" ] || \
-     [ "$(jq -r '.types' package.json)" != "dist/index.d.ts" ]; then
-    echo -e "❌ Failed: Incorrect package.json properties in package $dir_name.\n"
+  if [ "$(jq -r '.main' package.json)" != "./dist/cjs/index.cjs" ] || \
+     [ "$(jq -r '.types' package.json)" != "./dist/cjs/index.d.cts" ]; then
+    echo -e "❌ Failed: Incorrect cjs package.json properties in package $dir_name.\n"
     exit 1
   fi
 
@@ -54,13 +58,13 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   esm_packages=("grafana-data" "grafana-ui" "grafana-runtime" "grafana-e2e-selectors" "grafana-schema")
   for esm_package in "${esm_packages[@]}"; do
     if [[ "$dir_name" == "$esm_package" ]]; then
-      if [ ! -d dist/esm ] || [ ! -f dist/esm/index.js ]; then
+      if [ ! -d dist/esm ] || [ ! -f dist/esm/index.mjs ]; then
         echo -e "❌ Failed: Missing 'dist/esm' directory or required esm files in package $dir_name.\n"
         exit 1
       fi
 
-      if [ "$(jq -r '.module' package.json)" != "dist/esm/index.js" ]; then
-        echo -e "❌ Failed: Incorrect package.json properties in package $dir_name.\n"
+      if [ "$(jq -r '.module' package.json)" != "./dist/esm/index.mjs" ]; then
+        echo -e "❌ Failed: Incorrect esm package.json properties in package $dir_name.\n"
         exit 1
       fi
     fi

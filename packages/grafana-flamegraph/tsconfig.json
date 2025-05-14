@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "baseUrl": "./",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,

@@ -10,15 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -37,6 +38,14 @@ var (
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
+
+// List of supported audiences in Azure
+var supportedFederatedCredentialAudiences = []string{
+	"api://AzureADTokenExchange",      // Public
+	"api://AzureADTokenExchangeUSGov", // US Gov
+	"api://AzureADTokenExchangeChina", // Mooncake
+	"api://AzureADTokenExchangeUSNat", // USNat
+	"api://AzureADTokenExchangeUSSec"} // USSec
 
 var _ social.SocialConnector = (*SocialAzureAD)(nil)
 var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
@@ -79,10 +88,17 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
 	}
 
@@ -121,26 +137,42 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrEmailNotFound
 	}
 
-	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
-	var role roletype.RoleType
-	var grafanaAdmin bool
-	if !s.info.SkipOrgRoleSync {
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
-		if err != nil {
-			return nil, err
-		}
-
-		if !role.IsValid() {
-			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
-		}
-	}
-	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
-
 	groups, err := s.extractGroups(ctx, client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
+
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
+
+	userInfo := &social.BasicUserInfo{
+		Id:     claims.ID,
+		Name:   claims.Name,
+		Email:  email,
+		Login:  email,
+		Groups: groups,
+	}
+
+	if !s.info.SkipOrgRoleSync {
+		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
+
+		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
+
+		s.log.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
+	}
+
+	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	if !s.isGroupMember(groups) {
 		if len(groups) == 0 {
 			// either they do not have a group or misconfiguration
@@ -150,28 +182,68 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, errMissingGroupMembership
 	}
 
-	var isGrafanaAdmin *bool = nil
-	if s.info.AllowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
+	return userInfo, nil
+}
+
+func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	switch s.info.ClientAuthentication {
+	case social.ManagedIdentity:
+		// Generate client assertion
+		clientAssertion, err := s.managedIdentityCallback(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set client assertion parameters
+		authOptions = append(authOptions,
+			oauth2.SetAuthURLParam("client_assertion", clientAssertion),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+
+	case social.ClientSecretPost:
+		// Default behavior for ClientSecretPost, no additional setup needed
+	default:
+		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
 	}
 
-	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	// Default token exchange
+	return s.Config.Exchange(ctx, code, authOptions...)
+}
+
+// ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
+func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
+	// Validate required fields for Managed Identity authentication
+	if s.info.ManagedIdentityClientID == "" {
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
+	}
+	if s.info.FederatedCredentialAudience == "" {
+		return "", fmt.Errorf("FederatedCredentialAudience is required for Managed Identity authentication")
 	}
 
-	return &social.BasicUserInfo{
-		Id:             claims.ID,
-		Name:           claims.Name,
-		Email:          email,
-		Login:          email,
-		Role:           role,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		Groups:         groups,
-	}, nil
+	// Prepare Managed Identity Credential
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(s.info.ManagedIdentityClientID),
+	})
+	if err != nil {
+		return "", fmt.Errorf("error constructing managed identity credential: %w", err)
+	}
+
+	// Request token and return
+	tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", s.info.FederatedCredentialAudience)},
+	})
+	if err != nil {
+		return "", fmt.Errorf("error getting managed identity token: %w", err)
+	}
+
+	return tk.Token, nil
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.AzureADProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -185,24 +257,36 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
 
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
+	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
 
 	return validation.Validate(info, requester,
+		validateClientAuthentication,
+		validateFederatedCredentialAudience,
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
@@ -278,6 +362,43 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
 }
 
+func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.ClientAuthentication != social.ManagedIdentity {
+		return nil
+	}
+	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
+		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
+			return nil
+		}
+	}
+	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
+}
+
+func validateClientAuthentication(info *social.OAuthInfo, requester identity.Requester) error {
+	switch info.ClientAuthentication {
+	case social.ManagedIdentity:
+		if info.ManagedIdentityClientID == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC managed identity client Id is required for Managed identity authentication.")
+		}
+		if info.FederatedCredentialAudience == "" {
+			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.ClientSecretPost, "":
+		if info.ClientSecret == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
+		}
+		return nil
+
+	case social.None:
+		return nil
+
+	default:
+		return ssosettings.ErrInvalidOAuthConfig("Invalid client authentication method.")
+	}
+}
+
 func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
@@ -289,12 +410,9 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
+func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if s.info.RoleAttributeStrict {
-			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
-		}
-		return s.defaultRole(), false, nil
+		return "", false
 	}
 
 	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
@@ -302,18 +420,14 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == social.RoleGrafanaAdmin {
-				return org.RoleAdmin, true, nil
+				return org.RoleAdmin, true
 			}
 
-			return role, false, nil
+			return role, false
 		}
 	}
 
-	if s.info.RoleAttributeStrict {
-		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
-	}
-
-	return s.defaultRole(), false, nil
+	return "", false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

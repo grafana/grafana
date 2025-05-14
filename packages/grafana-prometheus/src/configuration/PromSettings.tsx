@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx
-import React, { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
@@ -492,6 +492,26 @@ export const PromSettings = (props: Props) => {
               </InlineField>
             </div>
           </div>
+          <InlineField
+            labelWidth={PROM_CONFIG_LABEL_WIDTH}
+            label="Use series endpoint"
+            tooltip={
+              <>
+                Checking this option will favor the series endpoint with match[] parameter over the label values
+                endpoint with match[] parameter. While the label values endpoint is considered more performant, some
+                users may prefer the series because it has a POST method while the label values endpoint only has a GET
+                method. {docsTip()}
+              </>
+            }
+            interactive={true}
+            disabled={options.readOnly}
+            className={styles.switchField}
+          >
+            <Switch
+              value={options.jsonData.seriesEndpoint ?? false}
+              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'seriesEndpoint')}
+            />
+          </InlineField>
         </div>
       </ConfigSubSection>
 

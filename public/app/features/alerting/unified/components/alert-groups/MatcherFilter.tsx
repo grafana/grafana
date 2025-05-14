@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { logInfo, LogMessages } from '../../Analytics';
-import { parseMatchers } from '../../utils/alertmanager';
+import { LogMessages, logInfo } from '../../Analytics';
+import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 
 interface Props {
   defaultQueryString?: string;
@@ -16,7 +16,7 @@ interface Props {
 export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [filterQuery, setFilterQuery] = React.useState<string>(defaultQueryString ?? '');
+  const [filterQuery, setFilterQuery] = useState<string>(defaultQueryString ?? '');
 
   useDebounce(
     () => {
@@ -28,13 +28,22 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
   );
 
   const searchIcon = <Icon name={'search'} />;
-  const inputInvalid = defaultQueryString ? parseMatchers(defaultQueryString).length === 0 : false;
+  let inputValid = Boolean(defaultQueryString && defaultQueryString.length >= 3);
+  try {
+    if (!defaultQueryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(defaultQueryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <Field
       className={styles.fixMargin}
-      invalid={inputInvalid || undefined}
-      error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
+      invalid={!inputValid}
+      error={!inputValid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
         <Label>
           <Stack gap={0.5} alignItems="center">

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Select } from '@grafana/ui';
 import { SelectCommonProps } from '@grafana/ui/src/components/Select/types';

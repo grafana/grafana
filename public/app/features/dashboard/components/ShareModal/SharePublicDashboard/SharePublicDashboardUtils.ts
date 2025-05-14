@@ -1,9 +1,9 @@
 import { TypedVariableModel } from '@grafana/data';
-import { config, DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { PanelModel } from '../../../state';
+import { PanelModel } from '../../../state/PanelModel';
 import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
@@ -17,6 +17,7 @@ export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
   timeSelectionEnabled: boolean;
+  share: PublicDashboardShareType;
 }
 
 export interface PublicDashboard extends PublicDashboardSettings {
@@ -24,7 +25,6 @@ export interface PublicDashboard extends PublicDashboardSettings {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-  share: PublicDashboardShareType;
   recipients?: Array<{ uid: string; recipient: string }>;
 }
 
@@ -95,5 +95,10 @@ export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboard
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
 
 export const isPublicDashboardsEnabled = () => {
-  return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
+  return config.publicDashboardsEnabled;
 };
+
+export const isEmailSharingEnabled = () =>
+  isPublicDashboardsEnabled() &&
+  !!config.featureToggles.publicDashboardsEmailSharing &&
+  featureEnabled('publicDashboardsEmailSharing');

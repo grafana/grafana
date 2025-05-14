@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataLayerControls, SceneVariableSet, TextBoxVariable, VariableValueSelectors } from '@grafana/scenes';
@@ -17,7 +16,11 @@ describe('DashboardControls', () => {
     });
 
     it('should return if time controls are hidden', () => {
-      const scene = buildTestScene({ hideTimeControls: false, hideVariableControls: false, hideLinksControls: false });
+      const scene = buildTestScene({
+        hideTimeControls: false,
+        hideVariableControls: false,
+        hideLinksControls: false,
+      });
       expect(scene.hasControls()).toBeTruthy();
       scene.setState({ hideTimeControls: true });
       expect(scene.hasControls()).toBeTruthy();
@@ -67,23 +70,15 @@ describe('DashboardControls', () => {
       expect(scene._urlSync.getKeys()).toEqual(['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks']);
     });
 
-    it('should return url state', () => {
+    it('should not return url state for hide flags', () => {
       const scene = buildTestScene();
-      expect(scene.getUrlState()).toEqual({
-        '_dash.hideTimePicker': undefined,
-        '_dash.hideVariables': undefined,
-        '_dash.hideLinks': undefined,
-      });
+      expect(scene.getUrlState()).toEqual({});
       scene.setState({
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
       });
-      expect(scene.getUrlState()).toEqual({
-        '_dash.hideTimePicker': 'true',
-        '_dash.hideVariables': 'true',
-        '_dash.hideLinks': 'true',
-      });
+      expect(scene.getUrlState()).toEqual({});
     });
 
     it('should update from url', () => {
@@ -107,7 +102,11 @@ describe('DashboardControls', () => {
     });
 
     it('should not override state if no new state comes from url', () => {
-      const scene = buildTestScene({ hideTimeControls: true, hideVariableControls: true, hideLinksControls: true });
+      const scene = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
@@ -115,19 +114,20 @@ describe('DashboardControls', () => {
     });
 
     it('should not call setState if no changes', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       const setState = jest.spyOn(scene, 'setState');
+
       scene.updateFromUrl({
         '_dash.hideTimePicker': 'true',
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
       });
-      scene.updateFromUrl({
-        '_dash.hideTimePicker': 'true',
-        '_dash.hideVariables': 'true',
-        '_dash.hideLinks': 'true',
-      });
-      expect(setState).toHaveBeenCalledTimes(1);
+
+      expect(setState).toHaveBeenCalledTimes(0);
     });
   });
 });

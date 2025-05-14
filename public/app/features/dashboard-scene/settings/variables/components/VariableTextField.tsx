@@ -1,5 +1,6 @@
 import { useId } from '@react-aria/utils';
-import React, { FormEvent, PropsWithChildren } from 'react';
+import { FormEvent, PropsWithChildren } from 'react';
+import * as React from 'react';
 
 import { Field, Input } from '@grafana/ui';
 
@@ -48,7 +49,7 @@ export function VariableTextField({
         defaultValue={defaultValue}
         onChange={onChange}
         onBlur={onBlur}
-        width={grow ? undefined : width ?? 30}
+        width={grow ? undefined : (width ?? 30)}
         data-testid={testId}
         maxLength={maxLength}
         required={required}

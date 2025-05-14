@@ -7,14 +7,23 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 )
@@ -25,14 +34,12 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		identity  *authn.Identity
 		oauthInfo *social.OAuthInfo
 
-		expectedHasEntryToken *login.UserAuth
-		expectHasEntryCalled  bool
+		expectToken *login.UserAuth
 
 		expectedTryRefreshErr       error
 		expectTryRefreshTokenCalled bool
 
-		expectRevokeTokenCalled           bool
-		expectInvalidateOauthTokensCalled bool
+		expectRevokeTokenCalled bool
 
 		expectedErr error
 	}
@@ -40,42 +47,35 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:                        "should skip sync when identity is not a user",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")},
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeServiceAccount},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
 			desc:                        "should skip sync when identity is a user but is not authenticated with session token",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
-			desc:                              "should invalidate access token and session token if token refresh fails",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
-			expectHasEntryCalled:              true,
-			expectedTryRefreshErr:             errors.New("some err"),
-			expectTryRefreshTokenCalled:       true,
-			expectInvalidateOauthTokensCalled: true,
-			expectRevokeTokenCalled:           true,
-			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-			expectedErr:                       authn.ErrExpiredAccessToken,
+			desc:                        "should invalidate access token and session token if token refresh fails",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectedTryRefreshErr:       errors.New("some err"),
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     true,
+			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+			expectedErr:                 authn.ErrExpiredAccessToken,
 		},
 		{
-			desc:                              "should refresh the token successfully",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
-			expectHasEntryCalled:              false,
-			expectTryRefreshTokenCalled:       true,
-			expectInvalidateOauthTokensCalled: false,
-			expectRevokeTokenCalled:           false,
+			desc:                        "should refresh the token successfully",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     false,
 		},
 		{
-			desc:                              "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
-			expectHasEntryCalled:              true,
-			expectTryRefreshTokenCalled:       true,
-			expectInvalidateOauthTokensCalled: false,
-			expectRevokeTokenCalled:           false,
-			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
-			expectedTryRefreshErr:             errors.New("some err"),
+			desc:                        "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     false,
+			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
 
 		// TODO: address coverage of oauthtoken sync
@@ -84,24 +84,14 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			var (
-				hasEntryCalled         bool
-				tryRefreshCalled       bool
-				invalidateTokensCalled bool
-				revokeTokenCalled      bool
+				tryRefreshCalled  bool
+				revokeTokenCalled bool
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				HasOAuthEntryFunc: func(ctx context.Context, usr authn.Requester) (*login.UserAuth, bool, error) {
-					hasEntryCalled = true
-					return tt.expectedHasEntryToken, tt.expectedHasEntryToken != nil, nil
-				},
-				InvalidateOAuthTokensFunc: func(ctx context.Context, usr *login.UserAuth) error {
-					invalidateTokensCalled = true
-					return nil
-				},
-				TryTokenRefreshFunc: func(ctx context.Context, usr authn.Requester) error {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *auth.UserToken) (*oauth2.Token, error) {
 					tryRefreshCalled = true
-					return tt.expectedTryRefreshErr
+					return nil, tt.expectedTryRefreshErr
 				},
 			}
 
@@ -128,13 +118,17 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				sessionService:    sessionService,
 				socialService:     socialService,
 				singleflightGroup: new(singleflight.Group),
+				tracer:            tracing.InitializeTracerForTest(),
+				cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				features:          featuremgmt.WithFeatures(),
 			}
 
-			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
+			ctx := context.Background()
+			reqCtx := context.WithValue(ctx, ctxkey.Key{}, &contextmodel.ReqContext{UserToken: nil})
+
+			err := sync.SyncOauthTokenHook(reqCtx, tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
-			assert.Equal(t, tt.expectHasEntryCalled, hasEntryCalled)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)
-			assert.Equal(t, tt.expectInvalidateOauthTokensCalled, invalidateTokensCalled)
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)
 		})
 	}

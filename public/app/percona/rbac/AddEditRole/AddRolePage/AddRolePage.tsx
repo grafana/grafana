@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { AppEvents, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

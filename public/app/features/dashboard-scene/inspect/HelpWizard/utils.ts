@@ -14,11 +14,9 @@ import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
-import { DashboardScene } from '../../scene/DashboardScene';
-import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 
 import { Randomize, randomizeData } from './randomizer';
 
@@ -64,27 +62,13 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
   let saveModel: ReturnType<typeof gridItemToPanel> = { type: '' };
-  const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
-  const gridItem = (isLibraryPanel ? panel.parent.parent : panel.parent) as DashboardGridItem;
-  const scene = panel.getRoot() as DashboardScene;
+  const gridItem = panel.parent as DashboardGridItem;
 
-  if (isLibraryPanel) {
+  if (isLibraryPanel(panel)) {
     saveModel = {
       ...gridItemToPanel(gridItem),
       ...vizPanelToPanel(panel),
     };
-  } else if (scene.state.editPanel) {
-    // If panel edit mode is open when the user chooses the "get help" panel menu option
-    // we want the debug dashboard to include the panel with any changes that were made while
-    // in panel edit mode.
-    const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
-    const dashGridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
-    if (dashGridItem instanceof DashboardGridItem) {
-      saveModel = {
-        ...gridItemToPanel(dashGridItem),
-        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panel.clone()),
-      };
-    }
   } else {
     saveModel = gridItemToPanel(gridItem);
   }

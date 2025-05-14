@@ -12,16 +12,20 @@ Grafana open source is open source visualization and analytics software. It allo
 
 ### Grafana Loki
 
-Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](/docs/loki/latest/).
+Grafana Loki is an open-source set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](https://grafana.com/docs/loki/<LOKI_VERSION>/).
 
 ### Grafana Tempo
 
-Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Tempo documentation](/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
+Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Tempo documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/).
 
 ### Grafana Mimir
 
-Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
+Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](https://grafana.com/docs/mimir/<MIMIR_VERSION>/).
+
+### Grafana Pyroscope
+
+Grafana Pyroscope is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that helps you understand your workload’s resources usage. For more information, refer to [Grafana Pyroscope documentation](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/).
 
 ### Grafana Oncall
 
-Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](/docs/oncall/latest/).
+Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](https://grafana.com/docs/oncall/<ONCALL_VERSION>/).

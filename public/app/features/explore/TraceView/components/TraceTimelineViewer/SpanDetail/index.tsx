@@ -15,22 +15,27 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  LinkModel,
+  TimeRange,
+  TraceKeyValuePair,
+  TraceLog,
+} from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
-import { SpanLinkDef, SpanLinkType } from '../../types/links';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -38,82 +43,94 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0 1rem;
-      margin-bottom: 0.25rem;
-    `,
-    listWrapper: css`
-      overflow: hidden;
-    `,
+    header: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: '0 1rem',
+      marginBottom: '0.25rem',
+    }),
+    listWrapper: css({
+      overflow: 'hidden',
+    }),
     list: css({
       textAlign: 'right',
     }),
     operationName: css({
       margin: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      flexBasis: '50%',
+      flexGrow: 0,
+      flexShrink: 0,
     }),
-    debugInfo: css`
-      label: debugInfo;
-      display: block;
-      letter-spacing: 0.25px;
-      margin: 0.5em 0 -0.75em;
-      text-align: right;
-    `,
-    debugLabel: css`
-      label: debugLabel;
-      &::before {
-        color: ${autoColor(theme, '#bbb')};
-        content: attr(data-label);
-      }
-    `,
-    debugValue: css`
-      label: debugValue;
-      background-color: inherit;
-      border: none;
-      color: ${autoColor(theme, '#888')};
-      cursor: pointer;
-      &:hover {
-        color: ${autoColor(theme, '#333')};
-      }
-    `,
-    AccordianWarnings: css`
-      label: AccordianWarnings;
-      background: ${autoColor(theme, '#fafafa')};
-      border: 1px solid ${autoColor(theme, '#e4e4e4')};
-      margin-bottom: 0.25rem;
-    `,
-    AccordianWarningsHeader: css`
-      label: AccordianWarningsHeader;
-      background: ${autoColor(theme, '#fff7e6')};
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#ffe7ba')};
-      }
-    `,
-    AccordianWarningsHeaderOpen: css`
-      label: AccordianWarningsHeaderOpen;
-      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-    `,
-    AccordianWarningsLabel: css`
-      label: AccordianWarningsLabel;
-      color: ${autoColor(theme, '#d36c08')};
-    `,
+    debugInfo: css({
+      label: 'debugInfo',
+      display: 'block',
+      letterSpacing: '0.25px',
+      margin: '0.5em 0 -0.75em',
+      textAlign: 'right',
+    }),
+    debugLabel: css({
+      label: 'debugLabel',
+      '&::before': {
+        color: autoColor(theme, '#bbb'),
+        content: 'attr(data-label)',
+      },
+    }),
+    debugValue: css({
+      label: 'debugValue',
+      backgroundColor: 'inherit',
+      border: 'none',
+      color: autoColor(theme, '#888'),
+      cursor: 'pointer',
+      '&:hover': {
+        color: autoColor(theme, '#333'),
+      },
+    }),
+    AccordianWarnings: css({
+      label: 'AccordianWarnings',
+      background: autoColor(theme, '#fafafa'),
+      border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
+      marginBottom: '0.25rem',
+    }),
+    AccordianWarningsHeader: css({
+      label: 'AccordianWarningsHeader',
+      background: autoColor(theme, '#fff7e6'),
+      padding: '0.25rem 0.5rem',
+      '&:hover': {
+        background: autoColor(theme, '#ffe7ba'),
+      },
+    }),
+    AccordianWarningsHeaderOpen: css({
+      label: 'AccordianWarningsHeaderOpen',
+      borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
+    }),
+    AccordianWarningsLabel: css({
+      label: 'AccordianWarningsLabel',
+      color: autoColor(theme, '#d36c08'),
+    }),
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
-    Textarea: css`
-      word-break: break-all;
-      white-space: pre;
-    `,
-    LinkIcon: css`
-      font-size: 1.5em;
-    `,
+    Textarea: css({
+      wordBreak: 'break-all',
+      whiteSpace: 'pre',
+    }),
+    LinkIcon: css({
+      fontSize: '1.5em',
+    }),
+    linkList: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px',
+    }),
   };
 };
 
@@ -149,6 +166,8 @@ export type SpanDetailProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -174,6 +193,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     setTraceFlameGraphs,
     traceToProfilesOptions,
     setRedrawListView,
+    timeRange,
+    app,
   } = props;
   const {
     isTagsOpen,
@@ -270,64 +291,31 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
-    return (
-      <DataLinkButton
-        link={{
-          ...link,
-          title: title,
-          target: '_blank',
-          origin: link.field,
-          onClick: (event: React.MouseEvent) => {
-            // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-            // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-            // this interaction will not be tracked with link right clicks
-            reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-              datasourceType: datasourceType,
-              grafana_version: config.buildInfo.version,
-              type,
-              location: 'spanDetails',
-            });
-
-            if (link.onClick) {
-              link.onClick?.(event);
-            } else {
-              locationService.push(link.href);
-            }
-          },
-        }}
-        buttonProps={{ icon }}
-      />
-    );
-  };
-
-  let logLinkButton: JSX.Element | null = null;
-  let profileLinkButton: JSX.Element | null = null;
-  if (createSpanLink) {
-    const links = createSpanLink(span);
-    const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
-    if (links && logsLink && logsLink.length > 0) {
-      logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
-    }
-    const profilesLink = links?.filter(
-      (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
-    );
-    if (links && profilesLink && profilesLink.length > 0) {
-      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
-    }
-  }
+  const { profileLinkButtons, logLinkButton, sessionLinkButton } = getSpanDetailLinkButtons({
+    span,
+    createSpanLink,
+    datasourceType,
+    traceToProfilesOptions,
+    timeRange,
+    app,
+  });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={styles.operationName}>{operationName}</h2>
+        <h2 className={styles.operationName} title={operationName}>
+          {operationName}
+        </h2>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
-      {profileLinkButton}
+      <div className={styles.linkList}>
+        {logLinkButton}
+        {profileLinkButtons}
+        {sessionLinkButton}
+      </div>
       <Divider spacing={1} />
       <div>
         <div>

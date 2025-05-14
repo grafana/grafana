@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 

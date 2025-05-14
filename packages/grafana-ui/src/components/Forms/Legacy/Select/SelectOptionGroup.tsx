@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { GroupProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';

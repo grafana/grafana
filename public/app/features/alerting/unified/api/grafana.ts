@@ -1,13 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { ContactPointsState, NotifierDTO, ReceiversStateDTO, ReceiverState } from 'app/types';
+import { ContactPointsState, ReceiverState, ReceiversStateDTO } from 'app/types';
 
 import { getDatasourceAPIUid } from '../utils/datasource';
-
-export function fetchNotifiers(): Promise<NotifierDTO[]> {
-  return getBackendSrv().get(`/api/alert-notifiers`);
-}
 
 interface IntegrationNameObject {
   type: string;

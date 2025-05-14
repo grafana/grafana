@@ -37,7 +37,7 @@ func (c *defaultContactPointProvisioner) Provision(ctx context.Context,
 			if _, exists := cpsCache[contactPointsConfig.OrgID]; !exists {
 				cps, err := c.contactPointService.GetContactPoints(ctx, provisioning.ContactPointQuery{
 					OrgID: contactPointsConfig.OrgID,
-				}, nil)
+				}, provisionerUser(contactPointsConfig.OrgID))
 				if err != nil {
 					return err
 				}
@@ -55,8 +55,13 @@ func (c *defaultContactPointProvisioner) Provision(ctx context.Context,
 						continue outer
 					}
 				}
-				_, err := c.contactPointService.CreateContactPoint(ctx, contactPointsConfig.OrgID,
-					contactPoint, models.ProvenanceFile)
+				_, err := c.contactPointService.CreateContactPoint(
+					ctx,
+					contactPointsConfig.OrgID,
+					provisionerUser(contactPointsConfig.OrgID),
+					contactPoint,
+					models.ProvenanceFile,
+				)
 				if err != nil {
 					return err
 				}

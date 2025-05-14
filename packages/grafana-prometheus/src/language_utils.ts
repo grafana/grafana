@@ -16,7 +16,7 @@ import {
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -139,7 +139,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: str
   return { labelKeys, selector: selectorString };
 }
 
-export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
+export function expandRecordingRules(query: string, mapping: { [name: string]: RecordingRuleIdentifier }): string {
   const getRuleRegex = (ruleName: string) => new RegExp(`(\\s|\\(|^)(${ruleName})(\\s|$|\\(|\\[|\\{)`, 'ig');
 
   // For each mapping key we iterate over the query and split them in parts.
@@ -202,12 +202,13 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
 
     // check if the mapping is there
     if (mapping[tsp]) {
-      const recordingRule = mapping[tsp];
+      const { expandedQuery: recordingRule, identifierValue, identifier } = mapping[tsp];
       // it is a recording rule. if the following is a label then apply it
       if (i + 1 !== tmpSplitParts.length && tmpSplitParts[i + 1].match(labelRegexp)) {
         // the next value in the loop is label. Let's apply labels to the metric
         labelFound = true;
-        const labels = tmpSplitParts[i + 1];
+        const regexp = new RegExp(`(,)?(\\s)?(${identifier}=\\"${identifierValue}\\")(,)?(\\s)?`, 'g');
+        const labels = tmpSplitParts[i + 1].replace(regexp, '');
         const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
         return addLabelsToExpression(recordingRule + labels, invalidLabelsRegex);
       } else {
@@ -322,7 +323,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
-    type: 'counter',
+    type: 'gauge',
     help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
@@ -477,7 +478,10 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
 export function getRangeSnapInterval(
   cacheLevel: PrometheusCacheLevel,
   range: TimeRange
-): { start: string; end: string } {
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {
@@ -525,6 +529,16 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
   return Math.ceil(date.valueOf() / 1000);
 }
 
+/**
+ * Used to truncate metrics, label names and label value in the query builder select components
+ * to improve frontend performance. This is best used with an async select component including
+ * the loadOptions property where we should still allow users to search all results with a string.
+ * This can be done either storing the total results or querying an api that allows for matching a query.
+ *
+ * @param array
+ * @param limit
+ * @returns
+ */
 export function truncateResult<T>(array: T[], limit?: number): T[] {
   if (limit === undefined) {
     limit = PROMETHEUS_QUERY_BUILDER_MAX_RESULTS;

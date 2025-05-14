@@ -1,11 +1,13 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
+import { LogDetailsBody } from './LogDetailsBody';
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 import { getAllFields, createLogLineLinks } from './logParser';
@@ -27,6 +29,9 @@ export interface Props extends Themeable2 {
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+
+  onPinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -46,7 +51,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       displayedFields,
       getFieldLinks,
       wrapLogMessage,
+      onPinLine,
       styles,
+      pinLineButtonTooltipTitle,
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
@@ -81,10 +88,28 @@ class UnThemedLogDetails extends PureComponent<Props> {
           <div className={styles.logDetailsContainer}>
             <table className={styles.logDetailsTable}>
               <tbody>
+                {displayedFields && displayedFields.length > 0 && (
+                  <>
+                    <tr>
+                      <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
+                        <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
+                      </td>
+                    </tr>
+                    <LogDetailsBody
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      row={row}
+                      app={app}
+                      displayedFields={displayedFields}
+                      disableActions={false}
+                      theme={theme}
+                    />
+                  </>
+                )}
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
-                      Fields
+                      <Trans i18nKey="logs.log-details.fields">Fields</Trans>
                     </td>
                   </tr>
                 )}
@@ -137,7 +162,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
-                      Links
+                      <Trans i18nKey="logs.log-details.links">Links</Trans>
                     </td>
                   </tr>
                 )}
@@ -151,6 +176,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
+                      onPinLine={onPinLine}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
@@ -170,6 +197,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
+                      onPinLine={onPinLine}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                       getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
@@ -183,7 +212,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} aria-label="No details">
-                      No details available
+                      <Trans i18nKey="logs.log-details.no-details">No details available</Trans>
                     </td>
                   </tr>
                 )}

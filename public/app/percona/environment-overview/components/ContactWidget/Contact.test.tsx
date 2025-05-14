@@ -1,9 +1,9 @@
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import React, { FC, PropsWithChildren } from 'react';
+import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { locationService } from '@grafana/runtime';
+import { logger } from 'app/percona/shared/helpers/logger';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -20,7 +20,7 @@ const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
         },
       } as StoreState)}
     >
-      <Router history={locationService.getHistory()}>{children}</Router>
+      <MemoryRouter>{children}</MemoryRouter>
     </Provider>
   );
 };
@@ -46,16 +46,18 @@ describe('Contact widget', () => {
   });
 
   it('not render contact when data fetch failed', async () => {
-    jest.spyOn(ContactService, 'getContact').mockImplementationOnce(() => {
-      throw Error('test');
-    });
+    // We expected an error to be logged if the api call fails
+    jest.spyOn(logger, 'error').mockImplementation();
+
+    jest.spyOn(ContactService, 'getContact').mockReturnValueOnce(Promise.reject());
+
     render(
       <MockWrapper>
         <Contact />
       </MockWrapper>
     );
 
-    expect(screen.queryByTestId('contact-name')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contact-email-icon')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByTestId('contact-name')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId('contact-email-icon')).not.toBeInTheDocument());
   });
 });

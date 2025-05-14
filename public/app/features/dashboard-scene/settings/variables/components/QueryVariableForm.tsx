@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
@@ -34,6 +34,8 @@ interface QueryVariableEditorFormProps {
   onRefreshChange: (option: VariableRefresh) => void;
   isMulti: boolean;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
+  allowCustomValue?: boolean;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   includeAll: boolean;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
@@ -55,6 +57,8 @@ export function QueryVariableEditorForm({
   onRefreshChange,
   isMulti,
   onMultiChange,
+  allowCustomValue,
+  onAllowCustomValueChange,
   includeAll,
   onIncludeAllChange,
   allValue,
@@ -63,6 +67,13 @@ export function QueryVariableEditorForm({
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
+    const defaultQuery = datasource?.variables?.getDefaultQuery?.();
+
+    if (!query && defaultQuery) {
+      const query =
+        typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
+      onQueryChange(query);
+    }
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
@@ -126,10 +137,12 @@ export function QueryVariableEditorForm({
       <SelectionOptionsForm
         multi={!!isMulti}
         includeAll={!!includeAll}
+        allowCustomValue={allowCustomValue}
         allValue={allValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
   );

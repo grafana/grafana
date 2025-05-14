@@ -13,6 +13,10 @@ func (f *FakeActionSetSvc) ResolveAction(action string) []string {
 	return f.ExpectedActionSets
 }
 
+func (f *FakeActionSetSvc) ResolveActionPrefix(prefix string) []string {
+	return f.ExpectedActionSets
+}
+
 func (f *FakeActionSetSvc) ResolveActionSet(actionSet string) []string {
 	return f.ExpectedActions
 }
@@ -21,4 +25,8 @@ func (f *FakeActionSetSvc) ExpandActionSets(permissions []accesscontrol.Permissi
 	return f.ExpectedPermissions
 }
 
-func (f *FakeActionSetSvc) StoreActionSet(resource, permission string, actions []string) {}
+func (f *FakeActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
+	return f.ExpectedPermissions
+}
+
+func (f *FakeActionSetSvc) StoreActionSet(name string, actions []string) {}

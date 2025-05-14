@@ -21,10 +21,11 @@ func makeAlerts(amount int) []Alert {
 	alerts := make([]Alert, amount)
 
 	for i := 0; i < len(alerts); i++ {
-		alerts[i].Labels = make(map[string]string)
+		lbls := make(map[string]string)
 		for label := 0; label < numLabels; label++ {
-			alerts[i].Labels[fmt.Sprintf("label_%d", label)] = fmt.Sprintf("label_%d_value_%d", label, i%100)
+			lbls[fmt.Sprintf("label_%d", label)] = fmt.Sprintf("label_%d_value_%d", label, i%100)
 		}
+		alerts[i].Labels = LabelsFromMap(lbls)
 
 		if i%100 < percentAlerting {
 			alerts[i].State = "alerting"

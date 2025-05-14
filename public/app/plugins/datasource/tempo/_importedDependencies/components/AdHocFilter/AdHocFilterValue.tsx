@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AdHocVariableFilter, DataSourceRef, SelectableValue, getDefaultTimeRange } from '@grafana/data';
 // import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getDataSourceSrv } from '@grafana/runtime';

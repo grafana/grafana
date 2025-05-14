@@ -5,6 +5,8 @@ import {
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
+import { resourceTypes } from '../azureMetadata';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
@@ -19,18 +21,26 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const createResourcePickerData = (responses: AzureGraphResponse[]) => {
+const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean) => {
   const instanceSettings = createMockInstanceSetttings();
-  const mockDatasource = createMockDatasource();
-  mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
-    .fn()
-    .mockResolvedValueOnce([{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]);
-  const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
+  const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
   const postResource = jest.fn();
   responses.forEach((res) => {
     postResource.mockResolvedValueOnce(res);
   });
-  resourcePickerData.postResource = postResource;
+  azureResourceGraphDatasource.postResource = postResource;
+  const mockDatasource = createMockDatasource({ azureResourceGraphDatasource: azureResourceGraphDatasource });
+  mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
+    .fn()
+    .mockResolvedValueOnce(
+      noNamespaces ? [] : [{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]
+    );
+
+  const resourcePickerData = new ResourcePickerData(
+    instanceSettings,
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
+  );
   return { resourcePickerData, postResource, mockDatasource };
 };
 
@@ -63,7 +73,7 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('makes multiple requests when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+    it('makes multiple requests for subscriptions when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
       const response1 = {
         ...createMockARGSubscriptionResponse(),
         $skipToken: 'skipfirst100',
@@ -75,6 +85,48 @@ describe('AzureMonitor resourcePickerData', () => {
 
       expect(postResource).toHaveBeenCalledTimes(2);
       const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('makes multiple requests for resource groups when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+      const subscriptionResponse = createMockARGSubscriptionResponse();
+      const resourceGroupResponse1 = {
+        ...createMockARGResourceGroupsResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const resourceGroupResponse2 = createMockARGResourceGroupsResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        subscriptionResponse,
+        resourceGroupResponse1,
+        resourceGroupResponse2,
+      ]);
+
+      await resourcePickerData.getResourceGroupsBySubscriptionId('1', 'metrics');
+
+      expect(postResource).toHaveBeenCalledTimes(3);
+      const secondCall = postResource.mock.calls[2];
+      const [_, postBody] = secondCall;
+      expect(postBody.options.$skipToken).toEqual('skipfirst100');
+    });
+
+    it('makes multiple requests for resources when arg returns a skipToken and passes the right skipToken to each subsequent call', async () => {
+      const subscriptionResponse = createMockARGSubscriptionResponse();
+      const resourcesResponse1 = {
+        ...createARGResourcesResponse(),
+        $skipToken: 'skipfirst100',
+      };
+      const resourcesResponse2 = createARGResourcesResponse();
+      const { resourcePickerData, postResource } = createResourcePickerData([
+        subscriptionResponse,
+        resourcesResponse1,
+        resourcesResponse2,
+      ]);
+
+      await resourcePickerData.getResourcesForResourceGroup('resourceGroupURI', 'metrics');
+
+      expect(postResource).toHaveBeenCalledTimes(3);
+      const secondCall = postResource.mock.calls[2];
       const [_, postBody] = secondCall;
       expect(postBody.options.$skipToken).toEqual('skipfirst100');
     });
@@ -126,7 +178,9 @@ describe('AzureMonitor resourcePickerData', () => {
       const firstCall = postResource.mock.calls[0];
       const [path, postBody] = firstCall;
       expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
-      expect(postBody.query).toContain("type == 'microsoft.resources/subscriptions/resourcegroups'");
+      expect(postBody.query).toContain(
+        'extend resourceGroupURI = strcat("/subscriptions/", subscriptionId, "/resourcegroups/", resourceGroup)'
+      );
       expect(postBody.query).toContain("where subscriptionId == '123'");
     });
 
@@ -254,32 +308,6 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('throws an error if it recieves data with a malformed uri', async () => {
-      const mockResponse = {
-        data: [
-          {
-            id: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
-            name: 'web-server',
-            type: 'Microsoft.Compute/virtualMachines',
-            resourceGroup: 'dev',
-            subscriptionId: 'def-456',
-            location: 'northeurope',
-          },
-        ],
-      };
-      const { resourcePickerData } = createResourcePickerData([mockResponse]);
-      try {
-        await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
-        throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
-      } catch (err) {
-        if (err instanceof Error) {
-          expect(err.message).toEqual('unable to fetch resource details');
-        } else {
-          throw err;
-        }
-      }
-    });
-
     it('should filter metrics resources', async () => {
       const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
       const mockResourcesResponse = createARGResourcesResponse();
@@ -353,6 +381,53 @@ describe('AzureMonitor resourcePickerData', () => {
         typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
       });
+    });
+    it('metrics searches - fallback namespaces', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource, mockDatasource } = createResourcePickerData(
+        [mockSubscriptionsResponse, mockResponse],
+        true
+      );
+      await resourcePickerData.search('vmname', 'metrics');
+      expect(postResource).toHaveBeenCalledTimes(2);
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'westeurope'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'eastus'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'japaneast'
+      );
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      const namespaces = (postBody.query as string).match(/\((.*?)\)/)?.[0].split(',');
+      expect(namespaces?.length).toEqual(resourceTypes.length);
     });
     it('makes requests for logs searches', async () => {
       const mockResponse = {

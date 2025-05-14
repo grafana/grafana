@@ -1,4 +1,4 @@
-import React, { FC, ChangeEvent } from 'react';
+import { FC, ChangeEvent } from 'react';
 
 import { Switch, useStyles2 } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';

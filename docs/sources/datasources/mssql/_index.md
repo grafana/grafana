@@ -62,7 +62,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 ## Configure the data source
 
@@ -89,7 +89,7 @@ To configure basic settings for the data source, complete the following steps:
 | **Encrypt**         | Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server. Options include: `disable` - data sent between client and server is not encrypted; `false` - data sent between client and server is not encrypted beyond the login packet; `true` - data sent between client and server is encrypted. Default is `false`. |
 | **Max open**        | Sets the maximum number of open connections to the database. Default is `100`.                                                                                                                                                                                                                                                                                     |
 | **Max idle**        | Sets the maximum number of connections in the idle connection pool. Default is `100`.                                                                                                                                                                                                                                                                              |
-| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                             |
+| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                               |
 | **Max lifetime**    | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                                                                                                                                      |
 
 You can also configure settings specific to the Microsoft SQL Server data source. These options are described in the sections below.
@@ -171,11 +171,11 @@ datasources:
     user: grafana
     jsonData:
       database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
-      connectionTimeout: 0 # Grafana v9.3+
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      connectionTimeout: 0
       encrypt: 'false'
     secureJsonData:
       password: 'Password!'
@@ -185,7 +185,7 @@ datasources:
 
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, refer to the [query editor documentation](query-editor/).
 
 ## Use template variables
 
@@ -193,4 +193,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).

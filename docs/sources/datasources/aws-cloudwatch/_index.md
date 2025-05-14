@@ -66,7 +66,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [provision the data source](#provision-the-data-source) with Grafana's provisioning system, and should [control pricing](#control-pricing) and [manage service quotas](#manage-service-quotas) accordingly.
 
-Once you've added the data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+Once you've added the data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 {{% admonition type="note" %}}
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
@@ -86,12 +86,12 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication]({{< relref "./aws-authentication" >}}).
+For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
 
 #### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication" >}}).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
 
 ##### Metrics-only permissions
 
@@ -238,6 +238,10 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
+{{< admonition type="note" >}}
+Cross-account observability lets you to retrieve metrics and logs across different accounts in a single region but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
+{{< /admonition >}}
+
 ### Configure CloudWatch settings
 
 #### Namespaces of Custom Metrics
@@ -350,7 +354,11 @@ datasources:
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, see the [query editor documentation](query-editor/).
+
+## Query caching
+
+When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
 
 ## Use template variables
 
@@ -358,7 +366,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation](template-variables/).
 
 ## Import pre-configured dashboards
 
@@ -413,7 +421,7 @@ Each time you select a dimension in the query editor, Grafana issues a `ListMetr
 Each time you change queries in the query editor, Grafana issues a new request to the `GetMetricData` API.
 
 {{% admonition type="note" %}}
-Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
+Grafana replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
 The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
 {{% /admonition %}}
 
@@ -434,7 +442,7 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
-To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+To use this feature, configure in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
 
 ## CloudWatch Logs data protection
 

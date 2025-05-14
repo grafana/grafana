@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {
@@ -71,7 +71,7 @@ export const DynamicConfigValueEditor = ({
         </Label>
         {!isSystemOverride && (
           <div>
-            <IconButton name="times" onClick={onRemove} tooltip="Remove label" />
+            <IconButton name="times" onClick={onRemove} tooltip="Remove property" />
           </div>
         )}
       </HorizontalGroup>

@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -25,39 +28,70 @@ enum RoutingOptions {
   ContactPoint = 'contact point',
 }
 
+function useHasInternalAlertmanagerEnabled() {
+  const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
+  const { currentData: amChoiceStatus } = useGetGrafanaAlertingConfigurationStatusQuery(undefined);
+  return (
+    amChoiceStatus?.alertmanagersChoice === AlertmanagerChoice.Internal ||
+    amChoiceStatus?.alertmanagersChoice === AlertmanagerChoice.All
+  );
+}
+
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [type, manualRouting] = watch(['type', 'manualRouting']);
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaManaged = isGrafanaManagedRuleByType(type);
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
+  const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
-  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
+  const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
-  function onCloseLabelsEditor(
-    labelsToUpdate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) {
+  const shouldAllowSimplifiedRouting =
+    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
+
+  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }
     setShowLabelsEditor(false);
   }
 
+  if (isGrafanaRecordingRuleByType(type)) {
+    return null;
+  }
+
+  const step = !isGrafanaManaged ? 4 : 5;
+
+  const switchMode =
+    isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
+      ? {
+          isAdvancedMode: !manualRouting,
+          setAdvancedMode: (isAdvanced: boolean) => {
+            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
+            setValue('manualRouting', !isAdvanced);
+          },
+        }
+      : undefined;
+  const title = isRecordingRuleByType(type)
+    ? 'Add labels'
+    : isGrafanaManaged
+      ? 'Configure notifications'
+      : 'Configure labels and notifications';
+
   return (
     <RuleEditorSection
-      stepNo={4}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
+      stepNo={step}
+      title={title}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
-          {type === RuleFormType.cloudRecording ? (
+          {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              Add labels to help you better manage your recording rules
+              Add labels to help you better manage your recording rules.
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (
@@ -68,25 +102,32 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           )}
         </Stack>
       }
+      switchMode={switchMode}
       fullWidth
     >
-      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
-      <LabelsEditorModal
-        isOpen={showLabelsEditor}
-        onClose={onCloseLabelsEditor}
-        dataSourceName={dataSourceName}
-        initialLabels={getValues('labels')}
-      />
+      {!isGrafanaManaged && (
+        <>
+          <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+          <LabelsEditorModal
+            isOpen={showLabelsEditor}
+            onClose={onCloseLabelsEditor}
+            dataSourceName={dataSourceName}
+            initialLabels={getValues('labels')}
+          />
+        </>
+      )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Notifications</Text>
-          <Text variant="bodySmall" color="secondary">
-            Select who should receive a notification when an alert rule fires.
-          </Text>
+          <Text element="h5">Recipient</Text>
         </div>
       )}
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
-        <ManualAndAutomaticRouting alertUid={alertUid} />
+        simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
+          <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
+        ) : (
+          // simplified mode is disabled
+          <ManualAndAutomaticRouting alertUid={alertUid} />
+        )
       ) : // when simplified routing is not enabled, render the notification preview as we did before
       shouldRenderpreview ? (
         <AutomaticRooting alertUid={alertUid} />
@@ -125,6 +166,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
     <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
+          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
           options={routingOptions}
           value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
           onChange={onRoutingOptionChange}
@@ -132,6 +174,32 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
         />
       </Stack>
 
+      <RoutingOptionDescription manualRouting={manualRouting} />
+
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
+    </Stack>
+  );
+}
+
+/**
+ * Preconditions:
+ * - simplified routing is enabled
+ * - simple mode for notifications step is enabled
+ * - the alert rule is a grafana rule
+ *
+ * This component will render the switch between the select contact point routing and the notification policy routing.
+ * It also renders the section body of the NotificationsStep, depending on the routing option selected.
+ * If select contact point routing is selected, it will render the SimplifiedRouting component.
+ * If notification policy routing is selected, it will render the AutomaticRouting component.
+ *
+ */
+function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const [manualRouting] = watch(['manualRouting']);
+
+  return (
+    <Stack direction="column" gap={2}>
       <RoutingOptionDescription manualRouting={manualRouting} />
 
       {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
@@ -173,20 +241,9 @@ function NeedHelpInfoForNotificationPolicy() {
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
             <>
-              Firing alert rule instances are routed to notification policies based on matching labels. All alert rules
-              and instances, irrespective of their labels, match the default notification policy. If there are no nested
-              policies, or no nested policies match the labels in the alert rule or alert instance, then the default
-              notification policy is the matching policy.
+              Firing alert instances are routed to notification policies based on matching labels. The default
+              notification policy matches all alert instances.
             </>
-            <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Text color="link">
-                Read about notification routing. <Icon name="external-link-alt" />
-              </Text>
-            </a>
           </Stack>
           <Stack direction="column" gap={0}>
             <>
@@ -194,12 +251,12 @@ function NeedHelpInfoForNotificationPolicy() {
               connect them to your notification policy by adding label matchers.
             </>
             <a
-              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/`}
+              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
               target="_blank"
               rel="noreferrer"
             >
               <Text color="link">
-                Read about Labels and annotations. <Icon name="external-link-alt" />
+                Read about notification policies. <Icon name="external-link-alt" />
               </Text>
             </a>
           </Stack>
@@ -220,20 +277,18 @@ function NeedHelpInfoForContactpoint() {
           <br />
           Notifications for firing alert instances are grouped based on folder and alert rule name.
           <br />
-          The waiting time until the initial notification is sent for a new group created by an incoming alert is 30
-          seconds.
+          The wait time before sending the first notification for a new group of alerts is 30 seconds.
           <br />
-          The waiting time to send a batch of new alerts for that group after the first notification was sent is 5
-          minutes.
+          The waiting time before sending a notification about changes in the alert group after the first notification
+          has been sent is 5 minutes.
           <br />
-          The waiting time to resend an alert after they have successfully been sent is 4 hours.
+          The wait time before resending a notification that has already been sent successfully is 4 hours.
           <br />
           Grouping and wait time values are defined in your default notification policy.
         </>
       }
-      // todo: update the link with the new documentation about simplified routing
-      externalLink="`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`"
-      linkText="Read more about notifiying contact points"
+      externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
+      linkText="Read more about notifications"
       title="Notify contact points"
     />
   );

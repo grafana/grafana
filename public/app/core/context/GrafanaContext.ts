@@ -1,4 +1,5 @@
-import React, { useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext } from 'react';
+import { useObservable } from 'react-use';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
@@ -16,7 +17,7 @@ export interface GrafanaContextType {
   newAssetsChecker: NewFrontendAssetsChecker;
 }
 
-export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);
+export const GrafanaContext = createContext<GrafanaContextType | undefined>(undefined);
 
 export function useGrafana(): GrafanaContextType {
   const context = useContext(GrafanaContext);
@@ -40,4 +41,9 @@ export function useReturnToPreviousInternal() {
     },
     [chrome]
   );
+}
+
+export function useChromeHeaderHeight() {
+  const { chrome } = useGrafana();
+  return useObservable(chrome.headerHeightObservable, 0);
 }

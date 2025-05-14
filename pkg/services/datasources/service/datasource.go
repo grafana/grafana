@@ -15,6 +15,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -30,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -255,7 +255,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	var dataSource *datasources.DataSource
-	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -280,21 +280,31 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		// This belongs in Data source permissions, and we probably want
-		// to do this with a hook in the store and rollback on fail.
-		// We can't use events, because there's no way to communicate
-		// failure, and we want "not being able to set default perms"
-		// to fail the creation.
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: "Viewer", Permission: "Query"},
-			{BuiltinRole: "Editor", Permission: "Query"},
+		if s.cfg.RBAC.PermissionsOnCreation("datasource") {
+			// This belongs in Data source permissions, and we probably want
+			// to do this with a hook in the store and rollback on fail.
+			// We can't use events, because there's no way to communicate
+			// failure, and we want "not being able to set default perms"
+			// to fail the creation.
+			permissions := []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Query"},
+				{BuiltinRole: "Editor", Permission: "Query"},
+			}
+			if cmd.UserID != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+			}
+			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
+				return err
+			}
 		}
-		if cmd.UserID != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
-		}
-		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-		return err
+
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, nil
 }
 
 // This will valid validate the instance settings return a version that is safe to be saved
@@ -322,10 +332,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	}
 
 	// When the APIVersion is set, the client must also implement AdmissionHandler
-	if p.APIVersion == "" {
-		if settings.APIVersion != "" {
-			return nil, fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
-		}
+	if settings.APIVersion == "" {
 		return settings, nil // NOOP
 	}
 
@@ -366,8 +373,12 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
-					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, p.APIVersion)
+					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
 			return nil, err
 		}
@@ -387,8 +398,12 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
-				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
+				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}
 		return nil, err
 	}
@@ -517,6 +532,17 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			if err != nil {
 				return err
 			}
+		}
+
+		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
+		// TODO: Refactor to store lbac rules separate from a datasource
+		if !cmd.AllowLBACRuleUpdates {
+			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
+				"reason", "overriding_lbac_rules_from_datasource_api",
+				"datasource_id", dataSource.ID,
+				"datasource_uid", dataSource.UID)
+
+			cmd.JsonData = RetainExistingLBACRules(dataSource.JsonData, cmd.JsonData)
 		}
 
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
@@ -719,7 +745,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{
@@ -960,4 +986,31 @@ func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource)
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)
 	}
 	return s.getCustomHeaders(ds.JsonData, values), nil
+}
+
+func RetainExistingLBACRules(storedJsonData, cmdJsonData *simplejson.Json) *simplejson.Json {
+	// If there are no stored data, we should remove the key from the command json data
+	if storedJsonData == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	previousRules := storedJsonData.Get("teamHttpHeaders").Interface()
+	// If there are no previous rules, we should remove the key from the command json data
+	if previousRules == nil {
+		if cmdJsonData != nil {
+			cmdJsonData.Del("teamHttpHeaders")
+		}
+		return cmdJsonData
+	}
+
+	if cmdJsonData == nil {
+		// It's fine to instantiate a new JsonData here
+		// Because it's done in the SQLStore.UpdateDataSource anyway
+		cmdJsonData = simplejson.New()
+	}
+	cmdJsonData.Set("teamHttpHeaders", previousRules)
+	return cmdJsonData
 }

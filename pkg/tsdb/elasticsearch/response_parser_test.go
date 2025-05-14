@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -3677,12 +3676,12 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string, keepL
 		return nil, err
 	}
 
-	queries, err := parseQuery(tsdbQuery.Queries, log.New("test.logger"))
+	queries, err := parseQuery(tsdbQuery.Queries, log.New())
 	if err != nil {
 		return nil, err
 	}
 
-	return parseResponse(context.Background(), response.Responses, queries, configuredFields, keepLabelsInResponse, log.New("test.logger"), tracing.InitializeTracerForTest())
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, keepLabelsInResponse, log.New())
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {

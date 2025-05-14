@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
-import { createFilter, GroupBase, OptionsOrGroups } from 'react-select';
+import { FC, forwardRef } from 'react';
+import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
@@ -34,7 +34,7 @@ const handleIsValidNewOption = (
   return !Boolean(exactValueExists) && Boolean(valueIsNotEmpty);
 };
 
-const AlertLabelDropdown: FC<AlertLabelDropdownProps> = React.forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
+const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
   function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
     const styles = useStyles2(getStyles);
 

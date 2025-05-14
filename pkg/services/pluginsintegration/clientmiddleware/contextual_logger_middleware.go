@@ -6,26 +6,32 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
-// NewContextualLoggerMiddleware creates a new plugins.ClientMiddleware that adds
+// NewContextualLoggerMiddleware creates a new backend.HandlerMiddleware that adds
 // a contextual logger to the request context.
-func NewContextualLoggerMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewContextualLoggerMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ContextualLoggerMiddleware{
-			next: next,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type ContextualLoggerMiddleware struct {
-	next plugins.Client
+	backend.BaseHandler
 }
 
 // instrumentContext adds a contextual logger with plugin and request details to the given context.
-func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+func instrumentContext(ctx context.Context, pCtx backend.PluginContext) context.Context {
+	p := []any{}
+
+	if ep := backend.EndpointFromContext(ctx); !ep.IsEmpty() {
+		p = append(p, "endpoint", string(ep))
+	}
+
+	p = append(p, "pluginId", pCtx.PluginID)
+
 	if pCtx.DataSourceInstanceSettings != nil {
 		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
 		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
@@ -37,54 +43,54 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 }
 
 func (m *ContextualLoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctx = instrumentContext(ctx, endpointQueryData, req.PluginContext)
-	return m.next.QueryData(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.QueryData(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx = instrumentContext(ctx, endpointCallResource, req.PluginContext)
-	return m.next.CallResource(ctx, req, sender)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 
 func (m *ContextualLoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ctx = instrumentContext(ctx, endpointCheckHealth, req.PluginContext)
-	return m.next.CheckHealth(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.CheckHealth(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	ctx = instrumentContext(ctx, endpointCollectMetrics, req.PluginContext)
-	return m.next.CollectMetrics(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.CollectMetrics(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	ctx = instrumentContext(ctx, endpointSubscribeStream, req.PluginContext)
-	return m.next.SubscribeStream(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.SubscribeStream(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	ctx = instrumentContext(ctx, endpointPublishStream, req.PluginContext)
-	return m.next.PublishStream(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.PublishStream(ctx, req)
 }
 
 func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
-	return m.next.RunStream(ctx, req, sender)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.RunStream(ctx, req, sender)
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
 func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	ctx = instrumentContext(ctx, endpointValidateAdmission, req.PluginContext)
-	return m.next.ValidateAdmission(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.ValidateAdmission(ctx, req)
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
 func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	ctx = instrumentContext(ctx, endpointMutateAdmission, req.PluginContext)
-	return m.next.MutateAdmission(ctx, req)
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.MutateAdmission(ctx, req)
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	ctx = instrumentContext(ctx, endpointConvertObject, req.PluginContext)
-	return m.next.ConvertObject(ctx, req)
+func (m *ContextualLoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.ConvertObjects(ctx, req)
 }

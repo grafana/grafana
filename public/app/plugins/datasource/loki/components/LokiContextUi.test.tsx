@@ -1,6 +1,5 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { select } from 'react-select-event';
 
 import { LogRowModel, dateTime } from '@grafana/data';
@@ -233,7 +232,7 @@ describe('LokiContextUi', () => {
     window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
-      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(true);
     });
   });
 
@@ -249,7 +248,7 @@ describe('LokiContextUi', () => {
     window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'false');
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
-      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+      expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(false);
     });
   });
 
@@ -266,7 +265,7 @@ describe('LokiContextUi', () => {
     window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
-      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+      expect(screen.getByRole('switch')).toBeInTheDocument();
     });
   });
 
@@ -283,7 +282,7 @@ describe('LokiContextUi', () => {
     window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
-      expect(screen.queryByRole('checkbox')).toBeNull();
+      expect(screen.queryByRole('switch')).toBeNull();
     });
   });
 

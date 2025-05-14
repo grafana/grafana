@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 
 import { CurrentInformation } from 'app/percona/shared/core/reducers/updates';
 

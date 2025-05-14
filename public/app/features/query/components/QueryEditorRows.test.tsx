@@ -1,5 +1,4 @@
 import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

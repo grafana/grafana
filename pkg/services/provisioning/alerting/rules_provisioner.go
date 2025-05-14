@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -45,7 +45,8 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			u := provisionerUser(group.OrgID)
+			ctx, u := identity.WithServiceIdentity(ctx, group.OrgID)
+
 			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
 				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "org", group.OrgID, "err", err)
@@ -120,11 +121,13 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
+
 	cmd := &folder.GetFolderQuery{
 		Title:        &folderName,
 		ParentUID:    parentUID,
 		OrgID:        orgID,
-		SignedInUser: provisionerUser(orgID),
+		SignedInUser: user,
 	}
 
 	cmdResult, err := prov.folderService.Get(ctx, cmd)

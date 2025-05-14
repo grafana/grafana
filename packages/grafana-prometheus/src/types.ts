@@ -20,6 +20,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
   includeNullMetadata?: boolean;
+  fromExploreMetrics?: boolean;
 }
 
 export enum PrometheusCacheLevel {
@@ -53,6 +54,7 @@ export interface PromOptions extends DataSourceJsonData {
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
   codeModeMetricNamesSuggestionLimit?: number;
+  seriesEndpoint?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -140,4 +142,49 @@ export interface PromVariableQuery extends DataQuery {
 export type StandardPromVariableQuery = {
   query: string;
   refId: string;
+};
+
+// Rules that we fetch from Prometheus
+export type RawRecordingRules = {
+  name: string;
+  file: string;
+  rules: Rule[];
+  interval?: number;
+  limit?: number;
+};
+
+// A single recording rule with its labels and the query it represents
+// In this object, there may be other fields but those are the ones we care for now
+export type Rule = {
+  name: string;
+  query: string;
+  duration?: number;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+  alerts?: AlertInfo[];
+  type: 'alerting' | 'recording';
+};
+
+export type AlertInfo = {
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+  state: string;
+  activeAt: string;
+  value: string;
+};
+
+// Extracted recording rules with labels
+// We parse and extract the rules because
+// there might be multiple rules with same name but different labels and queries
+export type RuleQueryMapping = {
+  [key: string]: Array<{
+    query: string;
+    labels?: Record<string, string>;
+  }>;
+};
+
+export type RecordingRuleIdentifier = {
+  expandedQuery: string;
+  identifier?: string;
+  identifierValue?: string;
 };

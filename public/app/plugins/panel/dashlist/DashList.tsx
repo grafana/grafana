@@ -1,5 +1,6 @@
 import { take } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { useThrottle } from 'react-use';
 
 import {
   DataLinkBuiltInVars,
@@ -10,7 +11,7 @@ import {
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
+import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -106,13 +107,15 @@ export function DashList(props: PanelProps<Options>) {
   const dispatch = useDispatch();
   const navIndex = useSelector((state) => state.navIndex);
 
+  const throttledRenderCount = useThrottle(props.renderCounter, 5000);
+
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
     });
-  }, [props.options, props.replaceVariables, props.renderCounter]);
+  }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
+  const toggleDashboardStar = async (e: SyntheticEvent, dash: Dashboard) => {
     const { uid, title, url } = dash;
     e.preventDefault();
     e.stopPropagation();
@@ -204,7 +207,7 @@ export function DashList(props: PanelProps<Options>) {
   );
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+    <ScrollContainer minHeight="100%">
       {dashboardGroups.map(
         ({ show, header, dashboards }, i) =>
           show && (
@@ -214,7 +217,7 @@ export function DashList(props: PanelProps<Options>) {
             </div>
           )
       )}
-    </CustomScrollbar>
+    </ScrollContainer>
   );
 }
 

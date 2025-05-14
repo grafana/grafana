@@ -1,11 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
-import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2, ColorPickerInput } from '@grafana/ui';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { clearButtonStyles } from '../Button';
 
+import { ColorPicker, SeriesColorPicker } from './ColorPicker';
 import mdx from './ColorPicker.mdx';
+import { ColorPickerInput } from './ColorPickerInput';
 
 const meta: Meta<typeof ColorPicker> = {
   title: 'Pickers and Editors/ColorPicker',

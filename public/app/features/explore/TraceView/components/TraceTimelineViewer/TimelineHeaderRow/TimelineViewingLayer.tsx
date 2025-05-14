@@ -24,58 +24,58 @@ import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from
 // exported for testing
 export const getStyles = stylesFactory(() => {
   return {
-    TimelineViewingLayer: css`
-      label: TimelineViewingLayer;
-      bottom: 0;
-      cursor: vertical-text;
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 0;
-    `,
-    TimelineViewingLayerCursorGuide: css`
-      label: TimelineViewingLayerCursorGuide;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 1px;
-      background-color: red;
-    `,
-    TimelineViewingLayerDragged: css`
-      label: TimelineViewingLayerDragged;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-    `,
-    TimelineViewingLayerDraggedDraggingLeft: css`
-      label: TimelineViewingLayerDraggedDraggingLeft;
-      border-left: 1px solid;
-    `,
-    TimelineViewingLayerDraggedDraggingRight: css`
-      label: TimelineViewingLayerDraggedDraggingRight;
-      border-right: 1px solid;
-    `,
-    TimelineViewingLayerDraggedShiftDrag: css`
-      label: TimelineViewingLayerDraggedShiftDrag;
-      background-color: rgba(68, 68, 255, 0.2);
-      border-color: #44f;
-    `,
-    TimelineViewingLayerDraggedReframeDrag: css`
-      label: TimelineViewingLayerDraggedReframeDrag;
-      background-color: rgba(255, 68, 68, 0.2);
-      border-color: #f44;
-    `,
-    TimelineViewingLayerFullOverlay: css`
-      label: TimelineViewingLayerFullOverlay;
-      bottom: 0;
-      cursor: col-resize;
-      left: 0;
-      position: fixed;
-      right: 0;
-      top: 0;
-      user-select: none;
-    `,
+    TimelineViewingLayer: css({
+      label: 'TimelineViewingLayer',
+      bottom: 0,
+      cursor: 'vertical-text',
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    }),
+    TimelineViewingLayerCursorGuide: css({
+      label: 'TimelineViewingLayerCursorGuide',
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      width: '1px',
+      backgroundColor: 'red',
+    }),
+    TimelineViewingLayerDragged: css({
+      label: 'TimelineViewingLayerDragged',
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+    }),
+    TimelineViewingLayerDraggedDraggingLeft: css({
+      label: 'TimelineViewingLayerDraggedDraggingLeft',
+      borderLeft: '1px solid',
+    }),
+    TimelineViewingLayerDraggedDraggingRight: css({
+      label: 'TimelineViewingLayerDraggedDraggingRight',
+      borderRight: '1px solid',
+    }),
+    TimelineViewingLayerDraggedShiftDrag: css({
+      label: 'TimelineViewingLayerDraggedShiftDrag',
+      backgroundColor: 'rgba(68, 68, 255, 0.2)',
+      borderColor: '#44f',
+    }),
+    TimelineViewingLayerDraggedReframeDrag: css({
+      label: 'TimelineViewingLayerDraggedReframeDrag',
+      backgroundColor: 'rgba(255, 68, 68, 0.2)',
+      borderColor: '#f44',
+    }),
+    TimelineViewingLayerFullOverlay: css({
+      label: 'TimelineViewingLayerFullOverlay',
+      bottom: 0,
+      cursor: 'col-resize',
+      left: 0,
+      position: 'fixed',
+      right: 0,
+      top: 0,
+      userSelect: 'none',
+    }),
   };
 });
 

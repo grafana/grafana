@@ -39,10 +39,18 @@ func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, s
 	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
 
 	if len(query.DatasourceUIDs) > 0 {
+		q := "?" + strings.Repeat(",?", len(query.DatasourceUIDs)-1)
 		for _, uid := range query.DatasourceUIDs {
 			params = append(params, uid)
 		}
-		sql.WriteString(" AND query_history.datasource_uid IN (? " + strings.Repeat(",?", len(query.DatasourceUIDs)-1) + ") ")
+		for _, uid := range query.DatasourceUIDs {
+			params = append(params, uid)
+		}
+		sql.WriteString(" AND (")
+		sql.WriteString("(query_history.datasource_uid IN (" + q + "))")
+		sql.WriteString(" OR ")
+		sql.WriteString("(query_history.uid IN (SELECT i.query_history_item_uid from query_history_details i WHERE i.datasource_uid IN (" + q + ")))")
+		sql.WriteString(")")
 	}
 	builder.Write(sql.String(), params...)
 }

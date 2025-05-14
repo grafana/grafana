@@ -3,8 +3,10 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { TimePickerProps } from 'rc-time-picker';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { Moment } from 'moment';
+import { PickerProps } from 'rc-picker';
+import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
 import { useMedia } from 'react-use';
 
@@ -16,10 +18,12 @@ import {
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
+  TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
+import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -53,9 +57,11 @@ export interface Props {
   disabledSeconds?: () => number[];
   /** Can input be cleared/have empty values */
   clearable?: boolean;
+  /** Custom timezone for the date/time display */
+  timeZone?: TimeZone;
   // @PERCONA
   calendarProps?: CalendarProps;
-  timepickerProps?: TimePickerProps;
+  timepickerProps?: Partial<PickerProps<Moment>>;
   inputWrapperClassName?: string;
   growInlineField?: boolean;
   shrinkInlineField?: boolean;
@@ -70,6 +76,7 @@ export const DateTimePicker = ({
   disabledHours,
   disabledMinutes,
   disabledSeconds,
+  timeZone,
   showSeconds = true,
   clearable = false,
   calendarProps,
@@ -147,6 +154,7 @@ export const DateTimePicker = ({
         ref={refs.setReference}
         showSeconds={showSeconds}
         clearable={clearable}
+        timeZone={timeZone}
         // @PERCONA
         growInlineField={growInlineField}
         shrinkInlineField={shrinkInlineField}
@@ -170,6 +178,7 @@ export const DateTimePicker = ({
                   disabledHours={disabledHours}
                   disabledMinutes={disabledMinutes}
                   disabledSeconds={disabledSeconds}
+                  timeZone={timeZone}
                   // @PERCONA
                   calendarProps={calendarProps}
                   timepickerProps={timepickerProps}
@@ -194,6 +203,7 @@ export const DateTimePicker = ({
                     disabledHours={disabledHours}
                     disabledMinutes={disabledMinutes}
                     disabledSeconds={disabledSeconds}
+                    timeZone={timeZone}
                     // @PERCONA
                     calendarProps={calendarProps}
                     timepickerProps={timepickerProps}
@@ -208,24 +218,18 @@ export const DateTimePicker = ({
   );
 };
 
-interface DateTimeCalendarProps {
-  date?: DateTime;
+interface DateTimeCalendarProps extends Omit<Props, 'label' | 'clearable' | 'onChange'> {
   onChange: (date: DateTime) => void;
   onClose: () => void;
   isFullscreen: boolean;
-  maxDate?: Date;
-  minDate?: Date;
   style?: React.CSSProperties;
   showSeconds?: boolean;
-  disabledHours?: () => number[];
-  disabledMinutes?: () => number[];
-  disabledSeconds?: () => number[];
   // @PERCONA
   calendarProps?: CalendarProps;
-  timepickerProps?: TimePickerProps;
+  timepickerProps?: Partial<PickerProps<Moment>>;
 }
 
-type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable'> & {
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable' | 'timeZone'> & {
   isFullscreen: boolean;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   showSeconds?: boolean;
@@ -247,6 +251,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       label,
       onChange,
       onOpen,
+      timeZone,
       showSeconds = true,
       clearable = false,
       // @PERCONA
@@ -259,17 +264,21 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
+      return {
+        value: date ? dateTimeFormat(date, { timeZone }) : !clearable ? dateTimeFormat(dateTime(), { timeZone }) : '',
+        invalid: false,
+      };
     });
 
     useEffect(() => {
       if (date) {
+        const formattedDate = dateTimeFormat(date, { format, timeZone });
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(date, { format })),
-          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
+          invalid: !isValid(formattedDate),
+          value: isDateTime(date) ? formattedDate : date,
         });
       }
-    }, [date, format]);
+    }, [date, format, timeZone]);
 
     const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
       const isInvalid = !isValid(event.currentTarget.value);
@@ -281,10 +290,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const onBlur = useCallback(() => {
       if (!internalDate.invalid && internalDate.value) {
-        const date = dateTimeForTimeZone(getTimeZone(), internalDate.value);
+        const date = dateTimeForTimeZone(getTimeZone({ timeZone }), internalDate.value);
         onChange(date);
       }
-    }, [internalDate, onChange]);
+    }, [internalDate, onChange, timeZone]);
 
     const clearInternalDate = useCallback(() => {
       setInternalDate({ value: '', invalid: false });
@@ -293,10 +302,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const icon = (
       <Button
-        aria-label="Time picker"
+        aria-label={t('grafana-ui.date-time-picker.calendar-icon-label', 'Time picker')}
         icon="calendar-alt"
         variant="secondary"
-        onClick={onOpen} // @PERCONA
+        onClick={onOpen}
+        // @PERCONA
         className={css({
           height: '100%',
         })}
@@ -316,7 +326,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           value={internalDate.value}
           onBlur={onBlur}
           data-testid={Components.DateTimePicker.input}
-          placeholder="Select date/time"
+          placeholder={t('grafana-ui.date-time-picker.select-placeholder', 'Select date/time')}
           ref={ref}
           suffix={
             clearable &&
@@ -346,6 +356,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
       disabledHours,
       disabledMinutes,
       disabledSeconds,
+      timeZone,
       // @PERCONA
       calendarProps,
       timepickerProps,
@@ -358,17 +369,17 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     // need to keep these 2 separate in state since react-calendar doesn't support different timezones
     const [timeOfDayDateTime, setTimeOfDayDateTime] = useState(() => {
       if (date && date.isValid()) {
-        return dateTimeForTimeZone(getTimeZone(), date);
+        return dateTimeForTimeZone(getTimeZone({ timeZone }), date);
       }
 
-      return dateTimeForTimeZone(getTimeZone(), new Date());
+      return dateTimeForTimeZone(getTimeZone({ timeZone }), new Date());
     });
     const [reactCalendarDate, setReactCalendarDate] = useState<Date>(() => {
       if (date && date.isValid()) {
-        return adjustDateForReactCalendar(date.toDate(), getTimeZone());
+        return adjustDateForReactCalendar(date.toDate(), getTimeZone({ timeZone }));
       }
 
-      return new Date();
+      return adjustDateForReactCalendar(new Date(), getTimeZone({ timeZone }));
     });
 
     const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
@@ -401,9 +412,9 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           prev2Label={null}
           value={reactCalendarDate}
           nextLabel={<Icon name="angle-right" />}
-          nextAriaLabel="Next month"
+          nextAriaLabel={t('grafana-ui.date-time-picker.next-label', 'Next month')}
           prevLabel={<Icon name="angle-left" />}
-          prevAriaLabel="Previous month"
+          prevAriaLabel={t('grafana-ui.date-time-picker.previous-label', 'Previous month')}
           onChange={onChangeDate}
           locale="en"
           className={calendarStyles.body}
@@ -427,10 +438,10 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
         </div>
         <Stack>
           <Button type="button" onClick={handleApply}>
-            Apply
+            <Trans i18nKey="grafana-ui.date-time-picker.apply">Apply</Trans>
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
-            Cancel
+            <Trans i18nKey="grafana-ui.date-time-picker.cancel">Cancel</Trans>
           </Button>
         </Stack>
       </div>

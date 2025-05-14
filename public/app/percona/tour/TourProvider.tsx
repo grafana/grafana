@@ -1,5 +1,5 @@
 import { TourProvider } from '@reactour/tour';
-import React, { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren } from 'react';
 
 import { config } from '@grafana/runtime';
 import { getTheme } from '@grafana/ui';

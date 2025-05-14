@@ -19,10 +19,10 @@ The LDAP integration in Grafana allows your Grafana users to login with their LD
 group memberships and Grafana Organization user roles.
 
 {{% admonition type="note" %}}
-[Enhanced LDAP authentication]({{< relref "../enhanced-ldap" >}}) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
+[Enhanced LDAP authentication](../enhanced-ldap/) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
 {{% /admonition %}}
 
-Refer to [Role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control" >}}) to understand how you can control access with role-based permissions.
+Refer to [Role-based access control](../../../../administration/roles-and-permissions/access-control/) to understand how you can control access with role-based permissions.
 
 ## Supported LDAP Servers
 
@@ -32,7 +32,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../../configure-grafana" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file](../../../configure-grafana/) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 After enabling LDAP, the default behavior is for Grafana users to be created automatically upon successful LDAP authentication. If you prefer for only existing Grafana users to be able to sign in, you can change `allow_sign_up` to `false` in the `[auth.ldap]` section.
@@ -88,10 +88,11 @@ port = 636
 use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
-# The value of an accepted TLS cipher. By default, this value is empty. Example value: ["TLS_AES_256_GCM_SHA384"])
+# The value of an accepted TLS cipher. By default, this value is empty. Example value: ["TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"])
 # For a complete list of supported ciphers and TLS versions, refer to: https://go.dev/src/crypto/tls/cipher_suites.go
+# Starting with Grafana v11.0 only ciphers with ECDHE support are accepted for TLS 1.2 connections.
 tls_ciphers = []
-# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1, TLS1.2, TLS1.3.
+# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1 (only for Grafana v10.4 or earlier), TLS1.2, TLS1.3.
 min_tls_version = ""
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
@@ -143,10 +144,6 @@ bind_password = "${LDAP_ADMIN_PASSWORD}"
 
 ## LDAP debug view
 
-{{% admonition type="note" %}}
-Available in Grafana v6.4+
-{{% /admonition %}}
-
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. Only Grafana admins can use the LDAP debug view.
 
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
@@ -159,9 +156,11 @@ To use the debug view, complete the following steps:
 1.  Then, press "Run"
 1.  If the user is found within any of your LDAP instances, the mapping information is displayed.
 
+Note that this does not work if you are using the single bind configuration outlined below.
+
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP mapping displayed" >}}
 
-[Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "../enhanced-ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
+[Grafana Enterprise](../../../../introduction/grafana-enterprise/) users with [enhanced LDAP integration](../enhanced-ldap/) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
 
 {{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP sync status" >}}
 
@@ -215,7 +214,7 @@ The first group mapping that an LDAP user is matched to will be used for the syn
 [[servers.group_mappings]]
 group_dn = "cn=superadmins,dc=grafana,dc=org"
 org_role = "Admin"
-grafana_admin = true # Available in Grafana v5.3 and above
+grafana_admin = true
 
 [[servers.group_mappings]]
 group_dn = "cn=admins,dc=grafana,dc=org"
@@ -230,12 +229,12 @@ group_dn = "*"
 org_role = "Viewer"
 ```
 
-| Setting         | Required | Description                                                                                                                                                              | Default              |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                                               |
-| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                                           |
-| `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
-| `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
+| Setting         | Required | Description                                                                                                                                           | Default              |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                            |
+| `org_role`      | Yes      | Assign users of `group_dn` the organization role `Admin`, `Editor`, or `Viewer`. The organization role name is case sensitive.                        |
+| `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id) |
+| `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users.                  | `false`              |
 
 {{% admonition type="note" %}}
 Commenting out a group mapping requires also commenting out the header of
@@ -251,7 +250,7 @@ Example:
 [[servers.group_mappings]]
 group_dn = "cn=superadmins,dc=grafana,dc=org"
 org_role = "Admin"
-grafana_admin = true # Available in Grafana v5.3 and above
+grafana_admin = true
 
 # [[servers.group_mappings]]
 # group_dn = "cn=admins,dc=grafana,dc=org"
@@ -415,7 +414,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../../../configure-grafana" >}}).
+To troubleshoot and get more log info enable LDAP debug logging in the [main config file](../../../configure-grafana/).
 
 ```bash
 [log]

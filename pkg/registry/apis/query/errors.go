@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var QueryError = errutil.BadRequest("query.error").MustTemplate(
@@ -76,4 +76,21 @@ func makeCyclicError(refID string) error {
 		Error: fmt.Errorf("cyclic reference in %s", refID),
 	}
 	return cyclicErr.Build(data)
+}
+
+type ErrorWithRefID struct {
+	err   error
+	refId string
+}
+
+func (ewr ErrorWithRefID) Error() string {
+	return ewr.err.Error()
+}
+
+func NewErrorWithRefID(refId string, err error) error {
+	ewr := ErrorWithRefID{
+		err:   err,
+		refId: refId,
+	}
+	return ewr
 }

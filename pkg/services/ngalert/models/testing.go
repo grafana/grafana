@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -10,13 +11,17 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/uuid"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -92,13 +97,20 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		ns = append(ns, NotificationSettingsGen()())
 	}
 
+	var updatedBy *UserUID
+	if rand.Int63()%2 == 0 {
+		updatedBy = util.Pointer(UserUID(util.GenerateShortUID()))
+	}
+
 	rule := AlertRule{
 		ID:                   0,
+		GUID:                 uuid.NewString(),
 		OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 		Title:                fmt.Sprintf("title-%s", util.GenerateShortUID()),
 		Condition:            "A",
 		Data:                 []AlertQuery{g.GenerateQuery()},
 		Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
+		UpdatedBy:            updatedBy,
 		IntervalSeconds:      rand.Int63n(60) + 1,
 		Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
 		UID:                  util.GenerateShortUID(),
@@ -113,6 +125,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Annotations:          annotations,
 		Labels:               labels,
 		NotificationSettings: ns,
+		Metadata:             GenerateMetadata(),
 	}
 
 	for _, mutator := range g.mutators {
@@ -189,6 +202,26 @@ func (a *AlertRuleMutators) WithUniqueID() AlertRuleMutator {
 				return
 			}
 			id = rand.Int63n(1500) + 1
+		}
+	}
+}
+
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryAndExpressionsSection(enabled bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = enabled
+	}
+}
+
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedNotificationsSection(enabled bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.EditorSettings.SimplifiedNotificationsSection = enabled
+	}
+}
+
+func (a *AlertRuleMutators) WithPrometheusOriginalRuleDefinition(definition string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.PrometheusStyleRule = &PrometheusStyleRule{
+			OriginalRuleDefinition: definition,
 		}
 	}
 }
@@ -494,13 +527,13 @@ func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
 		if rand.Int63()%2 == 0 {
 			return
 		}
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
 func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
 	return func(rule *AlertRule) {
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
@@ -519,6 +552,43 @@ func (a *AlertRuleMutators) WithRecordFrom(from string) AlertRuleMutator {
 			rule.Record = &Record{}
 		}
 		rule.Record.From = from
+	}
+}
+
+func (a *AlertRuleMutators) WithUpdatedBy(uid *UserUID) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UpdatedBy = uid
+	}
+}
+
+func (a *AlertRuleMutators) WithUID(uid string) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UID = uid
+	}
+}
+
+func (a *AlertRuleMutators) WithKey(key AlertRuleKey) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UID = key.UID
+		r.OrgID = key.OrgID
+	}
+}
+
+func (a *AlertRuleMutators) WithVersion(version int64) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Version = version
+	}
+}
+
+func (a *AlertRuleMutators) WithMetadata(meta AlertRuleMetadata) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.Metadata = meta
+	}
+}
+
+func (a AlertRuleMutators) WithGUID(guid string) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.GUID = guid
 	}
 }
 
@@ -577,6 +647,14 @@ func GenerateRuleKey(orgID int64) AlertRuleKey {
 	}
 }
 
+// GenerateRuleKeyWithGroup generates a random alert rule key with group
+func GenerateRuleKeyWithGroup(orgID int64) AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{
+		AlertRuleKey: GenerateRuleKey(orgID),
+		RuleGroup:    util.GenerateShortUID(),
+	}
+}
+
 // GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{
@@ -588,77 +666,13 @@ func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 
 // CopyRule creates a deep copy of AlertRule
 func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
-	result := AlertRule{
-		ID:              r.ID,
-		OrgID:           r.OrgID,
-		Title:           r.Title,
-		Condition:       r.Condition,
-		Updated:         r.Updated,
-		IntervalSeconds: r.IntervalSeconds,
-		Version:         r.Version,
-		UID:             r.UID,
-		NamespaceUID:    r.NamespaceUID,
-		RuleGroup:       r.RuleGroup,
-		RuleGroupIndex:  r.RuleGroupIndex,
-		NoDataState:     r.NoDataState,
-		ExecErrState:    r.ExecErrState,
-		For:             r.For,
-		Record:          r.Record,
-	}
-
-	if r.DashboardUID != nil {
-		dash := *r.DashboardUID
-		result.DashboardUID = &dash
-	}
-	if r.PanelID != nil {
-		p := *r.PanelID
-		result.PanelID = &p
-	}
-
-	for _, d := range r.Data {
-		q := AlertQuery{
-			RefID:             d.RefID,
-			QueryType:         d.QueryType,
-			RelativeTimeRange: d.RelativeTimeRange,
-			DatasourceUID:     d.DatasourceUID,
-		}
-		q.Model = make([]byte, 0, cap(d.Model))
-		q.Model = append(q.Model, d.Model...)
-		result.Data = append(result.Data, q)
-	}
-
-	if r.Annotations != nil {
-		result.Annotations = make(map[string]string, len(r.Annotations))
-		for s, s2 := range r.Annotations {
-			result.Annotations[s] = s2
-		}
-	}
-
-	if r.Labels != nil {
-		result.Labels = make(map[string]string, len(r.Labels))
-		for s, s2 := range r.Labels {
-			result.Labels[s] = s2
-		}
-	}
-
-	if r.Record != nil {
-		result.Record = &Record{
-			From:   r.Record.From,
-			Metric: r.Record.Metric,
-		}
-	}
-
-	for _, s := range r.NotificationSettings {
-		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
-	}
-
+	result := r.Copy()
 	if len(mutators) > 0 {
 		for _, mutator := range mutators {
-			mutator(&result)
+			mutator(result)
 		}
 	}
-
-	return &result
+	return result
 }
 
 func CreateClassicConditionExpression(refID string, inputRefID string, reducer string, operation string, threshold int) AlertQuery {
@@ -805,6 +819,15 @@ func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, t
 	return q
 }
 
+func GenerateMetadata() AlertRuleMetadata {
+	return AlertRuleMetadata{
+		EditorSettings: EditorSettings{
+			SimplifiedQueryAndExpressionsSection: rand.Int()%2 == 0,
+			SimplifiedNotificationsSection:       rand.Int()%2 == 0,
+		},
+	}
+}
+
 type AlertInstanceMutator func(*AlertInstance)
 
 // AlertInstanceGen provides a factory function that generates a random AlertInstance.
@@ -840,6 +863,11 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		CurrentStateSince: currentStateSince,
 		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
 		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+		LastSentAt:        util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50))),
+	}
+
+	if instance.CurrentState == InstanceStateNormal && rand.Intn(2) == 1 {
+		instance.ResolvedAt = util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50)))
 	}
 
 	for _, mutator := range mutators {
@@ -1086,7 +1114,221 @@ func (n SilenceMutators) WithEmptyId() Mutator[Silence] {
 	}
 }
 
-func convertToRecordingRule(rule *AlertRule) {
+// Receivers
+
+// CopyReceiverWith creates a deep copy of Receiver and then applies mutators to it.
+func CopyReceiverWith(r Receiver, mutators ...Mutator[Receiver]) Receiver {
+	c := r.Clone()
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	c.Version = c.Fingerprint()
+	return c
+}
+
+// ReceiverGen generates Receiver using a base and mutators.
+func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
+	return func() Receiver {
+		name := util.GenerateShortUID()
+		integration := IntegrationGen(IntegrationMuts.WithName(name))()
+		c := Receiver{
+			UID:          nameToUid(name),
+			Name:         name,
+			Integrations: []*Integration{&integration},
+			Provenance:   ProvenanceNone,
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		c.Version = c.Fingerprint()
+		return c
+	}
+}
+
+var (
+	ReceiverMuts = ReceiverMutators{}
+)
+
+type ReceiverMutators struct{}
+
+func (n ReceiverMutators) WithName(name string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Name = name
+		r.UID = nameToUid(name)
+	}
+}
+
+func (n ReceiverMutators) WithProvenance(provenance Provenance) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Provenance = provenance
+	}
+}
+
+func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		integration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+		r.Integrations = []*Integration{&integration}
+	}
+}
+
+func (n ReceiverMutators) WithInvalidIntegration(integrationType string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		integration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
+		r.Integrations = []*Integration{&integration}
+	}
+}
+
+func (n ReceiverMutators) WithIntegrations(integration ...Integration) Mutator[Receiver] {
+	return func(r *Receiver) {
+		integrations := make([]*Integration, len(integration))
+		for i, v := range integration {
+			clone := v.Clone()
+			integrations[i] = &clone
+		}
+		r.Integrations = integrations
+	}
+}
+
+func (n ReceiverMutators) Encrypted(fn EncryptFn) Mutator[Receiver] {
+	return func(r *Receiver) {
+		_ = r.Encrypt(fn)
+	}
+}
+func (n ReceiverMutators) Decrypted(fn DecryptFn) Mutator[Receiver] {
+	return func(r *Receiver) {
+		_ = r.Decrypt(fn)
+	}
+}
+
+// Integrations
+
+// CopyIntegrationWith creates a deep copy of Integration and then applies mutators to it.
+func CopyIntegrationWith(r Integration, mutators ...Mutator[Integration]) Integration {
+	c := r.Clone()
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
+// IntegrationGen generates Integration using a base and mutators.
+func IntegrationGen(mutators ...Mutator[Integration]) func() Integration {
+	return func() Integration {
+		name := util.GenerateShortUID()
+		randomIntegrationType, _ := randomMapKey(alertingNotify.AllKnownConfigsForTesting)
+
+		c := Integration{
+			UID:                   util.GenerateShortUID(),
+			Name:                  name,
+			DisableResolveMessage: rand.Intn(2) == 1,
+			Settings:              make(map[string]any),
+			SecureSettings:        make(map[string]string),
+		}
+
+		IntegrationMuts.WithValidConfig(randomIntegrationType)(&c)
+
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
+var (
+	IntegrationMuts = IntegrationMutators{}
+	Base64Enrypt    = func(s string) (string, error) {
+		return base64.StdEncoding.EncodeToString([]byte(s)), nil
+	}
+	Base64Decrypt = func(s string) (string, error) {
+		b, err := base64.StdEncoding.DecodeString(s)
+		return string(b), err
+	}
+)
+
+type IntegrationMutators struct{}
+
+func (n IntegrationMutators) WithUID(uid string) Mutator[Integration] {
+	return func(s *Integration) {
+		s.UID = uid
+	}
+}
+
+func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
+	return func(s *Integration) {
+		s.Name = name
+	}
+}
+
+func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Integration] {
+	return func(c *Integration) {
+		config := alertingNotify.AllKnownConfigsForTesting[integrationType].GetRawNotifierConfig(c.Name)
+		integrationConfig, _ := IntegrationConfigFromType(integrationType)
+		c.Config = integrationConfig
+
+		var settings map[string]any
+		_ = json.Unmarshal(config.Settings, &settings)
+
+		c.Settings = settings
+
+		// Decrypt secure settings over to normal settings.
+		for k, v := range c.SecureSettings {
+			decodeValue, _ := base64.StdEncoding.DecodeString(v)
+			settings[k] = string(decodeValue)
+		}
+	}
+}
+
+func (n IntegrationMutators) WithInvalidConfig(integrationType string) Mutator[Integration] {
+	return func(c *Integration) {
+		integrationConfig, _ := IntegrationConfigFromType(integrationType)
+		c.Config = integrationConfig
+		c.Settings = map[string]interface{}{}
+		c.SecureSettings = map[string]string{}
+		if integrationType == "webex" {
+			// Webex passes validation without any settings but should fail with an unparsable URL.
+			c.Settings["api_url"] = "(*^$*^%!@#$*()"
+		}
+	}
+}
+
+func (n IntegrationMutators) WithSettings(settings map[string]any) Mutator[Integration] {
+	return func(c *Integration) {
+		c.Settings = maps.Clone(settings)
+	}
+}
+
+func (n IntegrationMutators) AddSetting(key string, val any) Mutator[Integration] {
+	return func(c *Integration) {
+		c.Settings[key] = val
+	}
+}
+
+func (n IntegrationMutators) WithSecureSettings(secureSettings map[string]string) Mutator[Integration] {
+	return func(r *Integration) {
+		r.SecureSettings = maps.Clone(secureSettings)
+	}
+}
+
+func (n IntegrationMutators) AddSecureSetting(key, val string) Mutator[Integration] {
+	return func(r *Integration) {
+		r.SecureSettings[key] = val
+	}
+}
+
+func randomMapKey[K comparable, V any](m map[K]V) (K, V) {
+	randIdx := rand.Intn(len(m))
+	i := 0
+
+	for key, val := range m {
+		if i == randIdx {
+			return key, val
+		}
+		i++
+	}
+	return *new(K), *new(V)
+}
+
+func ConvertToRecordingRule(rule *AlertRule) {
 	if rule.Record == nil {
 		rule.Record = &Record{}
 	}
@@ -1101,4 +1343,8 @@ func convertToRecordingRule(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+}
+
+func nameToUid(name string) string { // Avoid legacy_storage.NameToUid import cycle.
+	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }

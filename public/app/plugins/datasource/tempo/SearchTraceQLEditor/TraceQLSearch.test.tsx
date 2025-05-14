@@ -1,13 +1,13 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { config } from '@grafana/runtime';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { TempoQuery } from '../types';
 
 import TraceQLSearch from './TraceQLSearch';
@@ -64,7 +64,12 @@ describe('TraceQLSearch', () => {
       ],
     },
   } as TempoDatasource;
-  datasource.languageProvider = new TempoLanguageProvider(datasource);
+  datasource.isStreamingSearchEnabled = () => false;
+  datasource.isStreamingMetricsEnabled = () => false;
+  const lp = new TempoLanguageProvider(datasource);
+  lp.getIntrinsics = () => ['duration'];
+  lp.generateQueryFromFilters = () => '{}';
+  datasource.languageProvider = lp;
   let query: TempoQuery = {
     refId: 'A',
     queryType: 'traceqlSearch',
@@ -114,25 +119,37 @@ describe('TraceQLSearch', () => {
     });
 
     await user.click(screen.getByText('Select tag'));
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     await user.click(screen.getByText('foo'));
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     await user.click(screen.getAllByText('Select value')[2]);
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     await user.click(screen.getByText('driver'));
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     await act(async () => {
       expect(screen.getAllByLabelText('Add tag').length).toBe(1);
       expect(screen.getAllByLabelText(/Remove tag/).length).toBe(1);
     });
 
     await user.click(screen.getByLabelText('Add tag'));
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the new tag, so no need to add another one
     expect(screen.getAllByLabelText(/Remove tag/).length).toBe(2); // one for each tag
 
     await user.click(screen.getAllByLabelText(/Remove tag/)[1]);
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
     expect(screen.queryAllByLabelText('Add tag').length).toBe(1); // filled in the default tag, so can add another one
     expect(screen.queryAllByLabelText(/Remove tag/).length).toBe(1); // filled in the default tag, so can remove values
 
@@ -155,7 +172,9 @@ describe('TraceQLSearch', () => {
 
     if (minDurationOperator) {
       await user.click(minDurationOperator);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const regexOp = await screen.findByText('>=');
       await user.click(regexOp);
       const minDurationFilter = query.filters.find((f) => f.id === 'min-duration');
@@ -176,7 +195,9 @@ describe('TraceQLSearch', () => {
 
     if (serviceNameValue) {
       await user.click(serviceNameValue);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const customerValue = await screen.findByText('customer');
       await user.click(customerValue);
       const nameFilter = query.filters.find((f) => f.id === 'service-name');
@@ -200,7 +221,13 @@ describe('TraceQLSearch', () => {
         ],
       },
     } as TempoDatasource;
-    datasource.languageProvider = new TempoLanguageProvider(datasource);
+    datasource.isStreamingSearchEnabled = () => false;
+    datasource.isStreamingMetricsEnabled = () => false;
+
+    const lp = new TempoLanguageProvider(datasource);
+    lp.getIntrinsics = () => ['duration'];
+    lp.generateQueryFromFilters = () => '{}';
+    datasource.languageProvider = lp;
     await act(async () => {
       const { container } = render(
         <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />

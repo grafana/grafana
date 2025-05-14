@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Alert, Badge } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
@@ -9,7 +8,7 @@ import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
   const overrideNavId = 'standalone-plugin-page-/connections/add-new-connection';
-  const { id } = useParams<{ id: string }>();
+  const { id = '' } = useParams<{ id: string }>();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isConnectDataPageOverriden = Boolean(navIndex[overrideNavId]);
   const navId = isConnectDataPageOverriden ? overrideNavId : 'connections-add-new-connection'; // The nav id changes (gets a prefix) if it is overriden by a plugin

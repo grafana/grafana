@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -12,9 +13,9 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -96,72 +97,6 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 		require.Error(t, err, "exceeded maximum timeout")
 		require.Nil(t, cancelFunc)
 		require.Nil(t, ctx)
-	})
-}
-
-func TestStatusForTestReceivers(t *testing.T) {
-	t.Run("assert HTTP 400 Status Bad Request for no receivers", func(t *testing.T) {
-		require.Equal(t, http.StatusBadRequest, statusForTestReceivers([]notifier.TestReceiverResult{}))
-	})
-
-	t.Run("assert HTTP 400 Bad Request when all invalid receivers", func(t *testing.T) {
-		require.Equal(t, http.StatusBadRequest, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}}))
-	})
-
-	t.Run("assert HTTP 408 Request Timeout when all receivers timed out", func(t *testing.T) {
-		require.Equal(t, http.StatusRequestTimeout, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}}))
-	})
-
-	t.Run("assert 207 Multi Status for different errors", func(t *testing.T) {
-		require.Equal(t, http.StatusMultiStatus, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}}))
 	})
 }
 
@@ -324,6 +259,118 @@ func TestAlertmanagerConfig(t *testing.T) {
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
 	})
+}
+
+func TestGetAlertmanagerConfiguration_NewSecretField(t *testing.T) {
+	// This test has the following goals:
+	// Given:
+	// - A saved notifier config with an existing secret field stored unencrypted in Settings.
+	// Ensure:
+	// - The secret field is not returned in plaintext.
+	// - The secret field is returned as a bool in SecureFields.
+	// - The secret field is correctly saved and encrypted in SecureSettings when saving the notifier config without changes.
+	// - The secret field is removed from Settings when saving the notifier config.
+
+	sut := createSut(t)
+	orgId := int64(1)
+
+	// This config has the secret field "integrationKey" stored incorrectly and unencrypted in Settings.
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {
+			OrgID: orgId,
+			AlertmanagerConfiguration: `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "configWithNewlySecretSetting"
+		},
+		"receivers": [{
+			"name": "configWithNewlySecretSetting",
+			"grafana_managed_receiver_configs": [{
+				"uid": "configWithNewlySecretSetting-uid",
+				"name": "configWithNewlySecretSetting",
+				"type": "pagerduty",
+				"settings": {"integrationKey": "unencrypted secure secret"},
+				"secureSettings": {}
+			}]
+		}]
+	}
+}
+`,
+			CreatedAt: time.Now().Unix(),
+			Default:   false,
+		},
+	}
+
+	// Store the config as-is in the database. Bypasses normal save route so it doesn't get pre-emptively fixed.
+	mam := createMultiOrgAlertmanager(t, configs)
+	sut.mam = mam
+
+	rc := createRequestCtxInOrg(orgId)
+	res := sut.RouteGetAlertingConfig(rc)
+	gettable := asGettableUserConfig(t, res)
+
+	integration := gettable.GetGrafanaReceiverMap()["configWithNewlySecretSetting-uid"]
+	require.NotNil(t, integration)
+
+	var settings map[string]string
+	err := json.Unmarshal(integration.Settings, &settings)
+	require.NoError(t, err)
+
+	// The secret field "integrationKey" should not be returned in plaintext.
+	assert.NotEqual(t, "unencrypted secure secret", settings["integrationKey"])
+	// Just in case let's look for the unencrypted value anywhere in the settings.
+	assert.NotContains(t, string(integration.Settings), "unencrypted")
+
+	// The secret fields should be returned as a bool in SecureFields.
+	assert.True(t, integration.SecureFields["integrationKey"])
+
+	// Now we save the config without changes. This should encrypt the field "integrationKey" into SecureSettings and
+	// remove it from Settings.
+
+	// Simulates FE-API interaction, "integrationKey" is not sent in Settings as the caller.
+	// Instead, it leaves it out of "SecureSettings" to indicate the API should keep the existing value.
+	var postWithoutChanges = `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "configWithNewlySecretSetting"
+		},
+		"receivers": [{
+			"name": "configWithNewlySecretSetting",
+			"grafana_managed_receiver_configs": [{
+				"uid": "configWithNewlySecretSetting-uid",
+				"name": "configWithNewlySecretSetting",
+				"type": "pagerduty",
+				"settings": {},
+				"secureSettings": {}
+			}]
+		}]
+	}
+}
+`
+	postable := createAmConfigRequest(t, postWithoutChanges)
+
+	res = sut.RoutePostAlertingConfig(rc, postable)
+	require.Equal(t, 202, res.Status())
+
+	// Check that the secret field "integrationKey" is now encrypted in SecureSettings.
+	savedConfig := &apimodels.PostableUserConfig{}
+	err = json.Unmarshal([]byte(configs[orgId].AlertmanagerConfiguration), savedConfig)
+	require.NoError(t, err)
+
+	savedIntegration := savedConfig.GetGrafanaReceiverMap()["configWithNewlySecretSetting-uid"]
+	require.NotNil(t, savedIntegration)
+
+	// No longer in Settings.
+	assert.Equal(t, "{}", string(savedIntegration.Settings))
+
+	// Encrypted in SecureSettings.
+	secureSecret := savedIntegration.SecureSettings["integrationKey"]
+	assert.NotEmpty(t, secureSecret)
+	encryptedSecret, err := base64.StdEncoding.DecodeString(secureSecret)
+	require.NoError(t, err)
+
+	// No access to .Decrypt, but we can check that it's not the same as the unencrypted value.
+	assert.NotEqual(t, "unencrypted secure secret", string(encryptedSecret))
 }
 
 func TestAlertmanagerAutogenConfig(t *testing.T) {
@@ -635,11 +682,12 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	ruleStore := ngfakes.NewRuleStore(t)
 	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 	return AlertmanagerSrv{
-		mam:        mam,
-		crypto:     mam.Crypto,
-		ac:         ac,
-		log:        log,
-		silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
+		mam:            mam,
+		crypto:         mam.Crypto,
+		ac:             ac,
+		log:            log,
+		featureManager: featuremgmt.WithFeatures(),
+		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
 }
 
@@ -674,7 +722,20 @@ func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertC
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting))
+	mam, err := notifier.NewMultiOrgAlertmanager(
+		cfg,
+		configStore,
+		orgStore,
+		kvStore,
+		provStore,
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		ngfakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting),
+	)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)

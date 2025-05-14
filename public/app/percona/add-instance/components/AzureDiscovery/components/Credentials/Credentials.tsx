@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import { FC, useCallback } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
 import { Button, useStyles } from '@grafana/ui';

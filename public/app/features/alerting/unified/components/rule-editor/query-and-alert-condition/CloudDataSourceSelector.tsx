@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, useStyles2 } from '@grafana/ui';

@@ -1,10 +1,9 @@
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { render } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -15,7 +14,7 @@ import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
-  setupGrafanaManagedServer,
+  mockDataSources,
   setupVanillaAlertmanagerServer,
 } from './__mocks__/server';
 
@@ -39,15 +38,12 @@ const ui = {
   resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   cancelButton: byRole('button', { name: /Cancel/ }),
-  configInput: byTestId(selectors.components.CodeEditor.container),
-  readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Alerting Settings', () => {
-  const server = setupMswServer();
+  setupMswServer();
 
   beforeEach(() => {
-    setupGrafanaManagedServer(server);
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
@@ -55,7 +51,7 @@ describe('Alerting Settings', () => {
     const onReset = jest.fn();
     renderConfiguration('grafana', { onReset });
 
-    await userEvent.click(await ui.resetButton.get());
+    await userEvent.click(await ui.resetButton.find());
 
     await waitFor(() => {
       expect(ui.resetConfirmButton.query()).toBeInTheDocument();
@@ -81,6 +77,7 @@ describe('vanilla Alertmanager', () => {
 
   beforeEach(() => {
     setupVanillaAlertmanagerServer(server);
+    setupDataSources(...Object.values(mockDataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 

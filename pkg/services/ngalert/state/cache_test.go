@@ -3,14 +3,11 @@ package state
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net/url"
+	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -117,211 +114,6 @@ func Test_expand(t *testing.T) {
 	})
 }
 
-func Test_getOrCreate(t *testing.T) {
-	url := &url.URL{
-		Scheme: "http",
-		Host:   "localhost:3000",
-		Path:   "/test",
-	}
-	l := log.New("test")
-	c := newCache()
-
-	gen := models.RuleGen
-	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
-
-	t.Run("should combine all labels", func(t *testing.T) {
-		rule := generateRule()
-
-		extraLabels := models.GenerateAlertLabels(5, "extra-")
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
-		for key, expected := range extraLabels {
-			require.Equal(t, expected, state.Labels[key])
-		}
-		assert.Len(t, state.Labels, len(extraLabels)+len(rule.Labels)+len(result.Instance))
-		for key, expected := range extraLabels {
-			assert.Equal(t, expected, state.Labels[key])
-		}
-		for key, expected := range rule.Labels {
-			assert.Equal(t, expected, state.Labels[key])
-		}
-		for key, expected := range result.Instance {
-			assert.Equal(t, expected, state.Labels[key])
-		}
-	})
-	t.Run("extra labels should take precedence over rule and result labels", func(t *testing.T) {
-		rule := generateRule()
-
-		extraLabels := models.GenerateAlertLabels(2, "extra-")
-
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-		for key := range extraLabels {
-			rule.Labels[key] = "rule-" + util.GenerateShortUID()
-			result.Instance[key] = "result-" + util.GenerateShortUID()
-		}
-
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
-		for key, expected := range extraLabels {
-			require.Equal(t, expected, state.Labels[key])
-		}
-	})
-	t.Run("rule labels should take precedence over result labels", func(t *testing.T) {
-		rule := generateRule()
-
-		extraLabels := models.GenerateAlertLabels(2, "extra-")
-
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-		for key := range rule.Labels {
-			result.Instance[key] = "result-" + util.GenerateShortUID()
-		}
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
-		for key, expected := range rule.Labels {
-			require.Equal(t, expected, state.Labels[key])
-		}
-	})
-	t.Run("rule labels should be able to be expanded with result and extra labels", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-		rule := generateRule()
-
-		extraLabels := models.GenerateAlertLabels(2, "extra-")
-
-		labelTemplates := make(data.Labels)
-		for key := range extraLabels {
-			labelTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
-		}
-		for key := range result.Instance {
-			labelTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
-		}
-		rule.Labels = labelTemplates
-
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
-		for key, expected := range extraLabels {
-			assert.Equal(t, expected, state.Labels["rule-"+key])
-		}
-		for key, expected := range result.Instance {
-			assert.Equal(t, expected, state.Labels["rule-"+key])
-		}
-	})
-
-	t.Run("rule annotations should be able to be expanded with result and extra labels", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-
-		rule := generateRule()
-
-		extraLabels := models.GenerateAlertLabels(2, "extra-")
-
-		annotationTemplates := make(data.Labels)
-		for key := range extraLabels {
-			annotationTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
-		}
-		for key := range result.Instance {
-			annotationTemplates["rule-"+key] = fmt.Sprintf("{{ with (index .Labels \"%s\") }}{{.}}{{end}}", key)
-		}
-		rule.Annotations = annotationTemplates
-
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
-		for key, expected := range extraLabels {
-			assert.Equal(t, expected, state.Annotations["rule-"+key])
-		}
-		for key, expected := range result.Instance {
-			assert.Equal(t, expected, state.Annotations["rule-"+key])
-		}
-	})
-
-	t.Run("expected Reduce and Math expression values", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-			Values: map[string]eval.NumberValueCapture{
-				"A": {Var: "A", Value: util.Pointer(1.0)},
-				"B": {Var: "B", Value: util.Pointer(2.0)},
-			},
-		}
-		rule := generateRule()
-
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
-		assert.Equal(t, map[string]float64{"A": 1, "B": 2}, state.Values)
-	})
-
-	t.Run("expected Classic Condition values", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-			Values: map[string]eval.NumberValueCapture{
-				"B0": {Var: "B", Value: util.Pointer(1.0)},
-				"B1": {Var: "B", Value: util.Pointer(2.0)},
-			},
-		}
-		rule := generateRule()
-
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
-		assert.Equal(t, map[string]float64{"B0": 1, "B1": 2}, state.Values)
-	})
-
-	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-		}
-		m := models.LabelsUserCannotSpecify
-		t.Cleanup(func() {
-			models.LabelsUserCannotSpecify = m
-		})
-
-		models.LabelsUserCannotSpecify = map[string]struct{}{
-			"__label1__": {},
-			"label2__":   {},
-			"__label3":   {},
-			"label4":     {},
-		}
-		result.Instance["__label1__"] = uuid.NewString()
-		result.Instance["label2__"] = uuid.NewString()
-		result.Instance["__label3"] = uuid.NewString()
-		result.Instance["label4"] = uuid.NewString()
-
-		rule := generateRule()
-
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
-
-		for key := range models.LabelsUserCannotSpecify {
-			assert.NotContains(t, state.Labels, key)
-		}
-		assert.Contains(t, state.Labels, "label1")
-		assert.Equal(t, state.Labels["label1"], result.Instance["__label1__"])
-
-		assert.Contains(t, state.Labels, "label2")
-		assert.Equal(t, state.Labels["label2"], result.Instance["label2__"])
-
-		assert.Contains(t, state.Labels, "label3")
-		assert.Equal(t, state.Labels["label3"], result.Instance["__label3"])
-
-		assert.Contains(t, state.Labels, "label4_user")
-		assert.Equal(t, state.Labels["label4_user"], result.Instance["label4"])
-
-		t.Run("should drop label if renamed collides with existing", func(t *testing.T) {
-			result.Instance["label1"] = uuid.NewString()
-			result.Instance["label1_user"] = uuid.NewString()
-			result.Instance["label4_user"] = uuid.NewString()
-
-			state = c.getOrCreate(context.Background(), l, rule, result, nil, url)
-			assert.NotContains(t, state.Labels, "__label1__")
-			assert.Contains(t, state.Labels, "label1")
-			assert.Equal(t, state.Labels["label1"], result.Instance["label1"])
-			assert.Equal(t, state.Labels["label1_user"], result.Instance["label1_user"])
-
-			assert.NotContains(t, state.Labels, "label4")
-			assert.Equal(t, state.Labels["label4_user"], result.Instance["label4_user"])
-		})
-	})
-}
-
 func Test_mergeLabels(t *testing.T) {
 	t.Run("merges two maps", func(t *testing.T) {
 		a := models.GenerateAlertLabels(5, "set1-")
@@ -353,4 +145,40 @@ func Test_mergeLabels(t *testing.T) {
 			require.Equal(t, val, result[key])
 		}
 	})
+}
+
+func randomSate(ruleKey models.AlertRuleKey) State {
+	return State{
+		OrgID:             ruleKey.OrgID,
+		AlertRuleUID:      ruleKey.UID,
+		CacheID:           data.Fingerprint(rand.Int63()),
+		ResultFingerprint: data.Fingerprint(rand.Int63()),
+		State:             eval.Alerting,
+		StateReason:       util.GenerateShortUID(),
+		LatestResult: &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: eval.Error,
+			Values: map[string]float64{
+				"A": rand.Float64(),
+			},
+			Condition: "A",
+		},
+		Error: errors.New(util.GenerateShortUID()),
+		Image: &models.Image{
+			ID:    rand.Int63(),
+			Token: util.GenerateShortUID(),
+		},
+		Annotations: models.GenerateAlertLabels(2, "current-"),
+		Labels:      models.GenerateAlertLabels(2, "current-"),
+		Values: map[string]float64{
+			"A": rand.Float64(),
+		},
+		StartsAt:             randomTimeInPast(),
+		EndsAt:               randomTimeInFuture(),
+		ResolvedAt:           util.Pointer(randomTimeInPast()),
+		LastSentAt:           util.Pointer(randomTimeInPast()),
+		LastEvaluationString: util.GenerateShortUID(),
+		LastEvaluationTime:   randomTimeInPast(),
+		EvaluationDuration:   time.Duration(6000),
+	}
 }

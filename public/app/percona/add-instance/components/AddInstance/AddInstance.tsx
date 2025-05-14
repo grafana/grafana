@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
-import React, { FC, useLayoutEffect, useMemo } from 'react';
+import { FC, useLayoutEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Card, Icon, useStyles2 } from '@grafana/ui';

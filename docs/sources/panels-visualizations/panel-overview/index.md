@@ -140,18 +140,18 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
 
 - **View**: View the panel in full screen.
 - **Edit**: Open the panel editor to edit panel and visualization options.
-- **Share**: Share the panel as a link, embed, or library panel.
+- **Share**: Share the panel as a link, embed, or snapshot.
 - **Explore**: Open the panel in **Explore**, where you can focus on your query.
 - **Inspect**: Open the **Inspect** drawer, where you can review the panel data, stats, metadata, JSON, and query.
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/ui-extensions/) to the panel menu.
+- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
   - **Copy**: Copy the panel to the clipboard.
-  - **Create library panel**: Create a panel that can be imported into other dashboards.
-  - **Create alert**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](ref:create) based on the panel queries.
+  - **New library panel**: Create a panel that can be imported into other dashboards.
+  - **New alert rule**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](ref:create) based on the panel queries.
   - **Hide legend**: Hide the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Remove the panel from the dashboard.
@@ -164,10 +164,14 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel fullscreen view
-- `ps`: Open Panel Share Modal
+- `pu`: Share link
+- `pe`: Share embed
+- `ps`: Share snapshot
+- `px`: Open panel in **Explore**
 - `pd`: Duplicate Panel
+- `i`: Inspect
+- `pl`: Hide or show legend
 - `pr`: Remove Panel
-- `pl`: Toggle panel legend
 
 ## Add a panel
 
@@ -175,9 +179,12 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down:
+To add a panel to an existing dashboard, follow these steps:
 
-![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click the **Add** drop-down and select **Visualization**:
+
+   ![Add dropdown](/media/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
 
 ## Panel configuration
 

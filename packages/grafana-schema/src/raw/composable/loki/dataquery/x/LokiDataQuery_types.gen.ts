@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.1.8";
+export const pluginVersion = "11.6.1";
 
 export enum QueryEditorMode {
   Builder = 'builder',
@@ -33,6 +33,7 @@ export enum SupportingQueryType {
 export enum LokiQueryDirection {
   Backward = 'backward',
   Forward = 'forward',
+  Scan = 'scan',
 }
 
 export interface LokiDataQuery extends common.DataQuery {

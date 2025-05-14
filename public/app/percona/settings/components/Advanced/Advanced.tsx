@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';

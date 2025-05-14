@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -110,7 +111,7 @@ export function PayloadEditor({
               </Dropdown>
               <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
                 <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
-                  Help
+                  Reference
                 </Button>
               </Toggletip>
             </Stack>

@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
-import { RangeSlider } from '@grafana/ui';
+import { RangeSlider } from './RangeSlider';
 
 const meta: Meta<typeof RangeSlider> = {
   title: 'Forms/Slider/Range',

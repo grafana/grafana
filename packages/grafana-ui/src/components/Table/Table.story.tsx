@@ -1,6 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React from 'react';
 
 import {
   DataFrame,
@@ -13,12 +12,13 @@ import {
   formattedValueToString,
   Field,
 } from '@grafana/data';
-import { Button, Table } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
+import { Button } from '../Button/Button';
 
+import { Table } from './Table';
 import mdx from './Table.mdx';
 import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 

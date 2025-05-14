@@ -1,13 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/QueryPatternsModal.tsx
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataQuery, getNextRefId, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
-import { getNextRefIdChar } from '../gcopypaste/app/core/utils/query';
 import { PromQuery } from '../types';
 
 import { promQueryModeller } from './PromQueryModeller';
@@ -59,7 +58,7 @@ export const QueryPatternsModal = (props: Props) => {
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
-        refId: getNextRefIdChar(queries ?? [query]),
+        refId: getNextRefId(queries ?? [query]),
         expr: promQueryModeller.renderQuery(visualQuery.query),
       });
     } else {
@@ -78,19 +77,26 @@ export const QueryPatternsModal = (props: Props) => {
         Kick start your query by selecting one of these queries. You can then continue to complete your query.
       </div>
       {Object.values(PromQueryPatternType).map((patternType) => {
+        const isOpen = openTabs.includes(patternType);
         return (
           <Collapse
             aria-label={`open and close ${patternType} query starter card`}
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
-            isOpen={openTabs.includes(patternType)}
+            isOpen={isOpen}
             collapsible={true}
-            onToggle={() =>
+            onToggle={() => {
+              const action = isOpen ? 'close' : 'open';
+              reportInteraction(`grafana_prom_kickstart_toggle_pattern_card`, {
+                action,
+                patternType,
+              });
+
               setOpenTabs((tabs) =>
                 // close tab if it's already open, otherwise open it
                 tabs.includes(patternType) ? tabs.filter((t) => t !== patternType) : [...tabs, patternType]
-              )
-            }
+              );
+            }}
           >
             <div className={styles.cardsContainer}>
               {promQueryModeller

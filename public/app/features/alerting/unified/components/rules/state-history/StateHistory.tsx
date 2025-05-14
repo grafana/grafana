@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
+import * as React from 'react';
 
-import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -26,16 +27,16 @@ type StateHistoryMap = Record<string, StateHistoryRowItem[]>;
 type StateHistoryRow = DynamicTableItemProps<StateHistoryRowItem>;
 
 interface Props {
-  alertId: string;
+  ruleUID: string;
 }
 
-const StateHistory = ({ alertId }: Props) => {
+const StateHistory = ({ ruleUID }: Props) => {
   const [textFilter, setTextFilter] = useState<string>('');
   const handleTextFilter = useCallback((event: FormEvent<HTMLInputElement>) => {
     setTextFilter(event.currentTarget.value);
   }, []);
 
-  const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
+  const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
 
   const styles = useStyles2(getStyles);
 

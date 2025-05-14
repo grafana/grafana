@@ -1,8 +1,8 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { ConnectionConfig } from '@grafana/google-sdk';
+import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings } from '@grafana/ui';
 

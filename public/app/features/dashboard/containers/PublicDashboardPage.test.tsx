@@ -1,25 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { match, Router } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { locationService } from '@grafana/runtime';
-import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Panel } from '@grafana/schema/src';
-import config from 'app/core/config';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import * as appTypes from 'app/types';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
-import { SafeDynamicImport } from '../../../core/components/DynamicImports/SafeDynamicImport';
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
-import { DashboardModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
 import { initDashboard } from '../state/initDashboard';
 
 import PublicDashboardPage, { Props } from './PublicDashboardPage';
@@ -35,8 +29,8 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('react-virtualized-auto-sizer', () => {
-  //   //   // The size of the children need to be small enough to be outside the view.
-  //   //   // So it does not trigger the query to be run by the PanelQueryRunner.
+  // The size of the children need to be small enough to be outside the view.
+  // So it does not trigger the query to be run by the PanelQueryRunner.
   return ({ children }: AutoSizerProps) =>
     children({
       height: 1,
@@ -57,49 +51,37 @@ jest.mock('app/types', () => ({
 }));
 
 const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
-  const context = getGrafanaContextMock();
   const store = configureStore(initialState);
-
   const props: Props = {
     ...getRouteComponentProps({
-      match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
       route: {
         routeName: DashboardRoutes.Public,
         path: '/public-dashboards/:accessToken',
-        component: SafeDynamicImport(
-          () =>
-            import(/* webpackChunkName: "PublicDashboardPage"*/ 'app/features/dashboard/containers/PublicDashboardPage')
-        ),
+        component: () => null,
       },
     }),
   };
 
   Object.assign(props, propOverrides);
 
-  const { unmount, rerender } = render(
-    <GrafanaContext.Provider value={context}>
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PublicDashboardPage {...props} />
-        </Router>
-      </Provider>
-    </GrafanaContext.Provider>
+  render(
+    <Routes>
+      <Route path="/public-dashboards/:accessToken" element={<PublicDashboardPage {...props} />} />
+    </Routes>,
+    { store, historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] } }
   );
 
   const wrappedRerender = (newProps: Partial<Props>) => {
     Object.assign(props, newProps);
-    return rerender(
-      <GrafanaContext.Provider value={context}>
-        <Provider store={store}>
-          <Router history={locationService.getHistory()}>
-            <PublicDashboardPage {...props} />
-          </Router>
-        </Provider>
-      </GrafanaContext.Provider>
+    return render(
+      <Routes>
+        <Route path="/public-dashboards/:accessToken" element={<PublicDashboardPage {...props} />} />
+      </Routes>,
+      { store, historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] } }
     );
   };
 
-  return { rerender: wrappedRerender, unmount };
+  return { rerender: wrappedRerender };
 };
 
 const selectors = e2eSelectors.components;
@@ -139,8 +121,6 @@ const dashboardBase = {
 
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
-    config.featureToggles.publicDashboards = true;
-
     jest.clearAllMocks();
   });
 
@@ -251,7 +231,7 @@ describe('PublicDashboardPage', () => {
   describe('When public dashboard changes', () => {
     it('Should init again', async () => {
       const { rerender } = setup();
-      rerender({ match: { params: { accessToken: 'another-new-access-token' } } as unknown as match });
+      rerender({});
       await waitFor(() => {
         expect(initDashboard).toHaveBeenCalledTimes(2);
       });
@@ -265,7 +245,7 @@ describe('PublicDashboardPage', () => {
           ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [] },
             }),
         },
       });
@@ -280,7 +260,29 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 403,
+              statusText: 'Forbidden',
+              data: {
+                statusCode: 403,
+                messageId: 'publicdashboards.notEnabled',
+                message: 'Dashboard paused',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/4615c835a4e441f09c94fb1b073e6d2e',
+                retry: 0,
+                headers: {
+                  'X-Grafana-Org-Id': 1,
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+                hideFromInspector: true,
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false }),
         },
       });
 
@@ -297,7 +299,28 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 404,
+              statusText: 'Not Found',
+              data: {
+                statusCode: 404,
+                messageId: 'publicdashboards.notFound',
+                message: 'Dashboard not found',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/ce159fe139fc4d238a7d9c3ae33fb82b',
+                retry: 0,
+                hideFromInspector: true,
+                headers: {
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, {}),
         },
       });
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -140,7 +141,8 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			password: "password",
 			findUser: true,
 			expectedIdentity: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:1"),
+				ID:              "1",
+				Type:            claims.TypeUser,
 				OrgID:           1,
 				AuthenticatedBy: login.PasswordAuthModule,
 				ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

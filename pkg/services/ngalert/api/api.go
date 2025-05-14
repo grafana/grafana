@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,7 +46,7 @@ type RuleAccessControlService interface {
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 }
 
 // API handlers.
@@ -63,6 +64,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
+	Scheduler            StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
@@ -72,10 +74,12 @@ type API struct {
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
+	ConditionValidator   *eval.ConditionValidator
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
 	Tracer               tracing.Tracer
 	AppUrl               *url.URL
+	UserService          user.Service
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -95,10 +99,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{
-			crypto: api.MultiOrgAlertmanager.Crypto,
-			log:    logger,
-			ac:     api.AccessControl,
-			mam:    api.MultiOrgAlertmanager,
+			crypto:         api.MultiOrgAlertmanager.Crypto,
+			log:            logger,
+			ac:             api.AccessControl,
+			mam:            api.MultiOrgAlertmanager,
+			featureManager: api.FeatureManager,
 			silenceSvc: notifier.NewSilenceService(
 				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
 				api.TransactionManager,
@@ -107,20 +112,21 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.RuleStore,
 				ruleAuthzService,
 			),
+			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
+		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: api.EvaluatorFactory,
+			conditionValidator: api.ConditionValidator,
 			QuotaService:       api.QuotaService,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,
@@ -131,6 +137,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,
+			userService:        api.UserService,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -178,4 +185,17 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		receiverService:   api.ReceiverService,
 		muteTimingService: api.MuteTimings,
 	}), m)
+
+	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
+		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
+			NewConvertPrometheusSrv(
+				&api.Cfg.UnifiedAlerting,
+				logger,
+				api.RuleStore,
+				api.DatasourceCache,
+				api.AlertRules,
+				api.FeatureManager,
+			),
+		), m)
+	}
 }

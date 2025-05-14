@@ -14,14 +14,14 @@
 'use strict';
 
 // accessible variables in this scope
-let window, document, $, jQuery, moment, kbn;
+// let window, document, $, jQuery, moment, kbn;
 
 // Setup some variables
 let dashboard;
 
 // All url parameters are available via the ARGS object
 // eslint-disable-next-line no-redeclare
-let ARGS;
+// let ARGS;
 
 // Initialize a skeleton with nothing but a rows array and service object
 dashboard = {
@@ -44,19 +44,22 @@ dashboard.templating = {
   list: [
     {
       name: 'test',
-      query: 'apps.backend.*',
-      refresh: 1,
-      type: 'query',
-      datasource: null,
       hide: 2,
+      includeAll: false,
+      multi: false,
+      query: 'a,b,c\n',
+      skipUrlSync: false,
+      type: 'custom',
     },
     {
-      name: 'test2',
-      query: '*',
-      refresh: 1,
-      type: 'query',
-      datasource: null,
-      hide: 2,
+      name: 'seriesName',
+      label: 'Series name',
+      hide: 0,
+      includeAll: false,
+      multi: false,
+      query: 'series1,series2,series3\n',
+      skipUrlSync: false,
+      type: 'custom',
     },
   ],
 };
@@ -78,6 +81,7 @@ for (let i = 0; i < rows; i++) {
     height: '300px',
     panels: [
       {
+        id: 1,
         title: 'Events',
         type: 'graph',
         span: 12,
@@ -85,10 +89,16 @@ for (let i = 0; i < rows; i++) {
         linewidth: 2,
         targets: [
           {
-            target: "randomWalk('" + seriesName + "')",
+            scenarioId: 'random_walk',
+            refId: 'A',
+            seriesCount: 1,
+            alias: seriesName,
           },
           {
-            target: "randomWalk('[[test2]]')",
+            scenarioId: 'random_walk',
+            refId: 'B',
+            seriesCount: 1,
+            alias: '${seriesName}',
           },
         ],
       },

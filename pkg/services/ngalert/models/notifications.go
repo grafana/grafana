@@ -18,8 +18,9 @@ const GroupByAll = "..."
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
 type ListNotificationSettingsQuery struct {
-	OrgID        int64
-	ReceiverName string
+	OrgID            int64
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // NotificationSettings represents the settings for sending notifications for a single AlertRule. It is used to
@@ -32,6 +33,10 @@ type NotificationSettings struct {
 	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
 	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
 	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
+}
+
+func (s *NotificationSettings) GetUID() string {
+	return NameToUid(s.Receiver)
 }
 
 // NormalizedGroupBy returns a consistent and ordered GroupBy.

@@ -19,6 +19,11 @@ First, make sure the Docker daemon is running on your machine. Then, follow thes
 
 If you have the grafana/website repo checked out in the same directory as the grafana repo, then you can run `make docs-local-static` to use local assets (such as images).
 
+## Deploy preview
+
+When you open a PR that changes files in the `docs/sources/` directory, CI builds a deploy preview.
+After the deploy preview has been built, the **Deploy pr preview** workflow comments a link to the preview URL and adds a commit status check .
+
 ---
 
 ## Content guidelines
@@ -42,18 +47,6 @@ Typescript location for editing and instructions:
 Only use [reference style links](https://grafana.com/docs/writers-toolkit/write/shortcodes/#docsreference) in the `content.ts` file or else link text will be visible in the UI.
 
 ### [Contributing](/contribute/documentation/README.md)
-
-### Using `relref` for internal links
-
-Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
-
-Syntax is:
-
-```
-{{< relref "example.md" >}}
-```
-
-You might need to add more context for the link (containing folders and so on, `folder/example.md`) if Hugo says the relref is ambiguous.
 
 ### Managing redirects
 

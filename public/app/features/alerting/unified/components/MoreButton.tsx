@@ -1,4 +1,4 @@
-import React, { forwardRef, Ref } from 'react';
+import { Ref, forwardRef } from 'react';
 
 import { Button, ButtonProps, Icon, Stack } from '@grafana/ui';
 

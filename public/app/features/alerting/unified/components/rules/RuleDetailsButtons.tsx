@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { useReturnToPrevious } from '@grafana/runtime';
@@ -10,7 +10,7 @@ import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -103,13 +103,13 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (isGrafanaRulerRule(rule.rulerRule)) {
+  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button
           size="sm"
           icon="history"
-          onClick={() => isGrafanaRulerRule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
+          onClick={() => rulerRuleType.grafana.rule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
         >
           Show state history
         </Button>

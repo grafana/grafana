@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.1.8";
+export const pluginVersion = "11.6.1";
 
 export interface MetricStat {
   /**
@@ -86,7 +86,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    */
   metricEditorMode?: MetricEditorMode;
   /**
-   * Whether to use a metric search or metric query. Metric query is referred to as "Metrics Insights" in the AWS console.
+   * Whether to use a metric search or metric insights query
    */
   metricQueryType?: MetricQueryType;
   /**
@@ -94,11 +94,11 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    */
   queryMode?: CloudWatchQueryMode;
   /**
-   * When the metric query type is `metricQueryType` is set to `Query` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
+   * When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
    */
   sql?: SQLExpression;
   /**
-   * When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
+   * When the metric query type is set to `Insights`, this field is used to specify the query string.
    */
   sqlExpression?: string;
 }
@@ -106,7 +106,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
 export type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
 
 export enum MetricQueryType {
-  Query = 1,
+  Insights = 1,
   Search = 0,
 }
 
@@ -218,6 +218,12 @@ export interface QueryEditorArrayExpression {
 
 export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
+export enum LogsQueryLanguage {
+  CWLI = 'CWLI',
+  PPL = 'PPL',
+  SQL = 'SQL',
+}
+
 /**
  * Shape of a CloudWatch Logs query
  */
@@ -235,6 +241,10 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    * Log groups to query
    */
   logGroups?: Array<LogGroup>;
+  /**
+   * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+   */
+  queryLanguage?: LogsQueryLanguage;
   /**
    * Whether a query is a Metrics, Logs, or Annotations query
    */

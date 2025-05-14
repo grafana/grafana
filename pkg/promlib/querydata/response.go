@@ -3,6 +3,7 @@ package querydata
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -18,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -28,30 +29,59 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		Dataplane: enablePrometheusDataplaneFlag,
-	})
-	r.Status = backend.Status(res.StatusCode)
+	statusCode := res.StatusCode
 
-	// Add frame to attach metadata
-	if len(r.Frames) == 0 && !q.ExemplarQuery {
-		r.Frames = append(r.Frames, data.NewFrame(""))
-	}
+	switch {
+	// Status codes that Prometheus might return
+	// so we want to parse the response
+	// https://prometheus.io/docs/prometheus/latest/querying/api/#format-overview
+	case statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices,
+		statusCode == http.StatusBadRequest,
+		statusCode == http.StatusUnprocessableEntity,
+		statusCode == http.StatusServiceUnavailable:
 
-	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for i, frame := range r.Frames {
-		addMetadataToMultiFrame(q, frame, enablePrometheusDataplaneFlag)
-		if i == 0 {
-			frame.Meta.ExecutedQueryString = executedQueryString(q)
+		iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+		r := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
+		r.Status = backend.Status(res.StatusCode)
+
+		// Add frame to attach metadata
+		if len(r.Frames) == 0 && !q.ExemplarQuery {
+			r.Frames = append(r.Frames, data.NewFrame(""))
 		}
-	}
 
-	if r.Error == nil {
-		r = s.processExemplars(ctx, q, r)
-	}
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for i, frame := range r.Frames {
+			addMetadataToMultiFrame(q, frame)
+			if i == 0 {
+				frame.Meta.ExecutedQueryString = executedQueryString(q)
+			}
+		}
 
-	return r
+		if r.Error == nil {
+			r = s.processExemplars(ctx, q, r)
+		}
+
+		return r
+	default:
+		// Unknown status code. We don't want to parse the response.
+		const maxBodySize = 1024
+		lr := io.LimitReader(res.Body, maxBodySize)
+		tb, _ := io.ReadAll(lr)
+
+		s.log.FromContext(ctx).Error("Unexpected response received", "status", statusCode, "body", tb)
+
+		errResp := backend.DataResponse{
+			Error:       fmt.Errorf("unexpected response with status code %d: %s", statusCode, tb),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
+		}
+
+		f := data.NewFrame("")
+		addMetadataToMultiFrame(q, f)
+		f.Meta.ExecutedQueryString = executedQueryString(q)
+		errResp.Frames = append(errResp.Frames, f)
+
+		return errResp
+	}
 }
 
 func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr backend.DataResponse) backend.DataResponse {
@@ -106,7 +136,7 @@ func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr ba
 	}
 }
 
-func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane bool) {
+func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -120,13 +150,15 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
 	}
 
-	if enableDataplane {
-		valueField := frame.Fields[1]
-		if n, ok := valueField.Labels["__name__"]; ok {
-			valueField.Name = n
-		}
-	} else {
-		frame.Name = customName
+	// For heatmap-cells type we don't want to set field name
+	// prometheus native histograms have their own field name structure
+	if frame.Meta.Type == "heatmap-cells" {
+		return
+	}
+
+	valueField := frame.Fields[1]
+	if n, ok := valueField.Labels["__name__"]; ok {
+		valueField.Name = n
 	}
 }
 

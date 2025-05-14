@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { LocalStorageValueProvider } from '@grafana/o11y-ds-frontend';
+import { CoreApp, GrafanaTheme2, LocalStorageValueProvider, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
@@ -87,11 +86,11 @@ export const LabelBrowserModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    modal: css`
-      width: 85vw;
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
-    `,
+    modal: css({
+      width: '85vw',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
   };
 };

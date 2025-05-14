@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer';
+import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer-continued';
 import tinycolor from 'tinycolor2';
 
 import { useTheme2 } from '@grafana/ui';

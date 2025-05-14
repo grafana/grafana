@@ -17,33 +17,28 @@ weight: 200
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
 
-| Provider                                              | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
-| :---------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
-| [Auth Proxy]({{< relref "./auth-proxy" >}})           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
-| [Azure AD OAuth]({{< relref "./azuread" >}})          | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Generic OAuth]({{< relref "./generic-oauth" >}})     | no                | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
-| [GitHub OAuth]({{< relref "./github" >}})             | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [GitLab OAuth]({{< relref "./gitlab" >}})             | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Google OAuth]({{< relref "./google" >}})             | no                | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
-| [Grafana.com OAuth]({{< relref "./grafana-cloud" >}}) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
-| [Okta OAuth]({{< relref "./okta" >}})                 | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [SAML]({{< relref "./saml" >}}) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [LDAP]({{< relref "./ldap" >}})                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
-| [JWT Proxy]({{< relref "./jwt" >}})                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+| Authentication method               | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
+| :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
+| [Anonymous access](anonymous-auth/) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
+| [Auth Proxy](auth-proxy/)           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
+| [Azure AD OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Basic auth](grafana/)              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
+| [Passwordless auth](passwordless/)  | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
+| [Generic OAuth](generic-oauth/)     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
+| [GitHub OAuth](github/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [GitLab OAuth](gitlab/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Google OAuth](google/)             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
+| [Grafana.com OAuth](grafana-cloud/) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
+| [Okta OAuth](okta/)                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [SAML](saml/) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [LDAP](ldap/)                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
+| [JWT Proxy](jwt/)                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
 
-N/A = Not applicable
+Fields explanation:
 
-## Auth Proxy
-
-| Feature           | Supported? |
-| :---------------- | :--------- |
-| Multi Org Mapping | no         |
-| Enforce Sync      | N/A        |
-| Role Mapping      | yes        |
-
-**Multi Org Mapping:** Able to add a user and role map him to multiple orgs
+**Multi Org Mapping:** Able to add a user and map roles to multiple organizations
 
 **Enforce Sync:** If the information provided by the identity provider is empty, does the integration skip setting that user’s field or does it enforce a default.
 
@@ -66,7 +61,7 @@ N/A = Not applicable
 ## Configuring multiple identity providers
 
 Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
-For example, you can have [SAML]({{< relref "./saml" >}}) (Enterprise only) and [Generic OAuth]({{< relref "./generic-oauth" >}}) configured, but you can not have two different [Generic OAuth]({{< relref "./generic-oauth" >}}) configurations.
+For example, you can have [SAML](saml/) (Enterprise only) and [Generic OAuth](generic-oauth/) configured, but you can not have two different [Generic OAuth](generic-oauth/) configurations.
 
 > Note: Grafana does not support multiple identity providers resolving the same user. Ensure there are no user account overlaps between the different providers
 
@@ -74,7 +69,7 @@ In scenarios where you have multiple identity providers of the same type, there 
 
 - Use different Grafana instances each configured with a given identity provider.
 - Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
-- If SAML is supported by the identity provider, you can configure one [Generic OAuth]({{< relref "./generic-oauth" >}}) and one [SAML]({{< relref "./saml" >}}) (Enterprise only).
+- If SAML is supported by the identity provider, you can configure one [Generic OAuth](generic-oauth/) and one [SAML](saml/) (Enterprise only).
 
 ## Using the same email address to login with different identity providers
 
@@ -82,15 +77,15 @@ If users want to use the same email address with multiple identity providers (fo
 
 To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
 
-## Grafana Auth
+## Multi-factor authentication (MFA/2FA)
 
-Grafana of course has a built in user authentication system with password authentication enabled by default. You can
-disable authentication by enabling anonymous access. You can also hide the login form and only allow login through an auth
-provider (listed above). There are also options for allowing self sign up.
+Grafana and the Grafana Cloud portal currently do not include built-in support for multi-factor authentication (MFA).
 
-### Login and short-lived tokens
+We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Azure AD, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
 
-> The following applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
+## Login and short-lived tokens
+
+> The following applies when using Grafana's basic authentication, LDAP (without Auth proxy) or OAuth integration.
 
 Grafana uses short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated on an interval specified by `token_rotation_interval_minutes` for active authenticated users.
@@ -98,11 +93,6 @@ These short-lived tokens are rotated on an interval specified by `token_rotation
 Inactive authenticated users will remain logged in for a duration specified by `login_maximum_inactive_lifetime_duration`.
 This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
 This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
-
-#### Remote logout
-
-You can logout from other devices by removing login sessions from the bottom of your profile page. If you are
-a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
 
 ## Settings
 
@@ -130,54 +120,19 @@ api_key_max_seconds_to_live = -1
 oauth_allow_insecure_email_lookup = false
 ```
 
-### Anonymous authentication
-
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
-
-Example:
-
-```bash
-[auth.anonymous]
-enabled = true
-
-# Organization name that should be used for unauthenticated users
-org_name = Main Org.
-
-# Role for unauthenticated users, other valid values are `Editor` and `Admin`
-org_role = Viewer
-```
-
-If you change your organization name in the Grafana UI, this setting needs to be updated to match the new name.
-
-### Basic authentication
-
-Basic auth is enabled by default and works with the built-in Grafana user-password authentication system and LDAP
-authentication integration.
-
-To disable basic auth:
-
-```bash
-[auth.basic]
-enabled = false
-```
-
-### Disable login form
-
-Hide the Grafana login form using the below configuration settings.
-
-```bash
-[auth]
-disable_login_form = true
-```
+## Extended authentication settings
 
 ### Enable email lookup
 
-Enable user lookup based on email in addition to using unique ID provided by IdPs.
+By default, Grafana identifies users based on the unique ID provided by the identity provider (IdP).
+In certain cases, however, enabling user lookups by email can be a feasible option, such as when:
 
-By default, Grafana relies on the user unique ID provided by the identity provider.
-Looking up users by email can be safe for some identity providers (for example, when they are single tenants and unique non-editable, validated emails are provided), as well as in some infrastructures.
+- The identity provider is a single-tenant setup.
+- Unique, validated, and non-editable emails are provided by the IdP.
+- The infrastructure allows email-based identification without compromising security.
 
-We strongly recommend against enabling email lookups, however it is possible to do with the following configuration.
+**Important note**: While it is possible to configure Grafana to allow email-based user lookups, we strongly recommend against this approach in most cases due to potential security risks.
+If you still choose to proceed, the following configuration can be applied to enable email lookup.
 
 ```bash
 [auth]
@@ -187,7 +142,7 @@ oauth_allow_insecure_email_lookup = true
 You can also enable email lookup using the API:
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}) since Grafana v10.4.
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/) since Grafana v10.4.
 {{% /admonition %}}
 
 ```
@@ -211,10 +166,19 @@ Defaults to `false`.
 auto_login = true
 ```
 
-### Avoid automatic OAuth login
+### Avoid automatic login
 
-To sign in with a username and password and avoid automatic OAuth login, add the `disableAutoLogin` parameter to your login URL.
-For example: `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
+The `disableAutoLogin=true` URL parameter allows users to bypass the automatic login feature in scenarios where incorrect configuration changes prevent normal login functionality.
+This feature is especially helpful when you need to access the login screen to troubleshoot and fix misconfigurations.
+
+#### How to use
+
+1. Add `disableAutoLogin=true` as a query parameter to your Grafana URL.
+   - Example: `grafana.example.net/login?disableAutoLogin=true` or `grafana.example.net/login?disableAutoLogin`
+1. This will redirect you to the standard login screen, bypassing the automatic login mechanism.
+1. Fix any configuration issues and test your login setup.
+
+This feature is available for both for OAuth and SAML. Ensure that after fixing the issue, you remove the parameter or revert the configuration to re-enable the automatic login feature, if desired.
 
 ### Hide sign-out menu
 
@@ -236,10 +200,15 @@ Example for Generic OAuth:
 signout_redirect_url =
 ```
 
+### Remote logout
+
+You can log out from other devices by removing login sessions from the bottom of your profile page. If you are
+a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
+
 ### Protected roles
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/).
 {{% /admonition %}}
 
 By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.

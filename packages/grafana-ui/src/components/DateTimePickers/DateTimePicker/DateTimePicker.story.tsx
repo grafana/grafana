@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { dateTime, DateTime } from '@grafana/data';
 

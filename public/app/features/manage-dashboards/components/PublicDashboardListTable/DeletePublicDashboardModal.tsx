@@ -1,42 +1,42 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, useStyles2 } from '@grafana/ui/src';
 import { t } from 'app/core/internationalization';
 
-const Body = ({ title }: { title?: string }) => {
+const Body = () => {
   const styles = useStyles2(getStyles);
 
   return (
     <p className={styles.description}>
-      {title
+      {config.featureToggles.newDashboardSharingComponent
         ? t(
-            'public-dashboard.delete-modal.revoke-nonorphaned-body-text',
-            'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
+            'shared-dashboard.delete-modal.revoke-body-text',
+            'Are you sure you want to revoke this access? The dashboard can no longer be shared.'
           )
         : t(
-            'public-dashboard.delete-modal.revoke-orphaned-body-text',
-            'Orphaned public dashboard will no longer be public.'
+            'public-dashboard.delete-modal.revoke-body-text',
+            'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
           )}
     </p>
   );
 };
 
 export const DeletePublicDashboardModal = ({
-  dashboardTitle,
   onConfirm,
   onDismiss,
 }: {
-  dashboardTitle?: string;
   onConfirm: () => void;
   onDismiss: () => void;
 }) => {
-  const translatedRevocationModalText = t('public-dashboard.delete-modal.revoke-title', 'Revoke public URL');
+  const translatedRevocationModalText = config.featureToggles.newDashboardSharingComponent
+    ? t('shared-dashboard.delete-modal.revoke-title', 'Revoke access')
+    : t('public-dashboard.delete-modal.revoke-title', 'Revoke public URL');
   return (
     <ConfirmModal
       isOpen
-      body={<Body title={dashboardTitle} />}
+      body={<Body />}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
       title={translatedRevocationModalText}
@@ -47,10 +47,10 @@ export const DeletePublicDashboardModal = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  description: css`
-    font-size: ${theme.typography.body.fontSize};
-  `,
+  title: css({
+    marginBottom: theme.spacing(1),
+  }),
+  description: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
 });

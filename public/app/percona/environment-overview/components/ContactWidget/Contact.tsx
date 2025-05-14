@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { ClipboardButton, Icon, useStyles2 } from '@grafana/ui';

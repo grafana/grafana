@@ -9,6 +9,7 @@ import (
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 )
 
 // swagger:route GET /prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
@@ -71,6 +72,7 @@ type DiscoveryBase struct {
 type RuleDiscovery struct {
 	// required: true
 	RuleGroups []RuleGroup      `json:"groups"`
+	NextToken  string           `json:"groupNextToken,omitempty"`
 	Totals     map[string]int64 `json:"totals,omitempty"`
 }
 
@@ -87,6 +89,8 @@ type RuleGroup struct {
 	Name string `json:"name"`
 	// required: true
 	File string `json:"file"`
+	// required: true
+	FolderUID string `json:"folderUid"`
 	// In order to preserve rule ordering, while exposing type (alerting or recording)
 	// specific properties, both alerting and recording rules are exposed in the
 	// same array.
@@ -151,7 +155,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// required: true
-	Annotations overrideLabels `json:"annotations,omitempty"`
+	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
 	ActiveAt       *time.Time       `json:"activeAt,omitempty"`
 	Alerts         []Alert          `json:"alerts,omitempty"`
@@ -164,10 +168,14 @@ type AlertingRule struct {
 // swagger:model
 type Rule struct {
 	// required: true
+	UID string `json:"uid"`
+	// required: true
 	Name string `json:"name"`
 	// required: true
-	Query  string         `json:"query"`
-	Labels overrideLabels `json:"labels,omitempty"`
+	FolderUID string `json:"folderUid"`
+	// required: true
+	Query  string            `json:"query"`
+	Labels promlabels.Labels `json:"labels,omitempty"`
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
@@ -181,9 +189,9 @@ type Rule struct {
 // swagger:model
 type Alert struct {
 	// required: true
-	Labels overrideLabels `json:"labels"`
+	Labels promlabels.Labels `json:"labels"`
 	// required: true
-	Annotations overrideLabels `json:"annotations"`
+	Annotations promlabels.Labels `json:"annotations"`
 	// required: true
 	State    string     `json:"state"`
 	ActiveAt *time.Time `json:"activeAt"`
@@ -300,31 +308,6 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 // is more important than "normal". If two alerts have the same importance
 // then the ordering is based on their ActiveAt time and their labels.
 func AlertsByImportance(a1, a2 *Alert) bool {
-	// labelsForComparison concatenates each key/value pair into a string and
-	// sorts them.
-	labelsForComparison := func(m map[string]string) []string {
-		s := make([]string, 0, len(m))
-		for k, v := range m {
-			s = append(s, k+v)
-		}
-		sort.Strings(s)
-		return s
-	}
-
-	// compareLabels returns true if labels1 are less than labels2. This happens
-	// when labels1 has fewer labels than labels2, or if the next label from
-	// labels1 is lexicographically less than the next label from labels2.
-	compareLabels := func(labels1, labels2 []string) bool {
-		if len(labels1) == len(labels2) {
-			for i := range labels1 {
-				if labels1[i] != labels2[i] {
-					return labels1[i] < labels2[i]
-				}
-			}
-		}
-		return len(labels1) < len(labels2)
-	}
-
 	// The importance of an alert is first based on the importance of their states.
 	// This ordering is intended to show the most important alerts first when
 	// using pagination.
@@ -345,9 +328,7 @@ func AlertsByImportance(a1, a2 *Alert) bool {
 			return true
 		}
 		// Both alerts are active since the same time so compare their labels
-		labels1 := labelsForComparison(a1.Labels)
-		labels2 := labelsForComparison(a2.Labels)
-		return compareLabels(labels1, labels2)
+		return promlabels.Compare(a1.Labels, a2.Labels) < 0
 	}
 
 	return importance1 < importance2
@@ -362,9 +343,16 @@ func (s AlertsSorter) Len() int           { return len(s.alerts) }
 func (s AlertsSorter) Swap(i, j int)      { s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i] }
 func (s AlertsSorter) Less(i, j int) bool { return s.by(&s.alerts[i], &s.alerts[j]) }
 
-// override the labels type with a map for generation.
-// The custom marshaling for labels.Labels ends up doing this anyways.
-type overrideLabels map[string]string
+// LabelsFromMap creates Labels from a map. Note the Labels type requires the
+// labels be sorted, so we make sure to do that.
+func LabelsFromMap(m map[string]string) promlabels.Labels {
+	sb := promlabels.NewScratchBuilder(len(m))
+	for k, v := range m {
+		sb.Add(k, v)
+	}
+	sb.Sort()
+	return sb.Labels()
+}
 
 // swagger:parameters RouteGetGrafanaAlertStatuses
 type GetGrafanaAlertStatusesParams struct {

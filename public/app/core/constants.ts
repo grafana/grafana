@@ -17,5 +17,3 @@ export const EDIT_PANEL_ID = 23763571993;
 export const DEFAULT_PER_PAGE_PAGINATION = 40;
 
 export const LS_VISUALIZATION_SELECT_TAB_KEY = 'VisualizationSelectPane.ListMode';
-
-export const LS_WIDGET_SELECT_TAB_KEY = 'WidgetSelectPane.ListMode';

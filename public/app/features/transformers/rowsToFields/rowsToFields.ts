@@ -64,6 +64,7 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
   return {
     fields: outFields,
     length: 1,
+    refId: `${DataTransformerID.rowsToFields}-${data.refId}`,
   };
 }
 

@@ -7,338 +7,294 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package dataquery
 
-// Defines values for AlignmentTypes.
-const (
-	AlignmentTypesALIGNCOUNT         AlignmentTypes = "ALIGN_COUNT"
-	AlignmentTypesALIGNCOUNTFALSE    AlignmentTypes = "ALIGN_COUNT_FALSE"
-	AlignmentTypesALIGNCOUNTTRUE     AlignmentTypes = "ALIGN_COUNT_TRUE"
-	AlignmentTypesALIGNDELTA         AlignmentTypes = "ALIGN_DELTA"
-	AlignmentTypesALIGNFRACTIONTRUE  AlignmentTypes = "ALIGN_FRACTION_TRUE"
-	AlignmentTypesALIGNINTERPOLATE   AlignmentTypes = "ALIGN_INTERPOLATE"
-	AlignmentTypesALIGNMAX           AlignmentTypes = "ALIGN_MAX"
-	AlignmentTypesALIGNMEAN          AlignmentTypes = "ALIGN_MEAN"
-	AlignmentTypesALIGNMIN           AlignmentTypes = "ALIGN_MIN"
-	AlignmentTypesALIGNNEXTOLDER     AlignmentTypes = "ALIGN_NEXT_OLDER"
-	AlignmentTypesALIGNNONE          AlignmentTypes = "ALIGN_NONE"
-	AlignmentTypesALIGNPERCENTCHANGE AlignmentTypes = "ALIGN_PERCENT_CHANGE"
-	AlignmentTypesALIGNPERCENTILE05  AlignmentTypes = "ALIGN_PERCENTILE_05"
-	AlignmentTypesALIGNPERCENTILE50  AlignmentTypes = "ALIGN_PERCENTILE_50"
-	AlignmentTypesALIGNPERCENTILE95  AlignmentTypes = "ALIGN_PERCENTILE_95"
-	AlignmentTypesALIGNPERCENTILE99  AlignmentTypes = "ALIGN_PERCENTILE_99"
-	AlignmentTypesALIGNRATE          AlignmentTypes = "ALIGN_RATE"
-	AlignmentTypesALIGNSTDDEV        AlignmentTypes = "ALIGN_STDDEV"
-	AlignmentTypesALIGNSUM           AlignmentTypes = "ALIGN_SUM"
-)
-
-// Defines values for MetricFindQueryTypes.
-const (
-	MetricFindQueryTypesAggregations     MetricFindQueryTypes = "aggregations"
-	MetricFindQueryTypesAligners         MetricFindQueryTypes = "aligners"
-	MetricFindQueryTypesAlignmentPeriods MetricFindQueryTypes = "alignmentPeriods"
-	MetricFindQueryTypesDefaultProject   MetricFindQueryTypes = "defaultProject"
-	MetricFindQueryTypesLabelKeys        MetricFindQueryTypes = "labelKeys"
-	MetricFindQueryTypesLabelValues      MetricFindQueryTypes = "labelValues"
-	MetricFindQueryTypesMetricTypes      MetricFindQueryTypes = "metricTypes"
-	MetricFindQueryTypesProjects         MetricFindQueryTypes = "projects"
-	MetricFindQueryTypesResourceTypes    MetricFindQueryTypes = "resourceTypes"
-	MetricFindQueryTypesSelectors        MetricFindQueryTypes = "selectors"
-	MetricFindQueryTypesServices         MetricFindQueryTypes = "services"
-	MetricFindQueryTypesSlo              MetricFindQueryTypes = "slo"
-	MetricFindQueryTypesSloServices      MetricFindQueryTypes = "sloServices"
-)
-
-// Defines values for MetricKind.
-const (
-	MetricKindCUMULATIVE            MetricKind = "CUMULATIVE"
-	MetricKindDELTA                 MetricKind = "DELTA"
-	MetricKindGAUGE                 MetricKind = "GAUGE"
-	MetricKindMETRICKINDUNSPECIFIED MetricKind = "METRIC_KIND_UNSPECIFIED"
-)
-
-// Defines values for PreprocessorType.
-const (
-	PreprocessorTypeDelta PreprocessorType = "delta"
-	PreprocessorTypeNone  PreprocessorType = "none"
-	PreprocessorTypeRate  PreprocessorType = "rate"
-)
-
-// Defines values for QueryType.
-const (
-	QueryTypeAnnotation      QueryType = "annotation"
-	QueryTypePromQL          QueryType = "promQL"
-	QueryTypeSlo             QueryType = "slo"
-	QueryTypeTimeSeriesList  QueryType = "timeSeriesList"
-	QueryTypeTimeSeriesQuery QueryType = "timeSeriesQuery"
-)
-
-// Defines values for ValueTypes.
-const (
-	ValueTypesBOOL                 ValueTypes = "BOOL"
-	ValueTypesDISTRIBUTION         ValueTypes = "DISTRIBUTION"
-	ValueTypesDOUBLE               ValueTypes = "DOUBLE"
-	ValueTypesINT64                ValueTypes = "INT64"
-	ValueTypesMONEY                ValueTypes = "MONEY"
-	ValueTypesSTRING               ValueTypes = "STRING"
-	ValueTypesVALUETYPEUNSPECIFIED ValueTypes = "VALUE_TYPE_UNSPECIFIED"
-)
-
-// AlignmentTypes defines model for AlignmentTypes.
-type AlignmentTypes string
-
-// CloudMonitoringQuery defines model for CloudMonitoringQuery.
 type CloudMonitoringQuery struct {
-	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
-	AliasBy *string `json:"aliasBy,omitempty"`
-
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Time interval in milliseconds.
-	IntervalMs *float32 `json:"intervalMs,omitempty"`
-
-	// PromQL sub-query properties.
-	PromQLQuery *PromQLQuery `json:"promQLQuery,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// SLO sub-query properties.
-	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
-
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
+	AliasBy *string `json:"aliasBy,omitempty"`
+	// GCM query type.
+	// queryType: #QueryType
 	// Time Series List sub-query properties.
 	TimeSeriesList *TimeSeriesList `json:"timeSeriesList,omitempty"`
-
 	// Time Series sub-query properties.
 	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
-}
-
-// These are the common properties available to all queries in all datasources.
-// Specific implementations will *extend* this interface, adding the required
-// properties for the given context.
-type DataQuery struct {
+	// SLO sub-query properties.
+	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
+	// PromQL sub-query properties.
+	PromQLQuery *PromQLQuery `json:"promQLQuery,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	Datasource any `json:"datasource,omitempty"`
+	// Time interval in milliseconds.
+	IntervalMs *float64 `json:"intervalMs,omitempty"`
 }
 
-// Query filter representation.
-type Filter struct {
-	// Filter condition.
-	Condition *string `json:"condition,omitempty"`
-
-	// Filter key.
-	Key string `json:"key"`
-
-	// Filter operator.
-	Operator string `json:"operator"`
-
-	// Filter value.
-	Value string `json:"value"`
-}
-
-// GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
-type GoogleCloudMonitoringDataQuery = map[string]any
-
-// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
-type LegacyCloudMonitoringAnnotationQuery struct {
-	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
-	Filters    []string   `json:"filters"`
-	MetricKind MetricKind `json:"metricKind"`
-	MetricType string     `json:"metricType"`
-
-	// GCP project to execute the query against.
-	ProjectName string `json:"projectName"`
-
-	// Query refId.
-	RefId string `json:"refId"`
-
-	// Annotation text.
-	Text string `json:"text"`
-
-	// Annotation title.
-	Title     string `json:"title"`
-	ValueType string `json:"valueType"`
-}
-
-// MetricFindQueryTypes defines model for MetricFindQueryTypes.
-type MetricFindQueryTypes string
-
-// MetricKind defines model for MetricKind.
-type MetricKind string
-
-// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
-type MetricQuery struct {
-	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
-	AliasBy *string `json:"aliasBy,omitempty"`
-
-	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
-	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
-
-	// Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
-	CrossSeriesReducer string `json:"crossSeriesReducer"`
-	EditorMode         string `json:"editorMode"`
-
-	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
-	Filters []string `json:"filters,omitempty"`
-
-	// To disable the graphPeriod, it should explictly be set to 'disabled'.
-	GraphPeriod *string `json:"graphPeriod,omitempty"`
-
-	// Array of labels to group data by.
-	GroupBys   []string    `json:"groupBys,omitempty"`
-	MetricKind *MetricKind `json:"metricKind,omitempty"`
-	MetricType string      `json:"metricType"`
-
-	// Alignment function to be used. Defaults to ALIGN_MEAN.
-	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
-
-	// Types of pre-processor available. Defined by the metric.
-	Preprocessor *PreprocessorType `json:"preprocessor,omitempty"`
-
-	// GCP project to execute the query against.
-	ProjectName string `json:"projectName"`
-
-	// MQL query to be executed.
-	Query     string  `json:"query"`
-	ValueType *string `json:"valueType,omitempty"`
-	View      *string `json:"view,omitempty"`
-}
-
-// Types of pre-processor available. Defined by the metric.
-type PreprocessorType string
-
-// PromQL sub-query properties.
-type PromQLQuery struct {
-	// PromQL expression/query to be executed.
-	Expr string `json:"expr"`
-
-	// GCP project to execute the query against.
-	ProjectName string `json:"projectName"`
-
-	// PromQL min step
-	Step string `json:"step"`
+// NewCloudMonitoringQuery creates a new CloudMonitoringQuery object.
+func NewCloudMonitoringQuery() *CloudMonitoringQuery {
+	return &CloudMonitoringQuery{}
 }
 
 // Defines the supported queryTypes.
 type QueryType string
 
-// SLO sub-query properties.
-type SLOQuery struct {
-	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
-	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
-
-	// SLO goal value.
-	Goal *float32 `json:"goal,omitempty"`
-
-	// Specific lookback period for the SLO.
-	LookbackPeriod *string `json:"lookbackPeriod,omitempty"`
-
-	// Alignment function to be used. Defaults to ALIGN_MEAN.
-	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
-
-	// GCP project to execute the query against.
-	ProjectName string `json:"projectName"`
-
-	// SLO selector.
-	SelectorName string `json:"selectorName"`
-
-	// ID for the service the SLO is in.
-	ServiceId string `json:"serviceId"`
-
-	// Name for the service the SLO is in.
-	ServiceName string `json:"serviceName"`
-
-	// ID for the SLO.
-	SloId string `json:"sloId"`
-
-	// Name of the SLO.
-	SloName string `json:"sloName"`
-}
+const (
+	QueryTypeTIMESERIESLIST  QueryType = "timeSeriesList"
+	QueryTypeTIMESERIESQUERY QueryType = "timeSeriesQuery"
+	QueryTypeSLO             QueryType = "slo"
+	QueryTypeANNOTATION      QueryType = "annotation"
+	QueryTypePROMQL          QueryType = "promQL"
+)
 
 // Time Series List sub-query properties.
 type TimeSeriesList struct {
-	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
-	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
-
-	// Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
-	CrossSeriesReducer string `json:"crossSeriesReducer"`
-
-	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
-	Filters []string `json:"filters,omitempty"`
-
-	// Array of labels to group data by.
-	GroupBys []string `json:"groupBys,omitempty"`
-
-	// Alignment function to be used. Defaults to ALIGN_MEAN.
-	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
-
-	// Types of pre-processor available. Defined by the metric.
-	Preprocessor *PreprocessorType `json:"preprocessor,omitempty"`
-
 	// GCP project to execute the query against.
 	ProjectName string `json:"projectName"`
-
-	// Only present if a preprocessor is selected. Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
-	SecondaryAlignmentPeriod *string `json:"secondaryAlignmentPeriod,omitempty"`
-
-	// Only present if a preprocessor is selected. Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
-	SecondaryCrossSeriesReducer *string `json:"secondaryCrossSeriesReducer,omitempty"`
-
-	// Only present if a preprocessor is selected. Array of labels to group data by.
-	SecondaryGroupBys []string `json:"secondaryGroupBys,omitempty"`
-
-	// Only present if a preprocessor is selected. Alignment function to be used. Defaults to ALIGN_MEAN.
-	SecondaryPerSeriesAligner *string `json:"secondaryPerSeriesAligner,omitempty"`
-
-	// Annotation text.
-	Text *string `json:"text,omitempty"`
-
-	// Annotation title.
-	Title *string `json:"title,omitempty"`
-
+	// Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
+	CrossSeriesReducer string `json:"crossSeriesReducer"`
+	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
+	// Alignment function to be used. Defaults to ALIGN_MEAN.
+	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
+	// Array of labels to group data by.
+	GroupBys []string `json:"groupBys,omitempty"`
+	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+	Filters []string `json:"filters,omitempty"`
 	// Data view, defaults to FULL.
 	View *string `json:"view,omitempty"`
+	// Annotation title.
+	Title *string `json:"title,omitempty"`
+	// Annotation text.
+	Text *string `json:"text,omitempty"`
+	// Only present if a preprocessor is selected. Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
+	SecondaryCrossSeriesReducer *string `json:"secondaryCrossSeriesReducer,omitempty"`
+	// Only present if a preprocessor is selected. Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+	SecondaryAlignmentPeriod *string `json:"secondaryAlignmentPeriod,omitempty"`
+	// Only present if a preprocessor is selected. Alignment function to be used. Defaults to ALIGN_MEAN.
+	SecondaryPerSeriesAligner *string `json:"secondaryPerSeriesAligner,omitempty"`
+	// Only present if a preprocessor is selected. Array of labels to group data by.
+	SecondaryGroupBys []string `json:"secondaryGroupBys,omitempty"`
+	// Preprocessor is not part of the API, but is used to store the preprocessor and not affect the UI for the rest of parameters
+	Preprocessor *PreprocessorType `json:"preprocessor,omitempty"`
 }
+
+// NewTimeSeriesList creates a new TimeSeriesList object.
+func NewTimeSeriesList() *TimeSeriesList {
+	return &TimeSeriesList{}
+}
+
+// Types of pre-processor available. Defined by the metric.
+type PreprocessorType string
+
+const (
+	PreprocessorTypeNone  PreprocessorType = "none"
+	PreprocessorTypeRate  PreprocessorType = "rate"
+	PreprocessorTypeDelta PreprocessorType = "delta"
+)
 
 // Time Series sub-query properties.
 type TimeSeriesQuery struct {
-	// To disable the graphPeriod, it should explictly be set to 'disabled'.
-	GraphPeriod *string `json:"graphPeriod,omitempty"`
-
 	// GCP project to execute the query against.
 	ProjectName string `json:"projectName"`
-
 	// MQL query to be executed.
 	Query string `json:"query"`
+	// To disable the graphPeriod, it should explictly be set to 'disabled'.
+	GraphPeriod string `json:"graphPeriod,omitempty"`
 }
 
-// ValueTypes defines model for ValueTypes.
+// NewTimeSeriesQuery creates a new TimeSeriesQuery object.
+func NewTimeSeriesQuery() *TimeSeriesQuery {
+	return &TimeSeriesQuery{}
+}
+
+// SLO sub-query properties.
+type SLOQuery struct {
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+	// Alignment function to be used. Defaults to ALIGN_MEAN.
+	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
+	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
+	// SLO selector.
+	SelectorName string `json:"selectorName"`
+	// ID for the service the SLO is in.
+	ServiceId string `json:"serviceId"`
+	// Name for the service the SLO is in.
+	ServiceName string `json:"serviceName"`
+	// ID for the SLO.
+	SloId string `json:"sloId"`
+	// Name of the SLO.
+	SloName string `json:"sloName"`
+	// SLO goal value.
+	Goal *float64 `json:"goal,omitempty"`
+	// Specific lookback period for the SLO.
+	LookbackPeriod *string `json:"lookbackPeriod,omitempty"`
+}
+
+// NewSLOQuery creates a new SLOQuery object.
+func NewSLOQuery() *SLOQuery {
+	return &SLOQuery{}
+}
+
+// PromQL sub-query properties.
+type PromQLQuery struct {
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+	// PromQL expression/query to be executed.
+	Expr string `json:"expr"`
+	// PromQL min step
+	Step string `json:"step"`
+}
+
+// NewPromQLQuery creates a new PromQLQuery object.
+func NewPromQLQuery() *PromQLQuery {
+	return &PromQLQuery{}
+}
+
+// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
+type MetricQuery struct {
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+	// Alignment function to be used. Defaults to ALIGN_MEAN.
+	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
+	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
+	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
+	AliasBy    *string `json:"aliasBy,omitempty"`
+	EditorMode string  `json:"editorMode"`
+	MetricType string  `json:"metricType"`
+	// Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
+	CrossSeriesReducer string `json:"crossSeriesReducer"`
+	// Array of labels to group data by.
+	GroupBys []string `json:"groupBys,omitempty"`
+	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+	Filters    []string    `json:"filters,omitempty"`
+	MetricKind *MetricKind `json:"metricKind,omitempty"`
+	ValueType  *string     `json:"valueType,omitempty"`
+	View       *string     `json:"view,omitempty"`
+	// MQL query to be executed.
+	Query string `json:"query"`
+	// Preprocessor is not part of the API, but is used to store the preprocessor and not affect the UI for the rest of parameters
+	Preprocessor *PreprocessorType `json:"preprocessor,omitempty"`
+	// To disable the graphPeriod, it should explictly be set to 'disabled'.
+	GraphPeriod string `json:"graphPeriod,omitempty"`
+}
+
+// NewMetricQuery creates a new MetricQuery object.
+func NewMetricQuery() *MetricQuery {
+	return &MetricQuery{}
+}
+
+type MetricKind string
+
+const (
+	MetricKindMETRICKINDUNSPECIFIED MetricKind = "METRIC_KIND_UNSPECIFIED"
+	MetricKindGAUGE                 MetricKind = "GAUGE"
+	MetricKindDELTA                 MetricKind = "DELTA"
+	MetricKindCUMULATIVE            MetricKind = "CUMULATIVE"
+)
+
 type ValueTypes string
+
+const (
+	ValueTypesVALUETYPEUNSPECIFIED ValueTypes = "VALUE_TYPE_UNSPECIFIED"
+	ValueTypesBOOL                 ValueTypes = "BOOL"
+	ValueTypesINT64                ValueTypes = "INT64"
+	ValueTypesDOUBLE               ValueTypes = "DOUBLE"
+	ValueTypesSTRING               ValueTypes = "STRING"
+	ValueTypesDISTRIBUTION         ValueTypes = "DISTRIBUTION"
+	ValueTypesMONEY                ValueTypes = "MONEY"
+)
+
+type AlignmentTypes string
+
+const (
+	AlignmentTypesALIGNDELTA         AlignmentTypes = "ALIGN_DELTA"
+	AlignmentTypesALIGNRATE          AlignmentTypes = "ALIGN_RATE"
+	AlignmentTypesALIGNINTERPOLATE   AlignmentTypes = "ALIGN_INTERPOLATE"
+	AlignmentTypesALIGNNEXTOLDER     AlignmentTypes = "ALIGN_NEXT_OLDER"
+	AlignmentTypesALIGNMIN           AlignmentTypes = "ALIGN_MIN"
+	AlignmentTypesALIGNMAX           AlignmentTypes = "ALIGN_MAX"
+	AlignmentTypesALIGNMEAN          AlignmentTypes = "ALIGN_MEAN"
+	AlignmentTypesALIGNCOUNT         AlignmentTypes = "ALIGN_COUNT"
+	AlignmentTypesALIGNSUM           AlignmentTypes = "ALIGN_SUM"
+	AlignmentTypesALIGNSTDDEV        AlignmentTypes = "ALIGN_STDDEV"
+	AlignmentTypesALIGNCOUNTTRUE     AlignmentTypes = "ALIGN_COUNT_TRUE"
+	AlignmentTypesALIGNCOUNTFALSE    AlignmentTypes = "ALIGN_COUNT_FALSE"
+	AlignmentTypesALIGNFRACTIONTRUE  AlignmentTypes = "ALIGN_FRACTION_TRUE"
+	AlignmentTypesALIGNPERCENTILE99  AlignmentTypes = "ALIGN_PERCENTILE_99"
+	AlignmentTypesALIGNPERCENTILE95  AlignmentTypes = "ALIGN_PERCENTILE_95"
+	AlignmentTypesALIGNPERCENTILE50  AlignmentTypes = "ALIGN_PERCENTILE_50"
+	AlignmentTypesALIGNPERCENTILE05  AlignmentTypes = "ALIGN_PERCENTILE_05"
+	AlignmentTypesALIGNPERCENTCHANGE AlignmentTypes = "ALIGN_PERCENT_CHANGE"
+	AlignmentTypesALIGNNONE          AlignmentTypes = "ALIGN_NONE"
+)
+
+// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
+type LegacyCloudMonitoringAnnotationQuery struct {
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+	MetricType  string `json:"metricType"`
+	// Query refId.
+	RefId string `json:"refId"`
+	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+	Filters    []string   `json:"filters"`
+	MetricKind MetricKind `json:"metricKind"`
+	ValueType  string     `json:"valueType"`
+	// Annotation title.
+	Title string `json:"title"`
+	// Annotation text.
+	Text string `json:"text"`
+}
+
+// NewLegacyCloudMonitoringAnnotationQuery creates a new LegacyCloudMonitoringAnnotationQuery object.
+func NewLegacyCloudMonitoringAnnotationQuery() *LegacyCloudMonitoringAnnotationQuery {
+	return &LegacyCloudMonitoringAnnotationQuery{}
+}
+
+// Query filter representation.
+type Filter struct {
+	// Filter key.
+	Key string `json:"key"`
+	// Filter operator.
+	Operator string `json:"operator"`
+	// Filter value.
+	Value string `json:"value"`
+	// Filter condition.
+	Condition *string `json:"condition,omitempty"`
+}
+
+// NewFilter creates a new Filter object.
+func NewFilter() *Filter {
+	return &Filter{}
+}
+
+type MetricFindQueryTypes string
+
+const (
+	MetricFindQueryTypesProjects         MetricFindQueryTypes = "projects"
+	MetricFindQueryTypesServices         MetricFindQueryTypes = "services"
+	MetricFindQueryTypesDefaultProject   MetricFindQueryTypes = "defaultProject"
+	MetricFindQueryTypesMetricTypes      MetricFindQueryTypes = "metricTypes"
+	MetricFindQueryTypesLabelKeys        MetricFindQueryTypes = "labelKeys"
+	MetricFindQueryTypesLabelValues      MetricFindQueryTypes = "labelValues"
+	MetricFindQueryTypesResourceTypes    MetricFindQueryTypes = "resourceTypes"
+	MetricFindQueryTypesAggregations     MetricFindQueryTypes = "aggregations"
+	MetricFindQueryTypesAligners         MetricFindQueryTypes = "aligners"
+	MetricFindQueryTypesAlignmentPeriods MetricFindQueryTypes = "alignmentPeriods"
+	MetricFindQueryTypesSelectors        MetricFindQueryTypes = "selectors"
+	MetricFindQueryTypesSLOServices      MetricFindQueryTypes = "sloServices"
+	MetricFindQueryTypesSLO              MetricFindQueryTypes = "slo"
+)

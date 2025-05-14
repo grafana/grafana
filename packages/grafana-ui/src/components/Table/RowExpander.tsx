@@ -1,8 +1,3 @@
-// @PERCONA
-// Running typecheck in root of repo would yield errors here
-// @ts-nocheck
-import React from 'react';
-
 import { Icon } from '../Icon/Icon';
 
 import { TableStyles } from './styles';
@@ -15,6 +10,8 @@ export interface Props {
 
 export function RowExpander({ row, tableStyles }: Props) {
   return (
+    // @PERCONA - ignore errors related to expandable rows
+    // @ts-ignore
     <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
       <Icon
         aria-label={row.isExpanded ? 'Collapse row' : 'Expand row'}

@@ -2,6 +2,7 @@
 import { cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { AppEvents, PageLayoutType, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -9,7 +10,6 @@ import { CollapsableSection, CustomScrollbar, LinkButton, PageToolbar, useStyles
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
 import { PageSwitcherValue } from 'app/percona/shared/components/Elements/PageSwitcherCard/PageSwitcherCard.types';
@@ -57,9 +57,10 @@ import {
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
 
-const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = ({ match }) => {
+const AddBackupPage: FC = () => {
   const [queryParams, setQueryParams] = useQueryParams();
-  const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === BackupType.SCHEDULED;
+  const routeParams = useParams();
+  const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || routeParams.type === BackupType.SCHEDULED;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
   const [pending, setPending] = useState(false);
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
@@ -96,7 +97,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
         backups = await BackupInventoryService.list(generateToken(LIST_ARTIFACTS_CANCEL_TOKEN));
       }
       for (const value of backups) {
-        if (value.id === match.params.id) {
+        if (value.id === routeParams.id) {
           backup = value;
           break;
         }

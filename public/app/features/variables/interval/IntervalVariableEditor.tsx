@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { memo, ChangeEvent, FormEvent } from 'react';
 
 import { IntervalVariableModel, SelectableValue } from '@grafana/data';
 import { IntervalVariableForm } from 'app/features/dashboard-scene/settings/variables/components/IntervalVariableForm';
@@ -7,7 +7,7 @@ import { VariableEditorProps } from '../editor/types';
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
 
-export const IntervalVariableEditor = React.memo(({ onPropChange, variable }: Props) => {
+export const IntervalVariableEditor = memo(({ onPropChange, variable }: Props) => {
   const onAutoChange = (event: ChangeEvent<HTMLInputElement>) => {
     onPropChange({
       propName: 'auto',

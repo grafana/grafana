@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
-import { Button, Field, Input, Modal } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
-import { PanelModel } from '../../../dashboard/state';
+import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
 import { usePanelSave } from '../../utils/usePanelSave';
 
@@ -36,6 +36,7 @@ export const AddLibraryPanelContents = ({
 
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
+
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
@@ -84,21 +85,31 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <OldFolderPicker
-          onChange={({ uid }) => setFolderUid(uid)}
-          initialFolderUid={initialFolderUid}
+        <FolderPicker
+          onChange={(uid) => setFolderUid(uid)}
+          value={folderUid}
           inputId="share-panel-library-panel-folder-picker"
         />
       </Field>
-
-      <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
-        </Button>
-        <Button onClick={onCreate} disabled={invalidInput}>
-          <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
-        </Button>
-      </Modal.ButtonRow>
+      {config.featureToggles.newDashboardSharingComponent ? (
+        <Stack gap={1} justifyContent={'start'}>
+          <Button onClick={onCreate} disabled={invalidInput}>
+            <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
+          </Button>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
+          </Button>
+        </Stack>
+      ) : (
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
+          </Button>
+          <Button onClick={onCreate} disabled={invalidInput}>
+            <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
+          </Button>
+        </Modal.ButtonRow>
+      )}
     </>
   );
 };

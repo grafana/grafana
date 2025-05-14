@@ -1,47 +1,77 @@
-import React from 'react';
-import { RouteChildrenProps } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { t } from 'app/core/internationalization';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
+import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { EditTemplateView } from '../receivers/EditTemplateView';
+import { stringifyErrorLike } from '../../utils/misc';
+import { createRelativeUrl } from '../../utils/url';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { TemplateForm } from '../receivers/TemplateForm';
 
-type Props = RouteChildrenProps<{ name: string }>;
+import { ActiveTab } from './ContactPoints';
+import { useGetNotificationTemplate } from './useNotificationTemplates';
 
-const EditMessageTemplate = ({ match }: Props) => {
+const notFoundComponent = <EntityNotFound entity="Notification template" />;
+
+const EditMessageTemplateComponent = () => {
+  const { name } = useParams<{ name: string }>();
+  const templateUid = name ? decodeURIComponent(name) : undefined;
+
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { currentData, isLoading, error, isUninitialized } = useGetNotificationTemplate({
+    alertmanager: selectedAlertmanager ?? '',
+    uid: templateUid ?? '',
+  });
 
-  const name = match?.params.name;
-  if (!name) {
+  if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading || isUninitialized) {
+    return <LoadingPlaceholder text="Loading template..." />;
   }
 
   if (error) {
-    return (
+    return isNotFoundError(error) ? (
+      notFoundComponent
+    ) : (
       <Alert severity="error" title="Failed to fetch notification template">
-        {String(error)}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (!data) {
-    return null;
+  if (!currentData) {
+    return notFoundComponent;
   }
 
-  return (
-    <EditTemplateView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      templateName={decodeURIComponent(name)}
-    />
-  );
+  return <TemplateForm alertmanager={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
 };
 
-export default EditMessageTemplate;
+function EditMessageTemplate() {
+  return (
+    <AlertmanagerPageWrapper
+      navId="receivers"
+      accessType="notification"
+      pageNav={{
+        id: 'templates',
+        text: t('alerting.notification-templates.edit.title', 'Edit notification template group'),
+        subTitle: t('alerting.notification-templates.edit.subTitle', 'Edit a group of notification templates'),
+        parentItem: {
+          text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
+          url: createRelativeUrl('/alerting/notifications', {
+            tab: ActiveTab.NotificationTemplates,
+          }),
+        },
+      }}
+    >
+      <EditMessageTemplateComponent />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(EditMessageTemplate);

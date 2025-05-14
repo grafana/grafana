@@ -1,5 +1,6 @@
 import { sortBy as _sortBy } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { CustomScrollbar, Icon } from '@grafana/ui';
 import { TimeSeries } from 'app/core/core';
@@ -91,7 +92,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
   }
 
   sortLegend() {
-    let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
+    let seriesList: TimeSeries[] = [...this.props.seriesList];
     const sortBy = this.props.sort;
     if (sortBy && this.props[sortBy] && this.props.alignAsTable) {
       seriesList = _sortBy(seriesList, (series) => {

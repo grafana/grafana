@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -21,7 +21,7 @@ func TestVerifier_Start(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
-	is := &idtest.MockService{}
+	is := &idtest.FakeService{}
 
 	type calls struct {
 		expireCalled bool
@@ -116,7 +116,7 @@ func TestVerifier_Complete(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
-	is := &idtest.MockService{}
+	is := &idtest.FakeService{}
 
 	type calls struct {
 		updateCalled       bool

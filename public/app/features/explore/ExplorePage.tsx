@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,7 +16,7 @@ import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -28,11 +28,7 @@ import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/s
 const MIN_PANE_WIDTH = 200;
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  return (
-    <QueriesDrawerContextProvider>
-      <ExplorePageContent {...props} />
-    </QueriesDrawerContextProvider>
-  );
+  return <ExplorePageContent {...props} />;
 }
 
 function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
@@ -53,7 +49,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
@@ -97,7 +93,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         })}
       </SplitPaneWrapper>
       {drawerOpened && (
-        <ExploreDrawer initialHeight={queryLibraryAvailable ? '75vh' : undefined}>
+        <ExploreDrawer>
           <RichHistoryContainer
             onClose={() => {
               setDrawerOpened(false);

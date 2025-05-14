@@ -1,4 +1,3 @@
-import React from 'react';
 import { UseFieldArrayRemove } from 'react-hook-form';
 
 import { Button } from '@grafana/ui';

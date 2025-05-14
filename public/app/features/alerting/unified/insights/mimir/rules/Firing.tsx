@@ -1,11 +1,9 @@
-import React from 'react';
-
 import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
-import { InsightsRatingModal } from '../../RatingModal';
+import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getFiringCloudAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -39,7 +37,7 @@ export function getFiringCloudAlertsScene(datasource: DataSourceRef, panelTitle:
         ],
       })
       .setNoValue('0')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

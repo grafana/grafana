@@ -9,7 +9,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -19,466 +22,683 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
   "links": [],
   "panels": [
     {
-      "datasource": null,
-      "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
-      "id": 0,
-      "options": {
-        "mode": "markdown",
-        "content": "This dashboard has example charts for metrics exported by Prometheus, for example metrics from [Kubernetes pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/master/docs/pod-metrics.md)"
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
       },
-      "pluginVersion": "7.4.0-pre",
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "GKE Prometheus Pod/Node Monitoring",
+      "description": "",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "This dashboard has example charts for metrics exported by Prometheus, for example metrics from [Kubernetes Pods](https://github.com/kubernetes/kube-state-metrics/blob/master/docs/pod-metrics.md) and [Kubernetes Nodes](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md).\n\nNote that if you are using the deprecated [Stackdriver Prometheus sidecar](https://cloud.google.com/monitoring/api/metrics_other#prometheus) then this dashboard will not function as expected. This dashboard requires metrics to be collected by Google Managed Prometheus as they will then be exposed under the `prometheus.googleapis.com` metrics descriptor.\n\nIf you are using a GKE cluster that has been configured to automatically scrape Kube state metrics then some of the panels on this dashboard will not show data as the default configuration only sends a [subset](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics) of the available Kube state metrics.\n\nTo retrieve all available Kube state metrics [this](https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/kube_state_metrics#install-exporter) documentation can be followed.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "GKE Prometheus Pod/Node Monitoring Test",
       "type": "text"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
+      },
       "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "hiddenSeries": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 3
+      },
       "id": 1,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{metric.label.phase}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
+            "filters": ["metric.type", "=", "prometheus.googleapis.com/kube_pod_status_phase/gauge"],
             "groupBys": ["metric.label.phase"],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_pod_status_phase",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_pod_status_phase [SUM]",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
+      },
       "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "hiddenSeries": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 3
+      },
       "id": 2,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{resource.label.namespace}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
+            "filters": ["metric.type", "=", "prometheus.googleapis.com/kube_pod_container_status_ready/gauge"],
+            "groupBys": ["resource.label.namespace"],
             "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
-            "groupBys": ["metric.label.namespace"],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_pod_status_ready",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_pod_status_ready [SUM]",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
+      },
       "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "hiddenSeries": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
       "id": 3,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{resource.label.namespace}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
+            "filters": ["metric.type", "=", "prometheus.googleapis.com/kube_pod_container_status_running/gauge"],
+            "groupBys": ["resource.label.namespace"],
             "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
-            "groupBys": ["metric.label.namespace"],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_pod_container_status_running",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_pod_container_status_running [SUM]",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
-      "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "hiddenSeries": false,
-      "id": 4,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{metric.label.condition}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
+            "filters": ["metric.type", "=", "prometheus.googleapis.com/kube_node_status_condition/gauge"],
             "groupBys": ["metric.label.condition"],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_node_status_condition",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_node_status_condition [SUM]",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
+      },
       "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "hiddenSeries": false,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
       "id": 5,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{metric.label.node}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
+            "crossSeriesReducer": "REDUCE_NONE",
+            "filters": [
+              "metric.label.unit",
+              "=",
+              "integer",
+              "AND",
+              "metric.type",
+              "=",
+              "prometheus.googleapis.com/kube_node_status_capacity/gauge"
+            ],
             "groupBys": [],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_node_status_capacity_pods",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_node_status_capacity_pods",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "decimals": 2,
-      "description": "",
-      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "hiddenSeries": false,
-      "id": 6,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": false,
-        "sideWidth": 220
+      "datasource": {
+        "type": "stackdriver",
+        "uid": "$datasource"
       },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "connected",
-      "options": { "alertThreshold": false },
-      "percentage": true,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "width": 220
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
       "pluginVersion": "7.4.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
       "targets": [
         {
-          "queryType": "metrics",
+          "aliasBy": "{{metric.label.node}}",
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "queryType": "timeSeriesList",
           "refId": "A",
-          "metricQuery": {
-            "aliasBy": "",
+          "timeSeriesList": {
             "alignmentPeriod": "$alignmentPeriod",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "filters": ["resource.type", "=", "k8s_container"],
+            "filters": [
+              "metric.label.unit",
+              "=",
+              "integer",
+              "AND",
+              "metric.type",
+              "=",
+              "prometheus.googleapis.com/kube_node_status_allocatable/gauge"
+            ],
             "groupBys": [],
-            "metricKind": "",
-            "metricType": "external.googleapis.com/prometheus/kube_node_status_allocatable_pods",
-            "projectName": "$project",
-            "unit": "",
-            "valueType": ""
+            "perSeriesAligner": "ALIGN_MEAN",
+            "projectName": "$project"
           }
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "kube_node_status_allocatable_pods",
-      "tooltip": { "shared": true, "sort": 0, "value_type": "individual" },
-      "type": "graph",
-      "xaxis": { "buckets": null, "mode": "time", "name": null, "show": true, "values": [] },
-      "yaxes": [
-        { "format": "percent", "label": null, "logBase": 1, "max": null, "min": null, "show": true },
-        { "format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true }
-      ],
-      "yaxis": { "align": false, "alignLevel": null }
+      "type": "timeseries"
     }
   ],
-  "schemaVersion": 26,
+  "refresh": "",
+  "schemaVersion": 39,
   "tags": ["Compute", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [
       {
         "current": {},
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
@@ -493,12 +713,11 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$datasource",
+        "datasource": {
+          "uid": "$datasource"
+        },
         "definition": "Google Cloud Monitoring - Projects",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Project",
@@ -521,46 +740,39 @@
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "allValue": null,
-        "current": { "selected": false, "text": "grafana auto", "value": "grafana-auto" },
-        "datasource": "${datasource}",
+        "current": {
+          "selected": false,
+          "text": "grafana auto",
+          "value": "grafana-auto"
+        },
+        "datasource": {
+          "uid": "${datasource}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Alignment Period",
         "multi": false,
         "name": "alignmentPeriod",
-        "options": [
-          { "selected": true, "text": "grafana auto", "value": "grafana-auto" },
-          { "selected": false, "text": "stackdriver auto", "value": "stackdriver-auto" },
-          { "selected": false, "text": "cloud monitoring auto", "value": "cloud-monitoring-auto" },
-          { "selected": false, "text": "1m", "value": "+60s" },
-          { "selected": false, "text": "2m", "value": "+120s" },
-          { "selected": false, "text": "5m", "value": "+300s" },
-          { "selected": false, "text": "10m", "value": "+600s" },
-          { "selected": false, "text": "30m", "value": "+1800s" },
-          { "selected": false, "text": "1h", "value": "+3600s" },
-          { "selected": false, "text": "3h", "value": "+7200s" },
-          { "selected": false, "text": "6h", "value": "+21600s" },
-          { "selected": false, "text": "1d", "value": "+86400s" },
-          { "selected": false, "text": "3d", "value": "+259200s" },
-          { "selected": false, "text": "1w", "value": "+604800s" }
-        ],
+        "options": [],
         "query": {
           "labelKey": "",
           "loading": false,
           "projectName": "$project",
           "projects": [
-            { "name": "project-1", "value": "project-1" },
-            { "name": "project-2", "value": "project-2" }
+            {
+              "name": "project-1",
+              "value": "project-1"
+            },
+            {
+              "name": "project-2",
+              "value": "project-2"
+            }
           ],
           "refId": "CloudMonitoringVariableQueryEditor-VariableQuery",
           "selectedMetricType": "actions.googleapis.com/smarthome_action/num_active_users",
@@ -569,12 +781,11 @@
           "selectedService": "actions.googleapis.com",
           "sloServices": []
         },
-        "refresh": 0,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -586,5 +797,6 @@
   "timezone": "",
   "title": "GKE Prometheus Pod/Node Monitoring",
   "uid": "",
-  "version": 5
+  "version": 5,
+  "weekStart": ""
 }

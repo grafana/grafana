@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
@@ -88,6 +88,7 @@ export class ShareLink extends PureComponent<Props, State> {
     const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.id);
+    // @PERCONA
     const isPMM = !!(config.bootData.navTree || []).find((item) => item.id === 'pmm');
     const differentLocalhostDomains =
       isPMM && config.appUrl.includes('localhost') && !window.location.host.includes('localhost');
@@ -105,7 +106,7 @@ export class ShareLink extends PureComponent<Props, State> {
 
     return (
       <>
-        <p className="share-modal-info-text">
+        <p>
           <Trans i18nKey="share-modal.link.info-text">
             Create a direct link to this dashboard or panel, customized with the options below.
           </Trans>
@@ -178,15 +179,13 @@ export class ShareLink extends PureComponent<Props, State> {
             title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
             bottomSpacing={0}
           >
-            <Trans id="share-modal.link.render-instructions">
-              {/* @PERCONA */}
-              {/* We modified this text and link */}
-              To render a panel image, you must install the&nbsp;
-              <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
-                Image Renderer plugin
-              </a>
-              . Please contact your PMM administrator to install the plugin.
-            </Trans>
+            {/* @PERCONA */}
+            {/* We modified this text and link */}
+            To render a panel image, you must install the{' '}
+            <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
+              Image Renderer plugin
+            </a>
+            . Please contact your PMM administrator to install the plugin.
           </Alert>
         )}
       </>

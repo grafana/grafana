@@ -1,13 +1,14 @@
+import { cloneDeep } from 'lodash';
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
+import { DataFrame } from '../types/dataFrame';
 import {
-  DataFrame,
+  CustomTransformOperator,
   DataTransformContext,
   DataTransformerConfig,
   FrameMatcher,
-  CustomTransformOperator,
-} from '../types';
+} from '../types/transformations';
 
 import { getFrameMatchers } from './matchers';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
@@ -24,11 +25,23 @@ const getOperator =
     const defaultOptions = info.transformation.defaultOptions ?? {};
     const options = { ...defaultOptions, ...config.options };
 
+    // when running within Scenes, we can skip var interpolation, since it's already handled upstream
+    const isScenes = window.__grafanaSceneContext != null;
+
+    const interpolated = isScenes
+      ? options
+      : deepIterate(cloneDeep(options), (v) => {
+          if (typeof v === 'string') {
+            return ctx.interpolate(v);
+          }
+          return v;
+        });
+
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     return source.pipe(
       mergeMap((before) =>
         of(filterInput(before, matcher)).pipe(
-          info.transformation.operator(options, ctx),
+          info.transformation.operator(interpolated, ctx),
           postProcessTransform(before, info, matcher)
         )
       )
@@ -43,11 +56,7 @@ function filterInput(data: DataFrame[], matcher?: FrameMatcher) {
 }
 
 const postProcessTransform =
-  (
-    before: DataFrame[],
-    info: TransformerRegistryItem<any>,
-    matcher?: FrameMatcher
-  ): MonoTypeOperatorFunction<DataFrame[]> =>
+  (before: DataFrame[], info: TransformerRegistryItem, matcher?: FrameMatcher): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) =>
     source.pipe(
       map((after) => {
@@ -110,4 +119,22 @@ export function transformDataFrame(
 
 function isCustomTransformation(t: DataTransformerConfig | CustomTransformOperator): t is CustomTransformOperator {
   return typeof t === 'function';
+}
+
+function deepIterate<T extends object>(obj: T, doSomething: (current: any) => any): T;
+// eslint-disable-next-line no-redeclare
+function deepIterate(obj: any, doSomething: (current: any) => any): any {
+  if (Array.isArray(obj)) {
+    return obj.map((o) => deepIterate(o, doSomething));
+  }
+
+  if (typeof obj === 'object') {
+    for (const key in obj) {
+      obj[key] = deepIterate(obj[key], doSomething);
+    }
+
+    return obj;
+  } else {
+    return doSomething(obj) ?? obj;
+  }
 }

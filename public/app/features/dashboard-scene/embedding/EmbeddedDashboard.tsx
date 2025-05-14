@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
@@ -23,8 +25,8 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
 
   if (loadError) {
     return (
-      <Alert severity="error" title="Failed to load dashboard">
-        {loadError}
+      <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
+        {getMessageFromError(loadError)}
       </Alert>
     );
   }
@@ -42,7 +44,7 @@ interface RendererProps extends EmbeddedDashboardProps {
 
 function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, body, scopes } = model.useState();
+  const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -64,12 +66,9 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   }
 
   return (
-    <div
-      className={cx(styles.canvas, controls && !scopes && styles.canvasWithControls, scopes && styles.canvasWithScopes)}
-    >
-      {scopes && <scopes.Component model={scopes} />}
+    <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
       {controls && (
-        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+        <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
@@ -121,13 +120,6 @@ function getStyles(theme: GrafanaTheme2) {
         "panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
-    canvasWithScopes: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
-    }),
     body: css({
       label: 'body',
       flexGrow: 1,
@@ -142,9 +134,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2, 0, 2, 2),
-    }),
-    controlsWrapperWithScopes: css({
-      padding: theme.spacing(2, 0),
     }),
   };
 }

@@ -1,6 +1,6 @@
-import React from 'react';
-
 import { Modal } from '@grafana/ui';
+
+import { KBObjectArray } from '../../../types/rule-form';
 
 import { LabelsSubForm } from './LabelsField';
 
@@ -10,12 +10,7 @@ export interface LabelsEditorModalProps {
     key: string;
     value: string;
   }>;
-  onClose: (
-    labelsToUodate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) => void;
+  onClose: (labelsToUodate?: KBObjectArray) => void;
   dataSourceName: string;
 }
 export function LabelsEditorModal({ isOpen, onClose, dataSourceName, initialLabels }: LabelsEditorModalProps) {

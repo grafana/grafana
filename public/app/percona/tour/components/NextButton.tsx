@@ -1,7 +1,7 @@
 // there is a problem with exported types from react tour
 // @ts-ignore
 import { BtnFnProps } from '@reactour/tour/dist/types';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Button, IconButton } from '@grafana/ui';
 import usePerconaTour from 'app/percona/shared/core/hooks/tour';

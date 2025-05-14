@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -27,7 +27,7 @@ import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
@@ -44,28 +44,26 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
-const getStyles = stylesFactory(() => {
-  return {
-    rowsWrapper: css`
-      width: 100%;
-    `,
-    row: css`
-      width: 100%;
-    `,
-    scrollToTopButton: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      width: 40px;
-      height: 40px;
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      z-index: 1;
-    `,
-  };
-});
+const getStyles = stylesFactory(() => ({
+  rowsWrapper: css({
+    width: '100%',
+  }),
+  row: css({
+    width: '100%',
+  }),
+  scrollToTopButton: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '40px',
+    height: '40px',
+    position: 'absolute',
+    bottom: '30px',
+    right: '30px',
+    zIndex: 1,
+  }),
+}));
 
 type RowState = {
   isDetail: boolean;
@@ -111,6 +109,8 @@ type TVirtualizedTraceViewOwnProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -559,6 +559,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      timeRange,
+      app,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -568,7 +570,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const styles = getStyles();
 
     return (
-      <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
+      <div className={cx(styles.row, 'span-detail-row')} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
         <SpanDetailRow
           color={color}
           columnDivision={spanNameColumnWidth}
@@ -600,6 +602,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           traceFlameGraphs={traceFlameGraphs}
           setTraceFlameGraphs={setTraceFlameGraphs}
           setRedrawListView={setRedrawListView}
+          timeRange={timeRange}
+          app={app}
         />
       </div>
     );

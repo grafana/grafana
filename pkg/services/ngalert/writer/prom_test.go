@@ -1,19 +1,88 @@
 package writer
 
 import (
+	"context"
 	"math"
 	"math/rand/v2"
+	"net/http"
 	"reflect"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/m3db/prometheus_remote_client_golang/promremote"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func TestPrometheusWriter_Write(t *testing.T) {
-	t.Skip("TODO: implement")
+func TestValidateSettings(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		settings setting.RecordingRuleSettings
+		err      bool
+	}{
+		{
+			name: "invalid url",
+			settings: setting.RecordingRuleSettings{
+				URL: "invalid url",
+			},
+			err: true,
+		},
+		{
+			name: "missing password",
+			settings: setting.RecordingRuleSettings{
+				URL:               "http://localhost:9090",
+				BasicAuthUsername: "user",
+			},
+			err: true,
+		},
+		{
+			name: "timeout is 0",
+			settings: setting.RecordingRuleSettings{
+				URL:               "http://localhost:9090",
+				BasicAuthUsername: "user",
+				BasicAuthPassword: "password",
+				Timeout:           0,
+			},
+			err: true,
+		},
+		{
+			name: "valid settings w/ auth",
+			settings: setting.RecordingRuleSettings{
+				URL:               "http://localhost:9090",
+				BasicAuthUsername: "user",
+				BasicAuthPassword: "password",
+				Timeout:           10,
+			},
+			err: false,
+		},
+		{
+			name: "valid settings w/o auth",
+			settings: setting.RecordingRuleSettings{
+				URL:     "http://localhost:9090",
+				Timeout: 10,
+			},
+			err: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateSettings(tc.settings)
+			if tc.err {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestPointsFromFrames(t *testing.T) {
@@ -61,11 +130,145 @@ func TestPointsFromFrames(t *testing.T) {
 					}
 					require.Equal(t, expectedLabels, point.Labels)
 					require.Equal(t, "test", point.Name)
-					require.Equal(t, now.Unix(), point.Metric.T)
+					require.Equal(t, now, point.Metric.T)
 					require.Equal(t, v, point.Metric.V)
 				}
 			})
 		}
+	})
+}
+
+func TestPrometheusWriter_Write(t *testing.T) {
+	client := &testClient{}
+	writer := &PrometheusWriter{
+		client:  client,
+		clock:   clock.New(),
+		logger:  log.New("test"),
+		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+	}
+	now := time.Now()
+	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
+	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
+	emptyFrames := data.Frames{data.NewFrame("test")}
+
+	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+
+	t.Run("error when frames are empty", func(t *testing.T) {
+		err := writer.Write(ctx, "test", now, emptyFrames, 1, map[string]string{})
+		require.Error(t, err)
+	})
+
+	t.Run("include client error when client fails", func(t *testing.T) {
+		clientErr := testClientWriteError{statusCode: http.StatusInternalServerError}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, clientErr)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+	})
+
+	t.Run("writes expected points", func(t *testing.T) {
+		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			require.Len(t, tslist, len(series))
+			for i, ts := range tslist {
+				expectedLabels := []promremote.Label{
+					{Name: "__name__", Value: "test"},
+					{Name: "extra", Value: "label"},
+					{Name: "foo", Value: series[i]["foo"]},
+				}
+				require.ElementsMatch(t, expectedLabels, ts.Labels)
+				require.Equal(t, now, ts.Datapoint.Timestamp)
+				require.Equal(t, extractValue(t, frames, series[i], data.FrameTypeNumericWide), ts.Datapoint.Value)
+			}
+			return promremote.WriteResult{}, nil
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+	})
+
+	t.Run("ignores client error when status code is 400 and message contains duplicate timestamp error", func(t *testing.T) {
+		for _, msg := range DuplicateTimestampErrors {
+			t.Run(msg, func(t *testing.T) {
+				clientErr := testClientWriteError{
+					statusCode: http.StatusBadRequest,
+					msg:        &msg,
+				}
+				client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+					return promremote.WriteResult{}, clientErr
+				}
+
+				err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("bad labels fit under the client error category", func(t *testing.T) {
+		msg := MimirInvalidLabelError
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("max series limit fit under the client error category ", func(t *testing.T) {
+		msg := "send data to ingesters: failed pushing to ingester ingester-1: user=1: per-user series limit of 10 exceeded (err-mimir-max-series-per-user). To adjust the related per-tenant limit, configure -ingester.max-global-series-per-user, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too long labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series' (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("too many labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose number of labels exceeds the limit (actual: 50, limit: 40) series: 'some_series' (err-mimir-max-label-names-per-series). To adjust the related per-tenant limit, configure -validation.max-label-names-per-series, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
 }
 
@@ -155,7 +358,7 @@ func frameGenFromLabels(t *testing.T, frameType data.FrameType, labelSet []map[s
 func frameGenWide(t *testing.T, labelMaps []map[string]string) data.Frames {
 	t.Helper()
 
-	frame := data.NewFrame("test", fieldGenWide(time.Now(), labelMaps)...)
+	frame := data.NewFrame("test", fieldGenWide(t, time.Now(), labelMaps)...)
 	frame.SetMeta(&data.FrameMeta{
 		Type:        data.FrameTypeNumericWide,
 		TypeVersion: data.FrameTypeVersion{0, 1},
@@ -163,9 +366,11 @@ func frameGenWide(t *testing.T, labelMaps []map[string]string) data.Frames {
 	return data.Frames{frame}
 }
 
-func fieldGenWide(t time.Time, labelSet []map[string]string) []*data.Field {
+func fieldGenWide(t *testing.T, tt time.Time, labelSet []map[string]string) []*data.Field {
+	t.Helper()
+
 	fields := make([]*data.Field, 1, len(labelSet)+1)
-	fields[0] = data.NewField("T", nil, []time.Time{t})
+	fields[0] = data.NewField("T", nil, []time.Time{tt})
 	for _, labels := range labelSet {
 		field := data.NewField("value", data.Labels(labels), []float64{rand.Float64() * (100 - 0)}) // arbitrary range
 		fields = append(fields, field)
@@ -227,4 +432,44 @@ func frameGenMulti(t *testing.T, labelSet []map[string]string) data.Frames {
 	}
 
 	return frames
+}
+
+type testClient struct {
+	writeSeriesFunc func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError)
+}
+
+func (c *testClient) WriteProto(
+	ctx context.Context,
+	req *prompb.WriteRequest,
+	opts promremote.WriteOptions,
+) (promremote.WriteResult, promremote.WriteError) {
+	return promremote.WriteResult{}, nil
+}
+
+func (c *testClient) WriteTimeSeries(
+	ctx context.Context,
+	ts promremote.TSList,
+	opts promremote.WriteOptions,
+) (promremote.WriteResult, promremote.WriteError) {
+	if c.writeSeriesFunc != nil {
+		return c.writeSeriesFunc(ctx, ts, opts)
+	}
+
+	return promremote.WriteResult{}, nil
+}
+
+type testClientWriteError struct {
+	statusCode int
+	msg        *string
+}
+
+func (e testClientWriteError) StatusCode() int {
+	return e.statusCode
+}
+
+func (e testClientWriteError) Error() string {
+	if e.msg == nil {
+		return "test error"
+	}
+	return *e.msg
 }

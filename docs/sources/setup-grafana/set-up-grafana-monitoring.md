@@ -24,13 +24,13 @@ Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration's OpenTelemetry section]({{< relref "./configure-grafana#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
+Refer to [Configuration's OpenTelemetry section](../configure-grafana/#tracingopentelemetry) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "./configure-grafana#metrics" >}}) and [metrics.graphite]({{< relref "./configure-grafana#metricsgraphite" >}}) in [Configuration]({{< relref "./configure-grafana" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics](../configure-grafana/#metrics) and [metrics.graphite](../configure-grafana/#metricsgraphite) in [Configuration](../configure-grafana/).
 
 ### Available metrics
 
@@ -81,9 +81,11 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
-1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
+1. In Grafana, click **Connections** in the left-side menu.
+1. Under your connections, click **Data Sources**.
 1. Select the **Prometheus** data source.
-1. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
+1. Under the name of your data source, click **Dashboards**.
+1. On the Dashboards tab, click **Import** in the _Grafana metrics_ row to import the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
 
 ### View Grafana metrics in Graphite
 
@@ -115,7 +117,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin](/developers/plugin-tools/introduction/backend-plugins) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 

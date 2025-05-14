@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import {
@@ -7,7 +7,7 @@ import {
   QueryBuilderOperationParamValue,
   VisualQuery,
   VisualQueryModeller,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';

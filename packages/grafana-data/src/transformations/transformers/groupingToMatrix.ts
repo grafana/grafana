@@ -1,14 +1,13 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame, Field } from '../../types/dataFrame';
 import {
-  DataFrame,
-  DataTransformerInfo,
-  Field,
-  FieldType,
   SpecialValue,
+  DataTransformerInfo,
   TransformationApplicabilityLevels,
-} from '../../types';
+  DataTransformContext,
+} from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -63,7 +62,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
     return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
-  operator: (options) => (source) =>
+  operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
         const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
@@ -107,7 +106,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           {
             name: rowColumnField,
             values: rowValues,
-            type: FieldType.string,
+            type: keyRowField.type,
             config: {},
           },
         ];
@@ -128,7 +127,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            name: columnName.toString(),
+            name: columnName?.toString() ?? null,
             values: values,
             config: valueField.config,
             type: valueField.type,
@@ -146,12 +145,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 };
 
 function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
-
-  for (let index = 0; index < values.length; index++) {
-    unique.add(values[index]);
-  }
-
+  const unique = new Set<T>(values);
   return Array.from(unique);
 }
 
@@ -184,6 +178,8 @@ function getSpecialValue(specialValue: SpecialValue) {
       return true;
     case SpecialValue.Null:
       return null;
+    case SpecialValue.Zero:
+      return 0;
     case SpecialValue.Empty:
     default:
       return '';

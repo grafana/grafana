@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { SecretToggler } from 'app/percona/shared/components/Elements/SecretToggler';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';

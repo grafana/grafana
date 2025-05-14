@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import * as React from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
@@ -125,6 +126,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
+            onClear={() => updateTracesToLogs({ datasourceUid: undefined })}
           />
         </InlineField>
       </InlineFieldRow>

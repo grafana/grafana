@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, useState, useMemo } from 'react';
+import { FC, useState, useMemo } from 'react';
 
 import { IconButton, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 

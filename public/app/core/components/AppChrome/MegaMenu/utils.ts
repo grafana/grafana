@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
@@ -7,6 +9,9 @@ import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
+import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
+
+import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 
 export const enrichHelpItem = (helpItem: NavModelItem) => {
   let menuItems = helpItem.children || [];
@@ -30,19 +35,36 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
   return helpItem;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDockedState: boolean) => {
+export const enrichWithInteractionTracking = (
+  item: NavModelItem,
+  megaMenuDockedState: boolean,
+  ancestorIsNew = false
+) => {
   // creating a new object here to not mutate the original item object
   const newItem = { ...item };
   const onClick = newItem.onClick;
+
+  let isNew: 'item' | 'ancestor' | undefined = undefined;
+  if (newItem.isNew) {
+    isNew = 'item';
+  } else if (ancestorIsNew) {
+    isNew = 'ancestor';
+  }
+
   newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
+      itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
+      bookmarkToggleOn: Boolean(config.featureToggles.pinNavItems),
+      isNew,
     });
     onClick?.();
   };
   if (newItem.children) {
-    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
+    newItem.children = newItem.children.map((item) =>
+      enrichWithInteractionTracking(item, megaMenuDockedState, isNew !== undefined)
+    );
   }
   return newItem;
 };
@@ -96,7 +118,9 @@ export const getActiveItem = (
     }
   }
 
-  if (parentItem) {
+  // Do not search for the parent in the bookmarks section
+  const isInBookmarksSection = navTree[0]?.parentItem?.id === 'bookmarks';
+  if (parentItem && !isInBookmarksSection) {
     return getActiveItem(navTree, parentItem);
   }
 
@@ -127,4 +151,43 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
   }
 
   return links;
+}
+
+export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
+  for (const item of nodes) {
+    if (item.url === url) {
+      return item;
+    } else if (item.children?.length) {
+      const found = findByUrl(item.children, url);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * helper to manage focus when opening/closing and docking/undocking the mega menu
+ * @param isOpen whether the mega menu is open
+ * @param isDocked whether mega menu is docked
+ */
+export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+  // manage focus when opening/closing
+  useEffect(() => {
+    if (isOpen) {
+      document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
+    } else {
+      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    }
+  }, [isOpen]);
+
+  // manage focus when docking/undocking
+  useEffect(() => {
+    if (isDocked) {
+      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+    } else {
+      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    }
+  }, [isDocked]);
 }

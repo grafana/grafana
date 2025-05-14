@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
@@ -51,7 +51,10 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     ) {
       return false;
     }
-    return t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase());
+    return (
+      t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase()) ||
+      t.description?.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase())
+    );
   });
 
   const searchBoxSuffix = (

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import FlaggedScrollbar from '../FlaggedScroller';
+import NativeScrollbar from '../NativeScrollbar';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -26,8 +26,7 @@ export const Page: PageType = ({
   className,
   info,
   layout = PageLayoutType.Standard,
-  scrollTop,
-  scrollRef,
+  onSetScrollRef,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -53,12 +52,10 @@ export const Page: PageType = ({
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <FlaggedScrollbar
+        <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.pageInner}>
             {pageHeaderNav && (
@@ -74,19 +71,17 @@ export const Page: PageType = ({
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
             <div className={styles.pageContent}>{children}</div>
           </div>
-        </FlaggedScrollbar>
+        </NativeScrollbar>
       )}
 
       {layout === PageLayoutType.Canvas && (
-        <FlaggedScrollbar
+        <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.canvasContent}>{children}</div>
-        </FlaggedScrollbar>
+        </NativeScrollbar>
       )}
 
       {layout === PageLayoutType.Custom && children}
@@ -100,11 +95,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       label: 'page-wrapper',
-      height: '100%',
       display: 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
-      minHeight: 0,
+      position: 'relative',
     }),
     pageContent: css({
       label: 'page-content',

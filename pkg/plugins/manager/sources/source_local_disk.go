@@ -30,7 +30,7 @@ func (s *LocalSource) PluginURIs(_ context.Context) []string {
 	return s.paths
 }
 
-func (s *LocalSource) DefaultSignature(_ context.Context) (plugins.Signature, bool) {
+func (s *LocalSource) DefaultSignature(_ context.Context, _ string) (plugins.Signature, bool) {
 	switch s.class {
 	case plugins.ClassCore:
 		return plugins.Signature{
@@ -62,9 +62,10 @@ func DirAsLocalSources(pluginsPath string, class plugins.Class) ([]*LocalSource,
 	}
 	slices.Sort(pluginDirs)
 
-	var sources []*LocalSource
-	for _, dir := range pluginDirs {
-		sources = append(sources, NewLocalSource(class, []string{dir}))
+	sources := make([]*LocalSource, len(pluginDirs))
+	for i, dir := range pluginDirs {
+		sources[i] = NewLocalSource(class, []string{dir})
 	}
+
 	return sources, nil
 }

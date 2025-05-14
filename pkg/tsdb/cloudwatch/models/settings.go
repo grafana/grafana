@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 type Duration struct {
@@ -26,7 +27,7 @@ type CloudWatchSettings struct {
 func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
 	instance := CloudWatchSettings{}
 
-	if config.JSONData != nil && len(config.JSONData) > 1 {
+	if len(config.JSONData) > 1 {
 		if err := json.Unmarshal(config.JSONData, &instance); err != nil {
 			return CloudWatchSettings{}, fmt.Errorf("could not unmarshal DatasourceSettings json: %w", err)
 		}
@@ -43,7 +44,8 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 		instance.LogsTimeout = Duration{30 * time.Minute}
 	}
 
-	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
+	authSettings, _ := awsds.ReadAuthSettingsFromContext(ctx)
+	instance.GrafanaSettings = *authSettings
 
 	return instance, nil
 }
@@ -60,13 +62,16 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 	case float64:
 		*duration = Duration{time.Duration(value)}
 	case string:
+		if value == "" {
+			return nil
+		}
 		dur, err := time.ParseDuration(value)
 		if err != nil {
-			return err
+			return errorsource.DownstreamError(err, false)
 		}
 		*duration = Duration{dur}
 	default:
-		return fmt.Errorf("invalid duration: %#v", unmarshalledJson)
+		return errorsource.DownstreamError(fmt.Errorf("invalid duration: %#v", unmarshalledJson), false)
 	}
 
 	return nil

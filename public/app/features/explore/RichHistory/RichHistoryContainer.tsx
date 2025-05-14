@@ -1,5 +1,5 @@
 // Libraries
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
@@ -89,7 +89,7 @@ export function RichHistoryContainer(props: Props) {
     }
   }, [tracked, selectedTab]);
 
-  if (!richHistorySettings || !selectedTab) {
+  if (!richHistorySettings) {
     return (
       <span>
         <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { t } from '../../utils/i18n';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
@@ -83,6 +85,7 @@ export const Card: CardInterface = ({
     </CardContainer>
   );
 };
+Card.displayName = 'Card';
 
 interface ChildProps {
   className?: string;
@@ -100,6 +103,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
     onClick: undefined,
     isSelected: undefined,
   };
+  const optionLabel = t('grafana-ui.card.option', 'option');
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -115,7 +119,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
         <>{children}</>
       )}
       {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
-      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} readOnly />}
+      {isSelected !== undefined && <input aria-label={optionLabel} type="radio" checked={isSelected} readOnly />}
     </h2>
   );
 };
@@ -181,7 +185,8 @@ const getTagStyles = (theme: GrafanaTheme2) => ({
 /** Card description text */
 const Description = ({ children, className }: ChildProps) => {
   const styles = useStyles2(getDescriptionStyles);
-  return <p className={cx(styles.description, className)}>{children}</p>;
+  const Element = typeof children === 'string' ? 'p' : 'div';
+  return <Element className={cx(styles.description, className)}>{children}</Element>;
 };
 Description.displayName = 'Description';
 

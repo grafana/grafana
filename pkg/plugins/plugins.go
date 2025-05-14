@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -76,6 +75,7 @@ var (
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -101,36 +101,36 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles []RoleRegistration `json:"roles,omitempty"`
+	Roles      []RoleRegistration `json:"roles,omitempty"`
+	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool       `json:"autoEnabled"`
+	Extensions  Extensions `json:"extensions"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	IAM *pfs.IAM `json:"iam,omitempty"`
-
-	// API Version: Temporary field while plugins don't expose a OpenAPI schema
-	APIVersion string `json:"apiVersion,omitempty"`
+	IAM *auth.IAM `json:"iam,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -143,26 +143,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		return JSONData{}, err
 	}
 
-	// Hardcoded changes
-	switch plugin.ID {
-	case "grafana-piechart-panel":
+	if plugin.ID == "grafana-piechart-panel" {
 		plugin.Name = "Pie Chart (old)"
-	case "grafana-pyroscope-datasource":
-		fallthrough
-	case "grafana-testdata-datasource":
-		fallthrough
-	case "grafana-postgresql-datasource":
-		fallthrough
-	case "annolist":
-		fallthrough
-	case "debug":
-		if len(plugin.AliasIDs) == 0 {
-			return plugin, fmt.Errorf("expected alias to be set")
-		}
-	default: // TODO: when gcom validates the alias, this condition can be removed
-		if len(plugin.AliasIDs) > 0 {
-			return plugin, ErrUnsupportedAlias
-		}
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
@@ -173,9 +155,38 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Dependencies.GrafanaVersion = "*"
 	}
 
+	if len(plugin.Dependencies.Extensions.ExposedComponents) == 0 {
+		plugin.Dependencies.Extensions.ExposedComponents = make([]string, 0)
+	}
+
+	if plugin.Extensions.AddedLinks == nil {
+		plugin.Extensions.AddedLinks = []AddedLink{}
+	}
+
+	if plugin.Extensions.AddedComponents == nil {
+		plugin.Extensions.AddedComponents = []AddedComponent{}
+	}
+
+	if plugin.Extensions.AddedFunctions == nil {
+		plugin.Extensions.AddedFunctions = []AddedFunction{}
+	}
+
+	if plugin.Extensions.ExposedComponents == nil {
+		plugin.Extensions.ExposedComponents = []ExposedComponent{}
+	}
+
+	if plugin.Extensions.ExtensionPoints == nil {
+		plugin.Extensions.ExtensionPoints = []ExtensionPoint{}
+	}
+
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
 			include.Role = org.RoleViewer
+		}
+
+		// Default to app access for app plugins
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+			include.Action = ActionAppAccess
 		}
 	}
 
@@ -388,12 +399,12 @@ func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequ
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
 	}
-	return pluginClient.ConvertObject(ctx, req)
+	return pluginClient.ConvertObjects(ctx, req)
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -455,6 +466,7 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -486,20 +498,16 @@ func (p *Plugin) IsCorePlugin() bool {
 	return p.Class == ClassCore
 }
 
-func (p *Plugin) IsBundledPlugin() bool {
-	return p.Class == ClassBundled
-}
-
 func (p *Plugin) IsExternalPlugin() bool {
-	return !p.IsCorePlugin() && !p.IsBundledPlugin()
+	return !p.IsCorePlugin()
 }
 
 type Class string
 
 const (
 	ClassCore     Class = "core"
-	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

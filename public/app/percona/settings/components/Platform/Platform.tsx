@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

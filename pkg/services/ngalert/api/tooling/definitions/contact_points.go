@@ -56,10 +56,33 @@ type EmailIntegration struct {
 type GooglechatIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+}
+
+type JiraIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	URL       string `yaml:"api_url,omitempty" json:"api_url,omitempty" hcl:"api_url"`
+	Project   string `yaml:"project,omitempty" json:"project,omitempty" hcl:"project"`
+	IssueType string `yaml:"issue_type,omitempty" json:"issue_type,omitempty" hcl:"issue_type"`
+
+	Summary           *string         `yaml:"summary,omitempty" json:"summary,omitempty" hcl:"summary"`
+	Description       *string         `yaml:"description,omitempty" json:"description,omitempty" hcl:"description"`
+	Labels            *[]string       `yaml:"labels,omitempty" json:"labels,omitempty" hcl:"labels"`
+	Priority          *string         `yaml:"priority,omitempty" json:"priority,omitempty" hcl:"priority"`
+	ReopenTransition  *string         `yaml:"reopen_transition,omitempty" json:"reopen_transition,omitempty" hcl:"reopen_transition"`
+	ResolveTransition *string         `yaml:"resolve_transition,omitempty" json:"resolve_transition,omitempty" hcl:"resolve_transition"`
+	WontFixResolution *string         `yaml:"wont_fix_resolution,omitempty" json:"wont_fix_resolution,omitempty" hcl:"wont_fix_resolution"`
+	ReopenDuration    *string         `yaml:"reopen_duration,omitempty" json:"reopen_duration,omitempty" hcl:"reopen_duration"`
+	DedupKeyFieldName *string         `yaml:"dedup_key_field,omitempty" json:"dedup_key_field,omitempty" hcl:"dedup_key_field"`
+	Fields            *map[string]any `yaml:"fields,omitempty" json:"fields,omitempty" hcl:"fields"`
+
+	User     *Secret `yaml:"user,omitempty" json:"user,omitempty" hcl:"user"`
+	Password *Secret `yaml:"password,omitempty" json:"password,omitempty" hcl:"password"`
+	Token    *Secret `yaml:"api_token,omitempty" json:"api_token,omitempty" hcl:"api_token"`
 }
 
 type KafkaIntegration struct {
@@ -83,6 +106,28 @@ type LineIntegration struct {
 
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+}
+
+type TLSConfig struct {
+	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+	TLSCACertificate     *Secret `json:"caCertificate,omitempty" yaml:"caCertificate,omitempty" hcl:"ca_certificate"`
+	TLSClientCertificate *Secret `json:"clientCertificate,omitempty" yaml:"clientCertificate,omitempty" hcl:"client_certificate"`
+	TLSClientKey         *Secret `json:"clientKey,omitempty" yaml:"clientKey,omitempty" hcl:"client_key"`
+}
+
+type MqttIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	BrokerURL     *string    `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
+	ClientID      *string    `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
+	Topic         *string    `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
+	Message       *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat *string    `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
+	Username      *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Password      *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
+	QoS           *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
+	Retain        *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
+	TLSConfig     *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
 }
 
 type OnCallIntegration struct {
@@ -170,11 +215,11 @@ type SensugoIntegration struct {
 }
 
 type SigV4Config struct {
-	Region    string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
-	AccessKey string `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
-	SecretKey string `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
-	Profile   string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
-	RoleARN   string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
+	Region    *string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
+	AccessKey *Secret `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
+	SecretKey *Secret `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
+	Profile   *string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
+	RoleARN   *string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
 }
 
 type SnsIntegration struct {
@@ -205,6 +250,7 @@ type SlackIntegration struct {
 	MentionChannel *string `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty" hcl:"mention_channel"`
 	MentionUsers   *string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty" hcl:"mention_users"`
 	MentionGroups  *string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty" hcl:"mention_groups"`
+	Color          *string `json:"color,omitempty" yaml:"color,omitempty" hcl:"color"`
 }
 
 type TelegramIntegration struct {
@@ -245,7 +291,7 @@ type ThreemaIntegration struct {
 type VictoropsIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	MessageType *string `json:"messageType,omitempty" yaml:"messageType,omitempty" hcl:"message_type"`
 	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
@@ -267,14 +313,26 @@ type WebhookIntegration struct {
 
 	URL string `json:"url" yaml:"url" hcl:"url"`
 
-	HTTPMethod               *string `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
-	MaxAlerts                *int64  `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
-	AuthorizationScheme      *string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
-	AuthorizationCredentials *Secret `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
-	User                     *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
-	Password                 *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
-	Title                    *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	HTTPMethod               *string     `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
+	MaxAlerts                *int64      `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
+	AuthorizationScheme      *string     `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
+	AuthorizationCredentials *Secret     `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
+	User                     *string     `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
+	Password                 *Secret     `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
+	Title                    *string     `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message                  *string     `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	TLSConfig                *TLSConfig  `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
+	HMACConfig               *HMACConfig `json:"hmacConfig,omitempty" yaml:"hmacConfig,omitempty" hcl:"hmacConfig,block"`
+}
+
+type HMACConfig struct {
+	// Secret to use for HMAC signing.
+	Secret *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
+	// Header is the name of the header containing the HMAC signature.
+	Header string `json:"header,omitempty" yaml:"header,omitempty" hcl:"header"`
+	// TimestampHeader is the name of the header containing the timestamp
+	// used to generate the HMAC signature. If empty, timestamp is not included.
+	TimestampHeader string `yaml:"timestampHeader,omitempty" json:"timestampHeader,omitempty" hcl:"timestamp_header"`
 }
 
 type WecomIntegration struct {
@@ -297,8 +355,10 @@ type ContactPoint struct {
 	Discord      []DiscordIntegration      `json:"discord" yaml:"discord" hcl:"discord,block"`
 	Email        []EmailIntegration        `json:"email" yaml:"email" hcl:"email,block"`
 	Googlechat   []GooglechatIntegration   `json:"googlechat" yaml:"googlechat" hcl:"googlechat,block"`
+	Jira         []JiraIntegration         `json:"jira" yaml:"jira" hcl:"jira,block"`
 	Kafka        []KafkaIntegration        `json:"kafka" yaml:"kafka" hcl:"kafka,block"`
 	Line         []LineIntegration         `json:"line" yaml:"line" hcl:"line,block"`
+	Mqtt         []MqttIntegration         `json:"mqtt" yaml:"mqtt" hcl:"mqtt,block"`
 	Opsgenie     []OpsgenieIntegration     `json:"opsgenie" yaml:"opsgenie" hcl:"opsgenie,block"`
 	Pagerduty    []PagerdutyIntegration    `json:"pagerduty" yaml:"pagerduty" hcl:"pagerduty,block"`
 	OnCall       []OnCallIntegration       `json:"oncall" yaml:"oncall" hcl:"oncall,block"`

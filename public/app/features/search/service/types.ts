@@ -17,6 +17,7 @@ export interface SearchQuery {
   tags?: string[];
   kind?: string[];
   panel_type?: string;
+  name?: string[];
   uid?: string[];
   facet?: FacetField[];
   explain?: boolean;
@@ -39,6 +40,8 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
+  isDeleted?: boolean;
+  permanentlyDeleteDate?: Date;
 
   // debugging fields
   score: number;

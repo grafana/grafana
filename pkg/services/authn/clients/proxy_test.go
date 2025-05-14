@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -202,8 +203,6 @@ func TestProxy_Hook(t *testing.T) {
 		proxyFieldRole: "X-Role",
 	}
 	cache := &fakeCache{data: make(map[string][]byte)}
-	userId := int64(1)
-	userID := authn.NewNamespaceID(authn.NamespaceUser, userId)
 
 	// withRole creates a test case for a user with a specific role.
 	withRole := func(role string) func(t *testing.T) {
@@ -212,7 +211,8 @@ func TestProxy_Hook(t *testing.T) {
 			c, err := ProvideProxy(cfg, cache, authntest.MockProxyClient{})
 			require.NoError(t, err)
 			userIdentity := &authn.Identity{
-				ID: userID,
+				ID:   "1",
+				Type: claims.TypeUser,
 				ClientParams: authn.ClientParams{
 					CacheAuthProxyKey: cacheKey,
 				},
@@ -228,7 +228,7 @@ func TestProxy_Hook(t *testing.T) {
 			err = c.Hook(context.Background(), userIdentity, userReq)
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
-				cacheKey: []byte(fmt.Sprintf("%d", userId)),
+				cacheKey: []byte("1"),
 				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
 			}
 			assert.Equal(t, expectedCache, cache.data)

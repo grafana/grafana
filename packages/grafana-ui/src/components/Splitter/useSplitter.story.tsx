@@ -1,9 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
-
-import { Box } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { Box } from '../Layout/Box/Box';
 
 import { UseSplitterOptions, useSplitter } from './useSplitter';
 import mdx from './useSplitter.mdx';

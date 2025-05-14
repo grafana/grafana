@@ -1,5 +1,4 @@
 /* eslint-disable react/display-name */
-import React from 'react';
 
 import { Button } from '@grafana/ui';
 import { InstanceAvailableType, SelectInstance } from 'app/percona/add-instance/panel.types';

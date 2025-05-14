@@ -1,20 +1,12 @@
-import { screen, render } from '@testing-library/react';
-import React from 'react';
+import { render, screen } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { SupportedPlugin } from '../types/pluginBridges';
 
-import { createBridgeURL, PluginBridge } from './PluginBridge';
-import { server, NON_EXISTING_PLUGIN } from './PluginBridge.mock';
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+import { PluginBridge, createBridgeURL } from './PluginBridge';
+const NON_EXISTING_PLUGIN = '__does_not_exist__';
+setupMswServer();
 
 describe('createBridgeURL', () => {
   it('should work with path', () => {

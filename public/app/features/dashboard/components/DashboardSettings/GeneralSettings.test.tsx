@@ -1,17 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
-import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
@@ -21,7 +16,6 @@ setBackendSrv({
 } as unknown as BackendSrv);
 
 const setupTestContext = (options: Partial<Props>) => {
-  const store = configureStore();
   const defaults: Props = {
     dashboard: createDashboardModelFixture(
       {
@@ -29,7 +23,6 @@ const setupTestContext = (options: Partial<Props>) => {
         description: 'test dashboard description',
         timepicker: {
           refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
-          time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
           hidden: false,
         },
         timezone: 'utc',
@@ -51,15 +44,7 @@ const setupTestContext = (options: Partial<Props>) => {
 
   const props = { ...defaults, ...options };
 
-  const { rerender } = render(
-    <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <Provider store={store}>
-        <BrowserRouter>
-          <GeneralSettings {...props} />
-        </BrowserRouter>
-      </Provider>
-    </GrafanaContext.Provider>
-  );
+  const { rerender } = render(<GeneralSettings {...props} />);
 
   return { rerender, props };
 };

@@ -2,7 +2,6 @@ package definitions
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -15,12 +14,16 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/alerting/definition"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
 //
 // sets an Alerting config
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       201: Ack
 //       400: ValidationError
@@ -37,6 +40,10 @@ import (
 // swagger:route GET /alertmanager/grafana/config/api/v1/alerts alertmanager RouteGetGrafanaAlertingConfig
 //
 // gets an Alerting config
+//
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //
 //     Responses:
 //       200: GettableUserConfig
@@ -55,6 +62,9 @@ import (
 //
 // gets Alerting configurations that were successfully applied in the past
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: GettableHistoricUserConfigs
 
@@ -62,6 +72,9 @@ import (
 //
 // revert Alerting configuration to the historical configuration specified by the given id
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       202: Ack
 //       400: ValidationError
@@ -71,6 +84,9 @@ import (
 //
 // deletes the Alerting config for a tenant
 //
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
+//
+// Deprecated: true
 //     Responses:
 //       200: Ack
 //       400: ValidationError
@@ -353,6 +369,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -372,6 +392,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
@@ -545,15 +574,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = amv2.Receiver
+type Receiver = alertingmodels.Receiver
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []amv2.Receiver
+	Body []alertingmodels.Receiver
 }
 
-type Integration = amv2.Integration
+type Integration = alertingmodels.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -679,19 +708,11 @@ func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, err
 	// Iterate through receivers and decrypt secure settings.
 	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
 		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			for k, v := range gmr.SecureSettings {
-				decoded, err := base64.StdEncoding.DecodeString(v)
-				if err != nil {
-					return PostableUserConfig{}, fmt.Errorf("failed to decode value for key '%s': %w", k, err)
-				}
-
-				decrypted, err := decryptFn(decoded)
-				if err != nil {
-					return PostableUserConfig{}, fmt.Errorf("failed to decrypt value for key '%s': %w", k, err)
-				}
-
-				gmr.SecureSettings[k] = string(decrypted)
+			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
+			if err != nil {
+				return PostableUserConfig{}, err
 			}
+			gmr.SecureSettings = decrypted
 		}
 	}
 	return *newCfg, nil

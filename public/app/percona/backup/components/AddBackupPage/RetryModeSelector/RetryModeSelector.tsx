@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
-import React from 'react';
 
 import { useStyles } from '@grafana/ui';
 import { RetryMode } from 'app/percona/backup/Backup.types';

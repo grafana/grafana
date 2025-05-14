@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginActions } from '../components/PluginActions';

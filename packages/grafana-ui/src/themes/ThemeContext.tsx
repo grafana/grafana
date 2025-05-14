@@ -1,6 +1,7 @@
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoize from 'micro-memoize';
-import React, { useContext } from 'react';
+import { useContext } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
 
@@ -116,6 +117,13 @@ export function useStyles2<T extends unknown[], CSSReturnValue>(
   ...additionalArguments: T
 ): CSSReturnValue {
   const theme = useTheme2();
+
+  // Grafana ui can be bundled and used in older versions of Grafana where the theme doesn't have elevated background
+  // This can be removed post G12
+  if (!theme.colors.background.elevated) {
+    theme.colors.background.elevated =
+      theme.colors.mode === 'light' ? theme.colors.background.primary : theme.colors.background.secondary;
+  }
 
   let memoizedStyleCreator: typeof getStyles = memoizedStyleCreators.get(getStyles);
 

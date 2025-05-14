@@ -5,21 +5,31 @@ import (
 	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
+
 	return &AccessControl{
-		features, logger, accesscontrol.NewResolvers(logger),
+		features,
+		logger,
+		accesscontrol.NewResolvers(logger),
 	}
+}
+
+func ProvideAccessControlTest() *AccessControl {
+	return ProvideAccessControl(featuremgmt.WithFeatures())
 }
 
 type AccessControl struct {
@@ -29,6 +39,16 @@ type AccessControl struct {
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.Evaluate")
+	defer span.End()
+
+	return a.evaluate(ctx, user, evaluator)
+}
+
+func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.evaluate")
+	defer span.End()
+
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
@@ -70,7 +90,17 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
+func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return &AccessControl{
+		features:  a.features,
+		log:       a.log,
+		resolvers: accesscontrol.NewResolvers(a.log),
+	}
+}
+
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
-	namespace, id := ident.GetNamespacedID()
-	a.log.FromContext(ctx).Debug(msg, "namespace", namespace, "id", id, "orgID", ident.GetOrgID(), "permissions", eval.GoString())
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.debug")
+	defer span.End()
+
+	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }

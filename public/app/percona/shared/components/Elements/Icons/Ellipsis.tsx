@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { getStyles } from './Ellipsis.styles';
 import { SvgProps } from './Icons.types';

@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './__mocks__/configOptions';

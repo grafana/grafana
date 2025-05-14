@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"time"
+	"net/url"
+
+	alertingHTTP "github.com/grafana/alerting/http"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -21,6 +23,7 @@ type Webhook struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	TLSConfig   *tls.Config
 
 	// Validation is a function that will validate the response body and statusCode of the webhook. Any returned error will cause the webhook request to be considered failed.
 	// This can be useful when a webhook service communicates failures in creative ways, such as using the response body instead of the status code.
@@ -30,21 +33,6 @@ type Webhook struct {
 // WebhookClient exists to mock the client in tests.
 type WebhookClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-var netTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		Renegotiation: tls.RenegotiateFreelyAsClient,
-	},
-	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 5 * time.Second,
-}
-var netClient WebhookClient = &http.Client{
-	Timeout:   time.Second * 30,
-	Transport: netTransport,
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
@@ -60,6 +48,11 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 
 	request, err := http.NewRequestWithContext(ctx, webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
 	if err != nil {
+		return err
+	}
+	url, err := url.Parse(webhook.Url)
+	if err != nil {
+		// Should not be possible - NewRequestWithContext should also err if the URL is bad.
 		return err
 	}
 
@@ -78,9 +71,9 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := netClient.Do(request)
+	resp, err := alertingHTTP.NewTLSClient(webhook.TLSConfig).Do(request)
 	if err != nil {
-		return err
+		return redactURL(err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -96,16 +89,25 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	if webhook.Validation != nil {
 		err := webhook.Validation(body, resp.StatusCode)
 		if err != nil {
-			ns.log.Debug("Webhook failed validation", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
+			ns.log.Debug("Webhook failed validation", "url", url.Redacted(), "statuscode", resp.Status, "body", string(body), "error", err)
 			return fmt.Errorf("webhook failed validation: %w", err)
 		}
 	}
 
 	if resp.StatusCode/100 == 2 {
-		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)
+		ns.log.Debug("Webhook succeeded", "url", url.Redacted(), "statuscode", resp.Status)
 		return nil
 	}
 
-	ns.log.Debug("Webhook failed", "url", webhook.Url, "statuscode", resp.Status, "body", string(body))
+	ns.log.Debug("Webhook failed", "url", url.Redacted(), "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("webhook response status %v", resp.Status)
+}
+
+func redactURL(err error) error {
+	var e *url.Error
+	if !errors.As(err, &e) {
+		return err
+	}
+	e.URL = "<redacted>"
+	return e
 }

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useImperativeHandle, useRef } from 'react';
+import { useImperativeHandle, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -34,12 +35,12 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
       <Box
         {...otherProps}
         aria-label={ariaLabel}
-        backgroundColor="primary"
+        backgroundColor="elevated"
         borderRadius="default"
         boxShadow="z3"
         display="inline-block"
         onKeyDown={handleKeys}
-        paddingX={0}
+        paddingX={0.5}
         paddingY={0.5}
         ref={localRef}
         role="menu"
@@ -72,10 +73,11 @@ export const Menu = Object.assign(MenuComp, {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
-      padding: theme.spacing(0.5, 1, 1, 1),
+      padding: theme.spacing(0.5, 0.5, 1, 0.5),
     }),
     headerBorder: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      marginBottom: theme.spacing(0.5),
     }),
   };
 };

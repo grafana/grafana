@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import Map from 'ol/Map';
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';

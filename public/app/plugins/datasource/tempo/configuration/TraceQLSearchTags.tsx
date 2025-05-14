@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
@@ -91,7 +91,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           staticTags={staticTags}
           isTagsLoading={loading}
           hideValues={true}
-          query={'{}'}
+          generateQueryWithoutFilter={() => '{}'}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>

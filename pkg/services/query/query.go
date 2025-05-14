@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -13,18 +14,18 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -41,19 +42,19 @@ func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginRequestValidator validations.PluginRequestValidator,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
 ) *ServiceImpl {
 	g := &ServiceImpl{
-		cfg:                    cfg,
-		dataSourceCache:        dataSourceCache,
-		expressionService:      expressionService,
-		pluginRequestValidator: pluginRequestValidator,
-		pluginClient:           pluginClient,
-		pCtxProvider:           pCtxProvider,
-		log:                    log.New("query_data"),
-		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		cfg:                        cfg,
+		dataSourceCache:            dataSourceCache,
+		expressionService:          expressionService,
+		dataSourceRequestValidator: dataSourceRequestValidator,
+		pluginClient:               pluginClient,
+		pCtxProvider:               pCtxProvider,
+		log:                        log.New("query_data"),
+		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -69,14 +70,14 @@ type Service interface {
 var _ Service = (*ServiceImpl)(nil)
 
 type ServiceImpl struct {
-	cfg                    *setting.Cfg
-	dataSourceCache        datasources.CacheService
-	expressionService      *expr.Service
-	pluginRequestValidator validations.PluginRequestValidator
-	pluginClient           plugins.Client
-	pCtxProvider           *plugincontext.Provider
-	log                    log.Logger
-	concurrentQueryLimit   int
+	cfg                        *setting.Cfg
+	dataSourceCache            datasources.CacheService
+	expressionService          *expr.Service
+	dataSourceRequestValidator validations.DataSourceRequestValidator
+	pluginClient               plugins.Client
+	pCtxProvider               *plugincontext.Provider
+	log                        log.Logger
+	concurrentQueryLimit       int
 }
 
 // Run ServiceImpl.
@@ -125,7 +126,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 			if theErr, ok := r.(error); ok {
 				err = theErr
 			} else if theErrString, ok := r.(string); ok {
-				err = fmt.Errorf(theErrString)
+				err = errors.New(theErrString)
 			} else {
 				err = fmt.Errorf("unexpected error - %s", s.cfg.UserFacingDefaultError)
 			}
@@ -243,7 +244,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.pluginRequestValidator.Validate(ds.URL, nil); err != nil {
+	if err := s.dataSourceRequestValidator.Validate(ds, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 

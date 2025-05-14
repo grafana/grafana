@@ -1,5 +1,5 @@
-import React, { FC, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { FC, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { AppEvents, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -21,7 +21,7 @@ import { EditRolePageParams } from './EditRolePage.types';
 
 const EditRolePage: FC = () => {
   const dispatch = useAppDispatch();
-  const { id } = useParams<EditRolePageParams>();
+  const { id } = useParams() as EditRolePageParams;
   const [role, setRole] = useState<AddEditFormValues>();
   const [isLoading, setIsLoading] = useState(true);
 

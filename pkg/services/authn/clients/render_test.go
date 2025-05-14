@@ -9,6 +9,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -27,7 +29,7 @@ func TestRender_Authenticate(t *testing.T) {
 
 	tests := []TestCase{
 		{
-			desc:      "expect valid render key to return render user identity",
+			desc:      "expect valid render key to return anonymous user identity for org role Viewer",
 			renderKey: "123",
 			req: &authn.Request{
 				HTTPRequest: &http.Request{
@@ -35,7 +37,8 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("render:0"),
+				ID:              "0",
+				Type:            claims.TypeAnonymous,
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				AuthenticatedBy: login.RenderModule,
@@ -48,6 +51,28 @@ func TestRender_Authenticate(t *testing.T) {
 			},
 		},
 		{
+			desc:      "expect valid render key to return render user identity for org role Admin",
+			renderKey: "123",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{"Cookie": {"renderKey=123"}},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID:              "0",
+				Type:            claims.TypeRenderService,
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				AuthenticatedBy: login.RenderModule,
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
+			},
+			expectedRenderUsr: &rendering.RenderUser{
+				OrgID:   1,
+				UserID:  0,
+				OrgRole: "Admin",
+			},
+		},
+		{
 			desc:      "expect valid render key connected to user to return identity",
 			renderKey: "123",
 			req: &authn.Request{
@@ -56,7 +81,8 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:1"),
+				ID:              "1",
+				Type:            claims.TypeUser,
 				AuthenticatedBy: login.RenderModule,
 				ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 			},

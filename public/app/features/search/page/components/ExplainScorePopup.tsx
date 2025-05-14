@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';

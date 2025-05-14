@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import * as React from 'react';
+import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Dropdown, Icon, Menu, MenuItem, useStyles2, Stack } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 

@@ -1,13 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { LanguageProvider } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
 
 import SearchField from './SearchField';
@@ -86,20 +85,30 @@ describe('SearchField', () => {
     if (select) {
       // Add first value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const driverVal = await screen.findByText('driver');
-      await user.click(driverVal);
+
+      await act(async () => {
+        await user.click(driverVal);
+      });
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver'] });
 
       // Add a second value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const customerVal = await screen.findByText('customer');
+
       await user.click(customerVal);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver', 'customer'] });
 
       // Remove the first value
       const firstValRemove = await screen.findAllByLabelText('Remove');
+
       await user.click(firstValRemove[0]);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['customer'] });
     }
@@ -121,14 +130,18 @@ describe('SearchField', () => {
     if (select) {
       // Select tag22 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag22 = await screen.findByText('tag22');
       await user.click(tag22);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22', value: [] });
 
       // Select tag1 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag1 = await screen.findByText('tag1');
       await user.click(tag1);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });
@@ -140,7 +153,7 @@ describe('SearchField', () => {
     }
   });
 
-  it('should not provide intrinsic as a selectable scope', async () => {
+  it('should provide intrinsic as a selectable scope', async () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
@@ -158,7 +171,7 @@ describe('SearchField', () => {
       expect(await screen.findByText('resource')).toBeInTheDocument();
       expect(await screen.findByText('span')).toBeInTheDocument();
       expect(await screen.findByText('unscoped')).toBeInTheDocument();
-      expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+      expect(await screen.findByText('intrinsic')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
@@ -174,6 +187,8 @@ describe('SearchField', () => {
           type: 'keyword',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -222,6 +237,8 @@ describe('SearchField', () => {
           type: 'int',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -267,6 +284,8 @@ const renderSearchField = (
           type: 'string',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider);
 
   const datasource: TempoDatasource = {

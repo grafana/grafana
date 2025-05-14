@@ -1,14 +1,9 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
-import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
@@ -28,7 +23,6 @@ const queryByFullText = (text: string) =>
   });
 
 function setup() {
-  const store = configureStore();
   const dashboard = createDashboardModelFixture({
     id: 74,
     version: 11,
@@ -43,15 +37,7 @@ function setup() {
     },
   };
 
-  return render(
-    <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <Provider store={store}>
-        <BrowserRouter>
-          <VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />
-        </BrowserRouter>
-      </Provider>
-    </GrafanaContext.Provider>
-  );
+  return render(<VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />);
 }
 
 describe('VersionSettings', () => {
@@ -80,7 +66,7 @@ describe('VersionSettings', () => {
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
 
-    expect(tableBodyRows.length).toBe(versions.length);
+    expect(tableBodyRows.length).toBe(versions.versions.length);
 
     const firstRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0];
 
@@ -90,7 +76,11 @@ describe('VersionSettings', () => {
 
   test('does not render buttons if versions === 1', async () => {
     // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, 1));
+    historySrv.getHistoryList.mockResolvedValue({
+      continueToken: versions.continueToken,
+      versions: versions.versions.slice(0, 1),
+    });
+
     setup();
 
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
@@ -104,7 +94,11 @@ describe('VersionSettings', () => {
 
   test('does not render show more button if versions < VERSIONS_FETCH_LIMIT', async () => {
     // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT - 5));
+    historySrv.getHistoryList.mockResolvedValue({
+      continueToken: versions.continueToken,
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    });
+
     setup();
 
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
@@ -118,7 +112,11 @@ describe('VersionSettings', () => {
 
   test('renders buttons if versions >= VERSIONS_FETCH_LIMIT', async () => {
     // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
+    historySrv.getHistoryList.mockResolvedValue({
+      continueToken: versions.continueToken,
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+    });
+
     setup();
 
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
@@ -138,9 +136,17 @@ describe('VersionSettings', () => {
   test('clicking show more appends results to the table', async () => {
     historySrv.getHistoryList
       // @ts-ignore
-      .mockImplementationOnce(() => Promise.resolve(versions.slice(0, VERSIONS_FETCH_LIMIT)))
-      .mockImplementationOnce(
-        () => new Promise((resolve) => setTimeout(() => resolve(versions.slice(VERSIONS_FETCH_LIMIT)), 1000))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          continueToken: versions.continueToken,
+          versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          continueToken: versions.continueToken,
+          versions: versions.versions.slice(VERSIONS_FETCH_LIMIT),
+        })
       );
 
     setup();
@@ -160,13 +166,16 @@ describe('VersionSettings', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(/Fetching more entries/i)).not.toBeInTheDocument();
-      expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.length);
+      expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.versions.length);
     });
   });
 
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
-    historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
+    historySrv.getHistoryList.mockResolvedValue({
+      continueToken: versions.continueToken,
+      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+    });
     historySrv.getDashboardVersion
       // @ts-ignore
       .mockImplementationOnce(() => Promise.resolve(diffs.lhs))

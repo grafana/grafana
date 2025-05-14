@@ -1,4 +1,5 @@
-import React, { useRef, useState, useLayoutEffect } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
+import * as React from 'react';
 import { useClickAway } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';

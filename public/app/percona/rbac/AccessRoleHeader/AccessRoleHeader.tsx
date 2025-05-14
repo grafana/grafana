@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { HorizontalGroup, Icon, Tooltip } from '@grafana/ui';
 

@@ -399,7 +399,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           // Calculate final co-ordinates for text position
           const x =
             u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
-          const y =
+          let y =
             u.bbox.top +
             (isXHorizontal ? (value < 0 ? top + hgt + labelOffset : top - labelOffset) : top + hgt / 2 - middleShift);
 
@@ -434,6 +434,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
             // Adjust for baseline being "right" in the x direction
             xAdjust = value < 0 ? textMetrics.width * scaleFactor : 0;
+          }
+
+          // Force label bounding box y position to not be negative
+          if (y - yAdjust < 0) {
+            y = yAdjust;
           }
 
           // Construct final bounding box for the label text

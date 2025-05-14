@@ -1,4 +1,4 @@
-import React, { FC, useEffect, ReactNode, PropsWithChildren } from 'react';
+import { FC, useEffect, ReactNode, PropsWithChildren } from 'react';
 
 import { IconButton, useStyles2 } from '@grafana/ui';
 

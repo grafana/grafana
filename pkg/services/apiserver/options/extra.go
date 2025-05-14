@@ -4,12 +4,15 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/spf13/pflag"
+	genericfeatures "k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 )
 
 type ExtraOptions struct {
@@ -40,7 +43,12 @@ func (o *ExtraOptions) Validate() []error {
 func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 	handler := slogadapter.New(log.New("grafana-apiserver"))
 	logger := slog.New(handler)
-
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(map[string]bool{
+		string(genericfeatures.APIServerTracing): false,
+	}); err != nil {
+		return err
+	}
+	// TODO: klog isn't working as expected, investigate - it logs some of the time
 	klog.SetSlogLogger(logger)
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
 		logger.Error("failed to set log level", "error", err)

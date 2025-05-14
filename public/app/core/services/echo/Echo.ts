@@ -72,6 +72,8 @@ export class Echo implements EchoSrv {
       userId: contextSrv.user.id,
       userLogin: contextSrv.user.login,
       userSignedIn: contextSrv.user.isSignedIn,
+      orgRole: contextSrv.user.orgRole,
+      orgId: contextSrv.user.orgId,
       screenSize: {
         width: window.innerWidth,
         height: window.innerHeight,

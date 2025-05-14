@@ -1,9 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
-import { Spinner } from '@grafana/ui';
-
-import { Props } from './Spinner';
+import { Props, Spinner } from './Spinner';
 import mdx from './Spinner.mdx';
 
 const meta: Meta = {

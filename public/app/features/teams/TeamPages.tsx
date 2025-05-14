@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useMemo, useRef } from 'react';
-import { useParams } from 'react-router';
+import { memo, useRef } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { featureEnabled } from '@grafana/runtime';
@@ -18,10 +18,10 @@ import { loadTeam } from './state/actions';
 import { getTeamLoadingNav } from './state/navModel';
 import { getTeam } from './state/selectors';
 
-interface TeamPageRouteParams {
-  id: string;
+type TeamPageRouteParams = {
+  uid: string;
   page?: string;
-}
+};
 
 enum PageTypes {
   Members = 'members',
@@ -32,38 +32,37 @@ enum PageTypes {
 const PAGES = ['members', 'settings', 'groupsync'];
 
 const teamSelector = createSelector(
-  [(state: StoreState) => state.team, (_: StoreState, teamId: number) => teamId],
-  (team, teamId) => getTeam(team, teamId)
+  [(state: StoreState) => state.team, (_: StoreState, teamUid: string) => teamUid],
+  (team, teamUid) => getTeam(team, teamUid)
 );
 
 const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
     (_state: StoreState, pageName: string) => pageName,
-    (_state: StoreState, _pageName: string, teamId: number) => teamId,
+    (_state: StoreState, _pageName: string, teamUid: string) => teamUid,
   ],
-  (navIndex, pageName, teamId) => {
+  (navIndex, pageName, teamUid) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
-    return getNavModel(navIndex, `team-${pageName}-${teamId}`, teamLoadingNav).main;
+    return getNavModel(navIndex, `team-${pageName}-${teamUid}`, teamLoadingNav).main;
   }
 );
 
-const TeamPages = React.memo(() => {
+const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
-  const params = useParams<TeamPageRouteParams>();
-  const teamId = useMemo(() => parseInt(params.id, 10), [params]);
-  const team = useSelector((state) => teamSelector(state, teamId));
+  const { uid: teamUid = '', page } = useParams<TeamPageRouteParams>();
+  const team = useSelector((state) => teamSelector(state, teamUid));
 
   let defaultPage = 'members';
   // With RBAC the settings page will always be available
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
     defaultPage = 'settings';
   }
-  const pageName = params.page ?? defaultPage;
-  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamId));
+  const pageName = page ?? defaultPage;
+  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamUid));
 
   const dispatch = useDispatch();
-  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamId)), [teamId]);
+  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamUid)), [teamUid]);
 
   const renderPage = () => {
     const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
@@ -83,6 +82,7 @@ const TeamPages = React.memo(() => {
         if (canReadTeamPermissions) {
           return <TeamPermissions team={team!} />;
         }
+        return null;
       case PageTypes.Settings:
         return canReadTeam && <TeamSettings team={team!} />;
       case PageTypes.GroupSync:

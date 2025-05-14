@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationHeader.tsx
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
-import { DraggableProvided } from 'react-beautiful-dnd';
+import { DraggableProvided } from '@hello-pangea/dnd';
+import { memo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
+import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';
@@ -25,7 +25,7 @@ interface State {
   alternatives?: Array<SelectableValue<QueryBuilderOperationDef>>;
 }
 
-export const OperationHeader = React.memo<Props>(
+export const OperationHeader = memo<Props>(
   ({ operation, def, index, onChange, onRemove, queryModeller, dragHandleProps }) => {
     const styles = useStyles2(getStyles);
     const [state, setState] = useState<State>({});

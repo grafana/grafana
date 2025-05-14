@@ -26,28 +26,27 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query history' });
-  await userEvent.click(button);
-  expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  let button = screen.queryByRole('button', { name: 'Query history' });
+  if (button) {
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  } else {
+    button = screen.getByRole('button', { name: 'Open query library or query history' });
+    await userEvent.click(button);
+    button = await screen.findByRole('menuitem', { name: 'Query history' });
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  }
 };
 
 export const openQueryLibrary = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query library' });
+  const button = screen.getByRole('button', { name: 'Add query from library' });
   await userEvent.click(button);
   await waitFor(async () => {
-    screen.getByRole('tab', {
-      name: /tab query library/i,
+    screen.getByRole('dialog', {
+      name: 'Drawer title Query library',
     });
   });
-};
-
-export const switchToQueryHistory = async () => {
-  const tab = screen.getByRole('tab', {
-    name: /tab query history/i,
-  });
-  await userEvent.click(tab);
 };
 
 export const addQueryHistoryToQueryLibrary = async () => {
@@ -59,7 +58,7 @@ export const submitAddToQueryLibrary = async ({ description }: { description: st
   const input = within(screen.getByRole('dialog')).getByLabelText('Description');
   await userEvent.type(input, description);
   const saveButton = screen.getByRole('button', {
-    name: /save/i,
+    name: /^save$/i,
   });
   await userEvent.click(saveButton);
 };
@@ -71,13 +70,13 @@ export const closeQueryHistory = async () => {
 };
 
 export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History') => {
-  await userEvent.click(withinQueryHistory().getByRole('tab', { name: `Tab ${name}` }));
+  await userEvent.click(withinQueryHistory().getByRole('tab', { name }));
 };
 
 export const selectStarredTabFirst = async () => {
-  const checkbox = withinQueryHistory().getByRole('checkbox', {
-    name: /Change the default active tab from “Query history” to “Starred”/,
-  });
+  const checkbox = withinQueryHistory().getByLabelText(
+    /Change the default active tab from “Query history” to “Starred”/
+  );
   await userEvent.click(checkbox);
 };
 

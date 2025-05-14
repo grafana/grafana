@@ -16,15 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -463,7 +462,7 @@ func setup(t *testing.T) *testContext {
 	t.Helper()
 	pc := &fakePluginClient{}
 	dc := &fakeDataSourceCache{cache: dss}
-	rv := &fakePluginRequestValidator{}
+	rv := &fakeDataSourceRequestValidator{}
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -491,14 +490,14 @@ func setup(t *testing.T) *testContext {
 		secretStore:            ss,
 		pluginRequestValidator: rv,
 		queryService:           queryService,
-		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: roletype.RoleAdmin},
+		signedInUser:           &user.SignedInUser{OrgID: 1, Login: "login", Name: "name", Email: "email", OrgRole: identity.RoleAdmin},
 	}
 }
 
 type testContext struct {
 	pluginContext          *fakePluginClient
 	secretStore            secretskvs.SecretsKVStore
-	pluginRequestValidator *fakePluginRequestValidator
+	pluginRequestValidator *fakeDataSourceRequestValidator
 	queryService           *ServiceImpl // implementation belonging to this package
 	signedInUser           *user.SignedInUser
 }
@@ -519,11 +518,11 @@ func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricReq
 	}
 }
 
-type fakePluginRequestValidator struct {
+type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 

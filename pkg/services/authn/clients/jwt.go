@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const authQueryParamName = "auth_token"
@@ -73,7 +73,8 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncOrgRoles:    !s.cfg.JWTAuth.SkipOrgRoleSync,
 			AllowSignUp:     s.cfg.JWTAuth.AutoSignUp,
 			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
-		}}
+		},
+	}
 
 	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
@@ -117,7 +118,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 		return role, &grafanaAdmin, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

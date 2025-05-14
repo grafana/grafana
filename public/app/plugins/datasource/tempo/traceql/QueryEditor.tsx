@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { defaults } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, InlineLabel, useStyles2 } from '@grafana/ui';
 
-import { generateQueryFromFilters } from '../SearchTraceQLEditor/utils';
 import { TempoDatasource } from '../datasource';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
 
@@ -23,7 +22,7 @@ export function QueryEditor(props: Props) {
   const styles = useStyles2(getStyles);
   const query = defaults(props.query, defaultQuery);
   const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(() => {
-    const genQuery = generateQueryFromFilters(query.filters || []);
+    const genQuery = props.datasource.languageProvider.generateQueryFromFilters(query.filters || []);
     return genQuery === query.query || genQuery === '{}';
   });
 
@@ -51,7 +50,7 @@ export function QueryEditor(props: Props) {
               props.onClearResults();
               props.onChange({
                 ...query,
-                query: generateQueryFromFilters(query.filters || []),
+                query: props.datasource.languageProvider.generateQueryFromFilters(query.filters || []),
               });
               setShowCopyFromSearchButton(true);
             }}
@@ -69,7 +68,12 @@ export function QueryEditor(props: Props) {
         onRunQuery={props.onRunQuery}
       />
       <div className={styles.optionsContainer}>
-        <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
+        <TempoQueryBuilderOptions
+          query={query}
+          onChange={props.onChange}
+          searchStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
+          metricsStreaming={props.datasource.isStreamingMetricsEnabled() ?? false}
+        />
       </div>
     </>
   );

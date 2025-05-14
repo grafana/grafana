@@ -7,6 +7,13 @@ export const useLinkWithVariables = (url?: string) => {
       keepTime: true,
       // Check if the DB type matches the current one used
       includeVars: checkDbType(url),
+      asDropdown: false,
+      icon: '',
+      tags: [],
+      targetBlank: false,
+      title: '',
+      tooltip: '',
+      type: 'link',
     });
     return cleanupVariables(urlWithLinks);
   } else {

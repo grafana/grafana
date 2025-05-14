@@ -9,13 +9,13 @@ services:
     volumes:
       - "./:/workspace"
       - "./public:/usr/share/grafana/public"
-      - "./conf/grafana.local-dev.ini:/usr/share/grafana/conf/defaults.ini"
       # pmm
       # - "../pmm:/root/go/src/github.com/percona/pmm"
     ports:
       - 80:8080
       - 443:8443
     environment:
+      - GF_DEFAULT_APP_MODE=development
       - PMM_DEBUG=1
       - PMM_DEV_PORTAL_URL=https://portal-dev.percona.com
       - PMM_DEV_PERCONA_PLATFORM_ADDRESS=https://check-dev.percona.com:443

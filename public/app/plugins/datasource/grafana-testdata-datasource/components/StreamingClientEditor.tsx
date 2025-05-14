@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
@@ -17,6 +17,7 @@ const types = [
   { value: 'logs', label: 'Logs' },
   { value: 'fetch', label: 'Fetch' },
   { value: 'traces', label: 'Traces' },
+  { value: 'watch', label: 'Watch' },
 ];
 
 export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
@@ -34,7 +35,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   const fields =
     streamType === 'signal'
       ? streamingClientFields
-      : ['logs', 'traces'].includes(streamType)
+      : ['logs', 'traces', 'watch'].includes(streamType)
         ? [streamingClientFields[0]] // speed
         : [];
 

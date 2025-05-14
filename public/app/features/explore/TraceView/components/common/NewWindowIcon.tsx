@@ -14,16 +14,15 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React from 'react';
 
 import { Icon, useStyles2 } from '@grafana/ui';
 
 export const getStyles = () => {
   return {
-    NewWindowIconLarge: css`
-      label: NewWindowIconLarge;
-      font-size: 1.5em;
-    `,
+    NewWindowIconLarge: css({
+      label: 'NewWindowIconLarge',
+      fontSize: '1.5em',
+    }),
   };
 };
 

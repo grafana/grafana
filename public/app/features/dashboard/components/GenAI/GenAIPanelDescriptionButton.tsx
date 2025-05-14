@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';

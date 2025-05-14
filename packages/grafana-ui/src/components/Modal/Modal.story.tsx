@@ -1,13 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
-import React, { useState } from 'react';
-
-import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { useState } from 'react';
 
 import { getAvailableIcons } from '../../types';
+import { Button } from '../Button';
+import { TabContent } from '../Tabs';
 
+import { Modal } from './Modal';
 import mdx from './Modal.mdx';
+import { ModalTabsHeader } from './ModalTabsHeader';
 
 const meta: Meta = {
   title: 'Overlays/Modal',

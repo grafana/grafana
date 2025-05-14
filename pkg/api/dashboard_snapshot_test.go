@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -40,17 +41,17 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 			hs.DashboardService = svc
 
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 
 	allowedUser := userWithPermissions(1, []accesscontrol.Permission{
 		{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
+		{Action: dashboards.ActionSnapshotsDelete},
 	})
 
 	t.Run("User should not be able to delete snapshot without permissions", func(t *testing.T) {
 		svc := dashboards.NewFakeDashboardService(t)
-		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: "1"}, nil)
 		server := setup(t, svc, 0, "")
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(
@@ -115,7 +116,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 		server := setup(t, svc, 1, "")
 		res, err := server.Send(webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodDelete, "/api/snapshots/12345", nil),
-			&user.SignedInUser{UserID: 1, OrgID: 1},
+			allowedUser,
 		))
 
 		require.NoError(t, err)
@@ -405,7 +406,7 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 		res.External = true
 		res.ExternalDeleteURL = deleteUrl
 	}
-	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil)
+	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil).Maybe()
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 	return dashSnapSvc
 }

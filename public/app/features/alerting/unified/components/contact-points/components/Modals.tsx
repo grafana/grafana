@@ -1,43 +1,45 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button, Modal, ModalProps } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
-
-type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 
 /**
  * This hook controls the delete modal for contact points, showing loading and error states when appropriate
  */
 export const useDeleteContactPointModal = (
-  handleDelete: (name: string) => Promise<void>,
-  isLoading: boolean
-): ModalHook<string> => {
+  handleDelete: ({ name, resourceVersion }: { name: string; resourceVersion?: string }) => Promise<unknown>
+) => {
   const [showModal, setShowModal] = useState(false);
-  const [contactPoint, setContactPoint] = useState<string>();
+  const [contactPoint, setContactPoint] = useState<{ name: string; resourceVersion?: string }>();
   const [error, setError] = useState<unknown | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDismiss = useCallback(() => {
     if (isLoading) {
       return;
     }
-
     setContactPoint(undefined);
     setShowModal(false);
     setError(undefined);
   }, [isLoading]);
 
-  const handleShow = useCallback((name: string) => {
-    setContactPoint(name);
+  const handleShow = useCallback(({ name, resourceVersion }: { name: string; resourceVersion?: string }) => {
+    setContactPoint({ name, resourceVersion });
     setShowModal(true);
     setError(undefined);
   }, []);
 
   const handleSubmit = useCallback(() => {
     if (contactPoint) {
+      setIsLoading(true);
       handleDelete(contactPoint)
         .then(() => setShowModal(false))
-        .catch(setError);
+        .catch(setError)
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   }, [handleDelete, contactPoint]);
 
@@ -62,14 +64,14 @@ export const useDeleteContactPointModal = (
             {isLoading ? 'Deleting...' : 'Yes, delete contact point'}
           </Button>
           <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>
     );
   }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
 
-  return [modalElement, handleShow, handleDismiss];
+  return [modalElement, handleShow, handleDismiss] as const;
 };
 
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
@@ -84,10 +86,8 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
     title={'Something went wrong'}
   >
     <p>Failed to update your configuration:</p>
-    <p>
-      <pre>
-        <code>{stringifyErrorLike(error)}</code>
-      </pre>
-    </p>
+    <pre>
+      <code>{stringifyErrorLike(error)}</code>
+    </pre>
   </Modal>
 );

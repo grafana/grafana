@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -52,7 +52,7 @@ func BackendUserFromSignedInUser(requester identity.Requester) *backend.User {
 	}
 	return &backend.User{
 		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
+		Name:  requester.GetName(),
 		Email: requester.GetEmail(),
 		Role:  string(requester.GetOrgRole()),
 	}

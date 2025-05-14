@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import {
@@ -23,10 +23,14 @@ import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
-import { parseMatchers } from '../../utils/alertmanager';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { Matchers } from './Matchers';
 import { NoSilencesSplash } from './NoSilencesCTA';
@@ -40,13 +44,11 @@ export interface SilenceTableItem extends Silence {
 
 type SilenceTableColumnProps = DynamicTableColumnProps<SilenceTableItem>;
 type SilenceTableItemProps = DynamicTableItemProps<SilenceTableItem>;
-interface Props {
-  alertManagerSourceName: string;
-}
 
 const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
 
-const SilencesTable = ({ alertManagerSourceName }: Props) => {
+const SilencesTable = () => {
+  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.PreviewSilencedInstances
   );
@@ -135,6 +137,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
 
   return (
     <div data-testid="silences-table">
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter />
@@ -220,7 +223,7 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
         }
       }
       if (queryString) {
-        const matchers = parseMatchers(queryString);
+        const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
         const matchersMatch = matchers.every((matcher) =>
           silence.matchers?.some(
             ({ name, value, isEqual, isRegex }) =>
@@ -382,4 +385,13 @@ function useColumns(alertManagerSourceName: string) {
     return columns;
   }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
 }
-export default SilencesTable;
+
+function SilencesTablePage() {
+  return (
+    <AlertmanagerPageWrapper navId="silences" accessType="instance">
+      <SilencesTable />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(SilencesTablePage);

@@ -491,7 +491,20 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithFeatures())
+	moa, err := notifier.NewMultiOrgAlertmanager(
+		cfg,
+		cfgStore,
+		orgStore,
+		kvStore,
+		fakes.NewFakeProvisioningStore(),
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		fakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		featuremgmt.WithFeatures(),
+	)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -712,7 +725,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 			amUrls:   []string{"1234://user:password@localhost:9094"},
 			errCalls: 1,
 			errLog:   "Failed to parse alertmanager string",
-			expected: nil,
+			expected: []string{},
 		},
 	}
 
@@ -724,6 +737,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 					URL: url,
 				})
 			}
+
 			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))
 			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
 			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)

@@ -1,12 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Drawer } from '@grafana/ui';
+import { EditorRow } from '@grafana/plugin-ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -24,9 +22,6 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
-import { PromQail } from './promQail/PromQail';
-import { QueryAssistantButton } from './promQail/QueryAssistantButton';
-import { isLLMPluginEnabled } from './promQail/state/helpers';
 
 export interface PromQueryBuilderProps {
   query: PromVisualQuery;
@@ -37,46 +32,26 @@ export interface PromQueryBuilderProps {
   showExplain: boolean;
 }
 
-export const PromQueryBuilder = React.memo<PromQueryBuilderProps>((props) => {
+export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
-  const [showDrawer, setShowDrawer] = useState<boolean>(false);
-  const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
-  const { prometheusPromQAIL } = config.featureToggles; // AI/ML + Prometheus
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
   const initHints = datasource.getInitHints();
 
-  useEffect(() => {
-    async function checkLlms() {
-      const check = await isLLMPluginEnabled();
-      updateLlmAppEnabled(check);
-    }
-
-    if (prometheusPromQAIL) {
-      checkLlms();
-    }
-  }, [prometheusPromQAIL]);
-
   return (
     <>
-      {prometheusPromQAIL && showDrawer && (
-        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
-          <PromQail
-            query={query}
-            closeDrawer={() => setShowDrawer(false)}
-            onChange={onChange}
-            datasource={datasource}
-          />
-        </Drawer>
-      )}
       <EditorRow>
         <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
       </EditorRow>
       {initHints.length ? (
-        <div className="query-row-break">
-          <div className="prom-query-field-info text-warning">
+        <div
+          className={css({
+            flexBasis: '100%',
+          })}
+        >
+          <div className="text-warning">
             {initHints[0].label}{' '}
             {initHints[0].fix ? (
               <button type="button" className={'text-warning'}>
@@ -89,7 +64,7 @@ export const PromQueryBuilder = React.memo<PromQueryBuilderProps>((props) => {
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
-          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+          title={<RawQuery query={`${promQueryModeller.renderQuery(query)}`} lang={lang} />}
         >
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
@@ -104,15 +79,6 @@ export const PromQueryBuilder = React.memo<PromQueryBuilderProps>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
-        {prometheusPromQAIL && (
-          <div
-            className={css({
-              padding: '0 0 0 6px',
-            })}
-          >
-            <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
-          </div>
-        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
           <QueryBuilderHints<PromVisualQuery>
             datasource={datasource}

@@ -5,8 +5,9 @@
  * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
  */
 
-import { compact, uniqBy } from 'lodash';
+import { chain, compact } from 'lodash';
 
+import { parseFlags } from '@grafana/data';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';
@@ -58,6 +59,8 @@ export function parseMatcher(matcher: string): Matcher {
 
 /**
  * This function combines parseMatcher and parsePromQLStyleMatcher, always returning an array of Matcher[] regardless of input syntax
+ * 1. { foo=bar, bar=baz }
+ * 2. foo=bar
  */
 export function parseMatcherToArray(matcher: string): Matcher[] {
   return isPromQLStyleMatcher(matcher) ? parsePromQLStyleMatcher(matcher) : [parseMatcher(matcher)];
@@ -71,6 +74,15 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
     throw new Error('not a PromQL style matcher');
   }
 
+  return parsePromQLStyleMatcherLoose(matcher);
+}
+
+/**
+ * This function behaves the same as "parsePromQLStyleMatcher" but does not check if the matcher is formatted with { }
+ * In other words; it accepts both "{ foo=bar, bar=baz }" and "foo=bar,bar=baz"
+ * @throws
+ */
+export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
   // split by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
   const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
@@ -84,13 +96,30 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
     }));
 }
 
+/**
+ * This function behaves the same as "parsePromQLStyleMatcherLoose" but instead of throwing an error for incorrect syntax
+ * it returns an empty Array of matchers instead.
+ */
+export function parsePromQLStyleMatcherLooseSafe(matcher: string): Matcher[] {
+  try {
+    return parsePromQLStyleMatcherLoose(matcher);
+  } catch {
+    return [];
+  }
+}
+
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x));
-
-  // Due to migration, old alert rules might have a duplicated alertname label
-  // To handle that case want to filter out duplicates and make sure there are only unique labels
-  return uniqBy(parsedMatchers, (matcher) => matcher.name);
+  return (
+    chain(matcherPairs)
+      .map((m) => m.trim()) // trim spaces
+      .compact() // remove empty strings
+      .flatMap(parsePromQLStyleMatcherLooseSafe)
+      // Due to migration, old alert rules might have a duplicated alertname label
+      // To handle that case want to filter out duplicates and make sure there are only unique labels
+      .uniqBy('name')
+      .value()
+  );
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
@@ -159,8 +188,13 @@ export function quoteWithEscapeIfRequired(input: string) {
   return shouldQuote ? quoteWithEscape(input) : input;
 }
 
+export function unquoteIfRequired(input: string) {
+  return quoteWithEscapeIfRequired(unquoteWithUnescape(input));
+}
+
 export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
   const encodedLabelName = quoteWithEscapeIfRequired(name);
+  // @TODO why not use quoteWithEscapeIfRequired?
   const encodedLabelValue = quoteWithEscape(value);
 
   return `${encodedLabelName}${operator}${encodedLabelValue}`;
@@ -215,6 +249,81 @@ function matcherToOperator(matcher: Matcher): MatcherOperator {
   } else {
     return MatcherOperator.notEqual;
   }
+}
+
+// Compare set of matchers to set of label
+export function matchLabelsSet(matchers: ObjectMatcher[], labels: Label[]): boolean {
+  for (const matcher of matchers) {
+    if (!isLabelMatchInSet(matcher, labels)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
+const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
+  [MatcherOperator.equal]: (lv, mv) => lv === mv,
+  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
+  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
+  // so we should also anchor our UI matches for consistency with this behaviour
+  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
+  [MatcherOperator.regex]: (lv, mv) => {
+    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
+    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
+    return re.test(lv);
+  },
+  [MatcherOperator.notRegex]: (lv, mv) => {
+    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
+    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
+    return !re.test(lv);
+  },
+};
+
+function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  let labelValue = ''; // matchers that have no labels are treated as empty string label values
+  const labelForMatcher = Object.fromEntries(labels)[matcherKey];
+  if (labelForMatcher) {
+    labelValue = labelForMatcher;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  try {
+    // This can throw because the regex operators use the JavaScript regex engine
+    // and "new RegExp()" throws on invalid regular expressions.
+    //
+    // This is usually a user-error (because matcher values are taken from user input)
+    // but we're still logging this as a warning because it _might_ be a programmer error.
+    return matchFunction(labelValue, matcherValue);
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
+}
+
+// ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
+// for route selection algorithm, always compare a single matcher to the entire label set
+// see "matchLabelsSet"
+export function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
+  const [labelKey, labelValue] = label;
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  if (labelKey !== matcherKey) {
+    return false;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  return matchFunction(labelValue, matcherValue);
 }
 
 export type MatcherFormatter = keyof typeof matcherFormatter;

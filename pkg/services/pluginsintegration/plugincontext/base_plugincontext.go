@@ -6,8 +6,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -42,7 +43,6 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
-		APIVersion:    plugin.APIVersion,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()

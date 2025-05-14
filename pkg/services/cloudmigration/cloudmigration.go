@@ -3,25 +3,27 @@ package cloudmigration
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/authapi"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service interface {
 	// GetToken Returns the cloud migration token if it exists.
-	GetToken(ctx context.Context) (gcom.TokenView, error)
+	GetToken(ctx context.Context) (authapi.TokenView, error)
 	// CreateToken Creates a cloud migration token.
 	CreateToken(ctx context.Context) (CreateAccessTokenResponse, error)
-	// ValidateToken Sends a request to CMS to test the token.
-	ValidateToken(ctx context.Context, mig CloudMigration) error
+	// ValidateToken Sends a request to GMS to test the token.
+	ValidateToken(ctx context.Context, mig CloudMigrationSession) error
 	DeleteToken(ctx context.Context, uid string) error
 
-	CreateMigration(ctx context.Context, req CloudMigrationRequest) (*CloudMigrationResponse, error)
-	GetMigration(ctx context.Context, migUID string) (*CloudMigration, error)
-	DeleteMigration(ctx context.Context, migUID string) (*CloudMigration, error)
-	UpdateMigration(ctx context.Context, migUID string, request CloudMigrationRequest) (*CloudMigrationResponse, error)
-	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
+	CreateSession(ctx context.Context, signedInUser *user.SignedInUser, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
+	GetSession(ctx context.Context, orgID int64, migUID string) (*CloudMigrationSession, error)
+	DeleteSession(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, migUID string) (*CloudMigrationSession, error)
+	GetSessionList(ctx context.Context, orgID int64) (*CloudMigrationSessionListResponse, error)
 
-	RunMigration(ctx context.Context, migUID string) (*MigrateDataResponseDTO, error)
-	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationRun, error)
-	GetMigrationRunList(ctx context.Context, migUID string) (*CloudMigrationRunList, error)
+	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*CloudMigrationSnapshot, error)
+	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
+	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
+	UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error
+	CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
 }

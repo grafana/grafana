@@ -16,6 +16,8 @@ import {
   TimeRange,
   cacheFieldDisplayNames,
   outerJoinDataFrames,
+  ValueMapping,
+  ThresholdsConfig,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -49,6 +51,7 @@ interface UPlotConfigOptions {
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
+  axisWidth?: number;
 }
 
 /**
@@ -159,25 +162,32 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     range: coreConfig.yRange,
   });
 
+  const xAxisHidden = frame.fields[0].config.custom.axisPlacement === AxisPlacement.Hidden;
+
   builder.addAxis({
+    show: !xAxisHidden,
     scaleKey: xScaleKey,
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
     timeZone: timeZones[0],
     theme,
-    grid: { show: true },
   });
+
+  const yCustomConfig = frame.fields[1].config.custom;
+  const yAxisWidth = yCustomConfig.axisWidth;
+  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
-    values: coreConfig.yValues,
+    values: yAxisHidden ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: 16,
+    gap: yAxisHidden ? 0 : 16,
+    size: yAxisHidden ? 0 : yAxisWidth,
     theme,
   });
 
@@ -373,9 +383,6 @@ export function prepareTimelineFields(
 
     const fields: Field[] = [];
     for (let field of frame.fields) {
-      if (field.config.custom?.hideFrom?.viz) {
-        continue;
-      }
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
@@ -435,15 +442,39 @@ export function prepareTimelineFields(
   return { frames };
 }
 
-export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+export function makeFramePerSeries(frames: DataFrame[]) {
+  const outFrames: DataFrame[] = [];
+
+  for (let frame of frames) {
+    const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+
+    if (timeFields.length > 0) {
+      for (let field of frame.fields) {
+        if (field.type !== FieldType.time) {
+          outFrames.push({ fields: [...timeFields, field], length: frame.length });
+        }
+      }
+    }
+  }
+
+  return outFrames;
+}
+
+export function getThresholdItems(
+  fieldConfig: FieldConfig,
+  theme: GrafanaTheme2,
+  thresholdItems?: ThresholdsConfig
+): VizLegendItem[] {
   const items: VizLegendItem[] = [];
-  const thresholds = fieldConfig.thresholds;
+  const thresholds = thresholdItems ? thresholdItems : fieldConfig.thresholds;
   if (!thresholds || !thresholds.steps.length) {
     return items;
   }
 
   const steps = thresholds.steps;
-  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(
+    thresholds.mode === ThresholdsMode.Percentage ? 'percent' : (fieldConfig.unit ?? '')
+  );
 
   // `undefined` value for decimals will use `auto`
   const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
@@ -466,6 +497,66 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
+  }
+
+  return items;
+}
+
+export function getValueMappingItems(mappings: ValueMapping[], theme: GrafanaTheme2): VizLegendItem[] {
+  const items: VizLegendItem[] = [];
+  if (!mappings) {
+    return items;
+  }
+
+  for (let mapping of mappings) {
+    const { options, type } = mapping;
+
+    if (type === MappingType.ValueToText) {
+      for (let [label, value] of Object.entries(options)) {
+        const color = value.color;
+        items.push({
+          label: label,
+          color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+          yAxis: 1,
+        });
+      }
+    }
+
+    if (type === MappingType.RangeToText) {
+      const { from, result, to } = options;
+      const { text, color } = result;
+      const label = text ? `[${from} - ${to}] ${text}` : `[${from} - ${to}]`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+
+    if (type === MappingType.RegexToText) {
+      const { pattern, result } = options;
+      const { text, color } = result;
+      const label = `${text || pattern}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+
+    if (type === MappingType.SpecialValue) {
+      const { match, result } = options;
+      const { text, color } = result;
+      const label = `${text || match}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
   }
 
   return items;

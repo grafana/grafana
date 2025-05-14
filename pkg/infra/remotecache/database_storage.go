@@ -122,22 +122,6 @@ func (dc *databaseCache) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (dc *databaseCache) Count(ctx context.Context, prefix string) (int64, error) {
-	res := int64(0)
-	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		sql := "SELECT COUNT(*) FROM cache_data WHERE cache_key LIKE ?"
-
-		_, err := session.SQL(sql, prefix+"%").Get(&res)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return res, err
-}
-
 // CacheData is the struct representing the table in the database
 type CacheData struct {
 	CacheKey  string

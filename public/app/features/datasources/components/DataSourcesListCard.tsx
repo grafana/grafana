@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
-import { useDataSourcesRoutes } from '../state';
+import { ROUTES } from '../../connections/constants';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -17,8 +16,7 @@ export interface Props {
 }
 
 export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
-  const dataSourcesRoutes = useDataSourcesRoutes();
-  const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
+  const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
   return (

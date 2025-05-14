@@ -86,3 +86,19 @@ export const trackDsConfigClicked = (item: string) => {
 export const trackDsConfigUpdated = (props: { item: string; error?: unknown }) => {
   reportInteraction('connections_datasources_ds_configured', props);
 };
+
+export const trackDsSearched = (props: { query: string }) => {
+  reportInteraction('connections_datasource_list_searched', {
+    ...props,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
+  });
+};
+
+export const trackAddNewDsClicked = (props: { path: string }) => {
+  reportInteraction('connections_datasource_list_add_datasource_clicked', {
+    ...props,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
+  });
+};

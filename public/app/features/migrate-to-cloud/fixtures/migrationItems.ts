@@ -29,3 +29,17 @@ export function wellFormedDashboardMigrationItem(
     ...partial,
   };
 }
+
+export function wellFormedLibraryElementMigrationItem(
+  seed = 1,
+  partial: Partial<MigrateDataResponseItemDto> = {}
+): MigrateDataResponseItemDto {
+  const random = Chance(seed);
+
+  return {
+    type: 'LIBRARY_ELEMENT',
+    refId: random.guid(),
+    status: random.pickone(['OK', 'ERROR']),
+    ...partial,
+  };
+}

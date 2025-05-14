@@ -93,6 +93,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
   if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
+
     function addNewPages(node: NavModelItem) {
       if (node.children) {
         for (const child of node.children) {

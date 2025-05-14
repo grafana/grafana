@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
-import { EditorRows, FlexItem } from '@grafana/experimental';
+import { EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { LokiDatasource } from '../../datasource';
@@ -21,7 +21,7 @@ export interface Props {
   onRunQuery: () => void;
 }
 
-export const NestedQuery = React.memo<Props>(
+export const NestedQuery = memo<Props>(
   ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain }) => {
     const styles = useStyles2(getStyles);
 

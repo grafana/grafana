@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useMemo } from 'react';
+import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
@@ -29,9 +29,7 @@ export type TracePageSearchBarProps = {
   trace: Trace;
   search: SearchProps;
   spanFilterMatches: Set<string> | undefined;
-  showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  showCriticalPathSpansOnly: boolean;
   setShowCriticalPathSpansOnly: (showCriticalPath: boolean) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
@@ -46,9 +44,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     trace,
     search,
     spanFilterMatches,
-    showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    showCriticalPathSpansOnly,
     setShowCriticalPathSpansOnly,
     focusedSpanIndexForSearch,
     setFocusedSpanIndexForSearch,
@@ -70,17 +66,9 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
         return tag.key;
       }) ||
       (search.query && search.query !== '') ||
-      showSpanFilterMatchesOnly
+      search.matchesOnly
     );
-  }, [
-    search.serviceName,
-    search.spanName,
-    search.from,
-    search.to,
-    search.tags,
-    search.query,
-    showSpanFilterMatchesOnly,
-  ]);
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, search.query, search.matchesOnly]);
 
   return (
     <div className={styles.container}>
@@ -99,13 +87,13 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             </Button>
             <div className={styles.matchesOnly}>
               <Switch
-                value={showSpanFilterMatchesOnly}
+                value={search.matchesOnly}
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
                 disabled={!spanFilterMatches?.size}
               />
               <Button
-                onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
+                onClick={() => setShowSpanFilterMatchesOnly(!search.matchesOnly)}
                 className={styles.clearMatchesButton}
                 variant="secondary"
                 fill="text"
@@ -116,12 +104,12 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             </div>
             <div className={styles.matchesOnly}>
               <Switch
-                value={showCriticalPathSpansOnly}
+                value={search.criticalPathOnly}
                 onChange={(value) => setShowCriticalPathSpansOnly(value.currentTarget.checked ?? false)}
                 label="Show critical path only switch"
               />
               <Button
-                onClick={() => setShowCriticalPathSpansOnly(!showCriticalPathSpansOnly)}
+                onClick={() => setShowCriticalPathSpansOnly(!search.criticalPathOnly)}
                 className={styles.clearMatchesButton}
                 variant="secondary"
                 fill="text"
@@ -153,31 +141,31 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css(buttonStyles.button),
     buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none', cursor: 'not-allowed' }),
-    container: css`
-      display: inline;
-    `,
-    controls: css`
-      display: flex;
-      justify-content: flex-end;
-      margin: 5px 0 0 0;
-    `,
-    matchesOnly: css`
-      display: inline-flex;
-      margin: 0 0 0 25px;
-      vertical-align: middle;
-      align-items: center;
-    `,
-    clearMatchesButton: css`
-      color: ${theme.colors.text.primary};
+    container: css({
+      display: 'inline',
+    }),
+    controls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      margin: '5px 0 0 0',
+    }),
+    matchesOnly: css({
+      display: 'inline-flex',
+      margin: '0 0 0 25px',
+      verticalAlign: 'middle',
+      alignItems: 'center',
+    }),
+    clearMatchesButton: css({
+      color: theme.colors.text.primary,
 
-      &:hover {
-        background: inherit;
-      }
-    `,
-    nextPrevResult: css`
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-    `,
+      '&:hover': {
+        background: 'inherit',
+      },
+    }),
+    nextPrevResult: css({
+      marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 };

@@ -2,7 +2,7 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { QueryResponse } from './service';
+import { QueryResponse } from './service/types';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -30,6 +30,8 @@ export interface DashboardSearchHit extends WithAccessControlMetadata {
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
+  isDeleted?: boolean;
+  permanentlyDeleteDate?: string;
 }
 
 /**

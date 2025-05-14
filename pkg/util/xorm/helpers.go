@@ -191,7 +191,7 @@ func eraseAny(value string, strToErase ...string) string {
 	if len(strToErase) == 0 {
 		return value
 	}
-	var replaceSeq []string
+	replaceSeq := make([]string, 0, len(strToErase)*2)
 	for _, s := range strToErase {
 		replaceSeq = append(replaceSeq, s, "")
 	}

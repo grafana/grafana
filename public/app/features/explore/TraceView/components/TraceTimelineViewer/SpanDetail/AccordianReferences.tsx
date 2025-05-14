@@ -26,92 +26,90 @@ import AccordianKeyValues from './AccordianKeyValues';
 
 import { alignIcon } from '.';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    AccordianReferenceItem: css`
-      border-bottom: 1px solid ${autoColor(theme, '#d8d8d8')};
-    `,
-    AccordianKeyValues: css`
-      margin-left: 10px;
-    `,
-    AccordianReferences: css`
-      label: AccordianReferences;
-      border: 1px solid ${autoColor(theme, '#d8d8d8')};
-      position: relative;
-      margin-bottom: 0.25rem;
-    `,
-    AccordianReferencesHeader: css`
-      label: AccordianReferencesHeader;
-      background: ${autoColor(theme, '#e4e4e4')};
-      color: inherit;
-      display: block;
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#dadada')};
-      }
-    `,
-    AccordianReferencesContent: css`
-      label: AccordianReferencesContent;
-      background: ${autoColor(theme, '#f0f0f0')};
-      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
-      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-    `,
-    AccordianReferencesFooter: css`
-      label: AccordianReferencesFooter;
-      color: ${autoColor(theme, '#999')};
-    `,
-    AccordianKeyValuesItem: css({
-      marginBottom: theme.spacing(0.5),
-    }),
-    ReferencesList: css`
-      background: #fff;
-      border: 1px solid #ddd;
-      margin-bottom: 0.7em;
-      max-height: 450px;
-      overflow: auto;
-    `,
-    list: css`
-      width: 100%;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      background: #fff;
-    `,
-    itemContent: css`
-      padding: 0.25rem 0.5rem;
-      display: flex;
-      width: 100%;
-      justify-content: space-between;
-    `,
-    item: css`
-      &:nth-child(2n) {
-        background: #f5f5f5;
-      }
-    `,
-    debugInfo: css`
-      letter-spacing: 0.25px;
-      margin: 0.5em 0 0;
-      flex-wrap: wrap;
-      display: flex;
-      justify-content: flex-end;
-    `,
-    debugLabel: css`
-      margin: 0 5px 0 5px;
-      &::before {
-        color: #bbb;
-        content: attr(data-label);
-      }
-    `,
-    serviceName: css`
-      margin-right: 8px;
-    `,
-    title: css`
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  AccordianReferenceItem: css({
+    borderBottom: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+  }),
+  AccordianKeyValues: css({
+    marginLeft: '10px',
+  }),
+  AccordianReferences: css({
+    label: 'AccordianReferences',
+    border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    position: 'relative',
+    marginBottom: '0.25rem',
+  }),
+  AccordianReferencesHeader: css({
+    label: 'AccordianReferencesHeader',
+    background: autoColor(theme, '#e4e4e4'),
+    color: 'inherit',
+    display: 'block',
+    padding: '0.25rem 0.5rem',
+    '&:hover': {
+      background: autoColor(theme, '#dadada'),
+    },
+  }),
+  AccordianReferencesContent: css({
+    label: 'AccordianReferencesContent',
+    background: autoColor(theme, '#f0f0f0'),
+    borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    padding: '0.5rem 0.5rem 0.25rem 0.5rem',
+  }),
+  AccordianReferencesFooter: css({
+    label: 'AccordianReferencesFooter',
+    color: autoColor(theme, '#999'),
+  }),
+  AccordianKeyValuesItem: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  ReferencesList: css({
+    background: '#fff',
+    border: '1px solid #ddd',
+    marginBottom: '0.7em',
+    maxHeight: '450px',
+    overflow: 'auto',
+  }),
+  list: css({
+    width: '100%',
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+    background: '#fff',
+  }),
+  itemContent: css({
+    padding: '0.25rem 0.5rem',
+    display: 'flex',
+    width: '100%',
+    justifyContent: 'space-between',
+  }),
+  item: css({
+    '&:nth-child(2n)': {
+      background: '#f5f5f5',
+    },
+  }),
+  debugInfo: css({
+    letterSpacing: '0.25px',
+    margin: '0.5em 0 0',
+    flexWrap: 'wrap',
+    display: 'flex',
+    justifyContent: 'flex-end',
+  }),
+  debugLabel: css({
+    margin: '0 5px 0 5px',
+    '&::before': {
+      color: '#bbb',
+      content: 'attr(data-label)',
+    },
+  }),
+  serviceName: css({
+    marginRight: '8px',
+  }),
+  title: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  }),
+});
 
 export type AccordianReferencesProps = {
   data: TraceSpanReference[];

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button, Icon, useStyles2 } from '@grafana/ui';
 
 import { IsDisabledContext } from '../CustomCollapsableSection.context';

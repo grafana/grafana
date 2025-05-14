@@ -33,83 +33,104 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
     - pattern: /docs/grafana-cloud/
       destination: docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
+  explore-profiles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
 ---
 
 # Configure the Grafana Pyroscope data source
 
-To configure basic settings for the data source, complete the following steps:
+The Pyroscope data source sets how Grafana connects to your Pyroscope database.
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `Grafana Pyroscope` in the search bar.
-1. Select **Add new data source**.
-1. Click **Grafana Pyroscope** to display the **Settings** tab of the data source.
-1. Set the data source's basic configuration options.
-1. Select **Save & test**.
-
-## Configuration options
-
-You can configure several options for the Pyroscope data source, including the name, HTTP, authentication, querying, and private data source connect.
+You can configure the data source using either the data source interface in Grafana or using a configuration file.
+This page explains how to set up and enable the data source capabilities using Grafana.
 
 If you make any changes, select **Save & test** to preserve those changes.
 
-![Configuration options for the Pyroscope data source](/media/docs/grafana/data-sources/screenshot-pyroscope-data-source-config.png)
+If you're using your own installation of Grafana, you can provision the Pyroscope data source using a YAML configuration file.
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-### Name and default
+## Before you begin
 
-**Name**
-: Enter a name to specify the data source in panels, queries, and Explore.
+To configure a Pyroscope data source, you need administrator rights to your Grafana instance and a Pyroscope instance configured to send data to Grafana.
 
-**Default**
-: The default data source is pre-selected for new panels.
+If you're provisioning a Pyroscope data source, then you also need administrative rights on the server hosting your Grafana instance.
 
-### HTTP
+## Add or modify a data source
 
-The HTTP section is shown in number 1 in the screenshot.
+You can use these procedures to configure a new Pyroscope data source or to edit an existing one.
 
-**URL**
-: The URL of the Grafana Pyroscope instance, for example, `https://localhost:4100`.
+### Create a new data source
 
-**Allowed cookies**
-: The Grafana Proxy deletes forwarded cookies. Use this field to specify cookies by name that should be forwarded to the data source.
+To configure basic settings for the data source, complete the following steps:
 
-**Timeout**
-: HTTP request timeout in seconds.
+1. Select **Connections** in the main menu.
+1. Enter `Grafana Pyroscope` in the search bar.
+1. Select **Grafana Pyroscope**.
+1. Select **Add new data source** in the top-right corner of the page.
+1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
-### Auth
+- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
+- Under **Connection**, enter the **URL** of the Pyroscope instance. For example, `https://example.com:4100`. Refer to [Connection URL](#connection-url) for more information.
+- Complete the [**Authentication** section](#authentication).
 
-The Auth section is shown in number 2 in the screenshot.
+1. Optional: Use **Additional settings** to configure other options.
+1. Select **Save & test**.
 
-**Basic auth**
-: Enable basic authentication to the data source. When activated, it provides **User** and **Password** fields.
+### Update an existing data source
 
-**With Credentials**
-: Whether credentials, such as cookies or auth headers, should be sent with cross-site requests.
+To modify an existing Pyroscope data source:
 
-**TLS Client Auth**
-: Toggle on to use client authentication. When enabled, it adds the **Server name**, **Client cert**, and **Client key** fields. The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server. These details are encrypted and stored in the Grafana database.
+1. Select **Connections** in the main menu.
+1. Select **Data sources** to view a list of configured data sources.
+1. Select the Pyroscope data source you wish to modify.
+1. Optional: Use **Additional settings** to configure or modify other options.
+1. After completing your updates, select **Save & test**.
 
-**With CA Cert**
-: Activate this option to verify self-signed TLS certificates.
+#### Connection URL
 
-**Skip TLS Verify**
-: When activated, it bypasses TLS certificate verification.
+The data source connection URL should point to a location of a running Pyroscope backend.
 
-**Forward OAuth Identity**
-: When activated, the user’s upstream OAuth 2.0 identity is forwarded to the data source along with their access token.
+**Grafana Cloud Profiles**
 
-**Custom HTTP Headers**
-: Select Add header to add Header and Value fields.
+Your Grafana Cloud instance automatically includes a fully provisioned data source.
 
-**Header**
-: Add a custom header. This allows custom headers to be passed based on the needs of your Pyroscope instance.
+If you are running a self-managed Grafana instance or need to configure an additional Pyroscope data source pointing to Grafana Cloud Profiles, you can find the Pyroscope URL under the **Manage your stack** section for your organization.
 
-**Value**
-: The value of the header.
+**Self-managed Pyroscope backend**
+
+The connection URL for a self-managed Pyroscope backend depends on how Pyroscope is deployed.
+Refer to the steps under [Query profiles in Grafana](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/deploy-kubernetes/helm/#query-profiles-in-grafana) for more information on how to configure the data source.
+
+If you plan to use the [Profiles Drilldown](ref:explore-profiles) application and you are running a self-managed Pyroscope backend in microservices mode, the data source connection URL should point to a gateway or proxy that routes requests to the corresponding Pyroscope service.
+Refer to the [Helm ingress configuration](https://github.com/grafana/pyroscope/blob/main/operations/pyroscope/helm/pyroscope/templates/ingress.yaml) for specific routing requirements.
+
+## Authentication
+
+Use this section to select an authentication method to access the data source.
+
+{{< admonition type="note" >}}
+Use Transport Layer Security (TLS) for an additional layer of security when working with Pyroscope.
+For additional information on setting up TLS encryption with Pyroscope, refer to [Pyroscope configuration](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-server/reference-configuration-parameters/).
+{{< /admonition >}}
+
+[//]: # 'Shared content for authentication section procedure in data sources'
+
+{{< docs/shared source="grafana" lookup="datasources/datasouce-authentication.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
+
+## Additional settings
+
+Use the down arrow to expand the **Additional settings** section to view these options.
+
+### Advanced HTTP settings
+
+The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field to specify cookies that should be forwarded to the data source by name.
+
+The **Timeout** field sets the HTTP request timeout in seconds.
 
 ### Querying
-
-The **Querying** section is shown in number 3 in the screenshot.
 
 **Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
 
@@ -117,14 +138,6 @@ Adjusting this option can help prevent gaps when you zoom in to profiling data.
 
 ### Private data source connect
 
-The **Private data source connect** section is shown in number 4 in the screenshot.
+[//]: # 'Shared content for authentication section procedure in data sources'
 
-This feature is only available in Grafana Cloud.
-
-This option lets you query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud.
-
-Use the drop-down box to select a configured private data sources.
-
-Select **Manage private data source connect** to configure and manage any private data sources you have configured.
-
-For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
+{{< docs/shared source="grafana" lookup="datasources/datasouce-private-ds-connect.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}

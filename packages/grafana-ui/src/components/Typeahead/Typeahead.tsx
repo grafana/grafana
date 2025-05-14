@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { createRef, PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 

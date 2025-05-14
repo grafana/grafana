@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,7 +22,7 @@ import (
 )
 
 func TestBacktesting(t *testing.T) {
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	dir, grafanaPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -34,7 +33,7 @@ func TestBacktesting(t *testing.T) {
 		EnableLog: false,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, grafanaPath)
 
 	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -44,7 +43,7 @@ func TestBacktesting(t *testing.T) {
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
-	input, err := os.ReadFile(filepath.Join("api_backtesting_data.json"))
+	input, err := testData.ReadFile(path.Join("test-data", "api_backtesting_data.json"))
 	require.NoError(t, err)
 	var testData map[string]apimodels.BacktestConfig
 	require.NoError(t, json.Unmarshal(input, &testData))
@@ -93,7 +92,7 @@ func TestBacktesting(t *testing.T) {
 
 	t.Run("if user does not have permissions", func(t *testing.T) {
 		testUserId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(roletype.RoleNone),
+			DefaultOrgRole: string(identity.RoleNone),
 			Password:       "test",
 			Login:          "test",
 			OrgID:          1,

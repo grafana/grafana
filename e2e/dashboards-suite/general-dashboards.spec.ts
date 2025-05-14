@@ -12,12 +12,9 @@ describe('Dashboards', () => {
     e2e.components.Panels.Panel.title('Panel #1').should('be.visible');
 
     // scroll to the bottom
-    e2e.pages.Dashboard.DashNav.navV2()
-      .parent()
-      .parent() // Note, this will probably fail when we change the custom scrollbars
-      .scrollTo('bottom', {
-        timeout: 5 * 1000,
-      });
+    cy.scrollTo('bottom', {
+      timeout: 5 * 1000,
+    });
 
     // The last panel should be visible...
     e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
@@ -25,9 +22,9 @@ describe('Dashboards', () => {
     // Then we open and close the panel editor
     e2e.components.Panels.Panel.menu('Panel #50').click({ force: true }); // it only shows on hover
     e2e.components.Panels.Panel.menuItems('Edit').click();
-    e2e.components.PanelEditor.applyButton().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
 
-    // And the last panel should still be visible!
+    // The last panel should still be visible!
     e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
   });
 });

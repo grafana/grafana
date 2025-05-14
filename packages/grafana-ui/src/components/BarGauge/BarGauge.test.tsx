@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 
 import {
   DisplayValue,
@@ -57,6 +56,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     theme,
     orientation: VizOrientation.Horizontal,
     namePlacement: BarGaugeNamePlacement.Auto,
+    isOverflow: false,
   };
 
   Object.assign(props, propOverrides);

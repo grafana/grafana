@@ -2,7 +2,8 @@ import { isNumber } from 'lodash';
 
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
+import { Field, FieldConfig, FieldType, NumericRange } from '../types/dataFrame';
+import { Threshold } from '../types/thresholds';
 
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';

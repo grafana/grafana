@@ -1,16 +1,22 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState, ReactNode } from 'react';
+import { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
-import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { Button } from '../Button';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 import { Menu } from '../Menu/Menu';
 
+import { PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
+
+import { PanelChrome } from '.';
 
 const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
@@ -235,6 +241,11 @@ export const Examples = () => {
           {renderCollapsiblePanel('Collapsible panel', {
             title: 'Default title',
             collapsible: true,
+          })}
+          {renderPanel('Menu always visible', {
+            title: 'Menu always visible',
+            showMenuAlways: true,
+            menu,
           })}
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',

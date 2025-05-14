@@ -1,7 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
-import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
@@ -11,6 +10,8 @@ import {
   mockResourcesByResourceGroup,
   mockSearchResults,
 } from '../../__mocks__/resourcePickerRows';
+import { DeepPartial } from '../../__mocks__/utils';
+import Datasource from '../../datasource';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
@@ -33,11 +34,15 @@ const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
 const noop = () => {};
-function createMockResourcePickerData(preserveImplementation?: string[]) {
-  const mockDatasource = createMockDatasource();
+function createMockResourcePickerData(
+  preserveImplementation?: string[],
+  datasourceOverrides?: DeepPartial<Datasource>
+) {
+  const mockDatasource = createMockDatasource(datasourceOverrides);
   const mockResourcePicker = new ResourcePickerData(
     createMockInstanceSetttings(),
-    mockDatasource.azureMonitorDatasource
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
   );
 
   const mockFunctions = omit(
@@ -332,8 +337,11 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(subscriptionCheckboxAfterClear).toBeInTheDocument();
   });
 
-  it('should throw an error if no namespaces are found', async () => {
-    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId']);
+  it('should not throw an error if no namespaces are found - fallback used', async () => {
+    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId'], {
+      azureResourceGraphDatasource: { getResourceGroups: jest.fn().mockResolvedValue([]) },
+    });
+    resourcePickerData.postResource = jest.fn().mockResolvedValueOnce({ data: [] });
     render(
       <ResourcePicker
         {...defaultProps}
@@ -344,11 +352,8 @@ describe('AzureMonitor ResourcePicker', () => {
     );
     const subscriptionExpand = await screen.findByLabelText('Expand Primary Subscription');
     await userEvent.click(subscriptionExpand);
-    const error = await screen.findByRole('alert');
-    expect(error).toHaveTextContent('An error occurred while requesting resources from Azure Monitor');
-    expect(error).toHaveTextContent(
-      'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
-    );
+    const error = await screen.queryByRole('alert');
+    expect(error).toBeNull();
   });
 
   it('display a row for a selected resource even if it is not part of the current rows', async () => {

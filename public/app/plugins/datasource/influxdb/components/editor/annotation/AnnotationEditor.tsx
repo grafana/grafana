@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data/src';
 import { InlineFormLabel, Input, Stack } from '@grafana/ui/src';

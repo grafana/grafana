@@ -1,6 +1,6 @@
 import { getByRole, render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 
 import { InteractiveTable } from './InteractiveTable';
 import { Column } from './types';

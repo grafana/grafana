@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
 function getStyles() {
   return {
-    wrapper: css`
-      label: wrapper;
-      pointer-events: all;
-    `,
+    wrapper: css({
+      label: 'wrapper',
+      pointerEvents: 'all',
+    }),
   };
 }
 

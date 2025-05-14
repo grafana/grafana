@@ -1,7 +1,7 @@
-/* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
+/* eslint-disable id-blacklist, no-restricted-imports */
 import moment, { Moment } from 'moment-timezone';
 
-import { TimeZone } from '../types';
+import { TimeZone } from '../types/time';
 
 import { DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';

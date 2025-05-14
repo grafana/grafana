@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { Row } from 'react-table';
 
 import { SearchFilter } from 'app/percona/shared/components/SearchFilter';

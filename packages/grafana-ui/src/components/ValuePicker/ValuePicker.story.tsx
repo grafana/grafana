@@ -1,11 +1,9 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
-
-import { ValuePicker } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
 import { generateOptions } from '../Select/mockOptions';
 
+import { ValuePicker } from './ValuePicker';
 import mdx from './ValuePicker.mdx';
 
 const meta: Meta<typeof ValuePicker> = {

@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/NestedQuery.tsx
 import { css } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
-import { EditorRows, FlexItem } from '@grafana/experimental';
+import { EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -22,7 +22,7 @@ export interface NestedQueryProps {
   showExplain: boolean;
 }
 
-export const NestedQuery = React.memo<NestedQueryProps>((props) => {
+export const NestedQuery = memo<NestedQueryProps>((props) => {
   const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 

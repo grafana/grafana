@@ -155,9 +155,18 @@ func addUserMigrations(mg *Migrator) {
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
+	// Modifies the user table to add a new column is_provisioned to indicate if the user is provisioned
+	// by SCIM or not.
+	mg.AddMigration("Add is_provisioned column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_provisioned", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
 	// to be able to create service accounts that are unique per org
 	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
+	// This migration removes the duplicate org_id from the login.
+	mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})

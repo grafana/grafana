@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 
 import { DataLinkButton } from './DataLinkButton';
@@ -31,7 +31,9 @@ export function FieldLinkList({ links }: Props) {
         return <DataLinkButton key={i} link={link} />;
       })}
       <div className={styles.wrapper}>
-        <p className={styles.externalLinksHeading}>External links</p>
+        <p className={styles.externalLinksHeading}>
+          <Trans i18nKey="grafana-ui.field-link-list.external-links-heading">External links</Trans>
+        </p>
         {externalLinks.map((link, i) => (
           <a key={i} href={link.href} target={link.target} className={styles.externalLink}>
             <Icon name="external-link-alt" />

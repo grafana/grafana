@@ -9,36 +9,37 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	claims "github.com/grafana/authlib/types"
+	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:          cfg,
-		tracer:       tracer,
-		features:     features,
-		authnService: authnService,
+		cfg:           cfg,
+		authenticator: authenticator,
+		features:      features,
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg          *setting.Cfg
-	tracer       tracing.Tracer
-	features     featuremgmt.FeatureToggles
-	authnService authn.Service
+	cfg           *setting.Cfg
+	authenticator authn.Authenticator
+	features      featuremgmt.FeatureToggles
 }
 
 type reqContextKey = ctxkey.Key
@@ -85,23 +86,25 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
+		_, span := tracing.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
+			IsSignedIn:                false,
+			AllowAnonymous:            false,
+			SkipDSCache:               false,
+			Logger:                    log.New("context"),
+			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
 		// inject ReqContext in the context
 		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
 		// store list of possible auth header in context
-		ctx = WithAuthHTTPHeaders(ctx, h.Cfg)
+		ctx = WithAuthHTTPHeaders(ctx, h.cfg)
 		// Set the context for the http.Request.Context
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -112,17 +115,20 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
-			reqContext.SignedInUser = identity.SignedInUser()
-			reqContext.UserToken = identity.SessionToken
+			reqContext.SignedInUser = id.SignedInUser()
+			reqContext.UserToken = id.SessionToken
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
-			reqContext.IsRenderCall = identity.IsAuthenticatedBy(login.RenderModule)
+			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
+
+		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 		span.AddEvent("user", trace.WithAttributes(
@@ -131,15 +137,19 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
-		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+		if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
+	req.Header.Del(authnClients.ExtJWTAuthenticationHeaderName)
+	req.Header.Del(authnClients.ExtJWTAuthorizationHeaderName)
 }
 
 func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) web.BeforeFunc {
@@ -148,22 +158,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetNamespacedID()
-		if !identity.IsNamespace(
-			namespace,
-			identity.NamespaceUser,
-			identity.NamespaceServiceAccount,
-			identity.NamespaceAPIKey,
-		) || id == "0" {
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
+			claims.TypeUser,
+			claims.TypeServiceAccount,
+			claims.TypeAPIKey,
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
+		if _, ok := h.cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
-		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+		headerName := fmt.Sprintf("%s-Identity-Id", h.cfg.IDResponseHeaderPrefix)
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

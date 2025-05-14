@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Badge, useStyles2 } from '@grafana/ui';
 

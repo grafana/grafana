@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
+import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState, useDispatch } from 'app/types';
@@ -14,8 +14,9 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { createViewLink } from './utils/misc';
 
 interface Props {
@@ -168,8 +169,8 @@ function filterAndSortRules(
   labelFilter: string,
   sortOrder: SortOrder
 ) {
-  const matchers = parseMatchers(labelFilter);
-  let rules = originalRules.filter(
+  const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
+  const rules = originalRules.filter(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
 

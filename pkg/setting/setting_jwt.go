@@ -2,6 +2,10 @@ package setting
 
 import "time"
 
+const (
+	extJWTAccessTokenExpectAudience = "grafana"
+)
+
 type AuthJWTSettings struct {
 	// JWT Auth
 	Enabled                 bool
@@ -23,12 +27,14 @@ type AuthJWTSettings struct {
 	GroupsAttributePath     string
 	EmailAttributePath      string
 	UsernameAttributePath   string
+	TlsSkipVerify           bool
 }
 
 type ExtJWTSettings struct {
 	Enabled      bool
 	ExpectIssuer string
 	JWKSUrl      string
+	Audiences    []string
 }
 
 func (cfg *Cfg) readAuthExtJWTSettings() {
@@ -36,6 +42,9 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings := ExtJWTSettings{}
 	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
+	// for Grafana, this is hard coded, but we leave it as a configurable param for other use-cases
+	jwtSettings.Audiences = []string{extJWTAccessTokenExpectAudience}
+
 	cfg.ExtJWTAuth = jwtSettings
 }
 
@@ -61,6 +70,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.GroupsAttributePath = valueAsString(authJWT, "groups_attribute_path", "")
 	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
 	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
+	jwtSettings.TlsSkipVerify = authJWT.Key("tls_skip_verify_insecure").MustBool(false)
 
 	cfg.JWTAuth = jwtSettings
 }

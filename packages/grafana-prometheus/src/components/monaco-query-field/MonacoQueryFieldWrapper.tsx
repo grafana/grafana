@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryFieldWrapper.tsx
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';
@@ -23,13 +23,5 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
     onChange(value);
   };
 
-  /**
-   * Handles changes without running any queries
-   * @param value
-   */
-  const handleChange = (value: string) => {
-    onChange(value);
-  };
-
-  return <MonacoQueryFieldLazy onChange={handleChange} onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
+  return <MonacoQueryFieldLazy onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
 };

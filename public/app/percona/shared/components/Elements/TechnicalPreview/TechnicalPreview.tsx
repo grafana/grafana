@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon, Tooltip, useTheme } from '@grafana/ui';
 
 import { Messages } from './TechnicalPreview.messages';

@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
@@ -108,12 +108,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props, State> {
     const { editIndex, variables, sectionNav } = this.props;
     const variableToEdit = editIndex != null ? variables[editIndex] : undefined;
     const node = sectionNav.node;
-    const parentItem = node.parentItem
-      ? {
-          ...node.parentItem,
-          url: node.url,
-        }
-      : undefined;
+    const parentItem = node.parentItem;
     const subPageNav = variableToEdit ? { text: variableToEdit.name, parentItem } : parentItem;
 
     return (

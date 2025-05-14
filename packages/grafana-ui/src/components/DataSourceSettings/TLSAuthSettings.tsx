@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
 
+import { t, Trans } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -48,6 +49,9 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
     });
   };
 
+  const certificateBeginsWith = '-----BEGIN CERTIFICATE-----';
+  const privateKeyBeginsWith = '-----BEGIN RSA PRIVATE KEY-----';
+
   return (
     <div className="gf-form-group">
       <div
@@ -58,10 +62,15 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           })
         )}
       >
-        <h6>TLS/SSL Auth Details</h6>
+        <h6>
+          <Trans i18nKey="grafana-ui.data-source-settings.tls-heading">TLS/SSL Auth Details</Trans>
+        </h6>
         <Tooltip
           placement="right-end"
-          content="TLS/SSL Certs are encrypted and stored in the Grafana database."
+          content={t(
+            'grafana-ui.data-source-settings.tls-tooltip',
+            'TLS/SSL Certs are encrypted and stored in the Grafana database.'
+          )}
           theme="info"
         >
           <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
@@ -72,8 +81,12 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           <CertificationKey
             hasCert={!!hasTLSCACert}
             onChange={onCertificateChangeFactory('tlsCACert')}
-            placeholder="Begins with -----BEGIN CERTIFICATE-----"
-            label="CA Cert"
+            placeholder={t(
+              'grafana-ui.data-source-settings.tls-certification-placeholder',
+              'Begins with {{certificateBeginsWith}}',
+              { certificateBeginsWith }
+            )}
+            label={t('grafana-ui.data-source-settings.tls-certification-label', 'CA Cert')}
             onClick={onResetClickFactory('tlsCACert')}
           />
         )}
@@ -82,9 +95,10 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           <>
             <div className="gf-form">
               <FormField
-                label="ServerName"
+                label={t('grafana-ui.data-source-settings.tls-server-name-label', 'ServerName')}
                 labelWidth={7}
                 inputWidth={30}
+                // eslint-disable-next-line @grafana/no-untranslated-strings
                 placeholder="domain.example.com"
                 value={hasServerName && dataSourceConfig.jsonData.serverName}
                 onChange={onServerNameLabelChange}
@@ -92,16 +106,24 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
             </div>
             <CertificationKey
               hasCert={!!hasTLSClientCert}
-              label="Client Cert"
+              label={t('grafana-ui.data-source-settings.tls-client-certification-label', 'Client Cert')}
               onChange={onCertificateChangeFactory('tlsClientCert')}
-              placeholder="Begins with -----BEGIN CERTIFICATE-----"
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-certification-placeholder',
+                'Begins with {{certificateBeginsWith}}',
+                { certificateBeginsWith }
+              )}
               onClick={onResetClickFactory('tlsClientCert')}
             />
 
             <CertificationKey
               hasCert={!!hasTLSClientKey}
-              label="Client Key"
-              placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
+              label={t('grafana-ui.data-source-settings.tls-client-key-label', 'Client Key')}
+              placeholder={t(
+                'grafana-ui.data-source-settings.tls-client-key-placeholder',
+                'Begins with {{privateKeyBeginsWith}}',
+                { privateKeyBeginsWith }
+              )}
               onChange={onCertificateChangeFactory('tlsClientKey')}
               onClick={onResetClickFactory('tlsClientKey')}
             />

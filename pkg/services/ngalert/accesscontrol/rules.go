@@ -2,12 +2,13 @@ package accesscontrol
 
 import (
 	"fmt"
+	"slices"
 
 	"golang.org/x/net/context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,16 +24,18 @@ const (
 
 type RuleService struct {
 	genericService
+	notificationSettingsAuth notificationSettingsAuth
+}
+
+type notificationSettingsAuth interface {
+	AuthorizeRead(context.Context, identity.Requester, *models.NotificationSettings) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		genericService{ac: ac},
+		genericService:           genericService{ac: ac},
+		notificationSettingsAuth: NewReceiverAccess[*models.NotificationSettings](ac, true),
 	}
-}
-
-type Namespaced interface {
-	GetNamespaceUID() string
 }
 
 // getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
@@ -78,6 +81,14 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 		return evals[0]
 	}
 	return accesscontrol.EvalAll(evals...)
+}
+
+// CanReadAllRules returns true when user has access to all folders and can read rules in them.
+func (r *RuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	return r.HasAccess(ctx, user, accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+	))
 }
 
 // AuthorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
@@ -130,7 +141,7 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 // - ("folders:read") read the folder
 // - ("alert.rules:read") read alert rules in the folder
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
-func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) (bool, error) {
+func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) (bool, error) {
 	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
 	return r.HasAccess(ctx, user, eval)
 }
@@ -140,7 +151,7 @@ func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Reque
 // - ("folders:read") read the folder
 // - ("alert.rules:read") read alert rules in the folder
 // Returns error if at least one permission is missing or if something went wrong during the permission evaluation
-func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) error {
+func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) error {
 	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
 	return r.HasAccessOrError(ctx, user, eval, func() string {
 		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
@@ -192,6 +203,10 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			}); err != nil {
 				return err
 			}
+
+			if err := r.authorizeNotificationSettings(ctx, user, rule); err != nil {
+				return err
+			}
 		}
 		if !existingGroup {
 			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
@@ -232,6 +247,24 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 			updateAuthorized = true
+		}
+
+		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
+			return settings.Equals(&settings2)
+		}) {
+			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
+func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	for _, ns := range rule.NotificationSettings {
+		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
+			return err
 		}
 	}
 	return nil

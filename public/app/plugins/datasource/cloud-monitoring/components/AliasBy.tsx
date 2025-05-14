@@ -1,7 +1,8 @@
 import { debounce } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
 export interface Props {

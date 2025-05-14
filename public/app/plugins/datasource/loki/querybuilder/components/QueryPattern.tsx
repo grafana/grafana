@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { RawQuery } from '@grafana/experimental';
+import { RawQuery } from '@grafana/plugin-ui';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import logqlGrammar from '../../syntax';
@@ -89,21 +88,21 @@ export const QueryPattern = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    card: css`
-      width: 49.5%;
-      display: flex;
-      flex-direction: column;
-    `,
-    rawQueryContainer: css`
-      flex-grow: 1;
-    `,
-    rawQuery: css`
-      background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(1)};
-    `,
-    spacing: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    card: css({
+      width: '49.5%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    rawQueryContainer: css({
+      flexGrow: 1,
+    }),
+    rawQuery: css({
+      backgroundColor: theme.colors.background.primary,
+      padding: theme.spacing(1),
+      marginTop: theme.spacing(1),
+    }),
+    spacing: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };

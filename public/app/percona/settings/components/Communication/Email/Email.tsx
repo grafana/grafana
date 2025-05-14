@@ -1,5 +1,5 @@
 import { FormApi } from 'final-form';
-import React, { FC, useRef, useState } from 'react';
+import { FC, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { withTypes } from 'react-final-form';
 

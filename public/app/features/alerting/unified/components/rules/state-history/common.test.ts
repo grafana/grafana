@@ -1,4 +1,4 @@
-import { extractCommonLabels, Label, omitLabels } from './common';
+import { Label, extractCommonLabels, omitLabels } from './common';
 
 test('extractCommonLabels', () => {
   const labels: Label[][] = [

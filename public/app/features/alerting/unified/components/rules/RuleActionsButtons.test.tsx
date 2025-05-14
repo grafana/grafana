@@ -1,9 +1,8 @@
-import { produce } from 'immer';
-import React from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
-import { byLabelText } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
-import { config, setPluginExtensionsHook } from '@grafana/runtime';
+import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -15,16 +14,22 @@ import {
   mockGrafanaRulerRule,
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
-import { configureStore } from 'app/store/configureStore';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+import { setupDataSources } from '../../testSetup/datasources';
+import { fromCombinedRule, stringifyIdentifier } from '../../utils/rule-id';
 
 setupMswServer();
 jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
+  detailsButton: byRole('link', { name: /View/ }),
+  menu: byRole('menu'),
   moreButton: byLabelText(/More/),
+  pauseButton: byRole('menuitem', { name: /Pause evaluation/ }),
 };
 
 const grantAllPermissions = () => {
@@ -34,6 +39,8 @@ const grantAllPermissions = () => {
     AccessControlAction.AlertingRuleUpdate,
     AccessControlAction.AlertingRuleDelete,
     AccessControlAction.AlertingInstanceCreate,
+    AccessControlAction.AlertingRuleExternalRead,
+    AccessControlAction.AlertingRuleExternalWrite,
   ]);
   mockContextSrv.hasPermissionInMetadata.mockImplementation(() => true);
   mockContextSrv.hasPermission.mockImplementation(() => true);
@@ -52,10 +59,14 @@ const getMenuContents = async () => {
   return [...allMenuItems, ...allLinkItems];
 };
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
+
+const mimirDs = mockDataSource({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' });
+const prometheusDs = mockDataSource({ uid: 'prometheus', name: 'Prometheus' });
+setupDataSources(mimirDs, prometheusDs);
 
 const clickCopyLink = async () => {
   const user = userEvent.setup();
@@ -69,40 +80,64 @@ describe('RuleActionsButtons', () => {
     grantAllPermissions();
     const mockRule = getGrafanaRule();
 
-    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" showCopyLinkButton />);
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
 
     await user.click(await ui.moreButton.find());
 
     expect(await getMenuContents()).toMatchSnapshot();
   });
 
+  it('should be able to pause a Grafana rule', async () => {
+    const user = userEvent.setup();
+    grantAllPermissions();
+    const mockRule = getGrafanaRule();
+
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+
+    await user.click(await ui.moreButton.find());
+    await user.click(await ui.pauseButton.find());
+
+    expect(ui.menu.query()).not.toBeInTheDocument();
+  });
+
   it('renders correct options for Cloud rule', async () => {
     const user = userEvent.setup();
     grantAllPermissions();
-    const mockRule = getCloudRule();
-    const dataSource = mockDataSource({ id: 1 });
+    const mockRule = getCloudRule(undefined, { rulesSource: mimirDs });
 
-    const defaultState = configureStore().getState();
-    render(<RuleActionsButtons rule={mockRule} rulesSource={dataSource} />, {
-      preloadedState: produce(defaultState, (store) => {
-        store.unifiedAlerting.dataSources[dataSource.name] = {
-          loading: false,
-          dispatched: true,
-          result: {
-            id: 'test-ds',
-            name: dataSource.name,
-            rulerConfig: {
-              dataSourceName: dataSource.name,
-              apiVersion: 'config',
-            },
-          },
-        };
-      }),
-    });
+    render(<RuleActionsButtons rule={mockRule} rulesSource={mimirDs} />);
 
     await user.click(await ui.moreButton.find());
 
     expect(await getMenuContents()).toMatchSnapshot();
+  });
+
+  it('view rule button should properly handle special characters in rule name', async () => {
+    // Production setup uses the link interceptor to push all link clicks through the location service
+    // and history object under the hood
+    // It causes issues due to the bug in history library that causes the pathname to be decoded
+    // https://github.com/remix-run/history/issues/505#issuecomment-453175833
+    document.addEventListener('click', interceptLinkClicks);
+
+    grantAllPermissions();
+    const mockRule = getCloudRule({ name: 'special !@#$%^&*() chars' }, { rulesSource: mimirDs });
+    const { user } = render(<RuleActionsButtons rule={mockRule} rulesSource={mimirDs} showViewButton />, {
+      renderWithRouter: true,
+    });
+    const locationPushSpy = jest.spyOn(locationService, 'push');
+
+    await user.click(await ui.detailsButton.find());
+
+    const ruleId = fromCombinedRule(mimirDs.name, mockRule);
+    const stringifiedRuleId = stringifyIdentifier(ruleId);
+
+    const expectedPath = `/alerting/${encodeURIComponent(mimirDs.name)}/${encodeURIComponent(stringifiedRuleId)}/view`;
+
+    // Check if the interceptor worked
+    expect(locationPushSpy).toHaveBeenCalledWith(expectedPath);
+
+    // Check if the location service has the correct pathname
+    expect(locationService.getLocation().pathname).toBe(expectedPath);
   });
 
   it('renders minimal "More" menu when appropriate', async () => {
@@ -148,14 +183,14 @@ describe('RuleActionsButtons', () => {
     });
 
     it('copies correct URL for cloud rule', async () => {
-      const mockRule = getCloudRule();
+      const mockRule = getCloudRule({ name: 'pod-1-cpu-firing' }, { rulesSource: prometheusDs });
 
-      render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+      render(<RuleActionsButtons rule={mockRule} rulesSource={prometheusDs} />);
 
       await clickCopyLink();
 
       expect(await navigator.clipboard.readText()).toBe(
-        'http://localhost:3000/sub/alerting/Prometheus-2/mockRule/find'
+        'http://localhost:3000/sub/alerting/Prometheus/pod-1-cpu-firing/find'
       );
     });
   });

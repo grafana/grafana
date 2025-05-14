@@ -1,10 +1,10 @@
 apiVersion: 1
 muteTimes:
     - orgId: 1
-      name: interval
+      name: interval-1
       time_intervals: []
     - orgId: 1
-      name: full-interval
+      name: interval-2
       time_intervals:
         - times:
             - start_time: "10:00"

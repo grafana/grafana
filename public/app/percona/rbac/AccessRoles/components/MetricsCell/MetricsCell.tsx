@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
-import { RawQuery } from '@grafana/experimental';
+import { RawQuery } from '@grafana/plugin-ui';
 import { promqlGrammar } from '@grafana/prometheus';
 
 import { styles } from './MetricsCell.styles';

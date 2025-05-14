@@ -161,18 +161,20 @@ export function getSituation(text: string, offset: number): Situation | null {
     shiftedOffset -= 1;
   }
 
-  // if the tree contains error, it is very probable that
-  // our node is one of those error nodes.
-  // also, if there are errors, the node lezer finds us,
-  // might not be the best node.
-  // so first we check if there is an error node at the cursor position
-  let maybeErrorNode = getErrorNode(tree, shiftedOffset);
-  if (!maybeErrorNode) {
-    // try again with the previous character
-    maybeErrorNode = getErrorNode(tree, shiftedOffset - 1);
+  // If the tree contains error, it's probable that our node is one of those error nodes.
+  // If there are errors, the node lezer finds us might not be the best node.
+  // So, first we check if there is an error node at the cursor position.
+  let errorNode = getErrorNode(tree, shiftedOffset);
+  if (!errorNode) {
+    // Try again with the previous character.
+    errorNode = getErrorNode(tree, shiftedOffset - 1);
+  }
+  if (!errorNode) {
+    // Try again with the next character
+    errorNode = getErrorNode(tree, shiftedOffset + 1);
   }
 
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(shiftedOffset);
+  const cur = errorNode != null ? errorNode.cursor() : tree.cursorAt(shiftedOffset);
 
   const currentNode = cur.node;
   const ids = [cur.type.id];
@@ -342,7 +344,9 @@ function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const indexOfDot = attributeFieldParentText.indexOf('.');
   const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
 
-  if (['span', 'resource', 'parent'].find((item) => item === attributeFieldUpToDot)) {
+  if (
+    ['event', 'instrumentation', 'link', 'resource', 'span', 'parent'].find((item) => item === attributeFieldUpToDot)
+  ) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
       scope: attributeFieldUpToDot,

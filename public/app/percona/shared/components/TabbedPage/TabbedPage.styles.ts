@@ -36,7 +36,9 @@ export const getStyles = (theme: GrafanaTheme2, verticalTabs?: boolean) => ({
           display: none;
         }
       `
-    : '',
+    : css`
+        overflow-y: hidden;
+      `,
   TabSelect: verticalTabs
     ? css`
         width: 200px;

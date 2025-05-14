@@ -11,26 +11,27 @@ import (
 )
 
 const (
+	DS_ACCESS_DIRECT  = "direct"
+	DS_ACCESS_PROXY   = "proxy"
+	DS_ALERTMANAGER   = "alertmanager"
+	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
+	DS_DYNATRACE      = "grafana-dynatrace-datasource"
+	DS_ES             = "elasticsearch"
+	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
+	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
 	DS_GRAPHITE       = "graphite"
 	DS_INFLUXDB       = "influxdb"
 	DS_INFLUXDB_08    = "influxdb_08"
-	DS_ES             = "elasticsearch"
-	DS_PROMETHEUS     = "prometheus"
-	DS_ALERTMANAGER   = "alertmanager"
 	DS_JAEGER         = "jaeger"
 	DS_LOKI           = "loki"
-	DS_OPENTSDB       = "opentsdb"
-	DS_TEMPO          = "tempo"
-	DS_ZIPKIN         = "zipkin"
-	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
-	DS_ACCESS_DIRECT  = "direct"
-	DS_ACCESS_PROXY   = "proxy"
-	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
-	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
-	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
+	DS_MYSQL          = "mysql"
+	DS_OPENTSDB       = "opentsdb"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
+	DS_PROMETHEUS     = "prometheus"
+	DS_TEMPO          = "tempo"
 	DS_TESTDATA       = "grafana-testdata-datasource"
+	DS_ZIPKIN         = "zipkin"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
@@ -69,6 +70,16 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
+}
+
+func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
+	if ds.isSecureSocksDSProxyEnabled == nil {
+		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		ds.isSecureSocksDSProxyEnabled = &enabled
+	}
+	return *ds.isSecureSocksDSProxyEnabled
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -85,10 +96,6 @@ type TeamHeaders map[string][]TeamHTTPHeader
 type TeamHTTPHeader struct {
 	Header string `json:"header"`
 	Value  string `json:"value"`
-}
-
-func (ds DataSource) TeamHTTPHeaders() (*TeamHTTPHeaders, error) {
-	return GetTeamHTTPHeaders(ds.JsonData)
 }
 
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
@@ -204,6 +211,8 @@ type UpdateDataSourceCommand struct {
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	IgnoreOldSecureJsonData bool              `json:"-"`
+
+	AllowLBACRuleUpdates bool `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

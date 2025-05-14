@@ -1,6 +1,8 @@
 import { Dashboard } from '@grafana/schema';
+import { ObjectMeta } from 'app/features/apiserver/types';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
+import { SaveDashboardResponseDTO } from 'app/types';
 
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy
@@ -14,14 +16,27 @@ export interface SaveDashboardOptions extends CloneOptions {
   overwrite?: boolean;
   message?: string;
   makeEditable?: boolean;
+  // for schema v2 we need to pass the k8s metadata
+  k8s?: Partial<ObjectMeta>;
 }
 
-export interface SaveDashboardCommand {
-  dashboard: Dashboard;
+export interface SaveDashboardAsOptions {
+  saveAsCopy?: boolean;
+  isNew?: boolean;
+  copyTags?: boolean;
+  title?: string;
+  description?: string;
+}
+
+export interface SaveDashboardCommand<T> {
+  dashboard: T;
   message?: string;
   folderUid?: string;
   overwrite?: boolean;
   showErrorAlert?: boolean;
+
+  // When loading dashboards from k8s, we need to have access to the metadata wrapper
+  k8s?: Partial<ObjectMeta>;
 }
 
 export interface SaveDashboardFormProps {
@@ -29,7 +44,11 @@ export interface SaveDashboardFormProps {
   isLoading: boolean;
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (saveModel: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (
+    saveModel: Dashboard,
+    options: SaveDashboardOptions,
+    dashboard: DashboardModel
+  ) => Promise<SaveDashboardResponseDTO>;
 }
 
 export interface SaveDashboardModalProps {

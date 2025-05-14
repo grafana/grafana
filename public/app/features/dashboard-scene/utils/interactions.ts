@@ -1,5 +1,4 @@
 import { reportInteraction } from '@grafana/runtime';
-import { InspectTab } from 'app/features/inspector/types';
 
 let isScenesContextSet = false;
 
@@ -9,30 +8,6 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', { ...properties });
   },
 
-  // Panel interactions:
-  panelMenuShown: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('panelheader_menu', { ...properties, item: 'menu' });
-  },
-  panelMenuItemClicked: (
-    item:
-      | 'view'
-      | 'edit'
-      | 'share'
-      | 'createLibraryPanel'
-      | 'unlinkLibraryPanel'
-      | 'replaceLibraryPanel'
-      | 'duplicate'
-      | 'copy'
-      | 'remove'
-      | 'explore'
-      | 'toggleLegend'
-      | 'create-alert'
-  ) => {
-    reportDashboardInteraction('panelheader_menu', { item });
-  },
-  panelMenuInspectClicked(tab: InspectTab) {
-    reportDashboardInteraction('panelheader_menu', { item: 'inspect', tab });
-  },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },
@@ -43,8 +18,25 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
 
+  // Dashboard interactions from toolbar
+  toolbarFavoritesClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'favorites' });
+  },
+  toolbarSettingsClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'settings' });
+  },
+  toolbarShareClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
+  },
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
+  toolbarAddClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
+  },
+
   // Sharing interactions:
-  sharingTabChanged: (properties?: Record<string, unknown>) => {
+  sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_category_clicked', properties);
   },
   shareLinkCopied: (properties?: Record<string, unknown>) => {
@@ -52,6 +44,12 @@ export const DashboardInteractions = {
   },
   embedSnippetCopy: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_embed_copy_clicked', properties);
+  },
+  generatePanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_generate_image_clicked', properties);
+  },
+  downloadPanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_download_image_clicked', properties);
   },
   publishSnapshotClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_snapshot_publish_clicked', properties);
@@ -111,41 +109,20 @@ export const DashboardInteractions = {
   toolbarAddButtonClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('toolbar_add_clicked', properties);
   },
-  toolbarFavoritesClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'favorites' });
-  },
-  toolbarSettingsClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'settings' });
-  },
-  toolbarRefreshClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'refresh' });
-  },
-  toolbarTimePickerClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'time_picker' });
-  },
-  toolbarZoomClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'zoom_out_time_range' });
-  },
-
-  toolbarShareClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
-  },
-  toolbarSaveClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'save' });
-  },
-  toolbarSaveAsClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'save_as' });
-  },
-  toolbarAddClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
-  },
-
   setScenesContext: () => {
     isScenesContextSet = true;
 
     return () => {
       isScenesContextSet = false;
     };
+  },
+
+  // Dashboards versions interactions
+  versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean; version_date?: Date }) => {
+    reportDashboardInteraction('version_restore_clicked', properties);
+  },
+  showMoreVersionsClicked: () => {
+    reportDashboardInteraction('show_more_versions_clicked');
   },
 };
 

@@ -1,5 +1,4 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
@@ -33,7 +32,7 @@ const meta: Meta = {
     inline: { control: 'boolean' },
   },
   args: {
-    href: 'https://www.google.com',
+    href: 'https://www.grafana.com',
     external: true,
     icon: 'external-link-alt',
   },
@@ -68,14 +67,33 @@ Example.parameters = {
   controls: { exclude: ['href', 'external', 'variant', 'weight', 'color', 'inline', 'icon'] },
 };
 
-export const Basic: StoryFn = (args) => {
+export const Inline: StoryFn = (args) => {
   return (
     <div>
+      For more information{' '}
       <TextLink href={args.href} {...args}>
-        Go to Google
+        see Grafana.com
       </TextLink>
     </div>
   );
+};
+
+Inline.args = {
+  inline: true,
+};
+
+export const Standalone: StoryFn = (args) => {
+  return (
+    <div>
+      <TextLink href={args.href} {...args}>
+        Go to Grafana.com
+      </TextLink>
+    </div>
+  );
+};
+
+Standalone.args = {
+  inline: false,
 };
 
 export default meta;

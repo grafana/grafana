@@ -11,12 +11,13 @@ import {
   toUtc,
   IntervalValues,
   AppEvents,
+  dateTimeForTimeZone,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -106,7 +107,7 @@ export class TimeSrv {
     }
   }
 
-  private parseUrlParam(value: string) {
+  private parseUrlParam(value: string, timeZone?: string) {
     if (value.indexOf('now') !== -1) {
       return value;
     }
@@ -124,7 +125,7 @@ export class TimeSrv {
 
     if (!isNaN(Number(value))) {
       const epoch = parseInt(value, 10);
-      return toUtc(epoch);
+      return timeZone ? dateTimeForTimeZone(timeZone, epoch) : toUtc(epoch);
     }
 
     return null;
@@ -158,12 +159,13 @@ export class TimeSrv {
       this.time = this.getTimeWindow(params.get('time')!, params.get('time.window')!);
     }
 
+    const timeZone = this.timeModel?.getTimezone();
     if (params.get('from')) {
-      this.time.from = this.parseUrlParam(params.get('from')!) || this.time.from;
+      this.time.from = this.parseUrlParam(params.get('from')!, timeZone) || this.time.from;
     }
 
     if (params.get('to')) {
-      this.time.to = this.parseUrlParam(params.get('to')!) || this.time.to;
+      this.time.to = this.parseUrlParam(params.get('to')!, timeZone) || this.time.to;
     }
 
     // if absolute ignore refresh option saved to timeModel

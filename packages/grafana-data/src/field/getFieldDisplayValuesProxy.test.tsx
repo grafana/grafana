@@ -1,5 +1,5 @@
-import { createDataFrame, toDataFrame } from '../dataframe';
-import { createTheme } from '../themes';
+import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
+import { createTheme } from '../themes/createTheme';
 
 import { applyFieldOverrides } from './fieldOverrides';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';

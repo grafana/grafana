@@ -23,7 +23,7 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Current Organization API
 
@@ -33,7 +33,7 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action    | Scope |
 | --------- | ----- |
@@ -69,7 +69,7 @@ Accessible to users with org admin role.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -115,7 +115,7 @@ when editing folder/dashboard permissions.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -151,7 +151,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action          | Scope    |
 | --------------- | -------- |
@@ -185,7 +185,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action           | Scope    |
 | ---------------- | -------- |
@@ -215,7 +215,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action     | Scope |
 | ---------- | ----- |
@@ -251,7 +251,7 @@ Adds a global user to the current organization.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action        | Scope    |
 | ------------- | -------- |
@@ -282,11 +282,15 @@ Content-Type: application/json
 
 ## Admin Organizations API
 
-The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently
-only linked to an organization and an organization role. They cannot be given the permission of server
-admin, only users can be given that permission. So in order to use these API calls you will have to
-use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user
-is called `admin` and has permission to use this API).
+{{< admonition type="caution" >}}
+You can't authenticate to the Admin Organizations HTTP API with service account tokens.
+Service accounts are limited to an organization and an organization role.
+They can't be granted [Grafana server administrator permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
+
+To use these API endpoints you have to use Basic authentication and the Grafana user must have the Grafana server administrator permission.
+
+The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
+{{< /admonition >}}
 
 ### Get Organization by Id
 
@@ -296,7 +300,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action    | Scope |
 | --------- | ----- |
@@ -338,7 +342,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action    | Scope | Note                           |
 | --------- | ----- | ------------------------------ |
@@ -380,7 +384,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action      | Scope | Note                           |
 | ----------- | ----- | ------------------------------ |
@@ -423,7 +427,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action    | Scope | Note                           |
 | --------- | ----- | ------------------------------ |
@@ -465,7 +469,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action     | Scope |
 | ---------- | ----- |
@@ -500,7 +504,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action      | Scope |
 | ----------- | ----- |
@@ -530,7 +534,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action         | Scope    |
 | -------------- | -------- |
@@ -571,7 +575,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action        | Scope    |
 | ------------- | -------- |
@@ -607,7 +611,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action          | Scope    |
 | --------------- | -------- |
@@ -642,7 +646,7 @@ Only works with Basic Authentication (username and password), see [introduction]
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#organization-api" >}}) for an explanation.
+See note in the [introduction](#organization-api) for an explanation.
 
 | Action           | Scope    |
 | ---------------- | -------- |

@@ -1,11 +1,17 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { NodeGraphSection, SpanBarSection, TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConnectionSettings,
+  DataSourceDescription,
+  convertLegacyAuthProps,
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2, Divider, Stack } from '@grafana/ui';
+import { useStyles2, Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
 
 import { TraceIdTimeParams } from './TraceIdTimeParams';
 
@@ -24,14 +30,17 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <Divider spacing={4} />
 
-      <DataSourceHttpSettings
-        defaultUrl="http://localhost:16686"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:16686" />
+
+      <Divider spacing={4} />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
 
+      <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
 
@@ -45,6 +54,12 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isInitiallyOpen={false}
       >
         <Stack gap={5} direction="column">
+          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+          {config.secureSocksDSProxyEnabled && (
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          )}
+
           <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
           <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
           <TraceIdTimeParams options={options} onOptionsChange={onOptionsChange} />
@@ -55,9 +70,8 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(2)};
-    max-width: 900px;
-  `,
+  container: css({
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
 });

@@ -21,7 +21,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Dashboard JSON model
@@ -30,9 +30,10 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 To view the JSON of a dashboard:
 
-1. Navigate to a dashboard.
-1. In the top navigation menu, click the **Dashboard settings** (gear) icon.
-1. Click **JSON Model**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
+1. Go to the **JSON Model** tab.
+1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
 
 ## JSON fields
 
@@ -135,6 +136,18 @@ The grid has a negative gravity that moves panels up if there is empty space abo
     "now": true,
     "hidden": false,
     "nowDelay": "",
+    "quick_ranges": [
+      {
+        "display": "Last 6 hours",
+        "from": "now-6h",
+        "to": "now"
+      },
+      {
+        "display": "Last 7 days",
+        "from": "now-7d",
+        "to": "now"
+      }
+    ],
     "refresh_intervals": [
       "5s",
       "10s",
@@ -162,6 +175,7 @@ Usage of the fields is explained below:
 | **now**               |                                                                                                                                       |
 | **hidden**            | whether timepicker is hidden or not                                                                                                   |
 | **nowDelay**          | override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. |
+| **quick_ranges**      | custom quick ranges                                                                                                                   |
 | **refresh_intervals** | interval options available in the refresh picker dropdown                                                                             |
 | **status**            |                                                                                                                                       |
 | **type**              |                                                                                                                                       |

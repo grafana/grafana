@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -305,7 +304,7 @@ describe('Pagination', () => {
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
-    const option = screen.getByTestId('100-select-option');
+    const option = screen.getByText('100');
     fireEvent.click(option);
 
     expect(cb).toHaveBeenCalledWith(100);

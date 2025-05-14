@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -328,7 +327,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     1,
 			External:   false,
-			Permission: 0,
+			Permission: team.PermissionTypeMember,
 			Created:    now,
 			Updated:    now,
 		},
@@ -338,7 +337,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     2,
 			External:   false,
-			Permission: dashboardaccess.PERMISSION_ADMIN,
+			Permission: team.PermissionTypeAdmin,
 			Created:    now,
 			Updated:    now,
 		},
@@ -348,7 +347,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     3,
 			External:   false,
-			Permission: dashboardaccess.PERMISSION_ADMIN,
+			Permission: team.PermissionTypeAdmin,
 			Created:    now,
 			Updated:    now,
 		},
@@ -358,7 +357,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     4,
 			External:   false,
-			Permission: dashboardaccess.PERMISSION_ADMIN,
+			Permission: team.PermissionTypeAdmin,
 			Created:    now,
 			Updated:    now,
 		},
@@ -368,7 +367,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     2,
 			UserID:     5,
 			External:   false,
-			Permission: 0,
+			Permission: team.PermissionTypeMember,
 			Created:    now,
 			Updated:    now,
 		},

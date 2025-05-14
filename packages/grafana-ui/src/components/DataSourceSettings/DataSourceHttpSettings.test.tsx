@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
-import { DataSourceHttpSettings } from '@grafana/ui';
-
+import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import { HttpSettingsProps } from './types';
 
 const setup = (propOverrides?: object) => {

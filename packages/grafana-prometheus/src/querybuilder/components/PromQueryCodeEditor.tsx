@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +33,6 @@ export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
         data={data}
         app={app}
       />
-
       {showExplain && <PromQueryBuilderExplained query={query.expr} />}
     </div>
   );

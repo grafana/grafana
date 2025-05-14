@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { createTheme, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -392,7 +391,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     setupSwitch();
     //Is there another way to find the switch element? Filtering by name doesn't work
     expect(
-      screen.getByRole('checkbox', {
+      screen.getByRole('switch', {
         checked: false,
       })
     ).toBeInTheDocument();

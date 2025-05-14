@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import selectEvent from 'react-select-event';
+
+import { config } from '@grafana/runtime';
 
 import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
 import { createArray, createGroupBy } from '../../../../__mocks__/sqlUtils';
@@ -18,7 +19,7 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   region: 'us-east-1',
   namespace: 'ec2',
   dimensions: { somekey: 'somevalue' },
-  metricQueryType: MetricQueryType.Query,
+  metricQueryType: MetricQueryType.Insights,
   metricEditorMode: MetricEditorMode.Builder,
   sql: sql,
 });
@@ -26,6 +27,10 @@ const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
 datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 
 describe('Cloudwatch SQLGroupBy', () => {
+  afterEach(() => {
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+  });
+
   const baseProps = {
     query: makeSQLQuery(),
     datasource,
@@ -54,6 +59,31 @@ describe('Cloudwatch SQLGroupBy', () => {
       expect(screen.getByText('InstanceId')).toBeInTheDocument();
       expect(screen.getByText('InstanceType')).toBeInTheDocument();
     });
+  });
+
+  it('should show Account ID in groupBy options if cloudWatchCrossAccountQuerying feature flag is enabled', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+    const query = makeSQLQuery();
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    expect(screen.getByText('Account ID')).toBeInTheDocument();
+  });
+
+  it('should not show Account ID in groupBy options if not using a monitoring account', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+
+    const query = makeSQLQuery();
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+    const addButton = screen.getByRole('button', { name: 'Add' });
+    await userEvent.click(addButton);
+    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    expect(screen.queryByText('Account ID')).not.toBeInTheDocument();
   });
 
   it('should allow adding a new dimension filter', async () => {

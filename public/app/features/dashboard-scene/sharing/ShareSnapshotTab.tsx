@@ -1,23 +1,26 @@
-import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
+import { dispatch } from 'app/store/store';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { SceneShareTabState } from './types';
+import { SceneShareTabState, ShareView } from './types';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
-const getExpireOptions = () => {
+export const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
     label: t('share-modal.snapshot.expire-week', '1 Week'),
     value: 60 * 60 * 24 * 7,
@@ -45,18 +48,20 @@ const getDefaultExpireOption = () => {
 };
 
 export interface ShareSnapshotTabState extends SceneShareTabState {
+  dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
-  snapshotName?: string;
-  selectedExpireOption?: SelectableValue<number>;
-
+  snapshotName: string;
+  selectedExpireOption: SelectableValue<number>;
   snapshotSharingOptions?: SnapshotSharingOptions;
 }
 
-export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
-  static Component = ShareSnapshoTabRenderer;
+  static Component = ShareSnapshotTabRenderer;
 
-  public constructor(state: ShareSnapshotTabState) {
+  public constructor(
+    state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption' | 'snapshotSharingOptions'>
+  ) {
     super({
       ...state,
       snapshotName: state.dashboardRef.resolve().state.title,
@@ -85,7 +90,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   }
 
   public onSnasphotNameChange = (snapshotName: string) => {
-    this.setState({ snapshotName: snapshotName.trim() });
+    this.setState({ snapshotName });
   };
 
   public onExpireChange = (option: number) => {
@@ -100,7 +105,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
     return trimDashboardForSnapshot(
-      this.state.snapshotName || '',
+      this.state.snapshotName.trim() || '',
       timeRange.state.value,
       saveModel,
       panelRef?.resolve()
@@ -124,7 +129,11 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     };
 
     try {
-      return await getDashboardSnapshotSrv().create(cmdData);
+      const response = await getDashboardSnapshotSrv().create(cmdData);
+      dispatch(
+        notifyApp(createSuccessNotification(t('snapshot.share.success-creation', 'Your snapshot has been created')))
+      );
+      return response;
     } finally {
       if (external) {
         DashboardInteractions.publishSnapshotClicked({
@@ -139,9 +148,17 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       }
     }
   };
+
+  public onSnapshotDelete = async (url: string) => {
+    const response = await getBackendSrv().get(url);
+    dispatch(
+      notifyApp(createSuccessNotification(t('snapshot.share.success-delete', 'Your snapshot has been deleted')))
+    );
+    return response;
+  };
 }
 
-function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
+function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
   const { snapshotName, selectedExpireOption, modalRef, snapshotSharingOptions } = model.useState();
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
@@ -168,14 +185,14 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
       {!Boolean(snapshotResult.value) && (
         <>
           <div>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-1">
                 A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip
                 sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible
                 metric data and series names embedded in your dashboard.
               </Trans>
             </p>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-2">
                 Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
                 Share wisely.
@@ -231,7 +248,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
 
       {/* When snapshot has been created - show link and allow copy/deletion */}
       {snapshotResult.value && (
-        <>
+        <Stack direction="column" gap={0}>
           <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
             <Input
               data-testid={selectors.CopyUrlInput}
@@ -251,7 +268,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
             />
           </Field>
 
-          <div className="pull-right" style={{ padding: '5px' }}>
+          <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
             <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
             <Button
               fill="outline"
@@ -264,7 +281,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
               <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
             </Button>
           </div>
-        </>
+        </Stack>
       )}
     </>
   );

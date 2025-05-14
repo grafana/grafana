@@ -1,0 +1,21 @@
+[sample token] // NOT A REAL TOKEN
+eyJUb2tlbiI6ImNvbXBsZXRlbHlfZmFrZV90b2tlbl9jZG9peTFhYzdwdXlwZCIsIkluc3RhbmNlIjp7IlN0YWNrSUQiOiAzODYzLCJTbHVnIjoic3R1Ymluc3RhbmNlIiwiUmVnaW9uU2x1ZyI6ImZha2UtcmVnaW9uIiwiQ2x1c3RlclNsdWciOiJmYWtlLWNsdXNlciJ9fQo=
+
+[create session]
+curl -X POST -H "Content-Type: application/json" \
+  http://admin:admin@localhost:3000/api/cloudmigration/migration \
+  -d '{"AuthToken":"eyJUb2tlbiI6ImNvbXBsZXRlbHlfZmFrZV90b2tlbl9jZG9peTFhYzdwdXlwZCIsIkluc3RhbmNlIjp7IlN0YWNrSUQiOiAzODYzLCJTbHVnIjoic3R1Ymluc3RhbmNlIiwiUmVnaW9uU2x1ZyI6ImZha2UtcmVnaW9uIiwiQ2x1c3RlclNsdWciOiJmYWtlLWNsdXNlciJ9fQo="}'
+
+[create snapshot]
+curl -X POST -H "Content-Type: application/json" \
+  http://admin:admin@localhost:3000/api/cloudmigration/migration/{sessionUid}/snapshot
+
+[get snapshot list]
+curl -X GET http://admin:admin@localhost:3000/api/cloudmigration/migration/{sessionUid}/snapshots?limit=100&page=1
+
+[get snapshot]
+curl -X GET http://admin:admin@localhost:3000/api/cloudmigration/migration/{sessionUid}/snapshot/{snapshotUid}?resultLimit=100&resultPage=1
+
+[upload snapshot]
+curl -X POST -H "Content-Type: application/json" \
+   http://admin:admin@localhost:3000/api/cloudmigration/migration/{sessionUid}/snapshot/{snapshotUid}/upload

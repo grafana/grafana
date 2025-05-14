@@ -1,6 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
 
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
 import {
   And,
   BinOpExpr,
@@ -54,6 +53,7 @@ import {
   OnOrIgnoringModifier,
   OrFilter,
 } from '@grafana/lezer-logql';
+import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';

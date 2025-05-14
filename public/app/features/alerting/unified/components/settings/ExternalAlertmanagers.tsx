@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Stack } from '@grafana/ui';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -10,7 +8,7 @@ import {
   isProvisionedDataSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../../utils/datasource';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
 import { useSettings } from './SettingsContext';
@@ -52,8 +50,9 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const isReceiving = isReceivingGrafanaAlerts(alertmanager);
         const isProvisioned = isProvisionedDataSource(alertmanager.dataSourceSettings);
         const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
-
-        const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
+        // typescript on next line is wrong, as DATASOURCES_ROUTES.Edit is a RelativeUrl type, and replacing :uid with uid makes still a RelativeUrl
+        // @ts-ignore
+        const detailHref = createRelativeUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
         const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);

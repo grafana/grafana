@@ -8,6 +8,11 @@ load(
     "integration_test_services_volumes",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "enterprise_setup_step",
@@ -32,10 +37,13 @@ def integration_benchmarks(prefix):
     environment = {"EDITION": "oss"}
 
     services = integration_test_services()
-    volumes = integration_test_services_volumes()
+    volumes = integration_test_services_volumes() + github_app_pipeline_volumes()
 
     # In pull requests, attempt to clone grafana enterprise.
-    init_steps = [enterprise_setup_step(isPromote = True)]
+    init_steps = [
+        github_app_generate_token_step(),
+        enterprise_setup_step(isPromote = True),
+    ]
 
     verify_step = verify_gen_cue_step()
     verify_jsonnet_step = verify_gen_jsonnet_step()
@@ -57,10 +65,6 @@ def integration_benchmarks(prefix):
                           "PGPASSWORD": "grafanatest",
                           "GRAFANA_TEST_DB": "postgres",
                           "POSTGRES_HOST": "postgres",
-                      }) + \
-                      integration_benchmarks_step("mysql-5.7", {
-                          "GRAFANA_TEST_DB": "mysql",
-                          "MYSQL_HOST": "mysql57",
                       }) + \
                       integration_benchmarks_step("mysql-8.0", {
                           "GRAFANA_TEST_DB": "mysql",

@@ -1,15 +1,17 @@
 package folder
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
@@ -20,6 +22,7 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
 const (
 	GeneralFolderUID      = "general"
@@ -48,13 +51,20 @@ type Folder struct {
 	URL          string
 	UpdatedBy    int64
 	CreatedBy    int64
+	UpdatedByUID string
+	CreatedByUID string
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
+
+	// The folder is managed by an external process
+	// NOTE: this is only populated when folders are managed by unified storage
+	// This is not ever used by xorm, but the translation functions flow through this type
+	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
-var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
+var RootFolder = &Folder{ID: 0, Title: "Dashboards", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
@@ -148,11 +158,12 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID           *int64
-	Title        *string
-	ParentUID    *string
-	OrgID        int64
-	WithFullpath bool
+	ID               *int64
+	Title            *string
+	ParentUID        *string
+	OrgID            int64
+	WithFullpath     bool
+	WithFullpathUIDs bool
 
 	SignedInUser identity.Requester `json:"-"`
 }
@@ -168,6 +179,15 @@ type GetFoldersQuery struct {
 	// Set to true when ordering is meaningful (used for listing folders)
 	// otherwise better to keep it false since ordering can have a performance impact
 	OrderByTitle bool
+	SignedInUser identity.Requester `json:"-"`
+}
+
+type SearchFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
 	SignedInUser identity.Requester `json:"-"`
 }
 

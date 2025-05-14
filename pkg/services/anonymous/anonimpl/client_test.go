@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -29,16 +30,20 @@ func TestAnonymous_Authenticate(t *testing.T) {
 			desc: "should success with valid org configured",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				AnonymousOrgName: "some org",
-				AnonymousOrgRole: "Viewer",
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: "Viewer",
+					OrgName: "some org",
+				},
 			},
 		},
 		{
 			desc: "should return error if any error occurs during org lookup",
 			err:  fmt.Errorf("some error"),
 			cfg: &setting.Cfg{
-				AnonymousOrgName: "some org",
-				AnonymousOrgRole: "Viewer",
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: "Viewer",
+					OrgName: "some org",
+				},
 			},
 		},
 	}
@@ -52,17 +57,17 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				anonDeviceService: anontest.NewFakeService(),
 			}
 
-			identity, err := c.Authenticate(context.Background(), &authn.Request{})
+			user, err := c.Authenticate(context.Background(), &authn.Request{})
 			if err != nil {
 				require.Error(t, err)
-				require.Nil(t, identity)
+				require.Nil(t, user)
 			} else {
 				require.Nil(t, err)
 
-				assert.Equal(t, authn.AnonymousNamespaceID, identity.ID)
-				assert.Equal(t, tt.org.ID, identity.OrgID)
-				assert.Equal(t, tt.org.Name, identity.OrgName)
-				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(identity.GetOrgRole()))
+				assert.Equal(t, "anonymous:0", user.GetID())
+				assert.Equal(t, tt.org.ID, user.OrgID)
+				assert.Equal(t, tt.org.Name, user.OrgName)
+				assert.Equal(t, tt.cfg.Anonymous.OrgRole, string(user.GetOrgRole()))
 			}
 		})
 	}
@@ -73,7 +78,8 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 		desc        string
 		cfg         *setting.Cfg
 		orgID       int64
-		namespaceID authn.NamespaceID
+		typ         claims.IdentityType
+		id          string
 		org         *org.Org
 		orgErr      error
 		expectedErr error
@@ -84,30 +90,39 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 			desc: "should return error when org id is not the configured one",
 			org:  &org.Org{ID: 2, Name: "some org"},
 			cfg: &setting.Cfg{
-				AnonymousOrgName: "some org",
+				Anonymous: setting.AnonymousSettings{
+					OrgName: "some org",
+				},
 			},
 			orgID:       1,
-			namespaceID: authn.AnonymousNamespaceID,
+			typ:         claims.TypeAnonymous,
+			id:          "0",
 			expectedErr: errInvalidOrg,
 		},
 		{
 			desc: "should return error when namespace id does not match anonymous namespace id",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				AnonymousOrgName: "some org",
+				Anonymous: setting.AnonymousSettings{
+					OrgName: "some org",
+				},
 			},
 			orgID:       1,
-			namespaceID: authn.MustParseNamespaceID("anonymous:1"),
+			typ:         claims.TypeAnonymous,
+			id:          "1",
 			expectedErr: errInvalidID,
 		},
 		{
 			desc: "should resolve identity",
 			org:  &org.Org{ID: 1, Name: "some org"},
 			cfg: &setting.Cfg{
-				AnonymousOrgName: "some org",
+				Anonymous: setting.AnonymousSettings{
+					OrgName: "some org",
+				},
 			},
-			orgID:       1,
-			namespaceID: authn.AnonymousNamespaceID,
+			orgID: 1,
+			typ:   claims.TypeAnonymous,
+			id:    "0",
 		},
 	}
 
@@ -120,7 +135,7 @@ func TestAnonymous_ResolveIdentity(t *testing.T) {
 				anonDeviceService: anontest.NewFakeService(),
 			}
 
-			identity, err := c.ResolveIdentity(context.Background(), tt.orgID, tt.namespaceID)
+			identity, err := c.ResolveIdentity(context.Background(), tt.orgID, tt.typ, tt.id)
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
 				assert.Nil(t, identity)

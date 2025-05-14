@@ -22,6 +22,7 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
             expr: '',
             for: '5m',
             grafana_alert: {
+              version: 2,
               id: '49',
               title: random.sentence({ words: 3 }),
               condition: 'B',

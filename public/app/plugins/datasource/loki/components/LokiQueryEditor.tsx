@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -11,7 +11,7 @@ import {
   QueryEditorModeToggle,
   QueryHeaderSwitch,
   QueryEditorMode,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
@@ -33,7 +33,7 @@ export const testIds = {
 
 export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
 
-export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
+export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const id = useId();
   const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);

@@ -1,10 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { InlineFormLabel, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
@@ -21,6 +23,7 @@ export interface PromExploreExtraFieldProps {
 export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQuery }: PromExploreExtraFieldProps) => {
   const rangeOptions = getQueryTypeOptions(true);
   const prevQuery = usePrevious(query);
+  const styles = useStyles2(getStyles);
 
   const onExemplarChange = useCallback(
     (exemplar: boolean) => {
@@ -59,7 +62,8 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
       <div
         data-testid={promExploreExtraFieldTestIds.queryTypeField}
         className={cx(
-          'gf-form explore-input-margin',
+          'gf-form',
+          styles.queryTypeField,
           css({
             flexWrap: 'nowrap',
           })
@@ -144,3 +148,9 @@ export const promExploreExtraFieldTestIds = {
   stepField: 'prom-editor-extra-field-step',
   queryTypeField: 'prom-editor-extra-field-query-type',
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  queryTypeField: css({
+    marginRight: theme.spacing(0.5),
+  }),
+});

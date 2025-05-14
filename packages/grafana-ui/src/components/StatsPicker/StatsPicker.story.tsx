@@ -1,8 +1,8 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
-import { StatsPicker } from '@grafana/ui';
+import { StatsPicker } from './StatsPicker';
 
 interface State {
   stats: string[];

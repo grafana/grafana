@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -23,13 +23,13 @@ import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
-type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
 export interface OwnProps {}
 
 export interface State {
@@ -37,12 +37,12 @@ export interface State {
 }
 
 // this is dummy data to pass to the table while the real data is loading
-const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
+const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
+  uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,
-  permission: 0,
 }));
 
 export const TeamList = ({
@@ -75,7 +75,7 @@ export const TeamList = ({
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
-  const columns: Array<Column<Team>> = useMemo(
+  const columns: Array<Column<TeamWithRoles>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -103,7 +103,7 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
               {value}
             </TextLink>
           );
@@ -181,7 +181,7 @@ export const TeamList = ({
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <LinkButton
-                  href={`org/teams/edit/${original.id}`}
+                  href={`org/teams/edit/${original.uid}`}
                   aria-label={`Edit team ${original.name}`}
                   icon="pen"
                   size="sm"
@@ -193,7 +193,7 @@ export const TeamList = ({
                 aria-label={`Delete team ${original.name}`}
                 size="sm"
                 disabled={!canDelete}
-                onConfirm={() => deleteTeam(original.id)}
+                onConfirm={() => deleteTeam(original.uid)}
               />
             </Stack>
           );

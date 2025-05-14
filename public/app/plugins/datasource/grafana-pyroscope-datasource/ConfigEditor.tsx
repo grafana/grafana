@@ -1,8 +1,25 @@
-import React from 'react';
+import { css } from '@emotion/css';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConfigSubSection,
+  ConnectionSettings,
+  DataSourceDescription,
+  convertLegacyAuthProps,
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
+import {
+  Divider,
+  EventsWithValidation,
+  LegacyForms,
+  SecureSocksProxySettings,
+  Stack,
+  regexValidation,
+  useStyles2,
+} from '@grafana/ui';
 
 import { PyroscopeDataSourceOptions } from './types';
 
@@ -10,21 +27,43 @@ interface Props extends DataSourcePluginOptionsEditorProps<PyroscopeDataSourceOp
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const styles = useStyles2(getStyles);
 
   return (
-    <>
-      <DataSourceHttpSettings
-        defaultUrl={'http://localhost:4040'}
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+    <div className={styles.container}>
+      <DataSourceDescription
+        dataSourceName="Pyroscope"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/pyroscope"
+        hasRequiredFields={false}
       />
 
-      <h3 className="page-heading">Querying</h3>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
+      <Divider spacing={4} />
+
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:4040" />
+
+      <Divider spacing={4} />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
+      />
+
+      <Divider spacing={4} />
+      <ConfigSection
+        title="Additional settings"
+        description="Additional settings are optional settings that can be configured for more control over your data source."
+        isCollapsible={true}
+        isInitiallyOpen={false}
+      >
+        <Stack gap={5} direction="column">
+          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+          {config.secureSocksDSProxyEnabled && (
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          )}
+
+          <ConfigSubSection title="Querying">
             <LegacyForms.FormField
               label="Minimal step"
               labelWidth={13}
@@ -55,9 +94,16 @@ export const ConfigEditor = (props: Props) => {
               }
               tooltip="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
             />
-          </div>
-        </div>
-      </div>
-    </>
+          </ConfigSubSection>
+        </Stack>
+      </ConfigSection>
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
+});

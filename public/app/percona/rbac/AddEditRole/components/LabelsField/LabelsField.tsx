@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { LabelsFieldProps } from './LabelsField.types';

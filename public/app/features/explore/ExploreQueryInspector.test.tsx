@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
@@ -82,15 +82,15 @@ describe('ExploreQueryInspector', () => {
   });
   it('should render 4 Tabs if queryResponse has no error', () => {
     setup();
-    expect(screen.getAllByLabelText(/tab/i)).toHaveLength(4);
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
   });
   it('should render 5 Tabs if queryResponse has error', () => {
     setup({ queryResponse: { error: 'Bad gateway' } });
-    expect(screen.getAllByLabelText(/tab/i)).toHaveLength(5);
+    expect(screen.getAllByRole('tab')).toHaveLength(5);
   });
   it('should display query data when click on expanding', () => {
     setup();
-    fireEvent.click(screen.getByLabelText(/tab query/i));
+    fireEvent.click(screen.getByRole('tab', { name: /query/i }));
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });
@@ -134,7 +134,7 @@ describe('ExploreQueryInspector', () => {
       },
     });
 
-    fireEvent.click(screen.getByLabelText(/tab data/i));
+    fireEvent.click(screen.getByRole('tab', { name: /data/i }));
     // assert series values are formatted to 3 digits (xx.x or x.xx)
     expect(screen.getByText(/71.2/i)).toBeInTheDocument();
     expect(screen.getByText(/72.3/i)).toBeInTheDocument();

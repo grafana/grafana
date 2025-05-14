@@ -1,10 +1,9 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
-
-import { Button, AutoSizeInput } from '@grafana/ui';
 
 import { iconOptions } from '../../utils/storybook/icons';
+import { Button } from '../Button/Button';
 
+import { AutoSizeInput } from './AutoSizeInput';
 import mdx from './AutoSizeInput.mdx';
 import { parseAccessory } from './storyUtils';
 
@@ -36,6 +35,8 @@ const meta: Meta = {
     suffixVisible: '',
     invalid: false,
     loading: false,
+    value: '',
+    defaultValue: '',
   },
   argTypes: {
     prefixVisible: {
@@ -81,6 +82,8 @@ export const Simple: StoryFn = (args) => {
       type={args.type}
       placeholder={args.placeholder}
       minWidth={args.minWidth}
+      value={args.value}
+      defaultValue={args.defaultValue}
     />
   );
 };
@@ -89,6 +92,8 @@ Simple.args = {
   before: false,
   after: false,
   placeholder: 'Enter your name here...',
+  value: '',
+  defaultValue: '',
 };
 
 export default meta;

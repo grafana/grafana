@@ -1,8 +1,9 @@
-import React, { FC, FormEvent, useEffect, useState } from 'react';
+import { FC, FormEvent, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -24,9 +25,8 @@ import { EditInstanceFormValues, EditInstanceRouteParams } from './EditInstance.
 import { getInitialValues, getService, toPayload } from './EditInstance.utils';
 
 const EditInstancePage: FC = () => {
-  const history = useHistory();
   const dispatch = useAppDispatch();
-  const { serviceId } = useParams<EditInstanceRouteParams>();
+  const { serviceId } = useParams() as unknown as EditInstanceRouteParams;
   const [isLoading, setIsLoading] = useState(true);
   const [service, setService] = useState<DbServicePayload>();
   const [generateToken] = useCancelToken();
@@ -34,7 +34,9 @@ const EditInstancePage: FC = () => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    fetchService(serviceId);
+    if (serviceId) {
+      fetchService(serviceId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId]);
 
@@ -48,7 +50,7 @@ const EditInstancePage: FC = () => {
   };
 
   const handleCancel = () => {
-    history.push('/inventory/services');
+    locationService.push('/inventory/services');
   };
 
   const handleSubmit = async (values: EditInstanceFormValues) => {
@@ -73,7 +75,7 @@ const EditInstancePage: FC = () => {
         Messages.success.title(service.service_name),
         Messages.success.description,
       ]);
-      history.push('/inventory/services');
+      locationService.push('/inventory/services');
     } catch (error) {
       logger.error(error);
     }
@@ -86,6 +88,7 @@ const EditInstancePage: FC = () => {
   const handleOpenModal = (e?: FormEvent<HTMLFormElement | HTMLButtonElement>) => {
     setIsModalOpen(true);
     e?.preventDefault();
+    e?.stopPropagation();
   };
 
   return (
@@ -111,7 +114,7 @@ const EditInstancePage: FC = () => {
                   size="sm"
                   type="submit"
                   variant="primary"
-                  onClick={handleSubmit}
+                  onClick={handleOpenModal}
                   disabled={submitting}
                 >
                   {Messages.saveChanges}

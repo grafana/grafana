@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import { shuffle } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
-import { QueryEditorHelpProps } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector } from '../languageUtils';
@@ -37,7 +39,10 @@ const LOGQL_EXAMPLES = [
   },
 ];
 
-export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
+class UnthemedLokiCheatSheet extends PureComponent<
+  QueryEditorHelpProps<LokiQuery> & Themeable2,
+  { userExamples: string[] }
+> {
   declare userLabelTimer: ReturnType<typeof setTimeout>;
   state = {
     userExamples: [],
@@ -75,7 +80,8 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
   };
 
   renderExpression(expr: string) {
-    const { onClickExample } = this.props;
+    const { onClickExample, theme } = this.props;
+    const styles = getStyles(theme);
     const onClick = (query: LokiQuery) => {
       onClickExample(query);
       reportInteraction('grafana_loki_cheatsheet_example_clicked', {});
@@ -84,7 +90,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
     return (
       <button
         type="button"
-        className="cheat-sheet-item__example"
+        className={styles.cheatSheetExample}
         key={expr}
         onClick={() => onClick({ refId: 'A', expr })}
       >
@@ -95,55 +101,72 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
 
   render() {
     const { userExamples } = this.state;
+    const { theme } = this.props;
     const hasUserExamples = userExamples.length > 0;
+    const styles = getStyles(theme);
 
     return (
       <div>
         <h2>Loki Cheat Sheet</h2>
-        <div className="cheat-sheet-item">
-          <div className="cheat-sheet-item__title">See your logs</div>
-          <div className="cheat-sheet-item__label">
-            Start by selecting a log stream from the Label browser, or alternatively you can write a stream selector
-            into the query field.
-          </div>
+        <div className={styles.cheatSheetItem}>
+          <div className={styles.cheatSheetItemTitle}>See your logs</div>
+          Start by selecting a log stream from the Label browser, or alternatively you can write a stream selector into
+          the query field.
           {hasUserExamples ? (
             <div>
-              <div className="cheat-sheet-item__label">Here are some example streams from your logs:</div>
+              Here are some example streams from your logs:
               {userExamples.map((example) => this.renderExpression(example))}
             </div>
           ) : (
             <div>
-              <div className="cheat-sheet-item__label">Here is an example of a log stream:</div>
+              Here is an example of a log stream:
               {this.renderExpression(DEFAULT_EXAMPLES[0])}
             </div>
           )}
         </div>
-        <div className="cheat-sheet-item">
-          <div className="cheat-sheet-item__title">Combine stream selectors</div>
+        <div className={styles.cheatSheetItem}>
+          <div className={styles.cheatSheetItemTitle}>Combine stream selectors</div>
           {this.renderExpression('{app="cassandra",namespace="prod"}')}
-          <div className="cheat-sheet-item__label">Returns all log lines from streams that have both labels.</div>
+          Returns all log lines from streams that have both labels.
         </div>
 
-        <div className="cheat-sheet-item">
-          <div className="cheat-sheet-item__title">Filtering for search terms.</div>
+        <div className={styles.cheatSheetItem}>
+          <div className={styles.cheatSheetItemTitle}>Filtering for search terms.</div>
           {this.renderExpression('{app="cassandra"} |~ "(duration|latency)s*(=|is|of)s*[d.]+"')}
           {this.renderExpression('{app="cassandra"} |= "exact match"')}
           {this.renderExpression('{app="cassandra"} != "do not match"')}
-          <div className="cheat-sheet-item__label">
-            <a href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" target="logql">
-              LogQL
-            </a>{' '}
-            supports exact and regular expression filters.
-          </div>
+          <a href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" target="logql">
+            LogQL
+          </a>{' '}
+          supports exact and regular expression filters.
         </div>
         {LOGQL_EXAMPLES.map((item) => (
-          <div className="cheat-sheet-item" key={item.expression}>
-            <div className="cheat-sheet-item__title">{item.title}</div>
+          <div className={styles.cheatSheetItem} key={item.expression}>
+            <div className={styles.cheatSheetItemTitle}>{item.title}</div>
             {this.renderExpression(item.expression)}
-            <div className="cheat-sheet-item__label">{item.label}</div>
+            {item.label}
           </div>
         ))}
       </div>
     );
   }
 }
+
+export default withTheme2(UnthemedLokiCheatSheet);
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  cheatSheetItem: css({
+    margin: theme.spacing(3, 0),
+  }),
+  cheatSheetItemTitle: css({
+    fontSize: theme.typography.h3.fontSize,
+  }),
+  cheatSheetExample: css({
+    margin: theme.spacing(0.5, 0),
+    // element is interactive, clear button styles
+    textAlign: 'left',
+    border: 'none',
+    background: 'transparent',
+    display: 'block',
+  }),
+});

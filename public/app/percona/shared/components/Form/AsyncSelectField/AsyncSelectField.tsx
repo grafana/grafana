@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { AsyncSelect } from '@grafana/ui';
 

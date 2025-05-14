@@ -191,7 +191,7 @@ func Test_CheckHealth(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{
 				Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"}},
-				sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+				sessions: &fakeSessionCache{getSessionWithAuthSettings: func(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error) {
 					return nil, fmt.Errorf("some sessions error")
 				}},
 			}, nil
@@ -229,9 +229,8 @@ func TestNewSession_passes_authSettings(t *testing.T) {
 				},
 				GrafanaSettings: expectedSettings,
 			},
-			sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
-				assert.NotNil(t, c.AuthSettings)
-				assert.Equal(t, expectedSettings, *c.AuthSettings)
+			sessions: &fakeSessionCache{getSessionWithAuthSettings: func(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error) {
+				assert.Equal(t, expectedSettings, a)
 				return &session.Session{
 					Config: &aws.Config{},
 				}, nil

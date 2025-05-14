@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Plugin } from 'slate-react';
 
 export function RunnerPlugin({ handler }: { handler?: (e: React.KeyboardEvent) => void }): Plugin {

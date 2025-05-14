@@ -287,19 +287,19 @@ describe('clock', () => {
   describe('size greater than or equal 1 hour', () => {
     it('default', () => {
       const str = toClock(7199999);
-      expect(formattedValueToString(str)).toBe('01h:59m:59s:999ms');
+      expect(formattedValueToString(str)).toBe('1h:59m:59s:999ms');
     });
     it('decimals equals 0', () => {
       const str = toClock(7199999, 0);
-      expect(formattedValueToString(str)).toBe('01h');
+      expect(formattedValueToString(str)).toBe('1h');
     });
     it('decimals equals 1', () => {
       const str = toClock(7199999, 1);
-      expect(formattedValueToString(str)).toBe('01h:59m');
+      expect(formattedValueToString(str)).toBe('1h:59m');
     });
     it('decimals equals 2', () => {
       const str = toClock(7199999, 2);
-      expect(formattedValueToString(str)).toBe('01h:59m:59s');
+      expect(formattedValueToString(str)).toBe('1h:59m:59s');
     });
   });
   describe('size greater than or equal 1 day', () => {
@@ -318,6 +318,24 @@ describe('clock', () => {
     it('decimals equals 2', () => {
       const str = toClock(89999999, 2);
       expect(formattedValueToString(str)).toBe('24h:59m:59s');
+    });
+  });
+  describe('size greater than or equal 100 hours', () => {
+    it('default', () => {
+      const str = toClock(363599999);
+      expect(formattedValueToString(str)).toBe('100h:59m:59s:999ms');
+    });
+    it('decimals equals 0', () => {
+      const str = toClock(363599999, 0);
+      expect(formattedValueToString(str)).toBe('100h');
+    });
+    it('decimals equals 1', () => {
+      const str = toClock(363599999, 1);
+      expect(formattedValueToString(str)).toBe('100h:59m');
+    });
+    it('decimals equals 2', () => {
+      const str = toClock(363599999, 2);
+      expect(formattedValueToString(str)).toBe('100h:59m:59s');
     });
   });
 });

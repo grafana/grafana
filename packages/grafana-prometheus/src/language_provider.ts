@@ -6,12 +6,17 @@ import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   AbstractQuery,
+  AdHocVariableFilter,
   getDefaultTimeRange,
   LanguageProvider,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
+import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -24,11 +29,19 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
+
+type UrlParamsType = {
+  start?: string;
+  end?: string;
+  'match[]'?: string;
+  limit?: string;
+};
 
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
@@ -181,7 +194,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       if (selector === EMPTY_SELECTOR) {
         return await this.fetchDefaultSeries();
       } else {
-        return await this.fetchSeriesLabels(selector, withName);
+        return await this.fetchSeriesLabels(selector, withName, REMOVE_SERIES_LIMIT);
       }
     } catch (error) {
       // TODO: better error handling
@@ -196,7 +209,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
-    const url = `/api/v1/label/${interpolatedName}/values`;
+    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
+    const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
   };
@@ -220,10 +234,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
-        searchParams.append('match[]', visualQuery.query.metric);
+        const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+        searchParams.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
         if (visualQuery.query.binaryQueries) {
           visualQuery.query.binaryQueries.forEach((bq) => {
-            searchParams.append('match[]', bq.query.metric);
+            searchParams.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
           });
         }
       }
@@ -251,7 +266,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       const data = await this.getSeries(selector);
-      return data[labelName] ?? [];
+      return data[removeQuotesIfExist(labelName)] ?? [];
     }
     return await this.fetchSeriesValuesWithMatch(labelName, selector);
   };
@@ -285,7 +300,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       requestOptions = undefined;
     }
 
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, requestOptions);
+    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName ?? ''));
+
+    const value = await this.request(
+      `/api/v1/label/${interpolatedAndEscapedName}/values`,
+      [],
+      urlParams,
+      requestOptions
+    );
     return value ?? [];
   };
 
@@ -325,7 +347,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(name, withName);
     } else {
-      return this.fetchSeriesLabels(name, withName);
+      return this.fetchSeriesLabels(name, withName, REMOVE_SERIES_LIMIT);
     }
   };
 
@@ -334,14 +356,24 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * they can change over requested time.
    * @param name
    * @param withName
+   * @param withLimit
    */
-  fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(this.timeRange);
-    const urlParams = {
+    let urlParams: UrlParamsType = {
       ...range,
       'match[]': interpolatedName,
     };
+
+    if (withLimit !== 'none') {
+      urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
+    }
+
     const url = `/api/v1/series`;
 
     const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
@@ -389,6 +421,69 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
   });
+
+  /**
+   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   * @param timeRange
+   * @param queries
+   * @param scopes
+   * @param adhocFilters
+   * @param labelName
+   * @param limit
+   * @param requestId
+   */
+  fetchSuggestions = async (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ): Promise<string[]> => {
+    if (timeRange) {
+      this.timeRange = timeRange;
+    }
+
+    const url = '/suggestions';
+    const timeParams = this.datasource.getAdjustedInterval(this.timeRange);
+    const value = await this.request(
+      url,
+      [],
+      {
+        labelName,
+        queries: queries?.map((q) =>
+          this.datasource.interpolateString(q.expr, {
+            ...this.datasource.getIntervalVars(),
+            ...this.datasource.getRangeScopedVars(this.timeRange),
+          })
+        ),
+        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adhocFilters?.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        limit,
+        ...timeParams,
+      },
+      {
+        ...(requestId && { requestId }),
+        headers: {
+          ...this.getDefaultCacheHeaders()?.headers,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+
+    return value ?? [];
+  };
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
@@ -407,4 +502,11 @@ function isCancelledError(error: unknown): error is {
   cancelled: boolean;
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
+}
+
+// For utf8 labels we use quotes around the label
+// While requesting the label values we must remove the quotes
+export function removeQuotesIfExist(input: string): string {
+  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
+  return match?.[1] ?? input;
 }

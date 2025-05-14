@@ -38,13 +38,9 @@ Watch the following video to get started using Explore:
 
 ## Before you begin
 
-In order to access Explore, you must have either the `editor` or `administrator` role, unless the [`viewers_can_edit` option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#viewers_can_edit) is enabled. Refer to [Role and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/) for more information on what each role can access.
+In order to access Explore, you must have either the `editor` or `administrator` basic role or the `data sources explore` role. Refer to [Role and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/) for more information on what each role can access.
 
 Refer to [Role-based access control (RBAC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
-
-{{< admonition type="note" >}}
-If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/https://grafana.com/auth/sign-in) to enable the `viewers_can_edit` option.
-{{< /admonition >}}
 
 ## Explore elements
 

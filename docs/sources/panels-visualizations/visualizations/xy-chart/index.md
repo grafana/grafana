@@ -59,10 +59,6 @@ refs:
 
 # XY chart
 
-{{< admonition type="note">}}
-To use xy charts, enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
-{{< /admonition >}}
-
 XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble:
 
 ![An xy chart showing height weight distribution](/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.0.png)
@@ -312,9 +308,9 @@ You can customize the following standard options:
 
 To learn more, refer to [Configure standard options](ref:configure-standard-options).
 
-## Data links
+## Data links and actions
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Field overrides
 

@@ -2,6 +2,14 @@
 ---
 name: Levitate / Detect breaking changes in PR
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
 on:
   pull_request:
     paths:
@@ -11,7 +19,7 @@ on:
 
 jobs:
   buildPR:
-    name: Build PR
+    name: Build PR packages artifacts
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,11 +31,11 @@ jobs:
           path: './pr'
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.9.0
+          node-version: 22.11.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - name: Restore yarn cache
         uses: actions/cache@v4
@@ -57,7 +65,7 @@ jobs:
           path: './pr/pr_built_packages.zip'
 
   buildBase:
-    name: Build Base
+    name: Build Base packages artifacts
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -71,11 +79,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.9.0
+          node-version: 22.11.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - name: Restore yarn cache
         uses: actions/cache@v4
@@ -105,17 +113,20 @@ jobs:
           path: './base/base_built_packages.zip'
 
   Detect:
-    name: Detect breaking changes
+    name: Detect breaking changes between PR and base
     runs-on: ubuntu-latest
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.9.0
+          node-version: 22.11.0
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v4
@@ -133,26 +144,30 @@ jobs:
       - name: Unzip artifact from base
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
-      - name: Get link for the Github Action job
-        id: job
-        uses: actions/github-script@v6
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          script: |
-              const name = 'Detect breaking changes';
-              const script = require('./.github/workflows/scripts/pr-get-job-link.js')
-              await script({name, github, context, core})
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.LEVITATE_SA }}
+          project_id: 'grafanalabs-global'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+          project_id: 'grafanalabs-global'
+          install_components: 'bq'
 
       - name: Detect breaking changes
         id: breaking-changes
         run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
-          GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
 
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
+            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
         uses: actions/upload-artifact@v4
@@ -162,7 +177,7 @@ jobs:
 
 
   Report:
-    name: Report breaking changes in PR
+    name: Report breaking changes in PR comment
     runs-on: ubuntu-latest
     needs: ['Detect']
 
@@ -198,15 +213,12 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           script: |
-            const { data } = await github.rest.issues.listLabelsOnIssue({
-              issue_number: process.env.PR_NUMBER,
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const labels = data.map(({ name }) => name);
-            const doesExist = labels.includes('levitate breaking change');
-
-            return doesExist ? 1 : 0;
+            return labels.some(label => label.name === 'levitate breaking change') ? 1 : 0
 
       # put the markdown into a variable
       - name: Levitate Markdown
@@ -217,9 +229,9 @@ jobs:
               echo 'levitate_markdown<<EOF'
               cat levitate.md
               echo EOF
-            } >> $GITHUB_OUTPUT
+            } >> "$GITHUB_OUTPUT"
             else
-              echo "levitate_markdown=No breaking changes detected" >> $GITHUB_OUTPUT
+              echo "levitate_markdown=No breaking changes detected" >> "$GITHUB_OUTPUT"
             fi
 
 
@@ -236,7 +248,8 @@ jobs:
             ${{ steps.levitate-markdown.outputs.levitate_markdown }}
 
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
-            [Console output](${{ steps.levitate-run.outputs.job_link }})
+
+            * Your pull request merge won't be blocked.
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
@@ -249,23 +262,41 @@ jobs:
           delete: true
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-      # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
-      - name: Post to Slack
+      - name: Send Slack Message via Payload
         id: slack
-        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && env.HAS_SECRETS
-        uses: slackapi/slack-github-action@v1.26.0
+        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
+        uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
         with:
-          payload: |
+          channel-id: "C031SLFH6G0"
+          payload:  |
             {
-              "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
-              "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
-              "job_link": "${{ steps.levitate-run.outputs.job_link }}",
-              "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
-              "message": "${{ steps.levitate-run.outputs.message }}"
+              "channel": "C031SLFH6G0",
+              "text": ":warning: Possible breaking changes detected in *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :warning:",
+              "icon_emoji": ":grot:",
+              "username": "Levitate Bot",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*grafana/grafana* repository has possible breaking changes"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    }
+                  ]
+                }
+              ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
-          HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
       # Add the label
       - name: Add "levitate breaking change" label
@@ -336,5 +367,10 @@ jobs:
             });
 
       - name: Exit
-        run: exit ${{ steps.levitate-run.outputs.exit_code }}
+        run: |
+          if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
+            echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
+          fi
+
+          exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash

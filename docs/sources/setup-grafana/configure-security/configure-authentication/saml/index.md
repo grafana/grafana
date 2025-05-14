@@ -22,7 +22,7 @@ weight: 500
 # Configure SAML authentication using the configuration file
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
@@ -30,8 +30,8 @@ SAML authentication integration allows your Grafana users to log in by using an 
 You can configure SAML authentication in Grafana through one of the following methods:
 
 - the Grafana configuration file
-- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
-- the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
+- the API (refer to [SSO Settings API](../../../../developers/http_api/sso-settings/))
+- the user interface (refer to [Configure SAML authentication using the Grafana user interface](../saml-ui/))
 - the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
 {{% admonition type="note" %}}
@@ -66,38 +66,45 @@ In terms of initiation, Grafana supports:
 - SP-initiated requests
 - IdP-initiated requests
 
-By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
+By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)](#idp-initiated-single-sign-on-sso).
 
-{{% admonition type="warning" %}}
-It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have more than 150 groups, Azure AD provides a link to retrieve the groups that only works for OIDC/OAuth workflows. At the moment it is not possible to use this link with SAML authentication in Grafana.
+{{% admonition type="note" %}}
+It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
-It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread" >}}) instead of SAML if you have more than 150 groups.
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows,.
+
+As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
+
+Related links:
 
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
-
-{{% /admonition %}}
+- [Set up SAML with Azure AD](#set-up-saml-with-azure-ad)
+- [Configure a Graph API application in Azure AD](#configure-a-graph-api-application-in-azure-ad)
+  {{% /admonition %}}
 
 ### Edit SAML options in the Grafana config file
 
-1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "../../../configure-grafana/enterprise-configuration#enabled" >}}) to `true`.
-1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](../../../configure-grafana/enterprise-configuration/#enabled) to `true`.
+1. Configure the [certificate and private key](#certificate-and-private-key).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
-1. Set the [`idp_metadata_url`]({{< relref "../../../configure-grafana/enterprise-configuration#idp_metadata_url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
+1. Set the [`idp_metadata_url`](../../../configure-grafana/enterprise-configuration/#idp_metadata_url) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
 1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
-   - [`assertion_attribute_login`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_login" >}})
-   - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
-   - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
-   - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
+   - [`assertion_attribute_login`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_login)
+   - [`assertion_attribute_email`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_email)
+   - [`assertion_attribute_name`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_name)
+   - [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_groups)
+1. (Optional) Set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
 1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
 
-```bash
+```ini
 [server]
 root_url = https://grafana.example.com
 
 [auth.saml]
 enabled = true
+name = My IdP
 auto_login = false
 private_key_path = "/path/to/private_key.pem"
 certificate_path = "/path/to/certificate.cert"
@@ -112,7 +119,7 @@ assertion_attribute_groups = Group
 
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
-Refer to [Configuration]({{< relref "../../../configure-grafana" >}}) for more information about configuring Grafana.
+Refer to [Configuration](../../../configure-grafana/) for more information about configuring Grafana.
 
 ## Additional configuration for HTTP-Post binding
 
@@ -139,7 +146,7 @@ You can only use one form of each configuration option. Using multiple forms, su
 
 ---
 
-### **Example** of how to generate SAML credentials:
+### Generate private key for SAML authentication:
 
 An example of how to generate a self-signed certificate and private key that's valid for one year:
 
@@ -158,6 +165,111 @@ The key you provide should look like:
 -----END PRIVATE KEY-----
 ```
 
+## Set up SAML with Azure AD
+
+Grafana supports user authentication through Azure AD, which is useful when you want users to access Grafana using single sign-on. This topic shows you how to configure SAML authentication in Grafana with [Azure AD](https://azure.microsoft.com/en-us/services/active-directory/).
+
+**Before you begin:**
+
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana.
+  - [Roles and permissions](../../../../administration/roles-and-permissions/).
+- Learn the limitations of Azure AD SAML integration.
+  - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+- Configure SAML integration with Azure AD, create an app integration inside the Azure AD organization first.
+  - [Add app integration in Azure AD](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/add-application-portal-configure)
+- If you have users that belong to more than 150 groups, you need to configure a registered application to provide an Azure Graph API to retrieve the groups.
+  - [Setup Azure AD Graph API applications](#set-up-saml-with-azure-ad)
+
+### Generate self-signed certificates
+
+Azure AD requires a certificate to sign the SAML requests. You can generate a self-signed certificate using the following command:
+
+```sh
+$ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+```
+
+This will generate a `key.pem` and `cert.pem` file that you can use for the `private_key_path` and `certificate_path` configuration options.
+
+### Add Microsoft Entra SAML Toolkit from the gallery
+
+> Taken from https://learn.microsoft.com/en-us/entra/identity/saas-apps/saml-toolkit-tutorial#add-microsoft-entra-saml-toolkit-from-the-gallery
+
+1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
+1. Search for **Enterprise Applications**.
+1. In the **Enterprise applications** pane, select **New application**.
+1. In the search box, enter **SAML Toolkit**, and then select the **Microsoft Entra SAML Toolkit** from the results panel.
+1. Add a descriptive name and select **Create**.
+
+### Configure the SAML Toolkit application endpoints
+
+In order to validate Azure AD users with Grafana, you need to configure the SAML Toolkit application endpoints by creating a new SAML integration in the Azure AD organization.
+
+> For the following configuration, we will use `https://localhost` as the Grafana URL. Replace it with your Grafana URL.
+
+1. In the **SAML Toolkit application**, select **Set up single sign-on**.
+1. In the **Single sign-on** pane, select **SAML**.
+1. In the Set up **Single Sign-On with SAML** pane, select the pencil icon for **Basic SAML Configuration** to edit the settings.
+1. In the **Basic SAML Configuration** pane, click on the **Edit** button and update the following fields:
+   - In the **Identifier (Entity ID)** field, enter `https://localhost/saml/metadata`.
+   - In the **Reply URL (Assertion Consumer Service URL)** field, enter `https://localhost/saml/acs`.
+   - In the **Sign on URL** field, enter `https://localhost`.
+   - In the **Relay State** field, enter `https://localhost`.
+   - In the **Logout URL** field, enter `https://localhost/saml/slo`.
+1. Select **Save**.
+1. At the **SAML Certificate** section, copy the **App Federation Metadata Url**.
+   - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
+
+### Configure a Graph API application in Azure AD
+
+While an Azure AD tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Azure AD and grant it the necessary permissions.
+
+> [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+
+> For the following configuration, the URL `https://localhost` will be used as the Grafana URL. Replace it with your Grafana instance URL.
+
+#### Create a new Application registration
+
+This app registration will be used as a Service Account to retrieve more information about the user from the Azure AD.
+
+1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
+1. In the left-hand navigation pane, select the Azure Active Directory service, and then select **App registrations**.
+1. Click the **New registration** button.
+1. In the **Register an application** pane, enter a name for the application.
+1. In the **Supported account types** section, select the account types that can use the application.
+1. In the **Redirect URI** section, select Web and enter `https://localhost/login/azuread`.
+1. Click the **Register** button.
+
+#### Set up permissions for the application
+
+1. In the overview pane, look for **API permissions** section and select **Add a permission**.
+1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Application permissions**.
+1. In the **Select permissions** pane, under the **GroupMember** section, select **GroupMember.Read.All**.
+1. In the **Select permissions** pane, under the **User** section, select **User.Read.All**.
+1. Click the **Add permissions** button at the bottom of the page.
+1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Delegated permissions**.
+1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
+1. Click the **Add permissions** button at the bottom of the page.
+1. In the **API permissions** section, select **Grant admin consent for <your-organization>**.
+
+The following table shows what the permissions look like from the Azure AD portal:
+
+| Permissions name | Type        | Admin consent required | Status  |
+| ---------------- | ----------- | ---------------------- | ------- |
+| `Group.Read.All` | Application | Yes                    | Granted |
+| `User.Read`      | Delegated   | No                     | Granted |
+| `User.Read.All`  | Application | Yes                    | Granted |
+
+{{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Azure AD for the App registration" >}}
+
+#### Generate a client secret
+
+1. In the **Overview** pane, select **Certificates & secrets**.
+1. Select **New client secret**.
+1. In the **Add a client secret** pane, enter a description for the secret.
+1. Set the expiration date for the secret.
+1. Select **Add**.
+1. Copy the value of the secret. This value is used in the `client_secret` field in the `custom.ini` file.
+
 ## Set up SAML with Okta
 
 Grafana supports user authentication through Okta, which is useful when you want your users to access Grafana using single sign on. This guide will follow you through the steps of configuring SAML authentication in Grafana with [Okta](https://okta.com/). You need to be an admin in your Okta organization to access Admin Console and create SAML integration. You also need permissions to edit Grafana config file and restart Grafana server.
@@ -165,76 +277,39 @@ Grafana supports user authentication through Okta, which is useful when you want
 **Before you begin:**
 
 - To configure SAML integration with Okta, create an app integration inside the Okta organization first. [Add app integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
-- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
 **To set up SAML with Okta:**
 
 1. Log in to the [Okta portal](https://login.okta.com/).
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
 1. In the Admin Console, navigate to **Applications** > **Applications**.
-1. Click **Add Application**.
-1. Click **Create New App** to start the Application Integration Wizard.
-1. Choose **Web** as a platform.
-1. Select **SAML 2.0** in the Sign on method section.
+1. Click **Create App Integration** to start the Application Integration Wizard.
+1. Choose **SAML 2.0** as the **Sign-in method**.
 1. Click **Create**.
 1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
 
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
-   - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
+   - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
+     {{% admonition type="note" %}}
+     If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
+     {{% /admonition %}}
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
-     | Attribute name (in Grafana) | Name and value (in Okta profile)                   |
-     | --------------------------- | -------------------------------------------------- |
-     | Login                       | Login `user.login`                                 |
-     | Email                       | Email `user.email`                                 |
-     | DisplayName                 | DisplayName `user.firstName + " " + user.lastName` |
+     | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
+     | --------------------------- | ---------------------------------------------------- | ----------------------------------------- |
+     | Login                       | Login - `user.login`                                 | `assertion_attribute_login = Login`       |
+     | Email                       | Email - `user.email`                                 | `assertion_attribute_email = Email`       |
+     | DisplayName                 | DisplayName - `user.firstName + " " + user.lastName` | `assertion_attribute_name = DisplayName`  |
 
-   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
+   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`, ensure it matches the `asssertion_attribute_groups` setting in Grafana) and set filter to `Matches regex .*` to return all user groups.
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
 
-## Configure SAML authentication in Grafana
-
-The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
-
-| Setting                                                    | Required | Description                                                                                                                                                                                                  | Default                                               |
-| ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                                                                                                                       | `false`                                               |
-| `name`                                                     | No       | Name used to refer to the SAML authentication in the Grafana user interface.                                                                                                                                 | `SAML`                                                |
-| `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                                                                                                                           | `false`                                               |
-| `allow_sign_up`                                            | No       | Whether to allow new Grafana user creation through SAML login. If set to `false`, then only existing Grafana users can log in with SAML.                                                                     | `true`                                                |
-| `auto_login`                                               | No       | Whether SAML auto login is enabled                                                                                                                                                                           | `false`                                               |
-| `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed                                                                                                                                                                  | `false`                                               |
-| `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                                                                                                                                   |                                                       |
-| `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key                                                                                                                                                         |                                                       |
-| `signature_algorithm`                                      | No       | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512.                                                                                             |                                                       |
-| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                                                                                                                             |                                                       |
-| `max_issue_delay`                                          | No       | Duration, since the IdP issued a response and the SP is allowed to process it                                                                                                                                | `90s`                                                 |
-| `metadata_valid_duration`                                  | No       | Duration, for how long the SP metadata is valid                                                                                                                                                              | `48h`                                                 |
-| `relay_state`                                              | No       | Relay state for IdP-initiated login. Should match relay state configured in IdP                                                                                                                              |                                                       |
-| `assertion_attribute_name`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion. | `displayName`                                         |
-| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle                                                                                                             | `mail`                                                |
-| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email                                                                                                                    | `mail`                                                |
-| `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups                                                                                                                   |                                                       |
-| `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles                                                                                                                    |                                                       |
-| `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
-| `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
-| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`.  |                                                       |
-| `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role                                                                                                                              |                                                       |
-| `role_values_viewer`                                       | No       | List of comma- or space-separated roles which will be mapped into the Viewer role                                                                                                                            |                                                       |
-| `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                                                                                                            |                                                       |
-| `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                                             |                                                       |
-| `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                                                       |                                                       |
-| `name_id_format`                                           | No       | The Name ID Format to request within the SAML assertion                                                                                                                                                      | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` |
-
 ### Signature algorithm
-
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
 
 The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
@@ -246,10 +321,13 @@ By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
 
 The following list includes valid configuration field values:
 
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
-- `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
-- `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`
+| `name_id_format` value in the configuration file or Terraform | `Name identifier format` on the UI |
+| ------------------------------------------------------------- | ---------------------------------- |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`         | Default                            |
+| `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`       | Unspecified                        |
+| `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`      | Email address                      |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`        | Persistent                         |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`         | Transient                          |
 
 ### IdP metadata
 
@@ -284,24 +362,37 @@ The integration provides two key endpoints as part of Grafana:
 
 ### IdP-initiated Single Sign-On (SSO)
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
-
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
 
 ### Single logout
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
-
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
 `HTTP-Redirect` and `HTTP-POST` bindings are supported for single logout.
 When using `HTTP-Redirect` bindings the query should include a request signature.
+
+#### Configure single logout
+
+To configure single logout in Grafana:
+
+1. Enable the `single_logout` option in your configuration.
+2. Ensure the `name_id_format` matches the format your IdP expects (e.g., `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`).
+3. Enable the `improvedExternalSessionHandlingSAML` feature toggle for complete NameID and SessionIndex support (Grafana v11.5+).
+4. After enabling the feature, users may need to log in again to establish a new session.
+
+#### `NameID` and `SessionIndex` changes in Grafana v11.5
+
+Before Grafana version 11.5, the `Login` attribute value (extracted from the SAML assertion using the `assertion_attribute_login` configuration) was used as the `NameID` in the logout request. This could cause issues with single logout if the `assertion_attribute_login` value differed from what the Identity Provider (IdP) expected.
+
+Additionally, Grafana did not support IdP sessions and could not include the `SessionIndex` (a unique identifier for the user session on the IdP side) value in the logout request. This could result in issues such as the user being logged out from all of their applications/IdP sessions when logging out from Grafana.
+
+Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
+
+{{% admonition type="note" %}}
+These improvements are available in public preview behind the `improvedExternalSessionHandling` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles](../../../configure-grafana/feature-toggles/)
+{{% /admonition %}}
 
 ### Assertion mapping
 
@@ -340,16 +431,15 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Configure team sync
+### Configure group synchronization
+
+Group synchronization allows you to map user groups from an identity provider to Grafana teams and roles.
+
+To use SAML group synchronization, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups.
+Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
 
 {{% admonition type="note" %}}
-Team sync support for SAML is available in Grafana version 7.0 and later.
-{{% /admonition %}}
-
-To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
-
-{{% admonition type="note" %}}
-Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
+Team sync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
 {{% /admonition %}}
 
 Given the following partial SAML assertion:
@@ -379,31 +469,27 @@ The configuration would look like this:
 assertion_attribute_groups = groups
 ```
 
-The following `External Group ID`s would be valid for input in the desired team's _External group sync_ tab:
+The following `External Group ID`s would be valid for configuring team sync or role sync in Grafana:
 
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+To learn more about how to configure group synchronization, refer to [Configure team sync](../../configure-team-sync/) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 ### Configure role sync
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
-
-1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
-1. Set the [`role_values_none`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_none" >}}) option to the values mapped to the `None` role.
-1. Set the [`role_values_viewer`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_viewer" >}}) option to the values mapped to the `Viewer` role.
-1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
-1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
-1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
+1. In the configuration file, set [`assertion_attribute_role`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_role) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_none`](../../../configure-grafana/enterprise-configuration/#role_values_none) option to the values mapped to the `None` role.
+1. Set the [`role_values_viewer`](../../../configure-grafana/enterprise-configuration/#role_values_viewer) option to the values mapped to the `Viewer` role.
+1. Set the [`role_values_editor`](../../../configure-grafana/enterprise-configuration/#role_values_editor) option to the values mapped to the `Editor` role.
+1. Set the [`role_values_admin`](../../../configure-grafana/enterprise-configuration/#role_values_admin) option to the values mapped to the organization `Admin` role.
+1. Set the [`role_values_grafana_admin`](../../../configure-grafana/enterprise-configuration/#role_values_grafana_admin) option to the values mapped to the `Grafana Admin` role.
 
 If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` config option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
-For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+For more information about roles and permissions in Grafana, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
 Example configuration:
 
@@ -419,10 +505,6 @@ role_values_grafana_admin = superadmin
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
 
-{{% admonition type="note" %}}
-Available in Grafana version 9.2 and later.
-{{% /admonition %}}
-
 If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_sync` configuration option.
 
 Example configuration:
@@ -434,21 +516,38 @@ skip_org_role_sync = true
 
 ### Configure organization mapping
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
-
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
-1. In configuration file, set [`assertion_attribute_org`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
-1. Set [`org_mapping`]({{< relref "../../../configure-grafana/enterprise-configuration#org_mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
+1. In configuration file, set [`assertion_attribute_org`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_org) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
+1. Set [`org_mapping`](../../../configure-grafana/enterprise-configuration/#org_mapping) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by ID. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
 
-For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with ID `2` as Editor and users from `Sales` - to the org with ID `3` as Admin, based on `Org` assertion attribute value:
 
-```bash
+```ini
 [auth.saml]
 assertion_attribute_org = Org
 org_mapping = Engineering:2:Editor, Sales:3:Admin
+```
+
+Starting from Grafana version 11.5, you can use the organization name instead of the organization ID in the `org_mapping` option. Ensure that the organization name you configure matches exactly with the organization name in Grafana, as it is case-sensitive. If the organization name is not found in Grafana, the mapping will be ignored. If the external organization or the organization name contains spaces, use the JSON syntax for the `org_mapping` option:
+
+```ini
+org_mapping = ["Org 1:2:Editor", "ExternalOrg:ACME Corp.:Admin"]
+```
+
+If one of the mappings contains a `:`, use the JSON syntax and escape the `:` with a backslash:
+
+```ini
+# Assign users from "External:Admin" to the organization with name "ACME Corp" as Admin
+org_mapping = ["External\:Admin:ACME Corp:Admin"]
+```
+
+For example, to assign users from `Engineering` organization to the Grafana organization with name `ACME Corp` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
+
+```ini
+[auth.saml]
+assertion_attribute_org = Org
+org_mapping = ["Engineering:ACME Corp:Editor", "Sales:3:Admin"]
 ```
 
 You can specify multiple organizations both for the IdP and Grafana:
@@ -460,10 +559,6 @@ You can use `*` as the SAML Organization if you want all your users to be in som
 
 - `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
 
-{{% admonition type="note" %}}
-Available in Grafana version 9.2 and later.
-{{% /admonition %}}
-
 You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
 
 - `org_mapping = Engineering:*` to map users from `Engineering` to all existing Grafana organizations.
@@ -471,11 +566,7 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 
 ### Configure allowed organizations
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
-
-With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration#allowed_organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+With the [`allowed_organizations`](../../../configure-grafana/enterprise-configuration/#allowed_organizations) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
 To put values containing spaces in the list, use the following JSON syntax:
 
@@ -485,7 +576,7 @@ allowed_organizations = ["org 1", "second org"]
 
 ### Example SAML configuration
 
-```bash
+```ini
 [auth.saml]
 enabled = true
 auto_login = false
@@ -545,9 +636,9 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Troubleshoot SAML authentication in Grafana
 
-To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../../../configure-grafana#filters" >}}) for more information.
+To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration](../../../configure-grafana/#filters) for more information.
 
-```bash
+```ini
 [log]
 filters = saml.auth:debug
 ```
@@ -601,11 +692,11 @@ The keys you provide should look like:
 
 When the user logs in using SAML and gets presented with "origin not allowed", the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as Grafana's CSRF checks deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
 
-To solve this issue, you can configure either the [`csrf_trusted_origins`]({{< relref "../../../configure-grafana#csrf_trusted_origins" >}}) or [`csrf_additional_headers`]({{< relref "../../../configure-grafana#csrf_additional_headers" >}}) option in the SAML configuration.
+To solve this issue, you can configure either the [`csrf_trusted_origins`](../../../configure-grafana/#csrf_trusted_origins) or [`csrf_additional_headers`](../../../configure-grafana/#csrf_additional_headers) option in the SAML configuration.
 
 Example of a configuration file:
 
-```bash
+```ini
 # config.ini
 ...
 [security]
@@ -641,3 +732,43 @@ cookie_secure = true
 ```
 
 Ensure cookie_secure is set to true to ensure that cookies are only sent over HTTPS.
+
+## Configure SAML authentication in Grafana
+
+The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
+
+| Setting                                                    | Required | Description                                                                                                                                                                                                  | Default                                               |
+| ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `enabled`                                                  | No       | Whether SAML authentication is allowed.                                                                                                                                                                      | `false`                                               |
+| `name`                                                     | No       | Name used to refer to the SAML authentication in the Grafana user interface.                                                                                                                                 | `SAML`                                                |
+| `entity_id`                                                | No       | The entity ID of the service provider. This is the unique identifier of the service provider.                                                                                                                | `https://{Grafana URL}/saml/metadata`                 |
+| `single_logout`                                            | No       | Whether SAML Single Logout is enabled.                                                                                                                                                                       | `false`                                               |
+| `allow_sign_up`                                            | No       | Whether to allow new Grafana user creation through SAML login. If set to `false`, then only existing Grafana users can log in with SAML.                                                                     | `true`                                                |
+| `auto_login`                                               | No       | Whether SAML auto login is enabled.                                                                                                                                                                          | `false`                                               |
+| `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed.                                                                                                                                                                 | `false`                                               |
+| `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate.                                                                                                                                                  |                                                       |
+| `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key.                                                                                                                                                        |                                                       |
+| `signature_algorithm`                                      | No       | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512.                                                                                             |                                                       |
+| `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML.                                                                                                                                            |                                                       |
+| `max_issue_delay`                                          | No       | Maximum time allowed between the issuance of an AuthnRequest by the SP and the processing of the Response.                                                                                                   | `90s`                                                 |
+| `metadata_valid_duration`                                  | No       | Duration for which the SP metadata remains valid.                                                                                                                                                            | `48h`                                                 |
+| `relay_state`                                              | No       | Relay state for IdP-initiated login. This should match the relay state configured in the IdP.                                                                                                                |                                                       |
+| `assertion_attribute_name`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion. | `displayName`                                         |
+| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle.                                                                                                            | `mail`                                                |
+| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email.                                                                                                                   | `mail`                                                |
+| `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups.                                                                                                                  |                                                       |
+| `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles.                                                                                                                   |                                                       |
+| `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
+| `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
+| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`.  |                                                       |
+| `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role.                                                                                                                             |                                                       |
+| `role_values_viewer`                                       | No       | List of comma- or space-separated roles which will be mapped into the Viewer role.                                                                                                                           |                                                       |
+| `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role.                                                                                                                           |                                                       |
+| `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role.                                                                                                                            |                                                       |
+| `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role.                                                                                                      |                                                       |
+| `skip_org_role_sync`                                       | No       | Whether to skip organization role synchronization.                                                                                                                                                           | `false`                                               |
+| `name_id_format`                                           | No       | Specifies the format of the requested NameID element in the SAML AuthnRequest.                                                                                                                               | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` |
+| `client_id`                                                | No       | Client ID of the IdP service application used to retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                            |                                                       |
+| `client_secret`                                            | No       | Client secret of the IdP service application used to retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                        |                                                       |
+| `token_url`                                                | No       | URL to retrieve the access token from the IdP. (Microsoft Entra ID only)                                                                                                                                     |                                                       |
+| `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                                  | `false`                                               |

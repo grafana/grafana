@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +6,6 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -108,6 +106,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    links: options?.links ?? [],
   }),
 
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<CanvasElementConfig>) => {
@@ -115,6 +114,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
 
     const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
@@ -123,8 +123,6 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     const { background, border } = elementOptions;
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;

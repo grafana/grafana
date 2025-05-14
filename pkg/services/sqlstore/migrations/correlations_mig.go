@@ -38,7 +38,6 @@ func addCorrelationsMigrations(mg *Migrator) {
 			// All existing records will have '0' assigned
 			{Name: "org_id", Type: DB_BigInt, IsPrimaryKey: true, Default: "0"},
 			{Name: "source_uid", Type: DB_NVarchar, Length: 40, Nullable: false, IsPrimaryKey: true},
-			// Nullable because in the future we want to have correlations to external resources
 			{Name: "target_uid", Type: DB_NVarchar, Length: 40, Nullable: true},
 			{Name: "label", Type: DB_Text, Nullable: false},
 			{Name: "description", Type: DB_Text, Nullable: false},
@@ -62,5 +61,9 @@ func addCorrelationsMigrations(mg *Migrator) {
 
 	mg.AddMigration("add provisioning column", NewAddColumnMigration(correlationsV2, &Column{
 		Name: "provisioned", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("add type column", NewAddColumnMigration(correlationsV2, &Column{
+		Name: "type", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "'query'",
 	}))
 }

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
@@ -65,9 +65,9 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		headers["Accept-Language"] = acceptLanguageHeader
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		hs.log.Error("Failed to parse user id", "err", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		hs.log.Debug("Failed to parse user id", "err", err)
 	}
 
 	encoding := queryReader.Get("encoding", "")

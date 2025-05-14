@@ -4,7 +4,7 @@ import { ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/d
 import * as runtime from '@grafana/runtime';
 import { DataSourceSrv, LocationService } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';

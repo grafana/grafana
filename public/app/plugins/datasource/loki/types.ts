@@ -66,6 +66,7 @@ export type DerivedFieldConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
   matcherType?: 'label' | 'regex';
+  targetBlank?: boolean;
 };
 
 export enum LokiVariableQueryType {
@@ -102,6 +103,16 @@ export interface ParserAndLabelKeysResult {
   hasLogfmt: boolean;
   hasPack: boolean;
   unwrapLabelKeys: string[];
+}
+
+export interface DetectedFieldsResult {
+  fields: Array<{
+    label: string;
+    type: 'bytes' | 'float' | 'int' | 'string' | 'duration';
+    cardinality: number;
+    parsers: Array<'logfmt' | 'json'> | null;
+  }>;
+  limit: number;
 }
 
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

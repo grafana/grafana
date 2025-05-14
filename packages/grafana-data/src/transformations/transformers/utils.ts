@@ -1,15 +1,11 @@
-import { BootData, DataFrame } from '../../types';
+import { BootData } from '../../types/config';
+import { DataFrame } from '../../types/dataFrame';
 
 declare global {
   interface Window {
     grafanaBootData?: BootData;
   }
 }
-
-export const transformationsVariableSupport = () => {
-  return window?.grafanaBootData?.settings?.featureToggles?.transformationsVariableSupport;
-};
-
 /**
  * Retrieve the maximum number of fields in a series of a dataframe.
  */

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TooltipDisplayMode } from '@grafana/schema';
 
 import { VizTooltipContentProps } from '../../../components/VizTooltip';

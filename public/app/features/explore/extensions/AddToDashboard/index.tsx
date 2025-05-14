@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Modal, ToolbarButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -6,7 +6,7 @@ import { useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
 
-import { AddToDashboardForm } from './AddToDashboardForm';
+import { ExploreToDashboardPanel } from './ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './getAddToDashboardTitle';
 
 interface Props {
@@ -35,7 +35,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
 
       {isOpen && (
         <Modal title={getAddToDashboardTitle()} onDismiss={onClose} isOpen>
-          <AddToDashboardForm onClose={onClose} exploreId={exploreId} />
+          <ExploreToDashboardPanel onClose={onClose} exploreId={exploreId} />
         </Modal>
       )}
     </>

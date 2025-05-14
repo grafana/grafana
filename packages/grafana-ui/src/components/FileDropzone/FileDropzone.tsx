@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { isString, uniqueId } from 'lodash';
-import React, { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -185,6 +186,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   };
 
   const renderErrorMessages = (errors: FileError[]) => {
+    const size = formattedValueToString(formattedSize);
     return (
       <div className={styles.errorAlert}>
         <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
@@ -193,7 +195,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
               case ErrorCode.FileTooLarge:
                 return (
                   <div key={error.message + error.code}>
-                    File is larger than {formattedValueToString(formattedSize)}
+                    <Trans i18nKey="grafana-ui.file-dropzone.file-too-large">File is larger than {{ size }}</Trans>
                   </div>
                 );
               default:
@@ -218,7 +220,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
       <small className={cx(styles.small, styles.acceptContainer)}>
         {options?.maxSize && `Max file size: ${formattedValueToString(formattedSize)}`}
-        {options?.maxSize && options?.accept && <span className={styles.acceptSeparator}>|</span>}
+        {options?.maxSize && options?.accept && <span className={styles.acceptSeparator}>{'|'}</span>}
         {options?.accept && getAcceptedFileTypeText(options.accept)}
       </small>
       {fileList}

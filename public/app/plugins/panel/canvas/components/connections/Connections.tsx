@@ -1,10 +1,11 @@
-import React from 'react';
+import * as React from 'react';
 import { BehaviorSubject } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import { CanvasConnection, ConnectionCoordinates, ConnectionPath } from 'app/features/canvas/element';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { ConnectionState } from '../../types';
 import {
@@ -111,7 +112,7 @@ export class Connections {
       return undefined;
     }
 
-    elementTarget = this.scene.findElementByTarget(element);
+    elementTarget = findElementByTarget(element, this.scene.root.elements);
 
     if (!elementTarget && element.parentElement) {
       elementTarget = this.findElementTarget(element.parentElement);
@@ -207,8 +208,8 @@ export class Connections {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = event.pageX - (parentBoundingRect.x ?? 0);
+    const y = event.pageY - (parentBoundingRect.y ?? 0);
 
     this.connectionLine.setAttribute('x2', `${x / transformScale}`);
     this.connectionLine.setAttribute('y2', `${y / transformScale}`);
@@ -327,8 +328,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -482,8 +483,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);

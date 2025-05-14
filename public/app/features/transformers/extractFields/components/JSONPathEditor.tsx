@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
 
@@ -119,12 +120,12 @@ const getTooltips = () => {
 
 function getStyle() {
   return {
-    list: css`
-      margin-left: 20px;
-    `,
-    removeIcon: css`
-      margin: 0 0 0 4px;
-      align-items: center;
-    `,
+    list: css({
+      marginLeft: '20px',
+    }),
+    removeIcon: css({
+      margin: '0 0 0 4px',
+      alignItems: 'center',
+    }),
   };
 }

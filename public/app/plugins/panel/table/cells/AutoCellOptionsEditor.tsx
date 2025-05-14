@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TableAutoCellOptions, TableColorTextCellOptions } from '@grafana/schema';
 import { Field, Switch, Badge, Label } from '@grafana/ui';
 

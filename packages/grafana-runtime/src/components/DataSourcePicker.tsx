@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 // Components
 import {

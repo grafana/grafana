@@ -1,5 +1,5 @@
 import { defaults } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMount } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';

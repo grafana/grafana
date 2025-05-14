@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -9,7 +10,8 @@ import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
@@ -33,7 +35,7 @@ export interface NestedFolderPickerProps {
   excludeUIDs?: string[];
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
-  permission?: PermissionLevelString.View | PermissionLevelString.Edit;
+  permission?: 'view' | 'edit';
 
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
@@ -49,7 +51,7 @@ async function getSearchResults(searchQuery: string, permission?: PermissionLeve
     query: searchQuery,
     kind: ['folder'],
     limit: 100,
-    permission: permission,
+    permission,
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
@@ -62,7 +64,7 @@ export function NestedFolderPicker({
   showRootFolder = true,
   clearable = false,
   excludeUIDs,
-  permission = PermissionLevelString.Edit,
+  permission = 'edit',
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
@@ -80,12 +82,23 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
+  // Map the permission string union to enum value for compatibility
+  const permissionLevel = useMemo(() => {
+    if (permission === 'view') {
+      return PermissionLevelString.View;
+    } else if (permission === 'edit') {
+      return PermissionLevelString.Edit;
+    }
+
+    throw new Error('Invalid permission');
+  }, [permission]);
+
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
-  } = useFoldersQuery(isBrowsing, foldersOpenState, permission);
+  } = useFoldersQuery(isBrowsing, foldersOpenState, permissionLevel);
 
   useEffect(() => {
     if (!search) {
@@ -96,7 +109,7 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission).then((queryResponse) => {
+    debouncedSearch(search, permissionLevel).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
@@ -108,7 +121,7 @@ export function NestedFolderPicker({
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission]);
+  }, [search, permissionLevel]);
 
   // the order of middleware is important!
   const middleware = [

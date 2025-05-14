@@ -1,14 +1,14 @@
 import { Store } from 'redux';
 
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { AngularComponent, usePluginLinkExtensions } from '@grafana/runtime';
+import { AngularComponent, usePluginLinks } from '@grafana/runtime';
 import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { PanelModel } from '../state';
+import { PanelModel } from '../state/PanelModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { getPanelMenu } from './getPanelMenu';
@@ -22,16 +22,16 @@ jest.mock('app/core/services/context_srv', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionsHook: jest.fn(),
-  usePluginLinkExtensions: jest.fn(),
+  setPluginLinksHook: jest.fn(),
+  usePluginLinks: jest.fn(),
 }));
 
-const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
+const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 describe('getPanelMenu()', () => {
   beforeEach(() => {
-    usePluginLinkExtensionsMock.mockRestore();
-    usePluginLinkExtensionsMock.mockReturnValue({ extensions: [], isLoading: false });
+    usePluginLinksMock.mockRestore();
+    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
     config.unifiedAlertingEnabled = false;
   });
@@ -70,7 +70,6 @@ describe('getPanelMenu()', () => {
         },
         {
           "iconClassName": "info-circle",
-          "onClick": [Function],
           "shortcut": "i",
           "subMenu": [
             {
@@ -83,7 +82,6 @@ describe('getPanelMenu()', () => {
         },
         {
           "iconClassName": "cube",
-          "onClick": [Function],
           "subMenu": [
             {
               "onClick": [Function],
@@ -343,7 +341,6 @@ describe('getPanelMenu()', () => {
           },
           {
             "iconClassName": "info-circle",
-            "onClick": [Function],
             "shortcut": "i",
             "subMenu": [
               {
@@ -356,7 +353,6 @@ describe('getPanelMenu()', () => {
           },
           {
             "iconClassName": "cube",
-            "onClick": [Function],
             "subMenu": [
               {
                 "href": undefined,

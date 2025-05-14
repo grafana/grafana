@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
@@ -72,6 +73,10 @@ export type Props = {
    * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
   disableCollapsing?: boolean;
+  /**
+   * Whether or not to keep any focused item when the profile data changes.
+   */
+  keepFocusOnDataChange?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -86,6 +91,7 @@ const FlameGraphContainer = ({
   vertical,
   showFlameGraphOnly,
   disableCollapsing,
+  keepFocusOnDataChange,
   getExtraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
@@ -132,14 +138,44 @@ const FlameGraphContainer = ({
     setRangeMax(1);
   }, [setFocusedItemData, setRangeMax, setRangeMin]);
 
-  function resetSandwich() {
+  const resetSandwich = useCallback(() => {
     setSandwichItem(undefined);
-  }
+  }, [setSandwichItem]);
 
   useEffect(() => {
-    resetFocus();
-    resetSandwich();
-  }, [data, resetFocus]);
+    if (!keepFocusOnDataChange) {
+      resetFocus();
+      resetSandwich();
+      return;
+    }
+
+    if (dataContainer && focusedItemData) {
+      const item = dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
+
+      if (item) {
+        setFocusedItemData({ ...focusedItemData, item });
+
+        const levels = dataContainer.getLevels();
+        const totalViewTicks = levels.length ? levels[0][0].value : 0;
+        setRangeMin(item.start / totalViewTicks);
+        setRangeMax((item.start + item.value) / totalViewTicks);
+      } else {
+        setFocusedItemData({
+          ...focusedItemData,
+          item: {
+            start: 0,
+            value: 0,
+            itemIndexes: [],
+            children: [],
+            level: 0,
+          },
+        });
+
+        setRangeMin(0);
+        setRangeMax(1);
+      }
+    }
+  }, [dataContainer, keepFocusOnDataChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSymbolClick = useCallback(
     (symbol: string) => {

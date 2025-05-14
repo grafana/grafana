@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';

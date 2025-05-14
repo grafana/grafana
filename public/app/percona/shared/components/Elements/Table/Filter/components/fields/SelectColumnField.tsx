@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
 import { Field } from 'react-final-form';
 
 import { SelectableValue } from '@grafana/data';

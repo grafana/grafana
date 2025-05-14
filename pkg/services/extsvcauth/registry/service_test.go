@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/tests"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +29,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	env := TestEnv{}
 	env.saReg = tests.NewExternalServiceRegistryMock(t)
 	env.r = &Registry{
-		features:        featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts),
+		enabled:         true,
 		logger:          log.New("extsvcauth.registry.test"),
 		saReg:           env.saReg,
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},

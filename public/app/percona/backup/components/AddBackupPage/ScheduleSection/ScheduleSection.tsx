@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useStyles2 } from '@grafana/ui';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';

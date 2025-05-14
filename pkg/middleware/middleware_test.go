@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -117,7 +116,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should pass cache-control on datasource resources with private cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
 		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
@@ -125,8 +124,24 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
 	})
 
-	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not pass cache-control on datasource resources with public cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on plugins resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on plugins resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
 		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
@@ -245,6 +260,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		ctxHdlr := getContextHandler(t, cfg, sc.authnService)
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
+		// handle action urls
+		sc.m.Use(ValidateActionUrl(sc.cfg, logger))
 
 		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			require.NotNil(t, c)
@@ -272,6 +289,5 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Service) *contexthandler.ContextHandler {
 	t.Helper()
 
-	tracer := tracing.InitializeTracerForTest()
-	return contexthandler.ProvideService(cfg, tracer, featuremgmt.WithFeatures(), authnService)
+	return contexthandler.ProvideService(cfg, authnService, featuremgmt.WithFeatures())
 }

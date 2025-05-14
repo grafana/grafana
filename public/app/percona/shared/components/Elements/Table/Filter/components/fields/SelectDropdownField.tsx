@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Field } from 'react-final-form';
 
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';

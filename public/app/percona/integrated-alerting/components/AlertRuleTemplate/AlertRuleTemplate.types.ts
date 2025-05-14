@@ -1,4 +1,4 @@
-import { Severity } from 'app/percona/shared/core';
+import { PaginatedPayload, Severity } from 'app/percona/shared/core';
 
 export interface UploadAlertRuleTemplatePayload {
   yaml: string;
@@ -21,14 +21,8 @@ export interface AlertRuleTemplateGetPayload {
   reload?: boolean;
 }
 
-interface AlertRuleTemplatesTotals {
-  total_items: number;
-  total_pages: number;
-}
-
-export interface TemplatesListAPI {
+export interface TemplatesListAPI extends PaginatedPayload {
   templates: TemplateAPI[];
-  totals: AlertRuleTemplatesTotals;
 }
 
 export interface TemplatesList extends Omit<TemplatesListAPI, 'templates'> {

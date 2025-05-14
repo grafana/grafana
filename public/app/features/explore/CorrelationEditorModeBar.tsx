@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
-import { Prompt } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useBeforeUnload, useUnmount } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
@@ -175,13 +175,13 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
 
   return (
     <>
-      {/* Handle navigating outside of Explore */}
+      {/* Handle navigating outside Explore */}
       <Prompt
         message={(location) => {
           if (
             location.pathname !== '/explore' &&
-            (correlationDetails?.editorMode || false) &&
-            (correlationDetails?.correlationDirty || false)
+            correlationDetails?.editorMode &&
+            correlationDetails?.correlationDirty
           ) {
             return 'You have unsaved correlation data. Continue?';
           } else {

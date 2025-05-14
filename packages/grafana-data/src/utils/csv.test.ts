@@ -1,10 +1,11 @@
 // Test with local CSV files
 import fs from 'fs';
 
-import { MutableDataFrame } from '../dataframe';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
-import { getDisplayProcessor } from '../field';
-import { createTheme } from '../themes';
+import { getDisplayProcessor } from '../field/displayProcessor';
+import { createTheme } from '../themes/createTheme';
+import { FieldType } from '../types/dataFrame';
 
 import { CSVHeaderStyle, readCSV, toCSV } from './csv';
 
@@ -157,6 +158,25 @@ describe('DataFrame to CSV', () => {
     expect(csv).toMatchInlineSnapshot(`
       ""Time","Value"
       1589455688623,2020-05-14 11:28:08"
+    `);
+  });
+
+  it('should handle field type frame', () => {
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'Time', values: [1589455688623] },
+        {
+          name: 'Value',
+          type: FieldType.frame,
+          values: [{ value: '1234' }],
+        },
+      ],
+    });
+
+    const csv = toCSV([dataFrame]);
+    expect(csv).toMatchInlineSnapshot(`
+      ""Time","Value"
+      1589455688623,1234"
     `);
   });
 });

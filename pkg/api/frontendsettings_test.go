@@ -13,16 +13,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -33,7 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	// nolint:staticcheck
@@ -48,6 +53,12 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		})
 	}
 
+	pluginsCfg := &config.PluginManagementCfg{
+		PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+		PluginSettings:        cfg.PluginSettings,
+	}
+	pluginsCDN := pluginscdn.ProvideService(pluginsCfg)
+
 	var pluginStore = pstore
 	if pluginStore == nil {
 		pluginStore = &pluginstore.FakePluginStore{}
@@ -56,6 +67,12 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	var pluginsSettings = psettings
 	if pluginsSettings == nil {
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
+	}
+
+	var pluginsAssets = passets
+	if pluginsAssets == nil {
+		sig := signature.ProvideService(pluginsCfg, statickey.New())
+		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
 	}
 
 	hs := &HTTPServer{
@@ -67,18 +84,18 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererPluginManager{},
 		},
-		SQLStore:             db.InitTestDB(t),
-		SettingsProvider:     setting.ProvideProvider(cfg),
-		pluginStore:          pluginStore,
-		grafanaUpdateChecker: &updatechecker.GrafanaService{},
-		AccessControl:        accesscontrolmock.New(),
-		PluginSettings:       pluginsSettings,
-		pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
-			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
-			PluginSettings:        cfg.PluginSettings,
-		}),
-		namespacer:    request.GetNamespaceMapper(cfg),
-		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		SQLStore:              db.InitTestDB(t),
+		SettingsProvider:      setting.ProvideProvider(cfg),
+		pluginStore:           pluginStore,
+		grafanaUpdateChecker:  &updatechecker.GrafanaService{},
+		AccessControl:         accesscontrolmock.New(),
+		PluginSettings:        pluginsSettings,
+		pluginsCDNService:     pluginsCDN,
+		pluginAssets:          pluginsAssets,
+		namespacer:            request.GetNamespaceMapper(cfg),
+		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		managedPluginsService: managedplugins.NewNoop(),
+		tracer:                tracing.InitializeTracerForTest(),
 	}
 
 	m := web.New()
@@ -104,7 +121,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
 
-	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -143,7 +160,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			hs.Cfg.AnonymousHideVersion = test.hideVersion
+			hs.Cfg.Anonymous.HideVersion = test.hideVersion
 			expected := test.expected
 
 			recorder := httptest.NewRecorder()
@@ -194,7 +211,7 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 			if test.mutateCfg != nil {
 				test.mutateCfg(cfg)
 			}
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -217,6 +234,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		desc           string
 		pluginStore    func() pluginstore.Store
 		pluginSettings func() pluginsettings.Service
+		pluginAssets   func() *pluginassets.Service
 		expected       settings
 	}{
 		{
@@ -226,6 +244,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							// ModuleHash: "sha256-test",
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
@@ -241,13 +260,16 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", false),
 				}
 			},
+			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:      "test-app",
-						Preload: false,
-						Path:    "/test-app/module.js",
-						Version: "0.5.0",
+						ID:              "test-app",
+						Preload:         false,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						LoadingStrategy: plugins.LoadingStrategyScript,
+						// ModuleHash:      "sha256-test",
 					},
 				},
 			},
@@ -259,6 +281,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							// ModuleHash: "sha256-test",
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
@@ -274,13 +297,16 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
+			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:      "test-app",
-						Preload: true,
-						Path:    "/test-app/module.js",
-						Version: "0.5.0",
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						LoadingStrategy: plugins.LoadingStrategyScript,
+						// ModuleHash:      "sha256-test",
 					},
 				},
 			},
@@ -308,14 +334,93 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
+			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:      "test-app",
-						Preload: true,
-						Path:    "/test-app/module.js",
-						Version: "0.5.0",
-						Angular: plugins.AngularMeta{Detected: true},
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						Angular:         plugins.AngularMeta{Detected: true},
+						LoadingStrategy: plugins.LoadingStrategyFetch,
+					},
+				},
+			},
+		},
+		{
+			desc: "app plugin with create plugin version compatible with script loading strategy",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
+				PluginSettings: map[string]map[string]string{
+					"test-app": {
+						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
+					},
+				},
+			}),
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						LoadingStrategy: plugins.LoadingStrategyScript,
+					},
+				},
+			},
+		},
+		{
+			desc: "app plugin with CDN class",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Class:  plugins.ClassCDN,
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			pluginAssets: newPluginAssets(),
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						LoadingStrategy: plugins.LoadingStrategyFetch,
 					},
 				},
 			},
@@ -325,7 +430,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -347,5 +452,15 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 			PluginID: id,
 			Enabled:  enabled,
 		},
+	}
+}
+
+func newPluginAssets() func() *pluginassets.Service {
+	return newPluginAssetsWithConfig(&config.PluginManagementCfg{})
+}
+
+func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
+	return func() *pluginassets.Service {
+		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), &pluginstore.FakePluginStore{})
 	}
 }

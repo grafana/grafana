@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Button, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -12,10 +10,10 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center">
-          <Trans key="transformations.empty.add-transformation-header">Start transforming data</Trans>
+          <Trans i18nKey="transformations.empty.add-transformation-header">Start transforming data</Trans>
         </Text>
         <Text element="p" textAlignment="center" data-testid={selectors.components.Transforms.noTransformationsMessage}>
-          <Trans key="transformations.empty.add-transformation-body">
+          <Trans i18nKey="transformations.empty.add-transformation-body">
             Transformations allow data to be changed in various ways before your visualization is shown.
             <br />
             This includes joining data together, renaming fields, making calculations, formatting data for display, and

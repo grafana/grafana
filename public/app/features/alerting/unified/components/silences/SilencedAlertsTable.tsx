@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -29,11 +28,11 @@ const SilencedAlertsTable = ({ silencedAlerts }: Props) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.state">State</Trans>
             </th>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.alert-name">Alert name</Trans>
             </th>

@@ -1,19 +1,14 @@
-import { render, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import React from 'react';
+import { HttpResponse, http } from 'msw';
 import { Props } from 'react-virtualized-auto-sizer';
+import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataFrameJSON } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
-
-import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
-import { backendSrv } from '../../../../../../core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import LokiStateHistory from './LokiStateHistory';
 
-const server = setupServer();
+const server = setupMswServer();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -25,10 +20,20 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
+// Mock useMeasure from LogTimelineViewer > TimelineChart > GraphNG > VizLayout
+// so it always renders the chart
+jest.mock('react-use', () => {
+  const reactUse = jest.requireActual('react-use');
+  return {
+    ...reactUse,
+    useMeasure: () => {
+      const setRef = () => {};
+      return [setRef, { height: 300, width: 500 }];
+    },
+  };
+});
 
+beforeAll(() => {
   server.use(
     http.get('/api/v1/rules/history', () =>
       HttpResponse.json<DataFrameJSON>({
@@ -79,23 +84,18 @@ beforeAll(() => {
   );
 });
 
-afterAll(() => {
-  server.close();
-});
-
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 const ui = {
   loadingIndicator: byText('Loading...'),
   timestampViewer: byRole('list', { name: 'State history by timestamp' }),
-  record: byRole('listitem'),
   noRecords: byText('No state transitions have occurred in the last 30 days'),
   timelineChart: byTestId('uplot-main-div'),
 };
 
 describe('LokiStateHistory', () => {
   it('should render history records', async () => {
-    render(<LokiStateHistory ruleUID="ABC123" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="ABC123" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -108,7 +108,7 @@ describe('LokiStateHistory', () => {
   });
 
   it('should render timeline chart', async () => {
-    render(<LokiStateHistory ruleUID="ABC123" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="ABC123" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -122,7 +122,7 @@ describe('LokiStateHistory', () => {
       )
     );
 
-    render(<LokiStateHistory ruleUID="abcd" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="abcd" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

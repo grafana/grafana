@@ -1,12 +1,13 @@
 import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
-import React from 'react';
+import { ReactElement } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
+let i18nInstance: typeof i18n;
 
 export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
@@ -28,7 +29,7 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     ns: NAMESPACES,
   };
 
-  let i18nInstance = i18n;
+  i18nInstance = i18n;
   if (language === 'detect') {
     i18nInstance = i18nInstance.use(LanguageDetector);
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
@@ -56,11 +57,25 @@ export function changeLanguage(locale: string) {
   return i18n.changeLanguage(validLocale);
 }
 
-export const Trans: typeof I18NextTrans = (props) => {
+type I18NextTransType = typeof I18NextTrans;
+type I18NextTransProps = Parameters<I18NextTransType>[0];
+
+interface TransProps extends I18NextTransProps {
+  i18nKey: string;
+}
+
+export const Trans = (props: TransProps): ReactElement => {
   return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
-// Wrap t() to provide default namespaces and enforce a consistent API
+/**
+ * This is a simple wrapper over i18n.t() to provide default namespaces and enforce a consistent API.
+ * Note: Don't use this in the top level module scope. This wrapper needs initialization, which is done during Grafana
+ * startup, and it will throw if used before.
+ * @param id ID of the translation string
+ * @param defaultMessage Default message to use if the translation is missing
+ * @param values Values to be interpolated into the string
+ */
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {
@@ -79,10 +94,20 @@ export const t = (id: string, defaultMessage: string, values?: Record<string, un
   return tFunc(id, defaultMessage, values);
 };
 
-export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
-  if (typeof value === 'string') {
-    return i18nDate(new Date(value), format);
+export function getI18next() {
+  if (!tFunc) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        'An attempt to internationalize was made before it was initialized. This was probably caused by calling a locale-aware function in the root module scope, instead of in render'
+      );
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('getI18next was called before i18n was initialized');
+    }
+
+    return i18n;
   }
-  const dateFormatter = new Intl.DateTimeFormat(i18n.language, format);
-  return dateFormatter.format(value);
-};
+
+  return i18nInstance || i18n;
+}

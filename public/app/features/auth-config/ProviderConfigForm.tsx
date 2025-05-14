@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -41,6 +41,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     reset,
     watch,
     setValue,
+    getValues,
     unregister,
     formState: { errors, dirtyFields, isSubmitted },
   } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
@@ -181,6 +182,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                           control={control}
                           errors={errors}
                           setValue={setValue}
+                          getValues={getValues}
                           register={register}
                           watch={watch}
                           unregister={unregister}

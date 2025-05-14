@@ -1,6 +1,3 @@
-// Use the real plugin_loader (stubbed by default)
-jest.unmock('app/features/plugins/plugin_loader');
-
 jest.mock('app/core/core', () => {
   return {
     coreModule: {
@@ -12,27 +9,25 @@ jest.mock('app/core/core', () => {
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 
 // Loaded after the `unmock` above
+import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from '../extensions/registry/setup';
 import { SystemJS } from '../loader/systemjs';
 import { importAppPlugin } from '../plugin_loader';
 
-class MyCustomApp extends AppPlugin {
-  initWasCalled = false;
-  calledTwice = false;
-
-  init(meta: AppPluginMeta) {
-    this.initWasCalled = true;
-    this.calledTwice = this.meta === meta;
-  }
-}
+jest.mock('../extensions/registry/setup');
 
 describe('Load App', () => {
-  const app = new MyCustomApp();
+  const app = new AppPlugin();
   const modulePath = 'http://localhost:3000/public/plugins/my-app-plugin/module.js';
   // Hook resolver for tests
   const originalResolve = SystemJS.constructor.prototype.resolve;
   SystemJS.constructor.prototype.resolve = (x: unknown) => x;
 
   beforeAll(() => {
+    app.init = jest.fn();
+    addedComponentsRegistry.register = jest.fn();
+    addedLinksRegistry.register = jest.fn();
+    exposedComponentsRegistry.register = jest.fn();
+
     SystemJS.set(modulePath, { plugin: app });
   });
 
@@ -55,14 +50,17 @@ describe('Load App', () => {
     const m = await SystemJS.import(modulePath);
     expect(m.plugin).toBe(app);
 
-    const loaded = await importAppPlugin(meta);
-    expect(loaded).toBe(app);
+    // Importing the app should initialise the meta
+    const importedApp = await importAppPlugin(meta);
+    expect(importedApp).toBe(app);
     expect(app.meta).toBe(meta);
-    expect(app.initWasCalled).toBeTruthy();
-    expect(app.calledTwice).toBeFalsy();
 
-    const again = await importAppPlugin(meta);
-    expect(again).toBe(app);
-    expect(app.calledTwice).toBeTruthy();
+    // Importing the same app again doesn't initialise it twice
+    const importedAppAgain = await importAppPlugin(meta);
+    expect(importedAppAgain).toBe(app);
+    expect(app.init).toHaveBeenCalledTimes(1);
+    expect(addedComponentsRegistry.register).toHaveBeenCalledTimes(1);
+    expect(addedLinksRegistry.register).toHaveBeenCalledTimes(1);
+    expect(exposedComponentsRegistry.register).toHaveBeenCalledTimes(1);
   });
 });

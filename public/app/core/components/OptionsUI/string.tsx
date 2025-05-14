@@ -1,4 +1,5 @@
-import React, { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback } from 'react';
+import * as React from 'react';
 
 import { StandardEditorProps, StringFieldConfigSettings } from '@grafana/data';
 import { Input, TextArea } from '@grafana/ui';

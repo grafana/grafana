@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';

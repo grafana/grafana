@@ -1,4 +1,3 @@
-import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
@@ -9,7 +8,7 @@ import { Tooltip, useForceUpdate } from '@grafana/ui';
 import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 

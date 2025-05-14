@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';

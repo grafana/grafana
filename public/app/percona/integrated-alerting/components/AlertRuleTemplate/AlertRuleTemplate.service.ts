@@ -24,8 +24,8 @@ export const AlertRuleTemplateService = {
         params: { ...payload, reload: true },
       })
       .then(
-        ({ totals, templates = [] }): TemplatesList => ({
-          totals,
+        ({ templates = [], ...rest }): TemplatesList => ({
+          ...rest,
           templates: templates.map((template) => ({
             ...template,
             params: template.params?.map((param) => ({

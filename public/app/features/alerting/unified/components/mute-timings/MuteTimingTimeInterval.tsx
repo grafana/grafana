@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { concat, uniq, upperFirst, without } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,7 @@ import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 }
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
-import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
+import { DAYS_OF_THE_WEEK, MONTHS, defaultTimeInterval, validateArrayField } from '../../utils/mute-timings';
 
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 import { TimezoneSelect } from './timezones';

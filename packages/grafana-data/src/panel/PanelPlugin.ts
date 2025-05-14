@@ -1,21 +1,21 @@
 import { set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
-import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
-  FieldConfigProperty,
-  FieldConfigSource,
-  GrafanaPlugin,
+  PanelPluginMeta,
+  VisualizationSuggestionsSupplier,
+  PanelProps,
   PanelEditorProps,
   PanelMigrationHandler,
-  PanelPluginDataSupport,
-  PanelPluginMeta,
-  PanelProps,
   PanelTypeChangedHandler,
-  VisualizationSuggestionsSupplier,
-} from '../types';
-import { deprecationWarning } from '../utils';
+  PanelPluginDataSupport,
+} from '../types/panel';
+import { GrafanaPlugin } from '../types/plugin';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
 
@@ -94,7 +94,7 @@ export type PanelOptionsSupplier<TOptions> = (
 
 export class PanelPlugin<
   TOptions = any,
-  TFieldConfigOptions extends object = any,
+  TFieldConfigOptions extends object = {},
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {

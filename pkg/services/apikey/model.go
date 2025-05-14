@@ -4,14 +4,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 var (
 	ErrNotFound = errors.New("API key not found")
-	// @PERCONA
+	// ErrInvalidAuth @PERCONA
 	ErrInvalidAuth       = errors.New("invalid Service Token/API key")
 	ErrInvalidExpiration = errors.New("negative value for SecondsToLive")
 	ErrDuplicate         = errors.New("API key, organization ID and name must be unique")

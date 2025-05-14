@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { dump, load } from 'js-yaml';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, useStyles2, Tooltip } from '@grafana/ui';
+import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
@@ -14,7 +14,7 @@ import {
   formValuesToRulerRuleDTO,
   recordingRulerRuleToRuleForm,
 } from '../../utils/rule-form';
-import { isAlertingRulerRule, isRecordingRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 
 interface Props {
   onClose: () => void;
@@ -145,9 +145,9 @@ function YamlContentInfo() {
 }
 
 function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
-  if (isAlertingRulerRule(rulerRule)) {
+  if (rulerRuleType.dataSource.alertingRule(rulerRule)) {
     return alertingRulerRuleToRuleForm(rulerRule);
-  } else if (isRecordingRulerRule(rulerRule)) {
+  } else if (rulerRuleType.dataSource.recordingRule(rulerRule)) {
     return recordingRulerRuleToRuleForm(rulerRule);
   }
 

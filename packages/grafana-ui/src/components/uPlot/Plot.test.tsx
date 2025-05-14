@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import createMockRaf from 'mock-raf';
-import React from 'react';
 import uPlot from 'uplot';
 
 import { FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';

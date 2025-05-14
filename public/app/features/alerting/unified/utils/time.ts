@@ -1,6 +1,6 @@
 import { ValidationRule } from 'react-hook-form';
 
-import { parseDuration, durationToMilliseconds } from '@grafana/data';
+import { durationToMilliseconds, parseDuration } from '@grafana/data';
 import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
 
 import { TimeOptions } from '../types/time';
@@ -64,7 +64,7 @@ const INVALID_FORMAT = new Error(INVALID_FORMAT_MESSAGE);
  */
 export function parsePrometheusDuration(duration: string): number {
   let input = duration;
-  let parts: Array<[number, string]> = [];
+  const parts: Array<[number, string]> = [];
 
   function matchDuration(part: string) {
     const match = DURATION_REGEXP.exec(part);

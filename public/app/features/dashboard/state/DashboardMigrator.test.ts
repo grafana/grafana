@@ -2,11 +2,11 @@ import { each, map } from 'lodash';
 
 import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
 import { FieldConfigSource } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardModel } from '../state/DashboardModel';
@@ -41,7 +41,7 @@ const dataSources = {
   }),
 };
 
-setDataSourceSrv(new MockDataSourceSrv(dataSources));
+setupDataSources(...Object.values(dataSources));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
@@ -2410,6 +2410,43 @@ describe('when migrating table cell display mode to cell options', () => {
   it('should migrate cell display modes without options', () => {
     const fieldConfig = model.panels[6].fieldConfig;
     expect(fieldConfig.defaults.custom.cellOptions).toEqual({ type: 'auto' });
+  });
+});
+
+describe('when migrating variable refresh to on dashboard load', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      //@ts-ignore
+      refresh: false,
+    });
+  });
+
+  it('should migrate to empty string', () => {
+    expect(model.refresh).toBe('');
+  });
+});
+
+describe('when migrating time_options in timepicker', () => {
+  let model: DashboardModel;
+
+  it('should remove the property', () => {
+    model = new DashboardModel({
+      timepicker: {
+        //@ts-expect-error
+        time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+      },
+    });
+
+    expect(model.timepicker).not.toHaveProperty('time_options');
+  });
+
+  it('should not throw with empty timepicker', () => {
+    //@ts-expect-error
+    model = new DashboardModel({});
+
+    expect(model.timepicker).not.toHaveProperty('time_options');
   });
 });
 

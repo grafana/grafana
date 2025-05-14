@@ -19,14 +19,6 @@ import {
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
-  createAnnotationResponse,
-  createDataRequest,
-  createDefaultPromResponse,
-  createEmptyAnnotationResponse,
-  fetchMockCalledWith,
-  getMockTimeRange,
-} from './__mocks__/datasource';
-import {
   alignRange,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
@@ -34,7 +26,22 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
+import {
+  createAnnotationResponse,
+  createDataRequest,
+  createDefaultPromResponse,
+  createEmptyAnnotationResponse,
+  fetchMockCalledWith,
+  getMockTimeRange,
+} from './test/__mocks__/datasource';
+import {
+  PromApplication,
+  PrometheusCacheLevel,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  RawRecordingRules,
+} from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -238,60 +245,118 @@ describe('PrometheusDatasource', () => {
     const DEFAULT_QUERY_EXPRESSION = 'metric{job="foo"} - metric';
     const target: PromQuery = { expr: DEFAULT_QUERY_EXPRESSION, refId: 'A' };
 
-    it('should not modify expression with no filters', async () => {
-      ds.query({
-        interval: '15s',
-        range: getMockTimeRange(),
-        targets: [target],
-      } as DataQueryRequest<PromQuery>);
-      const [result] = fetchMockCalledWith(fetchMock);
-      expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
+      });
+
+      it('should not modify expression with no filters', async () => {
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
+      });
+
+      it('should add filters to expression', () => {
+        const filters = [
+          {
+            key: 'k1',
+            operator: '=',
+            value: 'v1',
+          },
+          {
+            key: 'k2',
+            operator: '!=',
+            value: 'v2',
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
+      });
+
+      it('should add escaping if needed to regex filter expressions', () => {
+        const filters = [
+          {
+            key: 'k1',
+            operator: '=~',
+            value: 'v.*',
+          },
+          {
+            key: 'k2',
+            operator: '=~',
+            value: `v'.*`,
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({
+          expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
+        });
+      });
     });
 
-    it('should add filters to expression', () => {
-      const filters = [
-        {
-          key: 'k1',
-          operator: '=',
-          value: 'v1',
-        },
-        {
-          key: 'k2',
-          operator: '!=',
-          value: 'v2',
-        },
-      ];
-      ds.query({
-        interval: '15s',
-        range: getMockTimeRange(),
-        filters,
-        targets: [target],
-      } as DataQueryRequest<PromQuery>);
-      const [result] = fetchMockCalledWith(fetchMock);
-      expect(result).toMatchObject({ expr: 'metric{job="foo", k1="v1", k2!="v2"} - metric{k1="v1", k2!="v2"}' });
-    });
-    it('should add escaping if needed to regex filter expressions', () => {
-      const filters = [
-        {
-          key: 'k1',
-          operator: '=~',
-          value: 'v.*',
-        },
-        {
-          key: 'k2',
-          operator: '=~',
-          value: `v'.*`,
-        },
-      ];
-      ds.query({
-        interval: '15s',
-        range: getMockTimeRange(),
-        filters,
-        targets: [target],
-      } as DataQueryRequest<PromQuery>);
-      const [result] = fetchMockCalledWith(fetchMock);
-      expect(result).toMatchObject({
-        expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
+      });
+
+      it('should not modify expression with no filters', async () => {
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
+      });
+
+      it('should add escaping if needed to regex filter expressions', () => {
+        const filters = [
+          {
+            key: 'k1',
+            operator: '=~',
+            value: 'v.*',
+          },
+          {
+            key: 'k2',
+            operator: '=~',
+            value: `v'.*`,
+          },
+          {
+            key: 'k3',
+            operator: '=~',
+            value: `v".*`,
+          },
+          {
+            key: 'k4',
+            operator: '=~',
+            value: `\\v.*`,
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({
+          expr: `metric{job="foo", k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"} - metric{k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"}`,
+        });
       });
     });
   });
@@ -395,7 +460,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('returns a mapping for recording rules only', () => {
-      const groups = [
+      const groups: RawRecordingRules[] = [
         {
           rules: [
             {
@@ -415,61 +480,174 @@ describe('PrometheusDatasource', () => {
         },
       ];
       const mapping = extractRuleMappingFromGroups(groups);
-      expect(mapping).toEqual({ 'job:http_inprogress_requests:sum': 'sum(http_inprogress_requests) by (job)' });
+      expect(mapping).toEqual({
+        'job:http_inprogress_requests:sum': [{ query: 'sum(http_inprogress_requests) by (job)' }],
+      });
+    });
+
+    it('should extract rules with same name respecting its labels', () => {
+      const groups: RawRecordingRules[] = [
+        {
+          name: 'nameOfTheGroup:uid11',
+          file: 'the_file_123',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'super_duper_query',
+              labels: {
+                uuid: 'uuid111',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+        {
+          name: 'nameOfTheGroup:uid22',
+          file: 'the_file_456',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'another_super_duper_query',
+              labels: {
+                uuid: 'uuid222',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+      ];
+
+      const mapping = extractRuleMappingFromGroups(groups);
+      expect(mapping['metric_5m']).toBeDefined();
+      expect(mapping['metric_5m'].length).toEqual(2);
+      expect(mapping['metric_5m'][0].query).toEqual('super_duper_query');
+      expect(mapping['metric_5m'][0].labels).toEqual({ uuid: 'uuid111' });
+      expect(mapping['metric_5m'][1].query).toEqual('another_super_duper_query');
+      expect(mapping['metric_5m'][1].labels).toEqual({ uuid: 'uuid222' });
     });
   });
 
   describe('Prometheus regular escaping', () => {
-    it('should not escape non-string', () => {
-      expect(prometheusRegularEscape(12)).toEqual(12);
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
+      });
+
+      it('should not escape non-string', () => {
+        expect(prometheusRegularEscape(12)).toEqual(12);
+      });
+
+      it('should not escape strings without special characters', () => {
+        expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
+      });
+
+      it('should escape single quotes', () => {
+        expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
+      });
+
+      it('should escape backslashes', () => {
+        expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+      });
     });
 
-    it('should not escape simple string', () => {
-      expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
-    });
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
+      });
 
-    it("should escape '", () => {
-      expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
-    });
+      it('should not escape non-string', () => {
+        expect(prometheusRegularEscape(12)).toEqual(12);
+      });
 
-    it('should escape \\', () => {
-      expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
-    });
+      it('should not escape strings without special characters', () => {
+        expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
+      });
 
-    it('should escape multiple characters', () => {
-      expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
-    });
+      it('should not escape complete label matcher', () => {
+        expect(prometheusRegularEscape('job="grafana"')).toEqual('job="grafana"');
+        expect(prometheusRegularEscape('job!="grafana"')).toEqual('job!="grafana"');
+        expect(prometheusRegularEscape('job=~"grafana"')).toEqual('job=~"grafana"');
+        expect(prometheusRegularEscape('job!~"grafana"')).toEqual('job!~"grafana"');
+      });
 
-    it('should escape multiple different characters', () => {
-      expect(prometheusRegularEscape("'loo\\king'glass'")).toEqual("\\\\'loo\\\\king\\\\'glass\\\\'");
+      it('should not escape single quotes', () => {
+        expect(prometheusRegularEscape("looking'glass")).toEqual("looking'glass");
+      });
+
+      it('should escape double quotes', () => {
+        expect(prometheusRegularEscape('looking"glass')).toEqual('looking\\"glass');
+      });
+
+      it('should escape backslashes', () => {
+        expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+      });
+
+      it('should handle complete label matchers with escaped content', () => {
+        expect(prometheusRegularEscape('job="my\\"service"')).toEqual('job="my\\"service"');
+        expect(prometheusRegularEscape('job="\\\\server"')).toEqual('job="\\\\server"');
+      });
     });
   });
 
   describe('Prometheus regexes escaping', () => {
-    it('should not escape simple string', () => {
-      expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
+      });
+
+      it('should not escape strings without special characters', () => {
+        expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
+      });
+
+      it('should escape special characters', () => {
+        expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
+        expect(prometheusSpecialRegexEscape('looking$glass')).toEqual('looking\\\\$glass');
+        expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+        expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
+      });
+
+      it('should handle multiple special characters', () => {
+        expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+      });
     });
 
-    it('should escape $^*+?.()|\\', () => {
-      expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
-      expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
-      expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
-      expect(prometheusSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
-      expect(prometheusSpecialRegexEscape('looking]glass')).toEqual('looking\\\\]glass');
-      expect(prometheusSpecialRegexEscape('looking$glass')).toEqual('looking\\\\$glass');
-      expect(prometheusSpecialRegexEscape('looking^glass')).toEqual('looking\\\\^glass');
-      expect(prometheusSpecialRegexEscape('looking*glass')).toEqual('looking\\\\*glass');
-      expect(prometheusSpecialRegexEscape('looking+glass')).toEqual('looking\\\\+glass');
-      expect(prometheusSpecialRegexEscape('looking?glass')).toEqual('looking\\\\?glass');
-      expect(prometheusSpecialRegexEscape('looking.glass')).toEqual('looking\\\\.glass');
-      expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
-      expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
-      expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
-      expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
-    });
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
+      });
 
-    it('should escape multiple special characters', () => {
-      expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+      it('should not escape strings without special characters', () => {
+        expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
+      });
+
+      it('should escape special characters', () => {
+        expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
+        expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
+        expect(prometheusSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
+        expect(prometheusSpecialRegexEscape('looking]glass')).toEqual('looking\\\\]glass');
+        expect(prometheusSpecialRegexEscape('looking$glass')).toEqual('looking\\\\$glass');
+        expect(prometheusSpecialRegexEscape('looking^glass')).toEqual('looking\\\\^glass');
+        expect(prometheusSpecialRegexEscape('looking*glass')).toEqual('looking\\\\*glass');
+        expect(prometheusSpecialRegexEscape('looking+glass')).toEqual('looking\\\\+glass');
+        expect(prometheusSpecialRegexEscape('looking?glass')).toEqual('looking\\\\?glass');
+        expect(prometheusSpecialRegexEscape('looking.glass')).toEqual('looking\\\\.glass');
+        expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
+        expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
+        expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+        expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
+      });
+
+      it('should escape double quotes with special regex escaping', () => {
+        expect(prometheusSpecialRegexEscape('looking"glass')).toEqual('looking\\\\\\"glass');
+      });
+
+      it('should handle multiple special characters', () => {
+        expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+      });
+
+      it('should handle mixed quotes and special characters', () => {
+        expect(prometheusSpecialRegexEscape('+looking"$glass?')).toEqual('\\\\+looking\\\\\\"\\\\$glass\\\\?');
+      });
     });
   });
 
@@ -498,9 +676,27 @@ describe('PrometheusDatasource', () => {
       };
     });
 
-    describe('and value is a string', () => {
-      it('should only escape single quotes', () => {
-        expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", customVariable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+    describe('with prometheusSpecialCharsInLabelValues disabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = false;
+      });
+
+      describe('and value is a string', () => {
+        it('should escape single quotes', () => {
+          expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", customVariable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+        });
+      });
+    });
+
+    describe('with prometheusSpecialCharsInLabelValues enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.prometheusSpecialCharsInLabelValues = true;
+      });
+
+      describe('and value is a string', () => {
+        it('should only escape double quotes and backslashes', () => {
+          expect(ds.interpolateQueryExpr('abc\'"$^*{}[]+?.()|\\', customVariable)).toEqual('abc\'\\"$^*{}[]+?.()|\\\\');
+        });
       });
     });
 
@@ -552,7 +748,7 @@ describe('PrometheusDatasource', () => {
       config.featureToggles.promQLScope = undefined;
     });
 
-    it('should call replace function 2 times', () => {
+    it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
@@ -563,7 +759,7 @@ describe('PrometheusDatasource', () => {
       replaceMock.mockReturnValue(interval);
 
       const queries = ds.interpolateVariablesInQueries([query], { Interval: { text: interval, value: interval } });
-      expect(templateSrvStub.replace).toBeCalledTimes(2);
+      expect(templateSrvStub.replace).toBeCalledTimes(3);
       expect(queries[0].interval).toBe(interval);
     });
 
@@ -753,6 +949,55 @@ describe('PrometheusDatasource', () => {
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job="99", k1="v1", k2!="v2"} > 99' });
     });
+
+    it('should replace variables in ad-hoc filters', () => {
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({ expr: 'test{job=~"99"}' });
+    });
+
+    it('should replace variables in adhoc filters on backend when promQLScope is enabled', () => {
+      config.featureToggles.promQLScope = true;
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({
+        expr: 'test',
+        adhocFilters: [
+          {
+            key: 'job',
+            operator: 'regex-match',
+            value: '99',
+          },
+        ],
+      });
+    });
   });
 
   describe('metricFindQuery', () => {
@@ -783,6 +1028,23 @@ describe('PrometheusDatasource', () => {
       const intervalMs = replaceMock.mock.calls[0][1].__interval_ms;
       expect(interval).toEqual({ text: '15s', value: '15s' });
       expect(intervalMs).toEqual({ text: 15000, value: 15000 });
+    });
+
+    it('should use the default time range when no range provided in options', () => {
+      const prometheusDatasource = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None } },
+        templateSrvStub
+      );
+      const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
+      prometheusDatasource.metricFindQuery(query);
+
+      // Last 6h
+      const range = replaceMock.mock.calls[1][1].__range;
+      const rangeMs = replaceMock.mock.calls[1][1].__range_ms;
+      const rangeS = replaceMock.mock.calls[1][1].__range_s;
+      expect(range).toEqual({ text: '21600s', value: '21600s' });
+      expect(rangeMs).toEqual({ text: 21600000, value: 21600000 });
+      expect(rangeS).toEqual({ text: 21600, value: 21600 });
     });
   });
 });
@@ -952,9 +1214,13 @@ describe('PrometheusDatasource2', () => {
         },
       } as unknown as AnnotationQueryRequest;
 
-      async function runAnnotationQuery(data: number[][]) {
+      async function runAnnotationQuery(data: number[][], overrideStep?: string) {
         let response = createAnnotationResponse();
         response.data.results['X'].frames[0].data.values = data;
+        if (overrideStep) {
+          const meta = response.data.results['X'].frames[0].schema.meta;
+          meta.executedQueryString = meta.executedQueryString.replace('1m0s', overrideStep);
+        }
 
         options.annotation.useValueForTime = false;
         fetchMock.mockImplementation(() => of(response));
@@ -993,6 +1259,31 @@ describe('PrometheusDatasource2', () => {
       it('should handle single active value', async () => {
         const results = await runAnnotationQuery([[2 * 60000], [1]]);
         expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
+      });
+
+      describe('should group annotations over wider range when the step grows larger', () => {
+        const data: number[][] = [
+          [1 * 120000, 2 * 120000, 3 * 120000, 4 * 120000, 5 * 120000, 6 * 120000],
+          [1, 1, 0, 0, 1, 1],
+        ];
+
+        it('should not group annotations with the default step', async () => {
+          const results = await runAnnotationQuery(data);
+          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
+            [120000, 120000],
+            [240000, 240000],
+            [600000, 600000],
+            [720000, 720000],
+          ]);
+        });
+
+        it('should group annotations with larger step', async () => {
+          const results = await runAnnotationQuery(data, '2m0s');
+          expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
+            [120000, 240000],
+            [600000, 720000],
+          ]);
+        });
       });
     });
 
@@ -1176,6 +1467,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: '=~' },
           { key: 'nreg', value: 'nregv', operator: '!~' },
+          { key: 'foo', value: 'bar', operator: '=|' },
+          { key: 'bar', value: 'baz', operator: '!=|' },
         ];
         const expectedScopeFilter: ScopeSpecFilter[] = [
           { key: 'eq', value: 'eqv', operator: 'equals' },
@@ -1186,6 +1479,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: 'regex-match' },
           { key: 'nreg', value: 'nregv', operator: 'regex-not-match' },
+          { key: 'foo', value: 'bar', operator: 'one-of' },
+          { key: 'bar', value: 'baz', operator: 'not-one-of' },
         ];
         const result = ds.generateScopeFilters(adhocFilter);
         result.forEach((r, i) => {

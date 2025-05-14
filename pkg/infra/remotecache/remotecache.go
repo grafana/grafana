@@ -69,11 +69,6 @@ type CacheStorage interface {
 
 	// Delete object from cache
 	Delete(ctx context.Context, key string) error
-
-	// Count returns the number of items in the cache.
-	// Optionaly a prefix can be provided to only count items with that prefix
-	// DO NOT USE. Not available for memcached.
-	Count(ctx context.Context, prefix string) (int64, error)
 }
 
 // RemoteCache allows Grafana to cache data outside its own process
@@ -102,11 +97,6 @@ func (ds *RemoteCache) Delete(ctx context.Context, key string) error {
 	return ds.client.Delete(ctx, key)
 }
 
-// Count returns the number of items in the cache.
-func (ds *RemoteCache) Count(ctx context.Context, prefix string) (int64, error) {
-	return ds.client.Count(ctx, prefix)
-}
-
 // Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	// create new interface if more clients need GC jobs
@@ -119,7 +109,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
+func createClient(opts *setting.RemoteCacheSettings, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
 	switch opts.Name {
 	case redisCacheType:
 		cache, err = newRedisStorage(opts)
@@ -173,10 +163,6 @@ func (pcs *encryptedCacheStorage) Delete(ctx context.Context, key string) error 
 	return pcs.cache.Delete(ctx, key)
 }
 
-func (pcs *encryptedCacheStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	return pcs.cache.Count(ctx, prefix)
-}
-
 type prefixCacheStorage struct {
 	cache  CacheStorage
 	prefix string
@@ -190,8 +176,4 @@ func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value []byte
 }
 func (pcs *prefixCacheStorage) Delete(ctx context.Context, key string) error {
 	return pcs.cache.Delete(ctx, pcs.prefix+key)
-}
-
-func (pcs *prefixCacheStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	return pcs.cache.Count(ctx, pcs.prefix+prefix)
 }

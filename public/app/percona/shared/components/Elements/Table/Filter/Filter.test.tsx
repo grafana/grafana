@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { CheckDetails } from 'app/percona/check/types';
 
@@ -88,8 +87,8 @@ const data = [
   },
 ];
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
   useLocation: () => ({
     pathname: 'http://localhost/graph/pmm-database-checks/all-checks',
   }),

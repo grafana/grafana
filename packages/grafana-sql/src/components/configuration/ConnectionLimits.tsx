@@ -1,9 +1,7 @@
-import React from 'react';
-
 import { DataSourceSettings } from '@grafana/data';
-import { ConfigSubSection, Stack } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Field, Icon, InlineLabel, Label, Switch, Tooltip } from '@grafana/ui';
+import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 

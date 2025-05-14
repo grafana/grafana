@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   DataFrame,
   DataLink,
@@ -31,6 +29,7 @@ import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } 
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
+import { TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -112,6 +111,7 @@ export function createSpanLinkFactory({
             content: <Icon name="link" title={link.title || 'Link'} />,
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
+            target: link.target,
           };
         });
 
@@ -139,6 +139,7 @@ const formatDefaultKeys = (keys: string[]) => {
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
 export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
+export const feO11yTagKey = 'gf.feo11y.app.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -323,11 +324,12 @@ function legacyCreateSpanLinkFactory(
         }
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -338,11 +340,12 @@ function legacyCreateSpanLinkFactory(
     if (span.subsidiarilyReferencedBy && createFocusSpanLink) {
       for (const reference of span.subsidiarilyReferencedBy) {
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
+        const title = getReferenceTitle(reference);
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title,
+          content: <Icon name="link" title={title} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,
@@ -350,9 +353,29 @@ function legacyCreateSpanLinkFactory(
       }
     }
 
+    // Get session links
+    const feO11yLink = getLinkForFeO11y(span);
+    if (feO11yLink) {
+      links.push({
+        title: 'Session for this span',
+        href: feO11yLink,
+        content: <Icon name="frontend-observability" title="Session for this span" />,
+        field,
+        type: SpanLinkType.Session,
+      });
+    }
+
     return links;
   };
 }
+
+const getReferenceTitle = (reference: TraceSpanReference) => {
+  let title = reference.span ? reference.span.operationName : 'View linked span';
+  if (reference.refType === 'EXTERNAL') {
+    title = 'View linked span';
+  }
+  return title;
+};
 
 function getQueryForLoki(
   span: TraceSpan,
@@ -372,16 +395,27 @@ function getQueryForLoki(
 
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr += ' |="${__span.traceId}"';
+    expr +=
+      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr += ' |="${__span.spanId}"';
+    expr +=
+      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" OR span_id="${__span.spanId}"';
   }
 
   return {
     expr: expr,
     refId: '',
   };
+}
+
+function getLinkForFeO11y(span: TraceSpan): string | undefined {
+  const feO11yAppId = span.process.tags.find((tag) => tag.key === feO11yTagKey)?.value;
+  const feO11ySessionId = span.tags.find((tag) => tag.key === 'session_id' || tag.key === 'session.id')?.value;
+
+  return feO11yAppId && feO11ySessionId
+    ? `/a/grafana-kowalski-app/apps/${feO11yAppId}/sessions/${feO11ySessionId}`
+    : undefined;
 }
 
 // we do not have access to the dataquery type for opensearch,

@@ -46,11 +46,10 @@ export function decorateSystemJSResolve(
     // CDN hosted plugins contain the version in the path so skip
     return isFileSystemModule ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
-    // Provide fallback for plugins that use `loadPluginCss` to load theme styles
-    // Regex only targets plugins on the filesystem.
+    // Provide fallback for plugins that use `loadPluginCss` to load theme styles.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
-      const prefixId = `${config.appSubUrl ?? ''}/public/${id}`;
-      const url = originalResolve.apply(this, [prefixId, parentUrl]);
+      const resolvedUrl = getLoadPluginCssUrl(id);
+      const url = originalResolve.apply(this, [resolvedUrl, parentUrl]);
       return resolveWithCache(url);
     }
     console.warn(`SystemJS: failed to resolve '${id}'`);
@@ -84,4 +83,25 @@ function getBackWardsCompatibleUrl(url: string) {
   const hasValidFileExtension = systemJSFileExtensions.some((extensionName) => url.endsWith(extensionName));
 
   return hasValidFileExtension ? url : url + '.js';
+}
+
+// This function takes the path used in loadPluginCss and attempts to resolve it
+// by checking the SystemJS entries for a matching pluginId then using that entry to find the baseUrl.
+// If no match is found then it returns a fallback attempt at a relative path.
+export function getLoadPluginCssUrl(id: string) {
+  const pluginId = id.split('/')[1];
+  let url = '';
+  for (const [moduleId] of SystemJS.entries()) {
+    if (moduleId.includes(pluginId)) {
+      url = moduleId;
+      break;
+    }
+  }
+
+  const index = url.lastIndexOf('/plugins');
+  if (index === -1) {
+    return `${config.appSubUrl ?? ''}/public/${id}`;
+  }
+  const baseUrl = url.substring(0, index);
+  return `${baseUrl}/${id}`;
 }

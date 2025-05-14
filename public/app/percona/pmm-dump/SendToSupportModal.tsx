@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { Messages } from 'app/percona/pmm-dump/PMMDump.messages';

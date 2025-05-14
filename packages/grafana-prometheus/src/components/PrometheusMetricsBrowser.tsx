@@ -1,6 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PrometheusMetricsBrowser.tsx
 import { css, cx } from '@emotion/css';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -8,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   BrowserLabel as PromLabel,
   Button,
-  HorizontalGroup,
+  Stack,
   Input,
   Label,
   LoadingPlaceholder,
@@ -18,6 +19,7 @@ import {
 
 import PromQlLanguageProvider from '../language_provider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import { isValidLegacyName, utf8Support } from '../utf8_support';
 
 // Hard limit on labels to render
 const EMPTY_SELECTOR = '{}';
@@ -44,7 +46,11 @@ interface BrowserState {
   error: string;
   validationStatus: string;
   valueSearchTerm: string;
+  seriesLimit?: string;
 }
+
+export const DEFAULT_SERIES_LIMIT = '40000';
+export const REMOVE_SERIES_LIMIT = 'none';
 
 interface FacettableValue {
   name: string;
@@ -63,22 +69,38 @@ export interface SelectableLabel {
 
 export function buildSelector(labels: SelectableLabel[]): string {
   let singleMetric = '';
-  const selectedLabels = [];
+  const selectedLabels: string[] = [];
   for (const label of labels) {
     if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
       const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
-        selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
+        selectedLabels.push(
+          `${utf8Support(label.name)}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`
+        );
       } else if (selectedValues.length === 1) {
         if (label.name === METRIC_LABEL) {
           singleMetric = selectedValues[0];
         } else {
-          selectedLabels.push(`${label.name}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
+          selectedLabels.push(`${utf8Support(label.name)}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
         }
       }
     }
   }
-  return [singleMetric, '{', selectedLabels.join(','), '}'].join('');
+
+  const selectorParts: string[] = [];
+  const isLegacyName = singleMetric === '' || isValidLegacyName(singleMetric);
+
+  if (isLegacyName) {
+    selectorParts.push(singleMetric, '{');
+  } else {
+    selectorParts.push('{', `"${singleMetric}"`);
+    if (selectedLabels.length > 0) {
+      selectorParts.push(',');
+    }
+  }
+
+  selectorParts.push(selectedLabels.join(','), '}');
+  return selectorParts.join('');
 }
 
 export function facetLabels(
@@ -211,6 +233,10 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
   onChangeMetricSearch = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ metricSearchTerm: event.target.value });
+  };
+
+  onChangeSeriesLimit = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ seriesLimit: event.target.value.trim() });
   };
 
   onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -418,7 +444,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.state.seriesLimit);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {
@@ -488,16 +514,29 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
     return (
       <div className={styles.wrapper}>
-        <HorizontalGroup align="flex-start" spacing="lg">
+        <Stack gap={3}>
           <div>
             <div className={styles.section}>
-              <Label description="Once a metric is selected only possible labels are shown.">1. Select a metric</Label>
+              <Label description="Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.">
+                1. Select a metric
+              </Label>
               <div>
                 <Input
                   onChange={this.onChangeMetricSearch}
                   aria-label="Filter expression for metric"
                   value={metricSearchTerm}
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
+                />
+              </div>
+              <Label description="Set to 'none' to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
+                Series limit
+              </Label>
+              <div>
+                <Input
+                  onChange={this.onChangeSeriesLimit}
+                  aria-label="Limit results from series endpoint"
+                  value={this.state.seriesLimit ?? DEFAULT_SERIES_LIMIT}
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
                 />
               </div>
               <div
@@ -631,7 +670,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
             </div>
           </div>
-        </HorizontalGroup>
+        </Stack>
 
         <div className={styles.section}>
           <Label>4. Resulting selector</Label>
@@ -639,7 +678,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             {selector}
           </div>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
-          <HorizontalGroup>
+          <Stack>
             <Button
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery}
               aria-label="Use selector for query button"
@@ -677,7 +716,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
               <span className={error ? styles.error : ''}>{error || status}</span>
             </div>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </div>
     );

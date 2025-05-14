@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  DataSourceApi,
+  EventBusSrv,
+  LoadingState,
+  PluginExtensionTypes,
+  store,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
@@ -76,10 +83,6 @@ const dummyProps: Props = {
   syncedTimes: false,
   updateTimeRange: jest.fn(),
   graphResult: [],
-  absoluteRange: {
-    from: 0,
-    to: 0,
-  },
   timeZone: 'UTC',
   queryResponse: makeEmptyQueryResponse(LoadingState.NotStarted),
   addQueryRow: jest.fn(),
@@ -100,6 +103,11 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -121,7 +129,7 @@ jest.mock('app/core/core', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -135,7 +143,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
+const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 const setup = (overrideProps?: Partial<Props>) => {
   const store = configureStore({
@@ -177,8 +185,8 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinkExtensionsMock.mockReturnValueOnce({
-      extensions: [
+    usePluginLinksMock.mockReturnValue({
+      links: [
         {
           id: '1',
           pluginId: 'grafana',
@@ -224,6 +232,16 @@ describe('Explore', () => {
       const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       expect(dataSourcePicker).toBeInTheDocument();
+    });
+  });
+
+  describe('Content Outline', () => {
+    it('should retrieve the last visible state from local storage', async () => {
+      const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+      setup();
+      const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+      expect(showContentOutlineButton).not.toBeInTheDocument();
+      getBoolMock.mockRestore();
     });
   });
 });

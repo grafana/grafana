@@ -1,14 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
-import configCore from 'app/core/config';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
-import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
 import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
@@ -28,52 +25,42 @@ export const PluginActions = ({ plugin }: Props) => {
   }
 
   const hasInstallWarning = hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion);
-  const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
       ? PluginStatus.UPDATE
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
-  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
+  const isInstallControlsDisabled =
+    plugin.isCore || plugin.isDisabled || plugin.isProvisioned || !isInstallControlsEnabled();
 
   return (
-    <VerticalGroup>
-      <HorizontalGroup>
+    <Stack direction="column">
+      <Stack alignItems="center">
         {!isInstallControlsDisabled && (
-          <>
-            {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
-              <ExternallyManagedButton
-                pluginId={plugin.id}
-                pluginStatus={pluginStatus}
-                angularDetected={plugin.angularDetected}
-              />
-            ) : (
-              <InstallControlsButton
-                plugin={plugin}
-                latestCompatibleVersion={latestCompatibleVersion}
-                pluginStatus={pluginStatus}
-                setNeedReload={setNeedReload}
-                hasInstallWarning={hasInstallWarning}
-              />
-            )}
-          </>
+          <InstallControlsButton
+            plugin={plugin}
+            latestCompatibleVersion={latestCompatibleVersion}
+            pluginStatus={pluginStatus}
+            setNeedReload={setNeedReload}
+            hasInstallWarning={hasInstallWarning}
+          />
         )}
         <GetStartedWithPlugin plugin={plugin} />
-      </HorizontalGroup>
+      </Stack>
       {needReload && (
-        <HorizontalGroup>
+        <Stack alignItems="center">
           <Icon name="exclamation-triangle" />
           <span className={styles.message}>Refresh the page to see the changes</span>
-        </HorizontalGroup>
+        </Stack>
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    message: css`
-      color: ${theme.colors.text.secondary};
-    `,
+    message: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };

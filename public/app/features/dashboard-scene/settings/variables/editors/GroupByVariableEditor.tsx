@@ -1,7 +1,7 @@
-import React from 'react';
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, DataSourceRef, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable } from '@grafana/scenes';
 
@@ -14,7 +14,7 @@ interface GroupByVariableEditorProps {
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { variable, onRunQuery } = props;
-  const { datasource: datasourceRef, defaultOptions } = variable.useState();
+  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -25,10 +25,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     : 'This data source does not support group by variable yet.';
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
-    const dsRef: DataSourceRef = {
-      uid: ds.uid,
-      type: ds.type,
-    };
+    const dsRef = getDataSourceRef(ds);
 
     variable.setState({ datasource: dsRef });
     onRunQuery();
@@ -39,6 +36,10 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
+  };
+
   return (
     <GroupByVariableForm
       defaultOptions={defaultOptions}
@@ -46,6 +47,8 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
+      allowCustomValue={allowCustomValue}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

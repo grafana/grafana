@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"strconv"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -57,7 +59,8 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	ident := &authn.Identity{
-		ID:           authn.NewNamespaceID(authn.NamespaceUser, token.UserId),
+		ID:           strconv.FormatInt(token.UserId, 10),
+		Type:         claims.TypeUser,
 		SessionToken: token,
 		ClientParams: authn.ClientParams{
 			FetchSyncedUser: true,

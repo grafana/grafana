@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
@@ -13,6 +13,7 @@ import {
   TextArea,
   Box,
   Stack,
+  WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -52,7 +53,7 @@ export function GeneralSettingsUnconnected({
     setRenderCounter(renderCounter + 1);
   };
 
-  const onTitleChange = React.useCallback(
+  const onTitleChange = useCallback(
     (title: string) => {
       dashboard.title = title;
       setDashboardTitle(title);
@@ -60,7 +61,7 @@ export function GeneralSettingsUnconnected({
     [setDashboardTitle, dashboard]
   );
 
-  const onDescriptionChange = React.useCallback(
+  const onDescriptionChange = useCallback(
     (description: string) => {
       dashboard.description = description;
       setDashboardDescription(description);
@@ -97,7 +98,7 @@ export function GeneralSettingsUnconnected({
     updateTimeZone(timeZone);
   };
 
-  const onWeekStartChange = (weekStart: string) => {
+  const onWeekStartChange = (weekStart?: WeekStart) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
     updateWeekStart(weekStart);

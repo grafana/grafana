@@ -3,9 +3,9 @@ import { useMemo, useRef } from 'react';
 
 import {
   AlertGroupTotals,
-  AlertingRule,
-  AlertInstanceTotals,
   AlertInstanceTotalState,
+  AlertInstanceTotals,
+  AlertingRule,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -22,23 +22,18 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSources,
   getRulesSourceByName,
-  GRAFANA_RULES_SOURCE_NAME,
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
-import {
-  isAlertingRule,
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-  isRecordingRule,
-  isRecordingRulerRule,
-} from '../utils/rules';
+import { hashQuery } from '../utils/rule-id';
+import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
-import { grafanaRulerConfig } from './useCombinedRule';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export interface CacheValue {
@@ -97,7 +92,7 @@ export function useCombinedRuleNamespaces(
 
           // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
           // All rules from all groups have the same namespace_uid so we're taking the first one.
-          if (isGrafanaRulerRule(groups[0].rules[0])) {
+          if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
             namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
           }
 
@@ -125,7 +120,7 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
-export function combineRulesNamespaces(
+export function combineRulesNamespace(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
   rulerRules?: RulerRulesConfigDTO
@@ -181,6 +176,33 @@ export function attachRulerRulesToCombinedRules(
   return ns;
 }
 
+export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: RulerRuleGroupDTO): void {
+  if (!rule.promRule) {
+    return;
+  }
+
+  const combinedRulesFromRuler = rulerGroup.rules.map((rulerRule) =>
+    rulerRuleToCombinedRule(rulerRule, rule.namespace, rule.group)
+  );
+  const existingRulerRulesByName = combinedRulesFromRuler.reduce((acc, rule) => {
+    const sameNameRules = acc.get(rule.name);
+    if (sameNameRules) {
+      sameNameRules.push(rule);
+    } else {
+      acc.set(rule.name, [rule]);
+    }
+    return acc;
+  }, new Map<string, CombinedRule[]>());
+
+  const matchingRulerRule = getExistingRuleInGroup(rule.promRule, existingRulerRulesByName, rule.namespace.rulesSource);
+  if (matchingRulerRule) {
+    rule.rulerRule = matchingRulerRule.rulerRule;
+    rule.query = matchingRulerRule.query;
+    rule.labels = matchingRulerRule.labels;
+    rule.annotations = matchingRulerRule.annotations;
+  }
+}
+
 export function addCombinedPromAndRulerGroups(
   ns: CombinedRuleNamespace,
   promGroups: RuleGroup[],
@@ -219,8 +241,10 @@ export function addRulerGroupsToCombinedNamespace(
   groups: RulerRuleGroupDTO[] = []
 ): void {
   namespace.groups = groups.map((group) => {
-    const numRecordingRules = group.rules.filter((rule) => isRecordingRulerRule(rule)).length;
-    const numPaused = group.rules.filter((rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.is_paused).length;
+    const numRecordingRules = group.rules.filter((rule) => rulerRuleType.any.recordingRule(rule)).length;
+    const numPaused = group.rules.filter((rule) => {
+      return rulerRuleType.grafana.alertingRule(rule) && isPausedRule(rule);
+    }).length;
 
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
@@ -270,8 +294,10 @@ export function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespac
       const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
-        existingRule.instanceTotals = isAlertingRule(rule) ? calculateRuleTotals(rule) : {};
-        existingRule.filteredInstanceTotals = isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {};
+        existingRule.instanceTotals = prometheusRuleType.alertingRule(rule) ? calculateRuleTotals(rule) : {};
+        existingRule.filteredInstanceTotals = prometheusRuleType.alertingRule(rule)
+          ? calculateRuleFilteredTotals(rule)
+          : {};
       } else {
         combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
       }
@@ -288,11 +314,11 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   }
 
   return {
-    alerting: result[AlertInstanceTotalState.Alerting] || result['firing'],
+    alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
-    error: result[AlertInstanceTotalState.Error] || result['err'] || undefined, // Prometheus uses "err" instead of "error"
+    error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
   };
 }
 
@@ -316,9 +342,9 @@ export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>)
     };
   }
 
-  const countsByState = countBy(group.rules, (rule) => isAlertingRule(rule) && rule.state);
+  const countsByState = countBy(group.rules, (rule) => prometheusRuleType.alertingRule(rule) && rule.state);
   const countsByHealth = countBy(group.rules, (rule) => rule.health);
-  const recordingCount = group.rules.filter((rule) => isRecordingRule(rule)).length;
+  const recordingCount = group.rules.filter((rule) => prometheusRuleType.recordingRule(rule)).length;
 
   return {
     alerting: countsByState[PromAlertingRuleState.Firing],
@@ -340,7 +366,9 @@ function calculateAllGroupsTotals(groups: CombinedRuleGroup[]): AlertGroupTotals
         totals[key] = 0;
       }
 
-      totals[key] += value;
+      if (value !== undefined && value !== null) {
+        totals[key] += value;
+      }
     });
   });
 
@@ -352,12 +380,12 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     name: rule.name,
     query: rule.query,
     labels: rule.labels || {},
-    annotations: isAlertingRule(rule) ? rule.annotations || {} : {},
+    annotations: prometheusRuleType.alertingRule(rule) ? getAnnotations(rule) : {},
     promRule: rule,
     namespace: namespace,
     group,
-    instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
-    filteredInstanceTotals: isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
+    instanceTotals: prometheusRuleType.alertingRule(rule) ? calculateRuleTotals(rule) : {},
+    filteredInstanceTotals: prometheusRuleType.alertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
   };
 }
 
@@ -366,7 +394,7 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return isAlertingRulerRule(rule)
+  return rulerRuleType.dataSource.alertingRule(rule)
     ? {
         name: rule.alert,
         query: rule.expr,
@@ -378,7 +406,7 @@ function rulerRuleToCombinedRule(
         instanceTotals: {},
         filteredInstanceTotals: {},
       }
-    : isRecordingRulerRule(rule)
+    : rulerRuleType.dataSource.recordingRule(rule)
       ? {
           name: rule.record,
           query: rule.expr,
@@ -443,25 +471,21 @@ function getExistingRuleInGroup(
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
+  const promRuleAnnotations = prometheusRuleType.alertingRule(rule) ? getAnnotations(rule) : {};
+  const promRuleLabels = rule.labels ?? {};
+  const promQuery = checkQuery ? hashQuery(rule.query) : '';
+
+  const combinedRuleAnnotations = combinedRule.annotations;
+  const combinedRuleLabels = combinedRule.labels;
+  const combinedRuleQuery = checkQuery ? hashQuery(combinedRule.query) : '';
+
   if (combinedRule.name === rule.name) {
     return isEqual(
-      [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
-      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}]
+      [combinedRuleQuery, combinedRuleLabels, combinedRuleAnnotations],
+      [promQuery, promRuleLabels, promRuleAnnotations]
     );
   }
   return false;
-}
-
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-function hashQuery(query: string) {
-  // one of them might be wrapped in parens
-  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.slice(1, -1);
-  }
-  // whitespace could be added or removed
-  query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
-  return query.split('').sort().join('');
 }
 
 /*
@@ -476,6 +500,8 @@ export function useCombinedRules(
   result?: CombinedRuleNamespace[];
   error?: unknown;
 } {
+  const isNewDashboard = !Boolean(dashboardUID);
+
   const {
     currentData: promRuleNs,
     isLoading: isLoadingPromRules,
@@ -487,8 +513,7 @@ export function useCombinedRules(
       panelId,
     },
     {
-      // "null" means the dashboard isn't saved yet, as opposed to "undefined" which means we don't want to filter by dashboard UID
-      skip: dashboardUID === null,
+      skip: isNewDashboard,
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
     }
   );
@@ -499,12 +524,12 @@ export function useCombinedRules(
     error: rulerRulesError,
   } = alertRuleApi.endpoints.rulerRules.useQuery(
     {
-      rulerConfig: grafanaRulerConfig,
+      rulerConfig: GRAFANA_RULER_CONFIG,
       filter: { dashboardUID: dashboardUID ?? undefined, panelId },
     },
     {
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
-      skip: dashboardUID === null,
+      skip: isNewDashboard,
     }
   );
 
@@ -535,7 +560,7 @@ export function useCombinedRules(
 
       // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
       // All rules from all groups have the same namespace_uid so we're taking the first one.
-      if (isGrafanaRulerRule(groups[0].rules[0])) {
+      if (rulerRuleType.grafana.rule(groups[0].rules[0])) {
         namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
       }
 

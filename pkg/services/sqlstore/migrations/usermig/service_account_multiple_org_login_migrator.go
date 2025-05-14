@@ -9,6 +9,7 @@ import (
 
 const (
 	AllowSameLoginCrossOrgs = "update login field with orgid to allow for multiple service accounts with same name across orgs"
+	DedupOrgInLogin         = "update service accounts login field orgid to appear only once"
 )
 
 // Service accounts login were not unique per org. this migration is part of making it unique per org
@@ -37,12 +38,12 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 	case migrator.Postgres:
 		_, err = p.sess.Exec(`
             UPDATE "user"
-            SET login = 'sa-' || org_id::text || '-' || 
-                CASE 
-                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4) 
-                    ELSE login 
-                END 
-            WHERE login IS NOT NULL 
+            SET login = 'sa-' || org_id::text || '-' ||
+                CASE
+                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4)
+                    ELSE login
+                END
+            WHERE login IS NOT NULL
               AND is_service_account = true
               AND login NOT LIKE 'sa-' || org_id::text || '-%';
         `)
@@ -55,7 +56,7 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
                     ELSE login
                 END
             )
-            WHERE login IS NOT NULL 
+            WHERE login IS NOT NULL
               AND is_service_account = 1
               AND login NOT LIKE CONCAT('sa-', org_id, '-%');
         `)
@@ -67,12 +68,69 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
                     WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
                     ELSE login
                 END
-            WHERE login IS NOT NULL 
+            WHERE login IS NOT NULL
               AND is_service_account = 1
               AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
         `)
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
 	}
+	return err
+}
+
+type ServiceAccountsDeduplicateOrgInLogin struct {
+	migrator.MigrationBase
+}
+
+func (p *ServiceAccountsDeduplicateOrgInLogin) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	dialect := mg.Dialect
+	var err error
+
+	// var logins []Login
+	switch dialect.DriverName() {
+	case migrator.Postgres:
+		_, err = sess.Exec(`
+            UPDATE "user" AS u
+            SET login = 'sa-' || org_id::text || SUBSTRING(login FROM LENGTH('sa-' || org_id::text || '-' || org_id::text)+1)
+            WHERE login IS NOT NULL
+              AND is_service_account = true
+              AND login LIKE 'sa-' || org_id::text || '-' || org_id::text || '-%'
+              AND NOT EXISTS (
+                SELECT 1
+                FROM "user" AS u2
+                WHERE u2.login = 'sa-' || u.org_id::text || SUBSTRING(u.login FROM LENGTH('sa-' || u.org_id::text || '-' || u.org_id::text)+1)
+            );;
+        `)
+	case migrator.MySQL:
+		_, err = sess.Exec(`
+            UPDATE user AS u
+            LEFT JOIN user AS u2 ON u2.login = CONCAT('sa-', u.org_id, SUBSTRING(u.login, LENGTH(CONCAT('sa-', u.org_id, '-', u.org_id))+1))
+            SET u.login = CONCAT('sa-', u.org_id, SUBSTRING(u.login, LENGTH(CONCAT('sa-', u.org_id, '-', u.org_id))+1))
+            WHERE u.login IS NOT NULL
+                AND u.is_service_account = 1
+                AND u.login LIKE CONCAT('sa-', u.org_id, '-', u.org_id, '-%')
+                AND u2.login IS NULL;
+        `)
+	case migrator.SQLite:
+		_, err = sess.Exec(`
+            UPDATE ` + dialect.Quote("user") + ` AS u
+            SET login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
+            WHERE u.login IS NOT NULL
+                AND u.is_service_account = 1
+                AND u.login LIKE 'sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT)||'-%'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM  ` + dialect.Quote("user") + `AS u2
+                    WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
+                );;
+        `)
+	default:
+		return fmt.Errorf("dialect not supported: %s", dialect)
+	}
+
 	return err
 }

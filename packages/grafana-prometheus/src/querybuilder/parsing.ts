@@ -11,15 +11,17 @@ import {
   FunctionIdentifier,
   GroupingLabels,
   Identifier,
-  LabelMatcher,
   LabelName,
+  QuotedLabelName,
   MatchingModifierClause,
   MatchOp,
-  NumberLiteral,
+  NumberDurationLiteral,
   On,
   ParenExpr,
   parser,
   StringLiteral,
+  QuotedLabelMatcher,
+  UnquotedLabelMatcher,
   VectorSelector,
   Without,
 } from '@prometheus-io/lezer-promql';
@@ -145,9 +147,33 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case LabelMatcher: {
+    case QuotedLabelName: {
+      // Usually we got the metric name above in the Identifier case.
+      // If we didn't get the name that's potentially we have it in curly braces as quoted string.
+      // It must be quoted because that's how utf8 metric names should be defined
+      // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
+      if (visQuery.metric === '') {
+        const strLiteral = node.getChild(StringLiteral);
+        const quotedMetric = getString(expr, strLiteral);
+        visQuery.metric = quotedMetric.slice(1, -1);
+      }
+      break;
+    }
+
+    case QuotedLabelMatcher: {
+      const quotedLabel = getLabel(expr, node, QuotedLabelName);
+      quotedLabel.label = quotedLabel.label.slice(1, -1);
+      visQuery.labels.push(quotedLabel);
+      const err = node.getChild(ErrorId);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
+      break;
+    }
+
+    case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
-      visQuery.labels.push(getLabel(expr, node));
+      visQuery.labels.push(getLabel(expr, node, LabelName));
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
@@ -202,10 +228,14 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
-function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild(LabelName));
+function getLabel(
+  expr: string,
+  node: SyntaxNode,
+  labelType: typeof LabelName | typeof QuotedLabelName
+): QueryBuilderLabelFilter {
+  const label = getString(expr, node.getChild(labelType));
   const op = getString(expr, node.getChild(MatchOp));
-  const value = getString(expr, node.getChild(StringLiteral)).replace(/"/g, '');
+  const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
     label,
     op,
@@ -281,7 +311,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, LabelName));
+    labels.push(...getAllByType(expr, modifier, LabelName), ...getAllByType(expr, modifier, QuotedLabelName));
   }
 
   const body = node.getChild(FunctionCallBody);
@@ -334,7 +364,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case NumberLiteral: {
+    case NumberDurationLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
@@ -369,8 +399,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.type.id === NumberLiteral;
-  const rightNumber = right.type.id === NumberLiteral;
+  const leftNumber = left.type.id === NumberDurationLiteral;
+  const rightNumber = right.type.id === NumberDurationLiteral;
 
   const rightBinary = right.type.id === BinaryExpr;
 
@@ -389,7 +419,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.type.id === NumberLiteral) {
+    if (leftMostChild?.type.id === NumberDurationLiteral) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 

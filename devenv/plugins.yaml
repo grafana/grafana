@@ -1,0 +1,23 @@
+apiVersion: 1
+
+apps:
+  - type: grafana-extensionstest-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+    jsonData:
+      apiUrl: http://default-url.com
+    secureJsonData:
+      apiKey: secret-key
+  - type: grafana-extensionexample1-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+  - type: grafana-extensionexample2-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+  - type: grafana-extensionexample3-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false

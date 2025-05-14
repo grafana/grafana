@@ -1,12 +1,12 @@
-import React, { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
-import { usePluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
+// We might want to customise this in future but right now the toolbar menu from the Explore view is fine.
+import { ToolbarExtensionPointMenu as AlertExtensionPointMenu } from 'app/features/explore/extensions/ToolbarExtensionPointMenu';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
-
-import { AlertExtensionPointMenu } from './AlertInstanceExtensionPointMenu';
 
 interface AlertInstanceExtensionPointProps {
   rule?: CombinedRule;
@@ -21,13 +21,13 @@ export const AlertInstanceExtensionPoint = ({
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const context = useMemo(() => ({ instance, rule }), [instance, rule]);
-  const { extensions } = usePluginLinkExtensions({ context, extensionPointId, limitPerPlugin: 3 });
+  const { links } = usePluginLinks({ context, extensionPointId, limitPerPlugin: 3 });
 
-  if (extensions.length === 0) {
+  if (links.length === 0) {
     return null;
   }
 
-  const menu = <AlertExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
+  const menu = <AlertExtensionPointMenu extensions={links} onSelect={setSelectedExtension} />;
   return (
     <>
       <Dropdown placement="bottom-start" overlay={menu}>

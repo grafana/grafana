@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';

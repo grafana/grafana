@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
@@ -60,6 +60,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
                         icon="history"
                         onClick={() => {
                           showModal(RevertDashboardModal, {
+                            id: version.id,
                             version: version.version,
                             hideModal,
                           });

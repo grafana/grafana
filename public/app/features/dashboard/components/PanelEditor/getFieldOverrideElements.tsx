@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import {
   FieldConfigOptionsRegistry,
@@ -106,24 +106,23 @@ export function getFieldOverrideCategories(
     });
 
     const onMatcherConfigChange = (options: unknown) => {
-      override.matcher.options = options;
-      onOverrideChange(idx, override);
+      onOverrideChange(idx, {
+        ...override,
+        matcher: { ...override.matcher, options },
+      });
     };
 
-    const onDynamicConfigValueAdd = (o: ConfigOverrideRule, value: SelectableValue<string>) => {
+    const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
       const registryItem = registry.get(value.value!);
       const propertyConfig: DynamicConfigValue = {
         id: registryItem.id,
         value: registryItem.defaultValue,
       };
 
-      if (override.properties) {
-        o.properties.push(propertyConfig);
-      } else {
-        o.properties = [propertyConfig];
-      }
+      const properties = override.properties ?? [];
+      properties.push(propertyConfig);
 
-      onOverrideChange(idx, o);
+      onOverrideChange(idx, { ...override, properties });
     };
 
     /**
@@ -158,13 +157,23 @@ export function getFieldOverrideCategories(
       }
 
       const onPropertyChange = (value: DynamicConfigValue) => {
-        override.properties[propIdx].value = value;
-        onOverrideChange(idx, override);
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.map((prop, i) => {
+            if (i === propIdx) {
+              return { ...prop, value: value };
+            }
+
+            return prop;
+          }),
+        });
       };
 
       const onPropertyRemove = () => {
-        override.properties.splice(propIdx, 1);
-        onOverrideChange(idx, override);
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter((_, i) => i !== propIdx),
+        });
       };
 
       /**

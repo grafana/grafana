@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -20,21 +20,48 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const useLatestCompatibleInfo = !plugin.isInstalled;
-  let version = plugin.installedVersion;
-  if (!version && useLatestCompatibleInfo && latestCompatibleVersion?.version) {
-    version = latestCompatibleVersion?.version;
-  }
 
-  if (Boolean(version)) {
-    info.push({
-      label: 'Version',
-      value: version,
-    });
+  const installedVersion = plugin.installedVersion;
+  const latestVersion = plugin.latestVersion;
+
+  if (installedVersion || latestVersion) {
+    const managedVersionText = 'Managed by Grafana';
+
+    const addInfo = (label: string, value: string | undefined) => {
+      if (value) {
+        info.push({
+          label:
+            label === 'installedVersion'
+              ? t('plugins.details.labels.installedVersion', 'Installed Version')
+              : t('plugins.details.labels.latestVersion', 'Latest Version'),
+          value,
+        });
+      }
+    };
+
+    if (plugin.isInstalled) {
+      const installedVersionValue = plugin.isManaged ? managedVersionText : installedVersion;
+      addInfo('installedVersion', installedVersionValue);
+    }
+
+    let latestVersionValue;
+    if (plugin.isManaged) {
+      latestVersionValue = managedVersionText;
+    } else if (plugin.isPreinstalled?.withVersion) {
+      latestVersionValue = `${latestVersion} (preinstalled)`;
+    } else {
+      latestVersionValue = latestVersion;
+    }
+
+    // latest versions of core plugins are not consistent
+    if (!plugin.isCore) {
+      addInfo('latestVersion', latestVersionValue);
+    }
   }
 
   if (Boolean(plugin.orgName)) {
     info.push({
-      label: 'From',
+      label: t('plugins.details.labels.from', 'From'),
       value: plugin.orgName,
     });
   }
@@ -45,7 +72,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
     plugin.signatureType === PluginSignatureType.commercial;
   if (showDownloads && Boolean(plugin.downloads > 0)) {
     info.push({
-      label: 'Downloads',
+      label: t('plugins.details.labels.downloads', 'Downloads'),
       value: new Intl.NumberFormat().format(plugin.downloads),
     });
   }
@@ -59,20 +86,20 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
 
   if (!hasNoDependencyInfo) {
     info.push({
-      label: 'Dependencies',
+      label: t('plugins.details.labels.dependencies', 'Dependencies'),
       value: <PluginDetailsHeaderDependencies plugin={plugin} grafanaDependency={grafanaDependency} />,
     });
   }
 
   if (plugin.isDisabled) {
     info.push({
-      label: 'Status',
+      label: t('plugins.details.labels.status', 'Status'),
       value: <PluginDisabledBadge error={plugin.error!} />,
     });
   }
 
   info.push({
-    label: 'Signature',
+    label: t('plugins.details.labels.signature', 'Signature'),
     value: <PluginDetailsHeaderSignature plugin={plugin} />,
   });
 
@@ -81,10 +108,10 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    subtitle: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
+    subtitle: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
   };
 };

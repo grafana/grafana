@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
-import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
@@ -12,6 +13,7 @@ import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
@@ -24,7 +26,7 @@ export function PreviewRule(): React.ReactElement | null {
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
-  if (type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) {
+  if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }
 

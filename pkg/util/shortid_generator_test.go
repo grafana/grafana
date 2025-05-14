@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 
 	"cuelang.org/go/pkg/strings"
@@ -19,25 +18,6 @@ func TestAllowedCharMatchesUidPattern(t *testing.T) {
 	}
 }
 
-// Run with "go test -race -run ^TestThreadSafe$ github.com/grafana/grafana/pkg/util"
-func TestThreadSafe(t *testing.T) {
-	// This test was used to showcase the bug, unfortunately there is
-	// no way to enable the -race flag programmatically.
-	t.Skip()
-	// Use 1000 go routines to create 100 UIDs each at roughly the same time.
-	var wg sync.WaitGroup
-	for i := 0; i < 1000; i++ {
-		go func() {
-			for ii := 0; ii < 100; ii++ {
-				_ = GenerateShortUID()
-			}
-			wg.Done()
-		}()
-		wg.Add(1)
-	}
-	wg.Wait()
-}
-
 func TestRandomUIDs(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		v := GenerateShortUID()
@@ -48,10 +28,7 @@ func TestRandomUIDs(t *testing.T) {
 		if validation != nil {
 			t.Fatalf("created invalid name: %v", validation)
 		}
-
-		//	fmt.Println(v)
 	}
-	// t.FailNow()
 }
 
 func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
@@ -140,35 +117,6 @@ func TestValidateUID(t *testing.T) {
 			} else {
 				require.ErrorIs(t, err, tt.expected)
 			}
-		})
-	}
-}
-
-func TestAutofixUID(t *testing.T) {
-	var tests = []struct {
-		name     string
-		uid      string
-		expected string
-	}{
-		{
-			name:     "return input when input is valid",
-			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-			expected: "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-		},
-		{
-			name:     "generate new uid when input is too long",
-			uid:      strings.Repeat("1", MaxUIDLength+1),
-			expected: strings.Repeat("1", MaxUIDLength),
-		},
-		{
-			name:     "generate new uid when input has invalid characters",
-			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
-			expected: "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.expected, AutofixUID(tt.uid))
 		})
 	}
 }

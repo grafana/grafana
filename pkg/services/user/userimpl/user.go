@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -65,10 +65,6 @@ func ProvideService(
 		return s, err
 	}
 
-	if err := s.uidMigration(db); err != nil {
-		return nil, err
-	}
-
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
 }
@@ -105,16 +101,28 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
 	}
 
-	cmdOrg := org.GetOrgIDForNewUserCommand{
-		Email:        cmd.Email,
-		Login:        cmd.Login,
-		OrgID:        cmd.OrgID,
-		OrgName:      cmd.OrgName,
-		SkipOrgSetup: cmd.SkipOrgSetup,
-	}
-	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	if err != nil {
-		return nil, err
+	// if the user is provisioned, use the org ID from the requester
+	var orgID int64
+	var err error
+	if cmd.IsProvisioned {
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		orgID = requester.GetOrgID()
+	} else {
+		cmdOrg := org.GetOrgIDForNewUserCommand{
+			Email:        cmd.Email,
+			Login:        cmd.Login,
+			OrgID:        cmd.OrgID,
+			OrgName:      cmd.OrgName,
+			SkipOrgSetup: cmd.SkipOrgSetup,
+		}
+		orgID, err = s.orgService.GetIDForNewUser(ctx, cmdOrg)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
@@ -139,6 +147,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		Updated:          timeNow(),
 		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: cmd.IsServiceAccount,
+		IsProvisioned:    cmd.IsProvisioned,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -169,7 +178,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	}
 
 	// create org user link
-	if !cmd.SkipOrgSetup {
+	if !cmd.SkipOrgSetup && !usr.IsProvisioned {
 		orgUser := org.OrgUser{
 			OrgID:   orgID,
 			UserID:  usr.ID,
@@ -215,6 +224,15 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	defer span.End()
 
 	return s.store.GetByID(ctx, query.ID)
+}
+
+func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetByUID", trace.WithAttributes(
+		attribute.String("userUID", query.UID),
+	))
+	defer span.End()
+
+	return s.store.GetByUID(ctx, query.UID)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
@@ -301,15 +319,15 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		return err
 	}
 
-	if !shouldUpdateLastSeen(u.LastSeenAt) {
+	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
 		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*15
+func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
@@ -528,26 +546,4 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 
 	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
 	return limits, nil
-}
-
-// This is just to ensure that all users have a valid uid.
-// To protect against upgrade / downgrade we need to run this for a couple of releases.
-// FIXME: Remove this migration and make uid field required https://github.com/grafana/identity-access-team/issues/552
-func (s *Service) uidMigration(store db.DB) error {
-	return store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		switch store.GetDBType() {
-		case migrator.SQLite:
-			_, err := sess.Exec("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;")
-			return err
-		case migrator.Postgres:
-			_, err := sess.Exec("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;")
-			return err
-		case migrator.MySQL:
-			_, err := sess.Exec("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;")
-			return err
-		default:
-			// this branch should be unreachable
-			return nil
-		}
-	})
 }

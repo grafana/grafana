@@ -323,7 +323,7 @@ describe('running queries', () => {
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
   });
-  it('should cancel running query when a new query is issued', async () => {
+  it('should cancel running queries when a new query is issued', async () => {
     const initialState = {
       ...makeExplorePaneState(),
     };
@@ -332,6 +332,23 @@ describe('running queries', () => {
       .whenThunkIsDispatched({ exploreId });
 
     expect(dispatchedActions).toContainEqual(cancelQueriesAction({ exploreId }));
+  });
+  it('should not cancel running queries when scanning', async () => {
+    const initialState = {
+      ...makeExplorePaneState(),
+      explore: {
+        panes: {
+          [exploreId]: {
+            scanning: true,
+          },
+        },
+      },
+    };
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(runQueries)
+      .whenThunkIsDispatched({ exploreId });
+
+    expect(dispatchedActions).not.toContainEqual(cancelQueriesAction({ exploreId }));
   });
 });
 

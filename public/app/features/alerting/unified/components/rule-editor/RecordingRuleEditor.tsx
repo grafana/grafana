@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { PanelData, CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
+import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isPromOrLokiQuery } from '../../utils/rule-form';
@@ -48,36 +51,42 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
 
-  const handleChangedQuery = (changedQuery: DataQuery) => {
-    const query = queries[0];
-    const dataSourceId = getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid;
+  const handleChangedQuery = useCallback(
+    (changedQuery: DataQuery) => {
+      if (!isPromOrLokiQuery(changedQuery) || !dataSource) {
+        return;
+      }
 
-    if (!isPromOrLokiQuery(changedQuery) || !dataSourceId) {
-      return;
-    }
+      const [query] = queries;
+      const { uid: dataSourceId, type } = dataSource;
+      const isLoki = type === DataSourceType.Loki;
+      const expr = changedQuery.expr;
 
-    const expr = changedQuery.expr;
-
-    const merged = {
-      ...query,
-      ...changedQuery,
-      datasourceUid: dataSourceId,
-      expr,
-      model: {
+      const merged = {
+        ...query,
+        ...changedQuery,
+        datasourceUid: dataSourceId,
         expr,
-        datasource: changedQuery.datasource,
-        refId: changedQuery.refId,
-        editorMode: changedQuery.editorMode,
-        // Instant and range are used by Prometheus queries
-        instant: changedQuery.instant,
-        range: changedQuery.range,
-        // Query type is used by Loki queries
-        queryType: changedQuery.queryType,
-        legendFormat: changedQuery.legendFormat,
-      },
-    };
-    onChangeQuery([merged]);
-  };
+        model: {
+          expr,
+          datasource: changedQuery.datasource,
+          refId: changedQuery.refId,
+          editorMode: changedQuery.editorMode,
+          // Instant and range are used by Prometheus queries
+          instant: changedQuery.instant,
+          range: changedQuery.range,
+          // Query type is used by Loki queries
+          // On first render/when creating a recording rule, the query type is not set
+          // unless the user has changed it betwee range/instant. The cleanest way to handle this
+          // is to default to instant, or whatever the changed type is
+          queryType: isLoki ? changedQuery.queryType || LokiQueryType.Instant : changedQuery.queryType,
+          legendFormat: changedQuery.legendFormat,
+        },
+      };
+      onChangeQuery([merged]);
+    },
+    [dataSource, queries, onChangeQuery]
+  );
 
   if (loading || dataSource?.name !== dataSourceName) {
     return null;
@@ -95,14 +104,19 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   return (
     <>
       {queries.length && (
-        <QueryEditor
-          query={queries[0]}
-          queries={queries}
-          app={CoreApp.UnifiedAlerting}
-          onChange={handleChangedQuery}
-          onRunQuery={runQueries}
-          datasource={dataSource}
-        />
+        <>
+          <QueryEditor
+            query={queries[0]}
+            queries={queries}
+            app={CoreApp.UnifiedAlerting}
+            onChange={handleChangedQuery}
+            onRunQuery={runQueries}
+            datasource={dataSource}
+          />
+          {(data?.errors || []).map((err) => {
+            return <QueryErrorAlert key={err.message} error={err} />;
+          })}
+        </>
       )}
 
       {data && (

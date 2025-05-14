@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,6 +21,7 @@ export interface OptionsPaneCategoryProps {
   isNested?: boolean;
   children: ReactNode;
   sandboxId?: string;
+  isOpenable?: boolean;
 }
 
 const CATEGORY_PARAM_NAME = 'showCategory' as const;
@@ -36,12 +38,13 @@ export const OptionsPaneCategory = React.memo(
     itemsCount,
     isNested = false,
     sandboxId,
+    isOpenable = true,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
     });
 
-    const [isExpanded, setIsExpanded] = useState(savedState?.isExpanded ?? isOpenDefault);
+    const [isExpanded, setIsExpanded] = useState(!isOpenable || (savedState?.isExpanded ?? isOpenDefault));
     const manualClickTime = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
@@ -65,6 +68,9 @@ export const OptionsPaneCategory = React.memo(
     }, [forceOpen, isExpanded, isOpenFromUrl]);
 
     const onToggle = useCallback(() => {
+      if (!isOpenable) {
+        return;
+      }
       manualClickTime.current = Date.now();
       updateQueryParams(
         {
@@ -74,7 +80,7 @@ export const OptionsPaneCategory = React.memo(
       );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
-    }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
+    }, [isOpenable, updateQueryParams, isExpanded, id, setSavedState]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {
@@ -100,6 +106,7 @@ export const OptionsPaneCategory = React.memo(
     );
 
     const headerStyles = cx(styles.header, {
+      [styles.headerHover]: isOpenable,
       [styles.headerExpanded]: isExpanded,
       [styles.headerNested]: isNested,
     });
@@ -119,20 +126,22 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <Button
-            data-testid={selectors.components.OptionsGroup.toggle(id)}
-            type="button"
-            fill="text"
-            size="sm"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            className={styles.toggleButton}
-            icon={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={onToggle}
-          />
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
+          {isOpenable ? (
+            <Button
+              data-testid={selectors.components.OptionsGroup.toggle(id)}
+              type="button"
+              fill="text"
+              size="md"
+              variant="secondary"
+              aria-expanded={isExpanded}
+              className={styles.toggleButton}
+              icon={isExpanded ? 'angle-up' : 'angle-down'}
+              onClick={onToggle}
+            />
+          ) : null}
         </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
@@ -158,18 +167,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     lineHeight: 1.5,
     fontSize: '1rem',
-    paddingLeft: '6px',
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
+    height: theme.spacing(4),
+    display: 'flex',
+    alignItems: 'center',
   }),
   header: css({
     display: 'flex',
-    cursor: 'pointer',
     alignItems: 'center',
-    padding: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
-
+  }),
+  headerHover: css({
+    cursor: 'pointer',
     '&:hover': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
     },
@@ -184,7 +196,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.5, 0),
   }),
   body: css({
-    padding: theme.spacing(1, 2, 1, 4),
+    padding: theme.spacing(1, 2, 1, 2),
   }),
   bodyNested: css({
     position: 'relative',
@@ -194,7 +206,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       content: "''",
       position: 'absolute',
       top: 0,
-      left: '8px',
+      left: '1px',
       width: '1px',
       height: '100%',
       background: theme.colors.border.weak,

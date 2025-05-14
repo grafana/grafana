@@ -2,16 +2,17 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
+import * as React from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/core';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import BrowseDashboardsPage, { Props } from './BrowseDashboardsPage';
+import BrowseDashboardsPage from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
 import * as permissions from './permissions';
 const [mockTree, { dashbdD, folderA, folderA_folderA }] = wellFormedTree();
@@ -42,6 +43,11 @@ jest.mock('react-virtualized-auto-sizer', () => {
     },
   };
 });
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({}),
+}));
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   const { rerender } = rtlRender(
@@ -105,7 +111,6 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
 });
 
 describe('browse-dashboards BrowseDashboardsPage', () => {
-  let props: Props;
   let server: SetupServer;
   const mockPermissions = {
     canCreateDashboards: true,
@@ -142,10 +147,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   });
 
   beforeEach(() => {
-    props = {
-      ...getRouteComponentProps(),
-    };
-
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
@@ -157,17 +158,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   describe('at the root level', () => {
     it('displays "Dashboards" as the page title', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
     });
 
     it('displays a search input', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
 
     it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
@@ -179,34 +180,34 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canCreateFolders: false,
         };
       });
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
     });
 
     it('does not show "Folder actions"', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
     it('does not show an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('does not show any tabs', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
 
-      expect(screen.queryByRole('tab', { name: 'Tab Dashboards' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Panels' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Alert rules' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Dashboards' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Panels' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Alert rules' })).not.toBeInTheDocument();
     });
 
     it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
 
       expect(await screen.findByText('Sort')).toBeInTheDocument();
@@ -217,7 +218,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
       await userEvent.click(checkbox);
@@ -232,7 +233,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('navigating into a child item resets the selected state', async () => {
-      const { rerender } = render(<BrowseDashboardsPage {...props} />);
+      const { rerender } = render(<BrowseDashboardsPage />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
@@ -241,9 +242,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
-      const updatedProps = { ...props };
-      updatedProps.match.params = { uid: folderA.item.uid };
-      rerender(<BrowseDashboardsPage {...updatedProps} />);
+      (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
+      rerender(<BrowseDashboardsPage />);
 
       // Check the filters are now visible again
       expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
@@ -257,21 +257,21 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   describe('for a child folder', () => {
     beforeEach(() => {
-      props.match.params = { uid: folderA.item.uid };
+      (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
     });
 
     it('shows the folder name as the page title', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
     });
 
     it('displays a search input', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
 
     it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
@@ -283,13 +283,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canCreateFolders: false,
         };
       });
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
     });
 
     it('shows the "Folder actions" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
     });
 
@@ -303,13 +303,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canViewPermissions: false,
         };
       });
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
     it('shows an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
     });
 
@@ -320,25 +320,25 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canEditFolders: false,
         };
       });
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toHaveAttribute('aria-selected', 'true');
+      render(<BrowseDashboardsPage />);
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
 
-      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: 'Panels' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Panels' })).toHaveAttribute('aria-selected', 'false');
 
-      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'false');
     });
 
     it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
 
       expect(await screen.findByText('Sort')).toBeInTheDocument();
@@ -349,7 +349,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      render(<BrowseDashboardsPage />);
 
       const checkbox = await screen.findByTestId(
         selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)

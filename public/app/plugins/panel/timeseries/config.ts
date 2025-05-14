@@ -32,6 +32,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
   barAlignment: BarAlignment.Center,
+  barWidthFactor: 0.6,
   stacking: {
     mode: StackingMode.None,
     group: 'A',
@@ -57,6 +58,14 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
         },
+      },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Actions]: {
+        hideFromDefaults: false,
       },
     },
     useCustomConfig: (builder) => {
@@ -87,6 +96,19 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           defaultValue: cfg.barAlignment,
           settings: {
             options: graphFieldOptions.barAlignment,
+          },
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Bars,
+        })
+        .addSliderInput({
+          path: 'barWidthFactor',
+          name: 'Bar width factor',
+          category: categoryStyles,
+          defaultValue: cfg.barWidthFactor,
+          settings: {
+            min: 0.1,
+            max: 1.0,
+            step: 0.1,
+            ariaLabelForHandle: 'Bar width factor',
           },
           showIf: (config) => config.drawStyle === GraphDrawStyle.Bars,
         })

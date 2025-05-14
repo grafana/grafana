@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Expression } from '../expressions/Expression';
 
-import { errorFromPreviewData, warningFromSeries } from './util';
+import { errorFromCurrentCondition, errorFromPreviewData, warningFromSeries } from './util';
 
 interface Props {
   condition: string | null;
@@ -45,7 +45,11 @@ export const ExpressionsEditor = ({
         const data = panelData[query.refId];
 
         const isAlertCondition = condition === query.refId;
-        const error = data ? errorFromPreviewData(data) : undefined;
+
+        const errorFromCondition = data && isAlertCondition ? errorFromCurrentCondition(data) : undefined;
+        const errorFromPreview = data ? errorFromPreviewData(data) : undefined;
+        const error = errorFromPreview || errorFromCondition;
+
         const warning = data ? warningFromSeries(data.series) : undefined;
 
         return (

@@ -1,49 +1,39 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
-import { Input } from '@grafana/ui';
+
+import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
-import { convertToType } from './utils';
 
 export function regexMatcherEditor(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<string>>> {
-  return function Render({ options, onChange, field }) {
-    const { validator, converter = convertToType } = config;
+  return function Render({ options, onChange }) {
+    const { validator } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
-    const onChangeValue = useCallback(
-      (event: React.FormEvent<HTMLInputElement>) => {
-        setInvalid(!validator(event.currentTarget.value));
-      },
-      [setInvalid, validator]
-    );
 
-    const onChangeOptions = useCallback(
-      (event: React.FocusEvent<HTMLInputElement>) => {
-        if (isInvalid) {
-          return;
-        }
-
-        const { value } = event.currentTarget;
-
+    const onChangeVariableValue = useCallback(
+      (value: string) => {
+        setInvalid(!validator(value));
         onChange({
           ...options,
-          value: converter(value, field),
+          value,
         });
       },
-      [options, onChange, isInvalid, field, converter]
+      [setInvalid, validator, onChange, options]
     );
 
     return (
-      <Input
-        className="flex-grow-1"
+      <SuggestionsInput
         invalid={isInvalid}
-        defaultValue={String(options.value)}
-        placeholder="Value"
-        onChange={onChangeValue}
-        onBlur={onChangeOptions}
+        value={value}
+        onChange={onChangeVariableValue}
+        placeholder="Value or variable"
+        suggestions={getVariableSuggestions()}
       />
     );
   };
@@ -56,7 +46,6 @@ export const getRegexValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       id: ValueMatcherID.regex,
       component: regexMatcherEditor({
         validator: () => true,
-        converter: (value) => String(value),
       }),
     },
   ];

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, forwardRef } from 'react';
+import { useState, forwardRef } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 

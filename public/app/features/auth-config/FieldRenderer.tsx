@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UseFormReturn, Controller } from 'react-hook-form';
 
+import { SelectableValue } from '@grafana/data';
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
@@ -9,7 +10,10 @@ import { SSOProviderDTO, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 
 interface FieldRendererProps
-  extends Pick<UseFormReturn<SSOProviderDTO>, 'register' | 'control' | 'watch' | 'setValue' | 'unregister'> {
+  extends Pick<
+    UseFormReturn<SSOProviderDTO>,
+    'register' | 'control' | 'watch' | 'setValue' | 'getValues' | 'unregister'
+  > {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
@@ -22,6 +26,7 @@ export const FieldRenderer = ({
   errors,
   watch,
   setValue,
+  getValues,
   control,
   unregister,
   secretConfigured,
@@ -41,6 +46,23 @@ export const FieldRenderer = ({
       }
     }
   }, [unregister, name, parentValue, isDependantField]);
+
+  const isNotEmptySelectableValueArray = (
+    current: string | boolean | Record<string, string> | Array<SelectableValue<string>> | undefined
+  ): current is Array<SelectableValue<string>> => {
+    return Array.isArray(current) && current.length > 0 && 'value' in current[0];
+  };
+
+  useEffect(() => {
+    if (fieldData.defaultValue) {
+      const current = getValues(name);
+      const obj = fieldData.options?.find(
+        (option) => option.value === (isNotEmptySelectableValueArray(current) ? current[0].value : undefined)
+      );
+      setValue(name, obj?.value || fieldData.defaultValue.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!field) {
     console.log('missing field:', name);
@@ -63,7 +85,6 @@ export const FieldRenderer = ({
     required: !!fieldData.validation?.required,
     invalid: !!errors[name],
     error: fieldData.validation?.message,
-    key: name,
     description: fieldData.description,
     defaultValue: fieldData.defaultValue?.value,
   };
@@ -71,13 +92,13 @@ export const FieldRenderer = ({
   switch (fieldData.type) {
     case 'text':
       return (
-        <Field {...fieldProps}>
+        <Field key={name} {...fieldProps}>
           <Input {...register(name, fieldData.validation)} type={fieldData.type} id={name} autoComplete={'off'} />
         </Field>
       );
     case 'secret':
       return (
-        <Field {...fieldProps} htmlFor={name}>
+        <Field key={name} {...fieldProps} htmlFor={name}>
           <Controller
             name={name}
             control={control}
@@ -105,7 +126,7 @@ export const FieldRenderer = ({
         options = isSelectableValue(watchOptions) ? watchOptions : [];
       }
       return (
-        <Field {...fieldProps} htmlFor={name}>
+        <Field key={name} {...fieldProps} htmlFor={name}>
           <Controller
             rules={fieldData.validation}
             name={name}
@@ -134,13 +155,25 @@ export const FieldRenderer = ({
       );
     case 'switch':
       return (
-        <Field {...fieldProps}>
+        <Field key={name} {...fieldProps}>
           <Switch {...register(name)} id={name} />
         </Field>
       );
     case 'checkbox':
       return (
-        <Checkbox {...register(name)} id={name} {...fieldProps} className={css({ marginBottom: theme.spacing(2) })} />
+        <Checkbox
+          key={name}
+          {...register(name)}
+          id={name}
+          {...fieldProps}
+          className={css({ marginBottom: theme.spacing(2) })}
+        />
+      );
+    case 'custom':
+      return (
+        <Field key={name} {...fieldProps}>
+          {fieldData.content ? fieldData.content(setValue) : <></>}
+        </Field>
       );
     default:
       console.error(`Unknown field type: ${fieldData.type}`);

@@ -11,6 +11,7 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
   parseSelector,
+  processLabels,
   toPromLikeQuery,
   truncateResult,
 } from './language_utils';
@@ -90,7 +91,7 @@ describe('parseSelector()', () => {
 describe('fixSummariesMetadata', () => {
   const synthetics = {
     ALERTS: {
-      type: 'counter',
+      type: 'gauge',
       help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
     },
   };
@@ -153,52 +154,65 @@ describe('expandRecordingRules()', () => {
   });
 
   it('does not modify recording rules name in label values', () => {
-    expect(expandRecordingRules('{__name__="metric"} + bar', { metric: 'foo', bar: 'super' })).toBe(
-      '{__name__="metric"} + super'
-    );
+    expect(
+      expandRecordingRules('{__name__="metric"} + bar', {
+        metric: { expandedQuery: 'foo' },
+        bar: { expandedQuery: 'super' },
+      })
+    ).toBe('{__name__="metric"} + super');
   });
 
   it('returns query with expanded recording rules', () => {
-    expect(expandRecordingRules('metric', { metric: 'foo' })).toBe('foo');
-    expect(expandRecordingRules('metric + metric', { metric: 'foo' })).toBe('foo + foo');
-    expect(expandRecordingRules('metric{}', { metric: 'foo' })).toBe('foo{}');
-    expect(expandRecordingRules('metric[]', { metric: 'foo' })).toBe('foo[]');
-    expect(expandRecordingRules('metric + foo', { metric: 'foo', foo: 'bar' })).toBe('foo + bar');
+    expect(expandRecordingRules('metric', { metric: { expandedQuery: 'foo' } })).toBe('foo');
+    expect(expandRecordingRules('metric + metric', { metric: { expandedQuery: 'foo' } })).toBe('foo + foo');
+    expect(expandRecordingRules('metric{}', { metric: { expandedQuery: 'foo' } })).toBe('foo{}');
+    expect(expandRecordingRules('metric[]', { metric: { expandedQuery: 'foo' } })).toBe('foo[]');
+    expect(
+      expandRecordingRules('metric + foo', {
+        metric: { expandedQuery: 'foo' },
+        foo: { expandedQuery: 'bar' },
+      })
+    ).toBe('foo + bar');
   });
 
   it('returns query with labels with expanded recording rules', () => {
     expect(
-      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', { metricA: 'fooA', metricB: 'fooB' })
+      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
+        metricA: { expandedQuery: 'fooA' },
+        metricB: { expandedQuery: 'fooB' },
+      })
     ).toBe('fooA{label1="value1"} / fooB{label2="value2"}');
     expect(
       expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
-        metricA: 'rate(fooA[])',
+        metricA: { expandedQuery: 'rate(fooA[])' },
       })
     ).toBe('rate(fooA{label1="value1", label2="value,2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
-        metricA: 'rate(fooA[])',
-        metricB: 'rate(fooB[])',
+        metricA: { expandedQuery: 'rate(fooA[])' },
+        metricB: { expandedQuery: 'rate(fooB[])' },
       })
     ).toBe('rate(fooA{label1="value1"}[]) / rate(fooB{label2="value2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1",label2="value2"} / metricB{label3="value3"}', {
-        metricA: 'rate(fooA[])',
-        metricB: 'rate(fooB[])',
+        metricA: { expandedQuery: 'rate(fooA[])' },
+        metricB: { expandedQuery: 'rate(fooB[])' },
       })
     ).toBe('rate(fooA{label1="value1", label2="value2"}[]) / rate(fooB{label3="value3"}[])');
   });
 
   it('expands the query even it is wrapped with parentheses', () => {
     expect(
-      expandRecordingRules('sum (metric{label1="value1"}) by (env)', { metric: 'foo{labelInside="valueInside"}' })
+      expandRecordingRules('sum (metric{label1="value1"}) by (env)', {
+        metric: { expandedQuery: 'foo{labelInside="valueInside"}' },
+      })
     ).toBe('sum (foo{labelInside="valueInside", label1="value1"}) by (env)');
   });
 
   it('expands the query with regex match', () => {
     expect(
       expandRecordingRules('sum (metric{label1=~"/value1/(sa|sb)"}) by (env)', {
-        metric: 'foo{labelInside="valueInside"}',
+        metric: { expandedQuery: 'foo{labelInside="valueInside"}' },
       })
     ).toBe('sum (foo{labelInside="valueInside", label1=~"/value1/(sa|sb)"}) by (env)');
   });
@@ -206,11 +220,46 @@ describe('expandRecordingRules()', () => {
   it('ins:metric:per{pid="val-42", comp="api"}', () => {
     const query = `aaa:111{pid="val-42", comp="api"} + bbb:222{pid="val-42"}`;
     const mapping = {
-      'aaa:111':
-        '(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}))',
-      'bbb:222': '(targetMetric2{device=~"/dev/(sda1|sdb)"})',
+      'aaa:111': {
+        expandedQuery:
+          '(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}))',
+      },
+      'bbb:222': { expandedQuery: '(targetMetric2{device=~"/dev/(sda1|sdb)"})' },
     };
     const expected = `(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"})) + (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42"})`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
+
+  it('when there is an identifier, identifier must be removed from expanded query', () => {
+    const query = `ins:metric:per{uuid="111", comp="api"}`;
+    const mapping = {
+      'ins:metric:per': {
+        expandedQuery: 'targetMetric{device="some_device"}',
+        identifier: 'uuid',
+        identifierValue: '111',
+      },
+    };
+    const expected = `targetMetric{device="some_device", comp="api"}`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
+
+  it('when there is an identifier, identifier must be removed from complex expanded query', () => {
+    const query = `instance_path:requests:rate5m{uuid="111", four="tops"} + instance_path:requests:rate15m{second="album", uuid="222"}`;
+    const mapping = {
+      'instance_path:requests:rate5m': {
+        expandedQuery: `rate(prometheus_http_requests_total{job="prometheus"}`,
+        identifier: 'uuid',
+        identifierValue: '111',
+      },
+      'instance_path:requests:rate15m': {
+        expandedQuery: `prom_http_requests_sum{job="prometheus"}`,
+        identifier: 'uuid',
+        identifierValue: '222',
+      },
+    };
+    const expected = `rate(prometheus_http_requests_total{job="prometheus", four="tops"} + prom_http_requests_sum{job="prometheus", second="album"}`;
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });
@@ -515,5 +564,56 @@ describe('truncateResult', () => {
     expect(array.length).toBe(1000);
     expect(array[0]).toBe(0);
     expect(array[999]).toBe(999);
+  });
+});
+
+describe('processLabels', () => {
+  it('export abstract query to expr', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { label1: 'value1' },
+      { label2: 'value2' },
+      { label3: 'value3' },
+      { label1: 'value1' },
+      { label1: 'value1b' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1', 'label2', 'label3'],
+      values: { label1: ['value1', 'value1b'], label2: ['value2'], label3: ['value3'] },
+    });
+  });
+
+  it('dont wrap utf8 label values with quotes', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { label1: 'value1' },
+      { label2: 'value2' },
+      { label3: 'value3 with space' },
+      { label4: 'value4.with.dot' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1', 'label2', 'label3', 'label4'],
+      values: {
+        label1: ['value1'],
+        label2: ['value2'],
+        label3: [`value3 with space`],
+        label4: [`value4.with.dot`],
+      },
+    });
+  });
+
+  it('dont wrap utf8 labels with quotes', () => {
+    const labels: Array<{ [key: string]: string }> = [
+      { 'label1 with space': 'value1' },
+      { 'label2.with.dot': 'value2' },
+    ];
+
+    expect(processLabels(labels)).toEqual({
+      keys: ['label1 with space', 'label2.with.dot'],
+      values: {
+        'label1 with space': ['value1'],
+        'label2.with.dot': ['value2'],
+      },
+    });
   });
 });

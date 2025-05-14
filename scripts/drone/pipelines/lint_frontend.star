@@ -3,10 +3,16 @@ This module returns the pipeline used for linting frontend code.
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "enterprise_setup_step",
     "identify_runner_step",
     "lint_frontend_step",
+    "verify_api_clients_step",
     "verify_i18n_step",
     "yarn_install_step",
 )
@@ -30,10 +36,18 @@ def lint_frontend_pipeline(trigger, ver_mode):
     init_steps = []
     lint_step = lint_frontend_step()
     i18n_step = verify_i18n_step()
+    api_clients_step = verify_api_clients_step()
+
+    volumes = []
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        init_steps = [enterprise_setup_step()]
+        init_steps = [
+            github_app_generate_token_step(),
+            enterprise_setup_step(),
+        ]
+
+        volumes += github_app_pipeline_volumes()
 
     init_steps += [
         identify_runner_step(),
@@ -42,6 +56,7 @@ def lint_frontend_pipeline(trigger, ver_mode):
     test_steps = [
         lint_step,
         i18n_step,
+        api_clients_step,
     ]
 
     return pipeline(
@@ -50,4 +65,5 @@ def lint_frontend_pipeline(trigger, ver_mode):
         services = [],
         steps = init_steps + test_steps,
         environment = environment,
+        volumes = volumes,
     )

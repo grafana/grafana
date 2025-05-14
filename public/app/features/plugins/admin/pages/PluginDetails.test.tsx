@@ -1,8 +1,6 @@
-import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { Route } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import { Routes, Route } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 
 import {
   PluginErrorCode,
@@ -12,7 +10,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -66,19 +64,19 @@ const renderPluginDetails = (
     pageId?: PluginTabIds;
     pluginsStateOverride?: ReducerState;
   } = {}
-): RenderResult => {
+) => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
   const store = configureStore({
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
-  locationService.push({ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' });
-
   return render(
-    <TestProvider store={store}>
-      <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
-    </TestProvider>
+    <Routes>
+      <Route path="/plugins/:pluginId" element={<PluginDetailsPage />} />
+    </Routes>,
+
+    { store, historyOptions: { initialEntries: [`/plugins/${id}${pageId ? `?page=${pageId}` : ''}`] } }
   );
 };
 
@@ -184,7 +182,8 @@ describe('Plugin details page', () => {
 
     it('should display the installed version if a plugin is installed', async () => {
       const installedVersion = '1.3.443';
-      const { queryByText } = renderPluginDetails({ id, installedVersion });
+      const isInstalled = true;
+      const { queryByText } = renderPluginDetails({ id, isInstalled, installedVersion });
 
       expect(await queryByText(`${installedVersion}`)).toBeInTheDocument();
     });
@@ -202,7 +201,7 @@ describe('Plugin details page', () => {
       };
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
-      expect(await findByText('1.1.1')).toBeInTheDocument();
+      expect(await findByText('4.2.2')).toBeInTheDocument();
       expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
     });
 
@@ -216,7 +215,7 @@ describe('Plugin details page', () => {
     it('should display a "Signed" badge if the plugin signature is verified', async () => {
       const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.valid });
 
-      expect(await queryByText('Signed')).toBeInTheDocument();
+      expect(await queryByText('community')).toBeInTheDocument();
     });
 
     it('should display a "Missing signature" badge if the plugin signature is missing', async () => {
@@ -271,7 +270,7 @@ describe('Plugin details page', () => {
       );
 
       // Check if version information is available
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.VERSIONS })).toBeInTheDocument();
 
       // Check the column headers
       expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
@@ -316,6 +315,35 @@ describe('Plugin details page', () => {
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
+    it('should not display an update button for a plugin that is managed', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display an update button for a plugin that is pre installed', async () => {
+      const { queryByRole, getByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        isPreinstalled: { found: true, withVersion: true },
+      });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+
+      // Display an uninstall button but disabled
+      expect(getByText(/Uninstall/i).closest('button')).toBeDisabled();
+    });
+
     it('should display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
 
@@ -356,29 +384,11 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
     });
 
-    it('should display install link with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
+    it('should not display install / uninstall buttons for provisioned plugins', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isProvisioned: true });
 
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
-
-      expect(await queryByRole('link', { name: /install via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display uninstall link for an installed plugin with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true });
-
-      expect(await queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display update and uninstall links for a plugin with an available update and `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
-
-      expect(await queryByRole('link', { name: /update via grafana.com/i })).toBeInTheDocument();
-      expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
@@ -410,7 +420,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      const { queryByText, getByRole, findByRole } = renderPluginDetails({
+      const { queryByText, getByRole, findByRole, user } = renderPluginDetails({
         id,
         name: 'Akumuli',
         isInstalled: true,
@@ -430,17 +440,17 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the install controls to be loaded
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       // Open the confirmation modal
-      await userEvent.click(getByRole('button', { name: /uninstall/i }));
+      await user.click(getByRole('button', { name: /uninstall/i }));
 
       expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
       expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
 
       // Confirm the uninstall
-      await userEvent.click(getByRole('button', { name: /confirm/i }));
+      await user.click(getByRole('button', { name: /confirm/i }));
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
       expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
 
@@ -612,7 +622,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      const { queryByText, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole, user } = renderPluginDetails({
         id,
         name,
         isInstalled: true,
@@ -623,7 +633,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Enable"
-      await userEvent.click(getByRole('button', { name: /enable/i }));
+      await user.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -652,7 +662,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      const { queryByText, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole, user } = renderPluginDetails({
         id,
         name,
         isInstalled: true,
@@ -663,7 +673,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Disable"
-      await userEvent.click(getByRole('button', { name: /disable/i }));
+      await user.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -682,7 +692,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await queryByRole('tab', { name: `Tab ${PluginTabLabels.VERSIONS}` })).not.toBeInTheDocument();
+      expect(await queryByRole('tab', { name: PluginTabLabels.VERSIONS })).not.toBeInTheDocument();
     });
 
     it('should not display update for plugins not published to gcom', async () => {
@@ -694,7 +704,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
     });
@@ -708,7 +718,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
@@ -722,7 +732,7 @@ describe('Plugin details page', () => {
         isPublished: false,
       });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -812,7 +822,7 @@ describe('Plugin details page', () => {
     it("should not display an install button for a plugin that isn't installed", async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: false });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
@@ -820,7 +830,7 @@ describe('Plugin details page', () => {
     it('should not display an uninstall button for an already installed plugin', async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
@@ -828,7 +838,7 @@ describe('Plugin details page', () => {
     it('should not display update or uninstall buttons for a plugin with update', async () => {
       const { queryByRole, findByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       expect(queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
@@ -837,7 +847,7 @@ describe('Plugin details page', () => {
     it('should not display an install button for enterprise plugins if license is valid', async () => {
       const { findByRole, queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
-      expect(await findByRole('tab', { name: `Tab ${PluginTabLabels.OVERVIEW}` })).toBeInTheDocument();
+      expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
       expect(await queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
   });
@@ -861,6 +871,59 @@ describe('Plugin details page', () => {
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeNull();
+    });
+  });
+
+  describe('Display plugin details right panel', () => {
+    beforeAll(() => {
+      mockUserPermissions({
+        isAdmin: true,
+        isDataSourceEditor: false,
+        isOrgAdmin: true,
+      });
+      config.featureToggles.pluginsDetailsRightPanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.pluginsDetailsRightPanel = false;
+    });
+
+    it('should display Last updated and report a concern information', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = '2023-10-26T16:54:55.000Z';
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('Oct 26, 2023')).toBeVisible();
+      expect(queryByText('Report a concern')).toBeVisible();
+    });
+
+    it('should not display Last updated if there is no updated At data', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = undefined;
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeNull();
+    });
+
+    it('should display last commit date information', async () => {
+      const id = 'right-panel-test-plugin';
+      const lastCommitDate = '2023-10-26T16:54:55.000Z';
+      const { queryByText } = renderPluginDetails({ id, details: { lastCommitDate, links: [] } });
+      expect(queryByText('Last commit date:')).toBeVisible();
+      expect(queryByText('Oct 26, 2023')).toBeVisible();
+    });
+
+    it('should not display last commit date if there is no lastCommit data', async () => {
+      const id = 'right-panel-test-plugin';
+      const lastCommitDate = undefined;
+      const { queryByText } = renderPluginDetails({ id, details: { lastCommitDate, links: [] } });
+      expect(queryByText('Last commit date:')).toBeNull();
+    });
+
+    it('should not display Report Abuse if the plugin is Core', async () => {
+      const id = 'right-panel-test-plugin';
+      const isCore = true;
+      const { queryByText } = renderPluginDetails({ id, isCore });
+      expect(queryByText('Report Abuse')).toBeNull();
     });
   });
 });

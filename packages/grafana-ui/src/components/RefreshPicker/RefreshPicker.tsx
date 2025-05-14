@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import { formatDuration } from 'date-fns';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -116,6 +117,10 @@ export class RefreshPicker extends PureComponent<Props> {
         </ToolbarButton>
         {!noIntervalPicker && (
           <ButtonSelect
+            className={css({
+              borderTopLeftRadius: 0,
+              borderBottomLeftRadius: 0,
+            })}
             value={selectedValue}
             options={options}
             onChange={this.onChangeSelect}

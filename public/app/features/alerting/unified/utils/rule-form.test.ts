@@ -1,26 +1,36 @@
 import { PromQuery } from '@grafana/prometheus';
-import { config } from '@grafana/runtime';
 import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
-  MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
+  cleanAnnotations,
+  cleanLabels,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
-  getDefaultFormValues,
-  getDefautManualRouting,
   getNotificationSettingsForDTO,
 } from './rule-form';
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
-  it('should correctly convert rule form values', () => {
+  it('should correctly convert rule form values for grafana alerting rule', () => {
     const formValues: RuleFormValues = {
       ...getDefaultFormValues(),
       condition: 'A',
+      type: RuleFormType.grafana,
+    };
+
+    expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
+  });
+
+  it('should correctly convert rule form values for grafana recording rule', () => {
+    const formValues: RuleFormValues = {
+      ...getDefaultFormValues(),
+      condition: 'A',
+      type: RuleFormType.grafanaRecording,
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
@@ -31,6 +41,7 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
 
     const values: RuleFormValues = {
       ...defaultValues,
+      type: RuleFormType.grafana,
       queries: [
         {
           refId: 'A',
@@ -95,6 +106,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -119,6 +131,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return routingSettings with correct props if notification_settings is defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -213,32 +226,31 @@ describe('getNotificationSettingsForDTO', () => {
   });
 });
 
-describe('getDefautManualRouting', () => {
-  afterEach(() => {
-    window.localStorage.clear();
+describe('cleanAnnotations', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanAnnotations([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
   });
 
-  it('returns false if the feature toggle is not enabled', () => {
-    config.featureToggles.alertingSimplifiedRouting = false;
-    expect(getDefautManualRouting()).toBe(false);
+  it('should trim keys and values', () => {
+    const output = cleanAnnotations([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  });
+});
+
+describe('cleanLabels', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanLabels([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
   });
 
-  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    expect(getDefautManualRouting()).toBe(true);
+  it('should trim keys and values', () => {
+    const output = cleanLabels([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
   });
 
-  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
-    expect(getDefautManualRouting()).toBe(true);
-    localStorage.removeItem(MANUAL_ROUTING_KEY);
-    expect(getDefautManualRouting()).toBe(true);
+  it('should leave empty values', () => {
+    const output = cleanLabels([{ key: 'key', value: '' }]);
+    expect(output).toStrictEqual([{ key: 'key', value: '' }]);
   });
 });

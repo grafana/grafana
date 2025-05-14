@@ -24,6 +24,7 @@ import {
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
+  checkLogsSampled,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -240,8 +241,36 @@ describe('checkLogsError()', () => {
       foo: 'boo',
     } as Labels,
   } as LogRowModel;
-  test('should return correct error if error is present', () => {
-    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
+  test('should return the error if present', () => {
+    expect(checkLogsError(log)).toStrictEqual('Error Message');
+  });
+  test('should return undefined otherwise', () => {
+    expect(checkLogsError({ ...log, labels: {} })).toStrictEqual(undefined);
+  });
+});
+
+describe('checkLogsSampled()', () => {
+  const log = {
+    labels: {
+      __adaptive_logs_sampled__: 'true',
+      foo: 'boo',
+    } as Labels,
+  } as LogRowModel;
+  test('should return a message if is sampled', () => {
+    expect(checkLogsSampled(log)).toStrictEqual('Logs like this one have been dropped by Adaptive Logs');
+  });
+  test('should return an interpolated message if is sampled', () => {
+    expect(
+      checkLogsSampled({
+        ...log,
+        labels: {
+          __adaptive_logs_sampled__: '10',
+        },
+      })
+    ).toStrictEqual('10% of logs like this one have been dropped by Adaptive Logs');
+  });
+  test('should return undefined otherwise', () => {
+    expect(checkLogsSampled({ ...log, labels: {} })).toStrictEqual(undefined);
   });
 });
 

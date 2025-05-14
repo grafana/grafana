@@ -10,7 +10,8 @@ import { dispatch } from 'app/store/store';
 
 import { ScopedResourceClient } from '../apiserver/client';
 import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
-import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
+import { getGrafanaSearcher } from '../search/service/searcher';
+import { DashboardQueryResult, SearchQuery } from '../search/service/types';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
 
@@ -71,7 +72,9 @@ class K8sAPI implements PlaylistAPI {
 
   async createPlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => this.server.create(body));
+    await withErrorHandling(async () => {
+      await this.server.create(body);
+    });
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {

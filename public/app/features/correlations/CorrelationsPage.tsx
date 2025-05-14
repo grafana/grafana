@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError, reportInteraction } from '@grafana/runtime';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -27,18 +27,18 @@ import { AccessControlAction } from 'app/types';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { RemoveCorrelationParams } from './types';
-import { CorrelationData, useCorrelations } from './useCorrelations';
+import type { Correlation, RemoveCorrelationParams } from './types';
+import { useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
   a.values[column].name.localeCompare(b.values[column].name);
 
 const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
-const loaderWrapper = css`
-  display: flex;
-  justify-content: center;
-`;
+const loaderWrapper = css({
+  display: 'flex',
+  justifyContent: 'center',
+});
 
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
@@ -238,7 +238,7 @@ interface ExpandedRowProps {
   readOnly: boolean;
   onUpdated: () => void;
 }
-function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
+function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
   useEffect(
     () => reportInteraction('grafana_correlations_details_expanded'),
     // we only want to fire this on first render
@@ -246,48 +246,49 @@ function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly
     []
   );
 
-  return (
-    <EditCorrelationForm
-      correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
-      onUpdated={onUpdated}
-      readOnly={readOnly}
-    />
-  );
+  let corr: Correlation =
+    correlation.type === 'query'
+      ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
+      : { ...correlation, type: 'external', sourceUID: source.uid };
+
+  return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
-  root: css`
-    display: flex;
-    align-items: center;
-  `,
-  dsLogo: css`
-    margin-right: ${theme.spacing()};
-    height: 16px;
-    width: 16px;
-  `,
+  root: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  dsLogo: css({
+    marginRight: theme.spacing(),
+    height: '16px',
+    width: '16px',
+  }),
 });
 
 const DataSourceCell = memo(
-  function DataSourceCell({
-    cell: { value },
-  }: CellProps<CorrelationData, CorrelationData['source'] | CorrelationData['target']>) {
+  function DataSourceCell({ cell: { value } }: CellProps<CorrelationData, DataSourceInstanceSettings>) {
     const styles = useStyles2(getDatasourceCellStyles);
 
     return (
       <span className={styles.root}>
-        <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
-        {value.name}
+        {value?.name !== undefined && (
+          <>
+            <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
+            {value.name}
+          </>
+        )}
       </span>
     );
   },
   ({ cell: { value } }, { cell: { value: prevValue } }) => {
-    return value.type === prevValue.type && value.name === prevValue.name;
+    return value?.type === prevValue?.type && value?.name === prevValue?.name;
   }
 );
 
-const noWrap = css`
-  white-space: nowrap;
-`;
+const noWrap = css({
+  whiteSpace: 'nowrap',
+});
 
 const InfoCell = memo(
   function InfoCell({ ...props }: CellProps<CorrelationData, void>) {

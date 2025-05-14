@@ -31,7 +31,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		return dr, backend.DataResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, req, dsInfo, r, "")
+	span := traceReq(ctx, req, dsInfo, r, "", promQLQ.timeRange)
 	defer span.End()
 
 	requestBody := map[string]any{
@@ -49,7 +49,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.logger.Error("Failed to close response body", "err", err)
+			s.logger.Error("Failed to close response body", "err", err, "statusSource", backend.ErrorSourceDownstream)
 		}
 	}()
 
@@ -67,7 +67,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]any) 
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return res, err
+		return res, backend.DownstreamError(err)
 	}
 
 	return res, nil

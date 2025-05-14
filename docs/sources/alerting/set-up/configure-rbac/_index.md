@@ -52,4 +52,39 @@ Grafana Alerting has the following permissions.
 | `alert.provisioning:write`            | n/a                                    | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and data source are not required.                                                                           |
 | `alert.provisioning.provenance:write` | n/a                                    | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources                                                                                         |
 
+Contact point permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                       | Applicable scope                   | Description                                                                                                 |
+| -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points.                                                                                        |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*` | Export contact points with decrypted secrets.                                                               |
+| `alert.notifications.receivers:create`       | n/a                                | Create a new contact points. The creator is automatically granted full access to the created contact point. |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.                                                                             |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.                                                                  |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
+
+Mute time interval permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                      | Applicable scope | Description                                        |
+| ------------------------------------------- | ---------------- | -------------------------------------------------- |
+| `alert.notifications.time-intervals:read`   | n/a              | Read mute time intervals.                          |
+| `alert.notifications.time-intervals:write`  | n/a              | Create new or update existing mute time intervals. |
+| `alert.notifications.time-intervals:delete` | n/a              | Delete existing time intervals.                    |
+
+Notification template permissions. To enable these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                 | Applicable scope | Description                              |
+| -------------------------------------- | ---------------- | ---------------------------------------- |
+| `alert.notifications.templates:read`   | n/a              | Read templates.                          |
+| `alert.notifications.templates:write`  | n/a              | Create new or update existing templates. |
+| `alert.notifications.templates:delete` | n/a              | Delete existing templates.               |
+
+Notification policies permissions. To enable API and user interface that use these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                             | Applicable scope | Description                                          |
+| ---------------------------------- | ---------------- | ---------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | Read notification policies.                          |
+| `alert.notifications.routes:write` | n/a              | Create new, update and update notification policies. |
+
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).

@@ -3,12 +3,13 @@ import { lastValueFrom } from 'rxjs';
 import { isObject } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { containsPathSeparator } from '../components/rule-editor/util';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 
-import { prepareRulesFilterQueryParams } from './prometheus';
+import { getRulesFilterSearchParams } from './prometheus';
 
 interface ErrorResponseMessage {
   message?: string;
@@ -20,51 +21,101 @@ export interface RulerRequestUrl {
   params?: Record<string, string>;
 }
 
+const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
+const QUERY_GROUP_TAG = 'QUERY_GROUP';
+
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
-  const grafanaServerPath = `/api/ruler/${getDatasourceAPIUid(rulerConfig.dataSourceName)}`;
+  const rulerPath = getRulerPath(rulerConfig);
+  const queryDetailsProvider = getQueryDetailsProvider(rulerConfig);
 
-  const rulerPath = `${grafanaServerPath}/api/v1/rules`;
-  const rulerSearchParams = new URLSearchParams();
-
-  rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir');
+  const subtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
 
   return {
-    rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {
-      const params = prepareRulesFilterQueryParams(rulerSearchParams, filter);
+    rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => ({
+      path: rulerPath,
+      params: { subtype, ...getRulesFilterSearchParams(filter) },
+    }),
+
+    namespace: (namespace: string): RulerRequestUrl => {
+      // To handle slashes we need to convert namespace to a query parameter
+      const { namespace: finalNs, searchParams: nsParams } = queryDetailsProvider.namespace(namespace);
 
       return {
-        path: `${rulerPath}`,
-        params: params,
+        path: `${rulerPath}/${encodeURIComponent(finalNs)}`,
+        params: { subtype, ...nsParams },
       };
     },
-    namespace: (namespace: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespace)}`,
-      params: Object.fromEntries(rulerSearchParams),
-    }),
-    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespaceUID)}/${encodeURIComponent(group)}`,
-      params: Object.fromEntries(rulerSearchParams),
-    }),
+
+    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => {
+      if (!namespaceUID) {
+        throw new Error('Namespace UID is required to fetch ruler group');
+      }
+      if (!group) {
+        throw new Error('Group name is required to fetch ruler group');
+      }
+
+      const { namespace: finalNs, searchParams: nsParams } = queryDetailsProvider.namespace(namespaceUID);
+      const { group: finalGroup, searchParams: groupParams } = queryDetailsProvider.group(group);
+
+      return {
+        path: `${rulerPath}/${encodeURIComponent(finalNs)}/${encodeURIComponent(finalGroup)}`,
+        params: { subtype, ...nsParams, ...groupParams },
+      };
+    },
   };
 }
 
-// upsert a rule group. use this to update rule
-export async function setRulerRuleGroup(
-  rulerConfig: RulerDataSourceConfig,
-  namespaceIdentifier: string,
-  group: PostableRulerRuleGroupDTO
-): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespaceIdentifier);
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'POST',
-      url: path,
-      data: group,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      params,
-    })
-  );
+interface NamespaceUrlParams {
+  namespace: string;
+  searchParams: Record<string, string>;
+}
+
+interface GroupUrlParams {
+  group: string;
+  searchParams: Record<string, string>;
+}
+
+interface RulerQueryDetailsProvider {
+  namespace: (namespace: string) => NamespaceUrlParams;
+  group: (group: string) => GroupUrlParams;
+}
+
+// some gateways (like Istio) will decode "/" and "\" characters – this will cause 404 errors for any API call
+// that includes these values in the URL (ie. /my/path%2fto/resource -> /my/path/to/resource)
+//
+// see https://istio.io/latest/docs/ops/best-practices/security/#customize-your-system-on-path-normalization
+function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQueryDetailsProvider {
+  const isGrafanaDatasource = rulerConfig.dataSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  const groupParamRewrite = (group: string): GroupUrlParams => {
+    if (containsPathSeparator(group) === true) {
+      return { group: QUERY_GROUP_TAG, searchParams: { group } };
+    }
+    return { group, searchParams: {} };
+  };
+
+  // GMA uses folderUID as namespace identifiers so we need to rewrite them
+  if (isGrafanaDatasource) {
+    return {
+      namespace: (namespace: string) => ({ namespace, searchParams: {} }),
+      group: groupParamRewrite,
+    };
+  }
+
+  return {
+    namespace: (namespace: string): NamespaceUrlParams => {
+      if (containsPathSeparator(namespace) === true) {
+        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { namespace } };
+      }
+      return { namespace, searchParams: {} };
+    },
+    group: groupParamRewrite,
+  };
+}
+
+function getRulerPath(rulerConfig: RulerDataSourceConfig) {
+  const grafanaServerPath = `/api/ruler/${rulerConfig.dataSourceUid}`;
+  return `${grafanaServerPath}/api/v1/rules`;
 }
 
 export interface FetchRulerRulesFilter {
@@ -107,19 +158,6 @@ export async function fetchRulerRulesGroup(
 ): Promise<RulerRuleGroupDTO | null> {
   const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespaceIdentifier, group);
   return rulerGetRequest<RulerRuleGroupDTO | null>(path, null, params);
-}
-
-export async function deleteRulerRulesGroup(rulerConfig: RulerDataSourceConfig, namespace: string, groupName: string) {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName);
-  await lastValueFrom(
-    getBackendSrv().fetch({
-      url: path,
-      method: 'DELETE',
-      showSuccessAlert: false,
-      showErrorAlert: false,
-      params,
-    })
-  );
 }
 
 // false in case ruler is not supported. this is weird, but we'll work on it
@@ -178,18 +216,5 @@ function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
   return (
     error.status === 404 &&
     (error.data.message?.includes('group does not exist') || error.data.message?.includes('no rule groups found'))
-  );
-}
-
-export async function deleteNamespace(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'DELETE',
-      url: path,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      params,
-    })
   );
 }

@@ -1,28 +1,19 @@
 import { produce } from 'immer';
-import { Observable } from 'rxjs';
+import { isEmpty, pick } from 'lodash';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginMeta,
-  DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
-  PluginMeta,
-  PluginType,
-  ScopedVars,
-  TestDataSourceResponse,
+  ReducerID,
 } from '@grafana/data';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
-import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
   AlertManagerCortexConfig,
   AlertState,
@@ -45,8 +36,10 @@ import {
   RecordingRule,
   RuleGroup,
   RuleNamespace,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   GrafanaAlertState,
   GrafanaAlertStateDecision,
@@ -56,11 +49,16 @@ import {
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
+  RulerRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
+
+import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
 
@@ -141,6 +139,42 @@ export const mockRulerGrafanaRule = (
     ...partial,
   };
 };
+export const mockRulerGrafanaRecordingRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      rule_group: 'my-group',
+      condition: 'A',
+      record: {
+        metric: 'myalert',
+        from: 'A',
+      },
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {
+            refId: '',
+          },
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
   alert: 'alert1',
@@ -154,14 +188,11 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   ...partial,
 });
 
-export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerAlertingRuleDTO => ({
-  alert: 'alert1',
+export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerRecordingRuleDTO => ({
+  record: 'alert1',
   expr: 'up = 1',
   labels: {
     severity: 'warning',
-  },
-  annotations: {
-    summary: 'test alert',
   },
   ...partial,
 });
@@ -171,20 +202,6 @@ export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): Ru
   rules: [mockRulerAlertingRule()],
   ...partial,
 });
-
-export const promRuleFromRulerRule = (
-  rulerRule: RulerAlertingRuleDTO,
-  override?: Partial<AlertingRule>
-): AlertingRule => {
-  return mockPromAlertingRule({
-    name: rulerRule.alert,
-    query: rulerRule.expr,
-    labels: rulerRule.labels,
-    annotations: rulerRule.annotations,
-    type: PromRuleType.Alerting,
-    ...override,
-  });
-};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
@@ -213,7 +230,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     annotations: {},
     labels: {},
     grafana_alert: {
-      uid: '',
+      uid: 'mock-rule-uid-123',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
       rule_group: 'my-group',
@@ -326,12 +343,12 @@ export const mockSilences = [
   mockSilence({ id: MOCK_SILENCE_ID_EXISTING, comment: 'Happy path silence' }),
   mockSilence({
     id: 'ce031625-61c7-47cd-9beb-8760bccf0ed7',
-    matchers: parseMatchers('foo!=bar'),
+    matchers: parsePromQLStyleMatcherLooseSafe('foo!=bar'),
     comment: 'Silence with negated matcher',
   }),
   mockSilence({
     id: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
-    matchers: parseMatchers(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
+    matchers: parsePromQLStyleMatcherLooseSafe(`__alert_rule_uid__=${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}`),
     comment: 'Silence with alert rule UID matcher',
     metadata: {
       rule_title: MOCK_GRAFANA_ALERT_RULE_TITLE,
@@ -339,7 +356,7 @@ export const mockSilences = [
   }),
   mockSilence({
     id: MOCK_SILENCE_ID_LACKING_PERMISSIONS,
-    matchers: parseMatchers('something=else'),
+    matchers: parsePromQLStyleMatcherLooseSafe('something=else'),
     comment: 'Silence without permissions to edit',
     accessControl: {},
   }),
@@ -374,80 +391,6 @@ export const mockReceiversState = (partial: Partial<ReceiversState> = {}): Recei
     ...partial,
   };
 };
-
-class MockDataSourceApi extends DataSourceApi {
-  constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
-    super(instanceSettings);
-  }
-
-  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
-    throw new Error('Method not implemented.');
-  }
-  testDatasource(): Promise<TestDataSourceResponse> {
-    throw new Error('Method not implemented.');
-  }
-}
-
-// TODO This should be eventually moved to public/app/features/alerting/unified/testSetup/datasources.ts
-export class MockDataSourceSrv implements DataSourceSrv {
-  datasources: Record<string, DataSourceApi> = {};
-  // @ts-ignore
-  private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
-  private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
-  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
-  // @ts-ignore
-  private templateSrv = {
-    getVariables: () => [],
-    replace: (name: any) => name,
-  };
-
-  defaultName = '';
-
-  constructor(datasources: Record<string, DataSourceInstanceSettings>) {
-    this.datasources = {};
-    this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
-      (acc, ds) => {
-        acc[ds.name] = ds;
-        return acc;
-      },
-      {}
-    );
-
-    for (const dsSettings of Object.values(this.settingsMapByName)) {
-      this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
-      if (dsSettings.isDefault) {
-        this.defaultName = dsSettings.name;
-      }
-      this.datasources[dsSettings.uid] = new MockDataSourceApi(dsSettings);
-    }
-  }
-
-  get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    return DatasourceSrv.prototype.get.call(this, name, scopedVars);
-    //return Promise.reject(new Error('not implemented'));
-  }
-
-  /**
-   * Get a list of data sources
-   */
-  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[] {
-    return DatasourceSrv.prototype.getList.call(this, filters);
-  }
-
-  /**
-   * Get settings and plugin metadata by name or uid
-   */
-  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid);
-  }
-
-  async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
-    return DatasourceSrv.prototype.loadDatasource.call(this, name);
-  }
-
-  reload() {}
-}
 
 export const mockGrafanaReceiver = (
   type: string,
@@ -489,6 +432,7 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
   },
 };
 
+/** @deprecated Move into alertmanager status entities */
 export const someCloudAlertManagerStatus: AlertmanagerStatus = {
   cluster: {
     peers: [],
@@ -520,6 +464,7 @@ export const someCloudAlertManagerStatus: AlertmanagerStatus = {
   },
 };
 
+/** @deprecated Move into alertmanager config entities */
 export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
   template_files: {
     'foo template': 'foo content',
@@ -638,6 +583,23 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   ...partial,
 });
 
+export const mockRuleWithLocation = (rule: RulerRuleDTO, partial?: Partial<RuleWithLocation>): RuleWithLocation => {
+  const ruleWithLocation: RuleWithLocation = {
+    rule,
+    ...{
+      ruleSourceName: 'grafana',
+      namespace: 'namespace-1',
+      group: mockRulerRuleGroup({
+        name: 'group-1',
+        rules: [rule],
+      }),
+    },
+    ...partial,
+  };
+
+  return ruleWithLocation;
+};
+
 export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
   return {
     id: 1,
@@ -686,7 +648,7 @@ export function mockStore(recipe: (state: StoreState) => void) {
   return configureStore(produce(defaultState, recipe));
 }
 
-export function mockAlertQuery(query: Partial<AlertQuery>): AlertQuery {
+export function mockAlertQuery(query: Partial<AlertQuery> = {}): AlertQuery {
   return {
     datasourceUid: '--uid--',
     refId: 'A',
@@ -725,22 +687,41 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
     namespace: {
       groups: [],
       name: 'Grafana',
-      rulesSource: 'grafana',
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
     },
     rulerRule: mockGrafanaRulerRule(rulerOverride),
     ...override,
   });
 }
 
-export function getCloudRule(override?: Partial<CombinedRule>) {
+export function getCloudRule(override?: Partial<CombinedRule>, nsOverride?: Partial<CombinedRuleNamespace>) {
+  const promOverride = pick(override, ['name', 'labels', 'annotations']);
+  const rulerOverride = pick(override, ['name', 'labels', 'annotations']);
+
   return mockCombinedRule({
     namespace: {
       groups: [],
       name: 'Cortex',
       rulesSource: mockDataSource(),
+      ...nsOverride,
+    },
+    promRule: mockPromAlertingRule(isEmpty(promOverride) ? undefined : promOverride),
+    rulerRule: mockRulerAlertingRule(
+      isEmpty(rulerOverride) ? undefined : { ...rulerOverride, alert: rulerOverride.name }
+    ),
+    ...override,
+  });
+}
+
+export function getVanillaPromRule(override?: Partial<Omit<CombinedRule, 'rulerRule'>>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Prometheus',
+      rulesSource: mockDataSource(),
     },
     promRule: mockPromAlertingRule(),
-    rulerRule: mockRulerAlertingRule(),
+    rulerRule: undefined,
     ...override,
   });
 }
@@ -791,27 +772,30 @@ export function mockDashboardDto(
   };
 }
 
-export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
-  return {
-    name,
-    id,
-    type: PluginType.app,
-    module: `plugins/${id}/module`,
-    baseUrl: `public/plugins/${id}`,
-    info: {
-      author: { name: 'Grafana Labs' },
-      description: name,
-      updated: '',
-      version: '',
-      links: [],
-      logos: {
-        small: '',
-        large: '',
-      },
-      screenshots: [],
-    },
-  };
+export const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
+  refId: SimpleConditionIdentifier.queryId,
+  datasourceUid: 'abc123',
+  queryType: '',
+  model: { refId: SimpleConditionIdentifier.queryId },
 };
 
-export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
-export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');
+export const reduceExpression: AlertQuery<ExpressionQuery> = {
+  refId: SimpleConditionIdentifier.reducerId,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.reduce,
+    refId: SimpleConditionIdentifier.reducerId,
+    settings: { mode: ReducerMode.Strict },
+    reducer: ReducerID.last,
+  },
+};
+export const thresholdExpression: AlertQuery<ExpressionQuery> = {
+  refId: SimpleConditionIdentifier.thresholdId,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.threshold,
+    refId: SimpleConditionIdentifier.thresholdId,
+  },
+};

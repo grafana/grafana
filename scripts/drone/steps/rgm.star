@@ -4,6 +4,10 @@ These aren't used in releases.
 """
 
 load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
     "scripts/drone/variables.star",
     "golang_version",
 )
@@ -22,7 +26,16 @@ def artifacts_cmd(artifacts = []):
     return cmd
 
 # rgm_artifacts_step will create artifacts using the '/src/build artifacts' command.
-def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt", depends_on = ["yarn-install"]):
+def rgm_artifacts_step(
+        name = "rgm-package",
+        artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"],
+        file = "packages.txt",
+        depends_on = ["yarn-install"],
+        tag_format = "{{ .version }}-{{ .arch }}",
+        ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}",
+        verify = "false",
+        ubuntu = images["ubuntu"],
+        alpine = images["alpine"]):
     cmd = artifacts_cmd(artifacts = artifacts)
 
     return {
@@ -34,11 +47,20 @@ def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/a
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
             cmd +
             "--go-version={} ".format(golang_version) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
+            "--ubuntu-base={} ".format(ubuntu) +
+            "--alpine-base={} ".format(alpine) +
+            "--tag-format='{}' ".format(tag_format) +
+            "--ubuntu-tag-format='{}' ".format(ubuntu_tag_format) +
+            "--verify='{}' ".format(verify) +
             "--grafana-dir=$$PWD > {}".format(file),
+            "find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i",
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
@@ -58,7 +80,9 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
         },
         "commands": [
-            "docker run --privileged --rm tonistiigi/binfmt --install all",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
+            "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
             "/src/grafana-build artifacts " +
             "-a docker:grafana:linux/amd64 " +
             "-a docker:grafana:linux/amd64:ubuntu " +

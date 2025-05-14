@@ -2,18 +2,25 @@ package models
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
+func init() {
+	model.NameValidationScheme = model.UTF8Validation
+}
+
+// ApplyFiltersAndGroupBy takes a raw promQL expression, converts the filters into PromQL matchers, and applies these matchers to the parsed expression. It also applies the group by clause to any aggregate expressions in the parsed expression.
 func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFilter, groupBy []string) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
 	if err != nil {
 		return "", err
 	}
 
-	matchers, err := filtersToMatchers(scopeFilters, adHocFilters)
+	matchers, err := FiltersToMatchers(scopeFilters, adHocFilters)
 	if err != nil {
 		return "", err
 	}
@@ -68,14 +75,34 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 	return expr.String(), nil
 }
 
-func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
+func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
 	filterMap := make(map[string]*labels.Matcher)
 
-	for _, filter := range append(scopeFilters, adhocFilters...) {
+	// scope filters are applied first
+	for _, filter := range scopeFilters {
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
 		}
+
+		// when scopes have the same key, both values should be matched
+		// in prometheus that means using an regex with both values
+		if _, ok := filterMap[filter.Key]; ok {
+			filterMap[filter.Key].Value = filterMap[filter.Key].Value + "|" + matcher.Value
+			filterMap[filter.Key].Type = labels.MatchRegexp
+		} else {
+			filterMap[filter.Key] = matcher
+		}
+	}
+
+	// ad hoc filters are applied after scope filters
+	for _, filter := range adhocFilters {
+		matcher, err := filterToMatcher(filter)
+		if err != nil {
+			return nil, err
+		}
+
+		// when ad hoc filters have the same key, the last one should be used
 		filterMap[filter.Key] = matcher
 	}
 
@@ -98,8 +125,17 @@ func filterToMatcher(f ScopeFilter) (*labels.Matcher, error) {
 		mt = labels.MatchRegexp
 	case FilterOperatorRegexNotMatch:
 		mt = labels.MatchNotRegexp
+	case FilterOperatorOneOf:
+		mt = labels.MatchRegexp
+	case FilterOperatorNotOneOf:
+		mt = labels.MatchNotRegexp
 	default:
 		return nil, fmt.Errorf("unknown operator %q", f.Operator)
+	}
+	if f.Operator == FilterOperatorOneOf || f.Operator == FilterOperatorNotOneOf {
+		if len(f.Values) > 0 {
+			return labels.NewMatcher(mt, f.Key, strings.Join(f.Values, "|"))
+		}
 	}
 	return labels.NewMatcher(mt, f.Key, f.Value)
 }

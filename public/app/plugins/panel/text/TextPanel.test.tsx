@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 
@@ -59,6 +58,15 @@ const setup = (props: Props = defaultProps) => {
 describe('TextPanel', () => {
   it('should render panel without content', () => {
     expect(() => setup()).not.toThrow();
+  });
+
+  it('should not throw an error when interpolating variables results in empty content', () => {
+    const contentTest = '${__all_variables}';
+    const props = Object.assign({}, defaultProps, {
+      options: { content: contentTest, mode: TextMode.HTML },
+    });
+
+    expect(() => setup(props)).not.toThrow();
   });
 
   it('sanitizes content in html mode', () => {

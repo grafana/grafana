@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   DataQueryResponse,
@@ -102,6 +101,7 @@ export function LogsSamplePanel(props: Props) {
             prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
             timeZone={timeZone}
             enableLogDetails={true}
+            scrollElement={null}
           />
         </div>
       </>
@@ -129,16 +129,16 @@ export function LogsSamplePanel(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    logSamplesButton: css`
-      position: absolute;
-      top: ${theme.spacing(1)};
-      right: ${theme.spacing(1)};
-    `,
-    logContainer: css`
-      overflow: scroll;
-    `,
-    infoTooltip: css`
-      margin-left: ${theme.spacing(1)};
-    `,
+    logSamplesButton: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(1),
+    }),
+    logContainer: css({
+      overflow: 'scroll',
+    }),
+    infoTooltip: css({
+      marginLeft: theme.spacing(1),
+    }),
   };
 };

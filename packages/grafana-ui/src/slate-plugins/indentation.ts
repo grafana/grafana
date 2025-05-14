@@ -1,5 +1,5 @@
 import { isKeyHotkey } from 'is-hotkey';
-import React from 'react';
+import * as React from 'react';
 import { RangeJSON, Range as SlateRange } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor, Plugin } from 'slate-react';

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -16,7 +16,7 @@ export interface Props {
   dataTestId?: string;
 }
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(
+export const TabsBar = forwardRef<HTMLDivElement, Props>(
   (
     {
       children,
@@ -51,8 +51,8 @@ const getStyles = (theme: GrafanaTheme2, vertical: boolean) => ({
   tabs: css({
     position: 'relative',
     display: 'flex',
-    height: `${theme.components.menuTabs.height}px`,
-    alignItems: 'center',
+    height: theme.spacing(theme.components.menuTabs.height),
+    alignItems: 'stretch',
 
     // @PERCONA
     [!!vertical ? 'height' : 'minHeight']: `${theme.components.menuTabs.height}px`,

@@ -6,18 +6,20 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestFixIntervalFormat(t *testing.T) {
@@ -125,7 +127,7 @@ func TestProcessQueries(t *testing.T) {
 		assert.Equal(t, expectedInvalid, invalids[0])
 	})
 
-	t.Run("QueryData with no valid queries returns an error", func(t *testing.T) {
+	t.Run("QueryData with no valid queries returns bad request response", func(t *testing.T) {
 		queries := []backend.DataQuery{
 			{
 				RefID: "A",
@@ -141,12 +143,70 @@ func TestProcessQueries(t *testing.T) {
 			},
 		}
 
-		service.im = fakeInstanceManager{}
-		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+		service := ProvideService(httpclient.NewProvider(), tracing.NewNoopTracerService())
+
+		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID:  0,
+					URL: "http://localhost",
+				},
+			},
 			Queries: queries,
 		})
+		assert.NoError(t, err)
+		expectedResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+		assert.Equal(t, expectedResponse, rsp.Responses["A"])
+	})
+
+	t.Run("QueryData with no queries returns an error", func(t *testing.T) {
+		service := &Service{}
+
+		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{})
+		assert.Nil(t, rsp)
 		assert.Error(t, err)
-		assert.Equal(t, err.Error(), "no query target found for the alert rule")
+	})
+
+	t.Run("QueryData happy path with service provider and plugin context", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`[
+				{
+					"target": "target A",
+					"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
+					"datapoints": [[50, 1], [null, 2], [100, 3]]
+				}	
+			]`))
+		}))
+		t.Cleanup(server.Close)
+
+		service := ProvideService(httpclient.NewProvider(), tracing.NewNoopTracerService())
+
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON: []byte(`{
+					"target": "app.grafana.*.dashboards.views.1M.count"
+				}`),
+			},
+			{
+				RefID: "B",
+				JSON: []byte(`{
+					"query": "app.grafana.*.dashboards.views.1M.count"
+				}`),
+			},
+		}
+
+		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					ID:  0,
+					URL: server.URL,
+				},
+			},
+			Queries: queries,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, rsp)
 	})
 }
 
@@ -287,14 +347,4 @@ func TestConvertResponses(t *testing.T) {
 		_, err := service.toDataFrames(logger, httpResponse, map[string]string{})
 		require.Error(t, err)
 	})
-}
-
-type fakeInstanceManager struct{}
-
-func (f fakeInstanceManager) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
-	return datasourceInfo{}, nil
-}
-
-func (f fakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
-	return nil
 }

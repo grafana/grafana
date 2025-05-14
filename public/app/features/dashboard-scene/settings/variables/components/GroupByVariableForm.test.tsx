@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { byTestId } from 'testing-library-selector';
 
 import { VariableSupportType } from '@grafana/data';
@@ -39,8 +38,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
 describe('GroupByVariableForm', () => {
   const onDataSourceChangeMock = jest.fn();
   const onDefaultOptionsChangeMock = jest.fn();
+  const onAllowCustomValueChangeMock = jest.fn();
 
   const defaultProps: GroupByVariableFormProps = {
+    allowCustomValue: true,
+    onAllowCustomValueChange: onAllowCustomValueChangeMock,
     onDataSourceChange: onDataSourceChangeMock,
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
   };
@@ -54,6 +56,23 @@ describe('GroupByVariableForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('should render the form with allow custom value true', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const {
+      renderer: { getByTestId },
+    } = setup({
+      allowCustomValue: true,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
   });
 
   it('should call onDataSourceChange when changing the datasource', async () => {

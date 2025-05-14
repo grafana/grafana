@@ -1,4 +1,4 @@
-import React from 'react';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
@@ -7,12 +7,13 @@ import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScen
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types';
 
-import DashboardPage from './DashboardPage';
+import DashboardPage, { DashboardPageParams } from './DashboardPage';
+import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
-export type DashboardPageProxyProps = GrafanaRouteComponentProps<
-  DashboardPageRouteParams,
-  DashboardPageRouteSearchParams
+export type DashboardPageProxyProps = Omit<
+  GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>,
+  'match'
 >;
 
 // This proxy component is used for Dashboard -> Scenes migration.
@@ -20,6 +21,14 @@ export type DashboardPageProxyProps = GrafanaRouteComponentProps<
 function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceScenes = props.queryParams.scenes === true;
   const forceOld = props.queryParams.scenes === false;
+  const params = useParams<DashboardPageParams>();
+  const location = useLocation();
+
+  // Force scenes if v2 api and scenes are enabled
+  if (config.featureToggles.useV2DashboardsAPI && config.featureToggles.dashboardScene && !forceOld) {
+    console.log('DashboardPageProxy: forcing scenes because of v2 api');
+    return <DashboardScenePage {...props} />;
+  }
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
@@ -27,35 +36,39 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
-    props.route.routeName === DashboardRoutes.Home ||
-      (props.route.routeName === DashboardRoutes.Normal && props.match.params.uid)
+    props.route.routeName === DashboardRoutes.Home || (props.route.routeName === DashboardRoutes.Normal && params.uid)
   );
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const dashboard = useAsync(async () => {
-    if (props.match.params.type === 'snapshot') {
+    if (params.type === 'snapshot') {
       return null;
     }
 
     return stateManager.fetchDashboard({
       route: props.route.routeName as DashboardRoutes,
-      uid: props.match.params.uid ?? '',
-      keepDashboardFromExploreInLocalStorage: true,
+      uid: params.uid ?? '',
+      type: params.type,
+      slug: params.slug,
     });
-  }, [props.match.params.uid, props.route.routeName]);
+  }, [params.uid, props.route.routeName]);
 
-  if (!config.featureToggles.dashboardSceneForViewers) {
-    return <DashboardPage {...props} />;
+  if (dashboard.error) {
+    return <DashboardPageError error={dashboard.error} />;
   }
 
   if (dashboard.loading) {
     return null;
   }
 
-  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid && dashboard.value?.meta?.isNew !== true) {
+  if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
     return null;
+  }
+
+  if (!config.featureToggles.dashboardSceneForViewers) {
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 
   if (
@@ -65,7 +78,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   ) {
     return <DashboardScenePage {...props} />;
   } else {
-    return <DashboardPage {...props} />;
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 }
 

@@ -2,10 +2,14 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -20,6 +24,7 @@ import (
 type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
+	GetByUID(ctx context.Context, uid string) (*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
@@ -52,7 +57,7 @@ func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
 
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 	var err error
-	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.UseBool("is_admin")
 		if cmd.UID == "" {
 			cmd.UID = util.GenerateShortUID()
@@ -71,7 +76,7 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return 0, handleSQLError(err)
 	}
 
 	return cmd.ID, nil
@@ -97,6 +102,21 @@ func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, erro
 			Where(ss.notServiceAccountFilter()).
 			Get(&usr)
 
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+	return &usr, err
+}
+
+func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error) {
+	var usr user.User
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Table("user").Where("uid = ?", uid).Get(&usr)
 		if err != nil {
 			return err
 		} else if !has {
@@ -185,14 +205,14 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 }
 
 // LoginConflict returns an error if the provided email or login are already
-// associated with a user. If caseInsensitive is true the search is not case
-// sensitive.
+// associated with a user.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	login = strings.ToLower(login)
+	email = strings.ToLower(email)
+
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		users := make([]user.User, 0)
 		where := "email=? OR login=?"
-		login = strings.ToLower(login)
-		email = strings.ToLower(email)
 
 		exists, err := sess.Where(where, email, login).Get(&user.User{})
 		if err != nil {
@@ -201,14 +221,7 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 		if exists {
 			return user.ErrUserAlreadyExists
 		}
-		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-			email, login).Find(&users); err != nil {
-			return err
-		}
 
-		if len(users) > 1 {
-			return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-		}
 		return nil
 	})
 	return err
@@ -423,7 +436,7 @@ func validateOneAdminLeft(sess *db.Session) error {
 }
 
 func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		userIds := cmd.UserIDs
 
 		if len(userIds) == 0 {
@@ -513,7 +526,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
 
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {
@@ -570,4 +583,31 @@ func setOptional[T any](v *T, add func(v T)) {
 	if v != nil {
 		add(*v)
 	}
+}
+
+func handleSQLError(err error) error {
+	if isUniqueConstraintError(err) {
+		return user.ErrUserAlreadyExists
+	}
+	return err
+}
+
+func isUniqueConstraintError(err error) bool {
+	// check mysql error code
+	var me *mysql.MySQLError
+	if errors.As(err, &me) && me.Number == 1062 {
+		return true
+	}
+
+	// for postgres we check the error message
+	if strings.Contains(err.Error(), "duplicate key value") {
+		return true
+	}
+
+	var se sqlite3.Error
+	if errors.As(err, &se) && se.ExtendedCode == sqlite3.ErrConstraintUnique {
+		return true
+	}
+
+	return false
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
@@ -9,7 +9,7 @@ import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
-import { CompletionProvider, CompletionType } from './autocomplete';
+import { CompletionProvider, CompletionItemType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
@@ -109,7 +109,7 @@ export function TraceQLEditor(props: Props) {
               errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
             );
 
-            // Later on, show all errors
+            // Show all errors after a short delay, to avoid flickering
             errorTimeoutId.current = window.setTimeout(() => {
               setMarkers(monaco, model, errorNodes);
             }, 500);
@@ -126,7 +126,7 @@ function setupPlaceholder(editor: monacoTypes.editor.IStandaloneCodeEditor, mona
     {
       range: new monaco.Range(1, 1, 1, 1),
       options: {
-        className: styles.placeholder, // The placeholder text is in styles.placeholder
+        className: styles.placeholder,
         isWholeLine: true,
       },
     },
@@ -163,7 +163,7 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
 }
 
 function setupRegisterInteractionCommand(editor: monacoTypes.editor.IStandaloneCodeEditor): string | null {
-  return editor.addCommand(0, function (_, label, type: CompletionType) {
+  return editor.addCommand(0, function (_, label, type: CompletionItemType) {
     const properties: Record<string, unknown> = { datasourceType: 'tempo', type };
     // Filter out the label for TAG_VALUE completions to avoid potentially exposing sensitive data
     if (type !== 'TAG_VALUE') {

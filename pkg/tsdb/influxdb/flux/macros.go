@@ -22,30 +22,43 @@ func interpolateInterval(flux string, interval time.Duration) string {
 	return flux
 }
 
-var fluxVariableFilterExp = regexp.MustCompile(`(?m)([a-zA-Z]+)\.([a-zA-Z]+)`)
+var fluxVariableFilterExp = regexp.MustCompile(`(?m)(v)\.([a-zA-Z]+)`)
 
 func interpolateFluxSpecificVariables(query queryModel) string {
+	rawQuery := query.RawQuery
 	flux := query.RawQuery
 
-	matches := fluxVariableFilterExp.FindAllStringSubmatch(flux, -1)
+	matches := fluxVariableFilterExp.FindAllStringSubmatchIndex(rawQuery, -1)
 	if matches != nil {
 		timeRange := query.TimeRange
 		from := timeRange.From.UTC().Format(time.RFC3339Nano)
 		to := timeRange.To.UTC().Format(time.RFC3339Nano)
 		for _, match := range matches {
-			switch match[2] {
+			// For query "range(start: v.timeRangeStart, stop: v.timeRangeStop)"
+			// rawQuery[match[0]:match[1]] will be v.timeRangeStart
+			// rawQuery[match[2]:match[3]] will be v
+			// rawQuery[match[4]:match[5]] will be timeRangeStart
+			fullMatch := rawQuery[match[0]:match[1]]
+			key := rawQuery[match[4]:match[5]]
+
+			switch key {
 			case "timeRangeStart":
-				flux = strings.ReplaceAll(flux, match[0], from)
+				flux = strings.ReplaceAll(flux, fullMatch, from)
 			case "timeRangeStop":
-				flux = strings.ReplaceAll(flux, match[0], to)
+				flux = strings.ReplaceAll(flux, fullMatch, to)
 			case "windowPeriod":
-				flux = strings.ReplaceAll(flux, match[0], query.Interval.String())
+				flux = strings.ReplaceAll(flux, fullMatch, query.Interval.String())
 			case "bucket":
-				flux = strings.ReplaceAll(flux, match[0], "\""+query.Options.Bucket+"\"")
+				// Check if 'bucket' is part of a join query
+				beforeMatch := rawQuery[:match[0]]
+				if strings.Contains(beforeMatch, "join.") {
+					continue
+				}
+				flux = strings.ReplaceAll(flux, fullMatch, "\""+query.Options.Bucket+"\"")
 			case "defaultBucket":
-				flux = strings.ReplaceAll(flux, match[0], "\""+query.Options.DefaultBucket+"\"")
+				flux = strings.ReplaceAll(flux, fullMatch, "\""+query.Options.DefaultBucket+"\"")
 			case "organization":
-				flux = strings.ReplaceAll(flux, match[0], "\""+query.Options.Organization+"\"")
+				flux = strings.ReplaceAll(flux, fullMatch, "\""+query.Options.Organization+"\"")
 			}
 		}
 	}

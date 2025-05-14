@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TourStep } from 'app/percona/shared/core/reducers/tour';
 import SidebarStep from 'app/percona/tour/components/SidebarStep';
 

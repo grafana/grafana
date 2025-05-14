@@ -15,7 +15,9 @@ type Service interface {
 	// GetPluginArchiveInfo fetches information needed for downloading the requested plugin.
 	GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginArchiveInfo, error)
 	// PluginVersion will return plugin version based on the requested information.
-	PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error)
+	PluginVersion(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (VersionData, error)
+	// PluginInfo will return generic plugin information from grafana.com/api/plugins.
+	PluginInfo(ctx context.Context, pluginID string) (*PluginInfo, error)
 }
 
 type CompatOpts struct {

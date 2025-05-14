@@ -21,7 +21,7 @@ export const filterMetricsQuery = (query: CloudWatchMetricsQuery): boolean => {
     return !!namespace && !!metricName && !!statistic;
   } else if (metricQueryType === MetricQueryType.Search && metricEditorMode === MetricEditorMode.Code) {
     return !!expression;
-  } else if (metricQueryType === MetricQueryType.Query) {
+  } else if (metricQueryType === MetricQueryType.Insights) {
     // still TBD how to validate the visual query builder for SQL
     return !!sqlExpression;
   }

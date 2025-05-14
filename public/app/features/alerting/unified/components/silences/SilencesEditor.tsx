@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
 import {
+  GrafanaTheme2,
   addDurationToDate,
   dateTime,
-  GrafanaTheme2,
   intervalToAbbreviatedDurationString,
   isValidDate,
   parseDuration,
@@ -25,32 +26,34 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
+import { Trans } from 'app/core/internationalization';
+import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
 import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 import { getDefaultSilenceFormValues, getFormFieldsForSilence } from './utils';
 
-interface Props {
-  silenceId: string;
-  alertManagerSourceName: string;
-}
-
 /**
  * Silences editor for editing an existing silence.
  *
  * Fetches silence details from API, based on `silenceId`
  */
-const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
+const ExistingSilenceEditor = () => {
+  const { id: silenceId = '' } = useParams();
+  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
   const {
     data: silence,
     isLoading: getSilenceIsLoading,
@@ -61,7 +64,6 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
     ruleMetadata: true,
     accessControl: true,
   });
-
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
@@ -91,7 +93,10 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   }
 
   return (
-    <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+    <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+    </>
   );
 };
 
@@ -254,7 +259,7 @@ export const SilencesEditor = ({
           )}
           {!isLoading && <Button type="submit">Save silence</Button>}
           <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </LinkButton>
         </Stack>
       </form>
@@ -279,4 +284,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export default ExistingSilenceEditor;
+function ExistingSilenceEditorPage() {
+  const pageNav = {
+    id: 'silence-edit',
+    text: 'Edit silence',
+    subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
+  };
+  return (
+    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
+      <ExistingSilenceEditor />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withPageErrorBoundary(ExistingSilenceEditorPage);

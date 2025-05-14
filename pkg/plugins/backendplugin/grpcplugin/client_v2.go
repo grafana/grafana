@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -19,12 +20,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+var (
+	logger = log.New("plugins.clientv2")
+)
+
 type ClientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
+	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -46,6 +52,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawAdmission, err := rpcClient.Dispense("admission")
+	if err != nil {
+		return nil, err
+	}
+
+	rawConversion, err := rpcClient.Dispense("conversion")
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +98,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawAdmission != nil {
 		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
 			c.AdmissionClient = admissionClient
+		}
+	}
+
+	if rawConversion != nil {
+		if conversionClient, ok := rawConversion.(grpcplugin.ConversionClient); ok {
+			c.ConversionClient = conversionClient
 		}
 	}
 
@@ -174,6 +191,9 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, plugins.ErrMethodNotImplemented
 		}
 
+		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
+			return nil, handleGrpcStatusError(ctx, errorSource, err)
+		}
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
@@ -308,13 +328,13 @@ func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRe
 	return backend.FromProto().MutationResponse(protoResp), nil
 }
 
-func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if c.AdmissionClient == nil {
+func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if c.ConversionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().ConversionRequest(req)
-	protoResp, err := c.AdmissionClient.ConvertObject(ctx, protoReq)
+	protoResp, err := c.ConversionClient.ConvertObjects(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -325,4 +345,25 @@ func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionReq
 	}
 
 	return backend.FromProto().ConversionResponse(protoResp), nil
+}
+
+// handleGrpcStatusError sets the error source via context based on the error source provided. Regardless of its value,
+// a plugin downstream error is returned as both plugin and downstream errors are treated the same in Grafana.
+func handleGrpcStatusError(ctx context.Context, errorSource errstatus.Source, err error) error {
+	switch errorSource {
+	case backend.ErrorSourceDownstream:
+		innerErr := backend.WithErrorSource(ctx, backend.ErrorSourceDownstream)
+		if innerErr != nil {
+			logger.Error("Could not set downstream error source", "error", innerErr)
+		}
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("%v", err)
+	case backend.ErrorSourcePlugin:
+		errorSourceErr := backend.WithErrorSource(ctx, backend.ErrorSourcePlugin)
+		if errorSourceErr != nil {
+			logger.Error("Could not set plugin error source", "error", errorSourceErr)
+		}
+		// plugin request has failed after being sent from the Grafana server
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("%v", err)
+	}
+	return fmt.Errorf("%v: %w", "Failed to query data", err)
 }

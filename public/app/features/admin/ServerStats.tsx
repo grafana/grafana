@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { contextSrv } from '../../core/services/context_srv';
@@ -34,11 +35,21 @@ export const ServerStats = () => {
 
   return (
     <>
-      <h2 className={styles.title}>Instance statistics</h2>
+      <h2 className={styles.title}>
+        <Trans i18nKey="admin.server-settings.title">Instance statistics</Trans>
+      </h2>
       {!isLoading && !stats ? (
-        <p className={styles.notFound}>No stats found.</p>
+        <p className={styles.notFound}>
+          <Trans i18nKey="admin.server-settings.not-found">No stats found.</Trans>
+        </p>
       ) : (
-        <div className={styles.row}>
+        <Stack
+          gap={2}
+          direction={{
+            xs: 'column',
+            md: 'row',
+          }}
+        >
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -49,19 +60,19 @@ export const ServerStats = () => {
             ]}
             footer={
               <LinkButton href={'/dashboards'} variant={'secondary'}>
-                Manage dashboards
+                <Trans i18nKey="admin.server-settings.dashboards-button">Manage dashboards</Trans>
               </LinkButton>
             }
           />
 
-          <div className={styles.doubleRow}>
+          <Stack direction="column" gap={2}>
             <ServerStatsCard
               isLoading={isLoading}
               content={[{ name: 'Data sources', value: stats?.datasources }]}
               footer={
                 hasAccessToDataSources && (
                   <LinkButton href={'/datasources'} variant={'secondary'}>
-                    Manage data sources
+                    <Trans i18nKey="admin.server-settings.data-sources-button">Manage data sources</Trans>
                   </LinkButton>
                 )
               }
@@ -71,11 +82,11 @@ export const ServerStats = () => {
               content={[{ name: 'Alerts', value: stats?.alerts }]}
               footer={
                 <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  Manage alerts
+                  <Trans i18nKey="admin.server-settings.alerts-button">Manage alerts</Trans>
                 </LinkButton>
               }
             />
-          </div>
+          </Stack>
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -88,12 +99,12 @@ export const ServerStats = () => {
             footer={
               hasAccessToAdminUsers && (
                 <LinkButton href={'/admin/users'} variant={'secondary'}>
-                  Manage users
+                  <Trans i18nKey="admin.server-settings.users-button">Manage users</Trans>
                 </LinkButton>
               )
             }
           />
-        </div>
+        </Stack>
       )}
     </>
   );
@@ -127,27 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css({
       marginBottom: theme.spacing(4),
-    }),
-    row: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      width: '100%',
-
-      '& > div:not(:last-of-type)': {
-        marginRight: theme.spacing(2),
-      },
-
-      '& > div': {
-        width: '33.3%',
-      },
-    }),
-    doubleRow: css({
-      display: 'flex',
-      flexDirection: 'column',
-
-      '& > div:first-of-type': {
-        marginBottom: theme.spacing(2),
-      },
     }),
     notFound: css({
       fontSize: theme.typography.h6.fontSize,

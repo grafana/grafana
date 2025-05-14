@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { JSX } from 'react';
+import { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';

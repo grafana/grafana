@@ -1,0 +1,65 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { ScrollContainer } from './ScrollContainer';
+
+<Meta title="MDX|ScrollContainer" component={ScrollContainer} />
+
+# ScrollContainer
+
+This component is used to create a scrollable container. It uses native scrollbars, has an option to show scroll indicators, and supports most `Box` properties.
+
+## Migrating from CustomScrollbar
+
+ScrollContainer is intended to be a functionally equivalent replacement for CustomScrollbar. If you're not using any additional props in CustomScrollbar, it should be a drop-in replacement.
+
+If you were using additional props, there are roughly 3 categories of changes:
+
+1. Props that have been **renamed**
+2. Props that have been removed but the **same behavior can be achieved in a different way**
+3. Props that have been removed and are **no longer supported**
+
+### Props that have been renamed
+
+- `autoHeightMin` is now `minHeight`
+- `autoHeightMax` is now `maxHeight`
+- `divId` is now `id`
+- `testId` is now `data-testid`
+- `scrollRefCallback` is now `ref`
+
+### Props that have been removed but the same behavior can be achieved in a different way
+
+- `hideHorizontalTrack` and `hideVerticalTrack` have been removed.
+  - You can achieve the same behavior by setting either `overflowX` or `overflowY` to `hidden`. These names more closely match the CSS properties they represent.
+- `scrollTop` and `setScrollTop`.
+
+  - You can achieve the same behavior by using the `ref` prop to get a reference to the `ScrollContainer` component, and then calling `scrollTo` on that reference.
+  - Before:
+
+    ```tsx
+    const [scrollTop, setScrollTop] = useState(0);
+
+    return <CustomScrollbar scrollTop={scrollTop}>// Your amazing scrolling content</CustomScrollbar>;
+    ```
+
+  - After:
+
+    ```tsx
+    const [scrollTop, setScrollTop] = useState(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      scrollRef.current?.scrollTo(0, scrollTop);
+    }, [scrollTop]);
+
+    return <ScrollContainer ref={scrollRef}>// Your amazing scrolling content</ScrollContainer>;
+    ```
+
+### Props that have been removed and are no longer supported
+
+- `autoHide`, `autoHideTimeout` and `hideTracksWhenNotNeeded`.
+  - These props no longer make sense when using native scrollbars, since some operating systems (Windows for example) don't have overlay scrollbars.
+- `className`
+  - Like our other design system components, the intention is that you'll never need to write custom CSS for this component. We extend all the base `Box` props, so everything _should_ be available as a prop.
+- `updateAfterMountMs`
+  - This wasn't very react-y, and could cause inconsistent behaviour.
+
+<ArgTypes of={ScrollContainer} />

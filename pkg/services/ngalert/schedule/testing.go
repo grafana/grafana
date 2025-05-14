@@ -7,15 +7,17 @@ import (
 	"testing"
 	"time"
 
-	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	mock "github.com/stretchr/testify/mock"
 )
 
 // waitForTimeChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
 // Timeout will cause the test to fail.
 // Returns the data from the channel.
 func waitForTimeChannel(t *testing.T, ch chan time.Time) time.Time {
+	t.Helper()
 	select {
 	case result := <-ch:
 		return result
@@ -64,7 +66,7 @@ func (f *fakeRulesStore) GetAlertRulesForScheduling(ctx context.Context, query *
 	query.ResultFoldersTitles = map[models.FolderKey]string{}
 	for _, rule := range f.rules {
 		query.ResultRules = append(query.ResultRules, rule)
-		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.UID}
+		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.NamespaceUID}
 		query.ResultFoldersTitles[key] = f.getNamespaceTitle(rule.NamespaceUID)
 	}
 	return nil

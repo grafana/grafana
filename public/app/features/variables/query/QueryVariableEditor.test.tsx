@@ -1,6 +1,5 @@
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { QueryVariableModel, VariableSupportType } from '@grafana/data';
@@ -80,12 +79,11 @@ describe('QueryVariableEditor', () => {
     });
 
     it('should pass down the query with default values if the datasource config defines it', async () => {
-      ds.variables!.getDefaultQuery = jest.fn().mockImplementationOnce(() => 'some default query');
-
       await setupTestContext({});
       expect(ds.variables?.getDefaultQuery).toBeDefined();
-      expect(ds.variables?.getDefaultQuery).toHaveBeenCalledTimes(1);
-      expect(editor.mock.calls[0][0].query).toBe('some default query');
+      // getDefaultQuery is called twice: once in QueryEditor to account for old arch
+      //   and once in QueryVariableForm for new scenes arch logic
+      expect(ds.variables?.getDefaultQuery).toHaveBeenCalledTimes(2);
     });
   });
 

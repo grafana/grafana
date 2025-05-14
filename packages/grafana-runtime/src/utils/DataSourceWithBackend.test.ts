@@ -140,6 +140,85 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('correctly passes datasource headers', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
+      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+      range: getDefaultTimeRange(),
+      queryGroupId: 'abc',
+      interval: '5s',
+      scopedVars: {},
+      timezone: '',
+      requestId: 'request-123',
+      startTime: 0,
+      app: '',
+      headers: {
+        'X-Test-Header': 'test',
+      },
+    });
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "from": "1697133600000",
+          "queries": [
+            {
+              "applyTemplateVariablesCalled": true,
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "filters": [
+                {
+                  "key": "key1",
+                  "operator": "=",
+                  "value": "val1",
+                },
+              ],
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+            {
+              "datasource": {
+                "type": "sample",
+                "uid": "<mockuid>",
+              },
+              "datasourceId": undefined,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "B",
+            },
+          ],
+          "to": "1697155200000",
+        },
+        "headers": {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
+          "X-Query-Group-Id": "abc",
+          "X-Test-Header": "test",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": "request-123",
+        "url": "/api/ds/query?ds_type=dummy&requestId=request-123",
+      }
+    `);
+  });
+
   test('correctly creates expression queries', () => {
     const { mock, ds } = createMockDatasource();
     ds.query({

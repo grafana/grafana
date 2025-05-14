@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { FormWrapper } from 'app/percona/shared/helpers/utils';
 
@@ -13,7 +12,7 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
   it('should call passed validators', () => {
@@ -72,6 +71,6 @@ describe('SwitchField::', () => {
       </FormWrapper>
     );
 
-    expect(screen.getByRole('checkbox')).toHaveProperty('disabled', true);
+    expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
   });
 });

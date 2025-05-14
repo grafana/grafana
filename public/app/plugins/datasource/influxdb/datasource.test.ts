@@ -1,5 +1,6 @@
 import { lastValueFrom, of } from 'rxjs';
 
+import { AdHocVariableFilter } from '@grafana/data';
 import { BackendSrvRequest, TemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
@@ -10,6 +11,7 @@ import { mockInfluxQueryRequest } from './__mocks__/request';
 import { mockInfluxFetchResponse, mockMetricFindQueryResponse } from './__mocks__/response';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
+import { InfluxQuery, InfluxVersion } from './types';
 
 const fetchMock = mockBackendService(mockInfluxFetchResponse());
 
@@ -267,7 +269,10 @@ describe('InfluxDataSource Backend Mode [influxdbBackendMigration=true]', () => 
 });
 
 describe('interpolateQueryExpr', () => {
-  let ds = getMockInfluxDS(getMockDSInstanceSettings(), {} as TemplateSrv);
+  const templateSrvStub = {
+    replace: jest.fn().mockImplementation((...rest: unknown[]) => 'templateVarReplaced'),
+  } as unknown as TemplateSrv;
+  let ds = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
   it('should return the value as it is', () => {
     const value = 'normalValue';
     const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
@@ -358,6 +363,18 @@ describe('interpolateQueryExpr', () => {
     expect(result).toBe(expectation);
   });
 
+  it('should **not** return the escaped value if the value **is not** wrapped in regex and the query is more complex (e.g. text is contained between two / but not a regex', () => {
+    const value = 'testmatch';
+    const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      `select value where ("tag"::tag =~ /value/) AND where other = $tempVar $timeFilter GROUP BY time($__interval) tz('Europe/London')`
+    );
+    const expectation = `testmatch`;
+    expect(result).toBe(expectation);
+  });
+
   it('should return floating point number as it is', () => {
     const variableMock = queryBuilder()
       .withId('tempVar')
@@ -372,5 +389,20 @@ describe('interpolateQueryExpr', () => {
     const result = ds.interpolateQueryExpr(value, variableMock, `select value / $tempVar from /^measurement$/`);
     const expectation = `1.0`;
     expect(result).toBe(expectation);
+  });
+
+  it('template var in adhoc', () => {
+    const templateVarName = '$templateVarName';
+    const templateVarValue = 'templateVarValue';
+    const templateSrvStub = {
+      replace: jest
+        .fn()
+        .mockImplementation((target?: string) => (target === templateVarName ? templateVarValue : target)),
+    } as unknown as TemplateSrv;
+    const ds = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
+    ds.version = InfluxVersion.SQL;
+    const adhocFilter: AdHocVariableFilter[] = [{ key: 'bar', value: templateVarName, operator: '=' }];
+    const result = ds.applyTemplateVariables(mockInfluxQueryRequest() as unknown as InfluxQuery, {}, adhocFilter);
+    expect(result.tags![0].value).toBe(templateVarValue);
   });
 });

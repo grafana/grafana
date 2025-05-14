@@ -13,15 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +35,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -49,6 +51,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		version:          opts.Version,
 		commit:           opts.Commit,
 		buildBranch:      opts.BuildBranch,
+		storageMetrics:   storageMetrics,
 	}
 
 	return s, nil
@@ -70,6 +73,7 @@ type ModuleServer struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
+	storageMetrics   *resource.StorageMetrics
 
 	pidFile     string
 	version     string
@@ -130,7 +134,15 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features, s.log)
+		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		if err != nil {
+			return nil, err
+		}
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics)
+	})
+
+	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
+		return authz.ProvideZanzanaService(s.cfg, s.features)
 	})
 
 	m.RegisterModule(modules.All, nil)

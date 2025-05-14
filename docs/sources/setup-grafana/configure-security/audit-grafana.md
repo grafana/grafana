@@ -26,7 +26,7 @@ To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 ## Audit logs
@@ -48,7 +48,7 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `user.orgId`\*          | number  | Current organization of the user that made the request.                                                                                                                                                                  |
 | `user.orgRole`          | string  | Current role of the user that made the request.                                                                                                                                                                          |
 | `user.name`             | string  | Name of the Grafana user that made the request.                                                                                                                                                                          |
-| `user.tokenId`          | number  | ID of the user authentication token.                                                                                                                                                                                     |
+| `user.authTokenId`      | number  | ID of the user authentication token.                                                                                                                                                                                     |
 | `user.apiKeyId`         | number  | ID of the Grafana API key used to make the request.                                                                                                                                                                      |
 | `user.isAnonymous`\*    | boolean | If an anonymous user made the request, `true`. Otherwise, `false`.                                                                                                                                                       |
 | `action`\*              | string  | The request action. For example, `create`, `update`, or `manage-permissions`.                                                                                                                                            |
@@ -145,7 +145,7 @@ to the action when the user requests a report's preview to be sent through email
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./configure-authentication/saml#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](../configure-authentication/saml/#single-logout).
 
 #### Service accounts
 
@@ -326,6 +326,17 @@ external group.
 | Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 | Save billing information | `{"action": "billing-information"}`                          |
 
+#### Cloud migration management
+
+{{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
+
+| Action                           | Distinguishing fields                                       |
+| -------------------------------- | ----------------------------------------------------------- |
+| Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
+| Disconnect from a cloud instance | `{"action": "disconnect-instance"}`                         |
+| Build a snapshot                 | `{"action": "build", "resources": [{"type": "snapshot"}]}`  |
+| Upload a snapshot                | `{"action": "upload", "resources": [{"type": "snapshot"}]}` |
+
 #### Generic actions
 
 In addition to the actions listed above, any HTTP request (`POST`, `PATCH`, `PUT`, and `DELETE`)
@@ -348,7 +359,7 @@ The auditing feature is disabled by default.
 {{% /admonition %}}
 
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
-You can choose which exporter to use in the [configuration file]({{< relref "../configure-grafana" >}}).
+You can choose which exporter to use in the [configuration file](../../configure-grafana/).
 
 Options are `file`, `loki`, and `logger`. Use spaces to separate multiple modes, such as `file loki`.
 
@@ -426,4 +437,4 @@ url = user:password@localhost:3000
 
 ### Console exporter
 
-Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration]({{< relref "../configure-grafana#log" >}}) section of the documentation. Accessing the audit logs in this way is not recommended for production use.
+Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration](../../configure-grafana/#log) section of the documentation. Accessing the audit logs in this way is not recommended for production use.

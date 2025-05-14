@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
+
+package authz.extention.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+service AuthzExtentionService {
+  rpc BatchCheck(BatchCheckRequest) returns (BatchCheckResponse);
+
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc Write(WriteRequest) returns (WriteResponse);
+}
+
+message TupleKey {
+  string user = 1;
+  string relation = 2;
+  string object = 3;
+  RelationshipCondition condition = 4;
+}
+
+message Tuple {
+  TupleKey key = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+message TupleKeyWithoutCondition {
+  string user = 1;
+  string relation = 2;
+  string object = 3;
+}
+
+message RelationshipCondition {
+  string name = 1;
+  google.protobuf.Struct context = 2;
+}
+
+message ReadRequest {
+  string namespace = 1;
+  ReadRequestTupleKey tuple_key = 2;
+  google.protobuf.Int32Value page_size = 3;
+  string continuation_token = 4;
+}
+
+message ReadRequestTupleKey {
+  string user = 1;
+  string relation = 2;
+  string object = 3;
+}
+
+message ReadResponse {
+  repeated Tuple tuples = 1;
+  string continuation_token = 2;
+}
+
+message WriteRequestWrites {
+  repeated TupleKey tuple_keys = 1;
+}
+
+message WriteRequestDeletes {
+  repeated TupleKeyWithoutCondition tuple_keys = 1;
+}
+
+message WriteRequest {
+  string namespace = 1;
+  WriteRequestWrites writes = 2;
+  WriteRequestDeletes deletes = 3;
+}
+
+message WriteResponse {}
+
+message BatchCheckRequest {
+  string subject = 1;
+  string namespace = 2;
+  repeated BatchCheckItem items = 3;
+}
+
+message BatchCheckItem {
+  string verb = 1;
+  string group = 2;
+  string resource = 3;
+  string name = 4;
+  string subresource = 5;
+  string folder = 6;
+}
+
+message BatchCheckResponse {
+  map<string, BatchCheckGroupResource> groups = 1;
+}
+
+message BatchCheckGroupResource {
+  map<string, bool> items = 1;
+}

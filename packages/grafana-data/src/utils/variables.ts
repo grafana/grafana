@@ -1,4 +1,4 @@
-import { ScopedVars } from '../types';
+import { ScopedVars } from '../types/ScopedVars';
 
 const SEARCH_FILTER_VARIABLE = '__searchFilter';
 

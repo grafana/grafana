@@ -37,6 +37,12 @@ refs:
 
 Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore](ref:explore).
 
+## Supported Parca versions
+
+This data source supports these versions of Parca:
+
+- v0.19+
+
 ## Configure the Parca data source
 
 To configure basic settings for the data source, complete the following steps:

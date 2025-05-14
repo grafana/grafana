@@ -8,9 +8,9 @@ import (
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 type RemoteService struct {
@@ -28,8 +28,14 @@ type RemoteServicesConfig struct {
 	serviceClientSet       *serviceclientset.Clientset
 }
 
+type CustomExtraConfig struct {
+	DiscoveryOnlyProxyClientCertFile string
+	DiscoveryOnlyProxyClientKeyFile  string
+}
+
 type Config struct {
 	KubeAggregatorConfig *aggregatorapiserver.Config
+	CustomExtraConfig    *CustomExtraConfig // this is temporary and will be removed once we have moved across newer auth rollout in cloud
 	Informers            informersv0alpha1.SharedInformerFactory
 	RemoteServicesConfig *RemoteServicesConfig
 	// Builders contain prerequisite api groups for aggregator to function correctly e.g. ExternalName
@@ -40,7 +46,7 @@ type Config struct {
 }
 
 // remoteServices may be nil when not using aggregation
-func NewConfig(aggregator *aggregatorapiserver.Config, informers informersv0alpha1.SharedInformerFactory, builders []builder.APIGroupBuilder, remoteServices *RemoteServicesConfig) *Config {
+func NewConfig(aggregator *aggregatorapiserver.Config, customExtraConfig *CustomExtraConfig, informers informersv0alpha1.SharedInformerFactory, builders []builder.APIGroupBuilder, remoteServices *RemoteServicesConfig) *Config {
 	getMergedOpenAPIDefinitions := func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
 		builderAPIs := builder.GetOpenAPIDefinitions(builders)(ref)
@@ -61,6 +67,7 @@ func NewConfig(aggregator *aggregatorapiserver.Config, informers informersv0alph
 
 	return &Config{
 		aggregator,
+		customExtraConfig,
 		informers,
 		remoteServices,
 		builders,

@@ -41,13 +41,14 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 			// the error happens, there is not enough info to create a nice error message)
 			var maxPointError maxPointsExceededError
 			if errors.As(dr.Error, &maxPointError) {
-				text := fmt.Sprintf("A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d.", maxPointError.Count, query.MaxDataPoints)
+				errMsg := "A query returned too many datapoints and the results have been truncated at %d points to prevent memory issues. At the current graph size, Grafana can only draw %d."
 				// we recommend to the user to use AggregateWindow(), but only if it is not already used
 				if !strings.Contains(query.RawQuery, "aggregateWindow(") {
-					text += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
+					errMsg += " Try using the aggregateWindow() function in your query to reduce the number of points returned."
 				}
 
-				dr.Error = fmt.Errorf(text)
+				dr.Error = fmt.Errorf(errMsg, maxPointError.Count, query.MaxDataPoints)
+				dr.ErrorSource = backend.ErrorSourceDownstream
 			}
 		}
 	}
@@ -96,6 +97,10 @@ func readDataFrames(logger log.Logger, result *api.QueryTableResult, maxPoints i
 		err := builder.Append(result.Record())
 		if err != nil {
 			dr.Error = err
+			var maxSeriesError maxSeriesExceededError
+			if errors.As(err, &maxSeriesError) {
+				dr.ErrorSource = backend.ErrorSourceDownstream
+			}
 			break
 		}
 	}

@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
-import { TimeRangeUpdatedEvent, usePluginLinkExtensions } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent, usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
+import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -57,12 +56,12 @@ const grafanaRuleMock = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinkExtensions: jest.fn(),
+  usePluginLinks: jest.fn(),
 }));
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 const mocks = {
-  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
+  usePluginLinksMock: jest.mocked(usePluginLinks),
 };
 
 const fakeResponse: PromRulesResponse = {
@@ -85,8 +84,8 @@ beforeEach(() => {
   mockRulerRulesApiResponse(server, 'grafana', {
     'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
   });
-  mocks.usePluginLinkExtensionsMock.mockReturnValue({
-    extensions: [
+  mocks.usePluginLinksMock.mockReturnValue({
+    links: [
       {
         pluginId: 'grafana-ml-app',
         id: '1',
@@ -114,6 +113,7 @@ const defaultOptions: UnifiedAlertListOptions = {
   alertInstanceLabelFilter: '',
   datasource: 'grafana',
   viewMode: ViewMode.List,
+  showInactiveAlerts: false,
 };
 
 const defaultProps: PanelProps<UnifiedAlertListOptions> = {

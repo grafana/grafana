@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { keyBy, startCase } from 'lodash';
-import React from 'react';
+import { keyBy, startCase, uniqueId } from 'lodash';
+import * as React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { config } from '@grafana/runtime';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
-import { Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
+  downsamplingTypes,
   reducerModes,
   reducerTypes,
   thresholdFunctions,
@@ -26,7 +26,7 @@ import alertDef, { EvalFunction } from '../state/alertDef';
 import { Spacer } from './components/Spacer';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
+import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
@@ -58,7 +58,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                 rule={rule}
                 key={index}
                 refId={refId}
-                isAlertCondition={condition === refId}
                 model={model}
                 relativeTimeRange={relativeTimeRange}
                 dataSource={dataSource}
@@ -72,8 +71,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
-            const dataSource = dsByUid[datasourceUid];
-
             return (
               isExpressionQuery(model) && (
                 <ExpressionPreview
@@ -81,7 +78,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                   refId={refId}
                   isAlertCondition={condition === refId}
                   model={model}
-                  dataSource={dataSource}
                   evalData={evalDataByQuery[refId]}
                 />
               )
@@ -95,7 +91,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   rule: CombinedRule;
-  isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
   thresholds?: ThresholdDefinition;
@@ -193,9 +188,6 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
   contentBox: css({
     flex: '1 0 100%',
   }),
-  visualization: css({
-    padding: theme.spacing(1),
-  }),
   dataSource: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
@@ -209,11 +201,12 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
   isAlertCondition: boolean;
   model: ExpressionQuery;
-  dataSource: DataSourceInstanceSettings;
   evalData?: PanelData;
 }
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition }: ExpressionPreviewProps) {
+  const styles = useStyles2(getQueryBoxStyles);
+
   function renderPreview() {
     switch (model.type) {
       case ExpressionQueryType.math:
@@ -249,7 +242,14 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
       ]}
       isAlertCondition={isAlertCondition}
     >
-      {renderPreview()}
+      <div className={styles.previewWrapper}>
+        {evalData?.errors?.map((error) => (
+          <Alert key={uniqueId()} title="Expression failed" severity="error" bottomSpacing={1}>
+            {error.message}
+          </Alert>
+        ))}
+        {renderPreview()}
+      </div>
       <Spacer />
       {evalData && <ExpressionResult series={evalData.series} isAlertCondition={isAlertCondition} />}
     </QueryBox>
@@ -316,6 +316,9 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),
+  previewWrapper: css({
+    padding: theme.spacing(1),
+  }),
 });
 
 function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
@@ -351,7 +354,6 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
 
 const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gridTemplateColumns: 'repeat(6, max-content)',
     gap: theme.spacing(0, 1),
@@ -384,7 +386,6 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
 const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gap: theme.spacing(0.5),
     gridTemplateRows: '1fr 1fr',
@@ -423,7 +424,6 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
 
 const getResampleExpressionViewerStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(1),
     display: 'grid',
     gap: theme.spacing(0.5),
     gridTemplateColumns: 'repeat(4, 1fr)',
@@ -492,7 +492,6 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
       maxWidth: '100%',
     }),
     container: css({
-      padding: theme.spacing(1),
       display: 'flex',
       gap: theme.spacing(0.5),
     }),
@@ -539,5 +538,10 @@ const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
 });
 
 function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {
-  return evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange;
+  return (
+    evaluator.type === EvalFunction.IsWithinRange ||
+    evaluator.type === EvalFunction.IsOutsideRange ||
+    evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    evaluator.type === EvalFunction.IsWithinRangeIncluded
+  );
 }

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Input, Field, FieldSet, Button } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { contextSrv } from 'app/core/core';

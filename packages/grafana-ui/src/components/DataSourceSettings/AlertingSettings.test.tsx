@@ -1,9 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
-import { AlertingSettings } from '@grafana/ui';
-
-import { Props, AlertingConfig } from './AlertingSettings';
+import { AlertingSettings, Props, AlertingConfig } from './AlertingSettings';
 
 const setup = () => {
   const onOptionsChange = jest.fn();

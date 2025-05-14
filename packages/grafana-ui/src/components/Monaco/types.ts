@@ -27,6 +27,7 @@ export interface CodeEditorProps {
   readOnly?: boolean;
   showMiniMap?: boolean;
   showLineNumbers?: boolean;
+  wordWrap?: boolean;
   monacoOptions?: MonacoOptions;
 
   /**

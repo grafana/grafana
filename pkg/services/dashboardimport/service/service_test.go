@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -83,7 +83,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
-		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetID())
 		require.NoError(t, err)
 
 		require.NotNil(t, importDashboardArg)
@@ -149,7 +149,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
-		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetID())
 		require.NoError(t, err)
 
 		require.NotNil(t, importDashboardArg)

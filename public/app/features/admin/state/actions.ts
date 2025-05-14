@@ -43,13 +43,13 @@ import {
 } from './reducers';
 // UserAdminPage
 
-export function loadAdminUserPage(userId: number): ThunkResult<void> {
+export function loadAdminUserPage(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     try {
       dispatch(userAdminPageLoadedAction(false));
-      await dispatch(loadUserProfile(userId));
-      await dispatch(loadUserOrgs(userId));
-      await dispatch(loadUserSessions(userId));
+      await dispatch(loadUserProfile(userUid));
+      await dispatch(loadUserOrgs(userUid));
+      await dispatch(loadUserSessions(userUid));
       if (config.ldapEnabled && featureEnabled('ldapsync')) {
         await dispatch(loadLdapSyncStatus());
       }
@@ -69,60 +69,60 @@ export function loadAdminUserPage(userId: number): ThunkResult<void> {
   };
 }
 
-export function loadUserProfile(userId: number): ThunkResult<void> {
+export function loadUserProfile(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    const user = await getBackendSrv().get(`/api/users/${userId}`, accessControlQueryParam());
+    const user = await getBackendSrv().get(`/api/users/${userUid}`, accessControlQueryParam());
     dispatch(userProfileLoadedAction(user));
   };
 }
 
 export function updateUser(user: UserDTO): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().put(`/api/users/${user.id}`, user);
-    dispatch(loadAdminUserPage(user.id));
+    await getBackendSrv().put(`/api/users/${user.uid}`, user);
+    dispatch(loadAdminUserPage(user.uid));
   };
 }
 
-export function setUserPassword(userId: number, password: string): ThunkResult<void> {
+export function setUserPassword(userUid: string, password: string): ThunkResult<void> {
   return async (dispatch) => {
     const payload = { password };
-    await getBackendSrv().put(`/api/admin/users/${userId}/password`, payload);
-    dispatch(loadAdminUserPage(userId));
+    await getBackendSrv().put(`/api/admin/users/${userUid}/password`, payload);
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 
-export function disableUser(userId: number): ThunkResult<void> {
+export function disableUser(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userId}/disable`);
+    await getBackendSrv().post(`/api/admin/users/${userUid}/disable`);
     locationService.push('/admin/users');
   };
 }
 
-export function enableUser(userId: number): ThunkResult<void> {
+export function enableUser(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userId}/enable`);
-    dispatch(loadAdminUserPage(userId));
+    await getBackendSrv().post(`/api/admin/users/${userUid}/enable`);
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 
-export function deleteUser(userId: number): ThunkResult<void> {
+export function deleteUser(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/admin/users/${userId}`);
+    await getBackendSrv().delete(`/api/admin/users/${userUid}`);
     locationService.push('/admin/users');
   };
 }
 
-export function updateUserPermissions(userId: number, isGrafanaAdmin: boolean): ThunkResult<void> {
+export function updateUserPermissions(userUid: string, isGrafanaAdmin: boolean): ThunkResult<void> {
   return async (dispatch) => {
     const payload = { isGrafanaAdmin };
-    await getBackendSrv().put(`/api/admin/users/${userId}/permissions`, payload);
-    dispatch(loadAdminUserPage(userId));
+    await getBackendSrv().put(`/api/admin/users/${userUid}/permissions`, payload);
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 
-export function loadUserOrgs(userId: number): ThunkResult<void> {
+export function loadUserOrgs(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    const orgs = await getBackendSrv().get(`/api/users/${userId}/orgs`);
+    const orgs = await getBackendSrv().get(`/api/users/${userUid}/orgs`);
     dispatch(userOrgsLoadedAction(orgs));
   };
 }
@@ -134,32 +134,32 @@ export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkRes
       role: role,
     };
     await getBackendSrv().post(`/api/orgs/${orgId}/users/`, payload);
-    dispatch(loadAdminUserPage(user.id));
+    dispatch(loadAdminUserPage(user.uid));
   };
 }
 
-export function updateOrgUserRole(userId: number, orgId: number, role: string): ThunkResult<void> {
+export function updateOrgUserRole(userUid: string, orgId: number, role: string): ThunkResult<void> {
   return async (dispatch) => {
     const payload = { role };
-    await getBackendSrv().patch(`/api/orgs/${orgId}/users/${userId}`, payload);
-    dispatch(loadAdminUserPage(userId));
+    await getBackendSrv().patch(`/api/orgs/${orgId}/users/${userUid}`, payload);
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 
-export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> {
+export function deleteOrgUser(userUid: string, orgId: number): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().delete(`/api/orgs/${orgId}/users/${userId}`);
-    dispatch(loadAdminUserPage(userId));
+    await getBackendSrv().delete(`/api/orgs/${orgId}/users/${userUid}`);
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 
-export function loadUserSessions(userId: number): ThunkResult<void> {
+export function loadUserSessions(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
       return;
     }
 
-    const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
+    const tokens = await getBackendSrv().get(`/api/admin/users/${userUid}/auth-tokens`);
     tokens.reverse();
 
     const sessions = tokens.map((session: UserSession) => {
@@ -171,6 +171,7 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
+        authModule: session.authModule,
         os: session.os,
         osVersion: session.osVersion,
         device: session.device,
@@ -181,18 +182,18 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
   };
 }
 
-export function revokeSession(tokenId: number, userId: number): ThunkResult<void> {
+export function revokeSession(tokenId: number, userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     const payload = { authTokenId: tokenId };
-    await getBackendSrv().post(`/api/admin/users/${userId}/revoke-auth-token`, payload);
-    dispatch(loadUserSessions(userId));
+    await getBackendSrv().post(`/api/admin/users/${userUid}/revoke-auth-token`, payload);
+    dispatch(loadUserSessions(userUid));
   };
 }
 
-export function revokeAllSessions(userId: number): ThunkResult<void> {
+export function revokeAllSessions(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userId}/logout`);
-    dispatch(loadUserSessions(userId));
+    await getBackendSrv().post(`/api/admin/users/${userUid}/logout`);
+    dispatch(loadUserSessions(userUid));
   };
 }
 
@@ -209,10 +210,10 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
   };
 }
 
-export function syncLdapUser(userId: number): ThunkResult<void> {
+export function syncLdapUser(userId: number, userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
-    dispatch(loadAdminUserPage(userId));
+    dispatch(loadAdminUserPage(userUid));
   };
 }
 

@@ -26,10 +26,6 @@ export const UserService = {
     const payload: UserDetailsPutPayload = { snoozed_pmm_version: version };
     return await api.put('/v1/users/me', payload);
   },
-  async setApiKeyMigrationSnoozed(shouldSnooze: boolean): Promise<UserDetailsResponse> {
-    const payload: UserDetailsPutPayload = { snoozed_api_keys_migration: shouldSnooze };
-    return await api.put('/v1/users/me', payload);
-  },
   async getUsersList(): Promise<UserListResponse> {
     return await api.get('/v1/users');
   },

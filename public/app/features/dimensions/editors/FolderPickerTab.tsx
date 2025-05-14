@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
@@ -123,10 +123,10 @@ export const FolderPickerTab = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  cardsWrapper: css`
-    height: 30vh;
-    min-height: 50px;
-    margin-top: 5px;
-    max-width: 680px;
-  `,
+  cardsWrapper: css({
+    height: '30vh',
+    minHeight: '50px',
+    marginTop: '5px',
+    maxWidth: '680px',
+  }),
 });

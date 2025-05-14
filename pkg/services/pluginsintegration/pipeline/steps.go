@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -56,7 +56,7 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 
 	ctxLogger := r.log.FromContext(ctx)
 
-	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, string(p.Type), p.IAM)
 	if err != nil {
 		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
@@ -70,15 +70,15 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 // RegisterPluginRoles implements an InitializeFunc for registering plugin roles.
 type RegisterPluginRoles struct {
 	log          log.Logger
-	roleRegistry plugins.RoleRegistry
+	roleRegistry pluginaccesscontrol.RoleRegistry
 }
 
 // RegisterPluginRolesStep returns a new InitializeFunc for registering plugin roles.
-func RegisterPluginRolesStep(roleRegistry plugins.RoleRegistry) initialization.InitializeFunc {
+func RegisterPluginRolesStep(roleRegistry pluginaccesscontrol.RoleRegistry) initialization.InitializeFunc {
 	return newRegisterPluginRoles(roleRegistry).Register
 }
 
-func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles {
+func newRegisterPluginRoles(registry pluginaccesscontrol.RoleRegistry) *RegisterPluginRoles {
 	return &RegisterPluginRoles{
 		log:          log.New("plugins.roles.registration"),
 		roleRegistry: registry,
@@ -94,11 +94,48 @@ func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (
 	return p, nil
 }
 
-// ReportBuildMetrics reports build information for all plugins, except core and bundled plugins.
+// RegisterActionSets implements an InitializeFunc for registering plugin action sets.
+type RegisterActionSets struct {
+	log               log.Logger
+	actionSetRegistry pluginaccesscontrol.ActionSetRegistry
+}
+
+// RegisterActionSetsStep returns a new InitializeFunc for registering plugin action sets.
+func RegisterActionSetsStep(actionRegistry pluginaccesscontrol.ActionSetRegistry) initialization.InitializeFunc {
+	return newRegisterActionSets(actionRegistry).Register
+}
+
+func newRegisterActionSets(registry pluginaccesscontrol.ActionSetRegistry) *RegisterActionSets {
+	return &RegisterActionSets{
+		log:               log.New("plugins.actionsets.registration"),
+		actionSetRegistry: registry,
+	}
+}
+
+// Register registers the plugin action sets.
+func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if err := r.actionSetRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
+		r.log.Warn("Plugin action set registration failed", "pluginId", p.ID, "error", err)
+		return nil, err
+	}
+	return p, nil
+}
+
+// ReportBuildMetrics reports build information for all plugins, except core plugins.
 func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+	if !p.IsCorePlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
+
+	return p, nil
+}
+
+// ReportTargetMetrics reports target information for all backend plugins.
+func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.Backend {
+		metrics.SetPluginTargetInformation(p.ID, string(p.Target()))
+	}
+
 	return p, nil
 }
 

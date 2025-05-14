@@ -4,6 +4,7 @@ import { AccessRole } from 'app/percona/shared/services/roles/Roles.types';
 import { OrgRole, OrgUser } from 'app/types';
 
 export const stubUserSingleRole: OrgUser = {
+  uid: '',
   avatarUrl: 'url/to/avatar',
   email: `user@test.com`,
   name: 'user test',

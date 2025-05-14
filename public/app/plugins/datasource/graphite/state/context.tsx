@@ -1,5 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import React, { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
@@ -88,7 +88,7 @@ export const GraphiteQueryEditorContext = ({
   if (!state) {
     dispatch(
       actions.init({
-        target: query,
+        target: { ...query },
         datasource: datasource,
         range: range,
         templateSrv: getTemplateSrv(),

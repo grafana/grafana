@@ -4,11 +4,9 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getValueMatcher } from '../matchers';
-import { ValueMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
-import { transformationsVariableSupport } from './utils';
 
 export enum FilterByValueType {
   exclude = 'exclude',
@@ -50,46 +48,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       return source.pipe(noopTransformer.operator({}, ctx));
     }
 
-    const interpolatedFilters: FilterByValueFilter[] = [];
-
-    if (transformationsVariableSupport()) {
-      interpolatedFilters.push(
-        ...filters.map((filter) => {
-          if (filter.config.id === ValueMatcherID.between) {
-            const interpolatedFrom = ctx.interpolate(filter.config.options.from);
-            const interpolatedTo = ctx.interpolate(filter.config.options.to);
-
-            const newFilter = {
-              ...filter,
-              config: {
-                ...filter.config,
-                options: {
-                  ...filter.config.options,
-                  to: interpolatedTo,
-                  from: interpolatedFrom,
-                },
-              },
-            };
-
-            return newFilter;
-          } else if (filter.config.id === ValueMatcherID.regex) {
-            // Due to colliding syntaxes, interpolating regex filters will cause issues.
-            return filter;
-          } else if (filter.config.options.value) {
-            const interpolatedValue = ctx.interpolate(filter.config.options.value);
-            const newFilter = {
-              ...filter,
-              config: { ...filter.config, options: { ...filter.config.options, value: interpolatedValue } },
-            };
-            newFilter.config.options.value! = interpolatedValue;
-            return newFilter;
-          }
-
-          return filter;
-        })
-      );
-    }
-
     return source.pipe(
       map((data) => {
         if (data.length === 0) {
@@ -98,17 +56,11 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
         const processed: DataFrame[] = [];
 
-        const fieldIndexByName = groupFieldIndexByName(data);
-
         for (const frame of data) {
           const rows = new Set<number>();
+          const fieldIndexByName = groupFieldIndexByName(frame, data);
 
-          let matchers;
-          if (transformationsVariableSupport()) {
-            matchers = createFilterValueMatchers(interpolatedFilters, fieldIndexByName);
-          } else {
-            matchers = createFilterValueMatchers(filters, fieldIndexByName);
-          }
+          const matchers = createFilterValueMatchers(filters, fieldIndexByName);
 
           for (let index = 0; index < frame.length; index++) {
             if (rows.has(index)) {
@@ -196,15 +148,13 @@ const createFilterValueMatchers = (
   });
 };
 
-const groupFieldIndexByName = (data: DataFrame[]) => {
+const groupFieldIndexByName = (frame: DataFrame, data: DataFrame[]) => {
   const lookup: Record<string, number> = {};
 
-  for (const frame of data) {
-    frame.fields.forEach((field, fieldIndex) => {
-      const fieldName = getFieldDisplayName(field, frame, data);
-      lookup[fieldName] = fieldIndex;
-    });
-  }
+  frame.fields.forEach((field, fieldIndex) => {
+    const fieldName = getFieldDisplayName(field, frame, data);
+    lookup[fieldName] = fieldIndex;
+  });
 
   return lookup;
 };

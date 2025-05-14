@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -86,7 +85,6 @@ func CreateDashboard(t *testing.T, db db.DB, cfg *setting.Cfg, features featurem
 		cfg,
 		features,
 		tagimpl.ProvideService(db),
-		quotatest.New(false, nil),
 	)
 	require.NoError(t, err)
 

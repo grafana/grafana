@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
 import { Button, Stack } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
@@ -131,7 +129,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       showIf: (options) => options.datasource === GRAFANA_DATASOURCE_NAME || !Boolean(options.datasource),
       path: 'folder',
       name: 'Folder',
-      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
+      description: 'Filter for alerts in the selected folder (for Grafana-managed alert rules only)',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
@@ -148,6 +146,14 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
           />
         );
       },
+      category: ['Filter'],
+    })
+    .addBooleanSwitch({
+      path: 'showInactiveAlerts',
+      name: 'Show alerts with 0 instances',
+      description:
+        'Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.',
+      defaultValue: false,
       category: ['Filter'],
     })
     .addBooleanSwitch({

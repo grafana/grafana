@@ -15,7 +15,7 @@
   node_exporter:
     image: prom/node-exporter
     ports:
-      - "9100:9100"
+      - "9101:9100"
 
   fake-prometheus-data:
     image: grafana/fake-data-gen
@@ -25,7 +25,11 @@
       FD_DATASOURCE: prom
 
   alertmanager:
-    image: quay.io/prometheus/alertmanager
+    image: prom/alertmanager 
+    volumes:
+    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command: >
+      --config.file=/etc/alertmanager/alertmanager.yml
     ports:
       - "9093:9093"
 
@@ -33,3 +37,13 @@
     build: docker/blocks/prometheus_random_data
     ports:
       - "8081:8080"
+
+  prometheus-high-card:
+    build: docker/blocks/prometheus_high_card
+    ports:
+      - "9111:9111"
+
+  prometheus-utf8:
+    build: docker/blocks/prometheus_utf8
+    ports:
+      - "9112:9112"

@@ -1,7 +1,5 @@
-import React from 'react';
-
 import { AnnotationQuery } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Input, Stack } from '@grafana/ui';
 
 import { ElasticsearchQuery } from '../../types';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TourStep } from 'app/percona/shared/core/reducers/tour';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 

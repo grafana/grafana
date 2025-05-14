@@ -1,10 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import {
+  CoreApp,
+  DataFrame,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  dateTimeFormat,
+  isTimeSeriesFrames,
+} from '@grafana/data';
+import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -20,7 +28,9 @@ import {
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { HoverCard } from '../HoverCard';
+import { RuleFormValues } from '../../types/rule-form';
+import { isGrafanaRecordingRuleByType } from '../../utils/rules';
+import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
@@ -51,14 +61,16 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
+  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
 
   const queryType = query?.type;
 
-  const { setError, clearErrors } = useFormContext();
+  const { setError, clearErrors, watch } = useFormContext<RuleFormValues>();
+  const type = watch('type');
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const onQueriesValidationError = useCallback(
     (errorMsg: string | undefined) => {
@@ -91,7 +103,15 @@ export const Expression: FC<ExpressionProps> = ({
           return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
 
         case ExpressionQueryType.reduce:
-          return <Reduce onChange={onChangeQuery} refIds={availableRefIds} labelWidth={'auto'} query={query} />;
+          return (
+            <Reduce
+              onChange={onChangeQuery}
+              refIds={availableRefIds}
+              labelWidth={'auto'}
+              app={CoreApp.UnifiedAlerting}
+              query={query}
+            />
+          );
 
         case ExpressionQueryType.resample:
           return <Resample onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
@@ -138,7 +158,6 @@ export const Expression: FC<ExpressionProps> = ({
           queryType={queryType}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
-          onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
           query={query}
           alertCondition={alertCondition}
@@ -159,20 +178,25 @@ export const Expression: FC<ExpressionProps> = ({
         </div>
         {hasResults && (
           <>
-            <ExpressionResult series={series} isAlertCondition={isAlertCondition} />
+            <ExpressionResult
+              series={series}
+              isAlertCondition={isAlertCondition}
+              isRecordingRule={isGrafanaRecordingRule}
+            />
+            {!isGrafanaRecordingRule && (
+              <div className={styles.footer}>
+                <Stack direction="row" alignItems="center">
+                  <Spacer />
 
-            <div className={styles.footer}>
-              <Stack direction="row" alignItems="center">
-                <Spacer />
-
-                <PreviewSummary
-                  isCondition={Boolean(isAlertCondition)}
-                  firing={groupedByState[PromAlertingRuleState.Firing].length}
-                  normal={groupedByState[PromAlertingRuleState.Inactive].length}
-                  seriesCount={seriesCount}
-                />
-              </Stack>
-            </div>
+                  <PreviewSummary
+                    isCondition={Boolean(isAlertCondition)}
+                    firing={groupedByState[PromAlertingRuleState.Firing].length}
+                    normal={groupedByState[PromAlertingRuleState.Inactive].length}
+                    seriesCount={seriesCount}
+                  />
+                </Stack>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -183,9 +207,10 @@ export const Expression: FC<ExpressionProps> = ({
 interface ExpressionResultProps {
   series: DataFrame[];
   isAlertCondition?: boolean;
+  isRecordingRule?: boolean;
 }
 export const PAGE_SIZE = 20;
-export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition, isRecordingRule = false }) => {
   const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
@@ -213,7 +238,13 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
         !isTimeSeriesResults &&
         pageItems.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-          <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
+          <FrameRow
+            key={uniqueId()}
+            frame={frame}
+            index={pageStart + index}
+            isAlertCondition={isAlertCondition}
+            isRecordingRule={isRecordingRule}
+          />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
       {shouldShowPagination && (
@@ -286,7 +317,6 @@ interface HeaderProps {
   queryType: ExpressionQueryType;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
-  onUpdateExpressionType: (type: ExpressionQueryType) => void;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;
@@ -329,10 +359,6 @@ const Header: FC<HeaderProps> = ({
               autoFocus
               defaultValue={refId}
               minWidth={5}
-              onChange={(event) => {
-                onUpdateRefId(event.currentTarget.value);
-                setEditMode(false);
-              }}
               onFocus={(event) => event.target.select()}
               onBlur={(event) => {
                 onUpdateRefId(event.currentTarget.value);
@@ -343,13 +369,17 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
+        <ExpressionStatusIndicator
+          refId={refId}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={alertCondition}
+        />
         <IconButton
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip="Remove expression"
+          tooltip={`Remove expression "${refId}"`}
         />
       </Stack>
     </header>
@@ -359,9 +389,16 @@ const Header: FC<HeaderProps> = ({
 interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   frame: DataFrame;
   index: number;
+  isRecordingRule?: boolean;
 }
 
-const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
+const OpeningBracket = () => <span>{'{'}</span>;
+const ClosingBracket = () => <span>{'}'}</span>;
+// eslint-disable-next-line @grafana/no-untranslated-strings
+const Quote = () => <span>&quot;</span>;
+const Equals = () => <span>{'='}</span>;
+
+function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProps) {
   const styles = useStyles2(getStyles);
 
   const name = getSeriesName(frame) || 'Series ' + index;
@@ -374,38 +411,46 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const showNormal = isAlertCondition && value === 0;
 
   const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`;
+  const shouldRenderSumary = !isRecordingRule;
 
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
         <div className={styles.expression.resultLabel} title={title}>
-          <span>{hasLabels ? '' : name}</span>
-          {hasLabels && (
-            <>
-              <span>{'{'}</span>
-              {labels.map(([key, value], index) => (
-                <span key={uniqueId()}>
-                  <span className={styles.expression.labelKey}>{key}</span>
-                  <span>=</span>
-                  <span>&quot;</span>
-                  <span className={styles.expression.labelValue}>{value}</span>
-                  <span>&quot;</span>
-                  {index < labels.length - 1 && <span>, </span>}
-                </span>
-              ))}
-              <span>{'}'}</span>
-            </>
-          )}
+          <Text variant="code">
+            {hasLabels ? (
+              <>
+                <OpeningBracket />
+                {labels.map(([key, value], index) => (
+                  <Text variant="body" key={uniqueId()}>
+                    <span className={styles.expression.labelKey}>{key}</span>
+                    <Equals />
+                    <Quote />
+                    <span className={styles.expression.labelValue}>{value}</span>
+                    <Quote />
+                    {index < labels.length - 1 && <span>, </span>}
+                  </Text>
+                ))}
+                <ClosingBracket />
+              </>
+            ) : (
+              <span className={styles.expression.labelKey}>{title}</span>
+            )}
+          </Text>
         </div>
         <div className={styles.expression.resultValue}>{value}</div>
-        {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
-        {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
+        {shouldRenderSumary && (
+          <>
+            {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
+            {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
+          </>
+        )}
       </Stack>
     </div>
   );
-};
-
-const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
+}
+interface TimeseriesRowProps extends Omit<FrameProps, 'isRecordingRule'> {}
+const TimeseriesRow: FC<TimeseriesRowProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
   const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
@@ -426,7 +471,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
           {name}
         </span>
         <div className={styles.expression.resultValue}>
-          <HoverCard
+          <PopupCard
             placement="right"
             wrapperClassName={styles.timeseriesTableWrapper}
             content={
@@ -449,7 +494,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
             }
           >
             <span>Time series data</span>
-          </HoverCard>
+          </PopupCard>
         </div>
       </Stack>
     </div>

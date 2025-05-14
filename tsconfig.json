@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "react-jsx",
     "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
@@ -9,14 +9,23 @@
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
     "incremental": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     }
   },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "ESNext",
+      "moduleResolution": "Node"
+    }
+  },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
     "public/app/**/*.ts*",
+    "public/swagger/**/*.ts*",
     "public/e2e-test/**/*.ts",
     "public/test/**/*.ts*",
     "public/vendor/**/*.ts",

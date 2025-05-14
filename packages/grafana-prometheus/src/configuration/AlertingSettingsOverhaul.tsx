@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/AlertingSettingsOverhaul.tsx
 import { cx } from '@emotion/css';
-import React from 'react';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
@@ -44,7 +44,7 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
               className={styles.switchField}
             >
               <Switch
-                value={options.jsonData.manageAlerts !== false}
+                value={options.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle}
                 onChange={(event) =>
                   onOptionsChange({
                     ...options,

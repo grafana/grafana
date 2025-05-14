@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { Field, FieldColorModeId, GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
@@ -10,15 +10,15 @@ import { NodeDatum } from './types';
 
 function getStyles() {
   return {
-    item: css`
-      label: LegendItem;
-      flex-grow: 0;
-    `,
+    item: css({
+      label: 'LegendItem',
+      flexGrow: 0,
+    }),
 
-    legend: css`
-      label: Legend;
-      pointer-events: all;
-    `,
+    legend: css({
+      label: 'Legend',
+      pointerEvents: 'all',
+    }),
   };
 }
 

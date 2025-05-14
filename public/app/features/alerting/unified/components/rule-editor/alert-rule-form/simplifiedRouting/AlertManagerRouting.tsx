@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
@@ -24,57 +23,48 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const {
-    isLoading,
-    error: errorInContactPointStatus,
-    contactPoints,
-    refetchReceivers,
-  } = useContactPointsWithStatus({ includePoliciesCount: false, receiverStatusPollingInterval: 0 });
+
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const contactPointInForm = watch(`contactPoints.${alertManagerName}.selectedContactPoint`);
+  const { contactPoints } = useContactPointsWithStatus({
+    // we only fetch the contact points with metadata for the first time we render an existing alert rule
+    alertmanager: alertManagerName,
+    skip: Boolean(selectedContactPointWithMetadata),
+  });
+  const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
+
+  useEffect(() => {
+    if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
+      onSelectContactPoint(contactPointWithMetadata);
+    }
+  }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
 
   const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
     setSelectedContactPointWithMetadata(contactPoint);
   };
 
-  const { watch } = useFormContext<RuleFormValues>();
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
     watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
     watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
 
-  const options = contactPoints.map((receiver) => {
-    const integrations = receiver?.grafana_managed_receiver_configs;
-    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
-
-    return { label: receiver.name, value: receiver, description };
-  });
-
-  if (errorInContactPointStatus) {
-    return <Alert title="Failed to fetch contact points" severity="error" />;
-  }
-  if (isLoading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
-  }
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <div className={styles.firstAlertManagerLine}></div>
+        <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
           Alertmanager:
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>
-        <div className={styles.secondAlertManagerLine}></div>
+        <div className={styles.secondAlertManagerLine} />
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
-        <ContactPointSelector
-          alertManager={alertManagerName}
-          options={options}
-          onSelectContactPoint={onSelectContactPoint}
-          refetchReceivers={refetchReceivers}
-        />
+        <ContactPointSelector alertManager={alertManagerName} onSelectContactPoint={onSelectContactPoint} />
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
@@ -86,7 +76,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           className={styles.collapsableSection}
         >
           <Stack direction="column" gap={1}>
-            <MuteTimingFields alertManager={alertManagerName} />
+            <MuteTimingFields alertmanager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
           </Stack>
         </CollapsableSection>

@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
@@ -58,8 +59,9 @@ interface LogsContainerProps extends PropsFromRedux {
   splitOpenFn: SplitOpen;
   scrollElement?: HTMLDivElement;
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
-  onClickFilterValue: (value: string, refId?: string) => void;
-  onClickFilterOutValue: (value: string, refId?: string) => void;
+  onClickFilterString: (value: string, refId?: string) => void;
+  onClickFilterOutString: (value: string, refId?: string) => void;
+  onPinLineCallback?: () => void;
 }
 
 type DataSourceInstance =
@@ -257,6 +259,14 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     this.props.clearCache(this.props.exploreId);
   };
 
+  loadLogsVolumeData = () => {
+    this.props.loadSupplementaryQueryData(this.props.exploreId, SupplementaryQueryType.LogsVolume);
+  };
+
+  onSetLogsVolumeEnabled = (enabled: boolean) => {
+    this.props.setSupplementaryQueryEnabled(this.props.exploreId, enabled, SupplementaryQueryType.LogsVolume);
+  };
+
   render() {
     const {
       loading,
@@ -265,8 +275,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       logsMeta,
       logsSeries,
       logsQueries,
-      loadSupplementaryQueryData,
-      setSupplementaryQueryEnabled,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -282,6 +290,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       exploreId,
       logsVolume,
       scrollElement,
+      onPinLineCallback,
     } = this.props;
 
     if (!logRows) {
@@ -316,16 +325,14 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={logsVolume.enabled}
-            onSetLogsVolumeEnabled={(enabled) =>
-              setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume)
-            }
+            onSetLogsVolumeEnabled={this.onSetLogsVolumeEnabled}
             logsVolumeData={logsVolume.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
+            loadLogsVolumeData={this.loadLogsVolumeData}
             onChangeTime={this.onChangeTime}
             loadMoreLogs={this.loadMoreLogs}
             onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
@@ -350,8 +357,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             scrollElement={scrollElement}
             isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
-            onClickFilterValue={this.filterValueAvailable() ? this.props.onClickFilterValue : undefined}
-            onClickFilterOutValue={this.filterOutValueAvailable() ? this.props.onClickFilterOutValue : undefined}
+            onPinLineCallback={onPinLineCallback}
+            onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
+            onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
           />
         </LogsCrossFadeTransition>
       </>

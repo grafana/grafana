@@ -1,7 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricsLabelsSection.tsx
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -12,6 +13,7 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
+import { MetricCombobox } from './MetricCombobox';
 import { MetricSelect } from './MetricSelect';
 
 export interface MetricsLabelsSectionProps {
@@ -192,9 +194,11 @@ export function MetricsLabelsSection({
     return withTemplateVariableOptions(getMetrics(datasource, query));
   }, [datasource, query, withTemplateVariableOptions]);
 
+  const MetricSelectComponent = config.featureToggles.prometheusUsesCombobox ? MetricCombobox : MetricSelect;
+
   return (
     <>
-      <MetricSelect
+      <MetricSelectComponent
         query={query}
         onChange={onChange}
         onGetMetrics={onGetMetrics}

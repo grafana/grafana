@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`setFieldConfigDefaults applies the base threshold when one does not exist in the config 1`] = `
+{
+  "mode": "absolute",
+  "steps": [
+    {
+      "color": "red",
+      "value": -Infinity,
+    },
+    {
+      "color": "green",
+      "value": 50,
+    },
+  ],
+}
+`;

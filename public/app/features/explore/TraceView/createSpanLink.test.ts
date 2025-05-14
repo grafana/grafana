@@ -200,7 +200,7 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |="7946b05c2e2e4e5a" |="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" OR span_id="6605c7b08e715d6c"',
                 refId: '',
               },
             ],
@@ -1266,6 +1266,57 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
+  describe('should return session link', () => {
+    beforeAll(() => {
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('does not add link when no ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBe(undefined);
+    });
+
+    it('adds link when fe o11y ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'feo11y-service',
+            tags: [{ key: 'gf.feo11y.app.id', value: 'appId' }],
+          },
+          tags: [{ key: 'session_id', value: 'the-session-id' }],
+        })
+      );
+      expect(links).toHaveLength(1);
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBeDefined();
+      expect(sessionLink!.href).toBe('/a/grafana-kowalski-app/apps/appId/sessions/the-session-id');
+    });
+
+    it('adds link when session id is defined following otel semantic convention', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'feo11y-service',
+            tags: [{ key: 'gf.feo11y.app.id', value: 'appId' }],
+          },
+          tags: [{ key: 'session.id', value: 'the-otel-session-id' }],
+        })
+      );
+      expect(links).toHaveLength(1);
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBeDefined();
+      expect(sessionLink!.href).toBe('/a/grafana-kowalski-app/apps/appId/sessions/the-otel-session-id');
+    });
+  });
+
   describe('should return pyroscope link', () => {
     beforeAll(() => {
       setDataSourceSrv({
@@ -1603,6 +1654,11 @@ function createMultiLinkDataFrame() {
                 },
                 datasourceUid: 'loki1_uid',
                 datasourceName: 'loki1',
+              },
+              url: '',
+              title: 'Test',
+              origin: DataLinkConfigOrigin.Correlations,
+              meta: {
                 transformations: [
                   {
                     type: SupportedTransformationType.Regex,
@@ -1611,9 +1667,6 @@ function createMultiLinkDataFrame() {
                   },
                 ],
               },
-              url: '',
-              title: 'Test',
-              origin: DataLinkConfigOrigin.Correlations,
             },
             {
               internal: {
@@ -1622,6 +1675,11 @@ function createMultiLinkDataFrame() {
                 },
                 datasourceUid: 'loki1_uid',
                 datasourceName: 'loki1',
+              },
+              url: '',
+              title: 'Test',
+              origin: DataLinkConfigOrigin.Correlations,
+              meta: {
                 transformations: [
                   {
                     type: SupportedTransformationType.Regex,
@@ -1630,9 +1688,6 @@ function createMultiLinkDataFrame() {
                   },
                 ],
               },
-              url: '',
-              title: 'Test2',
-              origin: DataLinkConfigOrigin.Correlations,
             },
           ],
         },

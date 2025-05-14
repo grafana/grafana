@@ -1,6 +1,6 @@
-import React from 'react';
+import { memo } from 'react';
 
-import { OperationExplainedBox, OperationListExplained, RawQuery } from '@grafana/experimental';
+import { OperationExplainedBox, OperationListExplained, RawQuery } from '@grafana/plugin-ui';
 import { Stack } from '@grafana/ui';
 
 import { lokiGrammar } from '../../syntax';
@@ -14,7 +14,7 @@ export interface Props {
   query: string;
 }
 
-export const LokiQueryBuilderExplained = React.memo<Props>(({ query }) => {
+export const LokiQueryBuilderExplained = memo<Props>(({ query }) => {
   const visQuery = buildVisualQueryFromString(query || '').query;
   const lang = { grammar: lokiGrammar, name: 'lokiql' };
 

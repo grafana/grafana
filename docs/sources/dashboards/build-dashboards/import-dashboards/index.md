@@ -48,7 +48,6 @@ To import a dashboard, follow these steps:
 1. (Optional) Change the dashboard name, folder, or UID, and specify metric prefixes, if the dashboard uses any.
 1. Select a data source, if required.
 1. Click **Import**.
-1. Save the dashboard.
 
 ## Discover dashboards on grafana.com
 

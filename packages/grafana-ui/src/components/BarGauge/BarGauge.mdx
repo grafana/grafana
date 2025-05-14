@@ -14,34 +14,35 @@ import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor }
 const field: Partial<Field> = {
   type: FieldType.number,
   config: {
-    min: minValue,
-    max: maxValue,
+    min: 0,
+    max: 100,
     thresholds: {
       mode: ThresholdsMode.Absolute,
       steps: [
         { value: -Infinity, color: 'green' },
-        { value: threshold1Value, color: threshold1Color },
-        { value: threshold2Value, color: threshold2Color },
+        { value: 20, color: 'blue' },
+        { value: 90, color: 'red' },
       ],
     },
   },
 };
-field.display = getDisplayProcessor({ field });
 
-const value = {
-  text: value.toString(),
-  title: title,
-  numeric: value,
-};
+field.display = getDisplayProcessor({ theme, field });
 
-<BarGauge
-  value={70}
-  field={field.config}
-  display={field.display}
-  value={value}
-  orientation={VizOrientation.Vertical}
-  displayMode={BarGaugeDisplayMode.Basic}
-/>;
+return (
+  <BarGauge
+    theme={theme}
+    field={field.config}
+    display={field.display}
+    value={{
+      text: '70',
+      title: 'Title of data point',
+      numeric: 70,
+    }}
+    orientation={VizOrientation.Vertical}
+    displayMode={BarGaugeDisplayMode.Basic}
+  />
+);
 ```
 
 <ArgTypes of={BarGauge} />

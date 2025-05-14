@@ -1,11 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/VariableQueryEditor.tsx
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import debounce from 'debounce-promise';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
+import { AsyncSelect, InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
+import { truncateResult } from '../language_utils';
 import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
@@ -56,7 +58,20 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
   const [classicQuery, setClassicQuery] = useState('');
 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
-  const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [truncatedLabelOptions, setTruncatedLabelOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [allLabelOptions, setAllLabelOptions] = useState<Array<SelectableValue<string>>>([]);
+
+  /**
+   * Set the both allLabels and truncatedLabels
+   *
+   * @param names
+   * @param variables
+   */
+  function setLabels(names: SelectableValue[], variables: SelectableValue[]) {
+    setAllLabelOptions([...variables, ...names]);
+    const truncatedNames = truncateResult(names);
+    setTruncatedLabelOptions([...variables, ...truncatedNames]);
+  }
 
   // label filters have been added as a filter for metrics in label values query type
   const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
@@ -100,7 +115,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       // get all the labels
       datasource.getTagKeys({ filters: [] }).then((labelNames: Array<{ text: string }>) => {
         const names = labelNames.map(({ text }) => ({ label: text, value: text }));
-        setLabelOptions([...variables, ...names]);
+        setLabels(names, variables);
       });
     } else {
       // fetch the labels filtered by the metric
@@ -110,7 +125,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       datasource.languageProvider.fetchLabelsWithMatch(expr).then((labelsIndex: Record<string, string[]>) => {
         const labelNames = Object.keys(labelsIndex);
         const names = labelNames.map((value) => ({ label: value, value: value }));
-        setLabelOptions([...variables, ...names]);
+        setLabels(names, variables);
       });
     }
   }, [datasource, qryType, metric]);
@@ -220,6 +235,18 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
     return { metric: metric, labels: labelFilters, operations: [] };
   }, [metric, labelFilters]);
 
+  /**
+   * Debounce a search through all the labels possible and truncate by .
+   */
+  const labelNamesSearch = debounce((query: string) => {
+    // we limit the select to show 1000 options,
+    // but we still search through all the possible options
+    const results = allLabelOptions.filter((label) => {
+      return label.value?.includes(query);
+    });
+    return truncateResult(results);
+  }, 300);
+
   return (
     <>
       <InlineFieldRow>
@@ -256,14 +283,15 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
                 </div>
               }
             >
-              <Select
+              <AsyncSelect
                 aria-label="label-select"
                 onChange={onLabelChange}
-                value={label}
-                options={labelOptions}
+                value={label ? toOption(label) : null}
+                defaultOptions={truncatedLabelOptions}
                 width={25}
                 allowCustomValue
                 isClearable={true}
+                loadOptions={labelNamesSearch}
                 data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect}
               />
             </InlineField>

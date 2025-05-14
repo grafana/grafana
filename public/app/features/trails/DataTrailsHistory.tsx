@@ -1,43 +1,79 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { config } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  SceneObjectBase,
   SceneComponentProps,
-  SceneVariableValueChangedEvent,
+  SceneObjectBase,
+  SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneObjectUrlValue,
+  SceneObjectUrlValues,
   SceneTimeRange,
   sceneUtils,
+  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
-import { useStyles2, Tooltip, Stack } from '@grafana/ui';
+import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
+import { SerializedTrailHistory } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
-import { VAR_FILTERS } from './shared';
+import { VAR_FILTERS, VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_RESOURCES } from './shared';
 import { getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
   steps: DataTrailHistoryStep[];
+  filtersApplied: string[];
+  otelResources: string[];
+  otelDepEnvs: string[];
 }
 
 export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
   return 'currentStep' in state && 'steps' in state;
 }
 
+export function isDataTrailHistoryFilter(filter?: SceneObjectUrlValue): filter is string[] {
+  return !!filter;
+}
+
+const isString = (value: unknown): value is string => typeof value === 'string';
+
 export interface DataTrailHistoryStep {
   description: string;
+  detail: string;
   type: TrailStepType;
   trailState: DataTrailState;
   parentIndex: number;
 }
 
-export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
+export type TrailStepType = 'filters' | 'time' | 'metric' | 'start' | 'metric_page' | 'dep_env' | 'resource';
+
+const filterSubst = ` $2 `;
+const filterPipeRegex = /(\|)(=|=~|!=|>|<|!~)(\|)/g;
+const stepDescriptionMap: Record<TrailStepType, string> = {
+  start: 'Start of history',
+  metric: 'Metric selected:',
+  metric_page: 'Metric select page',
+  filters: 'Filter applied:',
+  time: 'Time range changed:',
+  dep_env: 'Deployment environment selected:',
+  resource: 'Resource attribute selected:',
+};
+
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
-    super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
+    super({
+      steps: state.steps ?? [],
+      currentStep: state.currentStep ?? 0,
+      filtersApplied: [],
+      otelResources: [],
+      otelDepEnvs: [],
+    });
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -62,7 +98,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
         // But must add a secondary step to represent the selection of the metric
         // for this restored trail state
-        this.addTrailStep(trail, 'metric');
+        this.addTrailStep(trail, 'metric', trail.state.metric);
+      } else {
+        this.addTrailStep(trail, 'metric_page');
       }
     }
 
@@ -73,15 +111,35 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           this.state.steps[0].trailState = sceneUtils.cloneSceneObjectState(oldState, { history: this });
         }
 
-        if (newState.metric || oldState.metric) {
-          this.addTrailStep(trail, 'metric');
+        if (!newState.metric) {
+          this.addTrailStep(trail, 'metric_page');
+        } else {
+          this.addTrailStep(trail, 'metric', newState.metric);
         }
       }
     });
 
     trail.subscribeToEvent(SceneVariableValueChangedEvent, (evt) => {
       if (evt.payload.state.name === VAR_FILTERS) {
-        this.addTrailStep(trail, 'filters');
+        const filtersApplied = this.state.filtersApplied;
+        const urlState = sceneUtils.getUrlState(trail);
+        this.addTrailStep(trail, 'filters', parseFilterTooltip(urlState, filtersApplied));
+        this.setState({ filtersApplied });
+      }
+
+      // TEST THE MIGRATION OF REMOVING THE VAR_OTEL_DEPLOYMENT_ENV
+      if (evt.payload.state.name === VAR_OTEL_DEPLOYMENT_ENV) {
+        const otelDepEnvs = this.state.otelDepEnvs;
+        const urlState = sceneUtils.getUrlState(trail);
+        this.addTrailStep(trail, 'dep_env', parseDepEnvTooltip(urlState, otelDepEnvs));
+        this.setState({ otelDepEnvs });
+      }
+
+      if (evt.payload.state.name === VAR_OTEL_RESOURCES) {
+        const otelResources = this.state.otelResources;
+        const urlState = sceneUtils.getUrlState(trail);
+        this.addTrailStep(trail, 'resource', parseOtelResourcesTooltip(urlState, otelResources));
+        this.setState({ otelResources });
       }
     });
 
@@ -93,14 +151,31 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           if (prevState.from === newState.from && prevState.to === newState.to) {
             return;
           }
-        }
 
-        this.addTrailStep(trail, 'time');
+          const tooltip = parseTimeTooltip({
+            from: newState.from,
+            to: newState.to,
+            timeZone: newState.timeZone,
+          });
+
+          this.addTrailStep(trail, 'time', tooltip);
+
+          if (config.featureToggles.unifiedHistory) {
+            appEvents.publish(
+              new RecordHistoryEntryEvent({
+                name: 'Time range changed',
+                description: tooltip,
+                url: window.location.href,
+                time: Date.now(),
+              })
+            );
+          }
+        }
       }
     });
   }
 
-  public addTrailStep(trail: DataTrail, type: TrailStepType) {
+  public addTrailStep(trail: DataTrail, type: TrailStepType, detail = '') {
     if (this.stepTransitionInProgress) {
       // Do not add trail steps when step transition is in progress
       return;
@@ -114,8 +189,57 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       steps: [
         ...this.state.steps,
         {
-          description: 'Test',
           type,
+          detail,
+          description: stepDescriptionMap[type],
+          trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
+          parentIndex,
+        },
+      ],
+    });
+  }
+
+  public addTrailStepFromStorage(trail: DataTrail, step: SerializedTrailHistory) {
+    if (this.stepTransitionInProgress) {
+      // Do not add trail steps when step transition is in progress
+      return;
+    }
+
+    const type = step.type;
+    const stepIndex = this.state.steps.length;
+    const parentIndex = type === 'start' ? -1 : this.state.currentStep;
+    const filtersApplied = this.state.filtersApplied;
+    const otelResources = this.state.otelResources;
+    const otelDepEnvs = this.state.otelDepEnvs;
+    let detail = '';
+
+    switch (step.type) {
+      case 'metric':
+        detail = step.urlValues.metric?.toString() ?? '';
+        break;
+      case 'filters':
+        detail = parseFilterTooltip(step.urlValues, filtersApplied);
+        break;
+      case 'time':
+        detail = parseTimeTooltip(step.urlValues);
+        break;
+      case 'dep_env':
+        detail = parseDepEnvTooltip(step.urlValues, otelDepEnvs);
+      case 'resource':
+        detail = parseOtelResourcesTooltip(step.urlValues, otelResources);
+    }
+
+    this.setState({
+      filtersApplied,
+      otelDepEnvs,
+      otelResources,
+      currentStep: stepIndex,
+      steps: [
+        ...this.state.steps,
+        {
+          type,
+          detail,
+          description: stepDescriptionMap[type],
           trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: this }),
           parentIndex,
         },
@@ -145,8 +269,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   renderStepTooltip(step: DataTrailHistoryStep) {
     return (
       <Stack direction="column">
-        <div>{step.type}</div>
-        {step.type === 'metric' && <div>{step.trailState.metric || 'Select new metric'}</div>}
+        <div>{step.description}</div>
+        {step.detail !== '' && <div>{step.detail}</div>}
       </Stack>
     );
   }
@@ -220,6 +344,83 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   };
 }
 
+export function parseTimeTooltip(urlValues: SceneObjectUrlValues): string {
+  if (!isSceneTimeRangeState(urlValues)) {
+    return '';
+  }
+
+  const range = convertRawToRange({
+    from: urlValues.from,
+    to: urlValues.to,
+  });
+
+  const zone = isString(urlValues.timeZone) ? urlValues.timeZone : InternalTimeZones.localBrowserTime;
+  const tzInfo = getTimeZoneInfo(zone, Date.now());
+
+  const from = range.from.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
+  const to = range.to.subtract(tzInfo?.offsetInMins ?? 0, 'minute').format(TIME_FORMAT);
+
+  return `${from} - ${to}`;
+}
+
+export function parseFilterTooltip(urlValues: SceneObjectUrlValues, filtersApplied: string[]): string {
+  let detail = '';
+  const varFilters = urlValues['var-filters'];
+  if (isDataTrailHistoryFilter(varFilters)) {
+    detail =
+      varFilters.filter((f) => {
+        if (f !== '' && !filtersApplied.includes(f)) {
+          filtersApplied.push(f);
+          return true;
+        }
+        return false;
+      })[0] ?? '';
+  }
+  // filters saved as key|operator|value
+  // we need to remove pipes (|)
+  return detail.replace(filterPipeRegex, filterSubst);
+}
+
+export function parseOtelResourcesTooltip(urlValues: SceneObjectUrlValues, otelResources: string[]): string {
+  let detail = '';
+  const varOtelResources = urlValues['var-otel_resources'];
+  if (isDataTrailHistoryFilter(varOtelResources)) {
+    detail =
+      varOtelResources.filter((f) => {
+        if (f !== '' && !otelResources.includes(f)) {
+          otelResources.push(f);
+          return true;
+        }
+        return false;
+      })[0] ?? '';
+  }
+  // filters saved as key|operator|value
+  // we need to remove pipes (|)
+  return detail.replace(filterPipeRegex, filterSubst);
+}
+
+export function parseDepEnvTooltip(urlValues: SceneObjectUrlValues, otelDepEnvs: string[]): string {
+  let detail = '';
+  const varDepEnv = urlValues['var-deployment_environment'];
+
+  if (typeof varDepEnv === 'string') {
+    return varDepEnv;
+  }
+
+  if (isDataTrailHistoryFilter(varDepEnv)) {
+    detail =
+      varDepEnv?.filter((f) => {
+        if (f !== '' && !otelDepEnvs.includes(f)) {
+          otelDepEnvs.push(f);
+          return true;
+        }
+        return false;
+      })[0] ?? '';
+  }
+
+  return detail;
+}
+
 function getStyles(theme: GrafanaTheme2) {
   const visTheme = theme.visualization;
 
@@ -290,7 +491,10 @@ function getStyles(theme: GrafanaTheme2) {
       start: generateStepTypeStyle(visTheme.getColorByName('green')),
       filters: generateStepTypeStyle(visTheme.getColorByName('purple')),
       metric: generateStepTypeStyle(visTheme.getColorByName('orange')),
+      metric_page: generateStepTypeStyle(visTheme.getColorByName('orange')),
       time: generateStepTypeStyle(theme.colors.primary.main),
+      resource: generateStepTypeStyle(visTheme.getColorByName('purple')),
+      dep_env: generateStepTypeStyle(visTheme.getColorByName('purple')),
     },
   };
 }

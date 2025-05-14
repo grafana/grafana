@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react-hooks';
-import React, { ReactNode } from 'react';
+import { renderHook, act } from '@testing-library/react';
+import { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { initialExploreState } from 'app/features/explore/state/main';

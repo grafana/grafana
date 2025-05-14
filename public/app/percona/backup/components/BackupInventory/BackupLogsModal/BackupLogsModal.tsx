@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { Modal } from 'app/percona/shared/components/Elements/Modal';
 

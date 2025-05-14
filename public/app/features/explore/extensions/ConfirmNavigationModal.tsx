@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

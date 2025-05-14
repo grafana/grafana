@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps } from 'react';
+import { HTMLProps } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -43,16 +44,16 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const commonProps = {
       className: linkClass,
+      'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
       onClick: onChangeTab,
-      'aria-label': otherProps['aria-label'] || selectors.components.Tab.title(label),
       role: 'tab',
       'aria-selected': active,
     };
 
     if (href) {
       return (
-        <div className={tabsStyles.item}>
+        <div className={cx(tabsStyles.item, className)}>
           <a
             {...commonProps}
             href={href}
@@ -67,7 +68,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
     }
 
     return (
-      <div className={tabsStyles.item}>
+      <div className={cx(tabsStyles.item, className)}>
         <button
           {...commonProps}
           type="button"

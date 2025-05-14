@@ -2,7 +2,7 @@ import { components } from '@reactour/tour';
 // there is a problem with exported types from react tour
 // @ts-ignore
 import { BadgeProps } from '@reactour/tour/dist/components/Badge';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 

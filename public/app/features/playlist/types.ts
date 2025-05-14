@@ -1,4 +1,4 @@
-import { DashboardQueryResult } from '../search/service';
+import { DashboardQueryResult } from '../search/service/types';
 
 export type PlaylistMode = boolean | 'tv';
 

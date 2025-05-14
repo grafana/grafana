@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { ComponentProps, useState } from 'react';
+import { ComponentProps, useState } from 'react';
 
 import { InlineField, Input } from '@grafana/ui';
 

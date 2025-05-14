@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

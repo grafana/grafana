@@ -25,11 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
@@ -47,9 +49,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		setup := func() {
 			sqlStore, cfg = db.InitTestDBWithCfg(t)
-			quotaService := quotatest.New(false, nil)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
@@ -139,16 +140,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
 			var sqlStore db.DB
-			var cfg *setting.Cfg
 			var folder1, folder2, dashInRoot, childDash1, childDash2 *dashboards.Dashboard
 			var rootFolderId int64 = 0
 			var currentUser *user.SignedInUser
 
 			setup2 := func() {
 				sqlStore, cfg = db.InitTestDBWithCfg(t)
-				quotaService := quotatest.New(false, nil)
 				var err error
-				dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, "", true, "prod")
@@ -262,7 +260,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		var err error
-		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 
 		orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
@@ -288,11 +286,9 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:  u.ID,
 			OrgID:   u.OrgID,
 			OrgRole: org.RoleAdmin,
-			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersCreate,
-				}, {
-					Action: dashboards.ActionFoldersWrite,
 					Scope:  dashboards.ScopeFoldersAll,
 				}}),
 			},
@@ -305,7 +301,10 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderStore := folderimpl.ProvideStore(sqlStore)
+		folderSvc := folderimpl.ProvideService(
+			folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore),
+			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -407,7 +406,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardReadStore, err := ProvideDashboardStore(sqlStore, cfg, tc.features, tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+			dashboardReadStore, err := ProvideDashboardStore(sqlStore, cfg, tc.features, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}

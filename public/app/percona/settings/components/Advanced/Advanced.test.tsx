@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 
 import * as reducers from 'app/percona/shared/core/reducers';
@@ -50,7 +49,7 @@ describe('Advanced::', () => {
 
   it('Calls apply changes', async () => {
     const spy = jest.spyOn(reducers, 'updateSettingsAction');
-    const { container } = render(
+    render(
       <Provider
         store={configureStore({
           percona: {
@@ -82,7 +81,7 @@ describe('Advanced::', () => {
     );
     fireEvent.change(screen.getByTestId('retention-number-input'), { target: { value: 70 } });
     fireEvent.submit(screen.getByTestId('advanced-button'));
-    await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
+    await waitForElementToBeRemoved(() => screen.getByTestId('Spinner'));
 
     expect(spy).toHaveBeenCalled();
   });
@@ -136,7 +135,7 @@ describe('Advanced::', () => {
   it('Does not include STT check intervals in the change request if STT checks are disabled', async () => {
     const spy = jest.spyOn(reducers, 'updateSettingsAction');
 
-    const { container } = render(
+    render(
       <Provider
         store={configureStore({
           percona: {
@@ -169,7 +168,7 @@ describe('Advanced::', () => {
 
     fireEvent.change(screen.getByTestId('retention-number-input'), { target: { value: 70 } });
     fireEvent.submit(screen.getByTestId('advanced-button'));
-    await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
+    await waitForElementToBeRemoved(() => screen.getByTestId('Spinner'));
 
     // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeUndefined();
     expect(spy).toHaveBeenLastCalledWith(
@@ -184,7 +183,7 @@ describe('Advanced::', () => {
   it('Includes STT check intervals in the change request if STT checks are enabled', async () => {
     const spy = jest.spyOn(reducers, 'updateSettingsAction');
 
-    const { container } = render(
+    render(
       <Provider
         store={configureStore({
           percona: {
@@ -218,7 +217,7 @@ describe('Advanced::', () => {
 
     fireEvent.change(screen.getByTestId('retention-number-input'), { target: { value: 70 } });
     fireEvent.submit(screen.getByTestId('advanced-button'));
-    await waitForElementToBeRemoved(() => container.querySelector('.fa-spin'));
+    await waitForElementToBeRemoved(() => screen.getByTestId('Spinner'));
 
     // expect(spy.calls.mostRecent().args[0].body.stt_check_intervals).toBeDefined();
     expect(spy).toHaveBeenLastCalledWith(

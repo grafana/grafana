@@ -5,7 +5,9 @@ import (
 	"crypto/subtle"
 	"errors"
 	"net/mail"
+	"strconv"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -105,7 +107,8 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	}
 
 	return &authn.Identity{
-		ID:              authn.NewNamespaceID(authn.NamespaceUser, usr.ID),
+		ID:              strconv.FormatInt(usr.ID, 10),
+		Type:            claims.TypeUser,
 		OrgID:           r.OrgID,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 		AuthenticatedBy: login.PasswordAuthModule,

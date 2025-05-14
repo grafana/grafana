@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import React, { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
+import { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
@@ -109,6 +109,7 @@ export const Slider = ({
 
         <Input
           type="text"
+          width={7.5}
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
           value={sliderValue}
           onChange={onSliderInputChange}

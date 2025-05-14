@@ -1,50 +1,78 @@
-export * from './endpoints.gen';
-import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
+import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
+
+import { getLocalPlugins } from 'app/features/plugins/admin/api';
+import { LocalPlugin } from 'app/features/plugins/admin/types';
+
+import { handleRequestError } from '../../../api/createBaseQuery';
 
 import { generatedAPI } from './endpoints.gen';
 
-export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
-  endpoints: {
-    // Cloud-side - create token
-    createCloudMigrationToken: suppressErrorsOnQuery,
+export * from './endpoints.gen';
 
-    // List Cloud Configs
-    getMigrationList: {
-      providesTags: ['cloud-migration-config'] /* should this be a -list? */,
+export const cloudMigrationAPI = generatedAPI
+  .injectEndpoints({
+    endpoints: (build) => ({
+      // Manually written because the Swagger specifications for the plugins endpoint do not exist
+      getLocalPluginList: build.query<LocalPlugin[], void>({
+        queryFn: async () => {
+          try {
+            const list = await getLocalPlugins();
+            return { data: list };
+          } catch (error) {
+            return handleRequestError(error);
+          }
+        },
+      }),
+    }),
+  })
+  .enhanceEndpoints({
+    addTagTypes: ['cloud-migration-token', 'cloud-migration-session', 'cloud-migration-snapshot'],
+
+    endpoints: {
+      // Cloud-side - create token
+      getCloudMigrationToken: {
+        providesTags: ['cloud-migration-token'],
+      },
+      createCloudMigrationToken: {
+        invalidatesTags: ['cloud-migration-token'],
+      },
+      deleteCloudMigrationToken: {
+        invalidatesTags: ['cloud-migration-token'],
+      },
+
+      // On-prem session management (entering token)
+      getSessionList: {
+        providesTags: ['cloud-migration-session'] /* should this be a -list? */,
+      },
+      getSession: {
+        providesTags: ['cloud-migration-session'],
+      },
+      createSession: {
+        invalidatesTags: ['cloud-migration-session'],
+      },
+      deleteSession: {
+        invalidatesTags: ['cloud-migration-session', 'cloud-migration-snapshot'],
+      },
+
+      // Snapshot management
+      getShapshotList: {
+        providesTags: ['cloud-migration-snapshot'],
+      },
+      getSnapshot: {
+        providesTags: ['cloud-migration-snapshot'],
+      },
+      createSnapshot: {
+        invalidatesTags: ['cloud-migration-snapshot'],
+      },
+      uploadSnapshot: {
+        invalidatesTags: ['cloud-migration-snapshot'],
+      },
+
+      getDashboardByUid: suppressErrorsOnQuery,
+      getLibraryElementByUid: suppressErrorsOnQuery,
+      getLocalPluginList: suppressErrorsOnQuery,
     },
-
-    // Create Cloud Config
-    createMigration(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-config'];
-    },
-
-    // Get one Cloud Config
-    getCloudMigration: {
-      providesTags: ['cloud-migration-config'],
-    },
-
-    // Delete one Cloud Config
-    deleteCloudMigration: {
-      invalidatesTags: ['cloud-migration-config'],
-    },
-
-    getCloudMigrationRunList: {
-      providesTags: ['cloud-migration-run-list'],
-    },
-
-    getCloudMigrationRun: {
-      providesTags: ['cloud-migration-run'],
-    },
-
-    runCloudMigration: {
-      invalidatesTags: ['cloud-migration-run-list'],
-    },
-
-    getDashboardByUid: suppressErrorsOnQuery,
-  },
-});
+  });
 
 function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes extends string, ResultType>(
   endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
@@ -60,3 +88,5 @@ function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes
     return baseQuery;
   };
 }
+
+export const { useGetLocalPluginListQuery } = cloudMigrationAPI;

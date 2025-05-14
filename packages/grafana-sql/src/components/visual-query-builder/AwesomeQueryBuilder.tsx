@@ -1,3 +1,5 @@
+// @PERCONA
+// @ts-nocheck
 import {
   BasicConfig,
   Config,
@@ -13,7 +15,6 @@ import {
 } from '@react-awesome-query-builder/ui';
 import { List } from 'immutable';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

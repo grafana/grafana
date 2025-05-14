@@ -7,591 +7,1804 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package dataquery
 
-// Defines values for BucketAggregationType.
-const (
-	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
-	BucketAggregationTypeFilters       BucketAggregationType = "filters"
-	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
-	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
-	BucketAggregationTypeNested        BucketAggregationType = "nested"
-	BucketAggregationTypeTerms         BucketAggregationType = "terms"
+import (
+	json "encoding/json"
+	errors "errors"
+	fmt "fmt"
 )
 
-// Defines values for ExtendedStatMetaType.
-const (
-	ExtendedStatMetaTypeAvg                     ExtendedStatMetaType = "avg"
-	ExtendedStatMetaTypeCount                   ExtendedStatMetaType = "count"
-	ExtendedStatMetaTypeMax                     ExtendedStatMetaType = "max"
-	ExtendedStatMetaTypeMin                     ExtendedStatMetaType = "min"
-	ExtendedStatMetaTypeStdDeviation            ExtendedStatMetaType = "std_deviation"
-	ExtendedStatMetaTypeStdDeviationBoundsLower ExtendedStatMetaType = "std_deviation_bounds_lower"
-	ExtendedStatMetaTypeStdDeviationBoundsUpper ExtendedStatMetaType = "std_deviation_bounds_upper"
-	ExtendedStatMetaTypeSum                     ExtendedStatMetaType = "sum"
-)
+type BucketAggregation = DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested
 
-// Defines values for MetricAggregationType.
-const (
-	MetricAggregationTypeAvg           MetricAggregationType = "avg"
-	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
-	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
-	MetricAggregationTypeCount         MetricAggregationType = "count"
-	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
-	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
-	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
-	MetricAggregationTypeLogs          MetricAggregationType = "logs"
-	MetricAggregationTypeMax           MetricAggregationType = "max"
-	MetricAggregationTypeMin           MetricAggregationType = "min"
-	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
-	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
-	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
-	MetricAggregationTypeRate          MetricAggregationType = "rate"
-	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
-	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
-	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
-	MetricAggregationTypeSum           MetricAggregationType = "sum"
-	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
-)
-
-// Defines values for MovingAverageModel.
-const (
-	MovingAverageModelEwma        MovingAverageModel = "ewma"
-	MovingAverageModelHolt        MovingAverageModel = "holt"
-	MovingAverageModelHoltWinters MovingAverageModel = "holt_winters"
-	MovingAverageModelLinear      MovingAverageModel = "linear"
-	MovingAverageModelSimple      MovingAverageModel = "simple"
-)
-
-// Defines values for PipelineMetricAggregationType.
-const (
-	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
-	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
-	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
-	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
-	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
-	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
-)
-
-// Defines values for TermsOrder.
-const (
-	TermsOrderAsc  TermsOrder = "asc"
-	TermsOrderDesc TermsOrder = "desc"
-)
-
-// Average defines model for Average.
-type Average struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	MetricAggregationWithMissingSupport
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-		Script  *any    `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewBucketAggregation creates a new BucketAggregation object.
+func NewBucketAggregation() *BucketAggregation {
+	return NewDateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested()
 }
 
-// BaseBucketAggregation defines model for BaseBucketAggregation.
-type BaseBucketAggregation struct {
-	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
+type MetricAggregation = CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics
+
+// NewMetricAggregation creates a new MetricAggregation object.
+func NewMetricAggregation() *MetricAggregation {
+	return NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics()
 }
 
-// BaseMetricAggregation defines model for BaseMetricAggregation.
-type BaseMetricAggregation struct {
-	Hide *bool                 `json:"hide,omitempty"`
-	Id   string                `json:"id"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// BaseMovingAverageModelSettings defines model for BaseMovingAverageModelSettings.
-type BaseMovingAverageModelSettings struct {
-	Model   MovingAverageModel `json:"model"`
-	Predict string             `json:"predict"`
-	Window  string             `json:"window"`
-}
-
-// BasePipelineMetricAggregation defines model for BasePipelineMetricAggregation.
-type BasePipelineMetricAggregation struct {
-	MetricAggregationWithField
-	Hide        *bool                 `json:"hide,omitempty"`
-	Id          string                `json:"id"`
-	PipelineAgg *string               `json:"pipelineAgg,omitempty"`
-	Type        MetricAggregationType `json:"type"`
-}
-
-// BucketAggregationType defines model for BucketAggregationType.
 type BucketAggregationType string
 
-// BucketAggregationWithField defines model for BucketAggregationWithField.
-type BucketAggregationWithField struct {
-	BaseBucketAggregation
-	Field *string `json:"field,omitempty"`
-}
+const (
+	BucketAggregationTypeTerms         BucketAggregationType = "terms"
+	BucketAggregationTypeFilters       BucketAggregationType = "filters"
+	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
+	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
+	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
+	BucketAggregationTypeNested        BucketAggregationType = "nested"
+)
 
-// BucketScript defines model for BucketScript.
-type BucketScript struct {
-	PipelineMetricAggregationWithMultipleBucketPaths
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Script *any `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// Count defines model for Count.
-type Count struct {
-	BaseMetricAggregation
-	Hide *bool                 `json:"hide,omitempty"`
-	Id   string                `json:"id"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// CumulativeSum defines model for CumulativeSum.
-type CumulativeSum struct {
-	BasePipelineMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Format *string `json:"format,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// These are the common properties available to all queries in all datasources.
-// Specific implementations will *extend* this interface, adding the required
-// properties for the given context.
-type DataQuery struct {
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
-}
-
-// DateHistogram defines model for DateHistogram.
-type DateHistogram struct {
-	BucketAggregationWithField
+type BaseBucketAggregation struct {
 	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
+	Settings any                   `json:"settings,omitempty"`
 }
 
-// DateHistogramSettings defines model for DateHistogramSettings.
+// NewBaseBucketAggregation creates a new BaseBucketAggregation object.
+func NewBaseBucketAggregation() *BaseBucketAggregation {
+	return &BaseBucketAggregation{}
+}
+
+type BucketAggregationWithField struct {
+	Field    *string               `json:"field,omitempty"`
+	Id       string                `json:"id"`
+	Type     BucketAggregationType `json:"type"`
+	Settings any                   `json:"settings,omitempty"`
+}
+
+// NewBucketAggregationWithField creates a new BucketAggregationWithField object.
+func NewBucketAggregationWithField() *BucketAggregationWithField {
+	return &BucketAggregationWithField{}
+}
+
+type DateHistogram struct {
+	Field    *string                         `json:"field,omitempty"`
+	Id       string                          `json:"id"`
+	Type     string                          `json:"type"`
+	Settings *DataqueryDateHistogramSettings `json:"settings,omitempty"`
+}
+
+// NewDateHistogram creates a new DateHistogram object.
+func NewDateHistogram() *DateHistogram {
+	return &DateHistogram{
+		Type: "date_histogram",
+	}
+}
+
 type DateHistogramSettings struct {
 	Interval    *string `json:"interval,omitempty"`
 	MinDocCount *string `json:"min_doc_count,omitempty"`
+	TrimEdges   *string `json:"trimEdges,omitempty"`
 	Offset      *string `json:"offset,omitempty"`
 	TimeZone    *string `json:"timeZone,omitempty"`
-	TrimEdges   *string `json:"trimEdges,omitempty"`
 }
 
-// Derivative defines model for Derivative.
-type Derivative struct {
-	BasePipelineMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Unit *string `json:"unit,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewDateHistogramSettings creates a new DateHistogramSettings object.
+func NewDateHistogramSettings() *DateHistogramSettings {
+	return &DateHistogramSettings{}
 }
 
-// ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
-type ElasticsearchDataQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-
-	// Alias pattern
-	Alias *string `json:"alias,omitempty"`
-
-	// List of bucket aggregations
-	BucketAggs []any `json:"bucketAggs,omitempty"`
-
-	// List of metric aggregations
-	Metrics []any `json:"metrics,omitempty"`
-
-	// Lucene query
-	Query *string `json:"query,omitempty"`
-
-	// Name of time field
-	TimeField *string `json:"timeField,omitempty"`
-}
-
-// ExtendedStat defines model for ExtendedStat.
-type ExtendedStat struct {
-	Label string               `json:"label"`
-	Value ExtendedStatMetaType `json:"value"`
-}
-
-// ExtendedStatMetaType defines model for ExtendedStatMetaType.
-type ExtendedStatMetaType string
-
-// ExtendedStats defines model for ExtendedStats.
-type ExtendedStats struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	Hide     *bool          `json:"hide,omitempty"`
-	Id       string         `json:"id"`
-	Meta     map[string]any `json:"meta,omitempty"`
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-		Script  *any    `json:"script,omitempty"`
-		Sigma   *string `json:"sigma,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// Filter defines model for Filter.
-type Filter struct {
-	Label string `json:"label"`
-	Query string `json:"query"`
-}
-
-// Filters defines model for Filters.
-type Filters struct {
-	BaseBucketAggregation
-	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
-}
-
-// FiltersSettings defines model for FiltersSettings.
-type FiltersSettings struct {
-	Filters []Filter `json:"filters,omitempty"`
-}
-
-// GeoHashGrid defines model for GeoHashGrid.
-type GeoHashGrid struct {
-	BucketAggregationWithField
-	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
-}
-
-// GeoHashGridSettings defines model for GeoHashGridSettings.
-type GeoHashGridSettings struct {
-	Precision *string `json:"precision,omitempty"`
-}
-
-// Histogram defines model for Histogram.
 type Histogram struct {
-	BucketAggregationWithField
-	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
+	Field    *string                     `json:"field,omitempty"`
+	Id       string                      `json:"id"`
+	Type     string                      `json:"type"`
+	Settings *DataqueryHistogramSettings `json:"settings,omitempty"`
 }
 
-// HistogramSettings defines model for HistogramSettings.
+// NewHistogram creates a new Histogram object.
+func NewHistogram() *Histogram {
+	return &Histogram{
+		Type: "histogram",
+	}
+}
+
 type HistogramSettings struct {
 	Interval    *string `json:"interval,omitempty"`
 	MinDocCount *string `json:"min_doc_count,omitempty"`
 }
 
-// Logs defines model for Logs.
-type Logs struct {
-	BaseMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Limit *string `json:"limit,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewHistogramSettings creates a new HistogramSettings object.
+func NewHistogramSettings() *HistogramSettings {
+	return &HistogramSettings{}
 }
 
-// Max defines model for Max.
-type Max struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-		Script  *any    `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
+type TermsOrder string
 
-// MetricAggregationType defines model for MetricAggregationType.
-type MetricAggregationType string
+const (
+	TermsOrderDesc TermsOrder = "desc"
+	TermsOrderAsc  TermsOrder = "asc"
+)
 
-// MetricAggregationWithField defines model for MetricAggregationWithField.
-type MetricAggregationWithField struct {
-	BaseMetricAggregation
-	Field *string `json:"field,omitempty"`
-}
-
-// MetricAggregationWithInlineScript defines model for MetricAggregationWithInlineScript.
-type MetricAggregationWithInlineScript struct {
-	BaseMetricAggregation
-	Settings *struct {
-		Script *any `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-}
-
-// MetricAggregationWithMissingSupport defines model for MetricAggregationWithMissingSupport.
-type MetricAggregationWithMissingSupport struct {
-	BaseMetricAggregation
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-	} `json:"settings,omitempty"`
-}
-
-// Min defines model for Min.
-type Min struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-		Script  *any    `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// MovingAverage defines model for MovingAverage.
-type MovingAverage struct {
-	BasePipelineMetricAggregation
-	Hide     *bool                 `json:"hide,omitempty"`
-	Id       string                `json:"id"`
-	Settings map[string]any        `json:"settings,omitempty"`
-	Type     MetricAggregationType `json:"type"`
-}
-
-// MovingAverageEWMAModelSettings defines model for MovingAverageEWMAModelSettings.
-type MovingAverageEWMAModelSettings struct {
-	BaseMovingAverageModelSettings
-	Minimize bool               `json:"minimize"`
-	Model    MovingAverageModel `json:"model"`
-	Predict  string             `json:"predict"`
-	Settings *struct {
-		Alpha *string `json:"alpha,omitempty"`
-	} `json:"settings,omitempty"`
-	Window string `json:"window"`
-}
-
-// MovingAverageHoltModelSettings defines model for MovingAverageHoltModelSettings.
-type MovingAverageHoltModelSettings struct {
-	BaseMovingAverageModelSettings
-	Minimize bool               `json:"minimize"`
-	Model    MovingAverageModel `json:"model"`
-	Predict  string             `json:"predict"`
-	Settings struct {
-		Alpha *string `json:"alpha,omitempty"`
-		Beta  *string `json:"beta,omitempty"`
-	} `json:"settings"`
-	Window string `json:"window"`
-}
-
-// MovingAverageHoltWintersModelSettings defines model for MovingAverageHoltWintersModelSettings.
-type MovingAverageHoltWintersModelSettings struct {
-	BaseMovingAverageModelSettings
-	Minimize bool               `json:"minimize"`
-	Model    MovingAverageModel `json:"model"`
-	Predict  string             `json:"predict"`
-	Settings struct {
-		Alpha  *string `json:"alpha,omitempty"`
-		Beta   *string `json:"beta,omitempty"`
-		Gamma  *string `json:"gamma,omitempty"`
-		Pad    *bool   `json:"pad,omitempty"`
-		Period *string `json:"period,omitempty"`
-	} `json:"settings"`
-	Window string `json:"window"`
-}
-
-// MovingAverageLinearModelSettings defines model for MovingAverageLinearModelSettings.
-type MovingAverageLinearModelSettings struct {
-	BaseMovingAverageModelSettings
-	Model   MovingAverageModel `json:"model"`
-	Predict string             `json:"predict"`
-	Window  string             `json:"window"`
-}
-
-// MovingAverageModel defines model for MovingAverageModel.
-type MovingAverageModel string
-
-// MovingAverageModelOption defines model for MovingAverageModelOption.
-type MovingAverageModelOption struct {
-	Label string             `json:"label"`
-	Value MovingAverageModel `json:"value"`
-}
-
-// MovingAverageSimpleModelSettings defines model for MovingAverageSimpleModelSettings.
-type MovingAverageSimpleModelSettings struct {
-	BaseMovingAverageModelSettings
-	Model   MovingAverageModel `json:"model"`
-	Predict string             `json:"predict"`
-	Window  string             `json:"window"`
-}
-
-// MovingFunction defines model for MovingFunction.
-type MovingFunction struct {
-	BasePipelineMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Script *any    `json:"script,omitempty"`
-		Shift  *string `json:"shift,omitempty"`
-		Window *string `json:"window,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// Nested defines model for Nested.
 type Nested struct {
-	BucketAggregationWithField
-	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
+	Field    *string `json:"field,omitempty"`
+	Id       string  `json:"id"`
+	Type     string  `json:"type"`
+	Settings any     `json:"settings,omitempty"`
 }
 
-// Percentiles defines model for Percentiles.
-type Percentiles struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing  *string  `json:"missing,omitempty"`
-		Percents []string `json:"percents,omitempty"`
-		Script   *any     `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewNested creates a new Nested object.
+func NewNested() *Nested {
+	return &Nested{
+		Type: "nested",
+	}
 }
 
-// PipelineMetricAggregationType defines model for PipelineMetricAggregationType.
+type Terms struct {
+	Field    *string                 `json:"field,omitempty"`
+	Id       string                  `json:"id"`
+	Type     string                  `json:"type"`
+	Settings *DataqueryTermsSettings `json:"settings,omitempty"`
+}
+
+// NewTerms creates a new Terms object.
+func NewTerms() *Terms {
+	return &Terms{
+		Type: "terms",
+	}
+}
+
+type TermsSettings struct {
+	Order       *TermsOrder `json:"order,omitempty"`
+	Size        *string     `json:"size,omitempty"`
+	MinDocCount *string     `json:"min_doc_count,omitempty"`
+	OrderBy     *string     `json:"orderBy,omitempty"`
+	Missing     *string     `json:"missing,omitempty"`
+}
+
+// NewTermsSettings creates a new TermsSettings object.
+func NewTermsSettings() *TermsSettings {
+	return &TermsSettings{}
+}
+
+type Filters struct {
+	Id       string                    `json:"id"`
+	Type     string                    `json:"type"`
+	Settings *DataqueryFiltersSettings `json:"settings,omitempty"`
+}
+
+// NewFilters creates a new Filters object.
+func NewFilters() *Filters {
+	return &Filters{
+		Type: "filters",
+	}
+}
+
+type Filter struct {
+	Query string `json:"query"`
+	Label string `json:"label"`
+}
+
+// NewFilter creates a new Filter object.
+func NewFilter() *Filter {
+	return &Filter{}
+}
+
+type FiltersSettings struct {
+	Filters []Filter `json:"filters,omitempty"`
+}
+
+// NewFiltersSettings creates a new FiltersSettings object.
+func NewFiltersSettings() *FiltersSettings {
+	return &FiltersSettings{}
+}
+
+type GeoHashGrid struct {
+	Field    *string                       `json:"field,omitempty"`
+	Id       string                        `json:"id"`
+	Type     string                        `json:"type"`
+	Settings *DataqueryGeoHashGridSettings `json:"settings,omitempty"`
+}
+
+// NewGeoHashGrid creates a new GeoHashGrid object.
+func NewGeoHashGrid() *GeoHashGrid {
+	return &GeoHashGrid{
+		Type: "geohash_grid",
+	}
+}
+
+type GeoHashGridSettings struct {
+	Precision *string `json:"precision,omitempty"`
+}
+
+// NewGeoHashGridSettings creates a new GeoHashGridSettings object.
+func NewGeoHashGridSettings() *GeoHashGridSettings {
+	return &GeoHashGridSettings{}
+}
+
 type PipelineMetricAggregationType string
 
-// PipelineMetricAggregationWithMultipleBucketPaths defines model for PipelineMetricAggregationWithMultipleBucketPaths.
-type PipelineMetricAggregationWithMultipleBucketPaths struct {
-	BaseMetricAggregation
-	PipelineVariables []PipelineVariable `json:"pipelineVariables,omitempty"`
+const (
+	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
+	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
+	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
+	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
+	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
+	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
+)
+
+type MetricAggregationType = StringOrPipelineMetricAggregationType
+
+// NewMetricAggregationType creates a new MetricAggregationType object.
+func NewMetricAggregationType() *MetricAggregationType {
+	return NewStringOrPipelineMetricAggregationType()
 }
 
-// PipelineVariable defines model for PipelineVariable.
+type BaseMetricAggregation struct {
+	Type MetricAggregationType `json:"type"`
+	Id   string                `json:"id"`
+	Hide *bool                 `json:"hide,omitempty"`
+}
+
+// NewBaseMetricAggregation creates a new BaseMetricAggregation object.
+func NewBaseMetricAggregation() *BaseMetricAggregation {
+	return &BaseMetricAggregation{
+		Type: *NewMetricAggregationType(),
+	}
+}
+
 type PipelineVariable struct {
 	Name        string `json:"name"`
 	PipelineAgg string `json:"pipelineAgg"`
 }
 
-// Rate defines model for Rate.
-type Rate struct {
-	MetricAggregationWithField
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Mode *string `json:"mode,omitempty"`
-		Unit *string `json:"unit,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewPipelineVariable creates a new PipelineVariable object.
+func NewPipelineVariable() *PipelineVariable {
+	return &PipelineVariable{}
 }
 
-// RawData defines model for RawData.
-type RawData struct {
-	BaseMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Size *string `json:"size,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+type MetricAggregationWithField struct {
+	Field *string               `json:"field,omitempty"`
+	Type  MetricAggregationType `json:"type"`
+	Id    string                `json:"id"`
+	Hide  *bool                 `json:"hide,omitempty"`
 }
 
-// RawDocument defines model for RawDocument.
-type RawDocument struct {
-	BaseMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Size *string `json:"size,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+// NewMetricAggregationWithField creates a new MetricAggregationWithField object.
+func NewMetricAggregationWithField() *MetricAggregationWithField {
+	return &MetricAggregationWithField{
+		Type: *NewMetricAggregationType(),
+	}
 }
 
-// SerialDiff defines model for SerialDiff.
-type SerialDiff struct {
-	BasePipelineMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Lag *string `json:"lag,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+type MetricAggregationWithMissingSupport struct {
+	Settings *DataqueryMetricAggregationWithMissingSupportSettings `json:"settings,omitempty"`
+	Type     MetricAggregationType                                 `json:"type"`
+	Id       string                                                `json:"id"`
+	Hide     *bool                                                 `json:"hide,omitempty"`
 }
 
-// Sum defines model for Sum.
+// NewMetricAggregationWithMissingSupport creates a new MetricAggregationWithMissingSupport object.
+func NewMetricAggregationWithMissingSupport() *MetricAggregationWithMissingSupport {
+	return &MetricAggregationWithMissingSupport{
+		Type: *NewMetricAggregationType(),
+	}
+}
+
+type InlineScript = StringOrDataqueryInlineScript
+
+// NewInlineScript creates a new InlineScript object.
+func NewInlineScript() *InlineScript {
+	return NewStringOrDataqueryInlineScript()
+}
+
+type MetricAggregationWithInlineScript struct {
+	Settings *DataqueryMetricAggregationWithInlineScriptSettings `json:"settings,omitempty"`
+	Type     MetricAggregationType                               `json:"type"`
+	Id       string                                              `json:"id"`
+	Hide     *bool                                               `json:"hide,omitempty"`
+}
+
+// NewMetricAggregationWithInlineScript creates a new MetricAggregationWithInlineScript object.
+func NewMetricAggregationWithInlineScript() *MetricAggregationWithInlineScript {
+	return &MetricAggregationWithInlineScript{
+		Type: *NewMetricAggregationType(),
+	}
+}
+
+type Count struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+	Hide *bool  `json:"hide,omitempty"`
+}
+
+// NewCount creates a new Count object.
+func NewCount() *Count {
+	return &Count{
+		Type: "count",
+	}
+}
+
+type Average struct {
+	Type     string                    `json:"type"`
+	Field    *string                   `json:"field,omitempty"`
+	Id       string                    `json:"id"`
+	Settings *DataqueryAverageSettings `json:"settings,omitempty"`
+	Hide     *bool                     `json:"hide,omitempty"`
+}
+
+// NewAverage creates a new Average object.
+func NewAverage() *Average {
+	return &Average{
+		Type: "avg",
+	}
+}
+
 type Sum struct {
-	MetricAggregationWithField
-	MetricAggregationWithInlineScript
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing *string `json:"missing,omitempty"`
-		Script  *any    `json:"script,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
-}
-
-// Terms defines model for Terms.
-type Terms struct {
-	BucketAggregationWithField
+	Type     string                `json:"type"`
+	Field    *string               `json:"field,omitempty"`
 	Id       string                `json:"id"`
-	Settings *any                  `json:"settings,omitempty"`
-	Type     BucketAggregationType `json:"type"`
+	Settings *DataquerySumSettings `json:"settings,omitempty"`
+	Hide     *bool                 `json:"hide,omitempty"`
 }
 
-// TermsOrder defines model for TermsOrder.
-type TermsOrder string
-
-// TermsSettings defines model for TermsSettings.
-type TermsSettings struct {
-	MinDocCount *string     `json:"min_doc_count,omitempty"`
-	Missing     *string     `json:"missing,omitempty"`
-	Order       *TermsOrder `json:"order,omitempty"`
-	OrderBy     *string     `json:"orderBy,omitempty"`
-	Size        *string     `json:"size,omitempty"`
+// NewSum creates a new Sum object.
+func NewSum() *Sum {
+	return &Sum{
+		Type: "sum",
+	}
 }
 
-// TopMetrics defines model for TopMetrics.
-type TopMetrics struct {
-	BaseMetricAggregation
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Metrics []string `json:"metrics,omitempty"`
-		Order   *string  `json:"order,omitempty"`
-		OrderBy *string  `json:"orderBy,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+type Max struct {
+	Type     string                `json:"type"`
+	Field    *string               `json:"field,omitempty"`
+	Id       string                `json:"id"`
+	Settings *DataqueryMaxSettings `json:"settings,omitempty"`
+	Hide     *bool                 `json:"hide,omitempty"`
 }
 
-// UniqueCount defines model for UniqueCount.
+// NewMax creates a new Max object.
+func NewMax() *Max {
+	return &Max{
+		Type: "max",
+	}
+}
+
+type Min struct {
+	Type     string                `json:"type"`
+	Field    *string               `json:"field,omitempty"`
+	Id       string                `json:"id"`
+	Settings *DataqueryMinSettings `json:"settings,omitempty"`
+	Hide     *bool                 `json:"hide,omitempty"`
+}
+
+// NewMin creates a new Min object.
+func NewMin() *Min {
+	return &Min{
+		Type: "min",
+	}
+}
+
+type ExtendedStatMetaType string
+
+const (
+	ExtendedStatMetaTypeAvg                     ExtendedStatMetaType = "avg"
+	ExtendedStatMetaTypeMin                     ExtendedStatMetaType = "min"
+	ExtendedStatMetaTypeMax                     ExtendedStatMetaType = "max"
+	ExtendedStatMetaTypeSum                     ExtendedStatMetaType = "sum"
+	ExtendedStatMetaTypeCount                   ExtendedStatMetaType = "count"
+	ExtendedStatMetaTypeStdDeviation            ExtendedStatMetaType = "std_deviation"
+	ExtendedStatMetaTypeStdDeviationBoundsUpper ExtendedStatMetaType = "std_deviation_bounds_upper"
+	ExtendedStatMetaTypeStdDeviationBoundsLower ExtendedStatMetaType = "std_deviation_bounds_lower"
+)
+
+type ExtendedStat struct {
+	Label string               `json:"label"`
+	Value ExtendedStatMetaType `json:"value"`
+}
+
+// NewExtendedStat creates a new ExtendedStat object.
+func NewExtendedStat() *ExtendedStat {
+	return &ExtendedStat{}
+}
+
+type ExtendedStats struct {
+	Type     string                          `json:"type"`
+	Settings *DataqueryExtendedStatsSettings `json:"settings,omitempty"`
+	Field    *string                         `json:"field,omitempty"`
+	Id       string                          `json:"id"`
+	Meta     any                             `json:"meta,omitempty"`
+	Hide     *bool                           `json:"hide,omitempty"`
+}
+
+// NewExtendedStats creates a new ExtendedStats object.
+func NewExtendedStats() *ExtendedStats {
+	return &ExtendedStats{
+		Type: "extended_stats",
+	}
+}
+
+type Percentiles struct {
+	Type     string                        `json:"type"`
+	Field    *string                       `json:"field,omitempty"`
+	Id       string                        `json:"id"`
+	Settings *DataqueryPercentilesSettings `json:"settings,omitempty"`
+	Hide     *bool                         `json:"hide,omitempty"`
+}
+
+// NewPercentiles creates a new Percentiles object.
+func NewPercentiles() *Percentiles {
+	return &Percentiles{
+		Type: "percentiles",
+	}
+}
+
 type UniqueCount struct {
-	MetricAggregationWithField
-	Hide     *bool  `json:"hide,omitempty"`
-	Id       string `json:"id"`
-	Settings *struct {
-		Missing            *string `json:"missing,omitempty"`
-		PrecisionThreshold *string `json:"precision_threshold,omitempty"`
-	} `json:"settings,omitempty"`
-	Type MetricAggregationType `json:"type"`
+	Type     string                        `json:"type"`
+	Field    *string                       `json:"field,omitempty"`
+	Id       string                        `json:"id"`
+	Settings *DataqueryUniqueCountSettings `json:"settings,omitempty"`
+	Hide     *bool                         `json:"hide,omitempty"`
+}
+
+// NewUniqueCount creates a new UniqueCount object.
+func NewUniqueCount() *UniqueCount {
+	return &UniqueCount{
+		Type: "cardinality",
+	}
+}
+
+type RawDocument struct {
+	Type     string                        `json:"type"`
+	Id       string                        `json:"id"`
+	Settings *DataqueryRawDocumentSettings `json:"settings,omitempty"`
+	Hide     *bool                         `json:"hide,omitempty"`
+}
+
+// NewRawDocument creates a new RawDocument object.
+func NewRawDocument() *RawDocument {
+	return &RawDocument{
+		Type: "raw_document",
+	}
+}
+
+type RawData struct {
+	Type     string                    `json:"type"`
+	Id       string                    `json:"id"`
+	Settings *DataqueryRawDataSettings `json:"settings,omitempty"`
+	Hide     *bool                     `json:"hide,omitempty"`
+}
+
+// NewRawData creates a new RawData object.
+func NewRawData() *RawData {
+	return &RawData{
+		Type: "raw_data",
+	}
+}
+
+type Logs struct {
+	Type     string                 `json:"type"`
+	Id       string                 `json:"id"`
+	Settings *DataqueryLogsSettings `json:"settings,omitempty"`
+	Hide     *bool                  `json:"hide,omitempty"`
+}
+
+// NewLogs creates a new Logs object.
+func NewLogs() *Logs {
+	return &Logs{
+		Type: "logs",
+	}
+}
+
+type Rate struct {
+	Type     string                 `json:"type"`
+	Field    *string                `json:"field,omitempty"`
+	Id       string                 `json:"id"`
+	Settings *DataqueryRateSettings `json:"settings,omitempty"`
+	Hide     *bool                  `json:"hide,omitempty"`
+}
+
+// NewRate creates a new Rate object.
+func NewRate() *Rate {
+	return &Rate{
+		Type: "rate",
+	}
+}
+
+type BasePipelineMetricAggregation struct {
+	PipelineAgg *string `json:"pipelineAgg,omitempty"`
+	Field       *string `json:"field,omitempty"`
+	Type        string  `json:"type"`
+	Id          string  `json:"id"`
+	Hide        *bool   `json:"hide,omitempty"`
+}
+
+// NewBasePipelineMetricAggregation creates a new BasePipelineMetricAggregation object.
+func NewBasePipelineMetricAggregation() *BasePipelineMetricAggregation {
+	return &BasePipelineMetricAggregation{}
+}
+
+type PipelineMetricAggregationWithMultipleBucketPaths struct {
+	PipelineVariables []PipelineVariable    `json:"pipelineVariables,omitempty"`
+	Type              MetricAggregationType `json:"type"`
+	Id                string                `json:"id"`
+	Hide              *bool                 `json:"hide,omitempty"`
+}
+
+// NewPipelineMetricAggregationWithMultipleBucketPaths creates a new PipelineMetricAggregationWithMultipleBucketPaths object.
+func NewPipelineMetricAggregationWithMultipleBucketPaths() *PipelineMetricAggregationWithMultipleBucketPaths {
+	return &PipelineMetricAggregationWithMultipleBucketPaths{
+		Type: *NewMetricAggregationType(),
+	}
+}
+
+type MovingAverageModel string
+
+const (
+	MovingAverageModelSimple      MovingAverageModel = "simple"
+	MovingAverageModelLinear      MovingAverageModel = "linear"
+	MovingAverageModelEwma        MovingAverageModel = "ewma"
+	MovingAverageModelHolt        MovingAverageModel = "holt"
+	MovingAverageModelHoltWinters MovingAverageModel = "holt_winters"
+)
+
+type MovingAverageModelOption struct {
+	Label string             `json:"label"`
+	Value MovingAverageModel `json:"value"`
+}
+
+// NewMovingAverageModelOption creates a new MovingAverageModelOption object.
+func NewMovingAverageModelOption() *MovingAverageModelOption {
+	return &MovingAverageModelOption{}
+}
+
+type BaseMovingAverageModelSettings struct {
+	Model   MovingAverageModel `json:"model"`
+	Window  string             `json:"window"`
+	Predict string             `json:"predict"`
+}
+
+// NewBaseMovingAverageModelSettings creates a new BaseMovingAverageModelSettings object.
+func NewBaseMovingAverageModelSettings() *BaseMovingAverageModelSettings {
+	return &BaseMovingAverageModelSettings{}
+}
+
+type MovingAverageSimpleModelSettings struct {
+	Model   string `json:"model"`
+	Window  string `json:"window"`
+	Predict string `json:"predict"`
+}
+
+// NewMovingAverageSimpleModelSettings creates a new MovingAverageSimpleModelSettings object.
+func NewMovingAverageSimpleModelSettings() *MovingAverageSimpleModelSettings {
+	return &MovingAverageSimpleModelSettings{
+		Model: "simple",
+	}
+}
+
+type MovingAverageLinearModelSettings struct {
+	Model   string `json:"model"`
+	Window  string `json:"window"`
+	Predict string `json:"predict"`
+}
+
+// NewMovingAverageLinearModelSettings creates a new MovingAverageLinearModelSettings object.
+func NewMovingAverageLinearModelSettings() *MovingAverageLinearModelSettings {
+	return &MovingAverageLinearModelSettings{
+		Model: "linear",
+	}
+}
+
+type MovingAverageEWMAModelSettings struct {
+	Model    string                                           `json:"model"`
+	Settings *DataqueryMovingAverageEWMAModelSettingsSettings `json:"settings,omitempty"`
+	Window   string                                           `json:"window"`
+	Minimize bool                                             `json:"minimize"`
+	Predict  string                                           `json:"predict"`
+}
+
+// NewMovingAverageEWMAModelSettings creates a new MovingAverageEWMAModelSettings object.
+func NewMovingAverageEWMAModelSettings() *MovingAverageEWMAModelSettings {
+	return &MovingAverageEWMAModelSettings{
+		Model: "ewma",
+	}
+}
+
+type MovingAverageHoltModelSettings struct {
+	Model    string                                          `json:"model"`
+	Settings DataqueryMovingAverageHoltModelSettingsSettings `json:"settings"`
+	Window   string                                          `json:"window"`
+	Minimize bool                                            `json:"minimize"`
+	Predict  string                                          `json:"predict"`
+}
+
+// NewMovingAverageHoltModelSettings creates a new MovingAverageHoltModelSettings object.
+func NewMovingAverageHoltModelSettings() *MovingAverageHoltModelSettings {
+	return &MovingAverageHoltModelSettings{
+		Model:    "holt",
+		Settings: *NewDataqueryMovingAverageHoltModelSettingsSettings(),
+	}
+}
+
+type MovingAverageHoltWintersModelSettings struct {
+	Model    string                                                 `json:"model"`
+	Settings DataqueryMovingAverageHoltWintersModelSettingsSettings `json:"settings"`
+	Window   string                                                 `json:"window"`
+	Minimize bool                                                   `json:"minimize"`
+	Predict  string                                                 `json:"predict"`
+}
+
+// NewMovingAverageHoltWintersModelSettings creates a new MovingAverageHoltWintersModelSettings object.
+func NewMovingAverageHoltWintersModelSettings() *MovingAverageHoltWintersModelSettings {
+	return &MovingAverageHoltWintersModelSettings{
+		Model:    "holt_winters",
+		Settings: *NewDataqueryMovingAverageHoltWintersModelSettingsSettings(),
+	}
+}
+
+// #MovingAverage's settings are overridden in types.ts
+type MovingAverage struct {
+	PipelineAgg *string        `json:"pipelineAgg,omitempty"`
+	Field       *string        `json:"field,omitempty"`
+	Type        string         `json:"type"`
+	Id          string         `json:"id"`
+	Settings    map[string]any `json:"settings,omitempty"`
+	Hide        *bool          `json:"hide,omitempty"`
+}
+
+// NewMovingAverage creates a new MovingAverage object.
+func NewMovingAverage() *MovingAverage {
+	return &MovingAverage{
+		Type: "moving_avg",
+	}
+}
+
+type MovingFunction struct {
+	PipelineAgg *string                          `json:"pipelineAgg,omitempty"`
+	Field       *string                          `json:"field,omitempty"`
+	Type        string                           `json:"type"`
+	Id          string                           `json:"id"`
+	Settings    *DataqueryMovingFunctionSettings `json:"settings,omitempty"`
+	Hide        *bool                            `json:"hide,omitempty"`
+}
+
+// NewMovingFunction creates a new MovingFunction object.
+func NewMovingFunction() *MovingFunction {
+	return &MovingFunction{
+		Type: "moving_fn",
+	}
+}
+
+type Derivative struct {
+	PipelineAgg *string                      `json:"pipelineAgg,omitempty"`
+	Field       *string                      `json:"field,omitempty"`
+	Type        string                       `json:"type"`
+	Id          string                       `json:"id"`
+	Settings    *DataqueryDerivativeSettings `json:"settings,omitempty"`
+	Hide        *bool                        `json:"hide,omitempty"`
+}
+
+// NewDerivative creates a new Derivative object.
+func NewDerivative() *Derivative {
+	return &Derivative{
+		Type: "derivative",
+	}
+}
+
+type SerialDiff struct {
+	PipelineAgg *string                      `json:"pipelineAgg,omitempty"`
+	Field       *string                      `json:"field,omitempty"`
+	Type        string                       `json:"type"`
+	Id          string                       `json:"id"`
+	Settings    *DataquerySerialDiffSettings `json:"settings,omitempty"`
+	Hide        *bool                        `json:"hide,omitempty"`
+}
+
+// NewSerialDiff creates a new SerialDiff object.
+func NewSerialDiff() *SerialDiff {
+	return &SerialDiff{
+		Type: "serial_diff",
+	}
+}
+
+type CumulativeSum struct {
+	PipelineAgg *string                         `json:"pipelineAgg,omitempty"`
+	Field       *string                         `json:"field,omitempty"`
+	Type        string                          `json:"type"`
+	Id          string                          `json:"id"`
+	Settings    *DataqueryCumulativeSumSettings `json:"settings,omitempty"`
+	Hide        *bool                           `json:"hide,omitempty"`
+}
+
+// NewCumulativeSum creates a new CumulativeSum object.
+func NewCumulativeSum() *CumulativeSum {
+	return &CumulativeSum{
+		Type: "cumulative_sum",
+	}
+}
+
+type BucketScript struct {
+	Type              string                         `json:"type"`
+	PipelineVariables []PipelineVariable             `json:"pipelineVariables,omitempty"`
+	Id                string                         `json:"id"`
+	Settings          *DataqueryBucketScriptSettings `json:"settings,omitempty"`
+	Hide              *bool                          `json:"hide,omitempty"`
+}
+
+// NewBucketScript creates a new BucketScript object.
+func NewBucketScript() *BucketScript {
+	return &BucketScript{
+		Type: "bucket_script",
+	}
+}
+
+type TopMetrics struct {
+	Type     string                       `json:"type"`
+	Id       string                       `json:"id"`
+	Settings *DataqueryTopMetricsSettings `json:"settings,omitempty"`
+	Hide     *bool                        `json:"hide,omitempty"`
+}
+
+// NewTopMetrics creates a new TopMetrics object.
+func NewTopMetrics() *TopMetrics {
+	return &TopMetrics{
+		Type: "top_metrics",
+	}
+}
+
+type PipelineMetricAggregation = MovingAverageOrDerivativeOrCumulativeSumOrBucketScript
+
+// NewPipelineMetricAggregation creates a new PipelineMetricAggregation object.
+func NewPipelineMetricAggregation() *PipelineMetricAggregation {
+	return NewMovingAverageOrDerivativeOrCumulativeSumOrBucketScript()
+}
+
+type MetricAggregationWithSettings = BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics
+
+// NewMetricAggregationWithSettings creates a new MetricAggregationWithSettings object.
+func NewMetricAggregationWithSettings() *MetricAggregationWithSettings {
+	return NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics()
+}
+
+type ElasticsearchDataQuery struct {
+	// Alias pattern
+	Alias *string `json:"alias,omitempty"`
+	// Lucene query
+	Query *string `json:"query,omitempty"`
+	// Name of time field
+	TimeField *string `json:"timeField,omitempty"`
+	// List of bucket aggregations
+	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
+	// List of metric aggregations
+	Metrics []MetricAggregation `json:"metrics,omitempty"`
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
+}
+
+// NewElasticsearchDataQuery creates a new ElasticsearchDataQuery object.
+func NewElasticsearchDataQuery() *ElasticsearchDataQuery {
+	return &ElasticsearchDataQuery{}
+}
+
+type DataqueryDateHistogramSettings struct {
+	Interval    *string `json:"interval,omitempty"`
+	MinDocCount *string `json:"min_doc_count,omitempty"`
+	TrimEdges   *string `json:"trimEdges,omitempty"`
+	Offset      *string `json:"offset,omitempty"`
+	TimeZone    *string `json:"timeZone,omitempty"`
+}
+
+// NewDataqueryDateHistogramSettings creates a new DataqueryDateHistogramSettings object.
+func NewDataqueryDateHistogramSettings() *DataqueryDateHistogramSettings {
+	return &DataqueryDateHistogramSettings{}
+}
+
+type DataqueryHistogramSettings struct {
+	Interval    *string `json:"interval,omitempty"`
+	MinDocCount *string `json:"min_doc_count,omitempty"`
+}
+
+// NewDataqueryHistogramSettings creates a new DataqueryHistogramSettings object.
+func NewDataqueryHistogramSettings() *DataqueryHistogramSettings {
+	return &DataqueryHistogramSettings{}
+}
+
+type DataqueryTermsSettings struct {
+	Order       *TermsOrder `json:"order,omitempty"`
+	Size        *string     `json:"size,omitempty"`
+	MinDocCount *string     `json:"min_doc_count,omitempty"`
+	OrderBy     *string     `json:"orderBy,omitempty"`
+	Missing     *string     `json:"missing,omitempty"`
+}
+
+// NewDataqueryTermsSettings creates a new DataqueryTermsSettings object.
+func NewDataqueryTermsSettings() *DataqueryTermsSettings {
+	return &DataqueryTermsSettings{}
+}
+
+type DataqueryFiltersSettings struct {
+	Filters []Filter `json:"filters,omitempty"`
+}
+
+// NewDataqueryFiltersSettings creates a new DataqueryFiltersSettings object.
+func NewDataqueryFiltersSettings() *DataqueryFiltersSettings {
+	return &DataqueryFiltersSettings{}
+}
+
+type DataqueryGeoHashGridSettings struct {
+	Precision *string `json:"precision,omitempty"`
+}
+
+// NewDataqueryGeoHashGridSettings creates a new DataqueryGeoHashGridSettings object.
+func NewDataqueryGeoHashGridSettings() *DataqueryGeoHashGridSettings {
+	return &DataqueryGeoHashGridSettings{}
+}
+
+type DataqueryMetricAggregationWithMissingSupportSettings struct {
+	Missing *string `json:"missing,omitempty"`
+}
+
+// NewDataqueryMetricAggregationWithMissingSupportSettings creates a new DataqueryMetricAggregationWithMissingSupportSettings object.
+func NewDataqueryMetricAggregationWithMissingSupportSettings() *DataqueryMetricAggregationWithMissingSupportSettings {
+	return &DataqueryMetricAggregationWithMissingSupportSettings{}
+}
+
+type DataqueryInlineScript struct {
+	Inline *string `json:"inline,omitempty"`
+}
+
+// NewDataqueryInlineScript creates a new DataqueryInlineScript object.
+func NewDataqueryInlineScript() *DataqueryInlineScript {
+	return &DataqueryInlineScript{}
+}
+
+type DataqueryMetricAggregationWithInlineScriptSettings struct {
+	Script *InlineScript `json:"script,omitempty"`
+}
+
+// NewDataqueryMetricAggregationWithInlineScriptSettings creates a new DataqueryMetricAggregationWithInlineScriptSettings object.
+func NewDataqueryMetricAggregationWithInlineScriptSettings() *DataqueryMetricAggregationWithInlineScriptSettings {
+	return &DataqueryMetricAggregationWithInlineScriptSettings{}
+}
+
+type DataqueryAverageSettings struct {
+	Script  *InlineScript `json:"script,omitempty"`
+	Missing *string       `json:"missing,omitempty"`
+}
+
+// NewDataqueryAverageSettings creates a new DataqueryAverageSettings object.
+func NewDataqueryAverageSettings() *DataqueryAverageSettings {
+	return &DataqueryAverageSettings{}
+}
+
+type DataquerySumSettings struct {
+	Script  *InlineScript `json:"script,omitempty"`
+	Missing *string       `json:"missing,omitempty"`
+}
+
+// NewDataquerySumSettings creates a new DataquerySumSettings object.
+func NewDataquerySumSettings() *DataquerySumSettings {
+	return &DataquerySumSettings{}
+}
+
+type DataqueryMaxSettings struct {
+	Script  *InlineScript `json:"script,omitempty"`
+	Missing *string       `json:"missing,omitempty"`
+}
+
+// NewDataqueryMaxSettings creates a new DataqueryMaxSettings object.
+func NewDataqueryMaxSettings() *DataqueryMaxSettings {
+	return &DataqueryMaxSettings{}
+}
+
+type DataqueryMinSettings struct {
+	Script  *InlineScript `json:"script,omitempty"`
+	Missing *string       `json:"missing,omitempty"`
+}
+
+// NewDataqueryMinSettings creates a new DataqueryMinSettings object.
+func NewDataqueryMinSettings() *DataqueryMinSettings {
+	return &DataqueryMinSettings{}
+}
+
+type DataqueryExtendedStatsSettings struct {
+	Script  *InlineScript `json:"script,omitempty"`
+	Missing *string       `json:"missing,omitempty"`
+	Sigma   *string       `json:"sigma,omitempty"`
+}
+
+// NewDataqueryExtendedStatsSettings creates a new DataqueryExtendedStatsSettings object.
+func NewDataqueryExtendedStatsSettings() *DataqueryExtendedStatsSettings {
+	return &DataqueryExtendedStatsSettings{}
+}
+
+type DataqueryPercentilesSettings struct {
+	Script   *InlineScript `json:"script,omitempty"`
+	Missing  *string       `json:"missing,omitempty"`
+	Percents []string      `json:"percents,omitempty"`
+}
+
+// NewDataqueryPercentilesSettings creates a new DataqueryPercentilesSettings object.
+func NewDataqueryPercentilesSettings() *DataqueryPercentilesSettings {
+	return &DataqueryPercentilesSettings{}
+}
+
+type DataqueryUniqueCountSettings struct {
+	PrecisionThreshold *string `json:"precision_threshold,omitempty"`
+	Missing            *string `json:"missing,omitempty"`
+}
+
+// NewDataqueryUniqueCountSettings creates a new DataqueryUniqueCountSettings object.
+func NewDataqueryUniqueCountSettings() *DataqueryUniqueCountSettings {
+	return &DataqueryUniqueCountSettings{}
+}
+
+type DataqueryRawDocumentSettings struct {
+	Size *string `json:"size,omitempty"`
+}
+
+// NewDataqueryRawDocumentSettings creates a new DataqueryRawDocumentSettings object.
+func NewDataqueryRawDocumentSettings() *DataqueryRawDocumentSettings {
+	return &DataqueryRawDocumentSettings{}
+}
+
+type DataqueryRawDataSettings struct {
+	Size *string `json:"size,omitempty"`
+}
+
+// NewDataqueryRawDataSettings creates a new DataqueryRawDataSettings object.
+func NewDataqueryRawDataSettings() *DataqueryRawDataSettings {
+	return &DataqueryRawDataSettings{}
+}
+
+type DataqueryLogsSettings struct {
+	Limit *string `json:"limit,omitempty"`
+}
+
+// NewDataqueryLogsSettings creates a new DataqueryLogsSettings object.
+func NewDataqueryLogsSettings() *DataqueryLogsSettings {
+	return &DataqueryLogsSettings{}
+}
+
+type DataqueryRateSettings struct {
+	Unit *string `json:"unit,omitempty"`
+	Mode *string `json:"mode,omitempty"`
+}
+
+// NewDataqueryRateSettings creates a new DataqueryRateSettings object.
+func NewDataqueryRateSettings() *DataqueryRateSettings {
+	return &DataqueryRateSettings{}
+}
+
+type DataqueryMovingAverageEWMAModelSettingsSettings struct {
+	Alpha *string `json:"alpha,omitempty"`
+}
+
+// NewDataqueryMovingAverageEWMAModelSettingsSettings creates a new DataqueryMovingAverageEWMAModelSettingsSettings object.
+func NewDataqueryMovingAverageEWMAModelSettingsSettings() *DataqueryMovingAverageEWMAModelSettingsSettings {
+	return &DataqueryMovingAverageEWMAModelSettingsSettings{}
+}
+
+type DataqueryMovingAverageHoltModelSettingsSettings struct {
+	Alpha *string `json:"alpha,omitempty"`
+	Beta  *string `json:"beta,omitempty"`
+}
+
+// NewDataqueryMovingAverageHoltModelSettingsSettings creates a new DataqueryMovingAverageHoltModelSettingsSettings object.
+func NewDataqueryMovingAverageHoltModelSettingsSettings() *DataqueryMovingAverageHoltModelSettingsSettings {
+	return &DataqueryMovingAverageHoltModelSettingsSettings{}
+}
+
+type DataqueryMovingAverageHoltWintersModelSettingsSettings struct {
+	Alpha  *string `json:"alpha,omitempty"`
+	Beta   *string `json:"beta,omitempty"`
+	Gamma  *string `json:"gamma,omitempty"`
+	Period *string `json:"period,omitempty"`
+	Pad    *bool   `json:"pad,omitempty"`
+}
+
+// NewDataqueryMovingAverageHoltWintersModelSettingsSettings creates a new DataqueryMovingAverageHoltWintersModelSettingsSettings object.
+func NewDataqueryMovingAverageHoltWintersModelSettingsSettings() *DataqueryMovingAverageHoltWintersModelSettingsSettings {
+	return &DataqueryMovingAverageHoltWintersModelSettingsSettings{}
+}
+
+type DataqueryMovingFunctionSettings struct {
+	Window *string       `json:"window,omitempty"`
+	Script *InlineScript `json:"script,omitempty"`
+	Shift  *string       `json:"shift,omitempty"`
+}
+
+// NewDataqueryMovingFunctionSettings creates a new DataqueryMovingFunctionSettings object.
+func NewDataqueryMovingFunctionSettings() *DataqueryMovingFunctionSettings {
+	return &DataqueryMovingFunctionSettings{}
+}
+
+type DataqueryDerivativeSettings struct {
+	Unit *string `json:"unit,omitempty"`
+}
+
+// NewDataqueryDerivativeSettings creates a new DataqueryDerivativeSettings object.
+func NewDataqueryDerivativeSettings() *DataqueryDerivativeSettings {
+	return &DataqueryDerivativeSettings{}
+}
+
+type DataquerySerialDiffSettings struct {
+	Lag *string `json:"lag,omitempty"`
+}
+
+// NewDataquerySerialDiffSettings creates a new DataquerySerialDiffSettings object.
+func NewDataquerySerialDiffSettings() *DataquerySerialDiffSettings {
+	return &DataquerySerialDiffSettings{}
+}
+
+type DataqueryCumulativeSumSettings struct {
+	Format *string `json:"format,omitempty"`
+}
+
+// NewDataqueryCumulativeSumSettings creates a new DataqueryCumulativeSumSettings object.
+func NewDataqueryCumulativeSumSettings() *DataqueryCumulativeSumSettings {
+	return &DataqueryCumulativeSumSettings{}
+}
+
+type DataqueryBucketScriptSettings struct {
+	Script *InlineScript `json:"script,omitempty"`
+}
+
+// NewDataqueryBucketScriptSettings creates a new DataqueryBucketScriptSettings object.
+func NewDataqueryBucketScriptSettings() *DataqueryBucketScriptSettings {
+	return &DataqueryBucketScriptSettings{}
+}
+
+type DataqueryTopMetricsSettings struct {
+	Order   *string  `json:"order,omitempty"`
+	OrderBy *string  `json:"orderBy,omitempty"`
+	Metrics []string `json:"metrics,omitempty"`
+}
+
+// NewDataqueryTopMetricsSettings creates a new DataqueryTopMetricsSettings object.
+func NewDataqueryTopMetricsSettings() *DataqueryTopMetricsSettings {
+	return &DataqueryTopMetricsSettings{}
+}
+
+type DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested struct {
+	DateHistogram *DateHistogram `json:"DateHistogram,omitempty"`
+	Histogram     *Histogram     `json:"Histogram,omitempty"`
+	Terms         *Terms         `json:"Terms,omitempty"`
+	Filters       *Filters       `json:"Filters,omitempty"`
+	GeoHashGrid   *GeoHashGrid   `json:"GeoHashGrid,omitempty"`
+	Nested        *Nested        `json:"Nested,omitempty"`
+}
+
+// NewDateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested creates a new DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested object.
+func NewDateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested() *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested {
+	return &DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested` as JSON.
+func (resource DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) MarshalJSON() ([]byte, error) {
+	if resource.DateHistogram != nil {
+		return json.Marshal(resource.DateHistogram)
+	}
+	if resource.Histogram != nil {
+		return json.Marshal(resource.Histogram)
+	}
+	if resource.Terms != nil {
+		return json.Marshal(resource.Terms)
+	}
+	if resource.Filters != nil {
+		return json.Marshal(resource.Filters)
+	}
+	if resource.GeoHashGrid != nil {
+		return json.Marshal(resource.GeoHashGrid)
+	}
+	if resource.Nested != nil {
+		return json.Marshal(resource.Nested)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested` from JSON.
+func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return errors.New("discriminator field 'type' not found in payload")
+	}
+
+	switch discriminator {
+	case "date_histogram":
+		var dateHistogram DateHistogram
+		if err := json.Unmarshal(raw, &dateHistogram); err != nil {
+			return err
+		}
+
+		resource.DateHistogram = &dateHistogram
+		return nil
+	case "filters":
+		var filters Filters
+		if err := json.Unmarshal(raw, &filters); err != nil {
+			return err
+		}
+
+		resource.Filters = &filters
+		return nil
+	case "geohash_grid":
+		var geoHashGrid GeoHashGrid
+		if err := json.Unmarshal(raw, &geoHashGrid); err != nil {
+			return err
+		}
+
+		resource.GeoHashGrid = &geoHashGrid
+		return nil
+	case "histogram":
+		var histogram Histogram
+		if err := json.Unmarshal(raw, &histogram); err != nil {
+			return err
+		}
+
+		resource.Histogram = &histogram
+		return nil
+	case "nested":
+		var nested Nested
+		if err := json.Unmarshal(raw, &nested); err != nil {
+			return err
+		}
+
+		resource.Nested = &nested
+		return nil
+	case "terms":
+		var terms Terms
+		if err := json.Unmarshal(raw, &terms); err != nil {
+			return err
+		}
+
+		resource.Terms = &terms
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+}
+
+type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
+	Count          *Count          `json:"Count,omitempty"`
+	MovingAverage  *MovingAverage  `json:"MovingAverage,omitempty"`
+	Derivative     *Derivative     `json:"Derivative,omitempty"`
+	CumulativeSum  *CumulativeSum  `json:"CumulativeSum,omitempty"`
+	BucketScript   *BucketScript   `json:"BucketScript,omitempty"`
+	SerialDiff     *SerialDiff     `json:"SerialDiff,omitempty"`
+	RawData        *RawData        `json:"RawData,omitempty"`
+	RawDocument    *RawDocument    `json:"RawDocument,omitempty"`
+	UniqueCount    *UniqueCount    `json:"UniqueCount,omitempty"`
+	Percentiles    *Percentiles    `json:"Percentiles,omitempty"`
+	ExtendedStats  *ExtendedStats  `json:"ExtendedStats,omitempty"`
+	Min            *Min            `json:"Min,omitempty"`
+	Max            *Max            `json:"Max,omitempty"`
+	Sum            *Sum            `json:"Sum,omitempty"`
+	Average        *Average        `json:"Average,omitempty"`
+	MovingFunction *MovingFunction `json:"MovingFunction,omitempty"`
+	Logs           *Logs           `json:"Logs,omitempty"`
+	Rate           *Rate           `json:"Rate,omitempty"`
+	TopMetrics     *TopMetrics     `json:"TopMetrics,omitempty"`
+}
+
+// NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics creates a new CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics object.
+func NewCountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics() *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics {
+	return &CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` as JSON.
+func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
+	if resource.Count != nil {
+		return json.Marshal(resource.Count)
+	}
+	if resource.MovingAverage != nil {
+		return json.Marshal(resource.MovingAverage)
+	}
+	if resource.Derivative != nil {
+		return json.Marshal(resource.Derivative)
+	}
+	if resource.CumulativeSum != nil {
+		return json.Marshal(resource.CumulativeSum)
+	}
+	if resource.BucketScript != nil {
+		return json.Marshal(resource.BucketScript)
+	}
+	if resource.SerialDiff != nil {
+		return json.Marshal(resource.SerialDiff)
+	}
+	if resource.RawData != nil {
+		return json.Marshal(resource.RawData)
+	}
+	if resource.RawDocument != nil {
+		return json.Marshal(resource.RawDocument)
+	}
+	if resource.UniqueCount != nil {
+		return json.Marshal(resource.UniqueCount)
+	}
+	if resource.Percentiles != nil {
+		return json.Marshal(resource.Percentiles)
+	}
+	if resource.ExtendedStats != nil {
+		return json.Marshal(resource.ExtendedStats)
+	}
+	if resource.Min != nil {
+		return json.Marshal(resource.Min)
+	}
+	if resource.Max != nil {
+		return json.Marshal(resource.Max)
+	}
+	if resource.Sum != nil {
+		return json.Marshal(resource.Sum)
+	}
+	if resource.Average != nil {
+		return json.Marshal(resource.Average)
+	}
+	if resource.MovingFunction != nil {
+		return json.Marshal(resource.MovingFunction)
+	}
+	if resource.Logs != nil {
+		return json.Marshal(resource.Logs)
+	}
+	if resource.Rate != nil {
+		return json.Marshal(resource.Rate)
+	}
+	if resource.TopMetrics != nil {
+		return json.Marshal(resource.TopMetrics)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
+func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return errors.New("discriminator field 'type' not found in payload")
+	}
+
+	switch discriminator {
+	case "avg":
+		var average Average
+		if err := json.Unmarshal(raw, &average); err != nil {
+			return err
+		}
+
+		resource.Average = &average
+		return nil
+	case "bucket_script":
+		var bucketScript BucketScript
+		if err := json.Unmarshal(raw, &bucketScript); err != nil {
+			return err
+		}
+
+		resource.BucketScript = &bucketScript
+		return nil
+	case "cardinality":
+		var uniqueCount UniqueCount
+		if err := json.Unmarshal(raw, &uniqueCount); err != nil {
+			return err
+		}
+
+		resource.UniqueCount = &uniqueCount
+		return nil
+	case "count":
+		var count Count
+		if err := json.Unmarshal(raw, &count); err != nil {
+			return err
+		}
+
+		resource.Count = &count
+		return nil
+	case "cumulative_sum":
+		var cumulativeSum CumulativeSum
+		if err := json.Unmarshal(raw, &cumulativeSum); err != nil {
+			return err
+		}
+
+		resource.CumulativeSum = &cumulativeSum
+		return nil
+	case "derivative":
+		var derivative Derivative
+		if err := json.Unmarshal(raw, &derivative); err != nil {
+			return err
+		}
+
+		resource.Derivative = &derivative
+		return nil
+	case "extended_stats":
+		var extendedStats ExtendedStats
+		if err := json.Unmarshal(raw, &extendedStats); err != nil {
+			return err
+		}
+
+		resource.ExtendedStats = &extendedStats
+		return nil
+	case "logs":
+		var logs Logs
+		if err := json.Unmarshal(raw, &logs); err != nil {
+			return err
+		}
+
+		resource.Logs = &logs
+		return nil
+	case "max":
+		var max Max
+		if err := json.Unmarshal(raw, &max); err != nil {
+			return err
+		}
+
+		resource.Max = &max
+		return nil
+	case "min":
+		var min Min
+		if err := json.Unmarshal(raw, &min); err != nil {
+			return err
+		}
+
+		resource.Min = &min
+		return nil
+	case "moving_avg":
+		var movingAverage MovingAverage
+		if err := json.Unmarshal(raw, &movingAverage); err != nil {
+			return err
+		}
+
+		resource.MovingAverage = &movingAverage
+		return nil
+	case "moving_fn":
+		var movingFunction MovingFunction
+		if err := json.Unmarshal(raw, &movingFunction); err != nil {
+			return err
+		}
+
+		resource.MovingFunction = &movingFunction
+		return nil
+	case "percentiles":
+		var percentiles Percentiles
+		if err := json.Unmarshal(raw, &percentiles); err != nil {
+			return err
+		}
+
+		resource.Percentiles = &percentiles
+		return nil
+	case "rate":
+		var rate Rate
+		if err := json.Unmarshal(raw, &rate); err != nil {
+			return err
+		}
+
+		resource.Rate = &rate
+		return nil
+	case "raw_data":
+		var rawData RawData
+		if err := json.Unmarshal(raw, &rawData); err != nil {
+			return err
+		}
+
+		resource.RawData = &rawData
+		return nil
+	case "raw_document":
+		var rawDocument RawDocument
+		if err := json.Unmarshal(raw, &rawDocument); err != nil {
+			return err
+		}
+
+		resource.RawDocument = &rawDocument
+		return nil
+	case "serial_diff":
+		var serialDiff SerialDiff
+		if err := json.Unmarshal(raw, &serialDiff); err != nil {
+			return err
+		}
+
+		resource.SerialDiff = &serialDiff
+		return nil
+	case "sum":
+		var sum Sum
+		if err := json.Unmarshal(raw, &sum); err != nil {
+			return err
+		}
+
+		resource.Sum = &sum
+		return nil
+	case "top_metrics":
+		var topMetrics TopMetrics
+		if err := json.Unmarshal(raw, &topMetrics); err != nil {
+			return err
+		}
+
+		resource.TopMetrics = &topMetrics
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+}
+
+type StringOrPipelineMetricAggregationType struct {
+	String                        *string                        `json:"String,omitempty"`
+	PipelineMetricAggregationType *PipelineMetricAggregationType `json:"PipelineMetricAggregationType,omitempty"`
+}
+
+// NewStringOrPipelineMetricAggregationType creates a new StringOrPipelineMetricAggregationType object.
+func NewStringOrPipelineMetricAggregationType() *StringOrPipelineMetricAggregationType {
+	return &StringOrPipelineMetricAggregationType{
+		String: (func(input string) *string { return &input })("count"),
+	}
+}
+
+type StringOrDataqueryInlineScript struct {
+	String                *string                `json:"String,omitempty"`
+	DataqueryInlineScript *DataqueryInlineScript `json:"DataqueryInlineScript,omitempty"`
+}
+
+// NewStringOrDataqueryInlineScript creates a new StringOrDataqueryInlineScript object.
+func NewStringOrDataqueryInlineScript() *StringOrDataqueryInlineScript {
+	return &StringOrDataqueryInlineScript{}
+}
+
+type MovingAverageOrDerivativeOrCumulativeSumOrBucketScript struct {
+	MovingAverage *MovingAverage `json:"MovingAverage,omitempty"`
+	Derivative    *Derivative    `json:"Derivative,omitempty"`
+	CumulativeSum *CumulativeSum `json:"CumulativeSum,omitempty"`
+	BucketScript  *BucketScript  `json:"BucketScript,omitempty"`
+}
+
+// NewMovingAverageOrDerivativeOrCumulativeSumOrBucketScript creates a new MovingAverageOrDerivativeOrCumulativeSumOrBucketScript object.
+func NewMovingAverageOrDerivativeOrCumulativeSumOrBucketScript() *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript {
+	return &MovingAverageOrDerivativeOrCumulativeSumOrBucketScript{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `MovingAverageOrDerivativeOrCumulativeSumOrBucketScript` as JSON.
+func (resource MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) MarshalJSON() ([]byte, error) {
+	if resource.MovingAverage != nil {
+		return json.Marshal(resource.MovingAverage)
+	}
+	if resource.Derivative != nil {
+		return json.Marshal(resource.Derivative)
+	}
+	if resource.CumulativeSum != nil {
+		return json.Marshal(resource.CumulativeSum)
+	}
+	if resource.BucketScript != nil {
+		return json.Marshal(resource.BucketScript)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `MovingAverageOrDerivativeOrCumulativeSumOrBucketScript` from JSON.
+func (resource *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return errors.New("discriminator field 'type' not found in payload")
+	}
+
+	switch discriminator {
+	case "bucket_script":
+		var bucketScript BucketScript
+		if err := json.Unmarshal(raw, &bucketScript); err != nil {
+			return err
+		}
+
+		resource.BucketScript = &bucketScript
+		return nil
+	case "cumulative_sum":
+		var cumulativeSum CumulativeSum
+		if err := json.Unmarshal(raw, &cumulativeSum); err != nil {
+			return err
+		}
+
+		resource.CumulativeSum = &cumulativeSum
+		return nil
+	case "derivative":
+		var derivative Derivative
+		if err := json.Unmarshal(raw, &derivative); err != nil {
+			return err
+		}
+
+		resource.Derivative = &derivative
+		return nil
+	case "moving_avg":
+		var movingAverage MovingAverage
+		if err := json.Unmarshal(raw, &movingAverage); err != nil {
+			return err
+		}
+
+		resource.MovingAverage = &movingAverage
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+}
+
+type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
+	BucketScript   *BucketScript   `json:"BucketScript,omitempty"`
+	CumulativeSum  *CumulativeSum  `json:"CumulativeSum,omitempty"`
+	Derivative     *Derivative     `json:"Derivative,omitempty"`
+	SerialDiff     *SerialDiff     `json:"SerialDiff,omitempty"`
+	RawData        *RawData        `json:"RawData,omitempty"`
+	RawDocument    *RawDocument    `json:"RawDocument,omitempty"`
+	UniqueCount    *UniqueCount    `json:"UniqueCount,omitempty"`
+	Percentiles    *Percentiles    `json:"Percentiles,omitempty"`
+	ExtendedStats  *ExtendedStats  `json:"ExtendedStats,omitempty"`
+	Min            *Min            `json:"Min,omitempty"`
+	Max            *Max            `json:"Max,omitempty"`
+	Sum            *Sum            `json:"Sum,omitempty"`
+	Average        *Average        `json:"Average,omitempty"`
+	MovingAverage  *MovingAverage  `json:"MovingAverage,omitempty"`
+	MovingFunction *MovingFunction `json:"MovingFunction,omitempty"`
+	Logs           *Logs           `json:"Logs,omitempty"`
+	Rate           *Rate           `json:"Rate,omitempty"`
+	TopMetrics     *TopMetrics     `json:"TopMetrics,omitempty"`
+}
+
+// NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics creates a new BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics object.
+func NewBucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics() *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics {
+	return &BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` as JSON.
+func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) MarshalJSON() ([]byte, error) {
+	if resource.BucketScript != nil {
+		return json.Marshal(resource.BucketScript)
+	}
+	if resource.CumulativeSum != nil {
+		return json.Marshal(resource.CumulativeSum)
+	}
+	if resource.Derivative != nil {
+		return json.Marshal(resource.Derivative)
+	}
+	if resource.SerialDiff != nil {
+		return json.Marshal(resource.SerialDiff)
+	}
+	if resource.RawData != nil {
+		return json.Marshal(resource.RawData)
+	}
+	if resource.RawDocument != nil {
+		return json.Marshal(resource.RawDocument)
+	}
+	if resource.UniqueCount != nil {
+		return json.Marshal(resource.UniqueCount)
+	}
+	if resource.Percentiles != nil {
+		return json.Marshal(resource.Percentiles)
+	}
+	if resource.ExtendedStats != nil {
+		return json.Marshal(resource.ExtendedStats)
+	}
+	if resource.Min != nil {
+		return json.Marshal(resource.Min)
+	}
+	if resource.Max != nil {
+		return json.Marshal(resource.Max)
+	}
+	if resource.Sum != nil {
+		return json.Marshal(resource.Sum)
+	}
+	if resource.Average != nil {
+		return json.Marshal(resource.Average)
+	}
+	if resource.MovingAverage != nil {
+		return json.Marshal(resource.MovingAverage)
+	}
+	if resource.MovingFunction != nil {
+		return json.Marshal(resource.MovingFunction)
+	}
+	if resource.Logs != nil {
+		return json.Marshal(resource.Logs)
+	}
+	if resource.Rate != nil {
+		return json.Marshal(resource.Rate)
+	}
+	if resource.TopMetrics != nil {
+		return json.Marshal(resource.TopMetrics)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
+func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		return errors.New("discriminator field 'type' not found in payload")
+	}
+
+	switch discriminator {
+	case "avg":
+		var average Average
+		if err := json.Unmarshal(raw, &average); err != nil {
+			return err
+		}
+
+		resource.Average = &average
+		return nil
+	case "bucket_script":
+		var bucketScript BucketScript
+		if err := json.Unmarshal(raw, &bucketScript); err != nil {
+			return err
+		}
+
+		resource.BucketScript = &bucketScript
+		return nil
+	case "cardinality":
+		var uniqueCount UniqueCount
+		if err := json.Unmarshal(raw, &uniqueCount); err != nil {
+			return err
+		}
+
+		resource.UniqueCount = &uniqueCount
+		return nil
+	case "cumulative_sum":
+		var cumulativeSum CumulativeSum
+		if err := json.Unmarshal(raw, &cumulativeSum); err != nil {
+			return err
+		}
+
+		resource.CumulativeSum = &cumulativeSum
+		return nil
+	case "derivative":
+		var derivative Derivative
+		if err := json.Unmarshal(raw, &derivative); err != nil {
+			return err
+		}
+
+		resource.Derivative = &derivative
+		return nil
+	case "extended_stats":
+		var extendedStats ExtendedStats
+		if err := json.Unmarshal(raw, &extendedStats); err != nil {
+			return err
+		}
+
+		resource.ExtendedStats = &extendedStats
+		return nil
+	case "logs":
+		var logs Logs
+		if err := json.Unmarshal(raw, &logs); err != nil {
+			return err
+		}
+
+		resource.Logs = &logs
+		return nil
+	case "max":
+		var max Max
+		if err := json.Unmarshal(raw, &max); err != nil {
+			return err
+		}
+
+		resource.Max = &max
+		return nil
+	case "min":
+		var min Min
+		if err := json.Unmarshal(raw, &min); err != nil {
+			return err
+		}
+
+		resource.Min = &min
+		return nil
+	case "moving_avg":
+		var movingAverage MovingAverage
+		if err := json.Unmarshal(raw, &movingAverage); err != nil {
+			return err
+		}
+
+		resource.MovingAverage = &movingAverage
+		return nil
+	case "moving_fn":
+		var movingFunction MovingFunction
+		if err := json.Unmarshal(raw, &movingFunction); err != nil {
+			return err
+		}
+
+		resource.MovingFunction = &movingFunction
+		return nil
+	case "percentiles":
+		var percentiles Percentiles
+		if err := json.Unmarshal(raw, &percentiles); err != nil {
+			return err
+		}
+
+		resource.Percentiles = &percentiles
+		return nil
+	case "rate":
+		var rate Rate
+		if err := json.Unmarshal(raw, &rate); err != nil {
+			return err
+		}
+
+		resource.Rate = &rate
+		return nil
+	case "raw_data":
+		var rawData RawData
+		if err := json.Unmarshal(raw, &rawData); err != nil {
+			return err
+		}
+
+		resource.RawData = &rawData
+		return nil
+	case "raw_document":
+		var rawDocument RawDocument
+		if err := json.Unmarshal(raw, &rawDocument); err != nil {
+			return err
+		}
+
+		resource.RawDocument = &rawDocument
+		return nil
+	case "serial_diff":
+		var serialDiff SerialDiff
+		if err := json.Unmarshal(raw, &serialDiff); err != nil {
+			return err
+		}
+
+		resource.SerialDiff = &serialDiff
+		return nil
+	case "sum":
+		var sum Sum
+		if err := json.Unmarshal(raw, &sum); err != nil {
+			return err
+		}
+
+		resource.Sum = &sum
+		return nil
+	case "top_metrics":
+		var topMetrics TopMetrics
+		if err := json.Unmarshal(raw, &topMetrics); err != nil {
+			return err
+		}
+
+		resource.TopMetrics = &topMetrics
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
 }

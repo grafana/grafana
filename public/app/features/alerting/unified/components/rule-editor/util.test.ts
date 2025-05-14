@@ -3,7 +3,7 @@ import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/type
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
-  checkForPathSeparator,
+  containsPathSeparator,
   findRenamedDataQueryReferences,
   getThresholdsForQueries,
   queriesWithUpdatedReferences,
@@ -229,17 +229,15 @@ describe('rule-editor', () => {
   });
 });
 
-describe('checkForPathSeparator', () => {
-  it('should not allow strings with /', () => {
-    expect(checkForPathSeparator('foo / bar')).not.toBe(true);
-    expect(typeof checkForPathSeparator('foo / bar')).toBe('string');
+describe('containsPathSeparator', () => {
+  it('should return true for strings with /', () => {
+    expect(containsPathSeparator('foo / bar')).toBe(true);
   });
-  it('should not allow strings with \\', () => {
-    expect(checkForPathSeparator('foo \\ bar')).not.toBe(true);
-    expect(typeof checkForPathSeparator('foo \\ bar')).toBe('string');
+  it('should return true for strings with \\', () => {
+    expect(containsPathSeparator('foo \\ bar')).toBe(true);
   });
-  it('should allow anything without / or \\', () => {
-    expect(checkForPathSeparator('foo bar')).toBe(true);
+  it('should return false for strings without / or \\', () => {
+    expect(containsPathSeparator('foo !@#$%^&*() <> [] {} bar')).toBe(false);
   });
 });
 
@@ -424,7 +422,7 @@ describe('findRenamedReferences', () => {
       { refId: 'MATH', model: { datasource: '-100' } },
       { refId: 'B' },
       { refId: 'C' },
-    ] as AlertQuery[];
+    ] as Array<AlertQuery<ExpressionQuery>>;
 
     // @ts-expect-error
     const updated = [
@@ -432,7 +430,7 @@ describe('findRenamedReferences', () => {
       { refId: 'REDUCE', model: { datasource: '-100' } },
       { refId: 'B' },
       { refId: 'C' },
-    ] as AlertQuery[];
+    ] as Array<AlertQuery<ExpressionQuery>>;
 
     expect(findRenamedDataQueryReferences(previous, updated)).toEqual(['A', 'FOO']);
   });

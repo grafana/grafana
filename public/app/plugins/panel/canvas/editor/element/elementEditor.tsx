@@ -3,8 +3,8 @@ import { get as lodashGet } from 'lodash';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
-  DEFAULT_CANVAS_ELEMENT_CONFIG,
   canvasElementRegistry,
+  DEFAULT_CANVAS_ELEMENT_CONFIG,
   defaultElementItems,
 } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -118,6 +118,9 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
+
+      optionBuilder.addDataLinks(builder, ctx);
+      optionBuilder.addActions(builder, ctx);
     },
   };
 }

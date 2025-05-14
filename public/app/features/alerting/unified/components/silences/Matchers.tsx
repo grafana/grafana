@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { TagList, useStyles2 } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';

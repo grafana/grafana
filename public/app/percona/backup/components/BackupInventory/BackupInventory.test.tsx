@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
@@ -11,12 +11,6 @@ import { BackupInventory } from './BackupInventory';
 jest.mock('./BackupInventory.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 jest.mock('app/percona/shared/core/hooks/recurringCall.hook');
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useLocation: () => ({
-    pathname: '/',
-  }),
-}));
 
 describe('BackupInventory', () => {
   it('should send correct data to Table', async () => {
@@ -29,7 +23,7 @@ describe('BackupInventory', () => {
           },
         } as StoreState)}
       >
-        {wrapWithGrafanaContextMock(<BackupInventory />)}
+        <MemoryRouter>{wrapWithGrafanaContextMock(<BackupInventory />)}</MemoryRouter>
       </Provider>
     );
 

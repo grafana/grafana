@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { ComponentProps, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { InlineField, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -12,15 +12,15 @@ interface Props {
 }
 
 function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
-  return alertManager.name === GRAFANA_RULES_SOURCE_NAME ? 'Grafana' : alertManager.name.slice(0, 37);
+  return alertManager.name === GRAFANA_RULES_SOURCE_NAME ? 'Grafana' : alertManager.name;
 }
 
 export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
 
-  const options: Array<SelectableValue<string>> = useMemo(() => {
-    return availableAlertManagers.map((ds) => ({
+  const options = useMemo(() => {
+    return availableAlertManagers.map<SelectableValue<string>>((ds) => ({
       label: getAlertManagerLabel(ds),
       value: ds.name,
       imgUrl: ds.imgUrl,
@@ -44,10 +44,10 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
           }
         }}
         options={options}
-        maxMenuHeight={500}
         noOptionsMessage="No datasources found"
         value={selectedAlertmanager}
         getOptionLabel={(o) => o.label}
+        components={{ Option: CustomOption }}
       />
     </InlineField>
   );
@@ -58,3 +58,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
   }),
 });
+
+// custom option that overwrites the default "white-space: nowrap" for Alertmanager names that are really long
+const CustomOption = (props: ComponentProps<typeof SelectMenuOptions>) => (
+  <SelectMenuOptions
+    {...props}
+    renderOptionLabel={({ label }) => <div style={{ whiteSpace: 'pre-line' }}>{label}</div>}
+  />
+);

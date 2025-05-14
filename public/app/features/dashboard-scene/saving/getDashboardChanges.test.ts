@@ -1,32 +1,21 @@
-import { AdHocVariableModel } from '@grafana/data';
 import { Dashboard, Panel } from '@grafana/schema';
 
-import { adHocVariableFiltersEqual, getDashboardChanges, getPanelChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges, getPanelChanges } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
-    expect(
-      adHocVariableFiltersEqual(
-        { filters: [] } as unknown as AdHocVariableModel,
-        { filters: [] } as unknown as AdHocVariableModel
-      )
-    ).toBeTruthy();
+    expect(adHocVariableFiltersEqual([], [])).toBeTruthy();
   });
 
   it('should compare different length filter arrays', () => {
-    expect(
-      adHocVariableFiltersEqual(
-        { filters: [] } as unknown as AdHocVariableModel,
-        { filters: [{ value: '', key: '', operator: '' }] } as unknown as AdHocVariableModel
-      )
-    ).toBeFalsy();
+    expect(adHocVariableFiltersEqual([], [{ value: '', key: '', operator: '' }])).toBeFalsy();
   });
 
   it('should compare equal filter arrays', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }]
       )
     ).toBeTruthy();
   });
@@ -34,8 +23,8 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where operator differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'weee' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwe', operator: 'weee' }]
       )
     ).toBeFalsy();
   });
@@ -43,8 +32,8 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where key differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwer', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwer', operator: 'wer' }]
       )
     ).toBeFalsy();
   });
@@ -52,10 +41,30 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where value differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asdio', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asdio', key: 'qwe', operator: 'wer' }]
       )
     ).toBeFalsy();
+  });
+
+  describe('when filter property is undefined', () => {
+    afterAll(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should compare two adhoc variables where both are missing the filter property and return true', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+      expect(adHocVariableFiltersEqual(undefined, undefined)).toBeTruthy();
+
+      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    });
+
+    it('should compare two adhoc variables where one is undefined and return false', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+
+      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    });
   });
 });
 
@@ -85,6 +94,7 @@ describe('getDashboardChanges', () => {
       ],
     },
   };
+
   it('should return the correct result when no changes', () => {
     const changed = { ...initial };
 
@@ -104,7 +114,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -135,7 +145,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(newDashInitial, changed, false, false, false);
+    const result = getRawDashboardChanges(newDashInitial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -165,7 +175,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -206,7 +216,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, true, false, false);
+    const result = getRawDashboardChanges(initial, changed, true, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -233,7 +243,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -271,7 +281,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, true);
+    const result = getRawDashboardChanges(initial, changed, false, false, true);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -311,7 +321,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -362,7 +372,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, true, false);
+    const result = getRawDashboardChanges(initial, changed, false, true, false);
 
     expect(result).toEqual(expectedChanges);
   });

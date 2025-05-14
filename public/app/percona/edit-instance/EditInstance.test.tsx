@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom-v5-compat';
 
 import { configureStore } from 'app/store/configureStore';
 
@@ -16,7 +15,12 @@ jest.mock('app/percona/inventory/Inventory.service');
 const renderWithDefaults = () =>
   render(
     <MemoryRouter initialEntries={['/edit-instance/service_id']}>
-      <Provider store={configureStore()}>{wrapWithGrafanaContextMock(<EditInstancePage />)}</Provider>
+      <Routes>
+        <Route
+          path="/edit-instance/:serviceId"
+          element={<Provider store={configureStore()}>{wrapWithGrafanaContextMock(<EditInstancePage />)}</Provider>}
+        />
+      </Routes>
     </MemoryRouter>
   );
 

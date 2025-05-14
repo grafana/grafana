@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
@@ -99,6 +98,7 @@ export const droneTopItem: CanvasElementItem = {
         fixed: 'transparent',
       },
     },
+    links: options?.links ?? [],
   }),
 
   // Called when data changes

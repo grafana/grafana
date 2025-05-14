@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
 import { FormApi } from 'final-form';
 import { debounce } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Form, FormSpy } from 'react-final-form';
 
 import { IconButton, useStyles2 } from '@grafana/ui';

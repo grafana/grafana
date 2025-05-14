@@ -1,23 +1,24 @@
 import { isNumber } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
+  DisplayProcessor,
+  DisplayValue,
   DisplayValueAlignmentFactors,
+  FieldConfig,
   FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
-  FieldConfig,
-  DisplayProcessor,
-  DisplayValue,
   VizOrientation,
 } from '@grafana/data';
 import { BarGaugeSizing } from '@grafana/schema';
-import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { Options, defaultOptions } from './panelcfg.gen';
+import { BarGaugeLegend } from './BarGaugeLegend';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -28,6 +29,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
+    const spacing = this.getItemSpacing();
+    // check if the total height is bigger than the visualization height, if so, there will be scrollbars for overflow
+    const isOverflow = (height + spacing) * count - spacing > this.props.height;
 
     let processor: DisplayProcessor | undefined = undefined;
     if (view && isNumber(colIndex)) {
@@ -44,7 +48,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         text={options.text}
         display={processor}
         theme={config.theme2}
-        itemSpacing={this.getItemSpacing()}
+        itemSpacing={spacing}
         displayMode={options.displayMode}
         onClick={openMenu}
         className={targetClassName}
@@ -52,6 +56,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         showUnfilled={options.showUnfilled}
         valueDisplayMode={options.valueMode}
         namePlacement={options.namePlacement}
+        isOverflow={isOverflow}
       />
     );
   };
@@ -123,26 +128,43 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     return { minVizWidth, minVizHeight, maxVizHeight };
   }
 
+  getLegend() {
+    const { options, data } = this.props;
+    const { legend } = options;
+
+    if (legend.showLegend && data && data.series.length > 0) {
+      return <BarGaugeLegend data={data.series} {...legend} />;
+    }
+
+    return null;
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
 
     const { minVizWidth, minVizHeight, maxVizHeight } = this.calcBarSize();
 
     return (
-      <VizRepeater
-        source={data}
-        getAlignmentFactors={getDisplayValueAlignmentFactors}
-        getValues={this.getValues}
-        renderValue={this.renderValue}
-        renderCounter={renderCounter}
-        width={width}
-        height={height}
-        maxVizHeight={maxVizHeight}
-        minVizWidth={minVizWidth}
-        minVizHeight={minVizHeight}
-        itemSpacing={this.getItemSpacing()}
-        orientation={options.orientation}
-      />
+      <VizLayout width={width} height={height} legend={this.getLegend()}>
+        {(vizWidth: number, vizHeight: number) => {
+          return (
+            <VizRepeater
+              source={data}
+              getAlignmentFactors={getDisplayValueAlignmentFactors}
+              getValues={this.getValues}
+              renderValue={this.renderValue}
+              renderCounter={renderCounter}
+              width={vizWidth}
+              height={vizHeight}
+              maxVizHeight={maxVizHeight}
+              minVizWidth={minVizWidth}
+              minVizHeight={minVizHeight}
+              itemSpacing={this.getItemSpacing()}
+              orientation={options.orientation}
+            />
+          );
+        }}
+      </VizLayout>
     );
   }
 }
