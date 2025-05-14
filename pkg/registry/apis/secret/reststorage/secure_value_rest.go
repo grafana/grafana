@@ -202,11 +202,6 @@ func (s *SecureValueRest) Update(
 	// TODO: do we need to do this here again? Probably not, but double-check!
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
-	newSecureValue.Status = secretv0alpha1.SecureValueStatus{
-		Message: "Updating secure value",
-		Phase:   secretv0alpha1.SecureValuePhasePending,
-	}
-
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, false, fmt.Errorf("missing auth info in context")

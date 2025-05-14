@@ -111,8 +111,6 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 	// Never true in this case since updating a secure value is async.
 	const updateIsSync = false
 
-	// TODO: if updating requires communicating with external services, the secure value metadata status must be changed to Pending
-
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
@@ -125,6 +123,16 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 			return contracts.ErrSecureValueOperationInProgress
 		}
 
+		// Succeed immediately if the value is not going to be updated
+		if newSecureValue.Spec.Value == "" {
+			newSecureValue.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}
+		} else {
+			newSecureValue.Status = secretv0alpha1.SecureValueStatus{
+				Message: "Updating secure value",
+				Phase:   secretv0alpha1.SecureValuePhasePending,
+			}
+		}
+
 		// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 		updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
 		if err != nil {
@@ -132,16 +140,19 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 		}
 		out = updatedSecureValue
 
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			Type:      contracts.UpdateSecretOutboxMessage,
-			Name:      newSecureValue.Name,
-			Namespace: newSecureValue.Namespace,
-			// TODO: encrypt
-			EncryptedSecret: newSecureValue.Spec.Value,
-			KeeperName:      newSecureValue.Spec.Keeper,
-			ExternalID:      &updatedSecureValue.Status.ExternalID,
-		}); err != nil {
-			return fmt.Errorf("failed to append message to update secure value to outbox queue: %w", err)
+		// Only the value needs to be updated asynchronously by the outbox worker
+		if newSecureValue.Spec.Value != "" {
+			if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+				Type:      contracts.UpdateSecretOutboxMessage,
+				Name:      newSecureValue.Name,
+				Namespace: newSecureValue.Namespace,
+				// TODO: encrypt
+				EncryptedSecret: newSecureValue.Spec.Value,
+				KeeperName:      newSecureValue.Spec.Keeper,
+				ExternalID:      &updatedSecureValue.Status.ExternalID,
+			}); err != nil {
+				return fmt.Errorf("failed to append message to update secure value to outbox queue: %w", err)
+			}
 		}
 
 		return nil
