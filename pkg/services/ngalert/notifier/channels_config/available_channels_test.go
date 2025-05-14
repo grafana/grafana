@@ -11,7 +11,7 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		receiverType         string
 		expectedSecretFields []string
 	}{
-		{receiverType: "dingding", expectedSecretFields: []string{}},
+		{receiverType: "dingding", expectedSecretFields: []string{"url"}},
 		{receiverType: "kafka", expectedSecretFields: []string{"password"}},
 		{receiverType: "email", expectedSecretFields: []string{}},
 		{receiverType: "pagerduty", expectedSecretFields: []string{"integrationKey"}},
