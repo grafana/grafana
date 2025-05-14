@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -96,25 +97,6 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
-
-/** rewrite this test using the new functions
-func Test_DeleteMigrationSession(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("deletes a session from the db", func(t *testing.T) {
-		uid := "qwerty"
-		session, snapshots, err := s.DeleteMigrationSessionByUID(ctx, uid)
-		require.NoError(t, err)
-		require.Equal(t, uid, session.UID)
-		require.NotNil(t, snapshots)
-
-		// now we try to find it, should return an error
-		_, err = s.GetMigrationSessionByUID(ctx, uid)
-		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
-	})
-}
-*/
 
 func Test_SnapshotManagement(t *testing.T) {
 	t.Parallel()
@@ -225,7 +207,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  1,
 			ResultLimit: numResources,
-			SortColumn:  cloudmigration.SortColumnName,
+			SortColumn:  cloudmigration.SortColumnID,
 			SortOrder:   cloudmigration.SortOrderAsc,
 		})
 		require.NoError(t, err)
@@ -236,9 +218,9 @@ func Test_SnapshotManagement(t *testing.T) {
 			assert.Equal(t, cloudmigration.ItemStatusPending, r.Status)
 
 			if i%2 == 0 {
-				r.Status = cloudmigration.ItemStatusOK
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusOK
 			} else {
-				r.Status = cloudmigration.ItemStatusError
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusError
 			}
 		}
 
@@ -255,7 +237,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  1,
 			ResultLimit: numResources,
-			SortColumn:  cloudmigration.SortColumnName,
+			SortColumn:  cloudmigration.SortColumnID,
 			SortOrder:   cloudmigration.SortOrderAsc,
 		})
 		require.NoError(t, err)
@@ -449,6 +431,7 @@ func Test_SnapshotResources(t *testing.T) {
 		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
 		const numResources = 50001
 		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+		snapshotUid := uuid.New().String()
 
 		t.Run("create the resources", func(t *testing.T) {
 			for i := 0; i < numResources; i++ {
@@ -461,21 +444,21 @@ func Test_SnapshotResources(t *testing.T) {
 			}
 
 			// Attempt to create all resources at once -- it should batch under the hood
-			err := s.CreateSnapshotResources(ctx, "abc123", resources)
+			err := s.CreateSnapshotResources(ctx, snapshotUid, resources)
 			require.NoError(t, err)
 
 			// Get the resources and ensure they're all there
-			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnName,
+				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
 			assert.Len(t, resources, numResources)
 		})
 
-		t.Run("update resources", func(t *testing.T) {
+		t.Run("update the resources", func(t *testing.T) {
 			// Initially, update with a mix of ok and error statuses
 			for i := 0; i < numResources; i++ {
 				if i%2 == 0 {
@@ -487,13 +470,13 @@ func Test_SnapshotResources(t *testing.T) {
 				}
 			}
 
-			err := s.UpdateSnapshotResources(ctx, "abc123", resources)
+			err := s.UpdateSnapshotResources(ctx, snapshotUid, resources)
 			require.NoError(t, err)
 
-			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnName,
+				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
@@ -515,13 +498,13 @@ func Test_SnapshotResources(t *testing.T) {
 				resources[i].Error = "test-error-message-2"
 			}
 
-			err = s.UpdateSnapshotResources(ctx, "abc123", resources)
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
 			require.NoError(t, err)
 
-			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnName,
+				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
@@ -537,13 +520,13 @@ func Test_SnapshotResources(t *testing.T) {
 				resources[i].Status = cloudmigration.ItemStatusOK
 			}
 
-			err = s.UpdateSnapshotResources(ctx, "abc123", resources)
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
 			require.NoError(t, err)
 
-			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnName,
+				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
