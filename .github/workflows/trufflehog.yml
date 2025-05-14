@@ -1,0 +1,33 @@
+name: Trufflehog
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  trufflehog:
+    name: Run Trufflehog
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # clone the repo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Trufflehog
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified
