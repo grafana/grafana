@@ -59,17 +59,19 @@ export type ContactPoint = MergeDeep<
   Receiver,
   {
     metadata: {
-      annotations: AlertingNotificationsEntityMetadataAnnotations &
-        Partial<{
-          'grafana.com/inUse/routes': `${number}`;
-          'grafana.com/inUse/rules': `${number}`;
-        }>;
+      annotations: ContactPointMetadataAnnotations;
     };
     spec: {
       integrations: Integration[];
     };
   }
 >;
+
+export type ContactPointMetadataAnnotations = AlertingNotificationsEntityMetadataAnnotations &
+  Partial<{
+    'grafana.com/inUse/routes': `${number}`;
+    'grafana.com/inUse/rules': `${number}`;
+  }>;
 
 export type AlertingNotificationsEntityMetadataAnnotations = Partial<{
   'grafana.com/access/canAdmin': 'true' | 'false';
