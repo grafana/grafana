@@ -13,12 +13,6 @@ import {
 import { createStore } from '../state/store';
 import { GraphiteSegment } from '../types';
 
-jest.mock('app/angular/promiseToDigest', () => ({
-  promiseToDigest: () => {
-    return (p: Promise<unknown>) => p;
-  },
-}));
-
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));

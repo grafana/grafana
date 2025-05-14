@@ -56,8 +56,16 @@ export default class DraggableManagerDemo extends PureComponent<{}, DraggableMan
           <h2>
             <Trans i18nKey="explore.draggable-manager-demo.dragging-a-divider">Dragging a divider</Trans>
           </h2>
-          <p>Click and drag the gray divider in the colored area, below.</p>
-          <p>Value: {dividerPosition.toFixed(3)}</p>
+          <p>
+            <Trans i18nKey="explore.draggable-manager-demo.click-and-drag-gray-divider">
+              Click and drag the gray divider in the colored area, below.
+            </Trans>
+          </p>
+          <p>
+            <Trans i18nKey="explore.draggable-manager-demo.value" values={{ dividerPos: dividerPosition.toFixed(3) }}>
+              Value: {'{{ dividerPos }}'}
+            </Trans>
+          </p>
           <div className="DraggableManagerDemo--realm">
             <DividerDemo position={dividerPosition} updateState={this._updateState} />
           </div>
@@ -71,7 +79,14 @@ export default class DraggableManagerDemo extends PureComponent<{}, DraggableMan
               Click and drag horizontally somewhere in the colored area, below.
             </Trans>
           </p>
-          <p>Value: {regionDragging && regionDragging.map((n) => n.toFixed(3)).join(', ')}</p>
+          <p>
+            <Trans
+              i18nKey="explore.draggable-manager-demo.drag-value"
+              values={{ dragValue: regionDragging && regionDragging.map((n) => n.toFixed(3)).join(', ') }}
+            >
+              Value: {'{{dragValue}}'}
+            </Trans>
+          </p>
           <div className="DraggableManagerDemo--realm">
             <RegionDemo regionCursor={regionCursor} regionDragging={regionDragging} updateState={this._updateState} />
           </div>

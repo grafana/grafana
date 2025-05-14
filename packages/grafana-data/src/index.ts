@@ -257,6 +257,7 @@ export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+export { throwIfAngular } from './utils/throwIfAngular';
 
 // Tranformations
 export { standardTransformers } from './transformations/transformers';
@@ -551,10 +552,7 @@ export {
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
   type ComponentTypeWithExtensionMeta,
-  type PluginExtensionConfig,
   type PluginExtensionFunction,
-  type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
@@ -601,6 +599,7 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
+  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,

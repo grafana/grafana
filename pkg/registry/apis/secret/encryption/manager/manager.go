@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -39,7 +38,7 @@ var (
 
 type EncryptionManager struct {
 	tracer     tracing.Tracer
-	store      encryptionstorage.DataKeyStorage
+	store      contracts.DataKeyStorage
 	enc        cipher.Cipher
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
@@ -58,7 +57,7 @@ type EncryptionManager struct {
 // ProvideEncryptionManager returns an EncryptionManager that uses the OSS KMS providers, along with any additional third-party (e.g. Enterprise) KMS providers
 func ProvideEncryptionManager(
 	tracer tracing.Tracer,
-	store encryptionstorage.DataKeyStorage,
+	store contracts.DataKeyStorage,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	thirdPartyKMS encryption.ProviderMap,
@@ -149,9 +148,10 @@ func (s *EncryptionManager) registerUsageMetrics() {
 	})
 }
 
+// TODO: Why do we need to use a global variable for this?
 var b64 = base64.RawStdEncoding
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte, opt contracts.EncryptionOptions) ([]byte, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
 	defer span.End()
 
@@ -163,13 +163,11 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 		}).Inc()
 	}()
 
-	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
-	scope := opt()
-	label := encryption.KeyLabel(scope, s.currentProviderID)
+	label := encryption.KeyLabel(s.currentProviderID)
 
 	var id string
 	var dataKey []byte
-	id, dataKey, err = s.currentDataKey(ctx, namespace, label, scope)
+	id, dataKey, err = s.currentDataKey(ctx, namespace, label)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
 		return nil, err
@@ -197,7 +195,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
+func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
@@ -211,7 +209,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, namespace, label, scope)
+		id, dataKey, err = s.newDataKey(ctx, namespace, label)
 		if err != nil {
 			return "", nil, err
 		}
@@ -231,7 +229,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
-		if errors.Is(err, encryptionstorage.ErrDataKeyNotFound) {
+		if errors.Is(err, contracts.ErrDataKeyNotFound) {
 			return "", nil, nil
 		}
 		return "", nil, err
@@ -256,7 +254,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string, scope string) (string, []byte, error) {
+func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -278,14 +276,13 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	// 3. Store its encrypted value into the DB.
 	id := util.GenerateShortUID()
 
-	dbDataKey := encryptionstorage.SecretDataKey{
+	dbDataKey := contracts.SecretDataKey{
 		Active:        true,
 		UID:           id,
 		Namespace:     namespace,
 		Provider:      s.currentProviderID,
 		EncryptedData: encrypted,
 		Label:         label,
-		Scope:         scope,
 	}
 
 	err = s.store.CreateDataKey(ctx, &dbDataKey)
@@ -483,7 +480,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 // Look at the comments inline for further details.
 // You can also take a look at the issue below for more context:
 // https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(dataKey *encryptionstorage.SecretDataKey, decrypted []byte) {
+func (s *EncryptionManager) cacheDataKey(dataKey *contracts.SecretDataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{

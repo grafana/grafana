@@ -10,7 +10,7 @@ import {
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { isDashboardLayoutItem } from './types/DashboardLayoutItem';
 
 export interface AddLibraryPanelDrawerState extends SceneObjectState {
   panelToReplaceRef?: SceneObjectRef<VizPanel>;
@@ -35,13 +35,11 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     const panelToReplace = this.state.panelToReplaceRef?.resolve();
 
     if (panelToReplace) {
-      const gridItemToReplace = panelToReplace.parent;
+      const layoutItem = panelToReplace.parent;
 
-      if (!(gridItemToReplace instanceof DashboardGridItem)) {
-        throw new Error('Trying to replace a panel that does not have a DashboardGridItem');
+      if (layoutItem && isDashboardLayoutItem(layoutItem)) {
+        layoutItem.setElementBody(newPanel);
       }
-
-      gridItemToReplace.setState({ body: newPanel });
     } else {
       dashboard.addPanel(newPanel);
     }

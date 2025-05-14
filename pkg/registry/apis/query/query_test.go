@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	frameData "github.com/grafana/grafana-plugin-sdk-go/data"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,6 +81,60 @@ func TestQueryRestConnectHandler(t *testing.T) {
 		"X-Rule-Version":           "version-1",
 		"X-Grafana-Org-Id":         "1",
 	}, *b.client.(mockClient).lastCalledWithHeaders)
+}
+
+func TestInstantQueryFromAlerting(t *testing.T) {
+	builder := &QueryAPIBuilder{
+		converter: &expr.ResultConverter{
+			Features: featuremgmt.WithFeatures(),
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
+	}
+
+	dq := data.DataQuery{}
+	dq.RefID = "A"
+
+	dr := datasourceRequest{
+		Headers: map[string]string{
+			models.FromAlertHeaderName: "true",
+		},
+		Request: &data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				dq,
+			},
+		},
+	}
+
+	fakeFrame := frameData.NewFrame(
+		"A",
+		frameData.NewField("Time", nil, []time.Time{time.Now()}),
+		frameData.NewField("Value", nil, []int64{42}),
+	)
+	fakeFrame.Meta = &frameData.FrameMeta{TypeVersion: frameData.FrameTypeVersion{0, 1}, Type: "numeric-multi"}
+
+	inputQDR := &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			"A": {
+				Frames: frameData.Frames{
+					fakeFrame,
+				},
+			},
+		},
+	}
+
+	request := parsedRequestInfo{
+		Requests: []datasourceRequest{
+			dr,
+		},
+	}
+
+	result, err := builder.convertQueryFromAlerting(context.Background(), dr, inputQDR)
+	require.NoError(t, err)
+
+	require.True(t, isSingleAlertQuery(request), "Expected a valid alert query with a single query to return true")
+	require.NotNil(t, result)
+	require.Equal(t, 1, len(result.Responses["A"].Frames[0].Fields), "Expected a single field not Time and Value")
+	require.Equal(t, "Value", result.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
 }
 
 type mockResponder struct {

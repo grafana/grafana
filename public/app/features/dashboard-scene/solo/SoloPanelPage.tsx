@@ -8,7 +8,7 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
@@ -77,7 +77,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   if (!panel) {
     return (
       <span>
-        Loading <Spinner />
+        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
       </span>
     );
   }

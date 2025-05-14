@@ -5,6 +5,7 @@ import * as React from 'react';
 
 import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -41,11 +42,20 @@ const StateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (loading && !error) {
-    return <LoadingPlaceholder text={'Loading history...'} />;
+    return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
   if (error && !loading) {
-    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.state-history.title-failed-to-fetch-alert-state-history',
+          'Failed to fetch alert state history'
+        )}
+      >
+        {error.message}
+      </Alert>
+    );
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
@@ -84,12 +94,19 @@ const StateHistory = ({ ruleUID }: Props) => {
           label={
             <Label>
               <Stack gap={0.5} alignItems="center">
-                <span>Filter group</span>
+                <span>
+                  <Trans i18nKey="alerting.state-history.filter-group">Filter group</Trans>
+                </span>
                 <Tooltip
                   content={
                     <div>
-                      Filter each state history group either by exact match or a regular expression, ex:{' '}
-                      <code>{`region=eu-west-1`}</code> or <code>{`/region=us-.+/`}</code>
+                      <Trans i18nKey="alerting.state-history.filter-group-tooltip">
+                        Filter each state history group either by exact match or a regular expression, for example:
+                      </Trans>
+                      <div>
+                        <code>{`region=eu-west-1`}</code>
+                        <code>{`/region=us-.+/`}</code>
+                      </div>
                     </div>
                   }
                 >
@@ -99,7 +116,11 @@ const StateHistory = ({ ruleUID }: Props) => {
             </Label>
           }
         >
-          <Input prefix={<Icon name={'search'} />} onChange={handleTextFilter} placeholder="Search" />
+          <Input
+            prefix={<Icon name={'search'} />}
+            onChange={handleTextFilter}
+            placeholder={t('alerting.state-history.placeholder-search', 'Search')}
+          />
         </Field>
       </nav>
       {tables}

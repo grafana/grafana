@@ -49,14 +49,14 @@ describe('generatePath', () => {
     expect(result).toBe('folder/path/my-dashboard.json');
   });
 
-  it('should prepend folderPath to pathFromAnnotation when both are provided', () => {
+  it('should use pathFromAnnotation when both are provided', () => {
     const result = generatePath({
       timestamp,
-      pathFromAnnotation: 'my-custom-path.json',
-      folderPath: 'folder/path',
+      pathFromAnnotation: 'full/path/my-custom-path.json', // this is always the full path
+      folderPath: 'full/path', // this will be a substring
     });
 
-    expect(result).toBe('folder/path/my-custom-path.json');
+    expect(result).toBe('full/path/my-custom-path.json');
   });
 
   it('should handle empty folderPath', () => {

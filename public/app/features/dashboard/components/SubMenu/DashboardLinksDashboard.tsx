@@ -11,6 +11,7 @@ import { ButtonLinkProps } from '@grafana/ui/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
 
+import { t } from '../../../../core/internationalization';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 interface Props {
@@ -45,7 +46,11 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
                 label={resolvedLink.title}
                 testId={selectors.components.DashboardLinks.link}
-                aria-label={`${resolvedLink.title} dashboard`}
+                aria-label={t(
+                  'dashboard.dashboard-links-menu.aria-label-dashboard-name',
+                  '{{dashboardName}} dashboard',
+                  { dashboardName: resolvedLink.title }
+                )}
               />
             );
           })}

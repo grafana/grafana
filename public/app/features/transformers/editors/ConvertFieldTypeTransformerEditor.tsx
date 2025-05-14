@@ -132,7 +132,7 @@ export const ConvertFieldTypeTransformerEditor = ({
         return (
           <div key={`${c.targetField}-${idx}`}>
             <InlineFieldRow>
-              <InlineField label={'Field'}>
+              <InlineField label={t('transformers.convert-field-type-transformer-editor.label-field', 'Field')}>
                 <FieldNamePicker
                   context={{ data: input }}
                   value={c.targetField ?? ''}
@@ -140,11 +140,11 @@ export const ConvertFieldTypeTransformerEditor = ({
                   item={fieldNamePickerSettings}
                 />
               </InlineField>
-              <InlineField label={'as'}>
+              <InlineField label={t('transformers.convert-field-type-transformer-editor.label-as', 'as')}>
                 <Select
                   options={allTypes}
                   value={c.destinationType}
-                  placeholder={'Type'}
+                  placeholder={t('transformers.convert-field-type-transformer-editor.placeholder-type', 'Type')}
                   onChange={onSelectDestinationType(idx)}
                   width={18}
                 />
@@ -152,10 +152,14 @@ export const ConvertFieldTypeTransformerEditor = ({
               {c.destinationType === FieldType.time && (
                 <InlineField
                   label={t('transformers.convert-field-type-transformer-editor.label-input-format', 'Input format')}
-                  tooltip="Specify the format of the input field so Grafana can parse the date string correctly."
+                  tooltip={t(
+                    'transformers.convert-field-type-transformer-editor.tooltip-input-format',
+                    'Specify the format of the input field so Grafana can parse the date string correctly.'
+                  )}
                 >
                   <Input
                     value={c.dateFormat}
+                    // eslint-disable-next-line @grafana/no-untranslated-strings
                     placeholder={'e.g. YYYY-MM-DD'}
                     onChange={onInputFormat(idx)}
                     width={24}
@@ -172,7 +176,13 @@ export const ConvertFieldTypeTransformerEditor = ({
                         'Use an explicit separator when joining array values'
                       )}
                     >
-                      <Input value={c.joinWith} placeholder={'JSON'} onChange={onJoinWithChange(idx)} width={9} />
+                      <Input
+                        value={c.joinWith}
+                        // eslint-disable-next-line @grafana/no-untranslated-strings
+                        placeholder={'JSON'}
+                        onChange={onJoinWithChange(idx)}
+                        width={9}
+                      />
                     </InlineField>
                   )}
                   {targetField?.type === FieldType.time && (
@@ -186,6 +196,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                       >
                         <Input
                           value={c.dateFormat}
+                          // eslint-disable-next-line @grafana/no-untranslated-strings
                           placeholder={'e.g. YYYY-MM-DD'}
                           onChange={onInputFormat(idx)}
                           width={24}
@@ -212,7 +223,10 @@ export const ConvertFieldTypeTransformerEditor = ({
                 icon="trash-alt"
                 variant="secondary"
                 onClick={() => onRemoveConvertFieldType(idx)}
-                aria-label={'Remove convert field type transformer'}
+                aria-label={t(
+                  'transformers.convert-field-type-transformer-editor.aria-label-remove-convert-field-type-transformer',
+                  'Remove convert field type transformer'
+                )}
               />
             </InlineFieldRow>
             {c.destinationType === FieldType.enum && (
@@ -226,7 +240,10 @@ export const ConvertFieldTypeTransformerEditor = ({
         icon="plus"
         onClick={onAddConvertFieldType}
         variant="secondary"
-        aria-label={'Add a convert field type transformer'}
+        aria-label={t(
+          'transformers.convert-field-type-transformer-editor.aria-label-add-a-convert-field-type-transformer',
+          'Add a convert field type transformer'
+        )}
       >
         {'Convert field type'}
       </Button>

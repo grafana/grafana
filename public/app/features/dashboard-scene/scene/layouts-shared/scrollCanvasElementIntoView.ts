@@ -1,4 +1,4 @@
-import { SceneObject } from '@grafana/scenes';
+import { SceneGridRow, SceneObject } from '@grafana/scenes';
 
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';
@@ -18,6 +18,10 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
   let parent = sceneObject.parent;
   while (parent) {
     if (parent instanceof RowItem && parent.state.collapse) {
+      parent.onCollapseToggle();
+    }
+
+    if (parent instanceof SceneGridRow && parent.state.isCollapsed) {
       parent.onCollapseToggle();
     }
 

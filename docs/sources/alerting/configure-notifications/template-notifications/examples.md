@@ -55,6 +55,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
+  custom-payload-webhook:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/#custom-payload
 ---
 
 # Notification template examples
@@ -401,4 +406,58 @@ Execute the template by passing the dot (`.`):
 
 ```template_output
 [FIRING:1, RESOLVED:1] api warning (sql_db)
+```
+
+## Custom JSON payload
+
+The [custom payload option](ref:custom-payload-webhook) in the webhook contact point allows you to customize the payload of webhook notifications using a custom template.
+
+The following example generates a custom JSON payload by executing other templates with `tmpl.Exec`, and using functions like `coll.Dict` and `data.ToJSON` to process and format JSON data.
+
+{{< docs/shared lookup="alerts/example-custom-json-payload.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+```template_output
+{
+ "alerts": [
+  {
+   "endsAt": "0001-01-01T00:00:00Z",
+   "labels": {
+    "alertname": "InstanceDown",
+    "grafana_folder": "Test Folder",
+    "instance": "instance1"
+   },
+   "startsAt": "2025-04-21T10:19:46.179Z",
+   "status": "firing"
+  },
+  {
+   "endsAt": "2025-04-22T10:19:46.179Z",
+   "labels": {
+    "alertname": "CpuUsage",
+    "grafana_folder": "Test Folder",
+    "instance": "instance1"
+   },
+   "startsAt": "2025-04-22T06:19:46.179Z",
+   "status": "resolved"
+  }
+ ],
+ "allVariables": {},
+ "commonAnnotations": {},
+ "commonLabels": {
+  "grafana_folder": "Test Folder",
+  "instance": "instance1"
+ },
+ "externalURL": "http://localhost:3000/",
+ "groupKey": "",
+ "groupLabels": {
+  "group_label": "group_label_value"
+ },
+ "message": "**Firing**\n\nValue: B=22, C=1\nLabels:\n - alertname = InstanceDown\n - grafana_folder = Test Folder\n - instance = instance1\nAnnotations:\n - summary = Instance instance1 has been down for more than 5 minutes\nSource: http://grafana.com/alerting/grafana/cdeqmlhvflz40f/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DInstanceDown\u0026matcher=grafana_folder%3DTest+Folder\u0026matcher=instance%3Dinstance1\u0026orgId=1\nDashboard: http://localhost:3000/d/dashboard_uid?from=1745227186179\u0026orgId=1\u0026to=1745317189058\nPanel: http://localhost:3000/d/dashboard_uid?from=1745227186179\u0026orgId=1\u0026to=1745317189058\u0026viewPanel=1\n\n\n**Resolved**\n\nValue: B=22, C=1\nLabels:\n - alertname = CpuUsage\n - grafana_folder = Test Folder\n - instance = instance1\nAnnotations:\n - summary = CPU usage above 90%\nSource: http://grafana.com/alerting/grafana/oZSMdGj7z/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DCpuUsage\u0026matcher=grafana_folder%3DTest+Folder\u0026matcher=instance%3Dinstance1\u0026orgId=1\nDashboard: http://localhost:3000/d/dashboard_uid?from=1745299186179\u0026orgId=1\u0026to=1745317186179\nPanel: http://localhost:3000/d/dashboard_uid?from=1745299186179\u0026orgId=1\u0026to=1745317186179\u0026viewPanel=1\n",
+ "orgId": 1,
+ "receiver": "TestReceiver",
+ "state": "alerting",
+ "status": "firing",
+ "title": "[FIRING:1, RESOLVED:1] group_label_value (Test Folder instance1)",
+ "truncatedAlerts": null,
+ "version": "1"
+}
 ```

@@ -3,22 +3,25 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/go-jose/go-jose/v3/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
@@ -56,8 +59,9 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
+	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
-	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
+	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
@@ -69,15 +73,15 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		channel.RegisterService(
 			grpchan.InterceptServer(
 				desc,
-				grpcAuth.UnaryServerInterceptor(grpcAuthInt.Authenticate),
-				grpcAuth.StreamServerInterceptor(grpcAuthInt.Authenticate),
+				grpcAuth.UnaryServerInterceptor(grpcAuthInt),
+				grpcAuth.StreamServerInterceptor(grpcAuthInt),
 			),
 			server,
 		)
 	}
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
-		grpcutils.ProvideInProcExchanger(),
+		ProvideInProcExchanger(),
 		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
@@ -100,7 +104,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer tracing.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
@@ -159,4 +163,43 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
+}
+
+func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
+	token, err := createInProcToken()
+	if err != nil {
+		panic(err)
+	}
+
+	return authnlib.NewStaticTokenExchanger(token)
+}
+
+func createInProcToken() (string, error) {
+	claims := authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Issuer:   "grafana",
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
+			Audience: []string{"resourceStore"},
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "*",
+			Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
+			DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
+		},
+	}
+
+	header, err := json.Marshal(map[string]string{
+		"alg": "none",
+		"typ": authnlib.TokenTypeAccess,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + ".", nil
 }

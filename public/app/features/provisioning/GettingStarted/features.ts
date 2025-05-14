@@ -5,7 +5,6 @@ export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
   'kubernetesDashboards',
   'kubernetesClientDashboardsFolders',
-  'unifiedStorageSearch',
 ];
 
 /**

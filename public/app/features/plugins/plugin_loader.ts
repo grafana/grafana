@@ -6,11 +6,12 @@ import {
   DataSourcePluginMeta,
   PluginLoadingStrategy,
   PluginMeta,
+  throwIfAngular,
 } from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { addResourceBundle, getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getI18next } from 'app/core/internationalization';
-import { DEFAULT_LANGUAGE } from 'app/core/internationalization/constants';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
@@ -82,7 +83,6 @@ type PluginImportInfo = {
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
   version?: string;
-  isAngular?: boolean;
   moduleHash?: string;
   translations?: Record<string, string>;
 };
@@ -92,7 +92,6 @@ export async function importPluginModule({
   pluginId,
   loadingStrategy,
   version,
-  isAngular,
   moduleHash,
   translations,
 }: PluginImportInfo): Promise<System.Module> {
@@ -103,7 +102,7 @@ export async function importPluginModule({
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
   if (config.featureToggles.localizationForPlugins && translations) {
     await addTranslationsToI18n({
-      resolvedLanguage: getI18next().resolvedLanguage ?? DEFAULT_LANGUAGE,
+      resolvedLanguage: getResolvedLanguage(),
       fallbackLanguage: DEFAULT_LANGUAGE,
       pluginId,
       translations,
@@ -137,7 +136,7 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (await shouldLoadPluginInFrontendSandbox({ isAngular, pluginId })) {
+  if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
@@ -157,12 +156,12 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  const isAngular = meta.angular?.detected ?? meta.angularDetected;
+  throwIfAngular(meta);
+
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
@@ -198,11 +197,12 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     return importedAppPlugins[pluginId];
   }
 
+  throwIfAngular(meta);
+
   const pluginExports = await importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     pluginId: meta.id,
-    isAngular: meta.angular?.detected ?? meta.angularDetected,
     loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
     translations: meta.translations,
@@ -270,7 +270,7 @@ export async function addTranslationsToI18n({
     }
 
     const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
-    getI18next().addResourceBundle(language, pluginId, module.default, undefined, true);
+    addResourceBundle(language, pluginId, module.default);
   } catch (error) {
     console.warn(`Could not load translation for plugin ${pluginId}`, {
       resolvedLanguage,

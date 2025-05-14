@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/mattn/go-sqlite3"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var (
@@ -251,7 +251,7 @@ func TestBackend_create(t *testing.T) {
 
 		// Then we try to insert the same resource again. This should fail.
 		_, err = b.create(ctx, event)
-		require.ErrorIs(t, err, unifiedbackend.ErrResourceAlreadyExists)
+		require.ErrorIs(t, err, resource.ErrResourceAlreadyExists)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -402,6 +402,7 @@ func TestBackend_delete(t *testing.T) {
 }
 
 type readHistoryRow struct {
+	guid             string
 	namespace        string
 	group            string
 	resource         string
@@ -419,6 +420,7 @@ func TestBackend_ReadResource(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		expectedReadRow := readHistoryRow{
+			guid:             "guid",
 			namespace:        "ns",
 			group:            "gr",
 			resource:         "rs",
@@ -427,11 +429,12 @@ func TestBackend_ReadResource(t *testing.T) {
 			resource_version: "300",
 			value:            "rv-300",
 		}
-		readResource := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		readResource := []string{"guid", "namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource").
 			WillReturnRows(sqlmock.NewRows(readResource).
 				AddRow(
+					expectedReadRow.guid,
 					expectedReadRow.namespace,
 					expectedReadRow.group,
 					expectedReadRow.resource,
@@ -474,6 +477,7 @@ func TestBackend_ReadResource(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		expectedReadRow := readHistoryRow{
+			guid:             "guid",
 			namespace:        "ns",
 			group:            "gr",
 			resource:         "rs",
@@ -483,11 +487,12 @@ func TestBackend_ReadResource(t *testing.T) {
 			value:            "rv-300",
 		}
 
-		readHistoryColumns := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		readHistoryColumns := []string{"guid", "namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
 			WillReturnRows(sqlmock.NewRows(readHistoryColumns).
 				AddRow(
+					expectedReadRow.guid,
 					expectedReadRow.namespace,
 					expectedReadRow.group,
 					expectedReadRow.resource,
@@ -535,7 +540,7 @@ func TestBackend_getHistory(t *testing.T) {
 		Name:      "nm",
 	}
 	rv1, rv2, rv3 := int64(100), int64(200), int64(300)
-	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+	cols := []string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}
 
 	tests := []struct {
 		name                          string
@@ -658,8 +663,11 @@ func TestBackend_getHistory(t *testing.T) {
 				historyRows := sqlmock.NewRows(cols)
 				for _, rv := range tc.expectedVersions {
 					historyRows.AddRow(
+						"guid",                           // guid
 						rv,                               // resource_version
 						"ns",                             // namespace
+						"gr",                             // group
+						"rs",                             // resource
 						"nm",                             // name
 						"folder",                         // folder
 						[]byte(fmt.Sprintf("rv-%d", rv)), // value
@@ -830,12 +838,15 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	}
 
 	// Create the mock rows for the history items
-	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+	cols := []string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}
 	historyRows := sqlmock.NewRows(cols)
 	for _, rv := range resourceVersions {
 		historyRows.AddRow(
+			"guid",                           // guid
 			rv,                               // resource_version
 			"ns",                             // namespace
+			"gr",                             // group
+			"rs",                             // resource
 			"nm",                             // name
 			"folder",                         // folder
 			[]byte(fmt.Sprintf("rv-%d", rv)), // value

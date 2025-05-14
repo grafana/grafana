@@ -67,7 +67,6 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * Used to determine whether to show the "Unused" badge
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
-
   /** Does the current user have permissions to edit the contact point? */
   const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
   /** Can the contact point actually be edited via the UI? */
@@ -86,7 +85,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   if (showManagePermissions) {
     menuActions.push(
       <Fragment key="manage-permissions">
-        <Menu.Item icon="unlock" label="Manage permissions" onClick={() => setShowPermissionsDrawer(true)} />
+        <Menu.Item
+          icon="unlock"
+          label={t('alerting.contact-point-header.label-manage-permissions', 'Manage permissions')}
+          onClick={() => setShowPermissionsDrawer(true)}
+        />
       </Fragment>
     );
   }
@@ -96,7 +99,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
-          label="Export"
+          label={t('alerting.contact-point-header.export-label-export', 'Export')}
           ariaLabel="export"
           disabled={!exportAllowed}
           data-testid="export"
@@ -155,7 +158,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         )}
       >
         <Menu.Item
-          label="Delete"
+          label={t('alerting.contact-point-header.label-delete', 'Delete')}
           ariaLabel="delete"
           icon="trash-alt"
           destructive
@@ -213,20 +216,34 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
-          tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
+          tooltip={
+            provisioned
+              ? t(
+                  'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                  'Provisioned contact points cannot be edited in the UI'
+                )
+              : undefined
+          }
           variant="secondary"
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
-          aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
-          {canEdit ? 'Edit' : 'View'}
+          {canEdit
+            ? t('alerting.contact-point-header.button-edit', 'Edit')
+            : t('alerting.contact-point-header.button-view', 'View')}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton aria-label={`More actions for contact point "${contactPoint.name}"`} />
+            <MoreButton
+              aria-label={t(
+                'alerting.contact-point-header.aria-label-more-actions',
+                'More actions for contact point "{{contactPointName}}"',
+                { contactPointName: contactPoint.name }
+              )}
+            />
           </Dropdown>
         )}
       </Stack>

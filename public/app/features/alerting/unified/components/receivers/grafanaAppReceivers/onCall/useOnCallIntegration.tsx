@@ -264,7 +264,7 @@ export function useOnCallIntegration() {
       order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
         ? t('alerting.irm-integration.enabled-description', 'Seamless way to handle alerts and manage incidents')
-        : t('alerting.irm-integration.disabled-description', 'Enable Grafana IRM to use this integration'),
+        : t('alerting.irm-integration.disabled-description', 'Enable IRM through a Webhook integration'),
       badge: <Badge color="blue" text={t('alerting.irm-integration.recommended', 'Recommended')} />,
     },
     extendOnCallNotifierFeatures,

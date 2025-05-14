@@ -13,8 +13,8 @@
       "refId": "B",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "type": "math",
-      "expression": "$A - $B"
+      "expression": "$A - $B",
+      "type": "math"
     },
     {
       "refId": "C",
@@ -31,11 +31,11 @@
       "refId": "D",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "upsampler": "pad",
-      "type": "resample",
+      "downsampler": "last",
       "expression": "$A",
-      "window": "1d",
-      "downsampler": "last"
+      "type": "resample",
+      "upsampler": "pad",
+      "window": "1d"
     },
     {
       "refId": "E",
@@ -68,7 +68,6 @@
       "refId": "F",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expression": "A",
       "conditions": [
         {
           "evaluator": {
@@ -79,13 +78,13 @@
           }
         }
       ],
+      "expression": "A",
       "type": "threshold"
     },
     {
       "refId": "G",
       "maxDataPoints": 1000,
       "intervalMs": 5,
-      "expression": "B",
       "conditions": [
         {
           "evaluator": {
@@ -134,6 +133,7 @@
           }
         }
       ],
+      "expression": "B",
       "type": "threshold"
     },
     {
@@ -141,6 +141,7 @@
       "maxDataPoints": 1000,
       "intervalMs": 5,
       "expression": "SELECT * FROM A limit 1",
+      "format": "",
       "type": "sql"
     }
   ]

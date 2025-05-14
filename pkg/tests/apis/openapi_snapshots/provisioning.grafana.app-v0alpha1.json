@@ -1270,6 +1270,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1366,6 +1374,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1461,6 +1477,14 @@
             "description": "optional message sent with any changes",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -2472,11 +2496,26 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
         "type": "object",
         "required": [
-          "identifier"
+          "type"
         ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
+        "type": "object",
         "properties": {
           "branch": {
             "description": "Target branch for export (only git)",
@@ -2485,11 +2524,6 @@
           "folder": {
             "description": "The source folder (or empty) to export",
             "type": "string"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           },
           "path": {
             "description": "Prefix in target file system",
@@ -2606,51 +2640,6 @@
               "default": ""
             },
             "x-kubernetes-list-type": "atomic"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoricJob": {
-        "description": "HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.\n\nThe repository name and type are stored as labels.",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "default": {}
-          },
-          "status": {
-            "default": {}
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoricJobList": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
           }
         }
       },
@@ -2986,18 +2975,10 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
         "type": "object",
-        "required": [
-          "identifier"
-        ],
         "properties": {
           "history": {
             "description": "Preserve history (if possible)",
             "type": "boolean"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           }
         }
       },
@@ -3005,6 +2986,7 @@
         "type": "object",
         "properties": {
           "hash": {
+            "description": "The specific commit hash that triggered this notice",
             "type": "string"
           },
           "pr": {
@@ -3245,20 +3227,19 @@
         "required": [
           "name",
           "title",
-          "readOnly",
           "type",
-          "target"
+          "target",
+          "workflows"
         ],
         "properties": {
+          "branch": {
+            "description": "For git, this is the target branch",
+            "type": "string"
+          },
           "name": {
             "description": "The k8s name for this repository",
             "type": "string",
             "default": ""
-          },
-          "readOnly": {
-            "description": "Edit options within the repository",
-            "type": "boolean",
-            "default": false
           },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
@@ -3282,6 +3263,18 @@
               "github",
               "local"
             ]
+          },
+          "workflows": {
+            "description": "The supported workflows",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "branch",
+                "write"
+              ]
+            }
           }
         }
       },
@@ -3811,20 +3804,16 @@
             "format": "int32",
             "default": 0
           },
-          "details": {
-            "description": "Optional details",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
           "errors": {
-            "description": "Error descriptions",
+            "description": "Field related errors",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
             }
           },
           "kind": {
@@ -3900,6 +3889,10 @@
             "format": "byte"
           },
           "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastEvent": {
             "type": "integer",
             "format": "int64"
           },

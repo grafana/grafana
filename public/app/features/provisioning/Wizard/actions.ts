@@ -1,61 +1,75 @@
+import { useMemo } from 'react';
+
 import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
   RepositoryViewList,
 } from 'app/api/clients/provisioning';
+import { t } from 'app/core/internationalization';
 
-import { ModeOption, SystemState } from './types';
+import { ModeOption } from './types';
 
-const migrateInstance: ModeOption = {
-  target: 'instance',
-  operation: 'migrate',
-  label: 'Migrate instance to repository',
-  description: 'Save all Grafana resources in the repository',
-};
-
-const pullInstance: ModeOption = {
-  target: 'instance',
-  operation: 'pull',
-  label: 'Pull from repository to instance',
-  description: 'Pull resources from the repository into this Grafana instance',
-};
-
-const pullFolder: ModeOption = {
-  target: 'folder',
-  operation: 'pull',
-  label: 'Pull from repository to folder',
-  description: 'Pull repository resources into a repository-managed Grafana folder',
-};
-
-function getDisabledReason(action: ModeOption, resourceCount: number, folderConnected?: boolean) {
-  // Disable pull instance if there are existing dashboards or folders
-  if (action.target === 'instance' && action.operation === 'pull' && resourceCount > 0) {
-    return 'Cannot pull to instance when you have existing resources. Please migrate your existing resources first.';
-  }
-
-  if (!folderConnected) {
-    return undefined;
-  }
-
-  if (action.operation === 'migrate') {
-    return 'Cannot migrate when a folder is already mounted.';
-  }
-
-  if (action.target === 'instance') {
-    return 'Instance-wide connection is disabled because folders are connected to repositories.';
-  }
-
-  return undefined;
-}
-
-export function getState(
-  repoName: string,
-  settings?: RepositoryViewList,
-  files?: GetRepositoryFilesApiResponse,
-  stats?: GetResourceStatsApiResponse
-): SystemState {
+/**
+ * Filters available mode options based on system state
+ */
+function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
 
+  return modeOptions.filter((option) => {
+    if (settings?.legacyStorage) {
+      return option.target === 'instance';
+    }
+
+    if (option.target === 'folder') {
+      return true;
+    }
+
+    if (option.target === 'instance') {
+      return !folderConnected;
+    }
+
+    return false;
+  });
+}
+
+/**
+ * Hook that provides filtered mode options
+ * This needs to be a hook, so we can add translations
+ */
+export function useModeOptions(repoName: string, settings?: RepositoryViewList) {
+  return useMemo(() => {
+    const modeOptions: ModeOption[] = [
+      {
+        target: 'instance',
+        label: t('provisioning.mode-options.instance.label', 'Sync all resources with external storage'),
+        description: t(
+          'provisioning.mode-options.instance.description',
+          'Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.'
+        ),
+        subtitle: t(
+          'provisioning.mode-options.instance.subtitle',
+          'Use this option if you want to sync and manage your entire Grafana instance through external storage.'
+        ),
+      },
+      {
+        target: 'folder',
+        label: t('provisioning.mode-options.folder.label', 'Sync external storage to a new Grafana folder'),
+        description: t(
+          'provisioning.mode-options.folder.description',
+          'After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.'
+        ),
+        subtitle: t(
+          'provisioning.mode-options.folder.subtitle',
+          'Use this option to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders.'
+        ),
+      },
+    ];
+
+    return filterModeOptions(modeOptions, repoName, settings);
+  }, [repoName, settings]);
+}
+
+export function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
   const fileCount =
     files?.items?.reduce((count, file) => {
       const path = file.path ?? '';
@@ -64,9 +78,10 @@ export function getState(
 
   let counts: string[] = [];
   let resourceCount = 0;
+
   stats?.instance?.forEach((stat) => {
     switch (stat.group) {
-      case 'folders': // fallthrough
+      case 'folders':
       case 'folder.grafana.app':
         resourceCount += stat.count;
         counts.push(`${stat.count} ${stat.count > 1 ? 'folders' : 'folder'}`);
@@ -78,37 +93,9 @@ export function getState(
     }
   });
 
-  const state: SystemState = {
+  return {
+    fileCount,
     resourceCount,
     resourceCountString: counts.join(',\n'),
-    fileCount,
-    actions: [],
-    disabled: [],
-    folderConnected,
   };
-
-  // Legacy storage can only migrate
-  if (settings?.legacyStorage) {
-    const disabledReason = 'Instance must be migrated first';
-    state.actions = [migrateInstance];
-    state.disabled = [
-      { ...pullInstance, disabledReason },
-      { ...pullFolder, disabledReason },
-    ];
-    return state;
-  }
-
-  const actionsToEvaluate = resourceCount
-    ? [pullFolder, pullInstance, migrateInstance] // recommend pull when resources already exist
-    : [migrateInstance, pullInstance, pullFolder];
-  actionsToEvaluate.forEach((action) => {
-    const reason = getDisabledReason(action, resourceCount, folderConnected);
-    if (reason) {
-      state.disabled.push({ ...action, disabledReason: reason });
-    } else {
-      state.actions.push(action);
-    }
-  });
-
-  return state;
 }

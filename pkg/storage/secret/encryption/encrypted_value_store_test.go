@@ -4,18 +4,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEncryptedValueStoreImpl(t *testing.T) {
 	// Initialize data key storage with a fake db
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	ctx := context.Background()
 
-	store, err := ProvideEncryptedValueStorage(testDB, features)
+	store, err := ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	t.Run("creating an encrypted value returns it", func(t *testing.T) {
@@ -49,14 +52,14 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		obtainedEV, err := store.Get(ctx, "other-test-namespace", createdEV.UID)
 
 		require.Error(t, err)
-		require.Equal(t, "db failure: encrypted value not found", err.Error())
+		require.Equal(t, "encrypted value not found", err.Error())
 		require.Nil(t, obtainedEV)
 	})
 
 	t.Run("get a non existent encrypted value returns error", func(t *testing.T) {
 		obtainedEV, err := store.Get(ctx, "test-namespace", "test-uid")
 		require.Error(t, err)
-		require.Equal(t, "db failure: encrypted value not found", err.Error())
+		require.Equal(t, "encrypted value not found", err.Error())
 		require.Nil(t, obtainedEV)
 	})
 

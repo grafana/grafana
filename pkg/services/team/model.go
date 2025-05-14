@@ -22,11 +22,13 @@ var (
 
 // Team model
 type Team struct {
-	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
-	UID   string `json:"uid" xorm:"uid"`
-	OrgID int64  `json:"orgId" xorm:"org_id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID            int64  `json:"id" xorm:"pk autoincr 'id'"`
+	UID           string `json:"uid" xorm:"uid"`
+	OrgID         int64  `json:"orgId" xorm:"org_id"`
+	Name          string `json:"name"`
+	Email         string `json:"email"`
+	ExternalUID   string `json:"externalUID" xorm:"external_uid"`
+	IsProvisioned bool   `json:"isProvisioned" xorm:"is_provisioned"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -36,9 +38,11 @@ type Team struct {
 // COMMANDS
 
 type CreateTeamCommand struct {
-	Name  string `json:"name" binding:"Required"`
-	Email string `json:"email"`
-	OrgID int64  `json:"-"`
+	Name          string `json:"name" binding:"Required"`
+	Email         string `json:"email"`
+	ExternalUID   string `json:"-"`
+	IsProvisioned bool   `json:"-"`
+	OrgID         int64  `json:"-"`
 }
 
 type UpdateTeamCommand struct {
@@ -94,6 +98,8 @@ type TeamDTO struct {
 	OrgID         int64           `json:"orgId" xorm:"org_id"`
 	Name          string          `json:"name"`
 	Email         string          `json:"email"`
+	ExternalUID   string          `json:"externalUID"`
+	IsProvisioned bool            `json:"isProvisioned"`
 	AvatarURL     string          `json:"avatarUrl"`
 	MemberCount   int64           `json:"memberCount"`
 	Permission    PermissionType  `json:"permission"`

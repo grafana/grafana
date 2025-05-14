@@ -14,7 +14,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
@@ -112,12 +112,18 @@ const SilencesTable = () => {
   }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
 
   if (isLoading || amAlertsIsLoading) {
-    return <LoadingPlaceholder text="Loading silences..." />;
+    return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
   }
 
   if (mimirLazyInitError) {
     return (
-      <Alert title="The selected Alertmanager has no configuration" severity="warning">
+      <Alert
+        title={t(
+          'alerting.silences-table.title-the-selected-alertmanager-has-no-configuration',
+          'The selected Alertmanager has no configuration'
+        )}
+        severity="warning"
+      >
         <Trans i18nKey="silences.table.noConfig">
           Create a new contact point to create a configuration using the default values or contact your administrator to
           set up the Alertmanager.
@@ -129,7 +135,10 @@ const SilencesTable = () => {
   if (error) {
     const errMessage = stringifyErrorLike(error) || 'Unknown error.';
     return (
-      <Alert severity="error" title="Error loading silences">
+      <Alert
+        severity="error"
+        title={t('alerting.silences-table.title-error-loading-silences', 'Error loading silences')}
+      >
         {errMessage}
       </Alert>
     );
@@ -154,7 +163,12 @@ const SilencesTable = () => {
             dataTestId="not-expired-table"
           />
           {itemsExpired.length > 0 && (
-            <CollapsableSection label={`Expired silences (${itemsExpired.length})`} isOpen={showExpiredFromUrl}>
+            <CollapsableSection
+              label={t('alerting.silences-table.label-section-expired', 'Expired silences ({{numExpired}})', {
+                numExpired: itemsExpired.length,
+              })}
+              isOpen={showExpiredFromUrl}
+            >
               <div className={styles.callout}>
                 <Icon className={styles.calloutIcon} name="info-circle" />
                 <span>
@@ -312,7 +326,14 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alerts',
         label: 'Alerts silenced',
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
-          return <span data-testid="alerts">{Array.isArray(silencedAlerts) ? silencedAlerts.length : '-'}</span>;
+          return (
+            <span data-testid="alerts">
+              {Array.isArray(silencedAlerts)
+                ? silencedAlerts.length
+                : // eslint-disable-next-line @grafana/no-untranslated-strings
+                  '-'}
+            </span>
+          );
         },
         size: 2,
       },
@@ -345,7 +366,7 @@ function useColumns(alertManagerSourceName: string) {
             <Stack gap={0.5} wrap="wrap">
               {canRecreate && (
                 <LinkButton
-                  title="Recreate"
+                  title={t('alerting.use-columns.title-recreate', 'Recreate')}
                   size="sm"
                   variant="secondary"
                   icon="sync"
@@ -357,7 +378,7 @@ function useColumns(alertManagerSourceName: string) {
               {canEdit && (
                 <>
                   <LinkButton
-                    title="Unsilence"
+                    title={t('alerting.use-columns.title-unsilence', 'Unsilence')}
                     size="sm"
                     variant="secondary"
                     icon="bell"
@@ -366,7 +387,7 @@ function useColumns(alertManagerSourceName: string) {
                     <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
                   </LinkButton>
                   <LinkButton
-                    title="Edit"
+                    title={t('alerting.use-columns.title-edit', 'Edit')}
                     size="sm"
                     variant="secondary"
                     icon="pen"

@@ -8,27 +8,30 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
 	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 )
 
-func ProvideEncryptedValueStorage(db db.DB, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
 	}
 
-	return &encryptedValStorage{db: db}, nil
+	return &encryptedValStorage{
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+	}, nil
 }
 
 type encryptedValStorage struct {
-	db db.DB
+	db      contracts.Database
+	dialect sqltemplate.Dialect
 }
 
 func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (*contracts.EncryptedValue, error) {
@@ -41,15 +44,24 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 		Updated:       createdTime,
 	}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Insert(encryptedValue); err != nil {
-			return fmt.Errorf("insert row: %w", err)
-		}
-
-		return nil
-	})
+	req := createEncryptedValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row:         encryptedValue,
+	}
+	query, err := sqltemplate.Execute(sqlEncryptedValueCreate, req)
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueCreate.Name(), err)
+	}
+
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("inserting row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return nil, fmt.Errorf("getting rows affected: %w", err)
+	} else if rowsAffected != 1 {
+		return nil, fmt.Errorf("expected 1 row affected, got %d", rowsAffected)
 	}
 
 	return &contracts.EncryptedValue{
@@ -62,75 +74,85 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 }
 
 func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid string, encryptedData []byte) error {
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		updateEncryptedValue := &EncryptedValue{
-			EncryptedData: encryptedData,
-			Updated:       time.Now().Unix(),
-		}
-		rowsAffected, err := sess.Where("uid = ? AND namespace = ?", uid, namespace).Update(updateEncryptedValue)
-		if err != nil {
-			return fmt.Errorf("update row: %w", err)
-		}
+	req := updateEncryptedValue{
+		SQLTemplate:   sqltemplate.New(s.dialect),
+		Namespace:     namespace,
+		UID:           uid,
+		EncryptedData: encryptedData,
+		Updated:       time.Now().Unix(),
+	}
 
-		if rowsAffected == 0 {
-			return ErrEncryptedValueNotFound
-		}
-
-		return nil
-	})
+	query, err := sqltemplate.Execute(sqlEncryptedValueUpdate, req)
 	if err != nil {
-		return fmt.Errorf("db failure: %w", err)
+		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdate.Name(), err)
+	}
+
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("updating row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	} else if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, got %d on %s", rowsAffected, namespace)
 	}
 
 	return nil
 }
 
 func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid string) (*contracts.EncryptedValue, error) {
-	encryptedValueRow := &EncryptedValue{
-		UID:       uid,
-		Namespace: namespace,
+	req := &readEncryptedValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
+		UID:         uid,
+	}
+	query, err := sqltemplate.Execute(sqlEncryptedValueRead, req)
+	if err != nil {
+		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueRead.Name(), err)
 	}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(encryptedValueRow)
-		if err != nil {
-			return fmt.Errorf("could not get row: %w", err)
-		}
-
-		if !found {
-			return ErrEncryptedValueNotFound
-		}
-
-		return nil
-	})
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return nil, fmt.Errorf("getting row: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	if !rows.Next() {
+		return nil, ErrEncryptedValueNotFound
+	}
+
+	var encryptedValue EncryptedValue
+	err = rows.Scan(&encryptedValue.UID, &encryptedValue.Namespace, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
 	return &contracts.EncryptedValue{
-		UID:           encryptedValueRow.UID,
-		Namespace:     encryptedValueRow.Namespace,
-		EncryptedData: encryptedValueRow.EncryptedData,
-		Created:       encryptedValueRow.Created,
-		Updated:       encryptedValueRow.Updated,
+		UID:           encryptedValue.UID,
+		Namespace:     encryptedValue.Namespace,
+		EncryptedData: encryptedValue.EncryptedData,
+		Created:       encryptedValue.Created,
+		Updated:       encryptedValue.Updated,
 	}, nil
 }
 
 func (s *encryptedValStorage) Delete(ctx context.Context, namespace string, uid string) error {
-	encryptedValueRow := &EncryptedValue{
-		UID:       uid,
-		Namespace: namespace,
+	req := deleteEncryptedValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
+		UID:         uid,
+	}
+	query, err := sqltemplate.Execute(sqlEncryptedValueDelete, req)
+	if err != nil {
+		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueDelete.Name(), err)
 	}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Delete(encryptedValueRow); err != nil {
-			return fmt.Errorf("delete row: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("db failure: %w", err)
+	if _, err = s.db.ExecContext(ctx, query, req.GetArgs()...); err != nil {
+		return fmt.Errorf("deleting row: %w", err)
 	}
 
 	return nil

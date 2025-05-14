@@ -19,5 +19,10 @@ type DecryptStorage interface {
 	Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error)
 }
 
+// DecryptAuthorizer is the interface for authorizing decryption requests.
+type DecryptAuthorizer interface {
+	Authorize(ctx context.Context, secureValueDecrypters []string) (identity string, allowed bool)
+}
+
 // TEMPORARY: Needed to pass it with wire.
 type DecryptAllowList map[string]struct{}

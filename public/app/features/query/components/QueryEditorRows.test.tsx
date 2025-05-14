@@ -1,6 +1,6 @@
 import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
 
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/__mocks__/panelData';
@@ -52,6 +52,9 @@ const props: Props = {
     throw new Error('Function not implemented.');
   },
   onRunQueries: function (): void {
+    throw new Error('Function not implemented.');
+  },
+  onUpdateDatasources: function (datasource: DataSourceRef): void {
     throw new Error('Function not implemented.');
   },
   data: createMockPanelData(),

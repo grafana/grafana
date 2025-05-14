@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -32,7 +33,7 @@ func (h *HysteresisCommand) NeedsVars() []string {
 	return []string{h.ReferenceVar}
 }
 
-func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
 	results := vars[h.ReferenceVar]
 
 	logger := logger.FromContext(ctx)
@@ -46,7 +47,7 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 	if len(h.LoadedDimensions) == 0 {
-		return h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer)
+		return h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer, metrics)
 	}
 	var loadedVals, unloadedVals mathexp.Values
 	for _, value := range results.Values {
@@ -62,10 +63,10 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 
 	logger.Debug("Evaluating thresholds", "unloadingThresholdDimensions", len(loadedVals), "loadingThresholdDimensions", len(unloadedVals))
 	if len(loadedVals) == 0 { // if all values are unloaded
-		return h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer)
+		return h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer, metrics)
 	}
 	if len(unloadedVals) == 0 { // if all values are loaded
-		return h.UnloadingThresholdFunc.Execute(traceCtx, now, vars, tracer)
+		return h.UnloadingThresholdFunc.Execute(traceCtx, now, vars, tracer, metrics)
 	}
 
 	defer func() {
@@ -74,12 +75,12 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 	}()
 
 	vars[h.ReferenceVar] = mathexp.Results{Values: unloadedVals}
-	loadingResults, err := h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer)
+	loadingResults, err := h.LoadingThresholdFunc.Execute(traceCtx, now, vars, tracer, metrics)
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("failed to execute loading threshold: %w", err)
 	}
 	vars[h.ReferenceVar] = mathexp.Results{Values: loadedVals}
-	unloadingResults, err := h.UnloadingThresholdFunc.Execute(traceCtx, now, vars, tracer)
+	unloadingResults, err := h.UnloadingThresholdFunc.Execute(traceCtx, now, vars, tracer, metrics)
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("failed to execute unloading threshold: %w", err)
 	}

@@ -134,7 +134,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 			metadata[k] = v
 		}
 	} else {
-		metadata = existing.FileMetadata.Properties
+		metadata = existing.Properties
 	}
 
 	metadata[originalPathAttributeKey] = existing.FullPath
@@ -294,10 +294,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 	recursive := options.Recursive
 	pageSize := paging.Limit
 
-	foundCursor := true
-	if paging.After != "" {
-		foundCursor = false
-	}
+	foundCursor := paging.After == ""
 
 	files := make([]*File, 0)
 

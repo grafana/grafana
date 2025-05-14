@@ -111,6 +111,22 @@ export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
     }
   );
 
+export const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
+  http.delete<{ ruleGuid: string }>(
+    `/api/ruler/grafana/api/v1/trash/rule/guid/:ruleGuid`,
+    ({ params: { ruleGuid } }) => {
+      if (options?.response) {
+        return options.response;
+      }
+
+      if (grafanaRulerRule.grafana_alert.guid !== ruleGuid) {
+        return new HttpResponse(null, { status: 403 });
+      }
+
+      return HttpResponse.json({ status: 202 });
+    }
+  );
+
 export const rulerRuleHandler = () => {
   const grafanaRules = new Map<string, RulerGrafanaRuleDTO>(
     [grafanaRulerRule].map((rule) => [rule.grafana_alert.uid, rule])
@@ -164,6 +180,9 @@ export const rulerRuleVersionHistoryHandler = () => {
       draft.grafana_alert.version = 2;
       draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
       draft.for = '2h';
+      if (!draft.labels) {
+        draft.labels = {};
+      }
       draft.labels.foo = 'bar';
       draft.grafana_alert.notification_settings = { receiver: 'another receiver' };
       draft.grafana_alert.updated_by = {
@@ -198,6 +217,7 @@ const handlers = [
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
   deleteRulerRuleGroupHandler(),
+  deleteRulerRulePermanentlyHandler(),
   rulerRuleVersionHistoryHandler(),
 ];
 export default handlers;

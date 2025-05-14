@@ -1049,6 +1049,11 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: (pluginId: string) => `/plugins/${pluginId}`,
     },
   },
+  MigrateToCloud: {
+    url: {
+      '11.2.0': '/admin/migrate-to-cloud',
+    },
+  },
 } satisfies VersionedSelectorGroup;
 
 export type VersionedPages = typeof versionedPages;

@@ -128,7 +128,7 @@ export function RecentlyDeletedActions() {
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
+        <Trans i18nKey="recently-deleted.buttons.delete">Permanently delete</Trans>
       </Button>
     </Stack>
   );

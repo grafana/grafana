@@ -1,7 +1,5 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
-import { AngularComponent, locationService } from '@grafana/runtime';
-import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
-import config from 'app/core/config';
+import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -34,8 +32,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  extensions: PluginExtensionLink[],
-  angularComponent?: AngularComponent | null
+  extensions: PluginExtensionLink[]
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -90,8 +87,7 @@ export function getPanelMenu(
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
-    const openInNewWindow =
-      event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
+    const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
     store.dispatch(
       navigateToExplore(panel, {
         timeRange: getTimeSrv().timeRange(),
@@ -187,7 +183,7 @@ export function getPanelMenu(
     }
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
 
     locationService.push(ruleFormUrl);
@@ -240,29 +236,6 @@ export function getPanelMenu(
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: onCreateAlert,
     });
-  }
-
-  // add old angular panel options
-  if (angularComponent) {
-    const scope = angularComponent.getScope();
-    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
-    const angularMenuItems = panelCtrl.getExtendedMenu();
-
-    for (const item of angularMenuItems) {
-      const reactItem: PanelMenuItem = {
-        text: item.text,
-        href: item.href,
-        shortcut: item.shortcut,
-      };
-
-      if (item.click) {
-        reactItem.onClick = () => {
-          scope.$eval(item.click, { ctrl: panelCtrl });
-        };
-      }
-
-      subMenu.push(reactItem);
-    }
   }
 
   if (panel.options.legend) {

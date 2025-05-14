@@ -6,7 +6,7 @@ import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
-import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
+import { getChromeHeaderLevelHeight } from 'app/core/components/AppChrome/TopBar/useChromeHeaderHeight';
 import { t, Trans } from 'app/core/internationalization';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
@@ -231,7 +231,8 @@ function LogsNavigation({
 export default memo(LogsNavigation);
 
 const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
-  const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`;
+  const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${getChromeHeaderLevelHeight()}px)`;
+
   return {
     navContainer: css({
       maxHeight: navContainerHeight,

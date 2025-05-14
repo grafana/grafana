@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	PluginUpdateStrategyLatest = "latest"
+	PluginUpdateStrategyMinor  = "minor"
+)
+
 // PluginSettings maps plugin id to map of key/value settings.
 type PluginSettings map[string]map[string]string
 
@@ -29,9 +34,10 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app":   {"grafana-lokiexplore-app", "", ""},
-		"grafana-pyroscope-app":     {"grafana-pyroscope-app", "", ""},
-		"grafana-exploretraces-app": {"grafana-exploretraces-app", "", ""},
+		"grafana-lokiexplore-app":      {"grafana-lokiexplore-app", "", ""},
+		"grafana-pyroscope-app":        {"grafana-pyroscope-app", "", ""},
+		"grafana-exploretraces-app":    {"grafana-exploretraces-app", "", ""},
+		"grafana-metricsdrilldown-app": {"grafana-metricsdrilldown-app", "", ""},
 	}
 )
 
@@ -58,9 +64,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
-		}
-		if cfg.IsFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") { // Use literal string to avoid circular dependency
-			preinstallPlugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
 		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
@@ -98,6 +101,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	// Plugins CDN settings
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
+
+	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
 
 	return nil
 }

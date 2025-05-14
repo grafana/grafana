@@ -32,6 +32,9 @@ type StorageStatus struct {
 	UpdateKey int64 `json:"update_key" xorm:"update_key"`
 }
 
+// Service is a service for managing the dual write storage
+//
+//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
 	ShouldManage(gr schema.GroupResource) bool
 
@@ -62,5 +65,5 @@ func NewSearchAdapter(s Service) *SearchAdapter {
 func (d *SearchAdapter) IsEnabled(gr schema.GroupResource) bool {
 	//nolint:errcheck
 	status, _ := d.Status(context.Background(), gr)
-	return status.Runtime && d.Service.ShouldManage(gr)
+	return status.Runtime && d.ShouldManage(gr)
 }

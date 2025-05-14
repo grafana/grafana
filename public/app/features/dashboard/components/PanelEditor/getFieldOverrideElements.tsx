@@ -15,6 +15,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
@@ -213,7 +214,10 @@ export function getFieldOverrideCategories(
             return (
               <ValuePicker
                 key="Add override property"
-                label="Add override property"
+                label={t(
+                  'dashboard.get-field-override-categories.label-add-override-property',
+                  'Add override property'
+                )}
                 variant="secondary"
                 isFullWidth={true}
                 icon="plus"
@@ -239,7 +243,7 @@ export function getFieldOverrideCategories(
           <AddOverrideButtonContainer key="Add override">
             <ValuePicker
               icon="plus"
-              label="Add field override"
+              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
               variant="secondary"
               menuPlacement="auto"
               isFullWidth={true}

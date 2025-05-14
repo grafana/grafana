@@ -1,4 +1,4 @@
-import { RegistryItem } from '@grafana/data';
+import { IconName, RegistryItem } from '@grafana/data';
 
 import { DashboardLayoutManager } from './DashboardLayoutManager';
 
@@ -16,4 +16,9 @@ export interface LayoutRegistryItem extends RegistryItem {
    * Is grid layout (that contains panels)
    */
   isGridLayout: boolean;
+
+  /**
+   * icon name
+   */
+  icon: IconName;
 }

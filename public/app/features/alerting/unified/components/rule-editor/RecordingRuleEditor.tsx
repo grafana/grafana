@@ -12,6 +12,7 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { Trans } from '../../../../../core/internationalization';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
 
 import { VizWrapper } from './VizWrapper';
@@ -96,7 +97,13 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
-    return <div>Could not load query editor due to: {errorMessage}</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.recording-rule-editor.error-no-query-editor">
+          Could not load query editor due to: {{ errorMessage }}
+        </Trans>
+      </div>
+    );
   }
 
   const QueryEditor = dataSource.components.QueryEditor;

@@ -1,17 +1,29 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme } from '@grafana/data';
+import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles } from './LogLine';
 import { LogLineMenu } from './LogLineMenu';
-import { LogListContext } from './LogListContext';
+import { LogListContextProvider } from './LogListContext';
 import { LogListModel } from './processing';
+
+jest.mock('./LogListContext');
 
 const theme = createTheme();
 const styles = getStyles(theme);
+const contextProps = {
+  app: CoreApp.Unknown,
+  dedupStrategy: LogsDedupStrategy.exact,
+  displayedFields: [],
+  logs: [],
+  showControls: false,
+  showTime: false,
+  sortOrder: LogsSortOrder.Ascending,
+  wrapLogMessage: false,
+};
 
 describe('LogLineMenu', () => {
   let log: LogListModel;
@@ -30,9 +42,9 @@ describe('LogLineMenu', () => {
     test('Allows to copy a permalink', async () => {
       const onPermalinkClick = jest.fn();
       render(
-        <LogListContext.Provider value={{ onPermalinkClick }}>
+        <LogListContextProvider {...contextProps} onPermalinkClick={onPermalinkClick}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Copy link to log line'));
@@ -44,9 +56,14 @@ describe('LogLineMenu', () => {
       const logSupportsContext = jest.fn().mockReturnValue(true);
       const getRowContextQuery = jest.fn();
       render(
-        <LogListContext.Provider value={{ getRowContextQuery, logSupportsContext, onOpenContext }}>
+        <LogListContextProvider
+          {...contextProps}
+          getRowContextQuery={getRowContextQuery}
+          logSupportsContext={logSupportsContext}
+          onOpenContext={onOpenContext}
+        >
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Show context'));
@@ -58,9 +75,14 @@ describe('LogLineMenu', () => {
       const logSupportsContext = jest.fn().mockReturnValue(false);
       const getRowContextQuery = jest.fn();
       render(
-        <LogListContext.Provider value={{ getRowContextQuery, logSupportsContext, onOpenContext }}>
+        <LogListContextProvider
+          {...contextProps}
+          getRowContextQuery={getRowContextQuery}
+          logSupportsContext={logSupportsContext}
+          onOpenContext={onOpenContext}
+        >
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Show context')).not.toBeInTheDocument();
@@ -69,9 +91,9 @@ describe('LogLineMenu', () => {
     test('Allows to pin log line', async () => {
       const onPinLine = jest.fn();
       render(
-        <LogListContext.Provider value={{ pinnedLogs: [], onPinLine }}>
+        <LogListContextProvider {...contextProps} pinnedLogs={[]} onPinLine={onPinLine}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Pin log'));
@@ -81,9 +103,9 @@ describe('LogLineMenu', () => {
     test('Allows to unpin log line', async () => {
       const onUnpinLine = jest.fn();
       render(
-        <LogListContext.Provider value={{ pinnedLogs: [log.uid], onUnpinLine }}>
+        <LogListContextProvider {...contextProps} pinnedLogs={[log.uid]} onUnpinLine={onUnpinLine}>
           <LogLineMenu log={log} styles={styles} />
-        </LogListContext.Provider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Pin log')).not.toBeInTheDocument();

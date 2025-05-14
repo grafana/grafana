@@ -16,20 +16,20 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	authtypes "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var scheme = runtime.NewScheme()
-var codecs = serializer.NewCodecFactory(scheme)
+var rtscheme = runtime.NewScheme()
+var rtcodecs = serializer.NewCodecFactory(rtscheme)
 
 func TestPrepareObjectForStorage(t *testing.T) {
-	_ = v1alpha1.AddToScheme(scheme)
+	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int63n(1024))
 	require.NoError(t, err)
 	s := &Storage{
-		codec:     apitesting.TestCodec(codecs, v1alpha1.DashboardResourceInfo.GroupVersion()),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
 			EnableFolderSupport: true,
@@ -42,35 +42,35 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	)
 
 	t.Run("Error getting auth info from context", func(t *testing.T) {
-		_, err := s.prepareObjectForStorage(context.Background(), nil)
+		_, _, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		dashboard := dashv1.Dashboard{}
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "missing name")
 	})
 
 	t.Run("Error on non-empty resource version", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		dashboard.ResourceVersion = "123"
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		_, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
 	})
 
 	t.Run("Generate UID and leave deprecated ID empty, if not required", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -87,7 +87,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should keep manager info", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		ctx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+		require.NoError(t, err)
+
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
@@ -103,10 +106,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			TimestampMillis: now.UnixMilli(),
 		})
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -123,17 +126,17 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Update should manage incrementing generation and metadata", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		meta.SetFolder("aaa")
 		require.NoError(t, err)
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		insertedObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		insertedObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(insertedObject)
 		require.NoError(t, err)
@@ -153,8 +156,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		updatedObject := insertedObject.DeepCopyObject()
 		meta, err = utils.MetaAccessor(updatedObject)
 		require.NoError(t, err)
-		err = meta.SetStatus(v1alpha1.DashboardStatus{
-			Conversion: &v1alpha1.DashboardConversionStatus{
+		err = meta.SetStatus(dashv1.DashboardStatus{
+			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
 				Error:  "test",
 			},
@@ -169,7 +172,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, int64(1), meta.GetGeneration())
 
 		// Change the folder -- the generation should increase and the updatedBy metadata
-		dashboard2 := &v1alpha1.Dashboard{ObjectMeta: v1.ObjectMeta{
+		dashboard2 := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
 			Name: dashboard.Name,
 		}} // TODO... deep copy, See: https://github.com/grafana/grafana/pull/102258
 		meta2, err := utils.MetaAccessor(dashboard2)
@@ -183,12 +186,12 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 	s.opts.RequireDeprecatedInternalID = true
 	t.Run("Should generate internal id", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 
-		encodedData, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		encodedData, _, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -198,28 +201,46 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should use deprecated ID if given it", func(t *testing.T) {
-		dashboard := v1alpha1.Dashboard{}
+		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
 		meta.SetDeprecatedInternalID(1) // nolint:staticcheck
 
-		encodedData, err := s.prepareObjectForStorage(ctx, obj)
+		encodedData, _, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(encodedData, nil, &v1alpha1.Dashboard{})
+		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
 	})
 
+	t.Run("Should remove grant permissions annotation", func(t *testing.T) {
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
+
+		encodedData, p, err := s.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		newObject, _, err := s.codec.Decode(encodedData, nil, &dashv1.Dashboard{})
+		require.NoError(t, err)
+		meta, err = utils.MetaAccessor(newObject)
+		require.NoError(t, err)
+		require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions))
+		require.Equal(t, p, "default")
+	})
+
 	t.Run("calculate generation", func(t *testing.T) {
-		dash := &v1alpha1.Dashboard{
+		dash := &dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name: "test",
 			},
-			Spec: v1alpha1.DashboardSpec{
+			Spec: dashv1.DashboardSpec{
 				Object: map[string]interface{}{
 					"hello": "world",
 				},
@@ -265,8 +286,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			b.Labels = map[string]string{
 				"a": "b",
 			}
-			b.Status = v1alpha1.DashboardStatus{
-				Conversion: &v1alpha1.DashboardConversionStatus{
+			b.Status = dashv1.DashboardStatus{
+				Conversion: &dashv1.DashboardConversionStatus{
 					Failed: true,
 				},
 			}
@@ -283,7 +304,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	var err error
 
 	if old == nil {
-		raw, err = s.prepareObjectForStorage(ctx, obj)
+		raw, _, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
 		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}
@@ -296,4 +317,50 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	meta, err := utils.MetaAccessor(out)
 	require.NoError(t, err)
 	return meta
+}
+
+func TestPrepareLargeObjectForStorage(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	node, err := snowflake.NewNode(rand.Int63n(1024))
+	require.NoError(t, err)
+
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})
+
+	dashboard := dashv1.Dashboard{}
+	dashboard.Name = "test-name"
+	t.Run("Should deconstruct object if size is over threshold", func(t *testing.T) {
+		los := LargeObjectSupportFake{
+			threshold: 0,
+		}
+
+		f := &Storage{
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				LargeObjectSupport: &los,
+			},
+		}
+
+		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
+		require.True(t, los.deconstructed)
+	})
+
+	t.Run("Should not deconstruct object if size is under threshold", func(t *testing.T) {
+		los := LargeObjectSupportFake{
+			threshold: 1000,
+		}
+
+		f := &Storage{
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				LargeObjectSupport: &los,
+			},
+		}
+
+		_, _, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		require.Nil(t, err)
+		require.False(t, los.deconstructed)
+	})
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -425,6 +426,97 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.NotNil(t, remaining[0].Record)
 		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
 	})
+
+	t.Run("sets notification settings for rules if specified", func(t *testing.T) {
+		srv, _, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		receiver := "test-receiver"
+		groupBy := []string{"cluster", "pod"}
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: receiver,
+			GroupBy:  groupBy,
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, createdRules, 1)
+		require.Len(t, createdRules[0].NotificationSettings, 1)
+		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
+		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
+	})
+
+	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		rc.Req.Header.Set(notificationSettingsHeader, "{invalid json")
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
+	})
+
+	t.Run("returns error when notification settings contain invalid values", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: "", // empty receiver is invalid
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
+	})
 }
 
 func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
@@ -470,7 +562,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
-		groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKey := models.GenerateGroupKey(rc.OrgID)
 		groupKey.NamespaceUID = fldr.UID
 		groupKey.RuleGroup = "test-group"
 		rule := models.RuleGen.
@@ -482,7 +574,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Create a rule in another group
-		groupKeyNotFromProm := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKeyNotFromProm := models.GenerateGroupKey(rc.OrgID)
 		groupKeyNotFromProm.NamespaceUID = fldr.UID
 		groupKeyNotFromProm.RuleGroup = "test-group-2"
 		ruleInOtherFolder := models.RuleGen.
@@ -568,7 +660,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -655,7 +747,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		rootFolderUID := ""
 		if withCustomFolderHeader {
 			rootFolderUID = unknownFolderUID
-			rc.Context.Req.Header.Set(folderUIDHeader, unknownFolderUID)
+			rc.Req.Header.Set(folderUIDHeader, unknownFolderUID)
 		}
 
 		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
@@ -696,7 +788,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -1038,7 +1130,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1085,7 +1177,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1110,7 +1202,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1135,7 +1227,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 		require.NoError(t, err)
 		require.Len(t, rules, 4)
@@ -1166,7 +1258,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 
 		// Verify the rules were created
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
-			OrgID: req.SignedInUser.GetOrgID(),
+			OrgID: req.GetOrgID(),
 		})
 
 		require.NoError(t, err)
@@ -1282,6 +1374,46 @@ func createRequestCtx() *contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
 	}
+}
+
+// Test parseBooleanHeader function which handles boolean header values
+func TestParseBooleanHeader(t *testing.T) {
+	headerName := "X-Test-Header"
+
+	t.Run("should return false when header is not present", func(t *testing.T) {
+		result, err := parseBooleanHeader("", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'true'", func(t *testing.T) {
+		result, err := parseBooleanHeader("true", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return false when header is 'false'", func(t *testing.T) {
+		result, err := parseBooleanHeader("false", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'TRUE' (case insensitive)", func(t *testing.T) {
+		result, err := parseBooleanHeader("TRUE", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return error when header has invalid value", func(t *testing.T) {
+		_, err := parseBooleanHeader("invalid", headerName)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "Invalid value for header")
+	})
+
+	t.Run("should return error when header is numeric but not 0/1", func(t *testing.T) {
+		_, err := parseBooleanHeader("2", headerName)
+		require.Error(t, err)
+	})
 }
 
 func TestGetWorkingFolderUID(t *testing.T) {

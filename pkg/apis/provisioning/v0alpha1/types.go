@@ -197,6 +197,7 @@ type WebhookStatus struct {
 	Secret           string   `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
+	LastEvent        int64    `json:"lastEvent,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -393,11 +394,14 @@ type TestResults struct {
 	// Is the connection healthy
 	Success bool `json:"success"`
 
-	// Error descriptions
-	Errors []string `json:"errors,omitempty"`
+	// Field related errors
+	Errors []ErrorDetails `json:"errors,omitempty"`
+}
 
-	// Optional details
-	Details *common.Unstructured `json:"details,omitempty"`
+type ErrorDetails struct {
+	Type   metav1.CauseType `json:"type"`
+	Field  string           `json:"field,omitempty"`
+	Detail string           `json:"detail,omitempty"`
 }
 
 // HistoryList is a list of versions of a resource

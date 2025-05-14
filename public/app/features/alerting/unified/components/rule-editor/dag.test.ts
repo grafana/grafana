@@ -12,6 +12,7 @@ import {
   fingerprintGraph,
   getTargets,
   parseRefsFromMathExpression,
+  parseRefsFromSqlExpression,
 } from './dag';
 
 describe('working with dag', () => {
@@ -173,6 +174,124 @@ describe('parseRefsFromMathExpression', () => {
 
   test.each(cases)('testing "%s"', (input, output) => {
     expect(parseRefsFromMathExpression(input)).toEqual(output);
+  });
+});
+
+describe('parseRefsFromSqlExpression', () => {
+  describe('basic FROM queries', () => {
+    it('should extract table from simple SELECT', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1')).toEqual(['table1']);
+    });
+
+    it('ignores comments that might contain "from"', () => {
+      expect(
+        parseRefsFromSqlExpression(`
+-- a from b
+/** foo from bar */
+/**
+ joe from bloggs
+ */
+SELECT * FROM table1`)
+      ).toEqual(['table1']);
+    });
+
+    it('should be case insensitive for SQL keywords', () => {
+      expect(parseRefsFromSqlExpression('select * from table1')).toEqual(['table1']);
+    });
+
+    it('should work with specific field selections', () => {
+      expect(parseRefsFromSqlExpression('SELECT field1, field2 FROM table1')).toEqual(['table1']);
+    });
+
+    it('should preserve the original case of table names', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM TableName')).toEqual(['TableName']);
+      expect(parseRefsFromSqlExpression('SELECT * FROM tablename')).toEqual(['tablename']);
+      expect(parseRefsFromSqlExpression('SELECT * FROM TABLENAME')).toEqual(['TABLENAME']);
+      expect(parseRefsFromSqlExpression('SELECT * FROM Table_Name')).toEqual(['Table_Name']);
+    });
+  });
+
+  describe('multiple tables in FROM clause', () => {
+    it('should extract multiple comma-separated tables with spaces', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1, table2')).toEqual(['table1', 'table2']);
+    });
+
+    it('should extract multiple comma-separated tables without spaces', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1,table2')).toEqual(['table1', 'table2']);
+    });
+  });
+
+  describe('JOIN queries', () => {
+    it('should extract tables from basic JOIN', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1 JOIN table2 ON table1.id = table2.id')).toEqual([
+        'table1',
+        'table2',
+      ]);
+    });
+
+    it('should extract tables from INNER JOIN', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1 INNER JOIN table2 ON table1.id = table2.id')).toEqual([
+        'table1',
+        'table2',
+      ]);
+    });
+
+    it('should extract tables from LEFT JOIN', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM table1 LEFT JOIN table2 ON table1.id = table2.id')).toEqual([
+        'table1',
+        'table2',
+      ]);
+    });
+  });
+
+  describe('tables with aliases', () => {
+    it('should extract table name when using AS keyword', () => {
+      expect(parseRefsFromSqlExpression('SELECT t.* FROM table1 AS t')).toEqual(['table1']);
+    });
+
+    it('should extract table name when using implicit alias', () => {
+      expect(parseRefsFromSqlExpression('SELECT t.* FROM table1 t')).toEqual(['table1']);
+    });
+  });
+
+  describe('schema qualified tables', () => {
+    it('should extract table name from schema.table format', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM schema.table1')).toEqual(['table1']);
+    });
+
+    it('should extract table name from quoted identifiers', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM "schema"."table1"')).toEqual(['table1']);
+    });
+  });
+
+  describe('complex queries', () => {
+    it('should extract all tables from a complex query with joins and aliases', () => {
+      const complexQuery = `
+        SELECT t1.field1, t2.field2
+        FROM schema1.table1 AS t1
+        JOIN schema2.table2 t2 ON t1.id = t2.id
+        LEFT JOIN table3 ON t2.id = table3.id
+      `;
+      expect(parseRefsFromSqlExpression(complexQuery)).toEqual(['table1', 'table2', 'table3']);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should return empty array for empty input', () => {
+      expect(parseRefsFromSqlExpression('')).toEqual([]);
+    });
+
+    it('should return empty array for null input', () => {
+      expect(parseRefsFromSqlExpression(null as unknown as string)).toEqual([]);
+    });
+
+    it('should handle unusual spacing', () => {
+      expect(parseRefsFromSqlExpression('SELECT    *   FROM    table1')).toEqual(['table1']);
+    });
+
+    it('should handle line breaks', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM\ntable1')).toEqual(['table1']);
+    });
   });
 });
 

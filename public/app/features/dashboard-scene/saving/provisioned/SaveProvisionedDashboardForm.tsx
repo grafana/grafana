@@ -6,7 +6,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositorySpec } from 'app/api/clients/provisioning';
+import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
@@ -43,7 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
   isGitHub: boolean;
-  repositoryConfig?: RepositorySpec;
+  repository?: RepositoryView;
   loadedFromRef?: string;
 }
 
@@ -54,12 +54,12 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repositoryConfig,
+  repository,
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty } = dashboard.useState();
+  const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -71,7 +71,6 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
   } = useForm<FormData>({ defaultValues });
-
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
@@ -82,7 +81,12 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      if (workflow === 'branch' && ref !== '' && path !== '') {
+
+      const { ref, path } = request.data;
+
+      if (workflow === 'branch' && ref && path) {
+        dashboard.closeModal();
+        panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
@@ -124,7 +128,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
@@ -132,33 +136,32 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    // The dashboard spec
-    const saveModel = dashboard.getSaveAsModel({
-      isNew,
-      title,
-      description,
-    });
-
     // If user is writing to the original branch, override ref with whatever we loaded from
     if (workflow === 'write') {
       ref = loadedFromRef;
     }
+
+    const body = dashboard.getSaveResource({
+      isNew,
+      title,
+      description,
+    });
 
     createOrUpdateFile({
       ref,
       name: repo,
       path,
       message: comment,
-      body: { ...saveModel, uid: meta.uid },
+      body,
     });
   };
 
-  const workflowOptions = getWorkflowOptions(repositoryConfig, loadedFromRef);
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repositoryConfig?.workflows.length && (
+        {!repository?.workflows?.length && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
@@ -236,7 +239,7 @@ export function SaveProvisionedDashboardForm({
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" {...register('path')} />
+          <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
         </Field>
 
         <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>

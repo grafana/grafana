@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -224,14 +225,12 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	// Batch all the changes
 	idx := &bleveIndex{
-		key:       key,
-		index:     index,
-		batch:     index.NewBatch(),
-		batchSize: b.opts.BatchSize,
-		fields:    fields,
-		standard:  resource.StandardSearchFields(),
-		features:  b.features,
-		tracing:   b.tracer,
+		key:      key,
+		index:    index,
+		fields:   fields,
+		standard: resource.StandardSearchFields(),
+		features: b.features,
+		tracing:  b.tracer,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -241,12 +240,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	if build {
 		_, err = builder(idx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Flush the batch
-		err = idx.Flush()
 		if err != nil {
 			return nil, err
 		}
@@ -317,51 +310,36 @@ type bleveIndex struct {
 
 	// The values returned with all
 	allFields []*resource.ResourceTableColumnDefinition
-
-	// only valid in single thread
-	batch     *bleve.Batch
-	batchSize int // ??? not totally sure the units here
-
-	features featuremgmt.FeatureToggles
-	tracing  trace.Tracer
+	features  featuremgmt.FeatureToggles
+	tracing   trace.Tracer
 }
 
-// Write implements resource.DocumentIndex.
-func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
-	v = v.UpdateCopyFields()
+// BulkIndex implements resource.ResourceIndex.
+func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
+	if len(req.Items) == 0 {
+		return nil
+	}
 
-	// remove references (for now!)
-	v.References = nil
-	if b.batch != nil {
-		err := b.batch.Index(v.Key.SearchID(), v)
-		if err != nil {
-			return err
+	batch := b.index.NewBatch()
+	for _, item := range req.Items {
+		switch item.Action {
+		case resource.ActionIndex:
+			if item.Doc == nil {
+				return fmt.Errorf("missing document")
+			}
+			doc := item.Doc.UpdateCopyFields()
+			doc.References = nil // remove references (for now!)
+
+			err := batch.Index(doc.Key.SearchID(), doc)
+			if err != nil {
+				return err
+			}
+		case resource.ActionDelete:
+			batch.Delete(item.Key.SearchID())
 		}
-		if b.batch.Size() > b.batchSize {
-			err = b.index.Batch(b.batch)
-			b.batch.Reset() // clear the batch
-		}
-		return err // nil
 	}
-	return b.index.Index(v.Key.SearchID(), v)
-}
 
-// Delete implements resource.DocumentIndex.
-func (b *bleveIndex) Delete(key *resource.ResourceKey) error {
-	if b.batch != nil {
-		return fmt.Errorf("unexpected delete while building batch")
-	}
-	return b.index.Delete(key.SearchID())
-}
-
-// Flush implements resource.DocumentIndex.
-func (b *bleveIndex) Flush() (err error) {
-	if b.batch != nil {
-		err = b.index.Batch(b.batch)
-		b.batch.Reset()
-		b.batch = nil
-	}
-	return err
+	return b.index.Batch(batch)
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
@@ -537,7 +515,16 @@ func (b *bleveIndex) Search(
 		if err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = f
+		if len(f) > 0 {
+			searchrequest.Fields = f
+		} else {
+			searchrequest.Fields = []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+				resource.SEARCH_FIELD_MANAGED_BY,
+			}
+		}
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -1029,6 +1016,15 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				if match.Expl != nil {
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
+			case resource.SEARCH_FIELD_LEGACY_ID:
+				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+				if v != nil {
+					str, ok := v.(string)
+					if ok {
+						id, _ := strconv.ParseInt(str, 10, 64)
+						row.Cells[i], err = encoders[i](id)
+					}
+				}
 			default:
 				fieldName := f.Name
 				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
@@ -1060,6 +1056,8 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		standard.Field(resource.SEARCH_FIELD_FOLDER),
 		standard.Field(resource.SEARCH_FIELD_RV),
 		standard.Field(resource.SEARCH_FIELD_CREATED),
+		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
+		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
 	}
 
 	if custom != nil {

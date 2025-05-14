@@ -16,10 +16,10 @@ import {
 } from '@grafana/schema';
 import {
   AnnotationQueryKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DataLink,
   DatasourceVariableKind,
-  defaultDashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
   defaultTimeSettingsSpec,
   PanelQueryKind,
@@ -39,7 +39,7 @@ import {
   PanelKind,
   GridLayoutRowKind,
   GridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -52,6 +52,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
+  ObjectMeta,
 } from 'app/features/apiserver/types';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
@@ -130,9 +131,15 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+    }
+    if (dto.meta.isSnapshot) {
+      // FIXME -- lets not put non-annotation data in annotations!
+      annotationsMeta[AnnoKeyDashboardIsSnapshot] = 'true';
+    }
+
     creationTimestamp = dto.meta.created;
     labelsMeta = {
       [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
@@ -210,9 +217,6 @@ export function ensureV1Response(
     };
   } else {
     // if dashboard is on v2 schema convert to v1 schema
-    const annotations = getAnnotationsV1(spec.annotations);
-    const variables = getVariablesV1(spec.variables);
-    const panels = getPanelsV1(spec.elements, spec.layout);
     return {
       meta: {
         created: dashboard.metadata.creationTimestamp,
@@ -230,38 +234,7 @@ export function ensureV1Response(
         canStar: dashboard.access.canStar,
         annotationsPermissions: dashboard.access.annotationsPermissions,
       },
-      dashboard: {
-        uid: dashboard.metadata.name,
-        title: spec.title,
-        description: spec.description,
-        tags: spec.tags,
-        schemaVersion: 40,
-        graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
-        preload: spec.preload,
-        liveNow: spec.liveNow,
-        editable: spec.editable,
-        gnetId: dashboard.metadata.annotations?.[AnnoKeyDashboardGnetId],
-        revision: spec.revision,
-        time: {
-          from: spec.timeSettings.from,
-          to: spec.timeSettings.to,
-        },
-        timezone: spec.timeSettings.timezone,
-        refresh: spec.timeSettings.autoRefresh,
-        timepicker: {
-          refresh_intervals: spec.timeSettings.autoRefreshIntervals,
-          hidden: spec.timeSettings.hideTimepicker,
-          quick_ranges: spec.timeSettings.quickRanges,
-          nowDelay: spec.timeSettings.nowDelay,
-        },
-        fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
-        weekStart: spec.timeSettings.weekStart,
-        version: dashboard.metadata.generation,
-        links: spec.links,
-        annotations: { list: annotations },
-        panels,
-        templating: { list: variables },
-      },
+      dashboard: transformDashboardV2SpecToV1(spec, dashboard.metadata),
     };
   }
 }
@@ -1133,4 +1106,42 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
     default:
       throw new Error(`Unknown variable type: ${variable}`);
   }
+}
+
+export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
+  const annotations = getAnnotationsV1(spec.annotations);
+  const variables = getVariablesV1(spec.variables);
+  const panels = getPanelsV1(spec.elements, spec.layout);
+  return {
+    uid: metadata.name,
+    title: spec.title,
+    description: spec.description,
+    tags: spec.tags,
+    schemaVersion: 40,
+    graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
+    preload: spec.preload,
+    liveNow: spec.liveNow,
+    editable: spec.editable,
+    gnetId: metadata.annotations?.[AnnoKeyDashboardGnetId],
+    revision: spec.revision,
+    time: {
+      from: spec.timeSettings.from,
+      to: spec.timeSettings.to,
+    },
+    timezone: spec.timeSettings.timezone,
+    refresh: spec.timeSettings.autoRefresh,
+    timepicker: {
+      refresh_intervals: spec.timeSettings.autoRefreshIntervals,
+      hidden: spec.timeSettings.hideTimepicker,
+      quick_ranges: spec.timeSettings.quickRanges,
+      nowDelay: spec.timeSettings.nowDelay,
+    },
+    fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
+    weekStart: spec.timeSettings.weekStart,
+    version: metadata.generation,
+    links: spec.links,
+    annotations: { list: annotations },
+    panels,
+    templating: { list: variables },
+  };
 }

@@ -8,6 +8,7 @@ import { EditorRow } from '@grafana/plugin-ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
+import { getInitHints } from '../../query_hints';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
@@ -38,7 +39,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
-  const initHints = datasource.getInitHints();
+  const initHints = getInitHints(datasource);
 
   return (
     <>
@@ -83,6 +84,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           onChange={onChange}
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
+          timeRange={data?.timeRange ?? getDefaultTimeRange()}
         />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
           <QueryBuilderHints<PromVisualQuery>

@@ -10,6 +10,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
@@ -71,7 +72,14 @@ export const DynamicConfigValueEditor = ({
         </Label>
         {!isSystemOverride && (
           <div>
-            <IconButton name="times" onClick={onRemove} tooltip="Remove property" />
+            <IconButton
+              name="times"
+              onClick={onRemove}
+              tooltip={t(
+                'dashboard.dynamic-config-value-editor.render-label.tooltip-remove-property',
+                'Remove property'
+              )}
+            />
           </div>
         )}
       </HorizontalGroup>

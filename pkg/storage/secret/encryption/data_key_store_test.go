@@ -5,11 +5,15 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -23,26 +27,25 @@ const (
 
 func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Initialize data key storage with a fake db
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	store, err := ProvideDataKeyStorage(testDB, features)
+	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
 
 	// Define a data key whose lifecycle we will test
-	dataKey := &SecretDataKey{
+	dataKey := &contracts.SecretDataKey{
 		UID:           "test-uid",
 		Namespace:     "test-namespace",
 		Label:         "test-label",
 		Active:        true,
 		EncryptedData: []byte("test-data"),
-		Scope:         "test-scope",
 		Provider:      passThroughProvider, // so that the Decrypt() method just gets us the input test data
 	}
 
 	// Define a second data key in a different namespace that should remain undisturbed
-	unchangingDataKey := &SecretDataKey{
+	unchangingDataKey := &contracts.SecretDataKey{
 		UID:           "static-uid",
 		Namespace:     "static-namespace",
 		Label:         "static-label",
@@ -108,7 +111,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Verify that the data key is deleted
 	_, err = store.GetDataKey(ctx, "test-namespace", "test-uid")
 	require.Error(t, err)
-	require.Equal(t, ErrDataKeyNotFound, err)
+	require.Equal(t, contracts.ErrDataKeyNotFound, err)
 
 	// Verify that the unchanging data key still exists and is active
 	staticKey, err := store.GetDataKey(ctx, "static-namespace", "static-uid")

@@ -239,6 +239,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   loadError?: boolean;
 
   // Config control (app/datasource)
+  /** @deprecated it will be removed in a future release */
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page

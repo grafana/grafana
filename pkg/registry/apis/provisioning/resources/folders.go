@@ -10,21 +10,22 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-const maxFolders = 10000
+const MaxNumberOfFolders = 10000
 
 type FolderManager struct {
 	repo   repository.ReaderWriter
-	tree   *FolderTree
+	tree   FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup *FolderTree) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
 		tree:   lookup,
@@ -36,11 +37,11 @@ func (fm *FolderManager) Client() dynamic.ResourceInterface {
 	return fm.client
 }
 
-func (fm *FolderManager) Tree() *FolderTree {
+func (fm *FolderManager) Tree() FolderTree {
 	return fm.tree
 }
 
-func (fm *FolderManager) SetTree(tree *FolderTree) {
+func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
@@ -105,6 +106,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		return fmt.Errorf("failed to check if folder exists: %w", err)
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+
 	obj = &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]any{
@@ -112,8 +119,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			},
 		},
 	}
-	obj.SetAPIVersion(v0alpha1.APIVERSION)
-	obj.SetKind(v0alpha1.FolderResourceInfo.GroupVersionKind().Kind)
+	obj.SetAPIVersion(folders.APIVERSION)
+	obj.SetKind(folders.FolderResourceInfo.GroupVersionKind().Kind)
 	obj.SetNamespace(cfg.GetNamespace())
 	obj.SetName(folder.ID)
 
@@ -147,15 +154,18 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
-func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string, fn func(folder Folder, created bool, err error) error) error {
-	return fm.tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
 		p := folder.Path
 		if path != "" {
 			p = safepath.Join(path, p)
 		}
+		if !safepath.IsDir(p) {
+			p = p + "/" // trailing slash indicates folder
+		}
 
 		_, err := fm.repo.Read(ctx, p, ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
 			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
 		} else if err == nil {
 			return fn(folder, false, nil)
@@ -165,17 +175,9 @@ func (fm *FolderManager) EnsureTreeExists(ctx context.Context, ref, path string,
 		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
 			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
 		}
+		// Add it to the existing tree
+		fm.tree.Add(folder, parent)
 
 		return fn(folder, true, nil)
-	})
-}
-
-func (fm *FolderManager) LoadFromServer(ctx context.Context) error {
-	return ForEachResource(ctx, fm.client, func(item *unstructured.Unstructured) error {
-		if fm.tree.Count() > maxFolders {
-			return errors.New("too many folders")
-		}
-
-		return fm.tree.AddUnstructured(item, fm.repo.Config().Name)
 	})
 }

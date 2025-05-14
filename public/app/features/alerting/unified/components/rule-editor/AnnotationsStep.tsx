@@ -122,7 +122,7 @@ const AnnotationsStep = () => {
               )}
             </>
           }
-          title="Annotations"
+          title={t('alerting.annotations-step.get-annotations-section-description.title-annotations', 'Annotations')}
         />
       </Stack>
     );
@@ -151,6 +151,7 @@ const AnnotationsStep = () => {
                   annotations={annotations}
                   annotation={annotation}
                   index={index}
+                  labelId={`annotation-${index}`}
                 />
                 {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
@@ -175,13 +176,21 @@ const AnnotationsStep = () => {
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
+                        id={`annotation-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
+                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                              'https://'
+                            : (annotationField.key &&
+                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                  key: annotationField.key,
+                                })) ||
+                              t(
+                                'alerting.annotations-step.placeholder-value-input-default',
+                                'Enter custom annotation content...'
+                              )
                         }
                         defaultValue={annotationField.value}
                       />
@@ -190,7 +199,7 @@ const AnnotationsStep = () => {
                       <Button
                         type="button"
                         className={styles.deleteAnnotationButton}
-                        aria-label="delete annotation"
+                        aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
                         icon="trash-alt"
                         variant="secondary"
                         onClick={() => remove(index)}
@@ -212,11 +221,11 @@ const AnnotationsStep = () => {
                 append({ key: '', value: '' });
               }}
             >
-              Add custom annotation
+              <Trans i18nKey="alerting.annotations-step.add-custom-annotation">Add custom annotation</Trans>
             </Button>
             {!selectedDashboard && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                Link dashboard and panel
+                <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
           </div>

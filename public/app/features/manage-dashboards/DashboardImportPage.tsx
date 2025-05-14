@@ -27,12 +27,14 @@ import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
+import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
-import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { fetchGcomDashboard, importDashboardJson, importDashboardV2Json } from './state/actions';
 import { initialImportDashboardState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
@@ -53,6 +55,7 @@ const JSON_PLACEHOLDER = `{
 
 const mapStateToProps = (state: StoreState) => ({
   loadingState: state.importDashboard.state,
+  dashboard: state.importDashboard.dashboard,
 });
 
 const mapDispatchToProps = {
@@ -88,7 +91,13 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     });
 
     try {
-      this.props.importDashboardJson(JSON.parse(String(result)));
+      const json = JSON.parse(String(result));
+
+      if (json.elements) {
+        dispatch(importDashboardV2Json(json));
+        return;
+      }
+      this.props.importDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
         appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
@@ -102,7 +111,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
       import_source: 'json_pasted',
     });
 
-    this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
+    const dashboard = JSON.parse(formData.dashboardJson);
+
+    if (dashboard.elements) {
+      dispatch(importDashboardV2Json(dashboard));
+      return;
+    }
+
+    this.props.importDashboardJson(dashboard);
   };
 
   getGcomDashboard = (formData: { gcomDashboard: string }) => {
@@ -229,6 +245,19 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     subTitle: 'Import dashboard from file or Grafana.com',
   };
 
+  getDashboardOverview() {
+    const { loadingState, dashboard } = this.props;
+
+    if (loadingState === LoadingState.Done) {
+      if (dashboard.elements) {
+        return <ImportDashboardOverviewV2 />;
+      }
+      return <ImportDashboardOverview />;
+    }
+
+    return null;
+  }
+
   render() {
     const { loadingState } = this.props;
 
@@ -243,7 +272,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             </Stack>
           )}
           {[LoadingState.Error, LoadingState.NotStarted].includes(loadingState) && this.renderImportForm()}
-          {loadingState === LoadingState.Done && <ImportDashboardOverview />}
+          {this.getDashboardOverview()}
         </Page.Contents>
       </Page>
     );

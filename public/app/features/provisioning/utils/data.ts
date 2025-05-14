@@ -2,12 +2,25 @@ import { RepositorySpec } from 'app/api/clients/provisioning';
 
 import { RepositoryFormData } from '../types';
 
+const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
+  if (data.readOnly) {
+    return [];
+  }
+  const workflows: RepositorySpec['workflows'] = ['write'];
+
+  if (!data.prWorkflow) {
+    return workflows;
+  }
+
+  return [...workflows, 'branch'];
+};
+
 export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
-    workflows: data.workflows,
+    workflows: getWorkflows(data),
   };
   switch (data.type) {
     case 'github':
@@ -27,16 +40,19 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
       break;
   }
 
-  return spec;
+  // We need to deep clone the data, so it doesn't become immutable
+  return structuredClone(spec);
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  return {
+  return structuredClone({
     ...spec,
     ...spec.github,
     ...spec.local,
     branch: spec.github?.branch || '',
     url: spec.github?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
-  };
+    readOnly: !spec.workflows.length,
+    prWorkflow: spec.workflows.includes('write'),
+  });
 };

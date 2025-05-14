@@ -82,7 +82,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
                 {sessions &&
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
-                      <td>{session.isActive ? 'Now' : session.seenAt}</td>
+                      <td>{session.isActive ? t('admin.user-sessions.now', 'Now') : session.seenAt}</td>
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
