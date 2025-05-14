@@ -18,10 +18,8 @@ const createDurationFormatter = deepMemoize((locale: string | undefined, options
 });
 
 export const formatDate = deepMemoize(
-  (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
-    if (typeof value === 'string') {
-      return formatDate(new Date(value), format);
-    }
+  (_value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
+    const value = typeof _value === 'string' ? new Date(_value) : _value;
     const dateFormatter = createDateTimeFormatter(regionalFormat, format);
     return dateFormatter.format(value);
   }
@@ -34,7 +32,14 @@ export const formatDuration = deepMemoize(
   }
 );
 
-export const formatDateRange = (from: Date, to: Date, format: Intl.DateTimeFormatOptions = {}): string => {
+export const formatDateRange = (
+  _from: number | Date | string,
+  _to: number | Date | string,
+  format: Intl.DateTimeFormatOptions = {}
+): string => {
+  const from = typeof _from === 'string' ? new Date(_from) : _from;
+  const to = typeof _to === 'string' ? new Date(_to) : _to;
+
   const dateFormatter = createDateTimeFormatter(regionalFormat, format);
   return dateFormatter.formatRange(from, to);
 };
