@@ -32,6 +32,8 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
+let getTagKeysMock: Function | undefined = () => [];
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -42,7 +44,7 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
-      getTagKeys: jest.fn().mockResolvedValue(['key1', 'key2']),
+      getTagKeys: getTagKeysMock,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
@@ -64,24 +66,28 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('AdHocFiltersVariableEditor', () => {
+  beforeEach(() => {
+    getTagKeysMock = () => [];
+  });
+
   it('renders AdHocVariableForm with correct props', async () => {
+    getTagKeysMock = undefined;
+
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
     );
-    const infoText = renderer.getByTestId(
+    const infoText = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText
     );
-    const allowCustomValueCheckbox = renderer.getByTestId(
+    const allowCustomValueCheckbox = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
-    expect(allowCustomValueCheckbox).toBeInTheDocument();
-    expect(allowCustomValueCheckbox).toBeChecked();
+    expect(allowCustomValueCheckbox).not.toBeInTheDocument();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(infoText).toBeInTheDocument();
-    expect(infoText).toHaveTextContent('This data source does not support ad hoc filters yet.');
   });
 
   it('should update the variable data source when data source picker is changed', async () => {
@@ -106,6 +112,7 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 
   it('should update the variable default keys when the default keys option is disabled', async () => {
+    getTagKeysMock = () => Promise.resolve(['key1', 'key2']);
     const { renderer, variable, user } = await setup(undefined, true);
 
     // Simulate toggling default options off
