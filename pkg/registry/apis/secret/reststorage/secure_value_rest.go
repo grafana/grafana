@@ -9,6 +9,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -79,12 +81,35 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.storage.List(ctx, xkube.Namespace(namespace), options)
+	secureValueList, err := s.storage.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
 
-	return secureValueList, nil
+	labelSelector := options.LabelSelector
+
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
+
+	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList.Items))
+
+	for _, secureValue := range secureValueList.Items {
+		// Filter by label
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			// Filter by status.phase
+			if fieldSelector.Matches(fields.Set{"status.phase": string(secureValue.Status.Phase)}) {
+				allowedSecureValues = append(allowedSecureValues, secureValue)
+			}
+		}
+	}
+
+	return &secretv0alpha1.SecureValueList{Items: allowedSecureValues}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
@@ -94,7 +119,7 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.storage.Read(ctx, xkube.Namespace(namespace), name)
+	sv, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{})
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -122,7 +147,7 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValue, err := s.storage.Create(ctx, sv)
+	createdSecureValue, err := s.storage.Create(ctx, sv, "todo-user")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secure value: %w", err)
 	}
@@ -166,7 +191,7 @@ func (s *SecureValueRest) Update(
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue)
+	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue, "todo-user")
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
 	}
@@ -176,17 +201,20 @@ func (s *SecureValueRest) Update(
 
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
-func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
 	if err := s.storage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
-		return nil, false, fmt.Errorf("delete secure value: %w", err)
+		if errors.Is(err, contracts.ErrSecureValueNotFound) {
+			return nil, false, s.resource.NewNotFound(name)
+		}
+		return nil, false, fmt.Errorf("deleting secure value: %+w", err)
 	}
 
-	return nil, true, nil
+	return nil, false, nil
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
