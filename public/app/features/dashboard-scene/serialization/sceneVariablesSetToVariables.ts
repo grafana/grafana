@@ -4,6 +4,7 @@ import {
   MultiValueVariable,
   SceneVariables,
   sceneUtils,
+  ScopesVariable,
 } from '@grafana/scenes';
 import {
   VariableModel,
@@ -47,6 +48,7 @@ import {
 
 export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
   const variables: VariableModel[] = [];
+
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
@@ -435,6 +437,8 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(adhocVariable);
+    } else if (ScopesVariable) {
+      // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }

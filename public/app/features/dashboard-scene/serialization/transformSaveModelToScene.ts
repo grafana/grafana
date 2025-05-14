@@ -182,17 +182,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
-  if (oldModel.templating?.list?.length) {
-    if (oldModel.meta.isSnapshot) {
-      variables = createVariablesForSnapshot(oldModel);
-    } else {
-      variables = createVariablesForDashboard(oldModel);
-    }
+  if (oldModel.meta.isSnapshot) {
+    variables = createVariablesForSnapshot(oldModel);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(oldModel);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -391,23 +384,6 @@ export function registerPanelInteractionsReporter(scene: DashboardScene) {
     }
   });
 }
-
-const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
-  return snapshotData.map((data) => {
-    return {
-      data: {
-        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
-      },
-      schema: {
-        fields: data.fields.map((field) => ({
-          name: field.name,
-          type: field.type,
-          config: field.config,
-        })),
-      },
-    };
-  });
-};
 
 // override panel datasource and targets with snapshot data using the Grafana datasource
 export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
