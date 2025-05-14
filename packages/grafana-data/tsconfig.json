@@ -13,6 +13,7 @@
     "typings/jest",
     "../../public/app/types/jquery/*.ts",
     "../../public/app/types/*.d.ts",
-    "../grafana-ui/src/types/react-table-config.d.ts"
+    "../grafana-ui/src/types/react-table-config.d.ts",
+    "../grafana-ui/src/types/fonts.d.ts"
   ]
 }
