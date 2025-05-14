@@ -12,7 +12,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     // Set URL correctly so MSW can intercept requests
     // https://mswjs.io/docs/runbook#rtk-query-requests-are-not-intercepted
-    baseUrl: new URL(baseUrl, location.origin).href,
+    baseUrl: new URL(baseUrl, globalThis.location.origin).href,
   }),
   endpoints: () => ({}),
 });
