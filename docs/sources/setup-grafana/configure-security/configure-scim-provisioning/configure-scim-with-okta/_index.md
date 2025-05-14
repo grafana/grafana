@@ -77,10 +77,16 @@ Configure both SAML authentication and SCIM provisioning in Okta to enable autom
 In the **Integration** tab, configure:
 
 - **SCIM Connector base URL:**
-  ```
-  https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
-  ```
-  Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `your-stack.grafana.net` for Grafana Cloud or `grafana.yourcompany.com` for self-hosted instances). Replace `{stack-id}` with your Grafana Cloud stack ID.
+  - For Grafana Cloud instances:
+    ```
+    https://{stack-name}.grafana.net/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
+    ```
+    Replace `{stack-name}` and `{stack-id}` with your Grafana Cloud stack name and ID.
+  - For self-hosted instances:
+    ```
+    https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/default
+    ```
+    Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `grafana.yourcompany.com`).
 - **Unique identifier field:** userName
 - **Supported provisioning actions:**
   - Import New Users and Profile Updates
