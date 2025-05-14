@@ -177,24 +177,27 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 		return err
 	}
 
-	err = ps.ProvisionPlugins(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
+	// Run Plugins and Alerting Provisioning only once.
+	// It can't be initialized at RunInitProvisioners because it
+	// depends on the /apis endpoints to be already running and listening
 	ps.onceInitProvisioners.Do(func() {
-		// Run Alerting Provisioning only once.
-		// It can't be initialized at RunInitProvisioners because it
-		// depends on the Server to be already running and listening
-		// to /apis endpoints.
+		err = ps.ProvisionPlugins(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision plugins", "error", err)
+			return
+		}
+
 		err = ps.ProvisionAlerting(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
 	})
 
 	if err != nil {
