@@ -72,6 +72,8 @@ Configure both SAML authentication and SCIM provisioning in Okta to enable autom
 
 ### Configure provisioning settings
 
+To enable user provisioning through SCIM, configure the SCIM integration settings in Grafana by specifying the connector URL, authentication mode, and supported provisioning actions. Follow these steps to complete the integration.
+
 ### Configure SCIM integration
 
 In the **Integration** tab, configure:
