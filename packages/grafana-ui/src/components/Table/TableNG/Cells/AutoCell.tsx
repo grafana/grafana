@@ -16,7 +16,7 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const links = getCellLinks(field, rowIdx) || [];
+  const links = getCellLinks(field, rowIdx)?.filter((link) => link.href || link.onClick != null) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
   const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);

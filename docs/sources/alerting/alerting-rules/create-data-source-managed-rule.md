@@ -164,34 +164,8 @@ All alert rules and instances, irrespective of their labels, match the default n
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
-## Configure notification message
+{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
+## Bulk delete all alert rules within a folder
 
-Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
-
-Grafana provides several optional annotations.
-
-1. Optional: Add a summary.
-
-   Short summary of what happened and why.
-
-1. Optional: Add a description.
-
-   Description of what the alert rule does.
-
-1. Optional: Add a Runbook URL.
-
-   Webpage where you keep your runbook for the alert
-
-1. Optional: Add a custom annotation.
-
-   Add any additional information that could help address the alert.
-
-1. Optional: **Link dashboard and panel**.
-
-   [Link the alert rule to a panel](ref:shared-link-alert-rules-to-panels) to facilitate alert investigation.
-
-1. Click **Save rule**.
-
-[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+Admin users can delete all of the alert rules within a folder. To delete all the alert rules in a folder, click the menu icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion.
