@@ -341,14 +341,7 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
-		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate, isKubernetesAggregatorEnabled)
-		if err != nil {
-			return err
-		}
-		delegate = runningServer
-	}
+	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
@@ -357,10 +350,14 @@ func (s *service) start(ctx context.Context) error {
 		}
 		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
 		if aggregatorServer != nil {
-			runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
-			if err != nil {
-				s.log.Error("aggregator runner failed to run", "error", err)
-				return err
+			if !isDataplaneAggregatorEnabled {
+				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+				if err != nil {
+					s.log.Error("aggregator runner failed to run", "error", err)
+					return err
+				}
+			} else {
+				delegate = aggregatorServer
 			}
 		} else {
 			// even though the FT is set to true, enterprise isn't linked
@@ -368,7 +365,14 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) && !isKubernetesAggregatorEnabled {
+	if isDataplaneAggregatorEnabled {
+		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !isDataplaneAggregatorEnabled && !isKubernetesAggregatorEnabled {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
@@ -415,7 +419,6 @@ func (s *service) startDataplaneAggregator(
 	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
-	isKubernetesAggregatorEnabled bool,
 ) (*genericapiserver.GenericAPIServer, error) {
 	config := &dataplaneaggregator.Config{
 		GenericConfig: serverConfig,
@@ -440,23 +443,21 @@ func (s *service) startDataplaneAggregator(
 		return nil, err
 	}
 
-	if !isKubernetesAggregatorEnabled {
-		// setup the loopback transport for the aggregator server and signal that it's ready
-		// ignore the lint error because the response is passed directly to the client,
-		// so the client will be responsible for closing the response body.
-		// nolint:bodyclose
-		transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-		close(transport.Ready)
+	// setup the loopback transport for the aggregator server and signal that it's ready
+	// ignore the lint error because the response is passed directly to the client,
+	// so the client will be responsible for closing the response body.
+	// nolint:bodyclose
+	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.Ready)
 
-		prepared, err := aggregatorServer.PrepareRun()
-		if err != nil {
-			return nil, err
-		}
-
-		go func() {
-			s.stoppedCh <- prepared.RunWithContext(ctx)
-		}()
+	prepared, err := aggregatorServer.PrepareRun()
+	if err != nil {
+		return nil, err
 	}
+
+	go func() {
+		s.stoppedCh <- prepared.RunWithContext(ctx)
+	}()
 
 	return aggregatorServer.GenericAPIServer, nil
 }
