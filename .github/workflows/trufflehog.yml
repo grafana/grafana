@@ -21,10 +21,14 @@ jobs:
       contents: read # clone the repo
 
     steps:
+      - name: Calculate fetch depth
+        id: fetch_depth
+        run: echo "fetch_depth=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "$GITHUB_OUTPUT"
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: ${{ steps.fetch_depth.outputs.fetch_depth }}
       - name: Trufflehog
         uses: trufflesecurity/trufflehog@90190deac64289cb10bb694894be8db9ead8790b # v3.88.29
         with:
