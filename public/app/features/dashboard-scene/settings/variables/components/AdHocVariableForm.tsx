@@ -2,8 +2,9 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -19,6 +20,7 @@ export interface AdHocVariableFormProps {
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   inline?: boolean;
+  datasourceSupported: boolean;
 }
 
 export function AdHocVariableForm({
@@ -30,6 +32,7 @@ export function AdHocVariableForm({
   onAllowCustomValueChange,
   defaultKeys,
   inline,
+  datasourceSupported,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
@@ -51,22 +54,29 @@ export function AdHocVariableForm({
           <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
         </VariableLegend>
       )}
-      <Field
-        label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
-        htmlFor="data-source-picker"
-      >
-        <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
-      </Field>
 
-      {infoText ? (
+      <Box marginBottom={2}>
+        <EditorField
+          label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
+          htmlFor="data-source-picker"
+          tooltip={infoText}
+        >
+          <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+        </EditorField>
+      </Box>
+
+      {!datasourceSupported ? (
         <Alert
-          title={infoText}
-          severity="info"
+          title={t(
+            'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
+            'This data source does not support ad hoc filters'
+          )}
+          severity="warning"
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
 
-      {onDefaultKeysChange && (
+      {datasourceSupported && onDefaultKeysChange && (
         <>
           <Field
             label={t(
@@ -106,7 +116,7 @@ export function AdHocVariableForm({
         </>
       )}
 
-      {onAllowCustomValueChange && (
+      {datasourceSupported && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue ?? true}
           name="Allow custom values"

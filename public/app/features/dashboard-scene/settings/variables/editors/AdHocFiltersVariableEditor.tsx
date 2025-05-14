@@ -25,7 +25,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const message = datasourceSettings?.getTagKeys
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
-    : 'This data source does not support ad hoc filters yet.';
+    : 'This data source does not support ad hoc filters.';
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
@@ -56,6 +56,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
       inline={props.inline}
+      datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
     />
   );
 }
