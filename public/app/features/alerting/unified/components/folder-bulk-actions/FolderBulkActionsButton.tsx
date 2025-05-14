@@ -21,7 +21,7 @@ interface Props {
 
 export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
-  const canPause = pauseSupported && pauseAllowed && false; // lets disable pause for now
+  const canPause = pauseSupported && pauseAllowed;
   const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
