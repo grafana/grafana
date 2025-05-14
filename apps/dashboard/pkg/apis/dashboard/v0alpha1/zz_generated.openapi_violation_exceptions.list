@@ -8,5 +8,3 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,SortableField,Field
 API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1,Unstructured,Object
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardList,ListMeta
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardVersionList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,LibraryPanelList,Items

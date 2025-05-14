@@ -1,1 +1,0 @@
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/datasource/v0alpha1,DataSourceConnectionList,Items

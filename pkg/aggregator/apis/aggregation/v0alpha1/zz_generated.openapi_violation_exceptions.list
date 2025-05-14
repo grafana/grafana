@@ -1,1 +1,0 @@
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1,DataPlaneServiceList,Items

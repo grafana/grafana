@@ -2,11 +2,3 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/iam/v0
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,TeamBindingSpec,Subjects
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,Display,InternalID
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,DisplayList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,SSOSettingList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,ServiceAccountList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,ServiceAccountTokenList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,TeamBindingList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,TeamList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,TeamMemberList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,UserList,Items
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/iam/v0alpha1,UserTeamList,Items

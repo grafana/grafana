@@ -75,7 +75,7 @@ type KeeperList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// Slice containing all keepers.
-	Items []Keeper `json:"items,omitempty"`
+	Items []Keeper `json:"items"`
 }
 
 // Credentials of remote keepers.
