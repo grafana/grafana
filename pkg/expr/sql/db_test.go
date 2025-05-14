@@ -286,6 +286,51 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 	}
 }
 
+func TestQueryFrames_Limits(t *testing.T) {
+	tests := []struct {
+		name        string
+		query       string
+		opts        []QueryOption
+		expectRows  int
+		expectError string
+	}{
+		{
+			name:       "respects max output cells",
+			query:      `SELECT 1 as x UNION ALL SELECT 2 UNION ALL SELECT 3`,
+			opts:       []QueryOption{WithMaxOutputCells(2)},
+			expectRows: 2,
+		},
+		{
+			name: "timeout with large cross join",
+			query: `
+				SELECT a.val + b.val AS sum
+				FROM (SELECT 1 AS val UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5) a
+				CROSS JOIN (SELECT 1 AS val UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5) b
+			`,
+			opts:        []QueryOption{WithTimeout(5 * time.Microsecond)},
+			expectError: "did not complete within the timeout",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := DB{}
+			ctx := context.Background()
+			frame, err := db.QueryFrames(ctx, &testTracer{}, "test", tt.query, nil, tt.opts...)
+
+			if tt.expectError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, frame)
+			require.Equal(t, tt.expectRows, frame.Rows())
+		})
+	}
+}
+
 // p is a utility for pointers from constants
 func p[T any](v T) *T {
 	return &v
