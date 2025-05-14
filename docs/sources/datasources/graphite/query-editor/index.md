@@ -49,7 +49,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 The query editor consists of the following elements:
 
-- **Series** - Select a metric from the drop-down.
+- **Series** - A series in Graphite is a unique time-series dataset, represented by a specific metric name and timestamped values. Click **select metric** to select a metric from the drop-down.
 
 - **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of functions in the drop-down. You can create a query with multiple functions.
 
