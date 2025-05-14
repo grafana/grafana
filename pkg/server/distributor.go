@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"hash/fnv"
 
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -49,6 +49,7 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	}
 
 	distributorServer := &DistributorServer{
+		log:        log.New("unified-storage-distributor"),
 		ring:       ms.storageRing,
 		clientPool: ms.storageRingClientPool,
 	}
@@ -101,6 +102,7 @@ func (d *Distributor) running(ctx context.Context) error {
 type DistributorServer struct {
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
+	log         log.Logger
 }
 
 var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
@@ -108,81 +110,73 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 })
 
 func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	fmt.Println("distributing Search")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Search(userutils.InjectOrgID(ctx, "1"), r)
+	return client.Search(ctx, r)
 }
 
 func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	fmt.Println("distributing GetStats")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.GetStats(userutils.InjectOrgID(ctx, "1"), r)
+	return client.GetStats(ctx, r)
 }
 
 func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
-	fmt.Println("distributing Read")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Read(userutils.InjectOrgID(ctx, "1"), r)
+	return client.Read(ctx, r)
 }
 
 func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
-	fmt.Println("distributing Create")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Create(userutils.InjectOrgID(ctx, "1"), r)
+	return client.Create(ctx, r)
 }
 
 func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
-	fmt.Println("distributing Update")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Update(userutils.InjectOrgID(ctx, "1"), r)
+	return client.Update(ctx, r)
 }
 
 func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
-	fmt.Println("distributing Delete")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Delete(userutils.InjectOrgID(ctx, "1"), r)
+	return client.Delete(ctx, r)
 }
 
 func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
-	fmt.Println("distributing List")
-	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.List(userutils.InjectOrgID(ctx, "1"), r)
+	return client.List(ctx, r)
 }
 
 func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
-	fmt.Println("distributing Watch")
 	return nil
 	// ctx := srv.Context()
 
-	// client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	// ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	// if err != nil {
 	// 	return err
 	// }
@@ -196,61 +190,61 @@ func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 // }
 
 func (ds *DistributorServer) CountManagedObjects(ctx context.Context, r *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
-	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.CountManagedObjects(userutils.InjectOrgID(ctx, "1"), r)
+	return client.CountManagedObjects(ctx, r)
 }
 
 func (ds *DistributorServer) ListManagedObjects(ctx context.Context, r *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
-	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.ListManagedObjects(userutils.InjectOrgID(ctx, "1"), r)
+	return client.ListManagedObjects(ctx, r)
 }
 
 func (ds *DistributorServer) PutBlob(ctx context.Context, r *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
-	client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.PutBlob(userutils.InjectOrgID(ctx, "1"), r)
+	return client.PutBlob(ctx, r)
 }
 
 func (ds *DistributorServer) GetBlob(ctx context.Context, r *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.GetBlob(userutils.InjectOrgID(ctx, "1"), r)
+	return client.GetBlob(ctx, r)
 }
 
-func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (resource.ResourceClient, error) {
+func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (context.Context, resource.ResourceClient, error) {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	rs, err := ds.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
 	client, err := ds.clientPool.GetClientForInstance(rs.Instances[0])
 	if err != nil {
-		return nil, err
+		return ctx, nil, err
 	}
 
-	fmt.Println("distributing request to ", rs.Instances[0].Id)
+	ds.log.Info("distributing request to ", rs.Instances[0].Id)
 
-	return client.(*resource.RingClient).Client, nil
+	return userutils.InjectOrgID(ctx, namespace), client.(*resource.RingClient).Client, nil
 }
 
 type healthServer struct{}
