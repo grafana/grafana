@@ -9019,7 +9019,8 @@
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Value or variable"
+      "placeholder-value-or-variable": "Value or variable",
+      "variable-regex-documentation": "Formats multi-value variable into a regex string"
     },
     "regression-transformer-editor": {
       "label-degree": "Degree",
