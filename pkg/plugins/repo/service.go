@@ -132,25 +132,55 @@ func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID 
 	return v.Versions, nil
 }
 
-func (m *Manager) GetPluginsInfo(ctx context.Context, compatOpts CompatOpts) ([]PluginInfo, error) {
+type GetPluginsInfoOptions struct {
+	IncludeDeprecated bool
+	Plugins           []string
+}
+
+func (m *Manager) GetPluginsInfo(ctx context.Context, options GetPluginsInfoOptions, compatOpts CompatOpts) ([]PluginInfo, error) {
 	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := m.client.SendReq(ctx, u, compatOpts)
-	if err != nil {
-		return nil, err
+	// If we are requesting more than 100 plugins, split the request into multiple requests to avoid
+	// the URL limit (local testing shows that the URL is <2000 characters for 100 plugins, which is
+	// below the limit).
+	plugins := [][]string{}
+	results := []PluginInfo{}
+	if len(options.Plugins) > 100 {
+		for i := 0; i < len(options.Plugins); i += 100 {
+			plugins = append(plugins, options.Plugins[i:min(i+100, len(options.Plugins))])
+		}
+	} else {
+		plugins = [][]string{options.Plugins}
+	}
+	for _, p := range plugins {
+		q := u.Query()
+		if options.IncludeDeprecated {
+			q.Set("includeDeprecated", "true")
+		}
+		if len(p) > 0 {
+			q.Set("slugIn", strings.Join(p, ","))
+		}
+		u.RawQuery = q.Encode()
+
+		body, err := m.client.SendReq(ctx, u, compatOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		var v struct {
+			Items []PluginInfo `json:"items"`
+		}
+		err = json.Unmarshal(body, &v)
+		if err != nil {
+			m.log.Error("Failed to unmarshal plugin repo response", "error", err)
+			return nil, err
+		}
+
+		results = append(results, v.Items...)
 	}
 
-	var v struct {
-		Items []PluginInfo `json:"items"`
-	}
-	err = json.Unmarshal(body, &v)
-	if err != nil {
-		m.log.Error("Failed to unmarshal plugin repo response", "error", err)
-		return nil, err
-	}
-
-	return v.Items, nil
+	return results, nil
 }
