@@ -44,7 +44,7 @@ export function GlobalStyles(props: GlobalStylesProps) {
         getElementStyles(theme, isExtensionSidebarOpen),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
-        getFontStyles(theme),
+        getFontStyles(),
         getFormElementStyles(theme),
         getJsonFormatterStyles(theme),
         getCardStyles(theme),
