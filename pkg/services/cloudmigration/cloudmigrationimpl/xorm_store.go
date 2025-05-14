@@ -31,7 +31,7 @@ const (
 	GetAllSnapshots              = -1
 	GetSnapshotListSortingLatest = "latest"
 
-	maxInsertBatchSize = 1000
+	maxResourceBatchSize = 1000
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -341,14 +341,14 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 		var endIndex int
 		if i == len(resources)-1 { // we've hit the last resource -- insert the remaining resources
 			endIndex = len(resources)
-		} else if i%maxInsertBatchSize == 0 && i > 0 { // we've hit the max batch size -- insert the the previous n resources
+		} else if i%maxResourceBatchSize == 0 && i > 0 { // we've hit the max batch size -- insert the the previous n resources
 			endIndex = i
 		} else {
 			continue // proceed to the next resource
 		}
 
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			_, err := sess.Insert(resources[int(math.Max(float64(i-maxInsertBatchSize), 0)):endIndex])
+			_, err := sess.Insert(resources[int(math.Max(float64(i-maxResourceBatchSize), 0)):endIndex])
 			return err
 		})
 		if err != nil {
@@ -396,7 +396,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 		}
 
 		// If we've hit the end of the batch or the end of the list, prepare the statements that we've accumulated
-		if i == len(resources)-1 || (i%maxInsertBatchSize == 0 && i > 0) {
+		if i == len(resources)-1 || (i%maxResourceBatchSize == 0 && i > 0) {
 			// Prepare a sql statement for all of the OK statuses
 			var okUpdateStatement *statement
 			if len(okIds) > 0 {
