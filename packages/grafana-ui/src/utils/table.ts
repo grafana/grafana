@@ -34,5 +34,5 @@ export const getCellLinks = (field: Field, row: Row) => {
     }
   }
 
-  return links;
+  return links.filter((link) => link.href || link.onClick != null);
 };

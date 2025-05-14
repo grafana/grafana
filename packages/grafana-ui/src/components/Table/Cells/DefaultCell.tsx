@@ -75,7 +75,7 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   const { key, ...rest } = cellProps;
-  const links = getCellLinks(field, row)?.filter((link) => link.href || link.onClick != null) || [];
+  const links = getCellLinks(field, row) || [];
 
   const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
   const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links);
