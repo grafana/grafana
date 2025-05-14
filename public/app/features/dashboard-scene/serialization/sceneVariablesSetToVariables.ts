@@ -193,6 +193,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
+    } else if (variable instanceof ScopesVariable) {
+      // Not persisted
     } else {
       throw new Error('Unsupported variable type');
     }

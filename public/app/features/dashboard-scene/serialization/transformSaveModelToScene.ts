@@ -385,6 +385,23 @@ export function registerPanelInteractionsReporter(scene: DashboardScene) {
   });
 }
 
+const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
+  return snapshotData.map((data) => {
+    return {
+      data: {
+        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
+      },
+      schema: {
+        fields: data.fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          config: field.config,
+        })),
+      },
+    };
+  });
+};
+
 // override panel datasource and targets with snapshot data using the Grafana datasource
 export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
   // only old snapshots created with old dashboards contains snapshotData
