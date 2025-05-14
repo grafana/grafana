@@ -3,7 +3,9 @@ import { create } from '@storybook/theming';
 
 export const createStorybookTheme = (theme: GrafanaTheme2) => {
   const brandImage =
-    theme.colors.mode === 'light' ? `public/img/grafana_text_logo-light.svg` : `public/img/grafana_text_logo-dark.svg`;
+    theme.colors.mode === 'light'
+      ? `public/img/grafana_text_logo-light.svg`
+      : `public/img/grafana_text_logo-dark.svg`;
 
   return create({
     base: theme.colors.mode,
