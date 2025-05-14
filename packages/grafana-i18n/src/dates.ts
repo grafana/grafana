@@ -42,5 +42,4 @@ export const formatDateRange = (from: Date, to: Date, format: Intl.DateTimeForma
 
 export const initRegionalFormat = (regionalFormatArg: string) => {
   regionalFormat = regionalFormatArg;
-  console.log('initRegionalFormat', regionalFormat);
 };
