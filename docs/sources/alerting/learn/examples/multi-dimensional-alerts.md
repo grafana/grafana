@@ -22,6 +22,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/multi-dimensional-alerts/table-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/multi-dimensional-alerts/table-data/
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   reduce-expression:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#reduce
@@ -90,9 +95,15 @@ With a threshold condition like `$A > 80`, Grafana evaluates each instance separ
 | {cpu="cpu-1"}  | 30    | Normal |
 | {cpu="cpu-2"}  | 85    | Firing |
 
-Multi-dimensional alerts help you surface issues on individual components—problems that might be missed when alerting on aggregated data (like total CPU usage). Each alert instance includes distinct label data that identifies the component, making the alert more specific and actionable.
+Multi-dimensional alerts help you surface issues on individual components—problems that might be missed when alerting on aggregated data (like total CPU usage).
 
-For example, Grafana might generate alerts like:
+Each alert instance targets a specific component, identified by its unique label set. This makes alerts more specific and actionable. For example, you can set a [`summary` annotation](ref:annotations) in your alert rule that identifies the affected CPU:
+
+```
+High CPU usage on {{$labels.cpu}}
+```
+
+In the previous example, the two firing alert instances would display summaries indicating the affected CPUs:
 
 - High CPU usage on `cpu-0`
 - High CPU usage on `cpu-2`
