@@ -640,7 +640,7 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
+  image: us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-14.3.2:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   volumes:
   - name: github-app
@@ -1928,7 +1928,7 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
+  image: us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-14.3.2:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   volumes:
   - name: github-app
@@ -5190,6 +5190,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ae094695663fb8fff2d6bb0b7bb40c5ece88cabbd5a41465edee317bd16f579d
+hmac: 5f4ce778b0c86c6c2267b9045f6019917983e352c8c62df1f898e6db16c9e935
 
 ...
