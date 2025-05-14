@@ -184,6 +184,91 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Nil(t, snapshot)
 	})
 
+	t.Run("tests a snapshot with a large number of resources", func(t *testing.T) {
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
+			OrgID:     1,
+			AuthToken: encodeToken("token"),
+		})
+		require.NoError(t, err)
+
+		// create a snapshot
+		snapshotUid, err := s.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			SessionUID: session.UID,
+			Status:     cloudmigration.SnapshotStatusCreating,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, snapshotUid)
+
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+
+		for i := 0; i < numResources; i++ {
+			resources[i] = cloudmigration.CloudMigrationResource{
+				Name:   fmt.Sprintf("Resource %d", i),
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  fmt.Sprintf("refid-%d", i),
+				Status: cloudmigration.ItemStatusPending,
+			}
+		}
+
+		// Update the snapshot with the resources to create
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    snapshotUid,
+			Status:                 cloudmigration.SnapshotStatusPendingUpload,
+			SessionID:              session.UID,
+			LocalResourcesToCreate: resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnName,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusPendingUpload, snapshot.Status)
+		require.Len(t, snapshot.Resources, numResources)
+
+		for i, r := range snapshot.Resources {
+			assert.Equal(t, cloudmigration.ItemStatusPending, r.Status)
+
+			if i%2 == 0 {
+				r.Status = cloudmigration.ItemStatusOK
+			} else {
+				r.Status = cloudmigration.ItemStatusError
+			}
+		}
+
+		// Update the snapshot with the resources to update
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    snapshotUid,
+			Status:                 cloudmigration.SnapshotStatusFinished,
+			SessionID:              session.UID,
+			CloudResourcesToUpdate: snapshot.Resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnName,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
+
+		for i, r := range snapshot.Resources {
+			if i%2 == 0 {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			} else {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+			}
+		}
+	})
 }
 
 func Test_SnapshotResources(t *testing.T) {
@@ -361,14 +446,13 @@ func Test_SnapshotResources(t *testing.T) {
 	})
 
 	t.Run("test creating and updating a large number of resources", func(t *testing.T) {
-		// Generate 45,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
-		const numResources = 45001
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
 		resources := make([]cloudmigration.CloudMigrationResource, numResources)
 
 		t.Run("create the resources", func(t *testing.T) {
 			for i := 0; i < numResources; i++ {
 				resources[i] = cloudmigration.CloudMigrationResource{
-					ID:     int64(i),
 					Name:   fmt.Sprintf("Resource %d", i),
 					Type:   cloudmigration.DashboardDataType,
 					RefID:  fmt.Sprintf("refid-%d", i),
@@ -384,7 +468,7 @@ func Test_SnapshotResources(t *testing.T) {
 			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnID,
+				SortColumn:  cloudmigration.SortColumnName,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
@@ -409,7 +493,7 @@ func Test_SnapshotResources(t *testing.T) {
 			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnID,
+				SortColumn:  cloudmigration.SortColumnName,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
@@ -437,7 +521,7 @@ func Test_SnapshotResources(t *testing.T) {
 			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnID,
+				SortColumn:  cloudmigration.SortColumnName,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
@@ -459,7 +543,7 @@ func Test_SnapshotResources(t *testing.T) {
 			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
-				SortColumn:  cloudmigration.SortColumnID,
+				SortColumn:  cloudmigration.SortColumnName,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
