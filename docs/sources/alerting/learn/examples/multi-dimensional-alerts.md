@@ -108,10 +108,6 @@ In the previous example, the two firing alert instances would display summaries 
 - High CPU usage on `cpu-0`
 - High CPU usage on `cpu-2`
 
-{{< admonition type="note" >}}
-To avoid sending multiple notifications for similar alerts, Grafana Alerting [groups similar immediate alerts](ref:alert-grouping) into a single notification by default.
-{{< /admonition >}}
-
 ## Try it with TestData
 
 You can quickly experiment with multi-dimensional alerts using the [**TestData** data source](ref:testdata-data-source), which can generate multiple random time series.
