@@ -3,6 +3,8 @@ import { render, type RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
+import '@testing-library/jest-dom';
+
 import { alertingAPIv0alpha1 } from '../src/unstable';
 
 // create an empty store
@@ -37,8 +39,7 @@ const customRender = (ui: React.ReactNode, renderOptions: RenderOptions = {}) =>
   const Providers = renderOptions.wrapper || getDefaultWrapper(renderOptions);
 
   return {
-    ...render(ui, { wrapper: Providers, ...renderOptions }),
-    /** Instance of `userEvent.setup()` ready for use to interact with rendered component */
+    renderResult: render(ui, { wrapper: Providers, ...renderOptions }),
     user,
     store,
   };
