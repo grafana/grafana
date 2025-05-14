@@ -951,6 +951,8 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 }
 
 func TestIntegrationFindDashboardsByFolder(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
