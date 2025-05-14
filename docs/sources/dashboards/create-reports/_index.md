@@ -82,7 +82,7 @@ refs:
 You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
-<!-- add image of reporting drawer with an existing report here -->
+{{< figure src="screenshot-report-config.png" max-width="600px" alt="The report configuration screen" >}}
 
 ## Requirements
 
@@ -112,9 +112,7 @@ Refer to specific guides to understand what permissions are required.
 
 The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page.
 
-You can also save the report as a draft at any step in the process:
-
-{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The report configuration screen" >}}
+You can also save the report as a draft at any step in the process.
 
 You can create directly from a dashboard or from the Reporting page.
 Select one of the following tabs for directions on each option.
@@ -344,7 +342,7 @@ You can view and manage all your reports, and create new ones, on the **Reports*
 Alternatively, from any dashboard you can view and manage any reports generated from that dashboard, as well as create a new report
 You can also navigate to the list of all reports from the dashboard-specific list:
 
-<!-- drawer with a report in it here -->
+{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The open Report schedule drawer with an existing report" >}}
 
 ### Edit reports
 
