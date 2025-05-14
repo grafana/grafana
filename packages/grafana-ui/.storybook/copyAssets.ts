@@ -25,20 +25,8 @@ const iconPaths = Object.keys(availableIconsIndex)
 export function copyAssetsSync() {
   const assets = [
     {
-      from: '../../../public/fonts',
-      to: './static/public/fonts',
-    },
-    {
-      from: '../../../public/img/grafana_text_logo-dark.svg',
-      to: './static/public/img/grafana_text_logo-dark.svg',
-    },
-    {
-      from: '../../../public/img/grafana_text_logo-light.svg',
-      to: './static/public/img/grafana_text_logo-light.svg',
-    },
-    {
-      from: '../../../public/img/fav32.png',
-      to: './static/public/img/fav32.png',
+      from: '../../../public/build',
+      to: './static/public/build',
     },
     {
       from: '../../../public/lib',
