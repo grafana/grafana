@@ -9,7 +9,6 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -71,10 +70,13 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 }
 
 func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
-	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
-		PageSize: wrapperspb.Int32(1),
-	})
-	return err == nil, nil
+	// remove: Basically we are checking that we have store?
+	// no not at all. we are just checking that we can list a store without error
+	// _, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+	// 	PageSize: wrapperspb.Int32(1),
+	// })
+	ready, err := s.openfga.IsReady(ctx)
+	return err == nil && ready, nil
 }
 
 func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
