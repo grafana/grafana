@@ -125,7 +125,7 @@ To alert on each series, you need to reduce the time series to a single value th
 
 Grafana Alerting provides several ways to reduce time series data:
 
-- **Data source query functions**. In the earlier example, we used the Prometheus `sum` function to sum the rate results by `cpu,`producing a single value per CPU core.
+- **Data source query functions**. The earlier example used the Prometheus `sum` function to sum the rate results by `cpu,`producing a single value per CPU core.
 - **Reduce expression**. In the query and condition section, Grafana provides the `Reduce` expression to aggregate time series data.
   - In **Default mode**, the **When** input selects a reducer (like `last`, `mean`, or `min`), and the threshold compares that reduced value.
   - In **Advanced mode**, you can add the [**Reduce** expression](ref:reduce-expression) (e.g., `last()`, `mean()`) before defining the threshold (alert condition).
