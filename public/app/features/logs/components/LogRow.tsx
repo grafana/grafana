@@ -105,10 +105,7 @@ export const LogRow = ({
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
-    () =>
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row,
+    () => (row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row),
     [forceEscape, row]
   );
   const errorMessage = checkLogsError(row);
@@ -222,12 +219,16 @@ export const LogRow = ({
           }
         >
           {hasError && (
-            <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+            <Tooltip
+              content={t('logs.log-row-message.tooltip-error', 'Error: {{errorMessage}}', { errorMessage })}
+              placement="right"
+              theme="error"
+            >
               <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
             </Tooltip>
           )}
           {isSampled && (
-            <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+            <Tooltip content={sampleMessage} placement="right" theme="info">
               <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
             </Tooltip>
           )}
@@ -288,6 +289,7 @@ export const LogRow = ({
             mouseIsOver={mouseIsOver}
             onBlur={onMouseLeave}
             expanded={showDetails}
+            forceEscape={forceEscape}
             logRowMenuIconsBefore={logRowMenuIconsBefore}
             logRowMenuIconsAfter={logRowMenuIconsAfter}
           />

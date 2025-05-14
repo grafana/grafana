@@ -2,6 +2,8 @@ import { useState } from 'react';
 
 import { ActionModel, ActionVariable, Field } from '@grafana/data';
 
+import { useTheme2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Button, ButtonProps } from '../Button';
 
 import { VariablesInputModal } from './VariablesInputModal';
@@ -14,6 +16,10 @@ type ActionButtonProps = ButtonProps & {
  * @internal
  */
 export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
+  const theme = useTheme2();
+  const backgroundColor = action.style.backgroundColor || theme.colors.secondary.main;
+  const textColor = theme.colors.getContrastText(backgroundColor);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const actionHasVariables = action.variables && action.variables.length > 0;
 
@@ -26,7 +32,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
         size="sm"
         onClick={() => setShowConfirm(true)}
         {...buttonProps}
-        style={{ width: 'fit-content' }}
+        style={{ width: 'fit-content', backgroundColor, color: textColor }}
       >
         {action.title}
       </Button>

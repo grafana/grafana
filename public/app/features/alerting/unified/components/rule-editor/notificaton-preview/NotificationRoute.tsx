@@ -18,25 +18,34 @@ import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
 import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath } from './route';
 
-function NotificationRouteHeader({
-  route,
-  receiver,
-  routesByIdMap,
-  instancesCount,
-  alertManagerSourceName,
-  expandRoute,
-  onExpandRouteClick,
-}: {
+export interface ReceiverNameProps {
+  /** Receiver name taken from route definition. Used as a fallback when full receiver details cannot be found (in case of RBAC restrictions) */
+  receiverNameFromRoute?: string;
+}
+
+interface NotificationRouteHeaderProps extends ReceiverNameProps {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
   expandRoute: boolean;
   onExpandRouteClick: (expand: boolean) => void;
-}) {
+}
+
+function NotificationRouteHeader({
+  route,
+  receiver,
+  receiverNameFromRoute,
+  routesByIdMap,
+  instancesCount,
+  alertManagerSourceName,
+  expandRoute,
+  onExpandRouteClick,
+}: NotificationRouteHeaderProps) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -76,7 +85,7 @@ function NotificationRouteHeader({
               <span className={styles.textMuted}>
                 <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
               </span>{' '}
-              {receiver.name}
+              {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
             </div>
 
             <div className={styles.verticalBar} />
@@ -92,6 +101,7 @@ function NotificationRouteHeader({
           onClose={() => setShowDetails(false)}
           route={route}
           receiver={receiver}
+          receiverNameFromRoute={receiverNameFromRoute}
           routesByIdMap={routesByIdMap}
           alertManagerSourceName={alertManagerSourceName}
         />
@@ -100,9 +110,9 @@ function NotificationRouteHeader({
   );
 }
 
-interface NotificationRouteProps {
+interface NotificationRouteProps extends ReceiverNameProps {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
@@ -112,6 +122,7 @@ export function NotificationRoute({
   route,
   instanceMatches,
   receiver,
+  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteProps) {
@@ -126,6 +137,7 @@ export function NotificationRoute({
       <NotificationRouteHeader
         route={route}
         receiver={receiver}
+        receiverNameFromRoute={receiverNameFromRoute}
         routesByIdMap={routesByIdMap}
         instancesCount={instanceMatches.length}
         alertManagerSourceName={alertManagerSourceName}

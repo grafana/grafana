@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -279,7 +279,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 disabled={isSubmitting}
                 icon={isSubmitting ? 'spinner' : undefined}
               >
-                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
                 <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save</Trans>
               </Button>
 
@@ -319,7 +318,9 @@ function useRedirectToDetailsPage(existingUid?: string) {
       const newOrUpdatedRuleUid = (saveResult.created?.at(0) || saveResult.updated?.at(0)) ?? existingUid;
       if (newOrUpdatedRuleUid) {
         locationService.replace(
-          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
+          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' }, undefined, {
+            skipSubPath: true,
+          })
         );
       } else {
         notifyApp.error(
@@ -335,7 +336,11 @@ function useRedirectToDetailsPage(existingUid?: string) {
   const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
     const { dataSourceName, namespaceName, groupName } = groupId;
     const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
-    locationService.replace(rulesNav.detailsPageLink(updatedRuleIdentifier.ruleSourceName, updatedRuleIdentifier));
+    locationService.replace(
+      rulesNav.detailsPageLink(updatedRuleIdentifier.ruleSourceName, updatedRuleIdentifier, undefined, {
+        skipSubPath: true,
+      })
+    );
   }, []);
 
   const redirectToDetailsPage = useCallback(
@@ -388,9 +393,6 @@ function storeInLocalStorageValues(values: RuleFormValues) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSpinner: css({
-    marginRight: theme.spacing(1),
-  }),
   form: css({
     width: '100%',
     height: '100%',
@@ -402,10 +404,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     maxWidth: theme.breakpoints.values.xl,
     flex: 1,
-  }),
-  flexRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
   }),
 });

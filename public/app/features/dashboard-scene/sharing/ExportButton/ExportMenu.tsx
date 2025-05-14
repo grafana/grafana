@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -37,11 +37,15 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
+    const label = config.featureToggles.kubernetesDashboards
+      ? t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code')
+      : t('share-dashboard.menu.export-json-title', 'Export as JSON');
+
     menuItems.push({
       shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
-      label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
+      label,
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.export),
     });

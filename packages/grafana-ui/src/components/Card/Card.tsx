@@ -27,6 +27,8 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   isSelected?: boolean;
   /** If true, the padding of the Card will be smaller */
   isCompact?: boolean;
+  /** Remove the bottom margin */
+  noMargin?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -59,6 +61,7 @@ export const Card: CardInterface = ({
   isSelected,
   isCompact,
   className,
+  noMargin,
   ...htmlProps
 }) => {
   const hasHeadingComponent = useMemo(
@@ -68,7 +71,7 @@ export const Card: CardInterface = ({
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact);
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact, noMargin);
 
   return (
     <CardContainer
@@ -76,6 +79,7 @@ export const Card: CardInterface = ({
       disableHover={disableHover}
       isSelected={isSelected}
       className={cx(styles.container, className)}
+      noMargin={noMargin}
       {...htmlProps}
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>

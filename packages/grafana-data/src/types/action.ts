@@ -1,8 +1,12 @@
+import { CSSProperties } from 'react';
+
 import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
 }
+
+type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 
 export interface Action {
   type: ActionType;
@@ -15,6 +19,7 @@ export interface Action {
   confirmation?: string;
   oneClick?: boolean;
   variables?: ActionVariable[];
+  style?: ActionButtonCssProperties;
 }
 
 /**
@@ -25,6 +30,7 @@ export interface ActionModel<T = any> {
   onClick: (event: any, origin?: any) => void;
   confirmation?: string;
   oneClick?: boolean;
+  style: ActionButtonCssProperties;
   variables?: ActionVariable[];
 }
 

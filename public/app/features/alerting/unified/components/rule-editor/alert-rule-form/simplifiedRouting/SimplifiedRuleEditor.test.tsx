@@ -59,8 +59,6 @@ const selectContactPoint = async (user: UserEvent, contactPointName: string) => 
 
 setupMswServer();
 describe('Can create a new grafana managed alert using simplified routing', () => {
-  testWithFeatureToggles(['alertingSimplifiedRouting']);
-
   beforeEach(() => {
     window.localStorage.clear();
     setupDataSources(dataSources.default, dataSources.am);

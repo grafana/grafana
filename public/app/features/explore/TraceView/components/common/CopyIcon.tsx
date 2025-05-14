@@ -18,6 +18,8 @@ import { useState } from 'react';
 
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../../../../core/internationalization';
+
 const getStyles = () => ({
   CopyIcon: css({
     backgroundColor: 'transparent',
@@ -50,7 +52,7 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
   };
 
   return (
-    <Tooltip content={hasCopied ? 'Copied' : tooltipTitle}>
+    <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
       <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
     </Tooltip>
   );

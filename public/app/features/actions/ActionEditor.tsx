@@ -1,15 +1,19 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
+import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
 import {
-  Action,
-  GrafanaTheme2,
-  httpMethodOptions,
-  HttpRequestMethod,
-  VariableSuggestion,
+  Switch,
+  Field,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  JSONFormatter,
+  useStyles2,
+  ColorPicker,
+  useTheme2,
   ActionVariable,
-} from '@grafana/data';
-import { Switch, Field, InlineField, InlineFieldRow, RadioButtonGroup, JSONFormatter, useStyles2 } from '@grafana/ui';
+} from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
@@ -29,6 +33,7 @@ const LABEL_WIDTH = 13;
 
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -99,6 +104,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
+  const onBackgroundColorChange = (backgroundColor: string) => {
+    onChange(index, {
+      ...value,
+      style: {
+        ...value.style,
+        backgroundColor,
+      },
+    });
+  };
+
   const renderJSON = (data = '{}') => {
     try {
       const json = JSON.parse(data);
@@ -146,6 +161,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
             { actionTitle: value.title || '... ' }
           )}
         />
+      </Field>
+
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
       </Field>
 
       {showOneClick && (
@@ -241,6 +269,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   inputField: css({
     marginRight: 4,
+  }),
+  colorPicker: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
 
