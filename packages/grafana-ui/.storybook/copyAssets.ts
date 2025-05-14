@@ -25,8 +25,12 @@ const iconPaths = Object.keys(availableIconsIndex)
 export function copyAssetsSync() {
   const assets = [
     {
-      from: '../../../public',
-      to: './static/public/build',
+      from: '../../../public/fonts',
+      to: './static/public/fonts',
+    },
+    {
+      from: '../../../public/img',
+      to: './static/public/img',
     },
     {
       from: '../../../public/lib',
