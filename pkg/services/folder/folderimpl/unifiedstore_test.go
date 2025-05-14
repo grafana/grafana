@@ -441,142 +441,6 @@ func TestGetChildren(t *testing.T) {
 	})
 }
 
-func TestGetParentsWithCache(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		f     *folder.Folder
-		cache map[string][]*folder.Folder
-	}
-	tests := []struct {
-		name    string
-		args    args
-		mock    func(mockCli *client.MockK8sHandler)
-		want    []*folder.Folder
-		wantErr bool
-	}{
-		{
-			name: "should return parents from cache",
-			args: args{
-				ctx: context.Background(),
-				f: &folder.Folder{
-					UID:       "self",
-					OrgID:     orgID,
-					ParentUID: "parentone",
-				},
-				cache: map[string][]*folder.Folder{
-					"parentone": {
-						{
-							UID:   "parenttwo",
-							OrgID: orgID,
-						},
-						{
-							UID:   "parentone",
-							OrgID: orgID,
-						},
-					},
-				},
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-			},
-			want: []*folder.Folder{
-				{
-					UID:   "parenttwo",
-					OrgID: orgID,
-				},
-				{
-					UID:   "parentone",
-					OrgID: orgID,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return parents from k8s if not in cache",
-			args: args{
-				ctx: context.Background(),
-				f: &folder.Folder{
-					UID:       "self",
-					OrgID:     orgID,
-					ParentUID: "parentone",
-				},
-				cache: map[string][]*folder.Folder{},
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("Get", mock.Anything, "self", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "self",
-							"annotations": map[string]interface{}{"grafana.app/folder": "parentone"},
-						},
-					},
-				}, nil).Once()
-				mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "parentone",
-							"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
-						},
-					},
-				}, nil).Once()
-				mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name": "parenttwo",
-						},
-					},
-				}, nil).Once()
-			},
-			want: []*folder.Folder{
-				{
-					UID:   "parenttwo",
-					OrgID: orgID,
-				},
-				{
-					UID:   "parentone",
-					OrgID: orgID,
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return error if k8s returns error",
-			args: args{
-				ctx: context.Background(),
-				f: &folder.Folder{
-					UID:       "self",
-					OrgID:     orgID,
-					ParentUID: "parentone",
-				},
-				cache: map[string][]*folder.Folder{},
-			},
-			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("Get", mock.Anything, "self", orgID, mock.Anything, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "parentone")).Once()
-			},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockCLI := new(client.MockK8sHandler)
-			tt.mock(mockCLI)
-			ss := &FolderUnifiedStoreImpl{
-				k8sclient:   mockCLI,
-				userService: usertest.NewUserServiceFake(),
-			}
-			got, err := ss.getParentsWithCache(tt.args.ctx, tt.args.f, tt.args.cache)
-			require.Equal(t, tt.wantErr, err != nil, "getParentsWithCache() error = %v, wantErr %v", err, tt.wantErr)
-			if !tt.wantErr {
-				require.Len(t, got, len(tt.want), "getParentsWithCache() = %v, want %v", got, tt.want)
-				for i, parent := range got {
-					require.Equal(t, tt.want[i].UID, parent.UID, "getParentsWithCache() = %v, want %v", got, tt.want)
-					require.Equal(t, tt.want[i].OrgID, parent.OrgID, "getParentsWithCache() = %v, want %v", got, tt.want)
-				}
-			}
-		})
-	}
-}
-
 func TestGetFolders(t *testing.T) {
 	type args struct {
 		ctx context.Context
@@ -753,17 +617,6 @@ func TestGetFolders(t *testing.T) {
 						},
 					},
 				}, nil).Once()
-				mockCli.On("Get", mock.Anything, "root1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name": "root1",
-							"uid":  "root1",
-						},
-						"spec": map[string]interface{}{
-							"title": "root1",
-						},
-					},
-				}, nil).Once()
 			},
 			want: []*folder.Folder{
 				{
@@ -839,29 +692,6 @@ func TestGetFolders(t *testing.T) {
 						},
 					},
 				}, nil).Once()
-				mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "folder1",
-							"uid":         "folder1",
-							"annotations": map[string]interface{}{"grafana.app/folder": "parentcommon"},
-						},
-						"spec": map[string]interface{}{
-							"title": "folder1",
-						},
-					},
-				}, nil).Once()
-				mockCli.On("Get", mock.Anything, "parentcommon", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name": "parentcommon",
-							"uid":  "parentcommon",
-						},
-						"spec": map[string]interface{}{
-							"title": "parentcommon",
-						},
-					},
-				}, nil).Once()
 			},
 			want: []*folder.Folder{
 				{
@@ -921,6 +751,132 @@ func TestGetFolders(t *testing.T) {
 					require.Equal(t, tt.want[i].FullpathUIDs, folder.FullpathUIDs, "GetFolders() = %v, want %v", got, tt.want)
 				}
 			}
+		})
+	}
+}
+
+func TestBuildFolderFullPaths(t *testing.T) {
+	type args struct {
+		f         *folder.Folder
+		relations map[string]string
+		folderMap map[string]*folder.Folder
+	}
+	tests := []struct {
+		name string
+		args args
+		want *folder.Folder
+	}{
+		{
+			name: "should build full path for a folder with no parents",
+			args: args{
+				f: &folder.Folder{
+					Title: "Root",
+					UID:   "root-uid",
+				},
+				relations: map[string]string{},
+				folderMap: map[string]*folder.Folder{},
+			},
+			want: &folder.Folder{
+				Title:        "Root",
+				UID:          "root-uid",
+				Fullpath:     "Root",
+				FullpathUIDs: "root-uid",
+			},
+		},
+		{
+			name: "should build full path for a folder with one parent",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid": "parent-uid",
+				},
+				folderMap: map[string]*folder.Folder{
+					"parent-uid": {
+						Title: "Parent",
+						UID:   "parent-uid",
+					},
+				},
+			},
+			want: &folder.Folder{
+				Title:        "Child",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Parent/Child",
+				FullpathUIDs: "parent-uid/child-uid",
+			},
+		},
+		{
+			name: "should build full path for a folder with multiple parents",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid":       "parent-uid",
+					"parent-uid":      "grandparent-uid",
+					"grandparent-uid": "",
+				},
+				folderMap: map[string]*folder.Folder{
+					"child-uid": {
+						Title:     "Child",
+						UID:       "child-uid",
+						ParentUID: "parent-uid",
+					},
+					"parent-uid": {
+						Title:     "Parent",
+						UID:       "parent-uid",
+						ParentUID: "grandparent-uid",
+					},
+					"grandparent-uid": {
+						Title: "Grandparent",
+						UID:   "grandparent-uid",
+					},
+				},
+			},
+			want: &folder.Folder{
+				Title:        "Child",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Grandparent/Parent/Child",
+				FullpathUIDs: "grandparent-uid/parent-uid/child-uid",
+			},
+		},
+		{
+			name: "should build full path for a folder with no parents in the map",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid": "parent-uid",
+				},
+				folderMap: map[string]*folder.Folder{},
+			},
+			want: &folder.Folder{
+				Title:        "Child",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Child",
+				FullpathUIDs: "child-uid",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buildFolderFullPaths(tt.args.f, tt.args.relations, tt.args.folderMap)
+			require.Equal(t, tt.want.Fullpath, tt.args.f.Fullpath, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Fullpath, tt.want.Fullpath)
+			require.Equal(t, tt.want.FullpathUIDs, tt.args.f.FullpathUIDs, "BuildFolderFullPaths() = %v, want %v", tt.args.f.FullpathUIDs, tt.want.FullpathUIDs)
+			require.Equal(t, tt.want.Title, tt.args.f.Title, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Title, tt.want.Title)
+			require.Equal(t, tt.want.UID, tt.args.f.UID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.UID, tt.want.UID)
+			require.Equal(t, tt.want.ParentUID, tt.args.f.ParentUID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.ParentUID, tt.want.ParentUID)
 		})
 	}
 }

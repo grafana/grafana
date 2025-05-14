@@ -336,25 +336,26 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		return nil, err
 	}
 
-	filterUIDs := map[string]struct{}{}
+	filters := make(map[string]struct{}, len(q.UIDs))
 	for _, uid := range q.UIDs {
-		filterUIDs[uid] = struct{}{}
+		filters[uid] = struct{}{}
 	}
 
-	hits := []*folder.Folder{}
-	cache := map[string][]*folder.Folder{}
+	folderMap := make(map[string]*folder.Folder, len(folders))
+	relations := make(map[string]string, len(folders))
+	for _, folder := range folders {
+		folderMap[folder.UID] = folder
+		relations[folder.UID] = folder.ParentUID
+	}
+
+	hits := make([]*folder.Folder, 0, len(folders))
 	for _, f := range folders {
-		if shouldSkipFolder(f, filterUIDs) {
+		if shouldSkipFolder(f, filters) {
 			continue
 		}
 
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			parents, err := ss.getParentsWithCache(ctx, f, cache)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get parents for folder with cache %s: %w", f.UID, err)
-			}
-			parentsWithSelf := append(parents, f)
-			f.Fullpath, f.FullpathUIDs = computeFullPath(parentsWithSelf)
+			buildFolderFullPaths(f, relations, folderMap)
 		}
 
 		hits = append(hits, f)
@@ -365,21 +366,6 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	// }
 
 	return hits, nil
-}
-
-func (ss *FolderUnifiedStoreImpl) getParentsWithCache(ctx context.Context, f *folder.Folder, cache map[string][]*folder.Folder) ([]*folder.Folder, error) {
-	if result, ok := cache[f.ParentUID]; ok {
-		return result, nil
-	}
-
-	parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
-	}
-
-	cache[f.ParentUID] = parents
-
-	return parents, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
@@ -488,6 +474,37 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+	titles := make([]string, 0)
+	uids := make([]string, 0)
+
+	titles = append(titles, f.Title)
+	uids = append(uids, f.UID)
+
+	currentUID := f.UID
+	for currentUID != "" {
+		parentUID, exists := relations[currentUID]
+		if !exists {
+			break
+		}
+
+		if parentUID == "" {
+			break
+		}
+
+		parentFolder, exists := folderMap[parentUID]
+		if !exists {
+			break
+		}
+		titles = append(titles, parentFolder.Title)
+		uids = append(uids, parentFolder.UID)
+		currentUID = parentFolder.UID
+	}
+
+	f.Fullpath = strings.Join(util.Reverse(titles), "/")
+	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
 }
 
 func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {
