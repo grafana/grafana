@@ -22,7 +22,6 @@ export const formatDate = deepMemoize(
     if (typeof value === 'string') {
       return formatDate(new Date(value), format);
     }
-    console.log('formatting date with locale', regionalFormat);
     const dateFormatter = createDateTimeFormatter(regionalFormat, format);
     return dateFormatter.format(value);
   }
