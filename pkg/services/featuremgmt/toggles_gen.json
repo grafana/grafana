@@ -214,16 +214,18 @@
     {
       "metadata": {
         "name": "alertingMigrationUI",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-14T16:40:05Z"
+        "resourceVersion": "1747241866044",
+        "creationTimestamp": "2025-03-14T16:40:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-14 16:57:46.044198 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
-        "stage": "experimental",
+        "description": "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {
