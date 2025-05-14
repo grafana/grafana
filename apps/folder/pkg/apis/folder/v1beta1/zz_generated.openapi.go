@@ -274,6 +274,7 @@ func schema_pkg_apis_folder_v1beta1_FolderInfoList(ref common.ReferenceCallback)
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

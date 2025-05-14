@@ -11,13 +11,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,7 +130,7 @@ func NewStorage(
 	}
 
 	if opts.RequireDeprecatedInternalID {
-		node, err := snowflake.NewNode(rand.Int63n(1024))
+		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
 		}
