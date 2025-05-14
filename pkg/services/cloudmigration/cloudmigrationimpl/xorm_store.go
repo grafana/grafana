@@ -220,7 +220,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 		}
 	}
 
-	// Update status if set
+	// Update the snapshot status if set
 	if update.Status != "" {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE session_uid=? AND uid=?"
