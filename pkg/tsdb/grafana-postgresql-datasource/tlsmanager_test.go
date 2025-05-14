@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -130,6 +131,43 @@ func TestTLSManager_GetTLSSettings(t *testing.T) {
 	assert.NoFileExists(t, tlsConfig.CertKeyFile)
 }
 
+func TestTLSManager_CleanupCertFiles_FilePath(t *testing.T) {
+	logger := log.New()
+	tlsManager := newTLSManager(logger)
+
+	// Create temporary files for testing
+	rootCertFile, err := tlsManager.writeCertFile("root-*.crt", "root-cert-content")
+	require.NoError(t, err)
+	clientCertFile, err := tlsManager.writeCertFile("client-*.crt", "client-cert-content")
+	require.NoError(t, err)
+	clientKeyFile, err := tlsManager.writeCertFile("client-*.key", "client-key-content")
+	require.NoError(t, err)
+
+	// Simulate a configuration where the method is "file-path"
+	tlsConfig := tlsSettings{
+		ConfigurationMethod: "file-path",
+		RootCertFile:        rootCertFile,
+		CertFile:            clientCertFile,
+		CertKeyFile:         clientKeyFile,
+	}
+
+	// Call cleanupCertFiles
+	tlsManager.cleanupCertFiles(tlsConfig)
+
+	// Verify the files are NOT deleted
+	assert.FileExists(t, rootCertFile, "Root certificate file should not be deleted")
+	assert.FileExists(t, clientCertFile, "Client certificate file should not be deleted")
+	assert.FileExists(t, clientKeyFile, "Client key file should not be deleted")
+
+	// Cleanup the files manually
+	err = os.Remove(rootCertFile)
+	require.NoError(t, err)
+	err = os.Remove(clientCertFile)
+	require.NoError(t, err)
+	err = os.Remove(clientKeyFile)
+	require.NoError(t, err)
+}
+
 func TestTLSManager_CreateCertFiles(t *testing.T) {
 	logger := log.New()
 	tlsManager := newTLSManager(logger)
@@ -142,7 +180,9 @@ func TestTLSManager_CreateCertFiles(t *testing.T) {
 		},
 	}
 
-	tlsConfig := tlsSettings{}
+	tlsConfig := tlsSettings{
+		ConfigurationMethod: "file-content",
+	}
 	err := tlsManager.createCertFiles(dsInfo, &tlsConfig)
 	require.NoError(t, err)
 
@@ -166,8 +206,7 @@ func TestTLSManager_WriteCertFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.FileExists(t, filePath)
 
-	// Read the file to verify its content
-	content, err := os.ReadFile(filePath)
+	content, err := os.ReadFile(filepath.Clean(filePath))
 	require.NoError(t, err)
 	assert.Equal(t, "test-cert-content", string(content))
 
@@ -190,9 +229,10 @@ func TestTLSManager_CleanupCertFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	tlsConfig := tlsSettings{
-		RootCertFile: rootCertFile,
-		CertFile:     clientCertFile,
-		CertKeyFile:  clientKeyFile,
+		ConfigurationMethod: "file-content",
+		RootCertFile:        rootCertFile,
+		CertFile:            clientCertFile,
+		CertKeyFile:         clientKeyFile,
 	}
 
 	// Cleanup the files
