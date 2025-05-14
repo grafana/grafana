@@ -244,11 +244,7 @@ export function mockDashboardApi(server: SetupServer) {
  * Sets up MSW server with additional handlers for Alerting tests
  */
 export function setupMswServer() {
-  setupMockServer();
-
-  beforeEach(() => {
-    server.use(...allHandlers);
-  });
+  setupMockServer(allHandlers);
 
   beforeAll(() => {
     setBackendSrv(backendSrv);
