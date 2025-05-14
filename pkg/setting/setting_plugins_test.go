@@ -157,8 +157,10 @@ func Test_readPluginSettings(t *testing.T) {
 		tests := []struct {
 			name              string
 			rawInput          string
+			rawInputSync      string
 			disablePreinstall bool
 			expected          []InstallPlugin
+			expectedSync      []InstallPlugin
 			disableAsync      bool
 			disablePlugins    string
 		}{
@@ -199,7 +201,8 @@ func Test_readPluginSettings(t *testing.T) {
 				name:         "should mark preinstall as sync",
 				rawInput:     "plugin1",
 				disableAsync: true,
-				expected:     append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
+				expected:     nil,
+				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
 			},
 			{
 				name:     "should parse a plugin with version and URL",
@@ -211,6 +214,29 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
 				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://example.com/plugin1.tar.gz"}),
 			},
+			{
+				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",
+				rawInput:     "plugin1",
+				rawInputSync: "plugin2",
+				disableAsync: true,
+				expected:     nil,
+				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}, InstallPlugin{"plugin2", "", ""}),
+			},
+			{
+				name:     "should overwrite default when user pins a version",
+				rawInput: "grafana-pyroscope-app@4.0.0",
+				expected: func() []InstallPlugin {
+					var plugins []InstallPlugin
+					for _, p := range defaultPreinstallPlugins {
+						if p.ID == "grafana-pyroscope-app" {
+							plugins = append(plugins, InstallPlugin{"grafana-pyroscope-app", "4.0.0", ""})
+						} else {
+							plugins = append(plugins, p)
+						}
+					}
+					return plugins
+				}(),
+			},
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
@@ -219,6 +245,10 @@ func Test_readPluginSettings(t *testing.T) {
 				require.NoError(t, err)
 				_, err = sec.NewKey("preinstall", tc.rawInput)
 				require.NoError(t, err)
+				if tc.rawInputSync != "" {
+					_, err = sec.NewKey("preinstall_sync", tc.rawInputSync)
+					require.NoError(t, err)
+				}
 				if tc.disablePreinstall {
 					_, err = sec.NewKey("preinstall_disabled", "true")
 					require.NoError(t, err)
@@ -237,6 +267,9 @@ func Test_readPluginSettings(t *testing.T) {
 				assert.ElementsMatch(t, cfg.PreinstallPlugins, tc.expected)
 				if tc.disableAsync {
 					require.Equal(t, cfg.PreinstallPluginsAsync, false)
+				}
+				if tc.expectedSync != nil {
+					assert.ElementsMatch(t, cfg.PreinstallPluginsSync, tc.expectedSync)
 				}
 			})
 		}

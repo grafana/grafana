@@ -41,8 +41,7 @@ var (
 	}
 )
 
-func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string) map[string]InstallPlugin {
-	preinstallPlugins := make(map[string]InstallPlugin)
+func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallPlugins map[string]InstallPlugin) {
 	// Add the plugins defined in the configuration
 	for _, plugin := range rawInstallPlugins {
 		parts := strings.Split(plugin, "@")
@@ -58,7 +57,6 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string) map[string]
 
 		preinstallPlugins[id] = InstallPlugin{id, version, url}
 	}
-	return preinstallPlugins
 }
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
@@ -77,7 +75,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPluginsAsync := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
-		preinstallPlugins := cfg.processPreinstallPlugins(rawInstallPluginsAsync)
+		preinstallPlugins := make(map[string]InstallPlugin)
 		// Add the default preinstalled plugins to pre install plugins async list
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPlugins[plugin.ID] = plugin
@@ -85,9 +83,11 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
+		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPlugins)
 
 		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))
-		preinstallPluginsSync := cfg.processPreinstallPlugins(rawInstallPluginsSync)
+		preinstallPluginsSync := make(map[string]InstallPlugin)
+		cfg.processPreinstallPlugins(rawInstallPluginsSync, preinstallPluginsSync)
 		// Remove from the list the plugins that have been disabled
 		for _, disabledPlugin := range cfg.DisablePlugins {
 			delete(preinstallPlugins, disabledPlugin)
@@ -96,10 +96,19 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		for _, plugin := range preinstallPlugins {
 			cfg.PreinstallPlugins = append(cfg.PreinstallPlugins, plugin)
 		}
+
 		for _, plugin := range preinstallPluginsSync {
 			cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
 		}
 		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
+		if !cfg.PreinstallPluginsAsync {
+			for key, plugin := range preinstallPlugins {
+				if _, exists := preinstallPluginsSync[key]; !exists {
+					cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
+				}
+			}
+			cfg.PreinstallPlugins = nil
+		}
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
