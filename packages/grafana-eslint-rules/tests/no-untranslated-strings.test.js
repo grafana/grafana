@@ -18,8 +18,9 @@ RuleTester.setDefaultConfig({
 const filename = 'public/app/features/some-feature/SomeFile.tsx';
 
 const TRANS_IMPORT = `import { Trans } from '${PACKAGE_IMPORT_NAME}';`;
-const T_IMPORT = `import { t } from '${PACKAGE_IMPORT_NAME}';`;
-const ALL_IMPORT = `import { Trans, t } from '${PACKAGE_IMPORT_NAME}';`;
+const T_IMPORT = `import { t } from '${PACKAGE_IMPORT_NAME}/internal';`;
+const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${PACKAGE_IMPORT_NAME}';`;
+
 const LEGACY_IMPORT = `import { Trans } from 'app/core/internationalization';`;
 const LEGACY_IMPORT_RELATIVE = `import { Trans } from '../../core/internationalization';`;
 
@@ -125,7 +126,8 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
 
     {
       name: 'Text inside JSXElement, not in a function',
-      code: `const thing = <div>foo</div>`,
+      code: `
+const thing = <div>foo</div>`,
       filename,
       errors: [
         {
@@ -133,7 +135,8 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
           suggestions: [
             {
               messageId: 'wrapWithTrans',
-              output: `${TRANS_IMPORT}
+              output: `
+${TRANS_IMPORT}
 const thing = <div><Trans i18nKey="some-feature.thing.foo">foo</Trans></div>`,
             },
           ],
@@ -339,7 +342,8 @@ const Foo = () => <div title="foo" />`,
             {
               messageId: 'wrapWithT',
               output: `
-${ALL_IMPORT}
+${T_IMPORT}
+${TRANS_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],

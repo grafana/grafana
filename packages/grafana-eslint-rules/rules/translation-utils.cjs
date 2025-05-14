@@ -215,24 +215,33 @@ const PACKAGE_IMPORT_NAME = '@grafana/i18n';
 /**
  * Gets the import fixer for a node
  * @param {RuleFixer} fixer The fixer
- * @param {string} importName The import name
+ * @param {'Trans'|'t'|'useTranslate'} importName The import name
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
 function getImportsFixer(fixer, importName, context) {
   const body = context.sourceCode.ast.body;
 
+  /** Map of where we expect to import each translation util from */
+  const importPackage = {
+    Trans: '@grafana/i18n',
+    useTranslate: '@grafana/i18n',
+    t: '@grafana/i18n/internal',
+  };
+
+  const expectedImport = importPackage[importName];
+
   const existingAppCoreI18n = body.find(
     (node) =>
       node.type === AST_NODE_TYPES.ImportDeclaration &&
-      (node.source.value === PACKAGE_IMPORT_NAME ||
+      (node.source.value === importPackage[importName] ||
         // "legacy" imports:
         node.source.value.endsWith('core/internationalization'))
   );
 
   // If there's no existing import at all, add it
   if (!existingAppCoreI18n) {
-    return fixer.insertTextBefore(body[0], `import { ${importName} } from '${PACKAGE_IMPORT_NAME}';\n`);
+    return fixer.insertTextBefore(body[0], `import { ${importName} } from '${expectedImport}';\n`);
   }
 
   // To keep the typechecker happy - we have to explicitly check the type
