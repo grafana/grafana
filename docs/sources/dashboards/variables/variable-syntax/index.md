@@ -136,7 +136,18 @@ Interpolation result: 'test1.|test2'
 
 ### Raw
 
-The raw format for a data source variable returns the UID (unique identifier) of the data source, rather than its name.
+Doesn't apply any formatting to the variable.
+Characters that would typically be escaped are left included.
+
+Typically, the UID of a data source is converted to the data source name, as shown in the following example:
+
+```bash
+datasourceVariable = 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
+String to interpolate: '${datasourceVariable:raw}'
+Interpolation result: 'Prometheus-1'
+```
+
+Using the raw format, a data source variable returns the UID (unique identifier) of the data source instead:
 
 ```bash
 datasourceVariable = 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
