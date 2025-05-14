@@ -57,7 +57,7 @@ func ProvideAuthZClient(
 	}
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
-		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+		return authlib.FixedAccessClient(false), errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
@@ -131,7 +131,7 @@ func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return authlib.FixedAccessClient(false), nil
+		return authlib.FixedAccessClient(true), nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
