@@ -24,7 +24,7 @@ export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTree
   const isDashboard = to.startsWith('/d/');
   const locPathname = useLocation().pathname;
 
-  // For dashboards, the title is appended to the path. We need to diregard this
+  // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
   const currentPath = isDashboard ? getDashboardPathForComparison(locPathname) : locPathname;
 
   // Ignore query params
