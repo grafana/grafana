@@ -63,6 +63,7 @@ export interface TimeRangePickerProps {
   onToolbarTimePickerClick?: () => void;
   /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
   weekStart?: WeekStart;
+  showMoveButtonsWtihRelativeRange?: boolean;
 }
 
 export interface State {
@@ -90,6 +91,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onToolbarTimePickerClick,
     weekStart,
     initialIsSynced,
+    showMoveButtonsWtihRelativeRange,
   } = props;
 
   const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
@@ -138,6 +140,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
   const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+  const showMoveButtons = hasAbsolute || showMoveButtonsWtihRelativeRange;
 
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
@@ -148,7 +151,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   return (
     <ButtonGroup className={styles.container}>
-      {hasAbsolute && (
+      {showMoveButtons && (
         <ToolbarButton
           aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
           variant={variant}
@@ -207,7 +210,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
       {timeSyncButton}
 
-      {hasAbsolute && (
+      {showMoveButtons && (
         <ToolbarButton
           aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
           onClick={onMoveForward}
