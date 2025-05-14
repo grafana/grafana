@@ -38,12 +38,10 @@ describe('listing contact points', () => {
     // make sure all options are rendered
     expect(await screen.findAllByRole('option')).toHaveLength(simpleContactPointsList.items.length);
 
-    for (let item of simpleContactPointsList.items) {
-      const optionText = await screen.findByText(item.spec.title);
-      expect(optionText).toBeInTheDocument();
-
-      const option = optionText.closest<HTMLElement>('[role=option]');
-      expect(within(option!).getByText(getContactPointDescription(item))).toBeInTheDocument();
+    for (const item of simpleContactPointsList.items) {
+      const option = await screen.findByRole('option', { name: new RegExp(item.spec.title) });
+      expect(option).toBeInTheDocument();
+      expect(within(option).getByText(getContactPointDescription(item))).toBeInTheDocument();
     }
 
     // test interaction with combobox and handler contract
