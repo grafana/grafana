@@ -15,6 +15,10 @@ import (
 )
 
 func TestIntegration_GetAllLibraryElements(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191196704?pr=8583
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206086427?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)

@@ -32,6 +32,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191194120?pr=8583
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206084276?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
@@ -55,6 +59,9 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191194120?pr=8583
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}

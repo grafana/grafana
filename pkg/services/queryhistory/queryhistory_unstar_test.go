@@ -9,6 +9,10 @@ import (
 )
 
 func TestIntegrationUnstarQueryInQueryHistory(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191195390?pr=8583
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206085291?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

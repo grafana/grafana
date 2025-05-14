@@ -506,6 +506,9 @@ spec:
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206092834?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

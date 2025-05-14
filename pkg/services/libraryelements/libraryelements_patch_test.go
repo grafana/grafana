@@ -14,6 +14,10 @@ import (
 )
 
 func TestIntegration_PatchLibraryElement(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191205705?pr=8583
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206095545?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}

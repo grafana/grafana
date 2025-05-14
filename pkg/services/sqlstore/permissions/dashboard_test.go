@@ -498,6 +498,10 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15013574205/job/42191196704?pr=8583
+	// https://github.com/grafana/grafana-enterprise/actions/runs/15019815803/job/42206086427?pr=8603
+	t.Skip("Disabled due to flakiness or timeout with MySQL")
+
 	testCases := []struct {
 		desc                    string
 		queryType               string
