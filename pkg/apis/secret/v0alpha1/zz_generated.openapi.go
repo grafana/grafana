@@ -446,6 +446,7 @@ func schema_pkg_apis_secret_v0alpha1_KeeperList(ref common.ReferenceCallback) co
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -614,6 +615,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueList(ref common.ReferenceCallbac
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

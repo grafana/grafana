@@ -517,6 +517,7 @@ func schema_pkg_apis_dashboard_v1beta1_DashboardVersionList(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -667,6 +668,7 @@ func schema_pkg_apis_dashboard_v1beta1_LibraryPanelList(ref common.ReferenceCall
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

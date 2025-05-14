@@ -95,5 +95,5 @@ type SecureValueList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// Slice containing all secure values. This will NOT output decrypted values.
-	Items []SecureValue `json:"items,omitempty"`
+	Items []SecureValue `json:"items"`
 }
