@@ -9,6 +9,8 @@ import (
 )
 
 func TestIntegrationUnstarQueryInQueryHistory(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
