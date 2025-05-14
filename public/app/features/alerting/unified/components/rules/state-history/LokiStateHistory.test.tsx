@@ -33,7 +33,7 @@ jest.mock('react-use', () => {
   };
 });
 
-beforeAll(() => {
+beforeEach(() => {
   server.use(
     http.get('/api/v1/rules/history', () =>
       HttpResponse.json<DataFrameJSON>({

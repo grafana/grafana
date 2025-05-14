@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 type ManifestInfo struct {
@@ -36,6 +37,7 @@ type EntryPointInfo struct {
 var (
 	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
 	entryPointAssetsCache   *dtos.EntryPointAssets // TODO: get rid of global state
+	httpClient              = httpclient.New()
 )
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
@@ -88,7 +90,7 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	if err != nil {
 		return nil, err
 	}
-	response, err := http.DefaultClient.Do(req)
+	response, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

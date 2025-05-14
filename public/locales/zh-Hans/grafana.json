@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "审计",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "数据面板存在指示灯",
       "title-dashboard-usage-stats-drawer": "数据面板使用情况统计抽屉",
       "title-data-source-permissions": "数据源权限",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "SAML 身份验证",
       "title-settings-updates-at-runtime": "运行时设置更新",
       "title-sort-dashboards-by-popularity-in-search": "按搜索中的受欢迎程度对数据面板排序",
-      "title-team-sync": "团队同步",
-      "title-white-labeling": "白标签"
+      "title-team-sync": "团队同步"
     },
     "feature-toggles": {
       "restart-pending": "您的 Grafana 实例正在等待重新启动，以应用最新的功能切换更改",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "添加更多"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "添加匹配器",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "向策略添加静音时间设定",
       "am-mute-timing-select-label-mute-timings": "静音时间设定",
       "aria-label-group-by": "分组依据",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "关联数据面板和面板",
       "placeholder-value-input-default": "输入自定义注释内容..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "筛选规则列表"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "选择一个文件夹来存储规则。"
@@ -1444,29 +1487,21 @@
       "aria-label": "更多",
       "button-text": "更多"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "无法加载静音时间设定。请稍后重试。",
-        "title": "加载静音时间设定时出错"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "已禁用",
       "title-delete-mute-timing": "删除静音时间设定"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "选择一个静音时间设定，以定义何时不为此警报规则发送通知",
       "am-mute-timing-select-label-mute-timings": "静音时间设定"
     },
     "mute-timing-form": {
-      "description-unique-timing": "静音时间设定的唯一名称",
-      "label-name": "",
-      "text-loading-mute-timing": "正在加载静音时间设定",
-      "title-no-matching-mute-timing-found": "未找到匹配的静音时间设定"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "添加其他时间间隔",
-      "description": "时间间隔是对某一时刻的定义。所有字段都是列表，必须至少满足一个列表元素才能匹配字段。如果字段留空，则任何时间点都将匹配该字段。若要使某一时刻匹配整个时间间隔，则所有字段都必须匹配。静音时间设定可以包含多个时间间隔。",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "一个月中的某一天，一个月的 1:31。负值可用于表示从月底开始的日期",
       "description-months": "以数字或完整日历月份表示的一年中的月份",
       "label-days-of-the-month": "一个月中的哪一天",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "移除时间范围"
-    },
-    "mute-timings": {
-      "add-mute-timing": "添加静音时间设定",
-      "description": "输入特定的时间间隔，在此期间不发送通知或在重复的时间段内冻结通知操作。",
-      "save": "保存静音时间设定",
-      "saving": "正在保存静音时间设定"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "静音时间设定",
-      "placeholder-select-mute-timings": "选择静音时间设定…"
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "您尚未创建任何静音时间设定",
-      "text-loading-mute-timings": "正在加载静音时间设定...",
-      "text-no-mute-timings-configured": "未配置静音时间设定"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "通知策略已更改"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "静音时间设定",
-      "label-notification-policies": "通知策略"
+      "label-notification-policies": "通知策略",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2379,6 +2399,32 @@
       "input": "输入",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "时间序列数据",
       "timestamp": "",
@@ -2569,16 +2615,109 @@
       "refer-documentation-configure-authentication": "请参阅有关如何配置身份验证的文档"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "逗号或空格分隔的组列表。用户应至少是一个组的成员才能登录。",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "OAuth2 提供商的用户信息端点。此端点返回的信息必须与 <2>OpenID UserInfo</2> 兼容。",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "如果设置，则用户必须是给定团队之一的成员才能登录。",
       "team-ids-description-oauth": "",
-      "team-ids-github": "团队 ID 的整数列表。",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "团队 ID 的字符串列表。",
-      "teams-url-description": "用于查询团队 ID 的 URL。如果未设置，则默认值为 /teams。",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "如果启用，Grafana 将使用<2>代码交换的证明密钥 (PKCE)</2> 与 OAuth2 身份验证代码授予。"
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "如果启用，Grafana 将使用<2>代码交换的证明密钥 (PKCE)</2> 与 OAuth2 身份验证代码授予。",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2588,12 +2727,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "重置为默认值"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "丢弃",
       "enabled-label-enabled": "",
       "label-enabled": "已启用",
       "reset-configuration": "您确定要重置此配置吗？",
       "reset-configuration-description": "重置这些设置后，Grafana 将使用系统中的提供方配置（配置文件/环境变量）（如有）。",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "更多操作",
       "title-reset": "重置",
@@ -2643,6 +2785,10 @@
     },
     "actions": {
       "button-to-recently-deleted": "最近删除"
+    },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
     },
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
@@ -3255,6 +3401,11 @@
         "name": "",
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "允许自定义值",
           "allow-custom-values-description": "允许用户输入值",
@@ -5200,9 +5351,6 @@
     "discard-button": "丢弃未保存的更改",
     "title": "离开页面？"
   },
-  "frontendtests": {
-    "test-key": "未找到测试密钥"
-  },
   "gen-ai": {
     "apply-suggestion": "应用",
     "incomplete-request-error": "很抱歉，我无法完成您的请求。请重试。",
@@ -6063,8 +6211,8 @@
       "escape-newlines": "修复日志行中错误转义的换行和制表符序列",
       "hide-timestamps": "隐藏时间戳",
       "hide-unique-labels": "隐藏唯一标签",
-      "newest-first": "最新日志在前",
-      "oldest-first": "最旧日志在前",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "展开 JSON 日志",
       "remove-escaping": "移除转义",
       "scroll-bottom": "",
