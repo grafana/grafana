@@ -82,7 +82,7 @@ refs:
 You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
-{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The open Schedule report drawer" >}}
+<!-- add image of reporting drawer with an existing report here -->
 
 ## Requirements
 
@@ -114,7 +114,7 @@ The report creation process is multi-step, but you don't need to complete these 
 
 You can also save the report as a draft at any step in the process:
 
-![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png) <!-- update screenshot -->
+{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The report configuration screen" >}}
 
 You can create directly from a dashboard or from the Reporting page.
 Select one of the following tabs for directions on each option.
