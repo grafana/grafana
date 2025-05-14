@@ -93,10 +93,20 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     try {
       const json = JSON.parse(String(result));
 
-      if (json.elements) {
+      if (json.spec?.elements) {
+        dispatch(importDashboardV2Json(json.spec));
+        return;
+      } else if (json.elements) {
         dispatch(importDashboardV2Json(json));
         return;
       }
+
+      // check if it's a v1 resource format
+      if (json.spec) {
+        this.props.importDashboardJson(json.spec);
+        return;
+      }
+
       this.props.importDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
@@ -113,8 +123,19 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
-    if (dashboard.elements) {
+    // check if it's a v2 resource format
+    if (dashboard.spec?.elements) {
+      dispatch(importDashboardV2Json(dashboard.spec));
+      return;
+      // check if it's just a v2 spec
+    } else if (dashboard.elements) {
       dispatch(importDashboardV2Json(dashboard));
+      return;
+    }
+
+    // check if it's a v1 resource format
+    if (dashboard.spec) {
+      this.props.importDashboardJson(dashboard.spec);
       return;
     }
 
@@ -249,7 +270,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     const { loadingState, dashboard } = this.props;
 
     if (loadingState === LoadingState.Done) {
-      if (dashboard.elements) {
+      if (dashboard.elements || dashboard.spec?.elements) {
         return <ImportDashboardOverviewV2 />;
       }
       return <ImportDashboardOverview />;
