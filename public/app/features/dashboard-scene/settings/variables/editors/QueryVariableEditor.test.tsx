@@ -451,7 +451,7 @@ describe('Editor', () => {
       render(<Editor variable={variable} />);
     });
 
-    const dataSourcePicker = screen.getByLabelText('Data source');
+    const dataSourcePicker = screen.getByLabelText('Target data source');
     expect(dataSourcePicker).toBeInTheDocument();
 
     const user = userEvent.setup();
