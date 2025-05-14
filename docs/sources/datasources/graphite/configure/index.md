@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure the Graphite data source
-title: Graphite data source
+title: Configure the Graphite data source
 weight: 100
 refs:
   explore:

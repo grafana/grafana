@@ -47,6 +47,8 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 ## Query editor elements
 
+The query editor consists of the following elements:
+
 - **Series** - Select a metric from the drop-down.
 
 - **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of functions in the drop-down. You can create a query with multiple functions.
