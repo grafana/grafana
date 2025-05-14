@@ -103,6 +103,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `regressionTransformation`            | Enables regression analysis transformation                                                                                                                    |
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
 | `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                |
+| `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
