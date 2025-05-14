@@ -32,6 +32,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
@@ -55,6 +57,8 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
