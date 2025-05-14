@@ -341,11 +341,13 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		filters[uid] = struct{}{}
 	}
 
-	folderMap := make(map[string]*folder.Folder, len(folders))
-	relations := make(map[string]string, len(folders))
-	for _, folder := range folders {
-		folderMap[folder.UID] = folder
-		relations[folder.UID] = folder.ParentUID
+	folderMap := make(map[string]*folder.Folder)
+	relations := make(map[string]string)
+	if q.WithFullpath || q.WithFullpathUIDs {
+		for _, folder := range folders {
+			folderMap[folder.UID] = folder
+			relations[folder.UID] = folder.ParentUID
+		}
 	}
 
 	hits := make([]*folder.Folder, 0, len(folders))
