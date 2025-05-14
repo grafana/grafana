@@ -130,7 +130,7 @@ Grafana Alerting provides several ways to reduce time series data:
   - In **Default mode**, the **When** input selects a reducer (like `last`, `mean`, or `min`), and the threshold compares that reduced value.
   - In **Advanced mode**, you can add the [**Reduce** expression](ref:reduce-expression) (e.g., `last()`, `mean()`) before defining the threshold (alert condition).
 
-For demo purposes, we’ll use the **Advanced mode** with a **Reduce** expression:
+For demo purposes, this example uses the **Advanced mode** with a **Reduce** expression:
 
 1. Toggle **Advanced mode** in the top right section of the query panel to enable adding additional expressions.
 1. Add the **Reduce** expression using a function like `mean()` to reduce each time series to a single value.
