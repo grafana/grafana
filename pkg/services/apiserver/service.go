@@ -245,16 +245,23 @@ func (s *service) start(ctx context.Context) error {
 		if err := b.InstallSchema(s.scheme); err != nil {
 			return err
 		}
-		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		_ = s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for _, gv := range pvs {
-			if a, ok := b.(builder.APIGroupAuthorizer); ok {
-				auth := a.GetAuthorizer()
-				if auth != nil {
-					s.authorizer.Register(gv, auth)
-				}
+		if a, ok := b.(builder.APIGroupAuthorizer); ok {
+			auth := a.GetAuthorizer()
+			if auth != nil {
+				s.authorizer.Register(gvs[0], auth)
 			}
 		}
+
+		//for _, gv := range pvs {
+		//	if a, ok := b.(builder.APIGroupAuthorizer); ok {
+		//		auth := a.GetAuthorizer()
+		//		if auth != nil {
+		//			s.authorizer.Register(gv, auth)
+		//		}
+		//	}
+		//}
 	}
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
