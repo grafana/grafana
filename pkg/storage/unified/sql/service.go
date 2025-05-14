@@ -195,23 +195,25 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	err = s.lifecycler.StartAsync(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to start the lifecycler: %s", err)
-	}
+	if s.cfg.EnableSharding {
+		err = s.lifecycler.StartAsync(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to start the lifecycler: %s", err)
+		}
 
-	s.log.Info("waiting until resource server is JOINING in the ring")
-	lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	if err := ring.WaitInstanceState(lfcCtx, s.storageRing, s.lifecycler.GetInstanceID(), ring.JOINING); err != nil {
-		return fmt.Errorf("error switching to JOINING in the ring: %s", err)
-	}
-	s.log.Info("resource server is JOINING in the ring")
+		s.log.Info("waiting until resource server is JOINING in the ring")
+		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		if err := ring.WaitInstanceState(lfcCtx, s.storageRing, s.lifecycler.GetInstanceID(), ring.JOINING); err != nil {
+			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
+		}
+		s.log.Info("resource server is JOINING in the ring")
 
-	if err := s.lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
-		return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		if err := s.lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		}
+		s.log.Info("resource server is ACTIVE in the ring")
 	}
-	s.log.Info("resource server is ACTIVE in the ring")
 
 	// start the gRPC server
 	go func() {
