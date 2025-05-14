@@ -1413,25 +1413,18 @@
               "from": {
                 "description": "From is the start time of the query.",
                 "type": "string",
-                "default": "now-6h",
-                "examples": [
-                  "now-1h"
-                ]
+                "default": "now-6h"
               },
               "to": {
                 "description": "To is the end time of the query.",
                 "type": "string",
-                "default": "now",
-                "examples": [
-                  "now"
-                ]
+                "default": "now"
               }
             },
             "additionalProperties": false
           }
         },
-        "additionalProperties": true,
-        "$schema": "https://json-schema.org/draft-04/schema"
+        "additionalProperties": true
       },
       "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
         "type": "object",
