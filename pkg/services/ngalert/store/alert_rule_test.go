@@ -1285,7 +1285,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			TimeIntervalName: timeInterval,
 		})
 		require.NoError(t, err)
-		require.EqualValuesf(t, expected, maps.Keys(actual), "got more rules than expected: %#v", actual)
+		require.EqualValuesf(t, expected, slices.Collect(maps.Keys(actual)), "got more rules than expected: %#v", actual)
 	})
 }
 
