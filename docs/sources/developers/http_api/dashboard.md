@@ -20,7 +20,7 @@ title: Dashboard HTTP API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
-> To view more about the new api structure, refer to [API overview]({{< ref "apis" >}}).
+> To view more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 ## Create Dashboard
 
@@ -28,7 +28,7 @@ title: Dashboard HTTP API
 
 Creates a new dashboard.
 
-- namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
+- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
 **Required permissions**
 
