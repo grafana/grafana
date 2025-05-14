@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
@@ -6,15 +7,16 @@ import { IconButton } from '../IconButton/IconButton';
 import { Card } from './Card';
 
 describe('Card', () => {
-  it('should execute callback when clicked', () => {
+  it('should execute callback when clicked', async () => {
+    const user = userEvent.setup();
     const callback = jest.fn();
     render(
       <Card onClick={callback}>
         <Card.Heading>Test Heading</Card.Heading>
       </Card>
     );
-    fireEvent.click(screen.getByText('Test Heading'));
-    expect(callback).toBeCalledTimes(1);
+    await user.click(screen.getByText('Test Heading'));
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   describe('Card Actions', () => {
@@ -31,8 +33,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
 
       rerender(
         <Card disabled>
@@ -78,8 +80,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
 
     it('Children should be conditional', () => {
@@ -97,7 +99,7 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 

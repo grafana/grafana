@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -29,6 +32,7 @@ func TestService_IsDisabled(t *testing.T) {
 		prometheus.NewRegistry(),
 		&fakes.FakePluginRepo{},
 		featuremgmt.WithFeatures(),
+		&pluginchecker.FakePluginUpdateChecker{},
 	)
 	require.NoError(t, err)
 
@@ -120,6 +124,20 @@ func TestService_Run(t *testing.T) {
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", URL: "https://example.com/myplugin.tar.gz"}},
 		},
+		{
+			name:             "Should not update a plugin if the current version is greater than the latest version",
+			shouldInstall:    false,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.1"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0"},
+		},
+		{
+			name:             "Should not update a plugin if the current version is equal to the latest version, ignoring the prerelease",
+			shouldInstall:    false,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0-rc.1"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -166,6 +184,11 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
+				pluginchecker.ProvideService(
+					managedplugins.NewNoop(),
+					provisionedplugins.NewNoop(),
+					&pluginchecker.FakePluginPreinstall{},
+				),
 			)
 			if tt.blocking && !tt.shouldInstall {
 				require.ErrorContains(t, err, "Failed to install plugin")

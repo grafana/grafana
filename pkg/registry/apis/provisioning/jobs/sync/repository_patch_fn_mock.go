@@ -22,17 +22,24 @@ func (_m *MockRepositoryPatchFn) EXPECT() *MockRepositoryPatchFn_Expecter {
 	return &MockRepositoryPatchFn_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, repo, ops
-func (_m *MockRepositoryPatchFn) Execute(ctx context.Context, repo *v0alpha1.Repository, ops []map[string]interface{}) error {
-	ret := _m.Called(ctx, repo, ops)
+// Execute provides a mock function with given fields: ctx, repo, patchOperations
+func (_m *MockRepositoryPatchFn) Execute(ctx context.Context, repo *v0alpha1.Repository, patchOperations ...map[string]interface{}) error {
+	_va := make([]interface{}, len(patchOperations))
+	for _i := range patchOperations {
+		_va[_i] = patchOperations[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, repo)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository, []map[string]interface{}) error); ok {
-		r0 = rf(ctx, repo, ops)
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository, ...map[string]interface{}) error); ok {
+		r0 = rf(ctx, repo, patchOperations...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -48,14 +55,21 @@ type MockRepositoryPatchFn_Execute_Call struct {
 // Execute is a helper method to define mock.On call
 //   - ctx context.Context
 //   - repo *v0alpha1.Repository
-//   - ops []map[string]interface{}
-func (_e *MockRepositoryPatchFn_Expecter) Execute(ctx interface{}, repo interface{}, ops interface{}) *MockRepositoryPatchFn_Execute_Call {
-	return &MockRepositoryPatchFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, ops)}
+//   - patchOperations ...map[string]interface{}
+func (_e *MockRepositoryPatchFn_Expecter) Execute(ctx interface{}, repo interface{}, patchOperations ...interface{}) *MockRepositoryPatchFn_Execute_Call {
+	return &MockRepositoryPatchFn_Execute_Call{Call: _e.mock.On("Execute",
+		append([]interface{}{ctx, repo}, patchOperations...)...)}
 }
 
-func (_c *MockRepositoryPatchFn_Execute_Call) Run(run func(ctx context.Context, repo *v0alpha1.Repository, ops []map[string]interface{})) *MockRepositoryPatchFn_Execute_Call {
+func (_c *MockRepositoryPatchFn_Execute_Call) Run(run func(ctx context.Context, repo *v0alpha1.Repository, patchOperations ...map[string]interface{})) *MockRepositoryPatchFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v0alpha1.Repository), args[2].([]map[string]interface{}))
+		variadicArgs := make([]map[string]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(map[string]interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(*v0alpha1.Repository), variadicArgs...)
 	})
 	return _c
 }
@@ -65,7 +79,7 @@ func (_c *MockRepositoryPatchFn_Execute_Call) Return(_a0 error) *MockRepositoryP
 	return _c
 }
 
-func (_c *MockRepositoryPatchFn_Execute_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository, []map[string]interface{}) error) *MockRepositoryPatchFn_Execute_Call {
+func (_c *MockRepositoryPatchFn_Execute_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository, ...map[string]interface{}) error) *MockRepositoryPatchFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

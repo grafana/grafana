@@ -112,7 +112,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     !isTopLevel && styles.rowTitleNested,
                     isCollapsed && styles.rowTitleCollapsed
                   )}
-                  role="heading"
                 >
                   {!model.hasUniqueTitle() && (
                     <Tooltip
@@ -206,6 +205,8 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
+      // Without this min height, the custom grid (SceneGridLayout) wont render
+      minHeight: `42px`,
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
