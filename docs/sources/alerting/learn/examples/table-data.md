@@ -125,4 +125,4 @@ The key difference is the data format:
   To evaluate the alert condition, alert rules **must reduce each series to a single number** using a function like `last()`, `avg()`, or `max()`.
 - **Tabular data** doesn’t require reduction, as each row contains only a single numeric value used to evaluate the alert condition.
 
-See the [multi-dimensional time series data example](ref:multi-dimensional-example) for comparison.
+For comparison, see the [multi-dimensional time series data example](ref:multi-dimensional-example).
