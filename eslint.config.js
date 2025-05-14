@@ -269,7 +269,7 @@ module.exports = [
       react: reactPlugin,
       '@grafana': grafanaPlugin,
     },
-    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}', 'packages/grafana-alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
@@ -310,7 +310,7 @@ module.exports = [
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
       'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
-      'packages/grafana-ui/**/*.{spec,test}.{ts,tsx}',
+      'packages/{grafana-ui,grafana-alerting}/**/*.{spec,test}.{ts,tsx}',
     ],
     rules: {
       ...testingLibraryPlugin.configs['flat/react'].rules,
