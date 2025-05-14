@@ -36,6 +36,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import MatchersField from '../silences/MatchersField';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
@@ -67,17 +68,17 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
     object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
   };
 
+  const formAPI = useForm<FormAmRoute>({
+    defaultValues,
+  });
   const {
-    handleSubmit,
     control,
     register,
     formState: { errors },
     setValue,
     watch,
     getValues,
-  } = useForm<FormAmRoute>({
-    defaultValues,
-  });
+  } = formAPI;
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'object_matchers',
