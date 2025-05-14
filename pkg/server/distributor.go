@@ -67,7 +67,7 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 		return nil, err
 	}
 
-	return services.NewBasicService(distributor.start, distributor.running, nil).WithName(modules.Distributor), nil
+	return services.NewBasicService(nil, distributor.running, nil).WithName(modules.Distributor), nil
 }
 
 type Distributor struct {
@@ -75,28 +75,8 @@ type Distributor struct {
 	stoppedCh   chan error
 }
 
-func (d *Distributor) start(ctx context.Context) error {
-	go func() {
-		err := d.grpcHandler.Run(ctx)
-		if err != nil {
-			d.stoppedCh <- err
-		} else {
-			d.stoppedCh <- nil
-		}
-		close(d.stoppedCh)
-	}()
-	return nil
-}
-
 func (d *Distributor) running(ctx context.Context) error {
-	select {
-	case err := <-d.stoppedCh:
-		if err != nil {
-			return err
-		}
-	case <-ctx.Done():
-	}
-	return nil
+	return d.grpcHandler.Run(ctx)
 }
 
 type DistributorServer struct {
