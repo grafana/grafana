@@ -125,7 +125,6 @@ const restructureLog = (
   forceEscape: boolean
 ): string => {
   let line = row.raw;
-  console.log(row.raw);
   if (prettifyLogMessage) {
     try {
       line = JSON.stringify(JSON.parse(line), undefined, 2);
@@ -169,8 +168,6 @@ export const LogRowMessage = memo((props: Props) => {
     [expanded, forceEscape, prettifyLogMessage, row, wrapLogMessage]
   );
   const shouldShowMenu = mouseIsOver || pinned;
-
-  console.log(restructuredEntry, prettifyLogMessage, forceEscape);
 
   return (
     <>
