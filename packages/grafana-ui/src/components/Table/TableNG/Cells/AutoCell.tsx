@@ -3,6 +3,7 @@ import { Property } from 'csstype';
 import { useState } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
@@ -28,6 +29,7 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
       className={styles.cell}
       onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      data-testid={selectors.components.TablePanel.autoCell}
     >
       {shouldShowLink ? (
         renderSingleLink(links[0], formattedValue, getLinkStyle(styles, cellOptions))
