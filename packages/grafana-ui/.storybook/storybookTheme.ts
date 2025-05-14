@@ -1,11 +1,11 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import { create } from '@storybook/theming';
 
+import logoLight from '../../../public/img/grafana_text_logo-light.svg';
+import logoDark from '../../../public/img/grafana_text_logo-dark.svg';
+
 export const createStorybookTheme = (theme: GrafanaTheme2) => {
-  const brandImage =
-    theme.colors.mode === 'light'
-      ? `public/img/grafana_text_logo-light.svg`
-      : `public/img/grafana_text_logo-dark.svg`;
+  const brandImage = theme.colors.mode === 'light' ? logoLight : logoDark;
 
   return create({
     base: theme.colors.mode,

@@ -5,5 +5,5 @@
     "outDir": "compiled"
   },
   "extends": "../tsconfig.json",
-  "include": ["../src/**/*.ts*", "../../../public/app/types/svg.d.ts"]
+  "include": ["../src/**/*.ts*", "../../../public/app/types/images.d.ts"]
 }
