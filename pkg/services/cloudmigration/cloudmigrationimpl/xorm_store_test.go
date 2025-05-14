@@ -183,6 +183,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
 	})
+
 }
 
 func Test_SnapshotResources(t *testing.T) {
@@ -367,8 +368,10 @@ func Test_SnapshotResources(t *testing.T) {
 		t.Run("create the resources", func(t *testing.T) {
 			for i := 0; i < numResources; i++ {
 				resources[i] = cloudmigration.CloudMigrationResource{
+					ID:     int64(i),
 					Name:   fmt.Sprintf("Resource %d", i),
 					Type:   cloudmigration.DashboardDataType,
+					RefID:  fmt.Sprintf("refid-%d", i),
 					Status: cloudmigration.ItemStatusPending,
 				}
 			}
@@ -378,39 +381,94 @@ func Test_SnapshotResources(t *testing.T) {
 			require.NoError(t, err)
 
 			// Get the resources and ensure they're all there
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
 				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
-			assert.Len(t, results, numResources)
+			assert.Len(t, resources, numResources)
 		})
 
 		t.Run("update resources", func(t *testing.T) {
-			// Update the resources to test the update condition
+			// Initially, update with a mix of ok and error statuses
 			for i := 0; i < numResources; i++ {
-				resources[i].Status = cloudmigration.ItemStatusOK
+				if i%2 == 0 {
+					resources[i].Status = cloudmigration.ItemStatusOK
+				} else {
+					resources[i].Status = cloudmigration.ItemStatusError
+					resources[i].ErrorCode = "test-error"
+					resources[i].Error = "test-error-message"
+				}
 			}
 
 			err := s.UpdateSnapshotResources(ctx, "abc123", resources)
 			require.NoError(t, err)
 
-			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+			resources, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
 				ResultPage:  1,
 				ResultLimit: numResources,
 				SortColumn:  cloudmigration.SortColumnID,
 				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			require.NoError(t, err)
-			assert.Len(t, results, numResources)
-			for _, r := range results {
+			assert.Len(t, resources, numResources)
+			for i, r := range resources {
+				if i%2 == 0 {
+					assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				} else {
+					assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+					assert.Equal(t, "test-error", string(r.ErrorCode))
+					assert.Equal(t, "test-error-message", r.Error)
+				}
+			}
+
+			// Now update with only error statuses
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusError
+				resources[i].ErrorCode = "test-error-2"
+				resources[i].Error = "test-error-message-2"
+			}
+
+			err = s.UpdateSnapshotResources(ctx, "abc123", resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				assert.Equal(t, "test-error-2", string(r.ErrorCode))
+				assert.Equal(t, "test-error-message-2", r.Error)
+			}
+
+			// Finally, all okay
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusOK
+			}
+
+			err = s.UpdateSnapshotResources(ctx, "abc123", resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 			}
 		})
 	})
-
 }
 
 func Test_SnapshotResourceCaseInsensitiveSorting(t *testing.T) {
