@@ -15,5 +15,11 @@
     "../../public/app/types/*.d.ts",
     "../grafana-ui/src/types/*.d.ts",
     "src/**/*.ts*"
-  ]
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "NodeNext",
+      "moduleResolution": "Node"
+    }
+  }
 }

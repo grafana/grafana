@@ -440,6 +440,7 @@
 /packages/grafana-ui/src/utils/storybook/ @grafana/grafana-frontend-platform
 /packages/grafana-alerting/ @grafana/alerting-frontend
 /packages/grafana-i18n/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/packages/grafana-test-utils @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
