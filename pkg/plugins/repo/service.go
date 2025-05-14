@@ -143,14 +143,14 @@ func (m *Manager) GetPluginsInfo(ctx context.Context, options GetPluginsInfoOpti
 		return nil, err
 	}
 
-	// If we are requesting more than 100 plugins, split the request into multiple requests to avoid
-	// the URL limit (local testing shows that the URL is <2000 characters for 100 plugins, which is
-	// below the limit).
+	// If we are requesting more than 50 plugins, split the request into multiple requests to avoid
+	// the URL limit (local testing shows that the URL is <2000 characters for 100 plugins, so 50 is
+	// a safe limit).
 	plugins := [][]string{}
 	results := []PluginInfo{}
-	if len(options.Plugins) > 100 {
-		for i := 0; i < len(options.Plugins); i += 100 {
-			plugins = append(plugins, options.Plugins[i:min(i+100, len(options.Plugins))])
+	if len(options.Plugins) > 50 {
+		for i := 0; i < len(options.Plugins); i += 50 {
+			plugins = append(plugins, options.Plugins[i:min(i+50, len(options.Plugins))])
 		}
 	} else {
 		plugins = [][]string{options.Plugins}
