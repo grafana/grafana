@@ -4,6 +4,8 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
+const publicAssetsToCopy = ['fonts', 'img'];
+
 module.exports = {
   target: 'web',
   entry: {
@@ -70,12 +72,10 @@ module.exports = {
       Buffer: ['buffer', 'Buffer'],
     }),
     new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: 'public/img',
-          to: 'img',
-        },
-      ],
+      patterns: publicAssetsToCopy.map((asset) => ({
+        from: `public/${asset}`,
+        to: asset,
+      })),
     }),
   ],
   module: {

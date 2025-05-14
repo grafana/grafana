@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export function getFontStyles(theme: GrafanaTheme2) {
   const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
-  const fontRoot = grafanaPublicPath ? `${grafanaPublicPath}fonts/` : 'public/fonts/';
+  const fontRoot = grafanaPublicPath ? `${grafanaPublicPath}build/fonts/` : 'public/build/fonts/';
 
   return css([
     {
