@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
 	_ "github.com/lib/pq"
@@ -25,8 +24,6 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
 		desc        string
@@ -147,8 +144,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := Service{
-				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
-				logger:     backend.NewLoggerWith("logger", "tsdb.postgres"),
+				logger: backend.NewLoggerWith("logger", "tsdb.postgres"),
 			}
 
 			ds := sqleng.DataSourceInfo{
@@ -159,7 +155,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds)
+			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
@@ -1397,14 +1393,6 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
-}
-
-type tlsTestManager struct {
-	settings tlsSettings
-}
-
-func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
-	return m.settings, nil
 }
 
 func isTestDbPostgres() bool {
