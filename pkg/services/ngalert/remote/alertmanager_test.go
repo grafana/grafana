@@ -43,7 +43,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	testPasswordBase64   = base64.StdEncoding.EncodeToString([]byte(testPassword))
+	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
+	errTest              = errors.New("test")
+
+	// Valid Grafana Alertmanager configuration with secret in base64.
+	testGrafanaConfigWithEncryptedSecret = fmt.Sprintf(`{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"%s"}}]}]}}`, testPasswordBase64)
+)
+
 const (
+	testPassword = "test"
+
 	// Valid Grafana Alertmanager configurations.
 	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
 	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
@@ -54,11 +65,6 @@ const (
 	testSilence2 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
 	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
 	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
-)
-
-var (
-	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
-	errTest              = errors.New("test")
 )
 
 func TestMain(m *testing.M) {
@@ -137,20 +143,24 @@ func TestApplyConfig(t *testing.T) {
 	})
 
 	var configSent client.UserGrafanaConfig
-	var lastConfigSync, lastStateSync time.Time
+	var configSyncs, stateSyncs int
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+		res := map[string]any{"status": "success"}
+
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
-				lastConfigSync = time.Now()
+				configSyncs++
 			} else {
-				lastStateSync = time.Now()
+				stateSyncs++
 			}
+		} else {
+			res["data"] = &configSent
 		}
 		w.Header().Add("content-type", "application/json")
-		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
+		require.NoError(t, json.NewEncoder(w).Encode(res))
 	})
 
 	// Encrypt receivers to save secrets in the database.
@@ -178,6 +188,7 @@ func TestApplyConfig(t *testing.T) {
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
+		SmtpFrom:      "test-instance@grafana.net",
 		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 	}
 
@@ -197,11 +208,15 @@ func TestApplyConfig(t *testing.T) {
 	}
 	require.Error(t, am.ApplyConfig(ctx, config))
 	require.False(t, am.Ready())
+	require.Equal(t, 0, stateSyncs)
+	require.Equal(t, 0, configSyncs)
 
 	// A 200 status code response should make the check succeed.
 	server.Config.Handler = okHandler
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
+	require.Equal(t, 1, stateSyncs)
+	require.Equal(t, 1, configSyncs)
 
 	// The sent configuration should be unencrypted and promoted.
 	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
@@ -209,28 +224,45 @@ func TestApplyConfig(t *testing.T) {
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
 	require.True(t, configSent.Promoted)
 
-	// Grafana's URL and static headers should be sent alongside the configuration.
+	// Grafana's URL, email "from" address, and static headers should be sent alongside the configuration.
 	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
+	require.Equal(t, cfg.SmtpFrom, configSent.SmtpFrom)
 	require.Equal(t, cfg.StaticHeaders, configSent.StaticHeaders)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
-	expStateSync := lastStateSync
-	expConfigSync := lastConfigSync
 	require.NoError(t, am.ApplyConfig(ctx, config))
-	require.Equal(t, expStateSync, lastStateSync)
-	require.Equal(t, expConfigSync, lastConfigSync)
+	require.Equal(t, 1, stateSyncs)
+	require.Equal(t, 1, configSyncs)
 
-	// Changing the sync interval and calling ApplyConfig again
+	// Changing the sync interval and calling ApplyConfig again with a new config
 	// should result in us sending the configuration but not the state.
 	am.syncInterval = 0
+	config = &ngmodels.AlertConfiguration{
+		AlertmanagerConfiguration: string(testGrafanaConfig),
+	}
 	require.NoError(t, am.ApplyConfig(ctx, config))
-	require.Equal(t, lastStateSync, expStateSync)
-	require.Greater(t, lastConfigSync, expConfigSync)
+	require.Equal(t, 2, configSyncs)
+	require.Equal(t, 1, stateSyncs)
+
+	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, 2, configSyncs)
+
+	// Changing the "from" address should result in the configuration being updated.
+	cfg.SmtpFrom = "new-address@test.com"
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, 3, configSyncs)
+	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
 
 	// Failing to add the auto-generated routes should result in an error.
-	am.autogenFn = errAutogenFn
-	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
+	_, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
+	require.ErrorIs(t, err, errTest)
+	require.Equal(t, 3, configSyncs)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
@@ -315,9 +347,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"error from autogen function",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
 			errAutogenFn,
-			&client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: cfgWithSecret,
-			},
+			nil,
 			errTest.Error(),
 		},
 		{
@@ -479,6 +509,44 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			require.Equal(tt, test.expected, am.isDefaultConfiguration(md5.Sum(raw)))
 		})
 	}
+}
+
+func TestDecryptConfiguration(t *testing.T) {
+	t.Run("should not modify the original config", func(t *testing.T) {
+		var inputCfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithEncryptedSecret), &inputCfg))
+
+		decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
+			if string(payload) == testPassword {
+				return []byte(testPassword), nil
+			}
+			return nil, fmt.Errorf("incorrect payload")
+		}
+
+		am := &Alertmanager{
+			decrypt: decryptFn,
+		}
+
+		rawDecrypted, _, err := am.decryptConfiguration(context.Background(), &inputCfg)
+		require.NoError(t, err)
+
+		currentJSON, err := json.Marshal(inputCfg)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfigWithEncryptedSecret, string(currentJSON), "Original configuration should not be modified")
+
+		var decryptedCfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal(rawDecrypted, &decryptedCfg))
+
+		found := false
+		for _, rcv := range decryptedCfg.AlertmanagerConfig.Receivers {
+			for _, gmr := range rcv.GrafanaManagedReceivers {
+				if gmr.Type == "webhook" && gmr.SecureSettings["password"] == testPassword {
+					found = true
+				}
+			}
+		}
+		require.True(t, found, "Decrypted configuration should contain decrypted password")
+	})
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {

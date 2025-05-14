@@ -4247,9 +4247,6 @@
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
-    "query-variable-form": {
-      "label-editor": "Query Editor"
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "title-restore-version": "Restore version"
@@ -9022,7 +9019,8 @@
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Value or variable"
+      "placeholder-value-or-variable": "Value or variable",
+      "variable-regex-documentation": "Formats multi-value variable into a regex string"
     },
     "regression-transformer-editor": {
       "label-degree": "Degree",
