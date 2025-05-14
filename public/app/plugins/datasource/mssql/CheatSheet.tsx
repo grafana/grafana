@@ -12,7 +12,7 @@ export function CheatSheet() {
       <h2>
         <Trans i18nKey="cheat-sheet.title">MSSQL cheat sheet</Trans>
       </h2>
-      <Trans i18nkey="cheat-sheet.time-series">Time series:</Trans>
+      <Trans i18nKey="cheat-sheet.time-series">Time series:</Trans>
       <ul className={styles.ulPadding}>
         <li>
           <Trans i18nKey="cheat-sheet.time-series-tip">

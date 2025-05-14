@@ -267,11 +267,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                   />
                 </Field>
                 <Field
-                  label={t('configuration.configuration-edtor.label-common-name', 'Hostname in server certificate')}
+                  label={t('configuration.configuration-editor.label-common-name', 'Hostname in server certificate')}
                 >
                   <Input
                     placeholder={t(
-                      'configuration.configuration-edtor.placeholder-common-name',
+                      'configuration.configuration-editor.placeholder-common-name',
                       'Common Name (CN) in server certificate'
                     )}
                     value={jsonData.serverName || ''}
