@@ -19,6 +19,7 @@ const (
 	WeightDrilldown
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightAIAndML
 	WeightTestingAndSynthetics
 	WeightMonitoring
 	WeightCloudServiceProviders

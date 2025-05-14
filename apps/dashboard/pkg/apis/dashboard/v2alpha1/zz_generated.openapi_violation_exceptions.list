@@ -3,6 +3,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAdhocVariableSpec,BaseFilters
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAdhocVariableSpec,DefaultKeys
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAdhocVariableSpec,Filters
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAnnotationPanelFilter,Ids
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAutoGridLayoutSpec,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardConditionalRenderingGroupSpec,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardCustomVariableSpec,Options

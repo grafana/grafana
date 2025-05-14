@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "12.0.0-pre",
+  "version": "12.1.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"

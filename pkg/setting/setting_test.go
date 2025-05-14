@@ -523,6 +523,12 @@ func TestRedactedValue(t *testing.T) {
 			value:    "test",
 			expected: RedactedPassword,
 		},
+		{
+			desc:     "client token",
+			key:      "token",
+			value:    "test",
+			expected: RedactedPassword,
+		},
 	}
 
 	for _, tc := range testCases {

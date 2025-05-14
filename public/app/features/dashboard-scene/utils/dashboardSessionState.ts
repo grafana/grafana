@@ -7,6 +7,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 export const PRESERVED_SCENE_STATE_KEY = `grafana.dashboard.preservedUrlFiltersState`;
 
 export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
+  if (!dashboard.state.version) {
+    return;
+  }
+
   const preservedUrlState = window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY);
 
   if (preservedUrlState) {
@@ -49,7 +53,7 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
 
   return () => {
     // Skipping saving state for default home dashboard
-    if (!scene.state.uid) {
+    if (!scene.state.uid || !scene.state.version) {
       return;
     }
 

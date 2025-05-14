@@ -544,7 +544,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationPanelFilter(ref commo
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
 										Type:    []string{"integer"},
-										Format:  "byte",
+										Format:  "int64",
 									},
 								},
 							},

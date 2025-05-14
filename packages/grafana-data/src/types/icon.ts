@@ -139,6 +139,7 @@ export const availableIconsIndex = {
   'gf-layout-simple': true,
   'gf-logs': true,
   'gf-ml': true,
+  'gf-ml-alt': true,
   'gf-movepane-left': true,
   'gf-movepane-right': true,
   'gf-portrait': true,
