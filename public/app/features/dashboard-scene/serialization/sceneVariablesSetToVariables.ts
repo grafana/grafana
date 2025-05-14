@@ -4,7 +4,7 @@ import {
   MultiValueVariable,
   SceneVariables,
   sceneUtils,
-  ScopesVariable,
+  SceneVariable,
 } from '@grafana/scenes';
 import {
   VariableModel,
@@ -193,7 +193,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
-    } else if (variable instanceof ScopesVariable) {
+    } else if (variable.state.type === 'system') {
       // Not persisted
     } else {
       throw new Error('Unsupported variable type');
@@ -439,7 +439,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(adhocVariable);
-    } else if (ScopesVariable) {
+    } else if (variable.state.type === 'system') {
       // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
@@ -464,4 +464,8 @@ function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFil
       return restOfFilter;
     }) || []
   );
+}
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system';
 }
