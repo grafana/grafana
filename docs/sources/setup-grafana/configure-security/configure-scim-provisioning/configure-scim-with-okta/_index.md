@@ -85,6 +85,7 @@ In the **Integration** tab, configure:
   ```
   https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
   ```
+  Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `your-stack.grafana.net` for Grafana Cloud or `grafana.yourcompany.com` for self-hosted instances). Replace `{stack-id}` with your Grafana Cloud stack ID.
 - **Unique identifier field:** userName
 - **Supported provisioning actions:**
   - Import New Users and Profile Updates

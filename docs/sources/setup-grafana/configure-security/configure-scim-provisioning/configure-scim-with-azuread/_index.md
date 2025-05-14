@@ -92,6 +92,7 @@ After setting the Tenant URL and Secret Token, navigate to the **Mappings** sect
 Only work email addresses are supported. Azure AD must be configured to use `emails[type eq "work"].value` for email mapping.
 The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to the `externalId` attribute in Grafana. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, the `objectId` attribute in Azure AD is commonly used for this purpose).
 {{< /admonition >}}
+The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to the `externalId` attribute in Grafana. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, the `objectId` attribute in Azure AD is commonly used for this purpose).
 
 Configure the following required attributes:
 
