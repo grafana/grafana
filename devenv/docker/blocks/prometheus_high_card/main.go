@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"golang.org/x/exp/rand"
 )
 
 func randomValues(max int) func() (string, bool) {
@@ -23,7 +23,7 @@ func randomValues(max int) func() (string, bool) {
 
 func staticList(input []string) func() string {
 	return func() string {
-		i := rand.Intn(len(input))
+		i := rand.IntN(len(input))
 
 		return input[i]
 	}
