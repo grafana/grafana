@@ -5,8 +5,8 @@ import (
 )
 
 // NOTE: both dataplane aggregator and kubernetes aggregator (when enterprise is linked) have logic around
-// setting this RoundTripper as ready, however, dataplane aggregator skips it if it detects that kubernetes aggregator
-// is available
+// setting this RoundTripper as ready, however, kubernetes aggregator skips it is part of the delegate chain
+// headed by the dataplane aggregator
 type RoundTripperFunc struct {
 	Ready chan struct{}
 	Fn    func(req *http.Request) (*http.Response, error)
