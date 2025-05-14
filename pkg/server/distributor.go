@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -56,7 +55,6 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	grpcServer := distributor.grpcHandler.GetServer()
 
 	resource.RegisterResourceStoreServer(grpcServer, distributorServer)
-	// TODO how to do this
 	// resource.RegisterBulkStoreServer(grpcServer, distributorServer)
 	resource.RegisterResourceIndexServer(grpcServer, distributorServer)
 	resource.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
@@ -82,7 +80,7 @@ func (d *Distributor) running(ctx context.Context) error {
 type DistributorServer struct {
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
-	log         log.Logger
+	log        log.Logger
 }
 
 var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
@@ -153,19 +151,37 @@ func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) 
 }
 
 func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
-	return nil
-	// ctx := srv.Context()
+	// r -> consumer watch request
+	// srv -> stream connection with consumer
+	ctx := srv.Context()
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	if err != nil {
+		return err
+	}
 
-	// ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
-	// if err != nil {
-	// 	return err
-	// }
+	// watchClient -> stream connection with storage-api pod
+	watchClient, err := client.Watch(ctx, r)
+	if err != nil {
+		return err
+	}
 
-	// return client.Watch(r, srv)
+	// WARNING
+	// in Watch, all messages flow from the resource server (watchClient) to the consumer (srv)
+	// but since this is a streaming connection, in theory the consumer could also send a message to the server
+	// however for the sake of simplicity we are not handling it here
+	// but if we decide to handle bi-directional message passing in this method, we will need to update this
+	// we also never handle EOF err, as the server never closes the connection willingly
+	for {
+		msg, err := watchClient.Recv()
+		if err != nil {
+			return err
+		}
+		srv.Send(msg)
+	}
 }
 
-// TODO how to do this
-// func (ds *DistributorServer) BulkProcess(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
+// TODO implement this if we want to support it in cloud
+// func (ds *DistributorServer) BulkProcess(srv resource.BulkStore_BulkProcessServer) error {
 // 	return nil
 // }
 
@@ -222,7 +238,7 @@ func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	ds.log.Info("distributing request to ", rs.Instances[0].Id)
+	ds.log.Info("distributing request to ", "instanceId", rs.Instances[0].Id)
 
 	return userutils.InjectOrgID(ctx, namespace), client.(*resource.RingClient).Client, nil
 }
