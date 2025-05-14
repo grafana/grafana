@@ -42,6 +42,7 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
+      getTagKeys: jest.fn().mockResolvedValue(['key1', 'key2']),
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
