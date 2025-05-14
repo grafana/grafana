@@ -18,9 +18,9 @@ require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana-app-sdk/logging v0.38.1
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250422074709-7c8433fbb2c2
-	github.com/grafana/grafana/apps/folder v0.0.0-20250422074709-7c8433fbb2c2
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250514132646-acbc7b54ed9e
+	github.com/grafana/grafana/apps/folder v0.0.0-20250514132646-acbc7b54ed9e
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7

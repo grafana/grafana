@@ -36,8 +36,8 @@ github.com/grafana/grafana-app-sdk v0.38.1 h1:vCUNvRSl+QEHe0X3vDfpGDEy4NuLh+sV3Z
 github.com/grafana/grafana-app-sdk v0.38.1/go.mod h1:JWe0jQO6WLeopxw40gTqYtwodcwSNAK42OZYPiBjSW8=
 github.com/grafana/grafana-app-sdk/logging v0.38.1 h1:tKZEyT/jEcGUC6b85ho0v8dED18NIcahY4KeM/lOGrk=
 github.com/grafana/grafana-app-sdk/logging v0.38.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2 h1:kvG92f3XbJlQPUcZfXlTNLziI4e8LYeA9Jv2ixmM5Ic=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:ll14OJrUGYgXApz3YX6zmxYjRMZHL+pgQjoKBuRzaRs=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e h1:BTKk7LHuG1kmAkucwTA7DuMbKpKvJTKrGdBmUNO4dfQ=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:IA4SOwun8QyST9c5UNs/fN37XL6boXXDvRYFcFwbipg=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=

@@ -84,8 +84,8 @@ github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAh
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/grafana-app-sdk/logging v0.38.1 h1:tKZEyT/jEcGUC6b85ho0v8dED18NIcahY4KeM/lOGrk=
 github.com/grafana/grafana-app-sdk/logging v0.38.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2 h1:kvG92f3XbJlQPUcZfXlTNLziI4e8LYeA9Jv2ixmM5Ic=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:ll14OJrUGYgXApz3YX6zmxYjRMZHL+pgQjoKBuRzaRs=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e h1:BTKk7LHuG1kmAkucwTA7DuMbKpKvJTKrGdBmUNO4dfQ=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:IA4SOwun8QyST9c5UNs/fN37XL6boXXDvRYFcFwbipg=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 h1:uGoIog/wiQHI9GAxXO5TJbT0wWKH3O9HhOJW1F9c3fY=

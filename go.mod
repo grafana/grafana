@@ -207,24 +207,24 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250513003344-c9b2ab3affc9 // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250514132646-acbc7b54ed9e // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250514132646-acbc7b54ed9e // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/folder v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/apps/investigations v0.0.0-20250514132646-acbc7b54ed9e // @fcjack @matryer
+	github.com/grafana/grafana/apps/playlist v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250513003344-c9b2ab3affc9 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-search-and-storage
 )
 
 require (
@@ -561,11 +561,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/yaml v1.4.0 // indirect
-)
-
-require (
 	k8s.io/apiextensions-apiserver v0.33.0 // indirect
 	k8s.io/kms v0.33.0 // indirect
 	modernc.org/libc v1.62.1 // indirect
@@ -574,6 +569,8 @@ require (
 	modernc.org/sqlite v1.37.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
+	sigs.k8s.io/randfill v1.0.0 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
