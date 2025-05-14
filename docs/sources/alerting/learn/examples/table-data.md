@@ -121,8 +121,8 @@ Working with time series is similar—each series is treated as a separate alert
 
 The key difference is the data format:
 
-- **Time series data** contains multiple values over time, like: `{timestamp, value}, {timestamp, value}, ...`.
+- **Time series data** contains multiple values over time, each with its own timestamp.
   To evaluate the alert condition, alert rules **must reduce each series to a single number** using a function like `last()`, `avg()`, or `max()`.
-- **Tabular data** contain exactly a single numeric value per row—no reduction needed.
+- **Tabular data** doesn’t require reduction, as each row contains only a single numeric value used to evaluate the alert condition.
 
-For a quick example, see [multi-dimensional alerts on time series data](ref:multi-dimensional-example).
+See the [multi-dimensional time series data example](ref:multi-dimensional-example) for comparison.
