@@ -6,7 +6,8 @@ aliases:
   - ../../../enterprise/saml/about-saml/ # /docs/grafana/latest/enterprise/saml/about-saml/
   - ../../../enterprise/saml/configure-saml/ # /docs/grafana/latest/enterprise/saml/configure-saml/
   - ../../../enterprise/saml/enable-saml/ # /docs/grafana/latest/enterprise/saml/enable-saml/
-  - ../../../enterprise/saml/set-up-saml-with-okta/ # /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/  - ../../../enterprise/saml/troubleshoot-saml/ # /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
+  - ../../../enterprise/saml/set-up-saml-with-okta/ # /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
+  - ../../../enterprise/saml/troubleshoot-saml/ # /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana's configuration
   file.
 labels:
