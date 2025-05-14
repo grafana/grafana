@@ -19,13 +19,14 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { DashboardScene, isV2Dashboard } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 export interface JsonModelEditViewState extends DashboardEditViewState {
   jsonText: string;
@@ -65,7 +66,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
 
-    const isV2 = isV2Dashboard(jsonModel);
+    const isV2 = isDashboardV2Spec(jsonModel);
     let newDashboardScene: DashboardScene;
 
     if (isV2) {
