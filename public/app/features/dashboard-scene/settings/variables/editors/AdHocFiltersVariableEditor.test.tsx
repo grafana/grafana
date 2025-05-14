@@ -115,7 +115,7 @@ describe('AdHocFiltersVariableEditor', () => {
     expect(variable.state.defaultKeys).toEqual(undefined);
   });
 
-  it('should return an OptionsPaneItemDescriptor that renders ModalEditor', async () => {
+  it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
@@ -132,34 +132,11 @@ describe('AdHocFiltersVariableEditor', () => {
       title: 'Mock Parent',
     });
 
-    const { queryByRole } = render(descriptor.render());
-    const user = userEvent.setup();
+    render(descriptor.render());
 
-    // Initial state: "Open variable editor" button is visible, Modal is not.
-    const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
-    expect(openEditorButton).toBeInTheDocument();
-    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
-
-    // Opening Modal
-    await user.click(openEditorButton);
-    const modal = await screen.findByRole('dialog'); // wait for modal to appear
-    expect(modal).toBeInTheDocument();
-    expect(within(modal).getByText('Ad Hoc Variable')).toBeInTheDocument(); // Modal title
-
-    // Assert Editor's key elements are rendered
-    // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Data source')).toBeInTheDocument();
-
-    // Assert Close button is visible
-    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
-    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
-    const closeButton = closeButtonTextSpan.closest('button')!;
-    expect(closeButton).toBeInTheDocument();
-
-    // Closing Modal
-    await user.click(closeButton);
     await waitFor(() => {
-      expect(queryByRole('dialog')).not.toBeInTheDocument();
+      // Check that some part of the component renders
+      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
     });
   });
 });

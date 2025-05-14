@@ -1,13 +1,10 @@
 import { noop } from 'lodash';
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, SceneVariable } from '@grafana/scenes';
-import { Box, Button, Modal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
@@ -71,41 +68,7 @@ export function getAdHocFilterOptions(variable: SceneVariable): OptionsPaneItemD
 
   return [
     new OptionsPaneItemDescriptor({
-      render: () => <ModalEditor variable={variable} />,
+      render: () => <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];
-}
-
-export function ModalEditor({ variable }: { variable: AdHocFiltersVariable }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <>
-      <Box display={'flex'} direction={'column'} paddingBottom={1}>
-        <Button
-          tooltip={t(
-            'dashboard.edit-pane.variable.open-editor-tooltip',
-            'For more variable options open variable editor'
-          )}
-          onClick={() => setIsOpen(true)}
-          size="sm"
-          fullWidth
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
-        </Button>
-      </Box>
-      <Modal
-        title={t('dashboard.edit-pane.variable.adhoc-options.modal-title', 'Ad Hoc Variable')}
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-      >
-        <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true} />
-        <Modal.ButtonRow>
-          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
-            <Trans i18nKey="dashboard.edit-pane.variable.modal-options.close">Close</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </Modal>
-    </>
-  );
 }
