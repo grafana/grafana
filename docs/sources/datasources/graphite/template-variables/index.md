@@ -37,7 +37,7 @@ refs:
 # Graphite template variables
 
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in drop-down select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana lists these variables in drop-down selection boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
@@ -103,13 +103,11 @@ For details, refer to the [Graphite docs on the autocomplete API for tags](http:
 server=~${servers:regex}
 ```
 
-This query tells Grafana to format the selected values in the servers variable as a regular expression (e.g., (server1|server2) if two servers are selected).
+This query tells Grafana to format the selected values in the `servers` variable as a regular expression (e.g., (`server1`|`server2`) if two servers are selected).
 
 For more information, refer to [Advanced variable format options](ref:variable-syntax-advanced-variable-format-options).
 
 ### Filter with multiple expressions
-
-<!-- When using multi-value variables in tag-based queries, you must use the advanced formatting syntax: `${var:regex}`. This ensures the selected values are correctly interpreted as a regular expression by Graphite. -->
 
 When using multi-value variables in tag queries, append `${var:regex}` to the variable name to apply regex formatting.
 
@@ -173,39 +171,12 @@ For example:
 apps.$app.servers.*
 ```
 
-This query uses the selected value of the `$app` variable to dynamically filter the metric path. The variable `$app` contains one more application names and `servers.*` matches all servers for the given application.
-
-
-<!-- The expanded query returns the full names of matching metrics.
-In combination with regular expressions, you can use it to extract any part of the metric name.
-By contrast, a non-expanded query returns only the last part of the metric name, and doesn't let you extract other parts of metric names.
-
-Given these example metrics:
-
-- `prod.servers.001.cpu`
-- `prod.servers.002.cpu`
-- `test.servers.001.cpu`
-
-These examples demonstrate how expanded and non-expanded queries can fetch specific parts of the metrics name:
-
-| Non-expanded query | Results    | Expanded query            | Expanded results                                                 |
-| ------------------ | ---------- | ------------------------- | ---------------------------------------------------------------- |
-| `*`                | prod, test | `expand(*)`               | prod, test                                                       |
-| `*.servers`        | servers    | `expand(*.servers)`       | prod.servers, test.servers                                       |
-| `test.servers`     | servers    | `expand(test.servers)`    | test.servers                                                     |
-| `*.servers.*`      | 001,002    | `expand(*.servers.*)`     | prod.servers.001, prod.servers.002, test.servers.001             |
-| `test.servers.*`   | 001        | `expand(test.servers.*)`  | test.servers.001                                                 |
-| `*.servers.*.cpu`  | cpu        | `expand(*.servers.*.cpu)` | prod.servers.001.cpu, prod.servers.002.cpu, test.servers.001.cpu |
-
-The non-expanded query is the same as an expanded query, with a regex matching the last part of the name.
-
-You can also create nested variables that use other variables in their definition.
-For example, `apps.$app.servers.*` uses the variable `$app` in its query definition. -->
+This query uses the selected value of the `$app` variable to dynamically filter the metric path. The variable `$app` contains one or more application names and `servers.*` matches all servers for the given application.
 
 ### Filter query variable results with `__searchFilter`
 
 Grafana provides the variable `__searchFilter`, which you can use to dynamically filter query results based on what the user types into the variable drop-down.
-When the drop-down is empty or blank, `__searchFilter` defaults to `*`, meaning it returns all possible values. If you type a string, Grafana replaces `__searchFilter` with that input.
+When the drop-down is empty or blank, `__searchFilter` defaults to `*`, which means it returns all possible values. If you type a string, Grafana replaces `__searchFilter` with that input.
 
 To use `__searchFilter` as part of the query field to enable searching for `server` while the user types in the drop-down select box:
 

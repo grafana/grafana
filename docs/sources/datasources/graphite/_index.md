@@ -84,7 +84,6 @@ Grafana includes built-in support for Graphite.
 This topic explains options, variables, querying, and other features specific to the Graphite data source, which include its feature-rich query editor.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
 
 Once you've added the Graphite data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
@@ -96,17 +95,16 @@ For detailed instructions, refer to [Internal Grafana metrics](ref:internal-graf
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
+Refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring) for more information. 
 
 ## Graphite and Loki integration
 
 When you change the data source selection in [Explore](ref:explore), Graphite queries are converted to Loki queries.
-Grafana extracts Loki label names and values from the Graphite queries according to mappings provided in the Graphite data source configuration.
-Queries using tags with `seriesByTags()` are also transformed without any additional setup.
+Grafana extracts Loki label names and values from the Graphite queries according to mappings provided in the Graphite data source configuration. Grafana automatically transforms queries using tags with `seriesByTags()` without requiring additional setup.
 
 ## Get the most out of the data source
 
-After you install and configure Graphite you can:
+After installing and configuring the Graphite data source you can:
 
 - Create a wide variety of [visualizations](ref:visualizations)
 - Configure and use [templates and variables](ref:variables)

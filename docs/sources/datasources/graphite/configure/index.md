@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../data-sources/graphite/
+  - ../datasources/graphite/
   - ../features/datasources/graphite/
 description: Guide for using Graphite in Grafana
 keywords:
@@ -59,7 +60,7 @@ refs:
 
 ---
 
-# Configure the Graphite the data source
+# Configure the Graphite data source
 
 This document provides instructions for configuring the Graphite data source and explains available configuration options. For general information on managing data sources, refer to [Data source management](ref:data-source-management).
 
@@ -96,7 +97,7 @@ Following is a list of configuration options for Graphite.
 **HTTP:**
 
 - **URL** - Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation. Since your access method is set to Server, the URL must be accessible from the Grafana backend (server-side).
-- **Allowed cookies** - Grafana proxy deletes forwarded cookies by default. Specify cookies by name to forward them to the data source..
+- **Allowed cookies** - Grafana proxy deletes forwarded cookies by default. Specify cookies by name to forward them to the data source.
 - **Timeout** - Add an HTTP request timeout in seconds.
 
 **Auth:**
@@ -112,8 +113,8 @@ Following is a list of configuration options for Graphite.
 - **TLS Client Auth** - Toggle on to enable TLS client authentication (server and client are both verified). When toggled, add the following under TLS/SSL Auth Details:
 
   - **ServerName** - Specify the server name used to verify the hostname on the certificate returned by the server.
-  - **Client Cert** - The client certificate is generated from a Certificate Authority or its self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
-  - **Client Key** - Add your client key, which can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts data between the client and server.
+  - **Client Cert** - The client certificate is generated from a Certificate Authority or is self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
+  - **Client Key** - Add your client key, which can also be generated from a Certificate Authority (CA) or be self-signed. The client key is used to encrypt data between the client and server.
 
 - **With CA Cert** - Toggle on to authenticate with a CA certificate.
 
@@ -133,7 +134,7 @@ Pass along additional information and metadata about the request or response.
 
 **Graphite details:**
 
-- **Version** - Select your Graphite version from the dorp-down. This settings controls what functions are available in the Graphite query editor. If you are using Grafana Cloud Graphite, this should be set to `1.1.x`.
+- **Version** - Select your Graphite version from the drop-down. This setting controls what functions are available in the Graphite query editor. If you are using Grafana Cloud Graphite, this should be set to `1.1.x`.
 
 - **Graphite backend type** - Select the Graphite backend type from the drop-down. Selecting `Metrictank` enables additional features like query processing metadata.
   `Metrictank` is a multi-tenant time series engine compatible with Graphite.
@@ -144,13 +145,9 @@ Pass along additional information and metadata about the request or response.
 
 Label mappings are the rules you define to tell Grafana how to pull pieces of the Graphite metric path into Loki labels when switching data sources. They are currently only supported between Graphite and Loki queries.
 
-When you change your data source from Graphite to Loki, your queries are automatically mapped based on the rules you define. To create a mapping, specify the full path of the metric and replace the nodes you want to map with label names, using parentheses.
+When you change your data source from Graphite to Loki, your queries are automatically mapped based on the rules you define. To create a mapping, specify the full path of the metric and replace the nodes you want to map with label names, using parentheses. The corresponding label values are extracted from your Graphite query during the data source switch.
 
-The corresponding label values are extracted from your Graphite query during the data source switch.
-
-All Graphite tags are automatically mapped to labels, regardless of your defined mappings.
-Graphite matching patterns using `{}` are converted to Loki’s regular expression matching syntax.
-When your queries include functions, Graphite extracts the associated metrics and tags to match them against your mappings.
+Grafana automatically maps all Graphite tags to labels, even if you haven’t defined explicit mappings. When using matching patterns with `{}`(e.g., `metric.{a,b}.value`), Grafana converts them to Loki’s regular expression matching syntax. If your queries include functions, Graphite extracts the relevant metrics and tags, then matches them against your mappings.
 
 | **Graphite Query**                                       | **Mapped to Loki Query**         |
 | -------------------------------------------------------- | -------------------------------- |
@@ -158,15 +155,13 @@ When your queries include functions, Graphite extracts the associated metrics an
 | `alias(servers.*.{001,002}.*,1,2)`                       | `{server=~"(001,002)"}`          |
 | `interpolate(seriesByTag('foo=bar', 'server=002'), inf)` | `{foo="bar", server="002"}`      |
 
-- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for steps on setting up a PDC connection.
+- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for instructions on setting up a PDC connection.
 
-Click **Manage private data source connect**to open your PDC connection page and view your configuration details.
+Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
-After configuring your Graphite data source options, click **Save & test** at the bottom to test the connection.
+After configuring your Graphite data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
-You should see a confirmation dialog box that says:
-
-**\*\***insert a success message**\*\*\*\***
+**Data source is working.**
 
 ## Provision the data source
 
