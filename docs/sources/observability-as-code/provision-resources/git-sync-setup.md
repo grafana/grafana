@@ -16,7 +16,7 @@ weight: 100
 # Set up Git Sync
 
 {{< admonition type="note" >}}
-Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. Git Sync isn't available in Grafana Cloud.
+Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. Git Sync is not yet available in Grafana Cloud.
 {{< /admonition >}}
 
 Git Sync lets you manage Grafana dashboards as code by storing dashboards JSON files and folders in a remote GitHub repository.
