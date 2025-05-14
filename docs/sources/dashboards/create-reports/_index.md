@@ -337,26 +337,39 @@ You can send reports programmatically with the [send report](ref:send-report) en
 
 ## Manage reports
 
-On the **Reports** page, you can view and manage your existing reports or create new ones.
+You can view and manage all your reports, and create new ones, on the **Reports** page:
 
 ![Reports page](/media/docs/grafana/dashboards/screenshot-reports-page-v11.5.png)
+
+Alternatively, from any dashboard you can view and manage any reports generated from that dashboard, as well as create a new report
+You can also navigate to the list of all reports from the dashboard-specific list:
+
+<!-- drawer with a report in it here -->
 
 ### Edit reports
 
 To edit a report, follow these steps:
 
-1. In the main menu, click **Dashboards > Reporting**.
+1. Do one of the following:
+
+   - In the main menu, click **Dashboards > Reporting**.
+   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+
 1. Click the row of the report you want to update.
-1. Click the **Edit report** button in the top-right hand corner or click the **Edit** link for a specific section to go to that one directly.
-1. When you've finished making changes, click **Confirm** at the top of the screen to go to the last step.
+1. Make the necessary changes.
 1. Click **Update report**.
+1. Click the x at the top of the drawer to close it.
 
 ### Pause or resume reports {#pause-a-report}
 
 You can pause and resume sending reports from the report list view.
 To do this, follow these steps:
 
-1. In the main menu, click **Dashboards > Reporting**.
+1. Do one of the following:
+
+   - In the main menu, click **Dashboards > Reporting**.
+   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+
 1. On the row of the report you want to update, do one of the following:
 
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
@@ -366,7 +379,11 @@ To do this, follow these steps:
 
 To delete a report, follow these steps:
 
-1. In the main menu, click **Dashboards > Reporting**.
+1. Do one of the following:
+
+   - In the main menu, click **Dashboards > Reporting**.
+   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+
 1. On the row of the report you want to update, click the trash can icon.
 1. Click **Delete** to confirm.
 
