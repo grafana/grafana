@@ -1,12 +1,17 @@
 import { Trans, useTranslate } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
 
-import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+
+  const grafanaRecordingRulesEnabled =
+    config.unifiedAlerting.recordingRulesEnabled &&
+    config.featureToggles.grafanaManagedRecordingRules &&
+    canCreateGrafanaRules;
+
   const { t } = useTranslate();
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
 
