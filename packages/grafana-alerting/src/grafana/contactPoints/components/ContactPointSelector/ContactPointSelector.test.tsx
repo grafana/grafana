@@ -39,15 +39,12 @@ describe('listing contact points', () => {
     // make sure all options are rendered
     expect(await screen.findAllByRole('option')).toHaveLength(simpleContactPointsList.items.length);
 
-    // @TODO technically we could be matching descriptions of other options by we can't seem to use the "option"
-    // semantic roles here when we also have a description
     for (let item of simpleContactPointsList.items) {
-      const option = await screen.findByText(item.spec.title);
-      expect(option).toBeInTheDocument();
-      expect(
-        // @ts-expect-error
-        within(optionText.closest('[role=option]')).getByText(getContactPointDescription(item))
-      ).toBeInTheDocument();
+      const optionText = await screen.findByText(item.spec.title);
+      expect(optionText).toBeInTheDocument();
+
+      const option = optionText.closest<HTMLElement>('[role=option]');
+      expect(within(option!).getByText(getContactPointDescription(item))).toBeInTheDocument();
     }
 
     // test interaction with combobox and handler contract
