@@ -1,4 +1,4 @@
-import { http } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 import { UpdateReceiverApiResponse } from '../../../api.gen';
@@ -12,10 +12,6 @@ export function updateReceiverHandler(
       return data(info);
     }
 
-    return new Response(JSON.stringify(data), {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return HttpResponse.json(data);
   });
 }
