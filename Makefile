@@ -233,6 +233,11 @@ build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
 
+.PHONY: build-exporter-js
+build-exporter-js: ## Build panel-exporter assets
+	@echo "build panel exporter"
+	yarn run build:exporter
+
 PLUGIN_ID ?=
 
 .PHONY: build-plugin-go
