@@ -137,4 +137,22 @@ module.exports = [
       'no-barrel-files/no-barrel-files': 'error',
     },
   },
+  {
+    files: ['public/app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'JSXElement > JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector: 'JSXElement > JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+      ],
+    },
+  },
 ];
