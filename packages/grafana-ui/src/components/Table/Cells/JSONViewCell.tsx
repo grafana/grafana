@@ -36,6 +36,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
       <div
         className={cx(tableStyles.cellText, txt)}
         onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}

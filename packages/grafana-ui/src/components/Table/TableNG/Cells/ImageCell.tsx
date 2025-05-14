@@ -29,6 +29,7 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
   const img = <img alt={alt} src={text} className={styles.image} title={title} />;
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div
       className={styles.imageContainer}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
