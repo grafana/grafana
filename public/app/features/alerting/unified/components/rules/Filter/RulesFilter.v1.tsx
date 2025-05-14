@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
@@ -18,7 +17,6 @@ import {
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
-import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -42,11 +40,7 @@ const RuleHealthOptions: SelectableValue[] = [
 ];
 
 // Contact point selector is not supported in Alerting ListView V2 yet
-const canRenderContactPointSelector =
-  (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-    config.featureToggles.alertingSimplifiedRouting &&
-    shouldUseAlertingListViewV2() === false) ??
-  false;
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 interface RulesFilerProps {
   onClear?: () => void;

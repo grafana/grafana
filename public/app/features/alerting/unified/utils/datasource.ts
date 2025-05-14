@@ -18,6 +18,7 @@ import {
   RulesSourceIdentifier,
   RulesSourceUid,
 } from 'app/types/unified-alerting';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -112,7 +113,7 @@ export function isAlertmanagerDataSourceInterestedInAlerts(
 
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
-  imgUrl: 'public/img/grafana_icon.svg',
+  imgUrl: grafanaIconSvg,
   hasConfigurationAPI: true,
 };
 

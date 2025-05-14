@@ -75,6 +75,8 @@ function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeC
   const styles = useStyles2(getStyles);
 
   return (
+    // this is a convenience for mouse users. keyboard/screen reader users will use the radio button
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
     <div className={styles.card} onClick={onSelect}>
       <div className={styles.header}>
         <RadioButtonDot
