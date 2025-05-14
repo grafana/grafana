@@ -119,8 +119,8 @@ export function getNamespaces() {
 }
 
 export async function changeLanguage(language?: string) {
-  const validLocale = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
-  await getI18nInstance().changeLanguage(validLocale);
+  const validLanguage = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
+  await getI18nInstance().changeLanguage(validLanguage);
 }
 
 type ResourceKey = string;
