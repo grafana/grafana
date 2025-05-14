@@ -114,7 +114,7 @@ The report creation process is multi-step, but you don't need to complete these 
 
 You can also save the report as a draft at any step in the process.
 
-You can create directly from a dashboard or from the Reporting page.
+You can create directly from a dashboard or from the **Reporting** page.
 Select one of the following tabs for directions on each option.
 
 To create a report, follow these steps:
@@ -285,7 +285,7 @@ Enter the email addresses of the people or teams that you want to receive the re
 At this step, select one or more report attachment options.
 You can select multiple options, but you must select _at least one_:
 
-- **Attach the report as a PDF** -
+- **Attach the report as a PDF** - Attach the report as one PDF file.
 - **[Attach a separate PDF of table data](#table-data-in-pdf)** - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
 - **Attach a CSV file of table panel data** - Attach a CSV file to the report email for each table panel on the selected dashboard.
 
@@ -342,7 +342,7 @@ You can view and manage all your reports, and create new ones, on the **Reports*
 Alternatively, from any dashboard you can view and manage any reports generated from that dashboard, as well as create a new report
 You can also navigate to the list of all reports from the dashboard-specific list:
 
-{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The open Report schedule drawer with an existing report" >}}
+{{< figure src="screenshot-report-drawer.png" max-width="750px" alt="The open Report schedule drawer with an existing report" >}}
 
 ### Edit reports
 
@@ -351,7 +351,7 @@ To edit a report, follow these steps:
 1. Do one of the following:
 
    - In the main menu, click **Dashboards > Reporting**.
-   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+   - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 
 1. Click the row of the report you want to update.
 1. Make the necessary changes.
@@ -366,7 +366,7 @@ To do this, follow these steps:
 1. Do one of the following:
 
    - In the main menu, click **Dashboards > Reporting**.
-   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+   - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 
 1. On the row of the report you want to update, do one of the following:
 
@@ -380,7 +380,7 @@ To delete a report, follow these steps:
 1. Do one of the following:
 
    - In the main menu, click **Dashboards > Reporting**.
-   - Navigate to the dashboard from which the report was generated and click **Schedule report** in the **Share** drop-down list.
+   - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 
 1. On the row of the report you want to update, click the trash can icon.
 1. Click **Delete** to confirm.
