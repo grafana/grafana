@@ -460,7 +460,11 @@ func (ss *FolderUnifiedStoreImpl) list(ctx context.Context, orgID int64, opts v1
 			return nil, err
 		}
 
-		if out != nil && len(out.Items) > 0 {
+		if out == nil {
+			return nil, fmt.Errorf("k8s folder list returned nil")
+		}
+
+		if len(out.Items) > 0 {
 			allItems = append(allItems, out.Items...)
 		}
 
