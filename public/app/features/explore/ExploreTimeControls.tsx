@@ -96,7 +96,6 @@ export class ExploreTimeControls extends Component<Props> {
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
         onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-        showMoveButtonsWtihRelativeRange
       />
     );
   }

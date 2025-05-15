@@ -40,7 +40,7 @@ describe('TimePicker', () => {
     expect(screen.getByLabelText(/Time range selected/i)).toBeInTheDocument();
   });
 
-  it('renders move buttons with relative range and showMoveButtonsWtihRelativeRange set to true', () => {
+  it('renders move buttons with relative range', () => {
     render(
       <TimeRangePicker
         onChangeTimeZone={() => {}}
@@ -49,7 +49,6 @@ describe('TimePicker', () => {
         onMoveBackward={() => {}}
         onMoveForward={() => {}}
         onZoom={() => {}}
-        showMoveButtonsWtihRelativeRange={true}
       />
     );
 
@@ -57,20 +56,20 @@ describe('TimePicker', () => {
     expect(screen.getByLabelText(/Move time range forwards/i)).toBeInTheDocument();
   });
 
-  it('does not render move buttons with relative range and showMoveButtonsWtihRelativeRange set to false', () => {
+  it('renders move buttons with absolute range', () => {
     render(
       <TimeRangePicker
         onChangeTimeZone={() => {}}
         onChange={(value) => {}}
-        value={relativeValue}
+        value={value}
         onMoveBackward={() => {}}
         onMoveForward={() => {}}
         onZoom={() => {}}
       />
     );
 
-    expect(screen.queryByLabelText(/Move time range backwards/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/Move time range forwards/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Move time range backwards/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Move time range forwards/i)).toBeInTheDocument();
   });
 
   it('switches overlay content visibility when toolbar button is clicked twice', async () => {
