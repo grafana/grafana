@@ -3617,6 +3617,7 @@ __metadata:
     "@react-aria/overlays": "npm:3.26.1"
     "@react-aria/utils": "npm:3.28.1"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
+    "@rollup/plugin-url": "npm:^8.0.2"
     "@storybook/addon-a11y": "npm:^8.6.2"
     "@storybook/addon-actions": "npm:^8.6.2"
     "@storybook/addon-docs": "npm:^8.6.2"
@@ -6620,6 +6621,22 @@ __metadata:
     rollup:
       optional: true
   checksum: 10/a5e066ddea55fc8c32188bc8b484cca619713516f10e3a06801881ec98bf37459ca24e5fe8711f93a5fa7f26a6e9132a47bc1a61c01e0b513dfd79a96cdc6eb7
+  languageName: node
+  linkType: hard
+
+"@rollup/plugin-url@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@rollup/plugin-url@npm:8.0.2"
+  dependencies:
+    "@rollup/pluginutils": "npm:^5.0.1"
+    make-dir: "npm:^3.1.0"
+    mime: "npm:^3.0.0"
+  peerDependencies:
+    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  checksum: 10/181cddda6a08ac9199ef3ac345ae01c4a27e456d501e180891d5f05d6eb86ce5dabd9b50c2280604258d2d8dc6581a98f9134d1631a1c8ca5d521494bdf80fbb
   languageName: node
   linkType: hard
 
@@ -21805,7 +21822,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"make-dir@npm:^3.0.0, make-dir@npm:^3.0.2":
+"make-dir@npm:^3.0.0, make-dir@npm:^3.0.2, make-dir@npm:^3.1.0":
   version: 3.1.0
   resolution: "make-dir@npm:3.1.0"
   dependencies:
@@ -22139,7 +22156,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime@npm:3":
+"mime@npm:3, mime@npm:^3.0.0":
   version: 3.0.0
   resolution: "mime@npm:3.0.0"
   bin:
