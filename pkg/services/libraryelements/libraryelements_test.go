@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -106,8 +105,10 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(sc.service.folderService))
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID+"xxxx")
-			require.EqualError(t, err, guardian.ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", dashboards.ErrFolderNotFound).Error())
+			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
@@ -468,7 +469,6 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc, log.NewNopLogger())
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
@@ -542,13 +542,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 		service := LibraryElementService{
 			Cfg:               cfg,
 			features:          featuremgmt.WithFeatures(),
 			SQLStore:          sqlStore,
 			folderService:     folderSvc,
 			dashboardsService: dashService,
+			AccessControl:     ac,
 			log:               log.NewNopLogger(),
 		}
 

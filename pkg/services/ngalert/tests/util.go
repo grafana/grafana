@@ -122,13 +122,15 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 		Permissions: map[int64]map[string][]string{
-			orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
+			orgID: {
+				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+			},
 		},
 	}
 
 	ctx = identity.WithRequester(ctx, user)
 	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
-	// var foldr *folder.Folder
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
 	}
