@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Provisioning",
+  "id": "grafana-provisioning-app",
+  "info": {
+    "keywords": ["app"],
+    "description": "This app plugin is used to assert that provisioned dashboards work as expected.",
+    "author": {
+      "name": "Grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Provisioning",
+      "path": "/a/%PLUGIN_ID%",
+      "addToNav": true,
+      "defaultNav": true
+    },
+    {
+      "type": "dashboard",
+      "name": "Provisioning Test Dashboard",
+      "path": "dashboards/panels.json",
+      "role": "Admin",
+      "addToNav": false
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0",
+    "plugins": []
+  }
+}
