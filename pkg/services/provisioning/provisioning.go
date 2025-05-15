@@ -171,13 +171,16 @@ type ProvisioningServiceImpl struct {
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
+	// We had to move the initialization of OSS provisioners to Run()
+	// because they need the /apis/* endpoints to be ready and listening.
+	// They query these endpoints to retrieve folders and dashboards.
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
-	// Run Plugins and Alerting Provisioning only once.
+	// Run Datasources, Plugins and Alerting Provisioning only once.
 	// It can't be initialized at RunInitProvisioners because it
 	// depends on the /apis endpoints to be already running and listeningq
 	ps.onceInitProvisioners.Do(func() {
