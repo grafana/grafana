@@ -1,3 +1,6 @@
+/**
+ * ⚠️ @TODO this will eventually be replaced with "@grafana/test-utils", consider helping out instead of adding things here!
+ */
 import { configureStore } from '@reduxjs/toolkit';
 import { type RenderOptions, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
