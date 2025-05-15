@@ -167,13 +167,13 @@ require (
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.39.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.37.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.38.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // @grafana/alerting-backend
 	golang.org/x/mod v0.24.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.39.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.40.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.28.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.14.0 // @grafana/alerting-backend
-	golang.org/x/text v0.24.0 // @grafana/grafana-backend-group
+	golang.org/x/text v0.25.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.8.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.31.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
@@ -424,8 +424,8 @@ require (
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/term v0.31.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
