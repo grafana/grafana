@@ -8,7 +8,7 @@ on:
     branches:
       - "main"
       - "release-*"
-      - km/update-pr-patch-check
+      - km/update-patch-check
 
 permissions:
   id-token: write
