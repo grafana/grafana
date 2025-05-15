@@ -233,7 +233,6 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	}
 
 	return nil
-
 }
 
 func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) error {
@@ -364,7 +363,6 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 // It does preprocessing on the results in order to minimize the sql queries executed.
 // Updating large enough datasets causes SQL errors, so we batch the updates
 func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
-
 	// refIds of resources that migrated successfully in order to update in bulk
 	okIds := make([]any, 0)
 
