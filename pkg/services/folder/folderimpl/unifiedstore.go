@@ -317,16 +317,14 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	opts := v1.ListOptions{
-		Limit: folderSearchLimit,
-	}
+	opts := v1.ListOptions{}
 	if q.WithFullpath || q.WithFullpathUIDs {
 		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
 		// to retrieve the parent for all folders in grafana
 		opts.LabelSelector = utils.LabelGetFullpath + "=true"
 	}
 
-	out, err := ss.k8sclient.List(ctx, q.OrgID, opts)
+	out, err := ss.list(ctx, q.OrgID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +369,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 }
 
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
-	out, err := ss.k8sclient.List(ctx, orgID, v1.ListOptions{})
+	out, err := ss.list(ctx, orgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -445,6 +443,47 @@ func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (
 	}
 
 	return resp.Stats[0].Count, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) list(ctx context.Context, orgID int64, opts v1.ListOptions) (*unstructured.UnstructuredList, error) {
+	var allItems []unstructured.Unstructured
+
+	listOpts := opts.DeepCopy()
+
+	if listOpts.Limit == 0 {
+		listOpts.Limit = folderListLimit
+	}
+
+	for {
+		out, err := ss.k8sclient.List(ctx, orgID, *listOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		if out == nil {
+			return nil, fmt.Errorf("k8s folder list returned nil")
+		}
+
+		if len(out.Items) > 0 {
+			allItems = append(allItems, out.Items...)
+		}
+
+		if out.GetContinue() == "" || (opts.Limit > 0 && int64(len(allItems)) >= opts.Limit) {
+			break
+		}
+
+		listOpts.Continue = out.GetContinue()
+	}
+
+	result := &unstructured.UnstructuredList{
+		Items: allItems,
+	}
+
+	if opts.Limit > 0 && int64(len(allItems)) > opts.Limit {
+		result.Items = allItems[:opts.Limit]
+	}
+
+	return result, nil
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {

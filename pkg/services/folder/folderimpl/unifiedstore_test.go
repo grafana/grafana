@@ -465,7 +465,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -521,7 +521,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -588,7 +588,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100000,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -650,7 +650,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100000,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -724,7 +724,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100000,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 			},
@@ -877,6 +877,237 @@ func TestBuildFolderFullPaths(t *testing.T) {
 			require.Equal(t, tt.want.Title, tt.args.f.Title, "BuildFolderFullPaths() = %v, want %v", tt.args.f.Title, tt.want.Title)
 			require.Equal(t, tt.want.UID, tt.args.f.UID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.UID, tt.want.UID)
 			require.Equal(t, tt.want.ParentUID, tt.args.f.ParentUID, "BuildFolderFullPaths() = %v, want %v", tt.args.f.ParentUID, tt.want.ParentUID)
+		})
+	}
+}
+
+func TestList(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		orgID int64
+		opts  metav1.ListOptions
+	}
+	tests := []struct {
+		name    string
+		args    args
+		mock    func(mockCli *client.MockK8sHandler)
+		want    *unstructured.UnstructuredList
+		wantErr bool
+	}{
+		{
+			name: "should return all folders",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    0,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder2",
+								"uid":  "folder2",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder2",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return folders with limit",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return folders with continue token",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    1,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"continue": "continue-token",
+						},
+					},
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"name": "folder1",
+								"uid":  "folder1",
+							},
+							"spec": map[string]interface{}{
+								"title": "folder1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error if k8s returns error",
+			args: args{
+				ctx:   context.Background(),
+				orgID: orgID,
+				opts: metav1.ListOptions{
+					Limit:    0,
+					TypeMeta: metav1.TypeMeta{},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
+					Limit:    folderListLimit,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCLI := new(client.MockK8sHandler)
+			tt.mock(mockCLI)
+			ss := &FolderUnifiedStoreImpl{
+				k8sclient:   mockCLI,
+				userService: usertest.NewUserServiceFake(),
+			}
+			got, err := ss.list(tt.args.ctx, tt.args.orgID, tt.args.opts)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
