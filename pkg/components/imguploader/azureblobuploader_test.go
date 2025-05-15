@@ -20,7 +20,7 @@ func TestUploadToAzureBlob(t *testing.T) {
 
 		uploader, _ := NewImageUploader(cfg)
 
-		path, err := uploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
+		path, err := uploader.Upload(context.Background(), "../../../public/build/img/logo_transparent_400x.png")
 
 		require.NoError(t, err)
 		require.NotEqual(t, "", path)

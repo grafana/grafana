@@ -162,12 +162,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             "public/img/fav32.png",
-		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
+		FavIcon:                             "public/build/img/fav32.png",
+		AppleTouchIcon:                      "public/build/img/apple-touch-icon.png",
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         "public/img/grafana_icon.svg",
+		LoadingLogo:                         "public/build/img/grafana_icon.svg",
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 	}
@@ -184,7 +184,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if hs.Cfg.DisableGravatar {
-		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
+		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/build/img/user_profile.png"
 	}
 
 	if len(data.User.Name) == 0 {

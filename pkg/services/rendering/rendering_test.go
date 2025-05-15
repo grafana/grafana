@@ -89,19 +89,19 @@ func TestRenderErrorImage(t *testing.T) {
 	t.Run("No theme set returns error image with dark theme", func(t *testing.T) {
 		result, err := rs.RenderErrorImage("", nil)
 		require.NoError(t, err)
-		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_dark.png")
+		assert.Equal(t, result.FilePath, path+"/public/build/img/rendering_error_dark.png")
 	})
 
 	t.Run("Timeout error returns timeout error image", func(t *testing.T) {
 		result, err := rs.RenderErrorImage(models.ThemeLight, ErrTimeout)
 		require.NoError(t, err)
-		assert.Equal(t, result.FilePath, path+"/public/img/rendering_timeout_light.png")
+		assert.Equal(t, result.FilePath, path+"/public/build/img/rendering_timeout_light.png")
 	})
 
 	t.Run("Generic error returns error image", func(t *testing.T) {
 		result, err := rs.RenderErrorImage(models.ThemeLight, errors.New("an error"))
 		require.NoError(t, err)
-		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_light.png")
+		assert.Equal(t, result.FilePath, path+"/public/build/img/rendering_error_light.png")
 	})
 
 	t.Run("Unknown image path returns error", func(t *testing.T) {
@@ -144,17 +144,17 @@ func TestRenderLimitImage(t *testing.T) {
 		{
 			name:     "Light theme returns light image",
 			theme:    models.ThemeLight,
-			expected: path + "/public/img/rendering_limit_light.png",
+			expected: path + "/public/build/img/rendering_limit_light.png",
 		},
 		{
 			name:     "Dark theme returns dark image",
 			theme:    models.ThemeDark,
-			expected: path + "/public/img/rendering_limit_dark.png",
+			expected: path + "/public/build/img/rendering_limit_dark.png",
 		},
 		{
 			name:     "No theme returns dark image",
 			theme:    "",
-			expected: path + "/public/img/rendering_limit_dark.png",
+			expected: path + "/public/build/img/rendering_limit_dark.png",
 		},
 	}
 

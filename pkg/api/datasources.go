@@ -76,7 +76,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			dsItem.TypeName = plugin.Name
 			dsItem.Type = plugin.ID // may be from an alias
 		} else {
-			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
+			dsItem.TypeLogoUrl = "public/build/img/icn-datasource.svg"
 		}
 
 		result = append(result, dsItem)
@@ -736,7 +736,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 			dto.TypeLogoUrl = plugin.Info.Logos.Small
 			dto.Type = plugin.ID // may be from an alias
 		} else {
-			dto.TypeLogoUrl = "public/img/icn-datasource.svg"
+			dto.TypeLogoUrl = "public/build/img/icn-datasource.svg"
 		}
 	}
 
