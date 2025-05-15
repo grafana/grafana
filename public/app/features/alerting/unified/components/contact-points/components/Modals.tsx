@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Modal, ModalProps } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -42,6 +42,7 @@ export const useDeleteContactPointModal = (
         });
     }
   }, [handleDelete, contactPoint]);
+  const { t } = useTranslate();
 
   const modalElement = useMemo(() => {
     if (error) {
@@ -82,7 +83,7 @@ export const useDeleteContactPointModal = (
         </Modal.ButtonRow>
       </Modal>
     );
-  }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
+  }, [error, handleDismiss, handleSubmit, isLoading, showModal, t]);
 
   return [modalElement, handleShow, handleDismiss] as const;
 };
@@ -90,21 +91,25 @@ export const useDeleteContactPointModal = (
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
 }
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
-  <Modal
-    isOpen={isOpen}
-    onDismiss={onDismiss}
-    closeOnBackdropClick={true}
-    closeOnEscape={true}
-    title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
-  >
-    <p>
-      <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
-        Failed to update your configuration:
-      </Trans>
-    </p>
-    <pre>
-      <code>{stringifyErrorLike(error)}</code>
-    </pre>
-  </Modal>
-);
+const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
+  const { t } = useTranslate();
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      closeOnBackdropClick={true}
+      closeOnEscape={true}
+      title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
+    >
+      <p>
+        <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
+          Failed to update your configuration:
+        </Trans>
+      </p>
+      <pre>
+        <code>{stringifyErrorLike(error)}</code>
+      </pre>
+    </Modal>
+  );
+};

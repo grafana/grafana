@@ -3,8 +3,8 @@ import { capitalize } from 'lodash';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { AutoGridColumnWidth, AutoGridRowHeight, AutoGridLayoutManager } from './AutoGridLayoutManager';
@@ -44,6 +44,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       setFocusInput(false);
     }
   }, [focusInput, inputRef]);
+  const { t } = useTranslate();
 
   const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
@@ -151,6 +152,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       setFocusInput(false);
     }
   }, [focusInput, inputRef]);
+  const { t } = useTranslate();
 
   const minWidthOptions: Array<ComboboxOption<AutoGridRowHeight>> = [
     'short' as const,

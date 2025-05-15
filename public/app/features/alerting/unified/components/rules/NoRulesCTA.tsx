@@ -1,6 +1,6 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useRulesAccess } from '../../utils/accessControlHooks';
 
@@ -12,6 +12,7 @@ const RecordingRulesButtons = () => {
     config.featureToggles.grafanaManagedRecordingRules &&
     canCreateGrafanaRules;
 
+  const { t } = useTranslate();
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
 
   // User can create Grafana and DS-managed recording rules, show a dropdown
