@@ -22,6 +22,6 @@ jobs:
       head_ref: ${{ github.head_ref }}
       base_ref: ${{ github.base_ref }}
       repo: ${{ github.repository }}
-      sender: ${{ github.event.sender.login }}
+      sender_login: ${{ github.event.sender.login }}
       sha: ${{ github.sha }}
       pr_commit_sha: ${{ github.event.pull_request.head.sha }}
