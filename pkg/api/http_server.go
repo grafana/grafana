@@ -170,7 +170,7 @@ type HTTPServer struct {
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
 	secretsStore                 secretsKV.SecretsKVStore
-	secretsMigrator              secrets.Migrator
+	SecretsMigrator              secrets.Migrator
 	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -328,7 +328,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
-		secretsMigrator:              secretsMigrator,
+		SecretsMigrator:              secretsMigrator,
 		secretMigrationProvider:      secretMigrationProvider,
 		secretsStore:                 secretsStore,
 		DataSourcesService:           dataSourcesService,

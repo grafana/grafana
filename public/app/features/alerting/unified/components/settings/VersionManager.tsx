@@ -4,6 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -16,7 +17,6 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -55,6 +55,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // in here we'll track the configs we are comparing
   const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
+  const { t } = useTranslate();
 
   const {
     currentData: historicalConfigs = [],

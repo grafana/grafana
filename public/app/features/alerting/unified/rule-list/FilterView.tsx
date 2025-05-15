@@ -2,8 +2,8 @@ import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
 import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EmptyState, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -135,6 +135,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }
     return 'searching';
   }, [doneSearching, loadingAborted]);
+  const { t } = useTranslate();
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
