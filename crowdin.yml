@@ -6,10 +6,12 @@ preserve_hierarchy: true
 files: [
   {
     "source": "public/locales/en-US/grafana.json",
-    "translation": "public/locales/%locale%/%original_file_name%"
+    "translation": "public/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
   },
   {
     "source": "public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json",
-    "translation": "public/app/plugins/datasource/azuremonitor/locales/%locale%/%original_file_name%"
+    "translation": "public/app/plugins/datasource/azuremonitor/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
   },
 ]
