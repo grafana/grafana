@@ -2,10 +2,7 @@ module high-card
 
 go 1.24.3
 
-require (
-	github.com/prometheus/client_golang v1.20.2
-	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
-)
+require github.com/prometheus/client_golang v1.20.2
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
