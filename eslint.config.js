@@ -19,6 +19,7 @@ const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
+const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor'];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -287,15 +288,12 @@ module.exports = [
     plugins: {
       '@grafana': grafanaPlugin,
     },
-    files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
-    ignores: [
-      'public/app/plugins/**',
-      '**/*.story.tsx',
-      '**/*.{test,spec}.{ts,tsx}',
-      '**/__mocks__/',
-      'public/test',
-      '**/spec/**/*.{ts,tsx}',
+    files: [
+      'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
+    ignores: ['**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test', '**/spec/**/*.{ts,tsx}'],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
       '@grafana/no-translation-top-level': 'error',

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
@@ -21,6 +22,7 @@ const AggregationField = ({
   aggregationOptions,
   isLoading,
 }: AggregationFieldProps) => {
+  const { t } = useTranslate();
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {
@@ -36,7 +38,7 @@ const AggregationField = ({
   const options = addValueToOptions(aggregationOptions, variableOptionGroup, query.azureMonitor?.aggregation);
 
   return (
-    <Field label="Aggregation">
+    <Field label={t('components.aggregation-field.label-aggregation', 'Aggregation')}>
       <Select
         inputId="azure-monitor-metrics-aggregation-field"
         value={query.azureMonitor?.aggregation || null}

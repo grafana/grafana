@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
 import DataSource from '../../datasource';
@@ -16,6 +17,7 @@ const GrafanaTemplateVariableFnInput = ({
   datasource: DataSource;
 }) => {
   const [inputVal, setInputVal] = useState('');
+  const { t } = useTranslate();
 
   useEffect(() => {
     setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');
@@ -45,9 +47,18 @@ const GrafanaTemplateVariableFnInput = ({
   };
 
   return (
-    <InlineField label="Grafana template variable function">
+    <InlineField
+      label={t(
+        'components.grafana-template-variable-fn-input.label-grafana-template-variable',
+        'Grafana template variable function'
+      )}
+    >
       <Input
-        placeholder={'type a grafana template variable function, ex: Subscriptions()'}
+        placeholder={t(
+          'components.grafana-template-variable-fn-input.placeholder-grafana-template-variable',
+          'Type a grafana template variable function, e.g. {{example}}',
+          { example: 'Subscriptions()' }
+        )}
         value={inputVal}
         onChange={onChange}
         onBlur={() => onRunQuery(inputVal)}

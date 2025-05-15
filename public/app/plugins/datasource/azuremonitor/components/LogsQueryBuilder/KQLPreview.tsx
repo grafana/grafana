@@ -3,6 +3,7 @@ import Prism from 'prismjs';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Button, useStyles2 } from '@grafana/ui';
 
@@ -17,6 +18,7 @@ interface KQLPreviewProps {
 
 const KQLPreview: React.FC<KQLPreviewProps> = ({ query, hidden, setHidden }) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   useEffect(() => {
     Prism.highlightAll();
@@ -25,10 +27,10 @@ const KQLPreview: React.FC<KQLPreviewProps> = ({ query, hidden, setHidden }) => 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Query Preview">
+        <EditorField label={t('components.kql-preview.label-query-preview', 'Query Preview')}>
           <>
             <Button hidden={!hidden} variant="secondary" onClick={() => setHidden(false)} size="sm">
-              show
+              <Trans i18nKey="components.kql-preview.button-show">Show</Trans>
             </Button>
             <div className={styles.codeBlock} hidden={hidden}>
               <pre className={styles.code}>
@@ -36,7 +38,7 @@ const KQLPreview: React.FC<KQLPreviewProps> = ({ query, hidden, setHidden }) => 
               </pre>
             </div>
             <Button hidden={hidden} variant="secondary" onClick={() => setHidden(true)} size="sm">
-              hide
+              <Trans i18nKey="components.kql-preview.button-hide">Hide</Trans>
             </Button>
           </>
         </EditorField>
