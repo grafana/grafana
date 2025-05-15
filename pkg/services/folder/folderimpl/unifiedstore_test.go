@@ -465,7 +465,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -521,7 +521,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -588,7 +588,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -650,7 +650,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:         100,
+					Limit:         folderListLimit,
 					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
@@ -724,7 +724,7 @@ func TestGetFolders(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
-					Limit:    100,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 			},
@@ -906,7 +906,7 @@ func TestList(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
-					Limit:    100,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -986,6 +986,17 @@ func TestList(t *testing.T) {
 								},
 								"spec": map[string]interface{}{
 									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
 								},
 							},
 						},
@@ -1073,7 +1084,7 @@ func TestList(t *testing.T) {
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
-					Limit:    100,
+					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 			},
