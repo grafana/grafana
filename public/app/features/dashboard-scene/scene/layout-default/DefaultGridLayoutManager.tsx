@@ -25,6 +25,7 @@ import {
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  publishEditAction,
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isClonedKey, joinCloneKeys, useHasClonedParents } from '../../utils/clone';
@@ -121,7 +122,19 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+      publishEditAction({
+        description: 'Add panel',
+        addedObject: vizPanel,
+        source: this,
+        perform: () => {
+          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.grid.setState({
+            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      });
     } else {
       const newGridItem = new DashboardGridItem({
         height: NEW_PANEL_HEIGHT,
@@ -133,9 +146,8 @@ export class DefaultGridLayoutManager
       });
 
       this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
+      this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
     }
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public pastePanel() {

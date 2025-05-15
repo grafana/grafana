@@ -85,7 +85,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._subs.add(
       this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
-        // TODO record actions for undo/redo within panel edit
+        // TODO add support for undo/redo within panel edit
         payload.perform();
       })
     );

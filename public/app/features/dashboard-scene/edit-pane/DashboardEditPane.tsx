@@ -5,6 +5,7 @@ import {
   ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 
+import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
 import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
 
@@ -13,10 +14,10 @@ import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
   DashboardEditActionEventPayload,
+  NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from './shared';
-import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
@@ -52,6 +53,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     );
 
     this._subs.add(
+      dashboard.subscribeToEvent(NewObjectAddedToCanvasEvent, ({ payload }) => {
+        this.newObjectAddedToCanvas(payload);
+      })
+    );
+
+    this._subs.add(
       dashboard.subscribeToEvent(ObjectRemovedFromCanvasEvent, ({ payload }) => {
         this.clearSelection();
       })
@@ -76,6 +83,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
    * @param payload
    */
   private handleEditAction(action: DashboardEditActionEventPayload) {
+    // Clear redo stack when user performs a new action
+    // Otherwise things can get into very broken states
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
     this.performAction(action);
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
