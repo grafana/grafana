@@ -1,9 +1,7 @@
-// import '@formatjs/intl-durationformat/polyfill';
+import { DurationFormat } from '@formatjs/intl-durationformat';
+import type { DurationFormatOptions, DurationInput } from '@formatjs/intl-durationformat/src/types';
 import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
-
-// TODO: get types for Intl.DurationFormatOptions and Intl.DurationInput
-// from either polyfill, @types package, or by tweaking ts settings
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
@@ -13,8 +11,8 @@ const createDateTimeFormatter = deepMemoize((locale: string | undefined, options
   return new Intl.DateTimeFormat(locale, options);
 });
 
-const createDurationFormatter = deepMemoize((locale: string | undefined, options: Intl.DurationFormatOptions) => {
-  return new Intl.DurationFormat(locale, options);
+const createDurationFormatter = deepMemoize((locale: string | undefined, options: DurationFormatOptions) => {
+  return new DurationFormat(locale, options);
 });
 
 export const formatDate = deepMemoize(
@@ -25,12 +23,10 @@ export const formatDate = deepMemoize(
   }
 );
 
-export const formatDuration = deepMemoize(
-  (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const dateFormatter = createDurationFormatter(regionalFormat, options);
-    return dateFormatter.format(duration);
-  }
-);
+export const formatDuration = deepMemoize((duration: DurationInput, options: DurationFormatOptions = {}): string => {
+  const dateFormatter = createDurationFormatter(regionalFormat, options);
+  return dateFormatter.format(duration);
+});
 
 export const formatDateRange = (
   _from: number | Date | string,
