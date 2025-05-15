@@ -1,7 +1,7 @@
 import {
-  ListReceiverApiResponseFactory,
   ContactPointFactory,
   EmailIntegrationFactory,
+  ListReceiverApiResponseFactory,
   SlackIntegrationFactory,
 } from '../../../api/v0alpha1/mocks/fakes/Receivers';
 import { listReceiverHandler } from '../../../api/v0alpha1/mocks/handlers/ReceiverHandlers';

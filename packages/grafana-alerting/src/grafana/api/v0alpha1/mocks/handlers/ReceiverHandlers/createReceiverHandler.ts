@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { getAPIBaseURLForMocks } from '../../../../../mocks/util';
 import { CreateReceiverApiResponse } from '../../../api.gen';
