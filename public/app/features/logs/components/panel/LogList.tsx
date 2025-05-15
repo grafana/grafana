@@ -217,6 +217,7 @@ const LogListComponent = ({
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const dimensions = useMemo(
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
@@ -295,6 +296,10 @@ const LogListComponent = ({
     [toggleDetails]
   );
 
+  const handleLogDetailsResize = useCallback(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, []);
+
   const filteredLogs = useMemo(
     () =>
       filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
@@ -303,43 +308,53 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
-      <InfiniteScroll
-        displayedFields={displayedFields}
-        handleOverflow={handleOverflow}
-        logs={filteredLogs}
-        loadMore={loadMore}
-        onClick={handleLogLineClick}
-        scrollElement={scrollRef.current}
-        showTime={showTime}
-        sortOrder={sortOrder}
-        timeRange={timeRange}
-        timeZone={timeZone}
-        setInitialScrollPosition={handleScrollPosition}
-        wrapLogMessage={wrapLogMessage}
-      >
-        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-          <VariableSizeList
-            className={styles.logList}
-            height={listHeight}
-            itemCount={itemCount}
-            itemSize={getLogLineSize.bind(null, filteredLogs, containerElement, displayedFields, {
-              wrap: wrapLogMessage,
-              showControls,
-              showTime,
-            })}
-            itemKey={getItemKey}
-            layout="vertical"
-            onItemsRendered={onItemsRendered}
-            outerRef={scrollRef}
-            ref={listRef}
-            style={{ overflowY: 'scroll' }}
-            width="100%"
-          >
-            {Renderer}
-          </VariableSizeList>
-        )}
-      </InfiniteScroll>
-      {showDetails.length > 0 && <LogLineDetails logs={filteredLogs} getFieldLinks={getFieldLinks} />}
+      <div className={styles.logListWrapper} ref={wrapperRef}>
+        <InfiniteScroll
+          displayedFields={displayedFields}
+          handleOverflow={handleOverflow}
+          logs={filteredLogs}
+          loadMore={loadMore}
+          onClick={handleLogLineClick}
+          scrollElement={scrollRef.current}
+          showTime={showTime}
+          sortOrder={sortOrder}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          setInitialScrollPosition={handleScrollPosition}
+          wrapLogMessage={wrapLogMessage}
+        >
+          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+            <VariableSizeList
+              className={styles.logList}
+              height={listHeight}
+              itemCount={itemCount}
+              itemSize={getLogLineSize.bind(
+                null,
+                filteredLogs,
+                wrapperRef.current ?? containerElement,
+                displayedFields,
+                {
+                  wrap: wrapLogMessage,
+                  showControls,
+                  showTime,
+                }
+              )}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              outerRef={scrollRef}
+              ref={listRef}
+              style={{ overflowY: 'scroll' }}
+              width="100%"
+            >
+              {Renderer}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </div>
+      {showDetails.length > 0 && (
+        <LogLineDetails getFieldLinks={getFieldLinks} logs={filteredLogs} onResize={handleLogDetailsResize} />
+      )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
@@ -356,6 +371,9 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
     }),
     logListContainer: css({
       display: 'flex',
+    }),
+    logListWrapper: css({
+      width: '100%',
     }),
   };
 }
