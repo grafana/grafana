@@ -498,8 +498,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
-	t.Skip("skipping integration test because it's flaky")
-
 	testCases := []struct {
 		desc                    string
 		queryType               string
@@ -562,7 +560,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
-
 	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
@@ -621,8 +618,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T) {
-	t.Skip("skipping integration test because it's flaky")
-
 	testCases := []struct {
 		desc                    string
 		queryType               string
