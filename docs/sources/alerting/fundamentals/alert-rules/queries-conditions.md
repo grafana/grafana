@@ -47,6 +47,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#reduce
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
+  table-data-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/table-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/table-data/
 ---
 
 # Queries and conditions
@@ -70,7 +75,7 @@ Queries in Grafana can be applied in various ways, depending on the data source 
 Alerting can work with two types of data:
 
 1. **Time series data** — The query returns a collection of time series, where each series must be [reduced](#reduce) to a single numeric value for evaluating the alert condition.
-1. **Tabular data** — The query must return data in a table format with only one numeric column. Each row must have a value in that column, used to evaluate the alert condition. See a [tabular data example](#alert-example-on-tabular-data).
+1. **Tabular data** — The query must return data in a table format with only one numeric column. Each row must have a value in that column, used to evaluate the alert condition. See a [tabular data example](ref:table-data-example).
 
 Each time series or table row is evaluated as a separate [alert instance](ref:alert-instance).
 
@@ -209,66 +214,3 @@ The following aggregation functions are also available to further refine your qu
 | `count_non_null`   | Displays a count of values in the result set that aren't `null`                 |
 
 {{< /collapse >}}
-
-## Alert example on tabular data
-
-Grafana Alerting supports backend data sources that return data in table format, including:
-
-- SQL-based data sources, such as MySQL, PostgreSQL, MSSQL, and Oracle.
-- Data sources that expose structured data via query languages or APIs.
-- Formats like CSV or JSON, accessed through plugins such as the TestData or Infinity data source.
-
-For Alerting to process tabular data, the data must be structured like:
-
-1. Rows must contain only one column with a single numeric values (e.g. int, double, float).
-1. Rows can also include additional columns with string values, which become labels.
-
-   The name of the column becomes the label name, and the value in each row becomes the value of the corresponding label. If multiple rows are returned, each row should be uniquely identified by its labels.
-
-**Example**
-
-For a MySQL table called "DiskSpace":
-
-| Time        | Host | Disk | PercentFree |
-| ----------- | ---- | ---- | ----------- |
-| 2021-June-7 | web1 | /etc | 3           |
-| 2021-June-7 | web2 | /var | 4           |
-| 2021-June-7 | web3 | /var | 8           |
-
-You can query the data by filtering on time, but without returning the time series to Grafana. For example, a query that calculate the free space per Host and Disk:
-
-```sql
-SELECT
-    Host,
-    Disk,
-    AVG(PercentFree) AS PercentFree
-FROM DiskSpace
-WHERE __timeFilter(Time)
-GROUP BY
-    Host,
-    Disk
-```
-
-This query returns the following Table response to Grafana:
-
-| Host | Disk | PercentFree |
-| ---- | ---- | ----------- |
-| web1 | /etc | 3           |
-| web2 | /var | 4           |
-| web3 | /var | 8           |
-
-When Alerting evaluates the query response, the data is transformed into time series data, producing three alert instances as follows:
-
-| Alert instance        | Value |
-| --------------------- | ----- |
-| {Host=web1,disk=/etc} | 3     |
-| {Host=web2,disk=/var} | 4     |
-| {Host=web3,disk=/var} | 8     |
-
-Finally, an alert condition that checks for less than 5% of free space (`$A < 5`) results in two alert instances firing:
-
-| Alert instance        | State      |
-| --------------------- | ---------- |
-| {Host=web1,disk=/etc} | 1 `Firing` |
-| {Host=web2,disk=/var} | 1 `Firing` |
-| {Host=web3,disk=/var} | 0 `Normal` |

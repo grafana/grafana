@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -35,13 +37,14 @@ var (
 // KeeperRest is an implementation of CRUDL operations on a `keeper` backed by TODO.
 type KeeperRest struct {
 	storage        contracts.KeeperMetadataStorage
+	accessClient   claims.AccessClient
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(storage contracts.KeeperMetadataStorage, resource utils.ResourceInfo) *KeeperRest {
-	return &KeeperRest{storage, resource, resource.TableConverter()}
+func NewKeeperRest(storage contracts.KeeperMetadataStorage, accessClient claims.AccessClient, resource utils.ResourceInfo) *KeeperRest {
+	return &KeeperRest{storage, accessClient, resource, resource.TableConverter()}
 }
 
 // New returns an empty `*Keeper` that is used by the `Create` method.
@@ -79,12 +82,47 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	keepersList, err := s.storage.List(ctx, xkube.Namespace(namespace), options)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.KeeperResourceInfo.GetName(),
+		Namespace: namespace,
+		Verb:      utils.VerbGet,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
+	}
+
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	keepersList, err := s.storage.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list keepers: %w", err)
 	}
 
-	return keepersList, nil
+	allowedKeepers := make([]secretv0alpha1.Keeper, 0)
+
+	for _, keeper := range keepersList {
+		// Check whether the user has permission to access this specific Keeper in the namespace.
+		if !hasPermissionFor(keeper.Name, "") {
+			continue
+		}
+
+		if labelSelector.Matches(labels.Set(keeper.Labels)) {
+			allowedKeepers = append(allowedKeepers, keeper)
+		}
+	}
+
+	return &secretv0alpha1.KeeperList{
+		Items: allowedKeepers,
+	}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `Keeper` by `name`.
@@ -94,7 +132,8 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name)
+	// TODO: readopts
+	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{})
 	if err != nil {
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -117,11 +156,16 @@ func (s *KeeperRest) Create(
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
 
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
 	if err := createValidation(ctx, obj); err != nil {
 		return nil, err
 	}
 
-	createdKeeper, err := s.storage.Create(ctx, kp)
+	createdKeeper, err := s.storage.Create(ctx, kp, user.GetUID())
 	if err != nil {
 		var kErr xkube.ErrorLister
 		if errors.As(err, &kErr) {
@@ -144,6 +188,11 @@ func (s *KeeperRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, false, fmt.Errorf("missing auth info in context")
+	}
+
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -172,7 +221,7 @@ func (s *KeeperRest) Update(
 	newKeeper.Annotations = xkube.CleanAnnotations(newKeeper.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
+	updatedKeeper, err := s.storage.Update(ctx, newKeeper, user.GetUID())
 	if err != nil {
 		var kErr xkube.ErrorLister
 		if errors.As(err, &kErr) {
@@ -193,7 +242,11 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	err := s.storage.Delete(ctx, xkube.Namespace(namespace), name)
+	if err != nil {
+		if errors.Is(err, contracts.ErrKeeperNotFound) {
+			return nil, false, s.resource.NewNotFound(name)
+		}
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 
