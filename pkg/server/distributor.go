@@ -5,8 +5,8 @@ import (
 	"hash/fnv"
 
 	"github.com/grafana/dskit/ring"
-	"github.com/grafana/dskit/services"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -173,7 +173,7 @@ func (ds *distributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 		if err != nil {
 			return err
 		}
-		srv.Send(msg)
+		_ = srv.Send(msg)
 	}
 }
 
