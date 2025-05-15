@@ -96,7 +96,7 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export type KeyValuesTableLink = Omit<PluginExtensionLink, 'type'>;
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
@@ -129,7 +129,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
             const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
-            const links = linksGetter ? linksGetter(data, i) : null;
+            const links = linksGetter?.(data, i);
             let valueMarkup;
             if (links && links.length) {
               // TODO: handle multiple items

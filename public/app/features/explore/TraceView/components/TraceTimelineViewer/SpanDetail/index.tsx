@@ -39,8 +39,8 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc, TNil } from '../../types';
-import { TraceLink, TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { SpanLinkFunc } from '../../types';
+import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -185,7 +185,6 @@ export type TraceFlameGraphs = {
 
 export type SpanDetailProps = {
   detailState: DetailState;
-  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -215,7 +214,6 @@ export type SpanDetailProps = {
 export default function SpanDetail(props: SpanDetailProps) {
   const {
     detailState,
-    linksGetter,
     logItemToggle,
     logsToggle,
     processToggle,
@@ -380,7 +378,6 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs
-            linksGetter={linksGetter}
             logs={logs}
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}
