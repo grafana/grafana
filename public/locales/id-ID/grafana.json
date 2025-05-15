@@ -8988,7 +8988,8 @@
       "placeholder-choose-stat": "Pilih stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Nilai atau variabel"
+      "placeholder-value-or-variable": "Nilai atau variabel",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Derajat",

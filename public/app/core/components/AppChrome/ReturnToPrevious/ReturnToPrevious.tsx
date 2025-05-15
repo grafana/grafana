@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 
 import { DismissableButton } from './DismissableButton';
 
@@ -27,7 +27,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const handleOnDismiss = useCallback(() => {
     chrome.clearReturnToPrevious('dismissed');
   }, [chrome]);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.returnToPrevious} data-testid={selectors.components.ReturnToPrevious.buttonGroup}>
       <DismissableButton
