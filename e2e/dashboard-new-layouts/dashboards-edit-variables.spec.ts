@@ -92,6 +92,7 @@ describe('Dashboard edit - variables', () => {
     field.find('input').should('be.visible').clear().type(variable.value).blur();
 
     e2e.pages.Dashboard.SubMenu.submenuItem().should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
 
     // assert the panel is visible and has the correct value
     e2e.components.Panels.Panel.content()
