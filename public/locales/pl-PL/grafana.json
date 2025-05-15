@@ -4287,9 +4287,6 @@
       "query-options": "Opcje zapytania",
       "selection-options": "Opcje wyboru"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
       "title-restore-version": ""
@@ -9084,7 +9081,8 @@
       "placeholder-choose-stat": "Wybierz statystyki"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Wartość lub zmienna"
+      "placeholder-value-or-variable": "Wartość lub zmienna",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Stopień",

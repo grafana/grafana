@@ -4247,9 +4247,6 @@
       "query-options": "Frågealternativ",
       "selection-options": "Urvalsalternativ"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Är du säker på att du vill återställa instrumentpanelen till version {{version}}? Alla ändringar som inte sparats kommer att gå förlorade.",
       "title-restore-version": ""
@@ -9022,7 +9019,8 @@
       "placeholder-choose-stat": "Välj statistik"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Värde eller variabel"
+      "placeholder-value-or-variable": "Värde eller variabel",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Grad",

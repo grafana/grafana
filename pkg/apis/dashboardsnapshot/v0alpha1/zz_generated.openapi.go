@@ -229,6 +229,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotList(ref common
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -419,6 +420,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptionsList(ref common.Re
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

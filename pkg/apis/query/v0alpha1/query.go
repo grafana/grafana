@@ -3,9 +3,10 @@ package v0alpha1
 import (
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Generic query request with shared time across all values
@@ -55,5 +56,5 @@ type QueryTypeDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []QueryTypeDefinition `json:"items,omitempty"`
+	Items []QueryTypeDefinition `json:"items"`
 }

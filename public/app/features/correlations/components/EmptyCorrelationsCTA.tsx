@@ -1,11 +1,12 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Card, EmptyState } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onClick?: () => void;
   canWriteCorrelations: boolean;
 }
 export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) => {
+  const { t } = useTranslate();
   // TODO: if there are no datasources show a different message
 
   return canWriteCorrelations ? (
