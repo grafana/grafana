@@ -117,7 +117,7 @@ func ProvideUnifiedStorageGrpcService(
 		ringStore, err := kv.NewClient(
 			memberlistKVConfig,
 			ring.GetCodec(),
-			kv.RegistererWithKVName(reg, "unified_storage_ring"), // TODO reuse const in ring.go
+			kv.RegistererWithKVName(reg, resource.RingName),
 			log,
 		)
 		if err != nil {
@@ -131,14 +131,14 @@ func ProvideUnifiedStorageGrpcService(
 
 		// Define lifecycler delegates in reverse order (last to be called defined first because they're
 		// chained via "next delegate").
-		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, 128)) // TODO reuse const in ring.go
+		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resource.RingNumTokens))
 		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
-		delegate = ring.NewAutoForgetDelegate(time.Minute*2, delegate, log) // TODO reuse const in ring.go
+		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
 
 		s.lifecycler, err = ring.NewBasicLifecycler(
 			lifecyclerCfg,
-			"unified_storage_ring", // TODO reuse const in ring.go
-			"unified-storage-ring", // TODO reuse const in ring.go
+			resource.RingName,
+			resource.RingKey,
 			ringStore,
 			delegate,
 			log,
@@ -367,8 +367,8 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
 		ID:                  instanceId,
 		HeartbeatPeriod:     15 * time.Second,
-		HeartbeatTimeout:    time.Minute, // TODO reuse const in ring.go
+		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
 		TokensObservePeriod: 0,
-		NumTokens:           128, // TODO reuse const in ring.go
+		NumTokens:           resource.RingNumTokens,
 	}, nil
 }

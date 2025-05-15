@@ -323,6 +323,11 @@ func (c *RingClient) RemoteAddress() string {
 	return c.Conn.Target()
 }
 
+const RingKey = "unified-storage-ring"
+const RingName = "unified_storage_ring"
+const RingHeartbeatTimeout = time.Minute
+const RingNumTokens = 128
+
 // Init implements ResourceServer.
 func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
@@ -556,7 +561,6 @@ func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.Aut
 }
 
 func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
-	s.log.Info("Creating")
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
@@ -588,7 +592,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
-	s.log.Info("Updating")
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
@@ -639,7 +642,6 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
-	s.log.Info("Deleting")
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
@@ -728,7 +730,6 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	s.log.Info("Reading")
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &ReadResponse{
@@ -776,7 +777,6 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
-	s.log.Info("Listing")
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
@@ -1057,14 +1057,11 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 		return nil, fmt.Errorf("search index not configured")
 	}
 
-	fmt.Println("searching!")
-
 	return s.search.Search(ctx, req)
 }
 
 // GetStats implements ResourceServer.
 func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
-	fmt.Println("Getting stats")
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}

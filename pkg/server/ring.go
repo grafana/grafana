@@ -20,11 +20,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const ringKey = "unified-storage-ring"
-const ringName = "unified_storage_ring"
-const heartbeatTimeout = time.Minute
-
-var metricsPrefix = ringName + "_"
+var metricsPrefix = resource.RingName + "_"
 
 func (ms *ModuleServer) initRing() (services.Service, error) {
 	if !ms.cfg.EnableSharding {
@@ -41,7 +37,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	ringStore, err := kv.NewClient(
 		ms.MemberlistKVConfig,
 		ring.GetCodec(),
-		kv.RegistererWithKVName(reg, ringName),
+		kv.RegistererWithKVName(reg, resource.RingName),
 		logger,
 	)
 	if err != nil {
@@ -50,8 +46,8 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	storageRing, err := ring.NewWithStoreClientAndStrategy(
 		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
-		ringName,
-		ringKey,
+		resource.RingName,
+		resource.RingKey,
 		ringStore,
 		ring.NewIgnoreUnhealthyInstancesReplicationStrategy(),
 		reg,
@@ -89,7 +85,7 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 	flagext.DefaultValues(&rc)
 
 	rc.KVStore = KVStore
-	rc.HeartbeatTimeout = heartbeatTimeout
+	rc.HeartbeatTimeout = resource.RingHeartbeatTimeout
 
 	rc.ReplicationFactor = 1
 
@@ -133,5 +129,5 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 		}, nil
 	})
 
-	return ringclient.NewPool(ringName, poolCfg, nil, factory, clientsCount, log)
+	return ringclient.NewPool(resource.RingName, poolCfg, nil, factory, clientsCount, log)
 }
