@@ -1,22 +1,21 @@
-import { useCallback } from 'react';
-
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { setLocalStorageFeatureToggle, shouldUseAlertingListViewV2 } from '../featureToggles';
+import { shouldUseAlertingListViewV2 } from '../featureToggles';
+import { setPreviewToggle } from '../previewToggles';
 
 export function RuleListPageTitle({ title }: { title: string }) {
   const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
 
-  const { listViewV2Enabled, enableListViewV2, disableListViewV2 } = useV2AlertListViewToggle();
+  const listViewV2Enabled = shouldUseAlertingListViewV2();
 
   const toggleListView = () => {
     if (listViewV2Enabled) {
-      disableListViewV2();
+      setPreviewToggle('alertingListViewV2', false);
       reportInteraction('alerting.list_view.v2.disabled');
     } else {
-      enableListViewV2();
+      setPreviewToggle('alertingListViewV2', true);
       reportInteraction('alerting.list_view.v2.enabled');
     }
     window.location.reload();
@@ -48,22 +47,4 @@ export function RuleListPageTitle({ title }: { title: string }) {
       )}
     </Stack>
   );
-}
-
-function useV2AlertListViewToggle() {
-  const listViewV2Enabled = shouldUseAlertingListViewV2();
-
-  const enableListViewV2 = useCallback(() => {
-    setLocalStorageFeatureToggle('alertingListViewV2', true);
-  }, []);
-
-  const disableListViewV2 = useCallback(() => {
-    setLocalStorageFeatureToggle('alertingListViewV2', undefined);
-  }, []);
-
-  return {
-    listViewV2Enabled,
-    enableListViewV2,
-    disableListViewV2,
-  };
 }

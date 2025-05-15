@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Auditing",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "Präsenzanzeigen des Dashboards",
       "title-dashboard-usage-stats-drawer": "Nutzungsstatistik-Fach des Dashboards",
       "title-data-source-permissions": "Datenquellenberechtigungen",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "SAML-Authentifizierung",
       "title-settings-updates-at-runtime": "Einstellungsaktualisierungen während der Laufzeit",
       "title-sort-dashboards-by-popularity-in-search": "Dashboards je nach Beliebtheit beim Suchen sortieren",
-      "title-team-sync": "Teamsynchronisierung",
-      "title-white-labeling": "White Labeling"
+      "title-team-sync": "Teamsynchronisierung"
     },
     "feature-toggles": {
       "restart-pending": "Ein Neustart für Ihre Grafana-Instanz steht bevor, damit die neuesten Änderungen am Funktionsschalter angewendet werden",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Weitere hinzufügen"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Matcher hinzufügen",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Stummschaltung zur Richtlinie hinzufügen",
       "am-mute-timing-select-label-mute-timings": "Stummschaltung",
       "aria-label-group-by": "Gruppieren nach",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Dashboard und Panel verknüpfen",
       "placeholder-value-input-default": "Inhalt der benutzerdefinierten Anmerkung eingeben …"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterte Regelliste"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Wählen Sie einen Ordner, in dem Sie Ihre Regel speichern."
@@ -1451,29 +1494,21 @@
       "aria-label": "Mehr",
       "button-text": "Mehr"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Die Stummschaltungszeiten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
-        "title": "Fehler beim Laden der Stummschaltung"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Deaktiviert",
       "title-delete-mute-timing": "Stummschaltung löschen"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Wählen Sie eine Stummschaltung aus, um festzulegen, wann für diese Warnregel keine Benachrichtigungen gesendet werden sollen",
       "am-mute-timing-select-label-mute-timings": "Stummschaltung"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Ein eindeutiger Name für die Stummschaltung",
-      "label-name": "",
-      "text-loading-mute-timing": "Stummschaltung wird geladen",
-      "title-no-matching-mute-timing-found": "Keine übereinstimmende Stummschaltung gefunden"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Ein weiteres Zeitintervall hinzufügen",
-      "description": "Ein Zeitintervall ist eine Definition für einen speziellen Zeitpunkt. Alle Felder sind Listen, wobei mindestens ein Listenelement erfüllt sein muss, um dem Feld zu entsprechen. Wenn ein Feld leer bleibt, wird jeder Zeitpunkt dem Feld entsprechen. Damit ein Zeitpunkt einem vollständigen Zeitintervall entspricht, müssen alle Felder übereinstimmen. Eine Stummschaltung kann mehrere Zeitintervalle umfassen.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Die Tage des Monats, 1:31, eines Monats. Negative Werte können genutzt werden und für Tage stehen, die am Ende des Monats beginnen",
       "description-months": "Die Monate des Jahres sind entweder numerisch oder ein voller Kalendermonat",
       "label-days-of-the-month": "Tage des Monats",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Zeitbereich entfernen"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Stummschaltung hinzufügen",
-      "description": "Geben Sie bestimmte Zeitintervalle an, in denen keine Benachrichtigungen gesendet werden sollen oder in denen Benachrichtigungen regelmäßig pausiert werden sollen.",
-      "save": "Stummschaltung speichern",
-      "saving": "Stummschaltung wird gespeichert"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Stummschaltung",
-      "placeholder-select-mute-timings": "Stummschaltung auswählen ..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Sie haben noch keine Stummschaltungen erstellt",
-      "text-loading-mute-timings": "Stummschaltungen werden geladen ...",
-      "text-no-mute-timings-configured": "Keine Stummschaltung konfiguriert"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Benachrichtigungsrichtlinien haben sich geändert"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Stummschaltung",
-      "label-notification-policies": "Benachrichtigungsrichtlinien"
+      "label-notification-policies": "Benachrichtigungsrichtlinien",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2392,6 +2412,32 @@
       "input": "Eingabe",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "Zeitreihendaten",
       "timestamp": "",
@@ -2582,16 +2628,109 @@
       "refer-documentation-configure-authentication": "Erfahren Sie in der Dokumentation, wie Sie die Authentifizierung konfigurieren"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "Liste der durch Komma oder Leerzeichen getrennten Gruppen. Um sich anzumelden, sollte der Nutzer Mitglied von mindestens einer Gruppe sein.",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "Der Endpunkt der Benutzerinformationen Ihres OAuth2-Anbieters. Informationen, die von diesem Endpunkt zurückgegeben werden, müssen mit <2>OpenID UserInfo</2> kompatibel sein.",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "Wenn dies festgelegt ist, muss der Nutzer einem der angegebenen Teams angehören, um sich anmelden zu können.",
       "team-ids-description-oauth": "",
-      "team-ids-github": "Integer-Liste der Team-IDs.",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "String-Liste der Team-IDs.",
-      "teams-url-description": "Die URL, die für die Abfrage von Team-IDs verwendet wird. Wenn dies nicht festgelegt ist, lautet der Standardwert: /teams.",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "Wenn dies aktiviert ist, nutzt Grafana <2>Proof Key for Code Exchange (PKCE)</2> mit OAuth2 Authorization Code Grant."
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "Wenn dies aktiviert ist, nutzt Grafana <2>Proof Key for Code Exchange (PKCE)</2> mit OAuth2 Authorization Code Grant.",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2601,12 +2740,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Auf Standardwerte zurücksetzen"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "Verwerfen",
       "enabled-label-enabled": "",
       "label-enabled": "Aktiviert",
       "reset-configuration": "Sind Sie sicher, dass Sie diese Konfiguration zurücksetzen möchten?",
       "reset-configuration-description": "Nach dem Zurücksetzen dieser Einstellungen verwendet Grafana die Provider-Konfiguration des Systems (Konfigurationsdatei/Umgebungsvariablen), falls vorhanden.",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "Weitere Aktionen",
       "title-reset": "Zurücksetzen",
@@ -2656,6 +2798,10 @@
     },
     "actions": {
       "button-to-recently-deleted": "Kürzlich gelöscht"
+    },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
     },
     "browse-view": {
       "this-folder-is-empty": "Dieser Ordner ist leer"
@@ -3273,6 +3419,11 @@
         "name": "",
         "open-editor": "Variablen-Editor öffnen",
         "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Benutzerdefinierte Werte zulassen",
           "allow-custom-values-description": "Ermöglicht Nutzern die Eingabe von Werten",
@@ -5221,9 +5372,6 @@
     "discard-button": "Nicht gespeicherte Änderungen verwerfen",
     "title": "Seite verlassen?"
   },
-  "frontendtests": {
-    "test-key": "Test-Key nicht gefunden"
-  },
   "gen-ai": {
     "apply-suggestion": "Anwenden",
     "incomplete-request-error": "Leider konnte ich Ihre Anfrage nicht abschließen. Bitte versuchen Sie es erneut.",
@@ -6089,8 +6237,8 @@
       "escape-newlines": "Falsch dargestellte Zeilenumbrüche und Tab-Sequenzen in Log-Zeilen korrigieren",
       "hide-timestamps": "Zeitstempel ausblenden",
       "hide-unique-labels": "Eindeutige Labels ausblenden",
-      "newest-first": "Neueste Logs zuerst",
-      "oldest-first": "Älteste Logs zuerst",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "JSON-Logs ausklappen",
       "remove-escaping": "Escaping entfernen",
       "scroll-bottom": "",

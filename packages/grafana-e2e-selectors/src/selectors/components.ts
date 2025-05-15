@@ -27,10 +27,21 @@ export const versionedComponents = {
     addPanel: {
       '12.1.0': 'data-testid CanvasGridAddActions add-panel',
     },
+    groupPanels: {
+      '12.1.0': 'data-testid CanvasGridAddActions group-panels',
+    },
+    ungroup: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup',
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+  },
+  EditPaneHeader: {
+    deleteButton: {
+      '12.1.0': 'data-testid EditPaneHeader delete panel',
     },
   },
   TimePicker: {
@@ -353,6 +364,9 @@ export const versionedComponents = {
       },
       content: {
         '11.1.0': 'data-testid panel content',
+      },
+      headerContainer: {
+        '9.5.0': 'data-testid header-container',
       },
       headerItems: {
         '10.2.0': (item: string) => `data-testid Panel header item ${item}`,
