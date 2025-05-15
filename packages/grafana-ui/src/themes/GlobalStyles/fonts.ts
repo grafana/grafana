@@ -1,8 +1,8 @@
 import { css } from '@emotion/react';
 
-import interMedium from '../../../../../public/fonts/inter/Inter-Medium.woff2';
-import interRegular from '../../../../../public/fonts/inter/Inter-Regular.woff2';
-import robotoMonoNormal from '../../../../../public/fonts/roboto/L0xTDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_3vrtSM1J-gEPT5Ese6hmHSh0mQ.woff2';
+import interMedium from '../../assets/fonts/inter/Inter-Medium.woff2';
+import interRegular from '../../assets/fonts/inter/Inter-Regular.woff2';
+import robotoMonoNormal from '../../assets/fonts/roboto/roboto.woff2';
 
 export function getFontStyles() {
   const robotoCommonFontFaceStyles = {
