@@ -23,12 +23,13 @@ import (
 func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 	testScenario(t, "When user with tries to create a library panel in the General folder, it should return correct status",
 		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.OrgRole = org.RoleViewer
 			command := getCreatePanelCommand(0, "", "Library Panel Name")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, http.StatusForbidden, resp.Status())
 
-			sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
+			sc.reqContext.OrgRole = org.RoleEditor
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp = sc.service.createHandler(sc.reqContext)
 			require.Equal(t, http.StatusOK, resp.Status())
@@ -44,13 +45,14 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 			result := validateAndUnMarshalResponse(t, resp)
 
 			// nolint:staticcheck
+			sc.reqContext.OrgRole = org.RoleViewer
 			cmd := model.PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(model.PanelElement)}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, http.StatusForbidden, resp.Status())
 
-			sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
+			sc.reqContext.OrgRole = org.RoleEditor
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, http.StatusOK, resp.Status())
@@ -65,6 +67,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			result := validateAndUnMarshalResponse(t, resp)
 
+			sc.reqContext.OrgRole = org.RoleViewer
 			cmd := model.PatchLibraryElementCommand{FolderUID: &folder.UID, Version: 1, Kind: int64(model.PanelElement)}
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderimpl.ProvideDashboardFolderStore(sc.sqlStore), sc.service.folderService))
@@ -73,6 +76,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, http.StatusForbidden, resp.Status())
 
+			sc.reqContext.OrgRole = org.RoleEditor
 			sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
 			sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -88,12 +92,13 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			result := validateAndUnMarshalResponse(t, resp)
 
+			sc.reqContext.OrgRole = org.RoleViewer
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			resp = sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, http.StatusForbidden, resp.Status())
 
-			sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
+			sc.reqContext.OrgRole = org.RoleEditor
 			resp = sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, http.StatusOK, resp.Status())
 		})
