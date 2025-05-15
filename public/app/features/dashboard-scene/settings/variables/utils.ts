@@ -24,7 +24,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { getCustomVariableOptions } from './components/CustomVariableForm';
-import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
+import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
@@ -81,6 +81,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
+    getOptions: getAdHocFilterOptions,
   },
   groupby: {
     name: 'Group by',

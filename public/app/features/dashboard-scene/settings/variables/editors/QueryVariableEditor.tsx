@@ -196,7 +196,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
   return (
     <>
       <Field
-        label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
+        label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
       >
         <DataSourcePicker current={selectedDatasource} onChange={onDataSourceChange} variables={true} width={30} />

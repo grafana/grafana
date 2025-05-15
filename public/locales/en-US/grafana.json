@@ -4020,6 +4020,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
+      "alert-not-supported": "This data source does not support ad hoc filters",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -4244,6 +4245,7 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-target-data-source": "Target data source",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
