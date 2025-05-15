@@ -9081,7 +9081,8 @@
       "placeholder-choose-stat": "Выбрать статистику"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Значение или переменная"
+      "placeholder-value-or-variable": "Значение или переменная",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Степень",

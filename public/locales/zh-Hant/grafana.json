@@ -8988,7 +8988,8 @@
       "placeholder-choose-stat": "選擇統計資料"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "值或變數"
+      "placeholder-value-or-variable": "值或變數",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "度",

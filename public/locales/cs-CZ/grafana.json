@@ -9081,7 +9081,8 @@
       "placeholder-choose-stat": "Vyberte statistiku"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Hodnota nebo proměnná"
+      "placeholder-value-or-variable": "Hodnota nebo proměnná",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "titul",

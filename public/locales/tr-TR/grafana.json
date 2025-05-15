@@ -9019,7 +9019,8 @@
       "placeholder-choose-stat": "İstatistik seç"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Değer veya değişken"
+      "placeholder-value-or-variable": "Değer veya değişken",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Seviye",
