@@ -1849,6 +1849,8 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	m := utils.ManagerProperties{}
 	s := utils.SourceProperties{}
 	if !unprovision {
+		// TODO: the path should be relative to the root
+		// HOWEVER, maybe OK to leave this for now and "fix" it by using file provisioning for mode 4
 		m.Kind = utils.ManagerKindClassicFP // nolint:staticcheck
 		m.Identity = provisioning.Name
 		s.Path = provisioning.ExternalID
