@@ -1,3 +1,5 @@
+import { Scope } from '@grafana/data';
+
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
@@ -62,10 +64,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
   }
 
-  private expandOrFilterNode = async (pathOrScopeNodeId: string[] | string, query?: string) => {
-    const path = Array.isArray(pathOrScopeNodeId)
-      ? pathOrScopeNodeId
-      : getPathOfNode(pathOrScopeNodeId, this.state.nodes);
+  private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
+    const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
     const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
@@ -80,17 +80,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           await this.loadNodeChildren(path, nodeToExpand, query);
         }
       } else {
-        throw new Error(`Trying to expand node at path or id ${pathOrScopeNodeId} that is not expandable`);
+        throw new Error(`Trying to expand node at id ${scopeNodeId} that is not expandable`);
       }
     } else {
-      throw new Error(`Trying to expand node at path or id ${pathOrScopeNodeId} not found`);
+      throw new Error(`Trying to expand node at id ${scopeNodeId} not found`);
     }
   };
 
-  private collapseNode = async (pathOrScopeNodeId: string[] | string) => {
-    const path = Array.isArray(pathOrScopeNodeId)
-      ? pathOrScopeNodeId
-      : getPathOfNode(pathOrScopeNodeId, this.state.nodes);
+  private collapseNode = async (scopeNodeId: string) => {
+    const path = getPathOfNode(scopeNodeId, this.state.nodes);
 
     const nodeToCollapse = treeNodeAtPath(this.state.tree!, path);
     if (nodeToCollapse) {
@@ -100,7 +98,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       });
       this.updateState({ tree: newTree });
     } else {
-      throw new Error(`Trying to collapse node at path or id ${pathOrScopeNodeId} not found`);
+      throw new Error(`Trying to collapse node at path or id ${scopeNodeId} not found`);
     }
   };
 
@@ -128,31 +126,23 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
     });
 
-    console.log('update tree', this.state.tree);
     this.updateState({ tree: newTree, nodes: newNodes, loadingNodeName: undefined });
   };
 
-  public selectScope = async (pathOrNodeScopeId: string[] | string) => {
-    let scopeNode;
-    if (Array.isArray(pathOrNodeScopeId)) {
-      const nodeToSelect = treeNodeAtPath(this.state.tree!, pathOrNodeScopeId);
-      if (!nodeToSelect) {
-        throw new Error(`Trying to select node at path ${pathOrNodeScopeId} not found`);
-      }
-
-      scopeNode = this.state.nodes[nodeToSelect.scopeNodeId];
-    } else {
-      scopeNode = this.state.nodes[pathOrNodeScopeId];
-    }
+  /**
+   * Selecting a scope means we add it to a temporary list of scopes that are waiting to be applied. We make sure
+   * that the selection makes sense (like not allowing selection from multiple categories) and prefetch the scope.
+   * @param scopeNodeId
+   */
+  public selectScope = async (scopeNodeId: string) => {
+    let scopeNode = this.state.nodes[scopeNodeId];
 
     if (!isNodeSelectable(scopeNode)) {
-      throw new Error(`Trying to select node at path ${pathOrNodeScopeId} that is not selectable`);
+      throw new Error(`Trying to select node with id ${scopeNodeId} that is not selectable`);
     }
 
     if (!scopeNode.spec.linkId) {
-      throw new Error(
-        `Trying to select node ${scopeNode.metadata.name} at path ${pathOrNodeScopeId} that does not have a linkId`
-      );
+      throw new Error(`Trying to select node id ${scopeNodeId} that does not have a linkId`);
     }
 
     // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
@@ -179,36 +169,30 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   /**
    * Deselect a selected scope.
-   * @param pathOrId This can be either a path or a scopeId or a scopeNodeId. Reason is there are cases where we want
-   *   to deselect a scope that is applied for which we don't have a scopeNodeId, while in the tree scope selector we
-   *   use scopeNodeIds.
+   * @param scopeIdOrScopeNodeId This can be either a scopeId or a scopeNodeId.
    */
-  public deselectScope = async (pathOrId: string[] | string) => {
-    if (Array.isArray(pathOrId)) {
-      const path = pathOrId;
-      const nodeToDeselect = treeNodeAtPath(this.state.tree!, path);
-      if (!nodeToDeselect) {
-        throw new Error(`Trying to deselect node at path ${path} not found`);
-      }
+  public deselectScope = async (scopeIdOrScopeNodeId: string) => {
+    const node = this.state.nodes[scopeIdOrScopeNodeId];
 
-      const scopeNode = this.state.nodes[nodeToDeselect.scopeNodeId];
-      const newSelectedScopes = this.state.selectedScopes.filter((s) => s.scopeNodeId !== scopeNode.metadata.name);
-      this.updateState({ selectedScopes: newSelectedScopes });
-      return;
-    }
+    // This is a bit complicated because there are multiple cases where we can deselect a scope without having enough
+    // information.
+    const filter: (s: SelectedScope) => boolean = node
+      ? // This case is when we get scopeNodeId but the selected scope can have one or the other. This happens on reload
+        // when we have just scopeId from the URL but then we navigate to the node in a tree and try to deselect the node.
+        (s) => s.scopeNodeId !== node.metadata.name && s.scopeId !== node.spec.linkId
+      : // This is when we scopeId, or scopeNodeId and the nodes aren't loaded yet. So we just try to match the id to the
+        // scopes.
+        (s) => s.scopeNodeId !== scopeIdOrScopeNodeId && s.scopeId !== scopeIdOrScopeNodeId;
 
-    // This is the case we just have some id so we directly remove it from selected scopes.
-    let newSelectedScopes = this.state.selectedScopes.filter(
-      (s) => s.scopeNodeId !== pathOrId && s.scopeId !== pathOrId
-    );
+    let newSelectedScopes = this.state.selectedScopes.filter(filter);
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
-  public updateNode = async (pathOrScopeNodeId: string[] | string, expanded: boolean, query: string) => {
+  public updateNode = async (scopeNodeId: string, expanded: boolean, query: string) => {
     if (expanded) {
-      return this.expandOrFilterNode(pathOrScopeNodeId, query);
+      return this.expandOrFilterNode(scopeNodeId, query);
     }
-    return this.collapseNode(pathOrScopeNodeId);
+    return this.collapseNode(scopeNodeId);
   };
 
   changeScopes = (scopeNames: string[]) => {
@@ -232,7 +216,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ appliedScopes: scopes, loading: scopes.length > 0 });
 
     if (scopes.length > 0) {
-      this.addRecentScopes(scopes);
       // Fetches both dashboards and scope navigations
       this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId));
 
@@ -241,13 +224,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
+      this.addRecentScopes(fetchedScopes);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
 
   public removeAllScopes = () => this.applyScopes([]);
 
-  private addRecentScopes = (scopes: SelectedScope[]) => {
+  private addRecentScopes = (scopes: Scope[]) => {
     if (scopes.length === 0) {
       return;
     }
@@ -259,17 +243,27 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     localStorage.setItem(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
   };
 
-  public getRecentScopes = (): SelectedScope[][] => {
-    const recentScopes = JSON.parse(localStorage.getItem(RECENT_SCOPES_KEY) || '[]');
-    // TODO: Make type safe
-    // Filter out the current selection from recent scopes to avoid duplicates
-    return recentScopes.filter((scopes: SelectedScope[]) => {
-      if (scopes.length !== this.state.selectedScopes.length) {
-        return true;
+  public getRecentScopes = (): Scope[][] => {
+    const content = localStorage.getItem(RECENT_SCOPES_KEY);
+    try {
+      let recentScopes = JSON.parse(content || '[]');
+      if (recentScopes[0]?.[0]?.scope) {
+        // Backward compatibility
+        recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
       }
-      const scopeSet = new Set(scopes.map((s) => s.scopeId));
-      return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
-    });
+      // TODO: Make type safe
+      // Filter out the current selection from recent scopes to avoid duplicates
+      return recentScopes.filter((scopes: Scope[]) => {
+        if (scopes.length !== this.state.selectedScopes.length) {
+          return true;
+        }
+        const scopeSet = new Set(scopes.map((s) => s.metadata.name));
+        return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
+      });
+    } catch (e) {
+      console.error('Failed to parse recent scopes', e, content);
+      return [];
+    }
   };
 
   /**
@@ -277,7 +271,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    */
   public open = async () => {
     if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
-      await this.expandOrFilterNode(['']);
+      await this.expandOrFilterNode('');
     }
 
     // First close all nodes
@@ -292,6 +286,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       newTree = expandNodes(newTree, path);
     }
 
+    this.resetSelection();
     this.updateState({ tree: newTree, opened: true });
   };
 
@@ -309,7 +304,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   public resetSelection = () => {
-    this.updateState({ selectedScopes: [] });
+    this.updateState({ selectedScopes: [...this.state.appliedScopes] });
   };
 
   public searchAllNodes = (query: string, limit: number) => {

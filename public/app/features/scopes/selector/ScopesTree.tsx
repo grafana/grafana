@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data/';
+import { GrafanaTheme2, Scope } from '@grafana/data';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { NodesMap, SelectedScope, TreeNode } from './types';
 import { isNodeSelectable } from './scopesTreeUtils';
+import { NodesMap, SelectedScope, TreeNode } from './types';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
@@ -17,14 +17,14 @@ export interface ScopesTreeProps {
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
 
-  onNodeUpdate: (pathOrNodeScopeId: string[] | string, expanded: boolean, query: string) => void;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
 
-  selectScope: (pathOrNodeScopeId: string[] | string) => void;
-  deselectScope: (pathOrNodeScopeId: string[] | string) => void;
+  selectScope: (scopeNodeId: string) => void;
+  deselectScope: (scopeNodeId: string) => void;
 
   // Recent scopes are only shown at the root node
-  recentScopes?: SelectedScope[][];
-  onRecentScopesSelect?: (recentScopeSet: SelectedScope[]) => void;
+  recentScopes?: Scope[][];
+  onRecentScopesSelect?: (scopeIds: string[]) => void;
 }
 
 export function ScopesTree({
@@ -126,9 +126,9 @@ type TreeItemListProps = {
   maxHeight: string;
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
-  onNodeUpdate: (pathOrNodeScopeId: string[] | string, expanded: boolean, query: string) => void;
-  selectScope: (pathOrNodeScopeId: string[] | string) => void;
-  deselectScope: (pathOrNodeScopeId: string[] | string) => void;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  selectScope: (scopeNodeId: string) => void;
+  deselectScope: (scopeNodeId: string) => void;
 };
 
 function TreeItemList({
@@ -154,9 +154,18 @@ function TreeItemList({
       {items.map((childNode) => {
         const selected =
           isNodeSelectable(scopeNodes[childNode.scopeNodeId]) &&
-          selectedScopes.map((s) => s.scopeNodeId).includes(childNode.scopeNodeId);
+          selectedScopes.some((s) => {
+            if (s.scopeNodeId) {
+              // If we have scopeNodeId we only match based on that so even if the actual scope is the same we don't
+              // mark different scopeNode as selected.
+              return s.scopeNodeId === childNode.scopeNodeId;
+            } else {
+              return s.scopeId === scopeNodes[childNode.scopeNodeId]?.spec.linkId;
+            }
+          });
         return (
           <ScopesTreeItem
+            key={childNode.scopeNodeId}
             type={'selected'}
             treeNode={childNode}
             selected={selected}

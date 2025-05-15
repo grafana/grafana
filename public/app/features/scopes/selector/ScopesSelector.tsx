@@ -106,8 +106,8 @@ export const ScopesSelector = () => {
                     scopeNodes={nodes}
                     selectScope={selectScope}
                     deselectScope={deselectScope}
-                    onRecentScopesSelect={(recentScopeSet) => {
-                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scopeId));
+                    onRecentScopesSelect={(scopeIds: string[]) => {
+                      scopesSelectorService.changeScopes(scopeIds);
                       scopesSelectorService.closeAndApply();
                     }}
                   />

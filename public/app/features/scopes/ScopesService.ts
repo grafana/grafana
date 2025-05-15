@@ -38,7 +38,10 @@ export class ScopesService implements ScopesContextValue {
 
     this._stateObservable = new BehaviorSubject({
       ...this._state.getValue(),
-      value: this.selectorService.state.appliedScopes.map((s) => this.selectorService.state.scopes[s.scopeId]),
+      value: this.selectorService.state.appliedScopes
+        .map((s) => this.selectorService.state.scopes[s.scopeId])
+        // Filter out scopes if we don't have actual scope data loaded yet
+        .filter((s) => s),
       loading: this.selectorService.state.loading,
       drawerOpened: this.dashboardsService.state.drawerOpened,
     });
@@ -160,7 +163,10 @@ export class ScopesService implements ScopesContextValue {
       map((state) => ({
         // We only need these 2 properties from the selectorService state.
         // We do mapping here but mainly to make the distinctUntilChanged simpler
-        selectedScopes: state.appliedScopes.map((s) => state.scopes[s.scopeId]),
+        selectedScopes: state.appliedScopes
+          .map((s) => state.scopes[s.scopeId])
+          // Filter out scopes if we don't have actual scope data loaded yet
+          .filter((s) => s),
         loading: state.loading,
       })),
       distinctUntilChanged(

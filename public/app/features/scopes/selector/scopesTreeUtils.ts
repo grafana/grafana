@@ -49,6 +49,9 @@ export function isNodeSelectable(node: ScopeNode) {
 }
 
 export function getPathOfNode(scopeNodeId: string, nodes: NodesMap): string[] {
+  if (scopeNodeId === '') {
+    return [''];
+  }
   const path = [scopeNodeId];
   let parent = nodes[scopeNodeId]?.spec.parentName;
   while (parent) {

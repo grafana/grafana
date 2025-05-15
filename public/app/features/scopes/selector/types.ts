@@ -14,12 +14,3 @@ export interface TreeNode {
   query: string;
   children?: Record<string, TreeNode>;
 }
-
-export interface TreeScope {
-  title: string;
-  scopeName: string;
-  path: string[];
-}
-
-// Sort of partial treeScope that is used as a way to say which node should be toggled.
-export type ToggleNode = { scopeName: string; path?: string[] } | { path: string[]; scopeName?: string };

@@ -1,4 +1,5 @@
 import { useRegisterActions } from 'kbar';
+import { fromPairs } from 'lodash';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
@@ -8,7 +9,7 @@ import { config } from '@grafana/runtime';
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, TreeScope, ToggleNode } from '../../scopes/selector/types';
+import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
 import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
@@ -72,11 +73,13 @@ export function useRegisterScopesActions(
     return { scopesRow: undefined };
   }
 
-  const { updateNode, toggleNodeSelect, apply, resetSelection, searchAllNodes } = services.scopesSelectorService;
+  const { updateNode, selectScope, deselectScope, apply, resetSelection, searchAllNodes } =
+    services.scopesSelectorService;
 
   // Initialize the scopes first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
-    updateNode([''], true, '');
+    updateNode('', true, '');
+    resetSelection();
     return () => {
       resetSelection();
     };
@@ -87,12 +90,16 @@ export function useRegisterScopesActions(
   // Load next level of scopes when the parentId changes.
   useEffect(() => {
     if (!parentId && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+      // We only search globally if there is no parentId
       searchAllNodes(searchQuery, 10).then((nodes) => {
-        setGlobalNodes(nodes);
+        const nodesMap = fromPairs(nodes.map((n) => [n.metadata.name, n]));
+        setGlobalNodes(nodesMap);
       });
     } else {
-      updateNode(getScopePathFromActionId(parentId), true, searchQuery);
-      setGlobalNodes(undefined);
+      if (parentId) {
+        updateNode(parentId, true, searchQuery);
+        setGlobalNodes(undefined);
+      }
     }
   }, [updateNode, searchAllNodes, searchQuery, parentId]);
 
@@ -101,21 +108,21 @@ export function useRegisterScopesActions(
     services.scopesSelectorService.state
   );
 
-  const { nodes, loading, loadingNodeName, treeScopes, selectedScopes } = selectorServiceState;
-  const nodesActions = mapScopeNodesToActions(globalNodes || nodes, treeScopes, toggleNodeSelect);
+  const { nodes, scopes, loading, loadingNodeName, tree, selectedScopes, appliedScopes } = selectorServiceState;
+  const nodesActions = mapScopeNodesToActions(globalNodes || nodes, tree!, selectedScopes, selectScope);
 
   // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
   // scopes tree though is loaded on demand, and it would be a deep check to see if something changes these deps are
   // approximation of when the actions really change.
-  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes, globalNodes]);
+  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, tree, globalNodes]);
 
   const isDirty =
-    treeScopes
-      .map((t) => t.scopeName)
+    appliedScopes
+      .map((t) => t.scopeId)
       .sort()
       .join('') !==
     selectedScopes
-      .map((s) => s.scope.metadata.name)
+      .map((s) => s.scopeId)
       .sort()
       .join('');
 
@@ -138,16 +145,23 @@ export function useRegisterScopesActions(
 
   return {
     scopesRow:
-      isDirty || treeScopes?.length ? (
-        <ScopesRow toggleNode={toggleNodeSelect} treeScopes={treeScopes} apply={finalApply} isDirty={isDirty} />
+      isDirty || selectedScopes?.length ? (
+        <ScopesRow
+          scopes={scopes}
+          deselectScope={deselectScope}
+          selectedScopes={selectedScopes}
+          apply={finalApply}
+          isDirty={isDirty}
+        />
       ) : null,
   };
 }
 
 function mapScopeNodesToActions(
   nodes: NodesMap,
-  selectedScopes: TreeScope[],
-  toggleNodeSelect: (node: ToggleNode) => void
+  tree: TreeNode,
+  selectedScopes: SelectedScope[],
+  selectScope: (id: string) => void
 ) {
   const actions: CommandPaletteAction[] = [
     {
@@ -159,17 +173,27 @@ function mapScopeNodesToActions(
     },
   ];
 
-  const traverse = (nodesMap: NodesMap | undefined, parentId: string | undefined) => {
+  const traverse = (tree: TreeNode, parentId: string | undefined) => {
     // TODO: not sure how and why a node.nodes can be undefined
-    if (!nodesMap || Object.keys(nodesMap).length === 0) {
+    if (!tree.children || Object.keys(tree.children).length === 0) {
       return;
     }
-    for (const key of Object.keys(nodesMap)) {
-      const child = nodesMap[key];
+
+    for (const key of Object.keys(tree.children)) {
+      const childTreeNode = tree.children[key];
+      const child = nodes[key];
 
       // Selected scopes are not shown in the list but in separate section
-      if (child.nodeType === 'leaf') {
-        if (selectedScopes.map((s) => s.scopeName).includes(child.linkId!)) {
+      if (child.spec.nodeType === 'leaf') {
+        if (
+          selectedScopes.some((s) => {
+            if (s.scopeNodeId) {
+              return s.scopeNodeId === child.metadata.name;
+            } else {
+              return s.scopeId === child.spec.linkId;
+            }
+          })
+        ) {
           continue;
         }
       }
@@ -177,42 +201,37 @@ function mapScopeNodesToActions(
       let action: CommandPaletteAction;
       if (parentId) {
         action = {
-          id: `${parentId}/${child.name}`,
-          name: child.title,
-          keywords: `${child.title} ${child.name}`,
+          id: `${parentId}/${child.metadata.name}`,
+          name: child.spec.title,
+          keywords: `${child.spec.title} ${child.metadata.name}`,
           priority: SCOPES_PRIORITY,
           parent: parentId,
         };
 
-        if (child.nodeType === 'leaf') {
+        if (child.spec.nodeType === 'leaf') {
           action.perform = () => {
-            toggleNodeSelect({ scopeName: child.linkId, path: getScopePathFromActionId(action.id) });
+            selectScope(child.metadata.name);
           };
         }
       } else {
         action = {
-          id: `scopes/${child.name}`,
-          name: child.title,
-          keywords: `${child.title} ${child.name}`,
+          id: `scopes/${child.metadata.name}`,
+          name: child.spec.title,
+          keywords: `${child.spec.title} ${child.metadata.name}`,
           priority: SCOPES_PRIORITY,
           section: t('command-palette.action.scopes', 'Scopes'),
-          subtitle: child.parentName,
+          subtitle: child.spec.parentName,
           perform: () => {
-            toggleNodeSelect({ scopeName: child.linkId! });
+            selectScope(child.metadata.name);
           },
         };
       }
 
       actions.push(action);
-      traverse(child.nodes, action.id);
+      traverse(childTreeNode, action.id);
     }
   };
 
-  traverse(nodes['']?.nodes || nodes, nodes[''] ? 'scopes' : undefined);
+  traverse(tree, nodes[''] ? 'scopes' : undefined);
   return actions;
-}
-
-function getScopePathFromActionId(id?: string | null) {
-  // The root action has id scopes while in the selectorService tree the root id = ''
-  return id?.replace('scopes', '').split('/') ?? [''];
 }

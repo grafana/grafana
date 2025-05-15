@@ -5,20 +5,21 @@ import { Button, FilterPill, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { Trans } from '../../core/internationalization';
 import { getModKey } from '../../core/utils/browser';
-import { ToggleNode, TreeScope } from '../scopes/selector/types';
+import { ScopesMap, SelectedScope } from '../scopes/selector/types';
 
 type Props = {
-  treeScopes: TreeScope[];
+  selectedScopes: SelectedScope[];
   isDirty: boolean;
   apply: () => void;
-  toggleNode: (node: ToggleNode) => void;
+  deselectScope: (id: string) => void;
+  scopes: ScopesMap;
 };
 
 /**
  * Shows scopes that are already selected and applied or the ones user just selected in the palette, with an apply
  * button if the selection is dirty.
  */
-export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
+export function ScopesRow({ selectedScopes, isDirty, apply, deselectScope, scopes }: Props) {
   const styles = useStyles2(getStyles);
   return (
     <>
@@ -26,15 +27,15 @@ export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
         <span className={styles.scopesText}>
           <Trans i18nKey={'command-palette.scopes.selected-scopes-label'}>Scopes: </Trans>
         </span>
-        {treeScopes?.map((scope) => {
+        {selectedScopes?.map((scope) => {
           return (
             <FilterPill
-              key={scope.scopeName}
+              key={scope.scopeId}
               selected={true}
               icon={'times'}
-              label={scope.title}
+              label={scopes[scope.scopeId].spec.title}
               onClick={() => {
-                toggleNode(scope);
+                deselectScope(scope.scopeNodeId || scope.scopeId);
               }}
             />
           );

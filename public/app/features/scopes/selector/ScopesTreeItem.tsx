@@ -17,9 +17,9 @@ export interface ScopesTreeItemProps {
   selected: boolean;
   selectedScopes: SelectedScope[];
 
-  onNodeUpdate: (pathOrNodeScopeId: string[] | string, expanded: boolean, query: string) => void;
-  selectScope: (pathOrNodeScopeId: string[] | string) => void;
-  deselectScope: (pathOrScopeId: string[] | string) => void;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
+  selectScope: (scopeNodeId: string) => void;
+  deselectScope: (scopeNodeId: string) => void;
 }
 
 export function ScopesTreeItem({

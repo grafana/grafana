@@ -11,7 +11,7 @@ import { TreeNode } from './types';
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
   treeNode: TreeNode;
-  onNodeUpdate: (pathOrNodeScopeId: string[] | string, expanded: boolean, query: string) => void;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
 }
 
 export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate }: ScopesTreeSearchProps) {

@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { getPathOfNode } from './ScopesSelectorService';
+import { getPathOfNode } from './scopesTreeUtils';
 import { NodesMap, ScopesMap, SelectedScope } from './types';
 
 export interface ScopesInputProps {
@@ -102,8 +102,7 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
   let nicePath: string[] | undefined;
 
   if (appliedScopes[0].scopeNodeId) {
-    const node = nodes[appliedScopes[0].scopeNodeId];
-    let path = getPathOfNode(node, nodes);
+    let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
     // Get reed of empty root section and the actual scope node
     path = path.slice(1, -1);
     nicePath = path.map((p) => nodes[p].spec.title);
