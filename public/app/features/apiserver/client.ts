@@ -45,7 +45,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
     if (params?.name) {
-      requestParams.fieldSelector = `metadata.name=${name}`;
+      requestParams.fieldSelector = `metadata.name=${params.name}`;
     }
 
     // For now, watch over live only supports provisioning

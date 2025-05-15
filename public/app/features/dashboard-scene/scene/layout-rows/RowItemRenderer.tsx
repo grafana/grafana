@@ -4,9 +4,9 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
@@ -38,6 +38,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+  const { t } = useTranslate();
 
   const isDraggable = !isClone && isEditing;
 
@@ -112,7 +113,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     !isTopLevel && styles.rowTitleNested,
                     isCollapsed && styles.rowTitleCollapsed
                   )}
-                  role="heading"
                 >
                   {!model.hasUniqueTitle() && (
                     <Tooltip
@@ -206,7 +206,8 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100px',
+      // Without this min height, the custom grid (SceneGridLayout) wont render
+      minHeight: `42px`,
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {

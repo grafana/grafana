@@ -10,10 +10,10 @@ import {
   SplitOpen,
   SupplementaryQueryType,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';
@@ -36,6 +36,7 @@ export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
 
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
     reportInteraction('grafana_explore_logs_sample_toggle_clicked', {
@@ -126,8 +127,10 @@ export function LogsSamplePanel(props: Props) {
     <Collapse
       label={
         <div>
-          Logs sample
-          <Tooltip content="Show log lines that contributed to visualized metrics">
+          <Trans i18nKey="explore.logs-sample-panel.label">Logs sample</Trans>
+          <Tooltip
+            content={t('explore.logs-sample-panel.tooltip', 'Show log lines that contributed to visualized metrics')}
+          >
             <Icon name="info-circle" className={styles.infoTooltip} />
           </Tooltip>
         </div>

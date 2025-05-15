@@ -86,7 +86,7 @@ func (t *folderTree) Count() int {
 	return t.count
 }
 
-type WalkFunc func(ctx context.Context, folder Folder) error
+type WalkFunc func(ctx context.Context, folder Folder, parent string) error
 
 func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	toWalk := make([]Folder, 0, len(t.folders))
@@ -101,7 +101,7 @@ func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	})
 
 	for _, folder := range toWalk {
-		if err := fn(ctx, folder); err != nil {
+		if err := fn(ctx, folder, t.tree[folder.ID]); err != nil {
 			return err
 		}
 	}

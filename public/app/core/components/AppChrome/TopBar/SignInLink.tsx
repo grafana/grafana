@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export function SignInLink() {
   const location = useLocation();

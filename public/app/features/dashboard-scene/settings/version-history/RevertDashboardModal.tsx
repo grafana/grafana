@@ -1,6 +1,6 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -13,7 +13,7 @@ export interface RevertDashboardModalProps {
 
 export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDashboardModalProps) => {
   const notifyApp = useAppNotification();
-
+  const { t } = useTranslate();
   const onRestoreDashboard = async () => {
     const success = await onRestore(version);
 
@@ -36,7 +36,12 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
       onConfirm={onRestoreDashboard}
       body={
         <p>
-          Are you sure you want to restore the dashboard to version {version.version}? All unsaved changes will be lost.
+          <Trans
+            i18nKey="dashboard-scene.revert-dashboard-modal.body-restore-version"
+            values={{ version: version.version }}
+          >
+            Are you sure you want to restore the dashboard to version {'{{version}}'}? All unsaved changes will be lost.
+          </Trans>
         </p>
       }
       confirmText={`Yes, restore to version ${version.version}`}

@@ -24,10 +24,15 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	}
 
 	if cfg.Env == setting.Dev {
-		defaultLogLevel = 10
 		port = 6443
 		ip = net.ParseIP("0.0.0.0")
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
+	}
+
+	// if grafana log level is set to debug, also increase the api server log level to 7,
+	// which will log the request headers & more details about the request
+	if cfg.Raw.Section("log").Key("level").MustString("info") == "debug" {
+		defaultLogLevel = 7
 	}
 
 	host := net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(port))
@@ -40,13 +45,6 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.RecommendedOptions.SecureServing.BindPort = port
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
-
-	o.KubeAggregatorOptions.ProxyClientCertFile = apiserverCfg.Key("proxy_client_cert_file").MustString("")
-	o.KubeAggregatorOptions.ProxyClientKeyFile = apiserverCfg.Key("proxy_client_key_file").MustString("")
-	o.KubeAggregatorOptions.LegacyClientCertAuth = apiserverCfg.Key("legacy_client_cert_auth").MustBool(true)
-
-	o.KubeAggregatorOptions.APIServiceCABundleFile = apiserverCfg.Key("apiservice_ca_bundle_file").MustString("")
-	o.KubeAggregatorOptions.RemoteServicesFile = apiserverCfg.Key("remote_services_file").MustString("")
 
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil

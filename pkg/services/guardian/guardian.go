@@ -33,12 +33,6 @@ var New = func(ctx context.Context, dashId int64, orgId int64, user identity.Req
 	panic("no guardian factory implementation provided")
 }
 
-// NewByFolderUID factory for creating a new folder guardian instance
-// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var NewByFolderUID = func(ctx context.Context, folderUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-	panic("no guardian factory implementation provided")
-}
-
 // NewByFolder factory for creating a new folder guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
 var NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
@@ -98,13 +92,6 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	New = func(_ context.Context, dashID int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashID = dashID
-		mock.User = user
-		return mock, nil
-	}
-
-	NewByFolderUID = func(_ context.Context, folderUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		mock.OrgID = orgId
-		mock.DashUID = folderUID
 		mock.User = user
 		return mock, nil
 	}

@@ -252,7 +252,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		namespaces[namespaceUID] = folder.Fullpath
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.status, srv.store, RuleGroupStatusesOptions{
+	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.store, RuleGroupStatusesOptions{
 		Ctx:        c.Req.Context(),
 		OrgID:      c.OrgID,
 		Query:      c.Req.Form,
@@ -260,12 +260,107 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		AuthorizeRuleGroup: func(rules []*ngmodels.AlertRule) (bool, error) {
 			return srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
 		},
-	})
+	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager))
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+// mutator function used to attach status to the rule
+type RuleStatusMutator func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule)
+
+// mutator function used to attach alert states to the rule and returns the totals and filtered totals
+type RuleAlertStateMutator func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (total map[string]int64, filteredTotal map[string]int64)
+
+func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
+	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule) {
+		status, ok := statusReader.Status(source.GetKey())
+		// Grafana by design return "ok" health and default other fields for unscheduled rules.
+		// This differs from Prometheus.
+		if !ok {
+			status = ngmodels.RuleStatus{
+				Health: "ok",
+			}
+		}
+		toMutate.Health = status.Health
+		toMutate.LastError = errorOrEmpty(status.LastError)
+		toMutate.LastEvaluation = status.EvaluationTimestamp
+		toMutate.EvaluationTime = status.EvaluationDuration.Seconds()
+	}
+}
+
+func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
+	return func(source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (map[string]int64, map[string]int64) {
+		states := manager.GetStatesForRuleUID(source.OrgID, source.UID)
+		totals := make(map[string]int64)
+		totalsFiltered := make(map[string]int64)
+		for _, alertState := range states {
+			activeAt := alertState.StartsAt
+			valString := ""
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
+				valString = FormatValues(alertState)
+			}
+			stateKey := strings.ToLower(alertState.State.String())
+			totals[stateKey] += 1
+			// Do not add error twice when execution error state is Error
+			if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
+				totals["error"] += 1
+			}
+			alert := apimodels.Alert{
+				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
+
+				// TODO: or should we make this two fields? Using one field lets the
+				// frontend use the same logic for parsing text on annotations and this.
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
+				ActiveAt: &activeAt,
+				Value:    valString,
+			}
+
+			// Set the state of the rule based on the state of its alerts.
+			// Only update the rule state with 'pending' or 'recovering' if the current state is 'inactive'.
+			// This prevents overwriting a higher-severity 'firing' state in the case of a rule with multiple alerts.
+			switch alertState.State {
+			case eval.Normal:
+			case eval.Pending:
+				if toMutate.State == "inactive" {
+					toMutate.State = "pending"
+				}
+			case eval.Recovering:
+				if toMutate.State == "inactive" {
+					toMutate.State = "recovering"
+				}
+			case eval.Alerting:
+				if toMutate.ActiveAt == nil || toMutate.ActiveAt.After(activeAt) {
+					toMutate.ActiveAt = &activeAt
+				}
+				toMutate.State = "firing"
+			case eval.Error:
+			case eval.NoData:
+			}
+
+			if len(stateFilterSet) > 0 {
+				if _, ok := stateFilterSet[alertState.State]; !ok {
+					continue
+				}
+			}
+
+			if !matchersMatch(matchers, alertState.Labels) {
+				continue
+			}
+
+			totalsFiltered[stateKey] += 1
+			// Do not add error twice when execution error state is Error
+			if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
+				totalsFiltered["error"] += 1
+			}
+
+			toMutate.Alerts = append(toMutate.Alerts, alert)
+		}
+		return totals, totalsFiltered
+	}
+}
+
+func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -299,16 +394,16 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	withStates, err := getStatesFromQuery(opts.Query)
+	stateFilter, err := getStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	withStatesFast := make(map[eval.State]struct{})
-	for _, state := range withStates {
-		withStatesFast[state] = struct{}{}
+	stateFilterSet := make(map[eval.State]struct{})
+	for _, state := range stateFilter {
+		stateFilterSet[state] = struct{}{}
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -392,14 +487,14 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(log, manager, status, rg.GroupKey, rg.Folder, rg.Rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+		ruleGroup, totals := toRuleGroup(log, rg.GroupKey, rg.Folder, rg.Rules, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
 
-		if len(withStates) > 0 {
-			filterRules(ruleGroup, withStatesFast)
+		if len(stateFilter) > 0 {
+			filterRules(ruleGroup, stateFilterSet)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
@@ -524,7 +619,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusReader, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -536,112 +631,39 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
-		status, ok := sr.Status(rule.GetKey())
-		// Grafana by design return "ok" health and default other fields for unscheduled rules.
-		// This differs from Prometheus.
-		if !ok {
-			status = ngmodels.RuleStatus{
-				Health: "ok",
-			}
-		}
-
-		queriedDatasourceUIDs := extractDatasourceUIDs(rule)
-
 		alertingRule := apimodels.AlertingRule{
 			State:                 "inactive",
 			Name:                  rule.Title,
 			Query:                 ruleToQuery(log, rule),
-			QueriedDatasourceUIDs: queriedDatasourceUIDs,
+			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
 			Duration:              rule.For.Seconds(),
 			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
 			Annotations:           apimodels.LabelsFromMap(rule.Annotations),
+			Rule: apimodels.Rule{
+				UID:       rule.UID,
+				Name:      rule.Title,
+				FolderUID: rule.NamespaceUID,
+				Labels:    apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+				Type:      rule.Type().String(),
+				IsPaused:  rule.IsPaused,
+			},
 		}
 
-		newRule := apimodels.Rule{
-			UID:            rule.UID,
-			Name:           rule.Title,
-			FolderUID:      rule.NamespaceUID,
-			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-			Health:         status.Health,
-			LastError:      errorOrEmpty(status.LastError),
-			Type:           rule.Type().String(),
-			LastEvaluation: status.EvaluationTimestamp,
-			EvaluationTime: status.EvaluationDuration.Seconds(),
+		// mutate rule to apply status fields
+		ruleStatusMutator(rule, &alertingRule)
+
+		if len(rule.NotificationSettings) > 0 {
+			alertingRule.NotificationSettings = (*apimodels.AlertRuleNotificationSettings)(&rule.NotificationSettings[0])
 		}
 
-		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-		totals := make(map[string]int64)
-		totalsFiltered := make(map[string]int64)
-		for _, alertState := range states {
-			activeAt := alertState.StartsAt
-			valString := ""
-			if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
-				valString = FormatValues(alertState)
-			}
-			stateKey := strings.ToLower(alertState.State.String())
-			totals[stateKey] += 1
-			// Do not add error twice when execution error state is Error
-			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
-				totals["error"] += 1
-			}
-			alert := apimodels.Alert{
-				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
-				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
-
-				// TODO: or should we make this two fields? Using one field lets the
-				// frontend use the same logic for parsing text on annotations and this.
-				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
-				ActiveAt: &activeAt,
-				Value:    valString,
-			}
-
-			// Set the state of the rule based on the state of its alerts.
-			// Only update the rule state with 'pending' or 'recovering' if the current state is 'inactive'.
-			// This prevents overwriting a higher-severity 'firing' state in the case of a rule with multiple alerts.
-			switch alertState.State {
-			case eval.Normal:
-			case eval.Pending:
-				if alertingRule.State == "inactive" {
-					alertingRule.State = "pending"
-				}
-			case eval.Recovering:
-				if alertingRule.State == "inactive" {
-					alertingRule.State = "recovering"
-				}
-			case eval.Alerting:
-				if alertingRule.ActiveAt == nil || alertingRule.ActiveAt.After(activeAt) {
-					alertingRule.ActiveAt = &activeAt
-				}
-				alertingRule.State = "firing"
-			case eval.Error:
-			case eval.NoData:
-			}
-
-			if len(withStates) > 0 {
-				if _, ok := withStates[alertState.State]; !ok {
-					continue
-				}
-			}
-
-			if !matchersMatch(matchers, alertState.Labels) {
-				continue
-			}
-
-			totalsFiltered[stateKey] += 1
-			// Do not add error twice when execution error state is Error
-			if alertState.Error != nil && rule.ExecErrState != ngmodels.ErrorErrState {
-				totalsFiltered["error"] += 1
-			}
-
-			alertingRule.Alerts = append(alertingRule.Alerts, alert)
-		}
-
+		// mutate rule for alert states
+		totals, totalsFiltered := ruleAlertStateMutator(rule, &alertingRule, stateFilterSet, matchers, labelOptions)
 		if alertingRule.State != "" {
 			rulesTotals[alertingRule.State] += 1
 		}
 
-		if newRule.Health == "error" || newRule.Health == "nodata" {
-			rulesTotals[newRule.Health] += 1
+		if alertingRule.Health == "error" || alertingRule.Health == "nodata" {
+			rulesTotals[alertingRule.Health] += 1
 		}
 
 		alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
@@ -654,14 +676,13 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			alertsBy.Sort(alertingRule.Alerts)
 		}
 
-		alertingRule.Rule = newRule
 		alertingRule.Totals = totals
 		alertingRule.TotalsFiltered = totalsFiltered
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
 		// TODO yuri. Change that when scheduler will process alerts in groups
-		newGroup.EvaluationTime = newRule.EvaluationTime
-		newGroup.LastEvaluation = newRule.LastEvaluation
+		newGroup.EvaluationTime = alertingRule.EvaluationTime
+		newGroup.LastEvaluation = alertingRule.LastEvaluation
 	}
 
 	return newGroup, rulesTotals

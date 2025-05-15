@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { PopupCard } from '../HoverCard';
 
@@ -54,19 +54,23 @@ export function TemplateDataDocs() {
           </>
         }
         dataItems={GlobalTemplateData}
-        typeRenderer={(type) =>
-          type === '[]Alert' ? (
-            <PopupCard content={AlertTemplateDataTable}>
-              <div className={styles.interactiveType}>{type}</div>
-            </PopupCard>
-          ) : type === 'KeyValue' ? (
-            <PopupCard content={<KeyValueTemplateDataTable />}>
-              <div className={styles.interactiveType}>{type}</div>
-            </PopupCard>
-          ) : (
-            type
-          )
-        }
+        typeRenderer={(type) => {
+          if (type === '[]Alert') {
+            return (
+              <PopupCard content={AlertTemplateDataTable}>
+                <div className={styles.interactiveType}>{type}</div>
+              </PopupCard>
+            );
+          }
+          if (type === 'KeyValue') {
+            return (
+              <PopupCard content={<KeyValueTemplateDataTable />}>
+                <div className={styles.interactiveType}>{type}</div>
+              </PopupCard>
+            );
+          }
+          return type;
+        }}
       />
     </Stack>
   );

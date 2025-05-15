@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
 import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JobStatus } from '../Job/JobStatus';
 
@@ -17,9 +17,10 @@ export interface SynchronizeStepProps {
 export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
-  const target = watch('repository.sync.target');
+  const repoType = watch('repository.type');
+  const supportsHistory = requiresMigration && repoType === 'github';
   const [job, setJob] = useState<Job>();
-
+  const { t } = useTranslate();
   const startSynchronization = async () => {
     const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
     if (!repoName) {
@@ -35,7 +36,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: Synch
       const jobSpec = requiresMigration
         ? {
             migrate: {
-              history,
+              history: history && supportsHistory,
             },
           }
         : {
@@ -111,7 +112,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: Synch
           </li>
         </ul>
       </Alert>
-      {requiresMigration && target !== 'folder' && (
+      {supportsHistory && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>

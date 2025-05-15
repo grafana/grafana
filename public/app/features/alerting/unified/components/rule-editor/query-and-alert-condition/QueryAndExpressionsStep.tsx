@@ -6,6 +6,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -21,7 +22,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
@@ -78,6 +78,7 @@ import {
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
+import { onlyOneDSInQueries } from './utils';
 
 interface Props {
   editingExistingRule: boolean;
@@ -356,6 +357,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   );
 
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   // Cloud alerts load data from form values
   // whereas Grafana managed alerts load data from reducer
@@ -474,7 +476,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         }
       : undefined;
 
-  const hasDatasourcesForDataSourceManaged = Boolean(rulesSourcesWithRuler.length);
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) &&
+    Boolean(rulesSourcesWithRuler.length) &&
+    queries.some((query) => rulesSourcesWithRuler.some((source) => source.uid === query.datasourceUid));
 
   return (
     <>
@@ -594,7 +599,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {hasDatasourcesForDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
+            {canSelectDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector

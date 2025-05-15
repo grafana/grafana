@@ -3,9 +3,9 @@ import { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
@@ -19,7 +19,7 @@ type Props = {
 export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
   const [annotations, updateAnnotations] = useState(dashboard.annotations.list);
-
+  const { t } = useTranslate();
   const onMove = (idx: number, direction: number) => {
     dashboard.annotations.list = arrayUtils.moveItemImmutably(annotations, idx, idx + direction);
     updateAnnotations(dashboard.annotations.list);
@@ -36,7 +36,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.enable === false) {
       return (
         <>
-          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
+          <em className="muted">
+            <Trans i18nKey="dashboard.annotation-settings-list.disabled" values={{ name: anno.name }}>
+              (Disabled) {'{{name}}'}
+            </Trans>
+          </em>
         </>
       );
     }
@@ -44,7 +48,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.builtIn) {
       return (
         <>
-          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
+          <em className="muted">
+            <Trans i18nKey="dashboard.annotation-settings-list.built-in" values={{ name: anno.name }}>
+              {'{{name}}'} (Built-in)
+            </Trans>
+          </em>
         </>
       );
     }

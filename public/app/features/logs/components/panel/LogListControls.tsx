@@ -4,9 +4,9 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
+import { useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
@@ -33,6 +33,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.warning,
   LogLevel.error,
   LogLevel.critical,
+  LogLevel.unknown,
 ];
 
 export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
@@ -161,6 +162,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
+  const { t } = useTranslate();
+
   const filterLevelsMenu = useMemo(
     () => (
       <Menu>
@@ -180,7 +183,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         ))}
       </Menu>
     ),
-    [filterLevels, onFilterLevelClick, styles.menuItemActive]
+    [filterLevels, onFilterLevelClick, styles.menuItemActive, t]
   );
 
   const downloadMenu = useMemo(
@@ -200,7 +203,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         />
       </Menu>
     ),
-    [downloadLogs]
+    [downloadLogs, t]
   );
 
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
@@ -225,13 +228,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
             onClick={onSortOrderClick}
             tooltip={
               sortOrder === LogsSortOrder.Descending
-                ? t('logs.logs-controls.newest-first', 'Newest logs first')
-                : t('logs.logs-controls.oldest-first', 'Oldest logs first')
+                ? t('logs.logs-controls.newest-first', 'Sorted by newest logs first - Click to show oldest first')
+                : t('logs.logs-controls.oldest-first', 'Sorted by oldest logs first - Click to show newest first')
             }
             size="lg"
           />
           {visualisationType === 'logs' && (
             <>
+              <div className={styles.divider} />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -252,6 +256,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               </Dropdown>
+              <div className={styles.divider} />
               <IconButton
                 name="clock-nine"
                 aria-pressed={showTime}
@@ -264,7 +269,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 }
                 size="lg"
               />
-              {showUniqueLabels !== undefined && (
+              {/* When this is used in a Plugin context, app is unknown */}
+              {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
                   name="tag-alt"
                   aria-pressed={showUniqueLabels}
@@ -344,7 +350,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 <IconButton
                   name="download-alt"
                   className={styles.controlButton}
-                  aria-pressed={wrapLogMessage}
                   tooltip={t('logs.logs-controls.download', 'Download logs')}
                   size="lg"
                 />
@@ -389,6 +394,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
+      overflow: 'hidden',
     }),
     scrollToTopButton: css({
       margin: 0,

@@ -82,6 +82,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
+		r.logger.Debug("Connect name is not name")
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
 	b := r.builder
@@ -94,10 +95,12 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
 				if statusCode >= 400 {
+					r.logger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
 			},
 			func(err error) {
+				r.logger.Debug("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
@@ -191,13 +194,22 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if err == nil && alertQueryWithoutExpression(req) {
-			b.log.Debug("handling alert query without expression")
-			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		if err != nil {
+			b.log.Debug("handleQuerySingleDatasource failed", err)
+		}
+		if err == nil && isSingleAlertQuery(req) {
+			b.log.Debug("handling alert query with single query")
+			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
+			if err != nil {
+				b.log.Debug("convertQueryFromAlerting failed", "err", err)
+			}
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+		if err != nil {
+			b.log.Debug("error in executeConcurrentQueries", "err", err)
+		}
 	}
 
 	if err != nil {
@@ -208,6 +220,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	if len(req.Expressions) > 0 {
 		b.log.Debug("executing expressions")
 		qdr, err = b.handleExpressions(ctx, req, qdr)
+		if err != nil {
+			b.log.Debug("handleExpressions failed", "err", err)
+		}
 	}
 
 	// Remove hidden results
@@ -217,7 +232,8 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 			delete(qdr.Responses, refId)
 		}
 	}
-	return
+
+	return qdr, err
 }
 
 // Process a single request
@@ -263,6 +279,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 				if ok && result.Error == nil {
 					err = q.ResultAssertions.Validate(result.Frames)
 					if err != nil {
+						b.log.Error("Validate failed", "err", err)
 						result.Error = err
 						result.ErrorSource = backend.ErrorSourceDownstream
 						rsp.Responses[q.RefID] = result
@@ -416,7 +433,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req datasourceRequest,
 	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
 	if len(req.Request.Queries) == 0 {
 		return nil, errors.New("no queries to convert")
@@ -432,6 +449,7 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 	frames := qdr.Responses[refID].Frames
 	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
 	if err != nil {
+		b.log.Error("issue converting query from alerting", "err", err)
 		results.Error = err
 	}
 	qdr = &backend.QueryDataResponse{
@@ -475,14 +493,14 @@ func (r responderWrapper) Error(err error) {
 	r.wrapped.Error(err)
 }
 
-// Checks if the request only contains a single query and not expression.
-func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+// Checks if the request only contains a single query and is from Alerting
+func isSingleAlertQuery(req parsedRequestInfo) bool {
 	if len(req.Requests) != 1 {
 		return false
 	}
 	headers := req.Requests[0].Headers
 	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+	if exist && len(req.Requests[0].Request.Queries) == 1 {
 		return true
 	}
 	return false

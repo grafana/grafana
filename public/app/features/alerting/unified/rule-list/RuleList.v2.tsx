@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
@@ -12,6 +12,7 @@ import { useURLSearchParams } from '../hooks/useURLSearchParams';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
+import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
   const [queryParams] = useURLSearchParams();
@@ -31,7 +32,7 @@ function RuleList() {
 export function RuleListActions() {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-
+  const { t } = useTranslate();
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
 
@@ -65,7 +66,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules]
+    [canCreateGrafanaRules, canCreateCloudRules, t]
   );
 
   return (
@@ -86,7 +87,12 @@ export function RuleListActions() {
 
 export default function RuleListPage() {
   return (
-    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={<RuleListActions />}>
+    <AlertingPageWrapper
+      navId="alert-list"
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
+      isLoading={false}
+      actions={<RuleListActions />}
+    >
       <RuleList />
     </AlertingPageWrapper>
   );

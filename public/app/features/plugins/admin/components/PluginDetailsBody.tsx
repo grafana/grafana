@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
@@ -120,8 +120,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <>
         <Stack direction="row">
-          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
-          permissions available to the service account:
+          <Trans i18nKey="plugins.plugin-details-body.needs-service-account" values={{ pluginName: plugin.name }}>
+            The {'{{pluginName}}'} plugin needs a service account to be able to query Grafana. The following list
+            contains the permissions available to the service account:
+          </Trans>
         </Stack>
         <InteractiveTable
           columns={columns}

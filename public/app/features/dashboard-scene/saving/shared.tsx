@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Diffs } from '../settings/version-history/utils';
 
@@ -41,6 +41,7 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
+  const { t } = useTranslate();
   const isRestoreDashboardsEnabled = false;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
@@ -83,6 +84,7 @@ export interface SaveButtonProps {
 }
 
 export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+  const { t } = useTranslate();
   return (
     <Button
       disabled={!isValid || isLoading}
@@ -91,7 +93,11 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-      {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
+      {isLoading
+        ? t('dashboard-scene.save-button.saving', 'Saving...')
+        : overwrite
+          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+          : t('dashboard-scene.save-button.save', 'Save')}
     </Button>
   );
 }

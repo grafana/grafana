@@ -3,9 +3,9 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -33,6 +33,7 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
 
     return respPromise;
   }, [dashboard]);
+  const { t } = useTranslate();
 
   let alert: React.ReactNode;
 
@@ -54,8 +55,10 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
           )}
         >
           <p>
-            Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
-            developer, consider checking and updating the dashboard schema
+            <Trans i18nKey="dashboard.dashboard-validation.body-dashboard-failed-schema-validation">
+              Validation is provided for development purposes and should be safe to ignore. If you are a Grafana
+              developer, consider checking and updating the dashboard schema
+            </Trans>
           </p>
           <div className={styles.error}>{value.message}</div>
         </Alert>

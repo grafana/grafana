@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { Playlist } from '../../api/clients/playlist';
 
@@ -20,7 +20,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
-
+  const { t } = useTranslate();
   const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: 'Normal', value: false },
     { label: 'Kiosk', value: true },
@@ -110,7 +110,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          Start {playlist.spec.title}
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec.title }}>
+            Start {'{{title}}'}
+          </Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

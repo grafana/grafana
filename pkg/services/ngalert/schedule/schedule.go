@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -106,8 +107,8 @@ type schedule struct {
 	// last evaluated.
 	schedulableAlertRules alertRulesRegistry
 
-	tracer tracing.Tracer
-
+	tracer          tracing.Tracer
+	featureToggles  featuremgmt.FeatureToggles
 	recordingWriter RecordingWriter
 }
 
@@ -129,6 +130,7 @@ type SchedulerCfg struct {
 	Log                    log.Logger
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
+	FeatureToggles         featuremgmt.FeatureToggles
 }
 
 // NewScheduler returns a new scheduler.
@@ -159,6 +161,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		tracer:                 cfg.Tracer,
 		recordingWriter:        cfg.RecordingWriter,
 		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
+		featureToggles:         cfg.FeatureToggles,
 	}
 
 	return &sch
@@ -305,6 +308,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.metrics,
 		sch.log,
 		sch.tracer,
+		sch.featureToggles,
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,

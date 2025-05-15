@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
 import { MoveDirection } from '../AnnotationsEditView';
@@ -21,16 +21,28 @@ export const BUTTON_TITLE = 'Add annotation query';
 
 export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
 
   const getAnnotationName = (anno: AnnotationQuery) => {
     if (anno.enable === false) {
-      return <em className="muted">(Disabled) &nbsp; {anno.name}</em>;
+      return (
+        <em className="muted">
+          <Trans i18nKey="dashboard-scene.annotation-settings-list.disabled" values={{ annoName: anno.name }}>
+            (Disabled) {'{{annoName}}'}
+          </Trans>
+        </em>
+      );
     }
 
     if (anno.builtIn) {
-      return <em className="muted">{anno.name} &nbsp; (Built-in)</em>;
+      return (
+        <em className="muted">
+          <Trans i18nKey="dashboard-scene.annotation-settings-list.built-in" values={{ annoName: anno.name }}>
+            {'{{annoName}}'} (Built-in)
+          </Trans>
+        </em>
+      );
     }
 
     return <>{anno.name}</>;

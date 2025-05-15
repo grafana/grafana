@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -47,13 +47,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
-  const shouldAllowSimplifiedRouting =
-    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
+  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && hasInternalAlertmanagerEnabled;
 
   function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
@@ -78,11 +76,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           },
         }
       : undefined;
-  const title = isRecordingRuleByType(type)
-    ? 'Add labels'
-    : isGrafanaManaged
-      ? 'Configure notifications'
-      : 'Configure labels and notifications';
+
+  const title = (() => {
+    if (isRecordingRuleByType(type)) {
+      return 'Add labels';
+    }
+    if (isGrafanaManaged) {
+      return 'Configure notifications';
+    }
+    return 'Configure labels and notifications';
+  })();
 
   return (
     <RuleEditorSection
@@ -128,24 +131,19 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
-        simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
-          <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
-        ) : (
-          // simplified mode is disabled
-          <ManualAndAutomaticRouting alertUid={alertUid} />
-        )
-      ) : // when simplified routing is not enabled, render the notification preview as we did before
-      shouldRenderpreview ? (
-        <AutomaticRooting alertUid={alertUid} />
-      ) : null}
+      {shouldAllowSimplifiedRouting && simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
+      )}
+      {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRouting alertUid={alertUid} />
+      )}
+      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
     </RuleEditorSection>
   );
 };
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - the alert rule is a grafana rule
  *
  * This component will render the switch between the select contact point routing and the notification policy routing.
@@ -190,7 +188,6 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - simple mode for notifications step is enabled
  * - the alert rule is a grafana rule
  *
@@ -242,6 +239,8 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
 function NeedHelpInfoForNotificationPolicy() {
+  const { t } = useTranslate();
+
   return (
     <NeedHelpInfo
       contentText={
@@ -274,6 +273,8 @@ function NeedHelpInfoForNotificationPolicy() {
 }
 
 function NeedHelpInfoForContactpoint() {
+  const { t } = useTranslate();
+
   return (
     <NeedHelpInfo
       contentText={
@@ -307,6 +308,7 @@ interface NotificationsStepDescriptionProps {
 }
 
 export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+  const { t } = useTranslate();
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

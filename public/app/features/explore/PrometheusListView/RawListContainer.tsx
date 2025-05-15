@@ -5,9 +5,9 @@ import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
 import { DataFrame, Field as DataFrameField } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ItemLabels } from './ItemLabels';
 import RawListItem from './RawListItem';
@@ -85,6 +85,8 @@ const RawListContainer = (props: RawListContainerProps) => {
     listRef.current?.resetAfterIndex(0, true);
   }, [isExpandedView]);
 
+  const { t } = useTranslate();
+
   const calculateInitialHeight = (length: number): number => {
     const maxListHeight = 600;
     const shortListLength = 10;
@@ -133,7 +135,11 @@ const RawListContainer = (props: RawListContainerProps) => {
           </div>
         </Field>
 
-        <div className={styles.resultCount}>Result series: {items.length}</div>
+        <div className={styles.resultCount}>
+          <Trans i18nKey="explore.raw-list-container.item-count" values={{ numItems: items.length }}>
+            Result series: {'{{numItems}}'}
+          </Trans>
+        </div>
       </header>
 
       <div role={'table'}>
