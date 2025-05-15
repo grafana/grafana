@@ -24,9 +24,7 @@ import (
 func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	tracer := otel.Tracer("unified-storage-distributor")
 
-	distributor := &Distributor{
-		stoppedCh: make(chan error),
-	}
+	distributor := &distributorService{}
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -47,7 +45,7 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 		return nil, err
 	}
 
-	distributorServer := &DistributorServer{
+	distributorServer := &distributorServer{
 		log:        log.New("unified-storage-distributor"),
 		ring:       ms.storageRing,
 		clientPool: ms.storageRingClientPool,
@@ -68,16 +66,15 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	return services.NewBasicService(nil, distributor.running, nil).WithName(modules.Distributor), nil
 }
 
-type Distributor struct {
+type distributorService struct {
 	grpcHandler grpcserver.Provider
-	stoppedCh   chan error
 }
 
-func (d *Distributor) running(ctx context.Context) error {
+func (d *distributorService) running(ctx context.Context) error {
 	return d.grpcHandler.Run(ctx)
 }
 
-type DistributorServer struct {
+type distributorServer struct {
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
 	log        log.Logger
@@ -87,7 +84,7 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 	return s != ring.ACTIVE
 })
 
-func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+func (ds *distributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -96,7 +93,7 @@ func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSea
 	return client.Search(ctx, r)
 }
 
-func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (ds *distributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
@@ -105,7 +102,7 @@ func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceS
 	return client.GetStats(ctx, r)
 }
 
-func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (ds *distributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -114,7 +111,7 @@ func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) 
 	return client.Read(ctx, r)
 }
 
-func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
+func (ds *distributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -123,7 +120,7 @@ func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateReque
 	return client.Create(ctx, r)
 }
 
-func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
+func (ds *distributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -132,7 +129,7 @@ func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateReque
 	return client.Update(ctx, r)
 }
 
-func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
+func (ds *distributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -141,7 +138,7 @@ func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteReque
 	return client.Delete(ctx, r)
 }
 
-func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
+func (ds *distributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -150,7 +147,7 @@ func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) 
 	return client.List(ctx, r)
 }
 
-func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
+func (ds *distributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
 	// r -> consumer watch request
 	// srv -> stream connection with consumer
 	ctx := srv.Context()
@@ -185,7 +182,7 @@ func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 // 	return nil
 // }
 
-func (ds *DistributorServer) CountManagedObjects(ctx context.Context, r *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
+func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
@@ -194,7 +191,7 @@ func (ds *DistributorServer) CountManagedObjects(ctx context.Context, r *resourc
 	return client.CountManagedObjects(ctx, r)
 }
 
-func (ds *DistributorServer) ListManagedObjects(ctx context.Context, r *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
+func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
@@ -203,7 +200,7 @@ func (ds *DistributorServer) ListManagedObjects(ctx context.Context, r *resource
 	return client.ListManagedObjects(ctx, r)
 }
 
-func (ds *DistributorServer) PutBlob(ctx context.Context, r *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
+func (ds *distributorServer) PutBlob(ctx context.Context, r *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
 	if err != nil {
 		return nil, err
@@ -212,7 +209,7 @@ func (ds *DistributorServer) PutBlob(ctx context.Context, r *resource.PutBlobReq
 	return client.PutBlob(ctx, r)
 }
 
-func (ds *DistributorServer) GetBlob(ctx context.Context, r *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
+func (ds *distributorServer) GetBlob(ctx context.Context, r *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
 	if err != nil {
 		return nil, err
@@ -221,7 +218,7 @@ func (ds *DistributorServer) GetBlob(ctx context.Context, r *resource.GetBlobReq
 	return client.GetBlob(ctx, r)
 }
 
-func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (context.Context, resource.ResourceClient, error) {
+func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (context.Context, resource.ResourceClient, error) {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
