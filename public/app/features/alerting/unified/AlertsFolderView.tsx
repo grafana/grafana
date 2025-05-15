@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
-import { Trans, t } from 'app/core/internationalization';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderDTO } from 'app/types';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
@@ -35,7 +35,7 @@ const sortOptions: Array<SelectableValue<SortOrder>> = [
 
 export const AlertsFolderView = ({ folder, rules }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const onTagClick = (tagName: string) => {
     const matchersString = combineMatcherStrings(labelFilter, tagName);
     setLabelFilter(matchersString);

@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -19,6 +19,7 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
     ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
     dashboardUid: dashboardUid,
   });
+  const { t } = useTranslate();
 
   if (namespaces.length === 0) {
     return null;

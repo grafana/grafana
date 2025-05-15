@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -68,12 +68,10 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       </TabsBar>
 
       {isEditing && (
-        <div className={conditionalRenderingClass}>
-          <TabContent className={styles.tabContentContainer}>
-            {currentTab && <layout.Component model={layout} />}
-          </TabContent>
+        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
+          {currentTab && <layout.Component model={layout} />}
           {conditionalRenderingOverlay}
-        </div>
+        </TabContent>
       )}
 
       {!isEditing && (
@@ -115,6 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     flex: 1,

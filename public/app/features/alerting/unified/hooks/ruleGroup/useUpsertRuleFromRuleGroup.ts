@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { isEqual } from 'lodash';
 
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
 import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -19,6 +19,7 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 export function useAddRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+  const { t } = useTranslate();
 
   const successMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
 
@@ -47,7 +48,7 @@ export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [moveRuleToGroup] = useMoveRuleToRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-
+  const { t } = useTranslate();
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
   return useAsync(
@@ -89,6 +90,7 @@ export function useMoveRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+  const { t } = useTranslate();
 
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 

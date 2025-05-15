@@ -4247,9 +4247,6 @@
       "query-options": "Opções de consulta",
       "selection-options": "Opções de seleção"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Tem certeza de que deseja restaurar o painel para a versão {{version}}? Todas as alterações não salvas serão perdidas.",
       "title-restore-version": ""
@@ -9022,7 +9019,8 @@
       "placeholder-choose-stat": "Escolha a estatística"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Valor ou variável"
+      "placeholder-value-or-variable": "Valor ou variável",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Grau",
