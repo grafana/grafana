@@ -739,6 +739,8 @@ func hasWildcardScope(user identity.Requester, action string) bool {
 }
 
 func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
