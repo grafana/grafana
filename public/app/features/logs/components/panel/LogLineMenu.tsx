@@ -23,8 +23,16 @@ interface Props {
 }
 
 export const LogLineMenu = ({ log, styles }: Props) => {
-  const { getRowContextQuery, onOpenContext, onPermalinkClick, onPinLine, onUnpinLine, logSupportsContext } =
-    useLogListContext();
+  const {
+    getRowContextQuery,
+    onOpenContext,
+    onPermalinkClick,
+    onPinLine,
+    onUnpinLine,
+    logSupportsContext,
+    showDetails,
+    toggleDetails,
+  } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
 
@@ -48,6 +56,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     [onOpenContext, getRowContextQuery, log]
   );
 
+  const toggleLogDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
+
   const togglePinning = useCallback(() => {
     if (pinned) {
       onUnpinLine?.(log);
@@ -58,14 +70,19 @@ export const LogLineMenu = ({ log, styles }: Props) => {
 
   const { t } = useTranslate();
 
+  const detailsDisplayed = showDetails.find((shownLog) => shownLog.uid === log.uid);
+
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
-        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
-        {onPermalinkClick && log.rowId !== undefined && log.uid && (
-          <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
-        )}
-        {(shouldlogSupportsContext || onPinLine || onUnpinLine) && <Menu.Divider />}
+        <Menu.Item
+          onClick={toggleLogDetails}
+          label={
+            detailsDisplayed
+              ? t('logs.log-line-menu.show-details', 'Hide log details')
+              : t('logs.log-line-menu.hide-details', 'Show log details')
+          }
+        />
         {shouldlogSupportsContext && (
           <Menu.Item onClick={showContext} label={t('logs.log-line-menu.show-context', 'Show context')} />
         )}
@@ -75,21 +92,28 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {pinned && onUnpinLine && (
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
+        <Menu.Divider />
+        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
+        {onPermalinkClick && log.rowId !== undefined && log.uid && (
+          <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
+        )}
       </Menu>
     ),
     [
-      copyLinkToLogLine,
+      toggleLogDetails,
+      detailsDisplayed,
+      t,
       copyLogLine,
+      onPermalinkClick,
       log.rowId,
       log.uid,
-      onPermalinkClick,
+      copyLinkToLogLine,
+      shouldlogSupportsContext,
       onPinLine,
       onUnpinLine,
-      pinned,
-      shouldlogSupportsContext,
       showContext,
+      pinned,
       togglePinning,
-      t,
     ]
   );
 
