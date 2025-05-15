@@ -168,7 +168,7 @@ type mockPluginRepo struct {
 	pluginInfo []repo.PluginInfo
 }
 
-func (m *mockPluginRepo) GetPluginsInfo(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+func (m *mockPluginRepo) GetPluginsInfo(ctx context.Context, options repo.GetPluginsInfoOptions, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
 	return m.pluginInfo, nil
 }
 

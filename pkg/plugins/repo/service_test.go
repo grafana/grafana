@@ -116,6 +116,7 @@ func TestPluginIndex(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "12.0.0", r.Header.Get("grafana-version"))
 		require.Equal(t, "grafana 12.0.0", r.Header.Get("User-Agent"))
+		require.Equal(t, "includeDeprecated=true&slugIn=grafana-test-datasource", r.URL.RawQuery)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprintf(w, `{"items": [{ "id": 1, "slug": "%s", "status": "active" }]}`, pluginID)
@@ -127,7 +128,10 @@ func TestPluginIndex(t *testing.T) {
 		BaseURL:       srv.URL,
 		Logger:        log.NewTestPrettyLogger(),
 	})
-	pi, err := m.GetPluginsInfo(context.Background(), CompatOpts{
+	pi, err := m.GetPluginsInfo(context.Background(), GetPluginsInfoOptions{
+		IncludeDeprecated: true,
+		Plugins:           []string{pluginID},
+	}, CompatOpts{
 		grafanaVersion: "12.0.0",
 		system: SystemCompatOpts{
 			os:   "darwin",
