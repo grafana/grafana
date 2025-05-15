@@ -91,6 +91,7 @@ describe('Dashboard edit - variables', () => {
     field.should('be.visible');
     field.find('input').should('be.visible').clear().type(variable.value).blur();
 
+    // select the variable in the dashboard and confirm the variable value is set
     e2e.pages.Dashboard.SubMenu.submenuItem().should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
 
