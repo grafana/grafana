@@ -145,18 +145,18 @@ func (mr *MockServiceMockRecorder) RenderCSV(ctx, opts, session any) *gomock.Cal
 }
 
 // RenderErrorImage mocks base method.
-func (m *MockService) RenderErrorImage(theme models.Theme, error error) (*RenderResult, error) {
+func (m *MockService) RenderErrorImage(theme models.Theme, err error) (*RenderResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RenderErrorImage", theme, error)
+	ret := m.ctrl.Call(m, "RenderErrorImage", theme, err)
 	ret0, _ := ret[0].(*RenderResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RenderErrorImage indicates an expected call of RenderErrorImage.
-func (mr *MockServiceMockRecorder) RenderErrorImage(theme, error any) *gomock.Call {
+func (mr *MockServiceMockRecorder) RenderErrorImage(theme, err any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderErrorImage", reflect.TypeOf((*MockService)(nil).RenderErrorImage), theme, error)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenderErrorImage", reflect.TypeOf((*MockService)(nil).RenderErrorImage), theme, err)
 }
 
 // SanitizeSVG mocks base method.

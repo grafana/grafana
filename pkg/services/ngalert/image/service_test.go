@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/infra/log"

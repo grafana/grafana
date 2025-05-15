@@ -127,7 +127,7 @@ type Service interface {
 	Version() string
 	Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
-	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
+	RenderErrorImage(theme models.Theme, err error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error

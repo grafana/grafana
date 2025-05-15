@@ -66,7 +66,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
 	github.com/golang-jwt/jwt/v4 v4.5.2 // @grafana/grafana-backend-group
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/grafana-backend-group
-	github.com/golang/mock v1.7.0-rc.1 // @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
@@ -545,7 +544,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.6.0 // indirect
-	go.uber.org/mock v0.5.2 // indirect
+	go.uber.org/mock v0.5.2
 	go.uber.org/multierr v1.11.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/sys v0.33.0 // indirect
