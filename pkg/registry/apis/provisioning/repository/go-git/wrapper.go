@@ -45,7 +45,7 @@ func init() {
 	client.InstallProtocol("http", httpClient)
 }
 
-//go:generate mockery --name=Worktree --output=mocks --inpackage --filename=worktree_mock.go --with-expecter
+//go:generate go tool mockery --name=Worktree --output=mocks --inpackage --filename=worktree_mock.go --with-expecter
 type Worktree interface {
 	Commit(message string, opts *git.CommitOptions) (plumbing.Hash, error)
 	Remove(path string) (plumbing.Hash, error)
@@ -57,7 +57,7 @@ type worktree struct {
 	*git.Worktree
 }
 
-//go:generate mockery --name=Repository --output=mocks --inpackage --filename=repository_mock.go --with-expecter
+//go:generate go tool mockery --name=Repository --output=mocks --inpackage --filename=repository_mock.go --with-expecter
 type Repository interface {
 	PushContext(ctx context.Context, o *git.PushOptions) error
 }

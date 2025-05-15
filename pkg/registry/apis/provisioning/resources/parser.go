@@ -27,14 +27,14 @@ import (
 
 // ParserFactory is a factory for creating parsers for a given repository
 //
-//go:generate mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
+//go:generate go tool mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
 type ParserFactory interface {
 	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
 // Parser is a parser for a given repository
 //
-//go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
+//go:generate go tool mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
 type Parser interface {
 	Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error)
 }

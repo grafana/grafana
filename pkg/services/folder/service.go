@@ -62,7 +62,7 @@ type Service interface {
 
 // FolderStore is a folder store.
 //
-//go:generate mockery --name FolderStore --structname FakeFolderStore --outpkg foldertest --output foldertest --filename folder_store_mock.go
+//go:generate go tool mockery --name FolderStore --structname FakeFolderStore --outpkg foldertest --output foldertest --filename folder_store_mock.go
 type FolderStore interface {
 	// Get joins on the dashboard and folder table to return all information needed for a folder
 	Get(ctx context.Context, q GetFolderQuery) (*Folder, error)

@@ -75,7 +75,7 @@ type CreateTokenCommand struct {
 
 // UserTokenService are used for generating and validating user tokens
 //
-//go:generate mockery --name UserTokenService --structname MockUserAuthTokenService --outpkg authtest --filename auth_token_service_mock.go --output ./authtest/
+//go:generate go tool mockery --name UserTokenService --structname MockUserAuthTokenService --outpkg authtest --filename auth_token_service_mock.go --output ./authtest/
 type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)

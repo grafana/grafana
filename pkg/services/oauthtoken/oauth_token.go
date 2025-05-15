@@ -51,7 +51,7 @@ type Service struct {
 
 var _ OAuthTokenService = (*Service)(nil)
 
-//go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
+//go:generate go tool mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool

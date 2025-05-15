@@ -179,7 +179,7 @@ import (
 	...
 )
 
-//go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
+//go:generate go tool mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
 ```
 
 ## Globals

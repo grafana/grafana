@@ -38,7 +38,7 @@ type IsSearchReadyResponse struct {
 	Reason  string // initial-indexing-ongoing, org-indexing-ongoing
 }
 
-//go:generate mockery --name SearchService --structname MockSearchService --inpackage --filename search_service_mock.go
+//go:generate go tool mockery --name SearchService --structname MockSearchService --inpackage --filename search_service_mock.go
 type SearchService interface {
 	registry.CanBeDisabled
 	registry.BackgroundService

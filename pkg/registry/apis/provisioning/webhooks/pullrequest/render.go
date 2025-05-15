@@ -18,14 +18,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-//go:generate mockery --name BlobStoreClient --structname MockBlobStoreClient --inpackage --filename blobstore_client_mock.go --with-expecter
+//go:generate go tool mockery --name BlobStoreClient --structname MockBlobStoreClient --inpackage --filename blobstore_client_mock.go --with-expecter
 type BlobStoreClient interface {
 	PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error)
 }
 
 // ScreenshotRenderer is an interface for rendering a preview of a file
 //
-//go:generate mockery --name ScreenshotRenderer --structname MockScreenshotRenderer --inpackage --filename render_mock.go --with-expecter
+//go:generate go tool mockery --name ScreenshotRenderer --structname MockScreenshotRenderer --inpackage --filename render_mock.go --with-expecter
 type ScreenshotRenderer interface {
 	IsAvailable(ctx context.Context) bool
 	RenderScreenshot(ctx context.Context, repo provisioning.ResourceRepositoryInfo, path string, values url.Values) (string, error)

@@ -31,7 +31,7 @@ type EvaluatorFactory interface {
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
 
-//go:generate mockery --name ConditionEvaluator --structname ConditionEvaluatorMock --with-expecter --output eval_mocks --outpkg eval_mocks
+//go:generate go tool mockery --name ConditionEvaluator --structname ConditionEvaluatorMock --with-expecter --output eval_mocks --outpkg eval_mocks
 type ConditionEvaluator interface {
 	// EvaluateRaw evaluates the condition and returns raw backend response backend.QueryDataResponse
 	EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error)

@@ -34,7 +34,7 @@ type StorageStatus struct {
 
 // Service is a service for managing the dual write storage
 //
-//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
+//go:generate go tool mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
 	ShouldManage(gr schema.GroupResource) bool
 

@@ -12,7 +12,7 @@ import (
 
 // History keeps track of completed jobs
 //
-//go:generate mockery --name History --structname MockHistory --inpackage --filename history_mock.go --with-expecter
+//go:generate go tool mockery --name History --structname MockHistory --inpackage --filename history_mock.go --with-expecter
 type History interface {
 	// Adds a job to the history
 	WriteJob(ctx context.Context, job *provisioning.Job) error

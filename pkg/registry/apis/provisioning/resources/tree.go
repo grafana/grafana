@@ -17,7 +17,7 @@ import (
 // The folders are portrayed as a tree, where a folder has a parent, up until the root folder.
 // The root folder is special-cased as a folder that exists, but is not itself stored. It has no ID, no title, and no data, but will return `true` for OK bools.
 //
-//go:generate mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
+//go:generate go tool mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
 type FolderTree interface {
 	In(folder string) bool
 	DirPath(folder, baseFolder string) (Folder, bool)

@@ -24,7 +24,7 @@ type ServiceAccountRetriever interface {
 	RetrieveServiceAccount(ctx context.Context, query *GetServiceAccountQuery) (*ServiceAccountProfileDTO, error)
 }
 
-//go:generate mockery --name Service --structname MockServiceAccountService --output tests --outpkg tests --filename mocks.go
+//go:generate go tool mockery --name Service --structname MockServiceAccountService --output tests --outpkg tests --filename mocks.go
 type Service interface {
 	ServiceAccountRetriever
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
@@ -46,7 +46,7 @@ type Service interface {
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*MigrationResult, error)
 }
 
-//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
+//go:generate go tool mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output tests --outpkg tests --filename extsvcaccmock.go
 type ExtSvcAccountsService interface {
 	// EnableExtSvcAccount enables or disables the service account associated to an external service
 	EnableExtSvcAccount(ctx context.Context, cmd *EnableExtSvcAccountCmd) error

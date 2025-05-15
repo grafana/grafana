@@ -55,7 +55,7 @@ type ListExternalSessionQuery struct {
 	SessionID string
 }
 
-//go:generate mockery --name ExternalSessionStore --structname MockExternalSessionStore --outpkg authtest --filename external_session_store_mock.go --output ./authtest/
+//go:generate go tool mockery --name ExternalSessionStore --structname MockExternalSessionStore --outpkg authtest --filename external_session_store_mock.go --output ./authtest/
 type ExternalSessionStore interface {
 	// Get returns the external session
 	Get(ctx context.Context, ID int64) (*ExternalSession, error)

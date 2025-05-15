@@ -20,7 +20,7 @@ import (
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
-//go:generate mockery --name LegacyResourcesMigrator --structname MockLegacyResourcesMigrator --inpackage --filename mock_legacy_resources_migrator.go --with-expecter
+//go:generate go tool mockery --name LegacyResourcesMigrator --structname MockLegacyResourcesMigrator --inpackage --filename mock_legacy_resources_migrator.go --with-expecter
 type LegacyResourcesMigrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
 }
