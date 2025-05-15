@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
-	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -104,10 +104,6 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		return p, fmt.Errorf("invalid db type specified: %s", dbType)
 
 	// If we have an empty Resource API db config, try with the core Grafana database config
-	case grafanaDBType != "":
-		p.registerMetrics = true
-		p.engine, err = getEngine(cfg)
-		return p, err
 	case grafanaDB != nil:
 		// try to use the grafana db connection (should only happen in tests)
 		if fallbackGetter.Bool(grafanaDBInstrumentQueriesKey) {
@@ -115,6 +111,10 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		}
 		p.engine = grafanaDB.GetEngine()
 		return p, nil
+	case grafanaDBType != "":
+		p.registerMetrics = true
+		p.engine, err = getEngine(cfg)
+		return p, err
 	default:
 		return p, fmt.Errorf("no database type specified")
 	}

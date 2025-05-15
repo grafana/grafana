@@ -101,7 +101,7 @@ func (p provisioningSecrets) reEncrypt(
 	} else {
 		logger.Info("Successfully rotated provisioning secrets", "action", action)
 	}
-	return failures > 0
+	return failures == 0
 }
 
 func (provisioningSecrets) reEncryptGitHubToken(

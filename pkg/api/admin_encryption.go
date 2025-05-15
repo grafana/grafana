@@ -25,7 +25,7 @@ func (hs *HTTPServer) AdminReEncryptEncryptionKeys(c *contextmodel.ReqContext) r
 }
 
 func (hs *HTTPServer) AdminReEncryptSecrets(c *contextmodel.ReqContext) response.Response {
-	success, err := hs.secretsMigrator.ReEncryptSecrets(c.Req.Context())
+	success, err := hs.SecretsMigrator.ReEncryptSecrets(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to re-encrypt secrets", err)
 	}
@@ -38,7 +38,7 @@ func (hs *HTTPServer) AdminReEncryptSecrets(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) AdminRollbackSecrets(c *contextmodel.ReqContext) response.Response {
-	success, err := hs.secretsMigrator.RollBackSecrets(c.Req.Context())
+	success, err := hs.SecretsMigrator.RollBackSecrets(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to rollback secrets", err)
 	}
