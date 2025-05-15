@@ -11,6 +11,7 @@ import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 import { DashboardVersionError, DashboardWithAccessInfo } from './types';
 import { isV2DashboardCommand } from './utils';
 import { K8sDashboardAPI } from './v1';
+import { K8sDashboardV2API } from './v2';
 
 jest.mock('./v1');
 jest.mock('./v2');
@@ -35,8 +36,6 @@ jest.mock('@grafana/runtime', () => ({
     }),
   }),
 }));
-
-import { K8sDashboardV2API } from './v2';
 
 describe('UnifiedDashboardAPI', () => {
   let api: UnifiedDashboardAPI;
