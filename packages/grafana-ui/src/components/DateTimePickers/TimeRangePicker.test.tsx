@@ -68,8 +68,8 @@ describe('TimePicker', () => {
       />
     );
 
-    expect(screen.queryByLabelText(/Move time range backwards/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Move time range forwards/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Move time range backwards/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Move time range forwards/i)).toBeInTheDocument();
   });
 
   it('switches overlay content visibility when toolbar button is clicked twice', async () => {
