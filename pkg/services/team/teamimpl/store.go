@@ -186,8 +186,6 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		Teams: make([]*team.TeamDTO, 0),
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		queryWithWildcards := "%" + query.Query + "%"
-
 		var sql bytes.Buffer
 		params := make([]any, 0)
 
@@ -201,8 +199,9 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		params = append(params, query.OrgID)
 
 		if query.Query != "" {
-			sql.WriteString(` and team.name ` + ss.db.GetDialect().LikeStr() + ` ?`)
-			params = append(params, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("team.name", true, query.Query, true)
+			sql.WriteString(" and " + like)
+			params = append(params, param)
 		}
 
 		if query.Name != "" {
@@ -250,7 +249,8 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
-			countSess.Where(`name `+ss.db.GetDialect().LikeStr()+` ?`, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("name", true, query.Query, true)
+			countSess.Where(like, param)
 		}
 
 		if query.Name != "" {

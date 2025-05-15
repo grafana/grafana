@@ -127,7 +127,7 @@ export function QueryPreview({
           i18nKey="alerting.query-preview.relative-time-range"
           values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
         >
-          {'{{from}}'} to now
+          <code>{'{{from}}'}</code> to now
         </Trans>
       </Text>
     );
@@ -503,7 +503,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         {unloadEvaluator && (
           <>
             <div className={styles.label}>
-              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">Stop alerting when </Trans>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
             </div>
             <div className={styles.value}>{expression}</div>
 

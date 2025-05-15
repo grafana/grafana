@@ -39,8 +39,8 @@ post-generate-cleanup: ## Clean up the generated code
 	@cp ./tshack/v0alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts
 
 	# Same for v1alpha1
-	@rm ../../packages/grafana-schema/src/schema/dashboard/v1alpha1/types.spec.gen.ts
-	@cp ./tshack/v1alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v1alpha1/types.spec.gen.ts
+	@rm ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
+	@cp ./tshack/v1alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v1beta1/types.spec.gen.ts
 
 	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v0alpha1.
 	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go > ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp
@@ -49,10 +49,10 @@ post-generate-cleanup: ## Clean up the generated code
 	@mv ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go
 
 	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v1alpha1.
-	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go > ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp
-	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp2
-	@rm ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp
-	@mv ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1alpha1/dashboard_object_gen.go
+	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go > ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
+	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2
+	@rm ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
+	@mv ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
 
 	# Copy dashboard/v2alpha1 spec so we can use it for schema validation
 	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue

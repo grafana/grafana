@@ -71,7 +71,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "dashboard.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}, {
 		Group:   "dashboard.grafana.app",
 		Version: "v2alpha1",
@@ -92,6 +92,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "playlist.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

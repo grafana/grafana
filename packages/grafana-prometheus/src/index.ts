@@ -42,7 +42,7 @@ export { QueryPatternsModal } from './querybuilder/QueryPatternsModal';
 export { LabelFilterItem } from './querybuilder/components/LabelFilterItem';
 export { LabelFilters } from './querybuilder/components/LabelFilters';
 export { LabelParamEditor } from './querybuilder/components/LabelParamEditor';
-export { MetricSelect } from './querybuilder/components/MetricSelect';
+export { MetricCombobox } from './querybuilder/components/MetricCombobox';
 export { MetricsLabelsSection } from './querybuilder/components/MetricsLabelsSection';
 export { NestedQuery } from './querybuilder/components/NestedQuery';
 export { NestedQueryList } from './querybuilder/components/NestedQueryList';

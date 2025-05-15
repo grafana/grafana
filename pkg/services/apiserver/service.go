@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -95,11 +94,12 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
-	pluginClient    plugins.Client
-	datasources     datasource.ScopedPluginDatasourceProvider
-	contextProvider datasource.PluginContextWrapper
-	pluginStore     pluginstore.Store
-	unified         resource.ResourceClient
+	pluginClient       plugins.Client
+	datasources        datasource.ScopedPluginDatasourceProvider
+	contextProvider    datasource.PluginContextWrapper
+	pluginStore        pluginstore.Store
+	unified            resource.ResourceClient
+	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
@@ -118,8 +118,10 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	reg prometheus.Registerer,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -135,7 +137,7 @@ func ProvideService(
 		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
-		metrics:                           metrics.ProvideRegisterer(),
+		metrics:                           reg,
 		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
@@ -144,6 +146,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
@@ -268,14 +271,6 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
-	// This will check that required feature toggles are enabled for more advanced storage modes
-	// Any required preconditions should be hardcoded here
-	if o.StorageOptions != nil {
-		if err := o.StorageOptions.EnforceFeatureToggleAfterMode1(s.features); err != nil {
-			return err
-		}
-	}
-
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
@@ -300,7 +295,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client

@@ -946,7 +946,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions,
-			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+			ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 			dualwrite.ProvideTestService(), sort.ProvideService(),
 			serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 		)
@@ -956,7 +956,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions,
-		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 	)

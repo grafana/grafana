@@ -510,3 +510,10 @@ func (m *mockDynamicInterface) List(ctx context.Context, opts metav1.ListOptions
 func (m *mockDynamicInterface) Delete(ctx context.Context, name string, opts metav1.DeleteOptions, subresources ...string) error {
 	return m.deleteError
 }
+
+func (m *mockDynamicInterface) Get(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	if len(m.items) == 0 {
+		return nil, fmt.Errorf("no items found")
+	}
+	return &m.items[0], nil
+}

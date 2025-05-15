@@ -380,6 +380,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAdHocFilterWithLabels(ref commo
 							Format: "",
 						},
 					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"condition": {
 						SchemaProps: spec.SchemaProps{
 							Description: "@deprecated",
@@ -538,7 +544,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationPanelFilter(ref commo
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
 										Type:    []string{"integer"},
-										Format:  "byte",
+										Format:  "int64",
 									},
 								},
 							},
@@ -4758,6 +4764,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardVersionList(ref common.Referenc
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -4981,6 +4988,7 @@ func schema_pkg_apis_dashboard_v2alpha1_LibraryPanelList(ref common.ReferenceCal
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

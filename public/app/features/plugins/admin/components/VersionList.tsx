@@ -76,9 +76,20 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
             <tr key={version.version}>
               {/* Version number */}
               {isInstalledVersion ? (
-                <td className={styles.currentVersion}>{version.version} (installed version)</td>
+                <td className={styles.currentVersion}>
+                  <Trans i18nKey="plugins.version-list.installed-version" values={{ versionNumber: version.version }}>
+                    {'{{versionNumber}}'} (installed version)
+                  </Trans>
+                </td>
               ) : version.version === latestCompatibleVersion?.version ? (
-                <td>{version.version} (latest compatible version)</td>
+                <td>
+                  <Trans
+                    i18nKey="plugins.version-list.latest-compatible-version"
+                    values={{ versionNumber: version.version }}
+                  >
+                    {'{{versionNumber}}'} (latest compatible version)
+                  </Trans>
+                </td>
               ) : (
                 <td>{version.version}</td>
               )}

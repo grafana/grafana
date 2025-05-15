@@ -42,10 +42,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -159,10 +156,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {

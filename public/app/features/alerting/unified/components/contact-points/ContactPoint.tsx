@@ -273,7 +273,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
-    borderRadius: `${theme.shape.radius.default}`,
+    borderRadius: theme.shape.radius.default,
     border: `solid 1px ${theme.colors.border.weak}`,
     borderBottom: 'none',
   }),

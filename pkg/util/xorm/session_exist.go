@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 // Exist returns true if the record exist otherwise return false

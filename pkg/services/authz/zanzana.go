@@ -5,22 +5,20 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/grpcutils"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 
-	authnlib "github.com/grafana/authlib/authn"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/services"
-
-	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -217,17 +215,17 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 func (z *Zanzana) running(ctx context.Context) error {
 	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
-		srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
-		if err != nil {
-			z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
-		} else {
-			go func() {
+		go func() {
+			srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+			if err != nil {
+				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
+			} else {
 				z.logger.Info("Starting OpenFGA HTTP server")
 				if err := srv.ListenAndServe(); err != nil {
 					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
 				}
-			}()
-		}
+			}
+		}()
 	}
 
 	// Run is blocking so we can just run it here

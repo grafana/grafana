@@ -93,17 +93,6 @@ export function ReceiverForm<R extends ChannelValues>({
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    values.items.forEach((item) => {
-      if (item.secureFields) {
-        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
-        Object.keys(item.secureFields).forEach((key) => {
-          if (item.secureFields[key] === true || item.secureFields[key] === false) {
-            delete item.secureFields[key];
-          }
-        });
-      }
-    });
-
     try {
       await onSubmit({
         ...values,
@@ -138,11 +127,9 @@ export function ReceiverForm<R extends ChannelValues>({
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
         <Stack justifyContent="space-between" alignItems="center">
           <h2 className={styles.heading}>
-            {!isEditable
-              ? t('alerting.receiver-form.contact-point', 'Contact point')
-              : initialValues
-                ? t('alerting.receiver-form.contact-point-update', 'Update contact point')
-                : t('alerting.receiver-form.contact-point-create', 'Create contact point')}
+            {!isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
+            {isEditable && initialValues && t('alerting.receiver-form.contact-point-update', 'Update contact point')}
+            {isEditable && !initialValues && t('alerting.receiver-form.contact-point-create', 'Create contact point')}
           </h2>
           {canManagePermissions && contactPointId && (
             <ManagePermissions
@@ -177,7 +164,7 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
-          const pathPrefix = `items.${index}.`;
+          const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
@@ -187,6 +174,7 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               initialValues={initialItem}
               key={field.__id}
+              integrationIndex={index}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
@@ -202,7 +190,6 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
