@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
-import { useTheme2 } from '@grafana/ui';
+import { useTranslate } from '@grafana/i18n';
+import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogDetails } from '../LogDetails';
@@ -10,6 +11,7 @@ import { getLogRowStyles } from '../getLogRowStyles';
 
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
   logs: LogListModel[];
@@ -19,6 +21,7 @@ interface Props {
 export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
   const {
     app,
+    closeDetails,
     detailsWidth,
     displayedFields,
     isLabelFilterActive,
@@ -34,7 +37,9 @@ export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
   } = useLogListContext();
   const getRows = useCallback(() => logs, [logs]);
   const logRowsStyles = getLogRowStyles(useTheme2());
+  const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { t } = useTranslate();
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -45,6 +50,12 @@ export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
   return (
     <Resizable onResize={handleResize} defaultSize={detailsWidth ? { width: detailsWidth } : undefined}>
       <div className={styles.container} ref={containerRef}>
+        <IconButton
+          name="times"
+          className={styles.closeIcon}
+          aria-label={t('logs.log-details.close', 'Close log details')}
+          onClick={closeDetails}
+        />
         <table width="100%">
           <tbody>
             <LogDetails
@@ -73,8 +84,14 @@ export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
   );
 };
 
-const styles = {
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
+    position: 'relative',
   }),
-};
+  closeIcon: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1.5),
+  }),
+});
