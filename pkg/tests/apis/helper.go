@@ -133,7 +133,6 @@ func (c *K8sTestHelper) loadAPIGroups() {
 		rsp := DoRequest(c, RequestParams{
 			User: c.Org1.Viewer,
 			Path: "/apis",
-			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
 		}, &metav1.APIGroupList{})
 
 		if rsp.Response.StatusCode == http.StatusOK {
@@ -707,7 +706,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	disco := c.NewDiscoveryClient()
 	req := disco.RESTClient().Get().
 		Prefix("apis").
-		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json")
 
 	result := req.Do(context.Background())
 	require.NoError(c.t, result.Error())
@@ -728,8 +727,6 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	err = json.Unmarshal(raw, all)
 	require.NoError(c.t, err)
 
-	fmt.Printf("%s", string(raw))
-
 	for _, item := range all.Items {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
@@ -738,7 +735,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		}
 	}
 
-	require.Fail(c.t, "could not find discovery info for: %s", group)
+	require.Failf(c.t, "could not find discovery info for: %s", group)
 	return ""
 }
 
