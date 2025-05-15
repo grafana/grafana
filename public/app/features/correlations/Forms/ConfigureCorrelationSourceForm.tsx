@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -24,7 +25,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const getFormText = (queryType: string, dataSourceName?: string) => {
+const getFormText = (queryType: string, t: TFunction, dataSourceName?: string) => {
   if (queryType === 'query') {
     return {
       title: t(
@@ -59,7 +60,7 @@ export const ConfigureCorrelationSourceForm = () => {
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
 
   const { correlation, readOnly } = useCorrelationsFormContext();
-
+  const { t } = useTranslate();
   const currentTargetQuery = getValues('config.target');
   const currentType = getValues('type');
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
@@ -67,7 +68,7 @@ export const ConfigureCorrelationSourceForm = () => {
   );
   const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
 
-  const formText = getFormText(currentType, dataSourceName);
+  const formText = getFormText(currentType, t, dataSourceName);
 
   function VariableList() {
     return (

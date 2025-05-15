@@ -11,8 +11,8 @@ import { produce } from 'immer';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
@@ -52,6 +52,7 @@ export function DraggableRulesTable({ rules, groupInterval, onSwap }: DraggableR
   const rulesWithUID = useMemo(() => {
     return rulesList.map((rulerRule) => ({ ...rulerRule, uid: hashRulerRule(rulerRule) }));
   }, [rulesList]);
+  const { t } = useTranslate();
 
   return (
     <div>
@@ -104,6 +105,7 @@ interface DraggableListItemProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const DraggableListItem = ({ provided, rule, groupInterval, isClone = false }: DraggableListItemProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   const ruleName = getRuleName(rule);
   const pendingPeriod = rulerRuleType.any.alertingRule(rule) ? rule.for : null;
   const numberEvaluationsToStartAlerting = getNumberEvaluationsToStartAlerting(pendingPeriod ?? '0s', groupInterval);

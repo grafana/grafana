@@ -134,7 +134,7 @@
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
 /pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
-/pkg/services/correlations/ @grafana/dataviz-squad
+/pkg/services/correlations/ @grafana/datapro
 /pkg/services/dashboardimport/ @grafana/grafana-backend-group
 /pkg/services/dashboards/ @grafana/grafana-app-platform-squad
 /pkg/services/dashboardversion/ @grafana/grafana-backend-group
@@ -175,7 +175,7 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
-/pkg/tests/api/correlations/ @grafana/dataviz-squad
+/pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
@@ -402,7 +402,7 @@
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
-/packages/grafana-data/src/transformations/ @grafana/dataviz-squad
+/packages/grafana-data/src/transformations/ @grafana/datapro 
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
@@ -499,9 +499,9 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend
-/public/app/features/correlations/ @grafana/dataviz-squad
+/public/app/features/correlations/ @grafana/datapro
 /public/app/features/dashboard/ @grafana/dashboards-squad
-/public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
+/public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/scopes/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
@@ -532,7 +532,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/teams/ @grafana/access-squad
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/trails/ @grafana/observability-metrics
-/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/ @grafana/datapro
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/access-squad
 /public/app/features/variables/ @grafana/dashboards-squad
@@ -617,7 +617,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/circle-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/plugins-platform-frontend
 /scripts/validate-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/plugins-platform-frontend
-/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad
+/scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad @grafana/datapro
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
@@ -641,7 +641,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 
-/scripts/**/generate-transformations* @grafana/dataviz-squad
+/scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform

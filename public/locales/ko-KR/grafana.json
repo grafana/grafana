@@ -8988,7 +8988,8 @@
       "placeholder-choose-stat": "통계 선택"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "값 또는 변수"
+      "placeholder-value-or-variable": "값 또는 변수",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "차수",
