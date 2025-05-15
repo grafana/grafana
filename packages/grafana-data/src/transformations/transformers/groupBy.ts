@@ -15,6 +15,9 @@ const MINIMUM_FIELDS_REQUIRED = 2;
 export enum GroupByOperationID {
   aggregate = 'aggregate',
   groupBy = 'groupby',
+  count = 'count',
+  takeFirst = 'takefirst',
+  takeLast = 'takelast',
 }
 
 export interface GroupByFieldOptions {
@@ -93,7 +96,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           const valuesByGroupKey = groupValuesByKey(frame, groupByFields);
 
           // Add the grouped fields to the resulting fields of the transformation
-          const fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
+          let fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
 
           // Then for each calculations configured, compute and add a new field (column)
           for (const field of frame.fields) {
@@ -102,33 +105,60 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             }
 
             const fieldName = getFieldDisplayName(field);
-            const aggregations = options.fields[fieldName].aggregations;
-            const valuesByAggregation: Record<string, unknown[]> = {};
 
-            valuesByGroupKey.forEach((value) => {
-              const fieldWithValuesForGroup = value[fieldName];
-              const results = reduceField({
-                field: fieldWithValuesForGroup,
-                reducers: aggregations,
+            let fieldOptions =
+              options.fields[fieldName].operation === GroupByOperationID.count
+                ? { operation: GroupByOperationID.aggregate, aggregations: [ReducerID.count] }
+                : options.fields[fieldName];
+
+            if (
+              fieldOptions.operation === GroupByOperationID.takeFirst ||
+              fieldOptions.operation === GroupByOperationID.takeLast
+            ) {
+              let rowContents: Field[] = [];
+              rowContents = frame.fields
+                .filter((f) => !groupByFieldNames.includes(f.name))
+                .map((f) => {
+                  const value =
+                    f.values[fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : f.values.length - 1];
+                  return { ...f, values: [value] };
+                });
+              fields = fields.concat(rowContents);
+              fieldOptions = {
+                operation: GroupByOperationID.aggregate,
+                aggregations: [
+                  fieldOptions.operation === GroupByOperationID.takeFirst ? ReducerID.first : ReducerID.last,
+                ],
+              };
+            } else {
+              const aggregations = fieldOptions.aggregations;
+              const valuesByAggregation: Record<string, unknown[]> = {};
+
+              valuesByGroupKey.forEach((value) => {
+                const fieldWithValuesForGroup = value[fieldName];
+                const results = reduceField({
+                  field: fieldWithValuesForGroup,
+                  reducers: aggregations,
+                });
+
+                for (const aggregation of aggregations) {
+                  if (!Array.isArray(valuesByAggregation[aggregation])) {
+                    valuesByAggregation[aggregation] = [];
+                  }
+                  valuesByAggregation[aggregation].push(results[aggregation]);
+                }
               });
 
               for (const aggregation of aggregations) {
-                if (!Array.isArray(valuesByAggregation[aggregation])) {
-                  valuesByAggregation[aggregation] = [];
-                }
-                valuesByAggregation[aggregation].push(results[aggregation]);
+                const aggregationField: Field = {
+                  name: `${fieldName} (${aggregation})`,
+                  values: valuesByAggregation[aggregation] ?? [],
+                  type: getFieldTypeForReducer(aggregation, field.type),
+                  config: {},
+                };
+
+                fields.push(aggregationField);
               }
-            });
-
-            for (const aggregation of aggregations) {
-              const aggregationField: Field = {
-                name: `${fieldName} (${aggregation})`,
-                values: valuesByAggregation[aggregation] ?? [],
-                type: getFieldTypeForReducer(aggregation, field.type),
-                config: {},
-              };
-
-              fields.push(aggregationField);
             }
           }
 
@@ -147,9 +177,12 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return (
-    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
-    Array.isArray(options?.fields[fieldName].aggregations) &&
-    options?.fields[fieldName].aggregations.length > 0
+    (options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
+      Array.isArray(options?.fields[fieldName].aggregations) &&
+      options?.fields[fieldName].aggregations.length > 0) ||
+    options?.fields[fieldName]?.operation === GroupByOperationID.count ||
+    options?.fields[fieldName]?.operation === GroupByOperationID.takeFirst ||
+    options?.fields[fieldName]?.operation === GroupByOperationID.takeLast
   );
 };
 

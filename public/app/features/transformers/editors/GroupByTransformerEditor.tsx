@@ -89,6 +89,9 @@ export const GroupByTransformerEditor = ({
 const options = [
   { label: 'Group by', value: GroupByOperationID.groupBy },
   { label: 'Calculate', value: GroupByOperationID.aggregate },
+  { label: 'Count', value: GroupByOperationID.count },
+  { label: 'Take first', value: GroupByOperationID.takeFirst },
+  { label: 'Take last', value: GroupByOperationID.takeLast },
 ];
 
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
