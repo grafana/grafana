@@ -383,7 +383,6 @@ describe('QueryVariableEditor', () => {
 
     expect(result.length).toBe(1);
     const descriptor = result[0];
-    expect(descriptor.props.title).toBe('Query Editor');
 
     // Mock the parent property that OptionsPaneItem expects
     descriptor.parent = new OptionsPaneCategoryDescriptor({
@@ -407,7 +406,7 @@ describe('QueryVariableEditor', () => {
 
     // 3. Assert Editor's key elements are rendered
     // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Data source')).toBeInTheDocument();
+    expect(within(modal).getByLabelText('Target data source')).toBeInTheDocument();
     // Regex input placeholder
     expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
     // Sort select (check for its current value display)
@@ -452,7 +451,7 @@ describe('Editor', () => {
       render(<Editor variable={variable} />);
     });
 
-    const dataSourcePicker = screen.getByLabelText('Data source');
+    const dataSourcePicker = screen.getByLabelText('Target data source');
     expect(dataSourcePicker).toBeInTheDocument();
 
     const user = userEvent.setup();

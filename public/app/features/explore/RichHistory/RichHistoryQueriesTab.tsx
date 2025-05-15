@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
@@ -128,6 +128,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
   } = props;
 
   const styles = useStyles2(getStyles, height);
+  const { t } = useTranslate();
 
   // on mount, set filter to either active datasource or all datasources
   useEffect(() => {

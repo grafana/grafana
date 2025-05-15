@@ -4227,9 +4227,6 @@
       "query-options": "クエリオプション",
       "selection-options": "選択オプション"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
       "title-restore-version": ""
@@ -8991,7 +8988,8 @@
       "placeholder-choose-stat": "統計を選択"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "値または変数"
+      "placeholder-value-or-variable": "値または変数",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "次数",

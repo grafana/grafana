@@ -379,12 +379,14 @@ func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 	}
 	sig := repository.GetAuthorSignature(ctx)
 	if sig != nil && sig.Name != "" {
-		opts.Author = &object.Signature{
-			Name:  sig.Name,
-			Email: sig.Email,
-			When:  sig.When,
-		}
+		opts.Author.Name = sig.Name
+		opts.Author.Email = sig.Email
+		opts.Author.When = sig.When
 	}
+	if opts.Author.When.IsZero() {
+		opts.Author.When = time.Now()
+	}
+
 	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
@@ -463,14 +465,4 @@ func (g *GoGitRepo) History(ctx context.Context, path string, ref string) ([]pro
 // Validate implements repository.Repository.
 func (g *GoGitRepo) Validate() field.ErrorList {
 	return nil
-}
-
-// Webhook implements repository.Repository.
-func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
-	}
 }
