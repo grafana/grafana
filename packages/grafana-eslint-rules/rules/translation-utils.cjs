@@ -209,17 +209,15 @@ function getComponentNames(node, context) {
   return names;
 }
 
-/** Package to suggest importing translation utils from */
-const PACKAGE_IMPORT_NAME = '@grafana/i18n';
-
 /**
  * Gets the import fixer for a node
+ * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
  * @param {'Trans'|'t'|'useTranslate'} importName The import name
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
-function getImportsFixer(fixer, importName, context) {
+function getImportsFixer(node, fixer, importName, context) {
   const body = context.sourceCode.ast.body;
 
   /** Map of where we expect to import each translation util from */
@@ -228,6 +226,44 @@ function getImportsFixer(fixer, importName, context) {
     useTranslate: '@grafana/i18n',
     t: '@grafana/i18n/internal',
   };
+  const ancestors = context.sourceCode.getAncestors(node);
+  const parentMethod = ancestors.find((anc) => {
+    return [
+      AST_NODE_TYPES.ArrowFunctionExpression,
+      AST_NODE_TYPES.FunctionDeclaration,
+      AST_NODE_TYPES.ClassDeclaration,
+    ].includes(anc.type);
+  });
+
+  // If we're trying to import `t`,
+  // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
+  // do nothing
+  if (importName === 't') {
+    // Find any t variable declarations in the parent method
+    const tDeclaration = parentMethod
+      ? context.sourceCode.getScope(parentMethod).variables.find((v) => v.name === 't')
+      : null;
+    const tIsFromUseTranslate =
+      tDeclaration &&
+      tDeclaration.defs.find((definition) => {
+        const { node: defNode } = definition;
+        const isVariableDeclaration = defNode.type === AST_NODE_TYPES.VariableDeclarator;
+        const init = isVariableDeclaration ? defNode.init : null;
+        if (
+          isVariableDeclaration &&
+          init &&
+          init.type === AST_NODE_TYPES.CallExpression &&
+          init.callee.type === AST_NODE_TYPES.Identifier
+        ) {
+          return init.callee.name === 'useTranslate';
+        }
+        return false;
+      });
+
+    if (tDeclaration && tIsFromUseTranslate) {
+      return;
+    }
+  }
 
   const expectedImport = importPackage[importName];
 
@@ -280,7 +316,7 @@ const getTransFixers = (node, context) => (fixer) => {
     }
   });
 
-  const importsFixer = getImportsFixer(fixer, 'Trans', context);
+  const importsFixer = getImportsFixer(node, fixer, 'Trans', context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
@@ -302,7 +338,7 @@ const getTFixers = (node, context) => (fixer) => {
     fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
   );
 
-  const importsFixer = getImportsFixer(fixer, 't', context);
+  const importsFixer = getImportsFixer(node, fixer, 't', context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
@@ -341,5 +377,4 @@ module.exports = {
   shouldBeFixed,
   elementIsTrans,
   isStringNonAlphanumeric,
-  PACKAGE_IMPORT_NAME,
 };

@@ -1,7 +1,6 @@
 import { RuleTester } from 'eslint';
 
 import noUntranslatedStrings from '../rules/no-untranslated-strings.cjs';
-import { PACKAGE_IMPORT_NAME } from '../rules/translation-utils.cjs';
 
 RuleTester.setDefaultConfig({
   languageOptions: {
@@ -17,9 +16,11 @@ RuleTester.setDefaultConfig({
 
 const filename = 'public/app/features/some-feature/SomeFile.tsx';
 
-const TRANS_IMPORT = `import { Trans } from '${PACKAGE_IMPORT_NAME}';`;
-const T_IMPORT = `import { t } from '${PACKAGE_IMPORT_NAME}/internal';`;
-const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${PACKAGE_IMPORT_NAME}';`;
+const packageName = '@grafana/i18n';
+
+const TRANS_IMPORT = `import { Trans } from '${packageName}';`;
+const T_IMPORT = `import { t } from '${packageName}/internal';`;
+const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${packageName}';`;
 
 const ruleTester = new RuleTester();
 
@@ -278,6 +279,41 @@ const Foo = () => <div title="foo" />`,
               output: `
 ${T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes correctly when useTranslate import already exists',
+      code: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+  return (<>
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+    <div title={"bar"} />
+  </>)
+}
+`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+  return (<>
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+    <div title={t("some-feature.foo.title-bar", "bar")} />
+  </>)
+}
+`,
             },
           ],
         },
