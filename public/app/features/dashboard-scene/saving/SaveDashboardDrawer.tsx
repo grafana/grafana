@@ -1,7 +1,6 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
