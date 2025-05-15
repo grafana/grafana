@@ -1,6 +1,7 @@
 import * as H from 'history';
 
 import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -36,7 +37,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind, ResourceForCreate } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
-import { publishEditAction } from '../edit-pane/shared';
+import { dashboardEditActions } from '../edit-pane/shared';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -668,15 +669,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public switchLayout(layout: DashboardLayoutManager) {
     const currentLayout = this.state.body;
 
-    publishEditAction({
-      description: 'Switch layout',
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ body: layout });
-      },
-      undo: () => {
-        this.setState({ body: currentLayout });
-      },
+      perform: () => this.setState({ body: layout }),
+      undo: () => this.setState({ body: currentLayout }),
     });
   }
 
