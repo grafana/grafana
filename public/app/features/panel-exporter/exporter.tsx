@@ -32,35 +32,46 @@ import appEvents from 'app/core/app_events';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { useParams } from 'react-router-dom-v5-compat';
-export interface SoloProps extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string, height:number, width:number }> {}
 import { useSoloPanel } from 'app/features/dashboard-scene/solo/useSoloPanel';
 import { css } from '@emotion/css';
+import "./styles.css"
+
+export interface SoloProps extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string, height:number, width:number }> {}
 
 // in this context, we'll be getting the config asynchronously.
 // Normally, window.grafanaBootData is set in index.html and
 // the 'config' system relies upon this synchronicity. Here,
 // we'll manually instantiate it instead.
-function getConfig(){
-  function checkAndResolveLater(resolve:any, reject:any, timeout:any){
-    if(timeout > 3000){ reject('Application did not load in time!') }
-    let bootData = (window as any).grafanaBootData;
-    if(!!bootData){
-      const options = bootData.settings;
-      options.bootData = bootData;
+let bootData = null;
 
-      const conf = new GrafanaBootConfig(options);
-      resolve(conf);
-    } else {
-      window.setTimeout(()=>{
-        checkAndResolveLater(resolve, reject, timeout + 100)
-      }, timeout);
+class BootDataLoader {
+  constructor(redirect) {
+    if (BootDataLoader._instance) {
+      return BootDataLoader._instance
     }
+    BootDataLoader._instance = this;
+    this.promise = fetch("/api/bootdata").then((response)=>{
+      return response.json()
+    }).then((conf)=>{
+      return conf
+    });
   }
 
-  return new Promise((resolve, reject)=>{
-    checkAndResolveLater(resolve, reject, 100);
-  })
+  fetch(){
+    return this.promise;
+  }
+}
 
+async function getConfig(redirect:boolean=true){
+
+  let loader = new BootDataLoader();
+
+    let bootData = await loader.fetch();
+
+  const options = bootData.settings;
+  options.bootData = bootData;
+
+  return new GrafanaBootConfig(options);
 }
 
 interface AppContext {
@@ -73,8 +84,8 @@ interface AppContext {
   newAssetsChecker: any
 }
 
-const GrafContext: any = async function(dashboardUid:string){
-  let conf = await getConfig()
+const GrafContext: any = async function(dashboardUid:string, redirect:boolean=true){
+  let conf = await getConfig(redirect)
 
   if(GrafContext._appContext){
     return GrafContext._appContext;
