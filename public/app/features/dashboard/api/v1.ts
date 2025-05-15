@@ -12,6 +12,10 @@ import {
   AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  AnnoKeyManagerAllowsEdits,
+  ManagerKind,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -125,6 +129,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      if (dash.metadata.annotations?.[AnnoKeyManagerKind]) {
+        const allowEdits =
+          dash.metadata.annotations?.[AnnoKeyManagerAllowsEdits] === 'true' ||
+          dash.metadata.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
+        result.meta.provisioned = allowEdits;
+        result.meta.provisionedExternalId = dash.metadata.annotations?.[AnnoKeySourcePath];
+      }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
