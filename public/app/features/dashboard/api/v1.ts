@@ -132,7 +132,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       const annotations = dash.metadata.annotations ?? {};
       const managerKind = annotations[AnnoKeyManagerKind];
-      
+
       if (managerKind) {
         result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
