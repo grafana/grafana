@@ -9019,7 +9019,8 @@
       "placeholder-choose-stat": "Escolha a estatística"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Valor ou variável"
+      "placeholder-value-or-variable": "Valor ou variável",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Grau",

@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 import provisioningSvg from 'img/provisioning/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
@@ -45,7 +46,7 @@ HTTP Requests
 const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-const getModalContent = (setupType: SetupType) => {
+const getModalContent = (setupType: SetupType, t: TFunction) => {
   switch (setupType) {
     case 'public-access':
       return {
@@ -127,7 +128,7 @@ export default function GettingStarted({ items }: Props) {
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
-
+  const { t } = useTranslate();
   return (
     <>
       {legacyStorage && (
@@ -171,7 +172,7 @@ export default function GettingStarted({ items }: Props) {
       </Stack>
       {showInstructionsModal && setupType && (
         <SetupModal
-          {...getModalContent(setupType)}
+          {...getModalContent(setupType, t)}
           isOpen={showInstructionsModal}
           onDismiss={() => setShowModal(false)}
         />

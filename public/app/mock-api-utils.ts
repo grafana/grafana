@@ -22,7 +22,11 @@ export const toggleMockApiAndReload = () => {
 export const potentiallySetupMockApi = async () => {
   const mockApiEnabled = currentMockApiState();
   if (process.env.NODE_ENV === 'development' && mockApiEnabled) {
-    const { default: worker } = await import('test/mock-api/worker');
+    const { default: worker } = await import('@grafana/test-utils/worker');
+
+    // TODO: Generalise and move Alerting handlers into @grafana/test-utils or @grafana/alerting package
+    const { default: alertingHandlers } = await import('./features/alerting/unified/mocks/server/all-handlers');
+    worker.use(...alertingHandlers);
 
     worker.start({ onUnhandledRequest: 'bypass' });
   }
