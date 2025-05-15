@@ -45,7 +45,7 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { onLogLineHover } = useLogListContext();
+  const { detailsDisplayed, onLogLineHover } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -77,10 +77,12 @@ export const LogLine = ({
     onClick(log);
   }, [log, onClick]);
 
+  const detailsShown = detailsDisplayed(log);
+
   return (
     <div style={style}>
       <div
-        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
@@ -263,6 +265,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '& .no-highlighting': {
         color: theme.colors.text.primary,
       },
+    }),
+    detailsDisplayed: css({
+      background: `hsla(0, 0%, 0%, 0.2)`,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
