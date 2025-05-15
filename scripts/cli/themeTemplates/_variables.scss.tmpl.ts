@@ -101,8 +101,6 @@ $font-family-sans-serif: ${theme.typography.fontFamily};
 /* stylelint-disable-next-line string-quotes */
 $font-family-monospace: ${theme.typography.fontFamilyMonospace};
 
-$font-file-path: '../build/fonts' !default;
-
 $font-size-base: ${theme.typography.fontSize}px !default;
 
 $font-size-lg: ${theme.typography.size.lg} !default;
