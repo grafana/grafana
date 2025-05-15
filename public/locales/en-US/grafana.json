@@ -428,15 +428,6 @@
     "alert-instance-state-filter": {
       "state": "State"
     },
-    "alert-missing-evaluations-to-stale": {
-      "help-info": {
-        "title": "Stale alert instances",
-        "link-text": "Read more about stale alert instances",
-        "text1": "An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.",
-        "text2": "A stale alert instance is resolved and then evicted.",
-        "text3": "This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty."
-      }
-    },
     "alert-label": {
       "tooltip-remove-label": "Remove label"
     },
@@ -458,6 +449,15 @@
       "export": "Export",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "Read more about stale alert instances",
+        "text1": "An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.",
+        "text2": "A stale alert instance is resolved and then evicted.",
+        "text3": "This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty.",
+        "title": "Stale alert instances"
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
