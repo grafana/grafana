@@ -17,7 +17,7 @@ permissions:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@main
+    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@km/update-patch-check
     with:
       head_ref: ${{ github.head_ref }}
       base_ref: ${{ github.base_ref }}
