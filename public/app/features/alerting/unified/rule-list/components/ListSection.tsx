@@ -30,7 +30,7 @@ export const ListSection = ({
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
       <div className={styles.sectionTitle}>
         <Stack alignItems="center">
-          <Stack alignItems="center" gap={0}>
+          <Stack alignItems="center" gap={0.5}>
             <IconButton
               name={isCollapsed ? 'angle-right' : 'angle-down'}
               onClick={toggleCollapsed}
@@ -61,11 +61,16 @@ export const ListSection = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
-    borderRadius: theme.shape.radius.default,
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderBottom: 'none',
+    marginLeft: theme.spacing(3),
 
-    marginLeft: theme.spacing(1.5),
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      height: '100%',
+
+      marginLeft: theme.spacing(-1),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
   }),
   wrapper: css({
     display: 'flex',
@@ -74,10 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   sectionTitle: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-
-    background: theme.colors.background.secondary,
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    padding: `${theme.spacing(0)} ${theme.spacing(1)}`,
   }),
 });
