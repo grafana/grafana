@@ -1,7 +1,6 @@
 import { Store } from 'redux';
 
 import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
 import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
@@ -20,18 +19,8 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  setPluginLinksHook: jest.fn(),
-  usePluginLinks: jest.fn(),
-}));
-
-const usePluginLinksMock = jest.mocked(usePluginLinks);
-
 describe('getPanelMenu()', () => {
   beforeEach(() => {
-    usePluginLinksMock.mockRestore();
-    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
     config.unifiedAlertingEnabled = false;
   });

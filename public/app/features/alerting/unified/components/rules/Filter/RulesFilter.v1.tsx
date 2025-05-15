@@ -3,7 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  Icon,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  RadioButtonGroup,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -53,7 +64,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const { pluginsFilterEnabled } = usePluginsFilterStatus();
+  const { isLoading: pluginsIsLoading, pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
@@ -125,6 +136,10 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   };
 
   const searchIcon = <Icon name={'search'} />;
+
+  if (pluginsIsLoading) {
+    return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+  }
 
   return (
     <Stack direction="column" gap={0}>
@@ -251,7 +266,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Stack>
           </AlertmanagerProvider>
         )}
-        {pluginsFilterEnabled && (
+        {!pluginsIsLoading && pluginsFilterEnabled && (
           <div>
             <Label>
               <Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>
@@ -418,8 +433,8 @@ const helpStyles = (theme: GrafanaTheme2) => ({
 });
 
 function usePluginsFilterStatus() {
-  const { components } = useAlertingHomePageExtensions();
-  return { pluginsFilterEnabled: components.length > 0 };
+  const { components, isLoading } = useAlertingHomePageExtensions();
+  return { isLoading, pluginsFilterEnabled: components.length > 0 };
 }
 
 export default RulesFilter;

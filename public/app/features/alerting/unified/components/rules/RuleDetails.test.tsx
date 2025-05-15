@@ -1,8 +1,7 @@
-import { render } from 'test/test-utils';
+import { ComponentProps } from 'react';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
@@ -10,16 +9,9 @@ import { getCloudRule, getGrafanaRule } from '../../mocks';
 
 import { RuleDetails } from './RuleDetails';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn(),
-  useReturnToPrevious: jest.fn(),
-}));
-
 jest.mock('../../hooks/useIsRuleEditable');
 
 const mocks = {
-  usePluginLinksMock: jest.mocked(usePluginLinks),
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
@@ -36,22 +28,11 @@ beforeAll(() => {
   jest.clearAllMocks();
 });
 
-beforeEach(() => {
-  mocks.usePluginLinksMock.mockReturnValue({
-    links: [
-      {
-        pluginId: 'grafana-ml-app',
-        id: '1',
-        type: PluginExtensionTypes.link,
-        title: 'Run investigation',
-        category: 'Sift',
-        description: 'Run a Sift investigation for this alert',
-        onClick: jest.fn(),
-      },
-    ],
-    isLoading: false,
-  });
-});
+const renderRuleDetails = async (rule: ComponentProps<typeof RuleDetails>['rule']) => {
+  const view = render(<RuleDetails rule={rule} />);
+  await waitFor(async () => screen.queryAllByRole('progressbar').length === 0);
+  return view;
+};
 
 describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons in details', () => {
@@ -62,7 +43,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      render(<RuleDetails rule={grafanaRule} />);
+      await renderRuleDetails(grafanaRule);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -73,7 +54,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      render(<RuleDetails rule={grafanaRule} />);
+      await renderRuleDetails(grafanaRule);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
@@ -88,7 +69,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
 
       // Act
-      render(<RuleDetails rule={cloudRule} />);
+      await renderRuleDetails(cloudRule);
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -99,7 +80,7 @@ describe('RuleDetails RBAC', () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
       // Act
-      render(<RuleDetails rule={cloudRule} />);
+      await renderRuleDetails(cloudRule);
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();

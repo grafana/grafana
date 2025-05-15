@@ -8,11 +8,6 @@ import { setupGrafanaManagedServer, withExternalOnlySetting } from './components
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
-
 const server = setupMswServer();
 
 const ui = {
