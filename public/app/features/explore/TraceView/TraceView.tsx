@@ -169,9 +169,6 @@ export function TraceView(props: Props) {
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
   const datasourceUid = datasource ? datasource?.uid : '';
-  useMemo(() => {
-    console.log('datasource changed', datasource);
-  }, [datasource]);
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];

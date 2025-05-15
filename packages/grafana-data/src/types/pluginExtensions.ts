@@ -239,7 +239,7 @@ export type PluginExtensionCommandPaletteContext = {};
 
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes
-  tags: Record<string, string>;
+  attributes: Record<string, string>;
   datasource: {
     type: string;
     uid: string;
