@@ -38,10 +38,6 @@ jobs:
       PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
     runs-on: ubuntu-latest
     steps:
-      - name: Debug OIDC Claims
-        uses: github/actions-oidc-debugger@main
-        with:
-          audience: '${{ github.server_url }}/${{ github.repository_owner }}'
       - name: "Get vault secrets"
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
