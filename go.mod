@@ -452,7 +452,7 @@ require (
 	cloud.google.com/go/longrunning v0.5.11 // indirect
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/docker/docker v28.0.1+incompatible // indirect
-	github.com/getkin/kin-openapi v0.120.0 // indirect
+	github.com/getkin/kin-openapi v0.132.0 // indirect
 	github.com/gobuffalo/pop/v6 v6.1.1 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
