@@ -9,7 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { publishEditAction } from '../edit-pane/shared';
+import { dashboardEditActions } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
@@ -145,7 +145,7 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
   const onChange = () => {
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
-    publishEditAction({
+    dashboardEditActions.edit({
       description: 'Change panel background',
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),

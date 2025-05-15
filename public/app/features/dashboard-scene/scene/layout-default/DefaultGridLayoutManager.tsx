@@ -22,10 +22,10 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
+  dashboardEditActions,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
-  publishEditAction,
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isClonedKey, joinCloneKeys, useHasClonedParents } from '../../utils/clone';
@@ -122,8 +122,7 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      publishEditAction({
-        description: 'Add panel',
+      dashboardEditActions.addElement({
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -153,17 +152,15 @@ export class DefaultGridLayoutManager
     const emptySpace = findSpaceForNewPanel(this.state.grid);
     const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
 
-    publishEditAction({
+    dashboardEditActions.edit({
       description: 'Paste panel',
-      addedObject: newGridItem,
+      addedObject: newGridItem.state.body,
       source: this,
       perform: () => {
         this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
       },
       undo: () => {
-        this.state.grid.setState({
-          children: this.state.grid.state.children.filter((child) => child !== newGridItem),
-        });
+        this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== newGridItem) });
       },
     });
 
@@ -193,16 +190,11 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    publishEditAction({
-      description: 'Remove panel',
-      removedObject: gridItem,
+    dashboardEditActions.removeElement({
+      removedObject: gridItem.state.body,
       source: this,
-      perform: () => {
-        layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
-      },
-      undo: () => {
-        layout.setState({ children: [...layout.state.children, gridItem] });
-      },
+      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
     });
   }
 

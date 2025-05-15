@@ -4,7 +4,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { NewObjectAddedToCanvasEvent, publishEditAction } from '../../edit-pane/shared';
+import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -96,8 +96,7 @@ export class AutoGridLayoutManager
 
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
-    publishEditAction({
-      description: 'Add panel',
+    dashboardEditActions.addElement({
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -126,8 +125,7 @@ export class AutoGridLayoutManager
 
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
 
-    publishEditAction({
-      description: 'Remove panel',
+    dashboardEditActions.removeElement({
       removedObject: panel,
       source: this,
       perform: () => {
