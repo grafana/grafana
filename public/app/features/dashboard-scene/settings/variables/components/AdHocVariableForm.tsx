@@ -20,7 +20,7 @@ export interface AdHocVariableFormProps {
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   inline?: boolean;
-  datasourceSupported: boolean;
+  datasourceSupported?: boolean;
 }
 
 export function AdHocVariableForm({
@@ -65,7 +65,7 @@ export function AdHocVariableForm({
         </EditorField>
       </Box>
 
-      {!datasourceSupported ? (
+      {datasourceSupported === false ? (
         <Alert
           title={t(
             'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
