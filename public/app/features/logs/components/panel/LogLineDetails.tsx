@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -11,14 +12,14 @@ import { getLogRowStyles } from '../getLogRowStyles';
 
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
-import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
-  logs: LogListModel[];
   getFieldLinks?: GetFieldLinksFn;
+  logs: LogListModel[];
+  onResize(): void;
 }
 
-export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
+export const LogLineDetails = ({ getFieldLinks, logs, onResize }: Props) => {
   const {
     app,
     closeDetails,
@@ -45,7 +46,8 @@ export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
     if (containerRef.current) {
       setDetailsWidth(containerRef.current.clientWidth);
     }
-  }, [setDetailsWidth]);
+    onResize();
+  }, [onResize, setDetailsWidth]);
 
   return (
     <Resizable onResize={handleResize} defaultSize={detailsWidth ? { width: detailsWidth } : undefined}>
