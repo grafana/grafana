@@ -19,6 +19,8 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
@@ -31,7 +33,6 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 

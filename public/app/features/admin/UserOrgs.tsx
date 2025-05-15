@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 import { createRef, PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Button,
   ConfirmButton,
@@ -19,7 +21,6 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
 
 import { OrgRolePicker } from './OrgRolePicker';
