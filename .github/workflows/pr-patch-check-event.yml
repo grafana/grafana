@@ -8,7 +8,6 @@ on:
     branches:
       - "main"
       - "release-*"
-      - km/update-patch-check
 
 permissions:
   id-token: write
@@ -18,7 +17,7 @@ permissions:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@km/update-patch-check
+    uses: grafana/grafana/.github/workflows/pr-patch-check.ymlmain
     with:
       head_ref: ${{ github.head_ref }}
       base_ref: ${{ github.base_ref }}
