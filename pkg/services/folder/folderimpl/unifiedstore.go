@@ -2,9 +2,7 @@ package folderimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -153,13 +151,11 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	hits := []*folder.Folder{}
 
-	parentUid := q.UID
-
-	for parentUid != "" {
-		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUid, OrgID: q.OrgID})
+	parentUID := q.UID
+	for parentUID != "" {
+		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUID, OrgID: q.OrgID})
 		if err != nil {
-			var statusError *apierrors.StatusError
-			if errors.As(err, &statusError) && statusError.ErrStatus.Code == http.StatusForbidden {
+			if apierrors.IsForbidden(err) {
 				// If we get a Forbidden error when requesting the parent folder, it means the user does not have access
 				// to it, nor its parents. So we can stop looping
 				break
@@ -167,15 +163,15 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 			return nil, err
 		}
 
-		parentUid = folder.ParentUID
+		parentUID = folder.ParentUID
 		hits = append(hits, folder)
 	}
 
-	if len(hits) > 0 {
-		return util.Reverse(hits[1:]), nil
+	if len(hits) == 0 {
+		return hits, nil
 	}
 
-	return hits, nil
+	return util.Reverse(hits[1:]), nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -340,45 +336,36 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		return nil, err
 	}
 
-	m := map[string]*folder.Folder{}
+	filters := make(map[string]struct{}, len(q.UIDs))
+	for _, uid := range q.UIDs {
+		filters[uid] = struct{}{}
+	}
+
+	folderMap := make(map[string]*folder.Folder)
+	relations := make(map[string]string)
+	if q.WithFullpath || q.WithFullpathUIDs {
+		for _, folder := range folders {
+			folderMap[folder.UID] = folder
+			relations[folder.UID] = folder.ParentUID
+		}
+	}
+
+	hits := make([]*folder.Folder, 0, len(folders))
 	for _, f := range folders {
+		if shouldSkipFolder(f, filters) {
+			continue
+		}
+
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
-			if err != nil {
-				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
-			}
-			// If we don't have a parent, we just return the current folder as the full path
-			f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
+			buildFolderFullPaths(f, relations, folderMap)
 		}
 
-		m[f.UID] = f
-	}
-
-	hits := []*folder.Folder{}
-
-	if len(q.UIDs) > 0 {
-		//return only the specified q.UIDs
-		for _, uid := range q.UIDs {
-			f, ok := m[uid]
-			if ok {
-				hits = append(hits, f)
-			}
-		}
-
-		return hits, nil
-	}
-
-	/*
-		if len(q.AncestorUIDs) > 0 {
-			// TODO
-			//return all nodes under those ancestors, requires building a tree
-		}
-	*/
-
-	//return everything
-	for _, f := range m {
 		hits = append(hits, f)
 	}
+
+	// TODO: return all nodes under those ancestors, requires building a tree
+	// if len(q.AncestorUIDs) > 0 {
+	// }
 
 	return hits, nil
 }
@@ -489,4 +476,43 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) {
+	titles := make([]string, 0)
+	uids := make([]string, 0)
+
+	titles = append(titles, f.Title)
+	uids = append(uids, f.UID)
+
+	currentUID := f.UID
+	for currentUID != "" {
+		parentUID, exists := relations[currentUID]
+		if !exists {
+			break
+		}
+
+		if parentUID == "" {
+			break
+		}
+
+		parentFolder, exists := folderMap[parentUID]
+		if !exists {
+			break
+		}
+		titles = append(titles, parentFolder.Title)
+		uids = append(uids, parentFolder.UID)
+		currentUID = parentFolder.UID
+	}
+
+	f.Fullpath = strings.Join(util.Reverse(titles), "/")
+	f.FullpathUIDs = strings.Join(util.Reverse(uids), "/")
+}
+
+func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {
+	if len(filterUIDs) == 0 {
+		return false
+	}
+	_, exists := filterUIDs[f.UID]
+	return !exists
 }

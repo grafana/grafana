@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -326,15 +325,8 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return nil, err
 	}
 
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, f, f.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
@@ -419,17 +411,13 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 
 	// we only need to check access to the folder
 	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	g, err := guardian.NewByFolderUID(ctx, q.UID, q.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	guardianFunc := g.CanView
+	folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID)
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, folderScope)
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanEdit
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope)
 	}
 
-	hasAccess, err := guardianFunc()
+	hasAccess, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator)
 	if err != nil {
 		return nil, err
 	}
@@ -981,12 +969,8 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	guard, err := guardian.NewByFolderUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return err
-	}
-
-	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if canDelete, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !canDelete {
 		if err != nil {
 			return toFolderError(err)
 		}
@@ -994,7 +978,7 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 	}
 
 	folders := []string{cmd.UID}
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		descendants, err := s.nestedFolderDelete(ctx, cmd)
 
 		if err != nil {
@@ -1402,27 +1386,24 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, err
 	}
 
-	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
-	if err != nil {
-		return nil, err
-	}
-
+	var evaluator accesscontrol.Evaluator
+	// Check write permission for existing dashboards, create permission for new dashboards
 	if dash.ID == 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		parentUID := dash.FolderUID
+		if parentUID == "" {
+			parentUID = folder.GeneralFolderUID
 		}
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID))
 	} else {
-		if canSave, err := guard.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID))
+	}
+
+	if hasAccess, err := s.accessControl.Evaluate(ctx, dto.User, evaluator); err != nil || !hasAccess {
+		if err != nil {
+			return nil, err
 		}
+		return nil, dashboards.ErrDashboardUpdateAccessDenied
 	}
 
 	var userID int64
@@ -1480,34 +1461,6 @@ func SplitFullpath(s string) []string {
 	}
 
 	return result
-}
-
-// getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
-// It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
-	newDashboard := d.ID == 0
-
-	if newDashboard {
-		// if it's a new dashboard/folder check the parent folder permissions
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.FolderID, // nolint:staticcheck
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-	guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-		UID:   d.UID,
-		OrgID: d.OrgID,
-	}, d.OrgID, user)
-	if err != nil {
-		return nil, err
-	}
-	return guard, nil
 }
 
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
