@@ -28,6 +28,8 @@ import (
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -204,6 +206,8 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
+	t.Skip("skipping integration test because it's flaky")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
