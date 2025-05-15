@@ -11,16 +11,25 @@ interface SecretStatus {
   message?: string; // Only applicable if the phase is `Failed`
 }
 
+interface MetaDataAnnotations {
+  'grafana.app/createdBy'?: string;
+  'grafana.app/updatedBy'?: string;
+  'grafana.app/updatedTimestamp'?: string;
+}
+
+interface Metadata {
+  creationTimestamp: string;
+  name: string;
+  namespace: string;
+  resourceVersion: string;
+  uid: string;
+  annotations?: MetaDataAnnotations;
+}
+
 export interface SecretsListResponseItem {
   apiVersion: string;
   kind: 'SecureValue';
-  metadata: {
-    creationTimestamp: null;
-    name: string;
-    namespace: string;
-    resourceVersion: string;
-    uid: string;
-  };
+  metadata: Metadata;
   spec: {
     decrypters: string[] | null;
     description: string;
@@ -61,6 +70,10 @@ export interface Secret {
   uid: SecretsListResponseItem['metadata']['uid'];
   value?: string; // Only present when editing a secret
   status?: SecretStatus['phase'];
+  created: SecretsListResponseItem['metadata']['creationTimestamp'];
+  createdBy?: MetaDataAnnotations['grafana.app/createdBy'];
+  modified?: MetaDataAnnotations['grafana.app/updatedTimestamp'];
+  modifiedBy?: MetaDataAnnotations['grafana.app/updatedBy'];
 }
 
 export interface NewSecret extends Omit<Secret, 'uid'> {

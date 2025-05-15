@@ -1,37 +1,43 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
-import { useListSecretsQuery, useDeleteSecretMutation } from './api/secretsManagementApi';
+import { useDeleteSecretMutation, useListSecretsQuery } from './api/secretsManagementApi';
 import { EditSecretModal } from './components/EditSecretModal';
 import { SecretsEmptyState } from './components/SecretsEmptyState';
 import { SecretsList } from './components/SecretsList';
-import { Secret } from './types';
+import { SecretStatusPhase } from './types';
 
 export default function SecretsManagementPage() {
+  const styles = useStyles2(getStyles);
+
   // Api test
-  const { data: secrets, isLoading } = useListSecretsQuery();
-  const [deleteSecret, { isLoading: isDeleting }] = useDeleteSecretMutation();
+  const [pollingInterval, setPollingInterval] = useState(0);
+  const { data: secrets, isLoading } = useListSecretsQuery(undefined, {
+    pollingInterval,
+  });
+
+  useEffect(() => {
+    if (secrets && secrets.some((secret) => secret.status === SecretStatusPhase.Pending)) {
+      setPollingInterval(500);
+    } else {
+      setPollingInterval(0);
+    }
+  }, [secrets]);
+
+  const [deleteSecret] = useDeleteSecretMutation();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<undefined | string>();
   const [filter, setFilter] = useState('');
 
   const isEditModalOpen = !!editTarget || isCreateModalOpen;
-  const styles = useStyles2(getStyles);
-
-  const filteredSecrets: Secret[] = useMemo(() => {
-    return secrets?.filter((secret) => secret.name.toLowerCase().includes(filter.toLowerCase())) ?? [];
-  }, [secrets, filter]);
-
   const hasSecrets = secrets && secrets.length > 0;
-  console.log('isDeleting', isDeleting);
-  const hasFilteredSecrets = filteredSecrets.length > 0;
 
   const handleShowCreateModal = () => {
     setIsCreateModalOpen(true);
@@ -79,7 +85,7 @@ export default function SecretsManagementPage() {
 
         {!hasSecrets && <SecretsEmptyState onCreateSecret={handleShowCreateModal} />}
 
-        {hasSecrets && hasFilteredSecrets && (
+        {hasSecrets && (
           <SecretsList
             onEditSecret={handleEditSecret}
             onDeleteSecret={deleteSecret}

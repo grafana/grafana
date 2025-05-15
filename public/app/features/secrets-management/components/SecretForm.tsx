@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { Button, Field, Input, MultiSelect, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Button, Field, Input, MultiSelect, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { DECRYPT_ALLOW_LIST_OPTIONS } from '../constants';
+import { validateSecretDescription, validateSecretName, validateSecretValue } from '../utils';
 
-import { SecretInput } from './SecretInput';
+import { SecretValueInput } from './SecretValueInput';
 
 export interface SecretFormValues {
   name: string;
@@ -20,7 +23,7 @@ interface BaseSecretFormProps {
   onCancel: () => void;
   initialValues?: SecretFormValues;
   onSubmit: (data: SecretFormValues) => void;
-  submitText?: string;
+  submitText: string;
   disableNameField?: boolean;
 }
 
@@ -28,11 +31,13 @@ export function SecretForm({
   onSubmit,
   onCancel,
   initialValues,
-  submitText = 'Save',
+  submitText,
   disableNameField = false,
 }: BaseSecretFormProps) {
   // Duplicates are not shown.
   const audiences = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.audiences ?? [])];
+  const isNew = initialValues?.uid === undefined;
+  const [isConfigured, setIsConfigured] = useState(!isNew);
 
   const {
     register,
@@ -42,6 +47,10 @@ export function SecretForm({
   } = useForm<SecretFormValues>({
     defaultValues: initialValues,
   });
+
+  const handleResetValue = () => {
+    setIsConfigured(false);
+  };
 
   return (
     <form
@@ -57,57 +66,68 @@ export function SecretForm({
       <input type="hidden" {...register('uid')} />
       <Field
         disabled={disableNameField}
-        description="The name that the secret will be referred to as."
-        label="Name"
+        description={t('secrets-management.form.name.description', 'The name will be used to reference the secret')}
+        label={t('secrets-management.form.name.label', 'Name')}
         invalid={Boolean(errors?.name?.message)}
         error={errors?.name?.message as string}
+        required
       >
-        <Input {...register('name', { required: true })} />
+        <Input
+          {...register('name', {
+            validate: validateSecretName,
+          })}
+        />
       </Field>
       <Field
-        description="Short description of the secret."
-        label="Description"
+        description={t(
+          'secrets-management.form.description.description',
+          'Short description of the purpose of this secret'
+        )}
+        label={t('secrets-management.form.description.label', 'Description')}
         invalid={Boolean(errors?.description?.message)}
         error={errors?.description?.message as string}
+        required
       >
-        <Input {...register('description', { required: true })} />
+        <Input
+          {...register('description', {
+            validate: validateSecretDescription,
+          })}
+        />
       </Field>
       <Field
-        description="Secret value that will be encrypted."
-        label="Value"
+        description={t('secrets-management.form.value.description', 'Secret value')}
+        label={t('secrets-management.form.value.label', 'Value')}
         invalid={Boolean(errors?.value?.message)}
         error={errors?.value?.message as string}
+        required
       >
-        <SecretInput isConfigured={disableNameField} {...register('value', { required: !disableNameField })} />
+        <SecretValueInput
+          isConfigured={isConfigured}
+          onReset={handleResetValue}
+          {...register('value', {
+            validate: validateSecretValue,
+          })}
+        />
       </Field>
-      <Field label="State" description="State of the secret.">
+      <Field
+        description={t('secrets-management.form.decrypters.description', 'Services able to decrypt secret value')}
+        label={t('secrets-management.form.decrypters.label', 'Decrypters')}
+      >
         <Controller
-          defaultValue
           control={control}
-          name="enabled"
+          name="audiences"
           render={({ field: { ref, ...field } }) => (
-            <RadioButtonGroup
-              options={[
-                { label: 'Active', value: true },
-                { label: 'Inactive', value: false },
-              ]}
+            <MultiSelect
+              placeholder={t('secrets-management.form.decrypters.placeholder', 'Choose decrypter(s)')}
+              options={audiences}
               {...field}
             />
           )}
         />
       </Field>
-      <Field description="Services able to decrypt secret value." label="Decrypters">
-        <Controller
-          control={control}
-          name="audiences"
-          render={({ field: { ref, ...field } }) => (
-            <MultiSelect placeholder="Choose decrypter(s)" options={audiences} {...field} />
-          )}
-        />
-      </Field>
       <Stack gap={1} justifyContent="flex-end">
         <Button variant="secondary" onClick={onCancel}>
-          Cancel
+          {t('secrets-management.form.btn-cancel', 'Cancel')}
         </Button>
         <Button disabled={isSubmitting} type="submit">
           {submitText}

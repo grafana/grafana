@@ -9277,6 +9277,68 @@
         "clear-search": "Clear active filter to see all secrets."
       }
     },
+    "item": {
+      "edit-item": "Edit",
+      "edit-item-aria-label": "Edit {{name}}",
+      "delete-item-aria-label": "Delete {{name}}",
+      "copy-value-aria-label": "Copy \"{{value}}\"",
+      "labels": {
+        "name": "Name:",
+        "uid": "ID:",
+        "description": "Description:",
+        "created": "Created:",
+        "decrypters": "Decrypters:",
+        "keeper": "Keeper:"
+      },
+      "delete-modal": {
+        "title": "Delete secret",
+        "body": "Are you sure you want to delete \"{{name}}\"?",
+        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "delete-button": "Delete",
+        "confirm-text": "delete"
+      }
+    },
+    "edit-modal": {
+      "title": {
+        "edit": "Edit secret {{name}}",
+        "create": "Create secret"
+      }
+    },
+    "form": {
+      "name": {
+        "label": "Name",
+        "description": "The name will be used to reference the secret",
+        "error": {
+          "required": "Name is required",
+          "too-long": "Name must be less than {{maxLength}} characters",
+          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods"
+        }
+      },
+      "description": {
+        "label": "Description",
+        "description": "Short description of the purpose of this secret",
+        "error": {
+          "required": "Description is required",
+          "too-long": "Description must be less than {{maxLength}} characters"
+        }
+      },
+      "value": {
+        "label": "Value",
+        "description": "Value returned when referencing this secret",
+        "error": {
+          "required": "Value is required",
+          "too-long": "Value must be less than {{maxLength}} characters"
+        }
+      },
+      "decrypters": {
+        "label": "Decrypters",
+        "description": "Services able to decrypt secret value",
+        "placeholder": "Choose decrypter(s)"
+      },
+      "btn-cancel": "Cancel",
+      "btn-create": "Create",
+      "btn-update": "Update"
+    },
     "empty-state": {
       "more-info": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
       "title": "You don't have any secrets yet."

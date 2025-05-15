@@ -14,3 +14,6 @@ export const DECRYPT_ALLOW_LIST_OPTIONS = (
 ).map(([value, label]) => {
   return { label, value };
 });
+
+export const SUBDOMAIN_MAX_LENGTH = 253;
+export const LABEL_MAX_LENGTH = 63;

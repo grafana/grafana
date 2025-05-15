@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 
-import { Modal } from '@grafana/ui';
+import { Modal, Spinner } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
-import { useGetSecretQuery } from '../api/secretsManagementApi';
+import { useCreateSecretMutation, useGetSecretQuery, useUpdateSecretMutation } from '../api/secretsManagementApi';
 import { secretFormValuesToSecret, secretToSecretFormValues } from '../utils';
 
 import { SecretForm, SecretFormValues } from './SecretForm';
@@ -22,29 +23,39 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
     skip: !name,
   });
 
-  console.log('isLoading', isLoading, secret);
+  const [createSecret] = useCreateSecretMutation();
+  const [updateSecret] = useUpdateSecretMutation();
+
   const isNew = isUninitialized;
   const initialValues = isNew ? undefined : secretToSecretFormValues(secret);
-  const modalTitle = isNew ? 'Create secret' : `Edit secret ${secret?.name}`;
-  const submitText = isNew ? 'Create' : 'Update';
+  const modalTitle = isNew
+    ? t('secrets-management.edit-modal.title.create', 'Create secret')
+    : t('secrets-management.edit-modal.title.edit', 'Edit secret {{name}}', { name: secret?.name ?? '' });
+  const submitText = isNew
+    ? t('secrets-management.form.btn-create', 'Create')
+    : t('secrets-management.form.btn-update', 'Update');
 
   const handleSubmit = useCallback(
     async (data: SecretFormValues) => {
       try {
-        const secretData = secretFormValuesToSecret(data);
-        console.log('secretData', secretData);
+        const secretData = secretFormValuesToSecret({ ...secret, ...data });
+        if (isNew) {
+          await createSecret(secretData);
+        } else {
+          await updateSecret(secretData);
+        }
       } catch (error) {
         return Promise.reject('Unable to store secret');
       } finally {
         onDismiss();
       }
     },
-    [onDismiss]
+    [createSecret, isNew, onDismiss, secret, updateSecret]
   );
 
   return (
     <Modal title={modalTitle} isOpen={isOpen} onDismiss={onDismiss} closeOnBackdropClick={false}>
-      {isLoading && <div>Loading...</div>}
+      {isLoading && <Spinner />}
       {!isLoading && (
         <SecretForm
           disableNameField={!isNew}

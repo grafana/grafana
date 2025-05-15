@@ -4,6 +4,7 @@ import { createBaseQuery } from 'app/api/createBaseQuery';
 import { getAPIBaseURL } from 'app/api/utils';
 
 import { Secret, SecretsListResponse, SecretsListResponseItem } from '../types';
+import { transformFromSecret, transformToSecret } from '../utils';
 
 const baseURL = getAPIBaseURL('secret.grafana.app', 'v0alpha1');
 
@@ -18,20 +19,9 @@ export const secretsManagementApi = createApi({
         method: 'GET',
       }),
       providesTags: (result) =>
-        result
-          ? [...result.map(({ name }) => ({ type: 'Secrets' as const, id: name })), { type: 'Secrets', id: 'LIST' }]
-          : [{ type: 'Secrets', id: 'LIST' }],
+        result ? [...result.map(({ name }) => ({ type: 'Secrets' as const, id: name })), 'Secrets'] : ['Secrets'],
       transformResponse: (response: SecretsListResponse) => {
-        return (
-          (response?.items?.map((item) => ({
-            name: item.metadata.name,
-            description: item.spec.description,
-            audiences: item.spec.decrypters,
-            uid: item.metadata.uid,
-            status: item.status?.phase ?? 'Succeeded',
-            ...('keeper' in item.spec ? { keeper: item.spec.keeper } : undefined),
-          })) as Secret[]) ?? []
-        );
+        return (response?.items?.map(transformToSecret) as Secret[]) ?? [];
       },
     }),
     getSecret: builder.query<Secret, string>({
@@ -41,14 +31,16 @@ export const secretsManagementApi = createApi({
       }),
       providesTags: (_result, _error, name) => [{ type: 'Secrets', id: name }],
       transformResponse: (response: SecretsListResponseItem) => {
-        return {
-          name: response.metadata.name,
-          description: response.spec.description,
-          audiences: response.spec.decrypters,
-          uid: response.metadata.uid,
-          status: response.status?.phase ?? 'Succeeded',
-          ...('keeper' in response.spec ? { keeper: response.spec.keeper } : undefined),
-        } as Secret;
+        return transformToSecret(response);
+
+        // return {
+        //   name: response.metadata.name,
+        //   description: response.spec.description,
+        //   audiences: response.spec.decrypters,
+        //   uid: response.metadata.uid,
+        //   status: response.status?.phase ?? 'Succeeded',
+        //   ...('keeper' in response.spec ? { keeper: response.spec.keeper } : undefined),
+        // } as Secret;
       },
     }),
     deleteSecret: builder.mutation({
@@ -56,7 +48,7 @@ export const secretsManagementApi = createApi({
         url: `/securevalues/${encodeURIComponent(name)}`,
         method: 'DELETE',
       }),
-      // invalidatesTags: (result, error, name) => [{ type: 'Secrets', id: name }],
+      invalidatesTags: (result, error, name) => ['Secrets'],
       async onQueryStarted(name, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           secretsManagementApi.util.updateQueryData('listSecrets', undefined, (draft) => {
@@ -77,15 +69,17 @@ export const secretsManagementApi = createApi({
       query: (data) => ({
         url: '/securevalues',
         method: 'POST',
-        body: data,
+        body: transformFromSecret(data),
       }),
+      invalidatesTags: ['Secrets'],
     }),
     updateSecret: builder.mutation({
-      query: ({ name, ...data }) => ({
-        url: `/securevalues/${encodeURIComponent(name)}`,
+      query: (secret) => ({
+        url: `/securevalues/${encodeURIComponent(secret.name)}`,
         method: 'PUT',
-        body: data,
+        body: transformFromSecret(secret),
       }),
+      invalidatesTags: ['Secrets'],
     }),
   }),
 });

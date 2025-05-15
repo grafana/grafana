@@ -12,7 +12,7 @@ interface SecretsListProps {
 
 export function SecretsList({ secrets, onEditSecret, onDeleteSecret, filter }: SecretsListProps) {
   const hasSecrets = secrets.length > 0;
-  const filteredSecrets = filter
+  const filteredSecrets = !filter
     ? secrets
     : secrets.filter((secret) => secret.name.toLowerCase().includes(filter?.toLowerCase() || ''));
   const hasFilteredSecrets = filteredSecrets.length > 0;
