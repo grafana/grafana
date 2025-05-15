@@ -119,17 +119,17 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               rowContents = frame.fields
                 .filter((f) => !groupByFieldNames.includes(f.name))
                 .map((f) => {
-                  const value =
-                    f.values[fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : f.values.length - 1];
-                  return { ...f, values: [value] };
+                  const values: any[] = [];
+                  valuesByGroupKey.forEach((v) => {
+                    values.push(
+                      v[f.name].values[
+                        fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : v[f.name].values.length - 1
+                      ]
+                    );
+                  });
+                  return { ...f, values: values };
                 });
               fields = fields.concat(rowContents);
-              fieldOptions = {
-                operation: GroupByOperationID.aggregate,
-                aggregations: [
-                  fieldOptions.operation === GroupByOperationID.takeFirst ? ReducerID.first : ReducerID.last,
-                ],
-              };
             } else {
               const aggregations = fieldOptions.aggregations;
               const valuesByAggregation: Record<string, unknown[]> = {};
