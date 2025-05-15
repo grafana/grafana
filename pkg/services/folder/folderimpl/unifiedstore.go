@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -195,9 +197,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 	}
 
-	req := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Fields: []*resource.Requirement{
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Fields: []*resourcepb.Requirement{
 				{
 					Key:      resource.SEARCH_FIELD_FOLDER,
 					Operator: string(selection.In),
@@ -214,7 +216,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 
 	// only filter the folder UIDs if they are provided in the query
 	if len(q.FolderUIDs) > 0 {
-		req.Options.Fields = append(req.Options.Fields, &resource.Requirement{
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   q.FolderUIDs,
