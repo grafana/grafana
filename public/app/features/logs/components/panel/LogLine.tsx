@@ -84,11 +84,12 @@ export const LogLine = ({
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
-        onClick={handleClick}
       >
         <LogLineMenu styles={styles} log={log} />
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+          onClick={handleClick}
         >
           <Log
             displayedFields={displayedFields}
