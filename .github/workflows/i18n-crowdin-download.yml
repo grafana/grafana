@@ -62,8 +62,6 @@ jobs:
           pull_request_base_branch_name: 'main'
           base_url: 'https://grafana.api.crowdin.com'
           config: 'crowdin.yml'
-          source: 'public/locales/en-US/grafana.json'
-          translation: 'public/locales/%locale%/%original_file_name%'
           # Magic details of the github-actions bot user, to pass CLA checks
           github_user_name: "github-actions[bot]"
           github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
@@ -150,16 +148,17 @@ jobs:
         # Only approve if:
         # - the PR does not modify files other than json files under the public/locales/ directory
         # - the PR does not modify the en-US locale
+        # TODO make these paths inputs to the workflow when we move this to a shared repo
         run: |
           filesChanged="$(gh pr diff --name-only "$PR_URL")"
 
-          if [[ $(echo "$filesChanged" | grep -cv 'public/locales/[a-zA-Z\-]*/grafana.json') -ne 0 ]]; then
+          if [[ $(echo "$filesChanged" | grep -cv -e 'public/locales/[a-zA-Z\-]*/grafana.json' -e 'public/app/plugins/datasource/azuremonitor/locales/[a-zA-Z\-]*/grafana-azure-monitor-datasource.json') -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
             exit 1
           fi
 
-          if [[ $(echo "$filesChanged" | grep -c "public/locales/en-US") -ne 0 ]]; then
-            echo "public/locales/en-US changes detected, not approving"
+          if [[ $(echo "$filesChanged" | grep -c -e "public/locales/en-US" -e "public/app/plugins/datasource/azuremonitor/locales/en-US") -ne 0 ]]; then
+            echo "en-US changes detected, not approving"
             exit 1
           fi
 
