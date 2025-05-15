@@ -95,11 +95,11 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.35.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.35.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.36.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.38.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.37.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.40.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.28.0 // @grafana/grafana-authnz-team
-	golang.org/x/sync v0.12.0 // @grafana/alerting-squad-backend
+	golang.org/x/sync v0.14.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
 	golang.org/x/tools v0.31.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
@@ -204,8 +204,8 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // @grafana/backend-platform
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.25.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142 // indirect; @grafana/backend-platform
 )
@@ -367,7 +367,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
