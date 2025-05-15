@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { useDispatch } from 'app/types';
 
-import { Trans } from '../../../core/internationalization';
 import { setInitialDatasource } from '../state/reducers';
 
 export default function NewDashboardWithDS() {

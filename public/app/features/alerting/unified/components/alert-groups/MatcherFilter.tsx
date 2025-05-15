@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
@@ -27,6 +27,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
     600,
     [filterQuery]
   );
+  const { t } = useTranslate();
 
   const searchIcon = <Icon name={'search'} />;
   let inputValid = Boolean(defaultQueryString && defaultQueryString.length >= 3);

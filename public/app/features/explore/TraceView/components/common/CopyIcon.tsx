@@ -16,9 +16,8 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
-
-import { t } from '../../../../../core/internationalization';
 
 const getStyles = () => ({
   CopyIcon: css({
@@ -45,7 +44,7 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
-
+  const { t } = useTranslate();
   const handleClick = () => {
     navigator.clipboard.writeText(copyText);
     setHasCopied(true);

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
 import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import {
   configMapHandlers,

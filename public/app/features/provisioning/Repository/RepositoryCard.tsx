@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { IconName, Stack, Text, TextLink, Icon, Card, LinkButton } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';

@@ -1,9 +1,10 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../utils/misc';
 
 export const NotificationPoliciesErrorAlert = ({ error }: { error: unknown }) => {
+  const { t } = useTranslate();
   const title = t('alerting.policies.update-errors.title', 'Error saving notification policy');
 
   const errMessage = stringifyErrorLike(error);

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -12,7 +13,6 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { trackInsightsFeedback } from '../Analytics';
 
@@ -66,7 +66,7 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
   const styles = useStyles2(getStyles);
 
   const [showModal, setShowModal] = useState<boolean>(false);
-
+  const { t } = useTranslate();
   const onDismiss = () => {
     setShowModal(false);
   };

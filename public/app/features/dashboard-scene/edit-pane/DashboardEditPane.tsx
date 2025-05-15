@@ -4,6 +4,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -24,7 +25,6 @@ import {
   Text,
   Icon,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
 import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
@@ -221,6 +221,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       setOutlinePaneSize(1 - size);
     },
   });
+  const { t } = useTranslate();
 
   if (!editableElement) {
     return null;

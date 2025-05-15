@@ -2,9 +2,9 @@ import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { VariableLegend } from '../components/VariableLegend';
@@ -73,6 +73,8 @@ export function CustomVariableForm({
 }
 
 export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  const { t } = useTranslate();
+
   if (!(variable instanceof CustomVariable)) {
     return [];
   }
@@ -87,6 +89,7 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
 
 function ValuesTextField({ variable }: { variable: CustomVariable }) {
   const { query } = variable.useState();
+  const { t } = useTranslate();
 
   const onBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ query: event.currentTarget.value });

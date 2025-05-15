@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
@@ -65,6 +65,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
       locationService.replace('/alerting/list');
     }
   }, [deleteRuleFromGroup, dismissModal, ruleToDelete, redirectToListView, waitForRemoval]);
+  const { t } = useTranslate();
 
   const modal = useMemo(
     () => (
@@ -88,7 +89,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         onDismiss={dismissModal}
       />
     ),
-    [ruleToDelete, deleteRule, dismissModal, isSoftDeleteEnabled]
+    [ruleToDelete, deleteRule, dismissModal, isSoftDeleteEnabled, t]
   );
 
   return [modal, showModal, dismissModal];

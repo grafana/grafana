@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -12,7 +13,6 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { Trans } from '../../../../../core/internationalization';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
 
 import { VizWrapper } from './VizWrapper';

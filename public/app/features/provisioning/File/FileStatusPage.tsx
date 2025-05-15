@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
 import {
@@ -14,7 +15,6 @@ import {
 } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t, Trans } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -26,7 +26,7 @@ export default function FileStatusPage() {
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
-
+  const { t } = useTranslate();
   return (
     <Page
       navId="provisioning"
@@ -84,6 +84,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
         return;
     }
   }, [wrap, tab, setJsonView]);
+  const { t } = useTranslate();
 
   const tabInfo = [
     { value: TabSelection.File, label: 'File (from repository)' },

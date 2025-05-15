@@ -3,9 +3,9 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -33,6 +33,7 @@ function DashboardValidation({ dashboard }: DashboardValidationProps) {
 
     return respPromise;
   }, [dashboard]);
+  const { t } = useTranslate();
 
   let alert: React.ReactNode;
 

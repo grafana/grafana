@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from '../../shared/InfoItem';
 
 export const MigrationStepsPane = () => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   return (
     <Box alignItems="flex-start" display="flex" direction="column" gap={2}>

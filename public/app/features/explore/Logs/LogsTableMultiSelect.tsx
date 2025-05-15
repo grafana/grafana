@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { LogsTableActiveFields } from './LogsTableActiveFields';
 import { LogsTableAvailableFields } from './LogsTableAvailableFields';

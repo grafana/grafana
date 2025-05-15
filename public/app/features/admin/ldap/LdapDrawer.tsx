@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction, useEffect, useId, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   useStyles2,
   Button,
@@ -22,7 +23,6 @@ import {
   RadioButtonGroup,
   SecretInput,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, MapKeyCertConfigured } from 'app/types';
 
 import { GroupMappingComponent } from './LdapGroupMapping';
@@ -64,6 +64,7 @@ export const LdapDrawerComponent = ({
         : EncryptionProvider.FilePath
     );
   }, [getValues]);
+  const { t } = useTranslate();
 
   const renderMultiSelectLabel = (value: string) => {
     if (value.length >= 5) {

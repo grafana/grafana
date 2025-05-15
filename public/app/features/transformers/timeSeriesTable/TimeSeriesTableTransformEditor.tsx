@@ -11,8 +11,8 @@ import {
   FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -58,6 +58,8 @@ export function TimeSeriesTableTransformEditor({
     },
     [onChange, options]
   );
+
+  const { t } = useTranslate();
 
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {

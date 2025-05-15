@@ -16,9 +16,9 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { defaultFilters, SearchProps } from '../../../useSearch';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
@@ -71,6 +71,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   useEffect(() => {
     clear();
   }, [clear, trace]);
+
+  const { t } = useTranslate();
 
   const setShowSpanFilterMatchesOnly = useCallback(
     (showMatchesOnly: boolean) => {

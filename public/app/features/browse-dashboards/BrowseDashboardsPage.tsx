@@ -5,11 +5,11 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';

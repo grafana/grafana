@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -11,6 +11,7 @@ import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
+  const { t } = useTranslate();
   const info: PageInfoItem[] = [];
 
   if (!plugin) {

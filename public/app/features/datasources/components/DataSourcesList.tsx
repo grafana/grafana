@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';
@@ -63,6 +63,8 @@ export function DataSourcesListView({
       path: location.pathname,
     });
   }, [location]);
+
+  const { t } = useTranslate();
 
   if (!isLoading && dataSourcesCount === 0) {
     return (

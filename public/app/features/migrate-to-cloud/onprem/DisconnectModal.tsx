@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface Props {
 }
 
 export const DisconnectModal = ({ isOpen, isError, isLoading, onDisconnectConfirm, onDismiss }: Props) => {
+  const { t } = useTranslate();
+
   const confirmBody = (
     <Stack direction="column">
       {isError && (

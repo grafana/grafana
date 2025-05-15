@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Collapse,
   Alert,
@@ -18,7 +19,6 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
@@ -131,6 +131,8 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, transformations]);
+
+  const { t } = useTranslate();
 
   return (
     <>

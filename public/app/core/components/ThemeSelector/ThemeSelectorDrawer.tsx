@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Drawer, FeatureBadge, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { ThemePreview } from '../Theme/ThemePreview';
@@ -18,7 +19,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   const styles = useStyles2(getStyles);
   const themes = getSelectableThemes();
   const currentTheme = useTheme2();
-
+  const { t } = useTranslate();
   const onChange = (theme: ThemeRegistryItem) => {
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: theme.id,
@@ -70,8 +71,9 @@ interface ThemeCardProps {
 }
 
 function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeCardProps) {
+  const { t } = useTranslate();
   const theme = themeOption.build();
-  const label = getTranslatedThemeName(themeOption);
+  const label = getTranslatedThemeName(themeOption, t);
   const styles = useStyles2(getStyles);
 
   return (
@@ -126,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-function getTranslatedThemeName(theme: ThemeRegistryItem) {
+function getTranslatedThemeName(theme: ThemeRegistryItem, t: TFunction) {
   switch (theme.id) {
     case 'dark':
       return t('shared.preferences.theme.dark-label', 'Dark');

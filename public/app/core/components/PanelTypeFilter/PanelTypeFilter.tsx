@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
@@ -30,7 +30,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
     [propsOnChange]
   );
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const selectOptions = {
     defaultOptions: true,
     getOptionLabel: (i: SelectableValue<PanelPluginMeta>) => i.label,

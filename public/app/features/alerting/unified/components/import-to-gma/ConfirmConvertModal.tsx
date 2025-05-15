@@ -4,10 +4,10 @@ import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -23,18 +23,25 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
   isOpen: boolean;
 };
 
-const AlertSomeRulesSkipped = () => (
-  <Alert
-    title={t('alerting.import-to-gma.confirm-modal.plugin-rules-warning.title', 'Some rules are excluded from import')}
-    severity="info"
-  >
-    <Text variant="body">
-      <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.text">
-        We have detected that some rules are managed by plugins. These rules will not be imported.
-      </Trans>
-    </Text>
-  </Alert>
-);
+const AlertSomeRulesSkipped = () => {
+  const { t } = useTranslate();
+
+  return (
+    <Alert
+      title={t(
+        'alerting.import-to-gma.confirm-modal.plugin-rules-warning.title',
+        'Some rules are excluded from import'
+      )}
+      severity="info"
+    >
+      <Text variant="body">
+        <Trans i18nKey="alerting.import-to-gma.confirm-modal.plugin-rules-warning.text">
+          We have detected that some rules are managed by plugins. These rules will not be imported.
+        </Trans>
+      </Text>
+    </Alert>
+  );
+};
 
 export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   const { watch } = useFormContext<ImportFormValues>();
@@ -70,7 +77,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
-
+  const { t } = useTranslate();
   if (isloadingCloudRules) {
     return (
       <Modal
@@ -245,6 +252,8 @@ const getStyles = () => ({
 
 function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
   const [showTargetRules, toggleShowTargetRules] = useToggle(false);
+  const { t } = useTranslate();
+
   return (
     <Stack direction="column" gap={2}>
       <Alert title={t('alerting.to-gma.confirm-modal.title-warning', 'Warning')} severity="warning">

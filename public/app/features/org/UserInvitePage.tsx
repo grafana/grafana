@@ -1,7 +1,6 @@
+import { Trans } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-
-import { Trans } from '../../core/internationalization';
 
 import UserInviteForm from './UserInviteForm';
 

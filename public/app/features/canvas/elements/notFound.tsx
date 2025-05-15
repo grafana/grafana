@@ -1,6 +1,7 @@
 import { PureComponent } from 'react';
 
-import { Trans } from '../../../core/internationalization';
+import { Trans } from '@grafana/i18n';
+
 import { CanvasElementItem, CanvasElementProps } from '../element';
 
 class NotFoundDisplay extends PureComponent<CanvasElementProps> {

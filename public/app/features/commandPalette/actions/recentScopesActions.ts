@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 
 import { CommandPaletteAction } from '../types';
@@ -7,7 +7,7 @@ import { RECENT_SCOPES_PRIORITY } from '../values';
 
 export function getRecentScopesActions(): CommandPaletteAction[] {
   const services = useScopesServices();
-
+  const { t } = useTranslate();
   if (!(config.featureToggles.scopeFilters && services)) {
     return [];
   }

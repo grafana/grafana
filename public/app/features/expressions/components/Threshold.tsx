@@ -5,8 +5,8 @@ import * as React from 'react';
 import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
@@ -51,7 +51,7 @@ const defaultEvaluator: ClassicCondition = {
 
 export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
 
   // this queryState is the source of truth for the threshold component.
@@ -211,6 +211,8 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
   }
 
   function RecoveryForRange({ allowOnblur }: RecoveryProps) {
+    const { t } = useTranslate();
+
     switch (condition.evaluator.type) {
       case EvalFunction.IsWithinRange:
         if (condition.evaluator.type === EvalFunction.IsWithinRange) {
@@ -365,6 +367,8 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
   }
 
   function RecoveryForSingleValue({ allowOnblur }: RecoveryProps) {
+    const { t } = useTranslate();
+
     switch (condition.evaluator.type) {
       case EvalFunction.IsAbove:
         return (

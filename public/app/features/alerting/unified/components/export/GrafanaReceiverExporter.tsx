@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -27,6 +27,7 @@ const GrafanaReceiverExportPreview = ({
     decrypt: decrypt,
     format: exportFormat,
   });
+  const { t } = useTranslate();
 
   const downloadFileName = `cp-${receiverName}-${new Date().getTime()}`;
 

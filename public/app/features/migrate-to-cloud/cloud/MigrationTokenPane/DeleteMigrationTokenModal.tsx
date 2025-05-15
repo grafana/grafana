@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Modal, Button, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   hideModal: () => void;
@@ -10,7 +10,7 @@ interface Props {
 
 export const DeleteMigrationTokenModal = ({ hideModal, onConfirm }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const { t } = useTranslate();
   const onConfirmDelete = async () => {
     setIsDeleting(true);
     await onConfirm();

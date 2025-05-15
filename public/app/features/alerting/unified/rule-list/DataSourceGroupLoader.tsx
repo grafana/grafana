@@ -1,9 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   PromRuleDTO,
@@ -85,6 +85,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
         }
       : skipToken
   );
+  const { t } = useTranslate();
 
   const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupFetching;
   if (isLoading) {

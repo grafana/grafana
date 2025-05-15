@@ -1,6 +1,6 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import ExportMenu from '../../../sharing/ExportButton/ExportMenu';
@@ -12,6 +12,8 @@ import { ShareExportDashboardButton } from './ShareExportDashboardButton';
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
 export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => {
+  const { t } = useTranslate();
+
   const buttonTooltip = config.featureToggles.kubernetesDashboards
     ? t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code')
     : t('dashboard.toolbar.new.export.tooltip.json', 'Export as JSON');

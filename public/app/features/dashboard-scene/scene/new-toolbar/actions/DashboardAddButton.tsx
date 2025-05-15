@@ -1,11 +1,13 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Dropdown, Menu } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardInteractions } from '../../../utils/interactions';
 import { ToolbarActionProps } from '../types';
 
 export function DashboardAddButton({ dashboard }: ToolbarActionProps) {
+  const { t } = useTranslate();
+
   return (
     <Dropdown
       overlay={

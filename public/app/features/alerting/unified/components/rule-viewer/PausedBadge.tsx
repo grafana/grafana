@@ -1,6 +1,5 @@
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
-
-import { Trans } from '../../../../../core/internationalization';
 
 export default function PausedBadge() {
   return (

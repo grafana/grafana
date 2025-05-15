@@ -16,9 +16,9 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -80,7 +80,7 @@ export const LogsVolumePanelList = ({
   }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const numberOfLogVolumes = Object.keys(logVolumes).length;
 
   const containsZoomed = Object.values(logVolumes).some((data: DataFrame[]) => {

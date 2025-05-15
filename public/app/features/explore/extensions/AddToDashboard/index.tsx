@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Modal, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
@@ -18,6 +18,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
   const selectExploreItem = getExploreItemSelector(exploreId);
   const explorePaneHasQueries = !!useSelector(selectExploreItem)?.queries?.length;
   const onClose = useCallback(() => setIsOpen(false), []);
+  const { t } = useTranslate();
 
   const addToDashboardLabel = t('explore.add-to-dashboard', 'Add to dashboard');
 

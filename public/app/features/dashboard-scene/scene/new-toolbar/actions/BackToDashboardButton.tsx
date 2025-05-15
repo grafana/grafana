@@ -1,7 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { ToolbarActionProps } from '../types';
 

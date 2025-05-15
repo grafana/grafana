@@ -1,11 +1,11 @@
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 import { createOrganization } from './state/actions';
 
@@ -28,6 +28,8 @@ const pageNav: NavModelItem = {
 };
 
 export const NewOrgPage = ({ createOrganization }: Props) => {
+  const { t } = useTranslate();
+
   const createOrg = async (newOrg: { name: string }) => {
     await createOrganization(newOrg);
     window.location.href = getConfig().appSubUrl + '/org';

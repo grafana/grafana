@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EmptyState } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { SearchState } from 'app/features/search/types';
 
 interface RecentlyDeletedEmptyStateProps {
@@ -7,6 +7,7 @@ interface RecentlyDeletedEmptyStateProps {
 }
 
 export const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyStateProps) => {
+  const { t } = useTranslate();
   const userIsSearching = Boolean(searchState.query || searchState.tag.length);
   return (
     <EmptyState

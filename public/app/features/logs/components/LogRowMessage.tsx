@@ -3,9 +3,9 @@ import { memo, ReactNode, SyntheticEvent, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, GrafanaTheme2, LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { escapeUnescapedString } from '../utils';
 

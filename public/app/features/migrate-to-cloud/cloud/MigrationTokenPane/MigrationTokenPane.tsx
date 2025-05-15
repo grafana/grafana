@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import {
   useCreateCloudMigrationTokenMutation,
@@ -54,6 +54,8 @@ export const MigrationTokenPane = () => {
       setShowDeleteModal(false);
     }
   }, [deleteTokenMutation, getTokenQuery.data]);
+
+  const { t } = useTranslate();
 
   return (
     <>

@@ -13,9 +13,9 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -267,6 +267,7 @@ export function LogsTableWrap(props: Props) {
 
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
+  const { t } = useTranslate();
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const tableWidth = props.width - sidebarWidth;

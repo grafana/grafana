@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, useEffect } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, Checkbox, Text, Box, IconName, Space, Tooltip } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { ResourceDependencyDto } from '../api';
 

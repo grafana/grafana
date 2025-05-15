@@ -1,4 +1,6 @@
 import { LoadingState } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   SceneComponentProps,
   SceneDataProvider,
@@ -9,7 +11,6 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { t, Trans } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 

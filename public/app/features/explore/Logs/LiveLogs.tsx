@@ -4,9 +4,10 @@ import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { TimeZone } from '@grafana/schema';
 import { Button, Themeable2, withTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../../logs/components/getLogRowStyles';

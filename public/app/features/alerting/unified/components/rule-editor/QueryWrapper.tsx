@@ -16,10 +16,10 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -237,6 +237,7 @@ export function MaxDataPointsOption({
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
 }) {
+  const { t } = useTranslate();
   const value = options.maxDataPoints ?? '';
 
   const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
@@ -280,6 +281,7 @@ export function MinIntervalOption({
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
 }) {
+  const { t } = useTranslate();
   const value = options.minInterval ?? '';
 
   const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {

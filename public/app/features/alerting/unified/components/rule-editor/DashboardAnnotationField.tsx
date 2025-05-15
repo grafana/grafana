@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardDataDTO } from 'app/types';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';

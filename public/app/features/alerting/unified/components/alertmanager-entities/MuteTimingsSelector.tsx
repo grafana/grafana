@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
@@ -18,6 +18,7 @@ const TimeIntervalSelector = ({
   selectProps,
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
+  const { t } = useTranslate();
 
   const timeIntervalOptions = data?.map((value) => mapTimeInterval(value)) || [];
 

@@ -14,6 +14,7 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
@@ -24,7 +25,6 @@ import {
   Tooltip,
   withTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 import { getLabelTypeFromRow } from '../utils';

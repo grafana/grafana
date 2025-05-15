@@ -1,8 +1,8 @@
 import { uniq } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';
@@ -14,6 +14,7 @@ interface Props {
 }
 
 export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
+  const { t } = useTranslate();
   const labelKeyOptions = uniq(groups.flatMap((group) => group.alerts).flatMap(({ labels }) => Object.keys(labels)))
     .filter((label) => !isPrivateLabelKey(label)) // Filter out private labels
     .map<SelectableValue>((key) => ({

@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 
 import { textUtil } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
 import appEvents from '../../../core/app_events';
-import { t } from '../../../core/internationalization';
 import { ShowModalReactEvent } from '../../../types/events';
 
 export function GoToSnapshotOriginButton(props: { originalURL: string }) {
+  const { t } = useTranslate();
+
   return (
     <ToolbarButton
       key="button-snapshot"

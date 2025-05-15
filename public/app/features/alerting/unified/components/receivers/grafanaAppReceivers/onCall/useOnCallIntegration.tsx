@@ -2,9 +2,9 @@ import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
@@ -92,6 +92,7 @@ export function useOnCallIntegration() {
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
   } = useGrafanaOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
+  const { t } = useTranslate();
 
   const onCallFormValidators = useMemo(() => {
     return {
@@ -126,7 +127,7 @@ export function useOnCallIntegration() {
           : t('alerting.irm-integration.integration-required', 'Selection of existing IRM integration is required');
       },
     };
-  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp]);
+  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp, t]);
 
   const extendOnCallReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -254,7 +255,7 @@ export function useOnCallIntegration() {
 
       return notifier;
     },
-    [grafanaOnCallIntegrations, isAlertingV2IntegrationEnabled]
+    [grafanaOnCallIntegrations, isAlertingV2IntegrationEnabled, t]
   );
 
   return {

@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { PanelEditor } from './PanelEditor';
 
@@ -10,6 +10,7 @@ export interface Props {
 
 export function PanelEditControls({ panelEditor }: Props) {
   const { tableView, dataPane } = panelEditor.useState();
+  const { t } = useTranslate();
 
   return (
     <>

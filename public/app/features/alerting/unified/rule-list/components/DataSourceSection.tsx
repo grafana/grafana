@@ -3,8 +3,8 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { IconButton, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -43,6 +43,7 @@ export const DataSourceSection = ({
     rulesSourcesWithRuler.some(({ uid: dsUid, type }) => dsUid === uid && supportedImportTypes.includes(type));
 
   const [isCollapsed, toggleCollapsed] = useToggle(false);
+  const { t } = useTranslate();
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
       const userIsAdmin = isAdmin();

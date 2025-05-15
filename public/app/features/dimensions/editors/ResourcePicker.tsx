@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import {
   Button,
   InlineField,
@@ -16,7 +17,6 @@ import {
 } from '@grafana/ui';
 import { closePopover } from '@grafana/ui/internal';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
-import { Trans } from 'app/core/internationalization';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';

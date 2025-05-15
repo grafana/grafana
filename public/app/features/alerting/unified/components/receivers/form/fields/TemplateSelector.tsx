@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Button,
   Drawer,
@@ -16,7 +17,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -44,6 +44,7 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
+  const { t } = useTranslate();
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -155,6 +156,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       setCustomTemplateValue(getUseTemplateText(template.value.name));
     }
   }, [template]);
+  const { t } = useTranslate();
 
   function onCustomTemplateChange(customInput: string) {
     setCustomTemplateValue(customInput);
@@ -287,6 +289,7 @@ function OptionCustomfield({
   onCustomTemplateChange(customInput: string): void;
   initialValue: string;
 }) {
+  const { t } = useTranslate();
   const id = `custom-template-${option.label}`;
   return (
     <Stack direction="column" gap={1}>

@@ -1,12 +1,11 @@
 import { connect, ConnectedProps } from 'react-redux';
 import { useEffectOnce } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState, UserOrg } from 'app/types';
-
-import { Trans } from '../../core/internationalization';
 
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 

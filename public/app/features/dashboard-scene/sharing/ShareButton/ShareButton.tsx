@@ -4,9 +4,9 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -32,6 +32,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
     setIsOpen(isOpen);
   }, []);
+  const { t } = useTranslate();
 
   const MenuActions = () => <ShareMenu dashboard={dashboard} />;
 

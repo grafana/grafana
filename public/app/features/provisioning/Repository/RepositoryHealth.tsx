@@ -1,12 +1,14 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Stack, Alert, Text } from '@grafana/ui';
 import { HealthStatus } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 interface Props {
   health: HealthStatus;
 }
 
 export function RepositoryHealth({ health }: Props) {
+  const { t } = useTranslate();
+
   return (
     <Stack gap={2} direction="column" alignItems="flex-start">
       {health.healthy ? (

@@ -3,9 +3,9 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { isUndefined } from 'lodash';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -42,6 +42,7 @@ interface DetailsProps {
 
 export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const pendingPeriod = usePendingPeriod(rule);
   const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;

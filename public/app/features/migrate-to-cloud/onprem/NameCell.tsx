@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
 import { LocalPlugin } from '../../plugins/admin/types';

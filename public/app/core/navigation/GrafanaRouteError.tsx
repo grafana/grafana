@@ -3,10 +3,10 @@ import { ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
-import { t, Trans } from '../internationalization';
 
 interface Props {
   error: Error | null;
@@ -24,6 +24,7 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
       window.location.href = locationUtil.getUrlForPartial(location, { chunkNotFound: true });
     }
   }, [location, isChunkLoadingError]);
+  const { t } = useTranslate();
 
   // Would be good to know the page navId here but needs a pretty big refactoring
 

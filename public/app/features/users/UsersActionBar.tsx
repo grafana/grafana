@@ -1,10 +1,10 @@
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { selectTotal } from '../invites/state/selectors';
@@ -44,6 +44,8 @@ export const UsersActionBarUnconnected = ({
   onShowInvites,
   showInvites,
 }: Props): JSX.Element => {
+  const { t } = useTranslate();
+
   const options = [
     { label: 'Users', value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },

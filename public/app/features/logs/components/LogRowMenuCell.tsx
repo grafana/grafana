@@ -11,9 +11,9 @@ import {
 } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { handleOpenLogsContextClick } from '../utils';
 
@@ -100,6 +100,8 @@ export const LogRowMenuCell = memo(
       }
       return addClickListenersToNode(addonAfter, row);
     }, [addonAfter, row]);
+
+    const { t } = useTranslate();
 
     return (
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.

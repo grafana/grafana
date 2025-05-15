@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { ApiKey } from '../../types';
@@ -17,6 +17,7 @@ interface Props {
 
 export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) => {
   const theme = useTheme2();
+  const { t } = useTranslate();
   const styles = getStyles(theme);
 
   return (

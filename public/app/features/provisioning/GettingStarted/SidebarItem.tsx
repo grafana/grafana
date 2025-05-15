@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Text, Stack, Card } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface Props {
   step: string;
@@ -13,6 +13,8 @@ export interface Props {
 }
 
 export const SidebarItem = ({ step, index, currentStep, onStepClick, styles }: Props) => {
+  const { t } = useTranslate();
+
   const isCompleted = index < currentStep;
   const isCurrent = index === currentStep;
   const isPending = index > currentStep;

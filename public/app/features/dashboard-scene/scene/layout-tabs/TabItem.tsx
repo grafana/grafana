@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -11,7 +12,6 @@ import {
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { appEvents } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';

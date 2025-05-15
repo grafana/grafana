@@ -3,9 +3,9 @@ import React from 'react';
 import { useMount } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { randomId, SearchProps, Tag } from '../../../useSearch';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
@@ -23,7 +23,7 @@ interface Props {
 
 export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys, tagValues, setTagValues }: Props) => {
   const styles = { ...useStyles2(getStyles) };
-
+  const { t } = useTranslate();
   const getTagKeys = () => {
     if (!tagKeys) {
       setTagKeys(getTraceTagKeys(trace).map(toOption));

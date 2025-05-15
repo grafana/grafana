@@ -11,13 +11,15 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
+  const { t } = useTranslate();
+
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
       label: 'Series to rows',

@@ -9,8 +9,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -113,6 +113,8 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
     },
     [onChange, options]
   );
+
+  const { t } = useTranslate();
 
   return (
     <>

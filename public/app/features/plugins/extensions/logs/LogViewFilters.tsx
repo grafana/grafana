@@ -2,9 +2,9 @@ import { isEmpty } from 'lodash';
 import { ReactElement, useMemo } from 'react';
 
 import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export type LogFilter = {
   pluginIds?: Set<string>;
@@ -21,6 +21,7 @@ type LogViewFiltersProps = {
 };
 
 export function LogViewFilters({ provider, filteredProvider, filter, onChange }: LogViewFiltersProps): ReactElement {
+  const { t } = useTranslate();
   const { pluginIds, extensionPointIds, severity } = useLogFilters(provider, filteredProvider, filter);
 
   const onChangePluginIds = (values: Array<SelectableValue<string>>) => {

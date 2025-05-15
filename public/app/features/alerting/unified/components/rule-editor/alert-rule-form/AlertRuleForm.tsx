@@ -4,11 +4,11 @@ import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-h
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -139,7 +139,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   const showDataSourceDependantStep = Boolean(type && (isGrafanaManagedRuleByType(type) || !!dataSourceName));
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
-
+  const { t } = useTranslate();
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };

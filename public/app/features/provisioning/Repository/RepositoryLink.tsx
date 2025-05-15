@@ -1,8 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
+import { Trans } from '@grafana/i18n';
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
 
 import { getRepoHref } from '../utils/git';
 

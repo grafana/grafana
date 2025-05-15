@@ -1,9 +1,9 @@
 import { ChangeEvent } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
@@ -54,6 +54,8 @@ export const SaveDashboardAsForm = ({
   onCancel,
   onSuccess,
 }: SaveDashboardAsFormProps) => {
+  const { t } = useTranslate();
+
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     description: dashboard.description,

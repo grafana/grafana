@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {
@@ -26,7 +26,7 @@ const TransformationEditorRow = (props: Props) => {
   const { control, formState, register, setValue, watch, getValues } = useFormContext<FormDTO>();
 
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
-
+  const { t } = useTranslate();
   register(`config.transformations.${index}.type`, {
     required: {
       value: true,

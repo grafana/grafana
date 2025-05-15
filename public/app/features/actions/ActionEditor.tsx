@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import {
   Switch,
   Field,
@@ -13,7 +14,6 @@ import {
   ColorPicker,
   useTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -32,7 +32,7 @@ const LABEL_WIDTH = 13;
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-
+  const { t } = useTranslate();
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
   };

@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
@@ -19,6 +19,8 @@ interface ProvisioningAlertProps extends ExtraAlertProps {
 }
 
 export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps) => {
+  const { t } = useTranslate();
+
   return (
     <Alert
       title={t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
@@ -45,6 +47,7 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
+  const { t } = useTranslate();
   const badge = <Badge text={t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned')} color="purple" />;
 
   if (tooltip) {

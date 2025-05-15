@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
+import { useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
@@ -24,7 +24,7 @@ export const RowOptionsModal = ({
   isUsingDashboardDS,
 }: RowOptionsModalProps) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <Modal
       isOpen={true}

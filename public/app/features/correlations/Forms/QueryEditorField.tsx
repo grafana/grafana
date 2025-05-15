@@ -2,9 +2,9 @@ import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { CoreApp } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   dsUid?: string;
@@ -24,6 +24,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     }
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
+  const { t } = useTranslate();
 
   const QueryEditor = datasource?.components?.QueryEditor;
 

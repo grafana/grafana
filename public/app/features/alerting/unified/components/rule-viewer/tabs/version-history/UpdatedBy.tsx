@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 
+import { useTranslate } from '@grafana/i18n';
 import { Badge, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { UpdatedBy } from 'app/types/unified-alerting-dto';
 
 import { getSpecialUidsDisplayMap } from './versions-utils';
 
 export const UpdatedByUser = ({ user }: { user: UpdatedBy | null | undefined }) => {
+  const { t } = useTranslate();
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
   const SPECIAL_UID_MAP = getSpecialUidsDisplayMap();
   const styles = useStyles2(getStyles);

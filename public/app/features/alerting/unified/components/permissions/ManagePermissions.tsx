@@ -1,8 +1,8 @@
 import { ComponentProps, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Drawer } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
-import { Trans, t } from 'app/core/internationalization';
 
 type ButtonProps = { onClick: () => void };
 
@@ -27,6 +27,7 @@ export const ManagePermissionsDrawer = ({
   onClose,
   ...permissionsProps
 }: BaseProps & Pick<ComponentProps<typeof Drawer>, 'onClose'>) => {
+  const { t } = useTranslate();
   const defaultTitle = t('alerting.manage-permissions.title', 'Manage permissions');
   return (
     <Drawer onClose={onClose} title={title || defaultTitle} subtitle={resourceName}>

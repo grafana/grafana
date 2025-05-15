@@ -1,8 +1,8 @@
 import { PropsWithChildren, useMemo } from 'react';
 
 import { VariableType, VariableHide } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   onChange: (option: VariableHide) => void;
@@ -18,6 +18,7 @@ const HIDE_OPTIONS = [
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {
   const value = useMemo(() => HIDE_OPTIONS.find((o) => o.value === hide)?.value ?? HIDE_OPTIONS[0].value, [hide]);
+  const { t } = useTranslate();
 
   if (type === 'constant') {
     return null;

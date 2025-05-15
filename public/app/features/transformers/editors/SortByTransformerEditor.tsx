@@ -8,9 +8,9 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -27,6 +27,8 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
     },
     [onChange, options]
   );
+
+  const { t } = useTranslate();
 
   const sorts: SortByField[] = options.sort?.length ? options.sort : [{} as SortByField];
 

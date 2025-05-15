@@ -1,9 +1,11 @@
+import { useTranslate } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { performInviteUserClick } from './utils';
 
 export function InviteUserButton() {
+  const { t } = useTranslate();
+
   return (
     <Button
       icon="add-user"

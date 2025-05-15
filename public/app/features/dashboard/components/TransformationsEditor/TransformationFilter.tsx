@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { DataFrame, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 interface TransformationFilterProps {
@@ -31,6 +31,8 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
       ],
     };
   }, [data, annotations?.length, config.topic]);
+
+  const { t } = useTranslate();
 
   return (
     <div className={styles.wrapper}>

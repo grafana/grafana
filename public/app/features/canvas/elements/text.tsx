@@ -5,12 +5,12 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
-import { t } from '../../../core/internationalization';
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
@@ -23,7 +23,7 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const scene = context.instanceState?.scene;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
-
+  const { t } = useTranslate();
   if (isEditMode && isSelected) {
     return <TextEdit {...props} />;
   }

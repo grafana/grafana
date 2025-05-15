@@ -1,9 +1,9 @@
 import { uniqBy } from 'lodash';
 
 import { AppEvents, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 
@@ -21,6 +21,8 @@ interface TimePickerHistoryItem {
 type LSTimePickerHistoryItem = TimePickerHistoryItem | TimeRange;
 
 export const TimePickerWithHistory = (props: Props) => {
+  const { t } = useTranslate();
+
   return (
     <LocalStorageValueProvider<LSTimePickerHistoryItem[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(rawValues, onSaveToStore) => {

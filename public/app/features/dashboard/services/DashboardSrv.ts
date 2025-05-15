@@ -1,8 +1,8 @@
 import { AppEvents } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardMeta } from 'app/types';

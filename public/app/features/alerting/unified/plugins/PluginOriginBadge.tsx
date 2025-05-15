@@ -1,9 +1,9 @@
 import { useAsync } from 'react-use';
 
+import { useTranslate } from '@grafana/i18n';
 import { Badge, IconSize, Tooltip } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 
-import { t } from '../../../../core/internationalization';
 import { getPluginSettings } from '../../../plugins/pluginSettings';
 
 interface PluginOriginBadgeProps {
@@ -13,6 +13,7 @@ interface PluginOriginBadgeProps {
 
 export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
   const { value: pluginMeta, loading } = useAsync(() => getPluginSettings(pluginId));
+  const { t } = useTranslate();
 
   if (loading) {
     return null;

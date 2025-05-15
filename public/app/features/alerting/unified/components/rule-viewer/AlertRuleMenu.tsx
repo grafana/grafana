@@ -1,7 +1,7 @@
 import { AppEvents } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
@@ -67,6 +67,7 @@ const AlertRuleMenu = ({
   const canExport = exportSupported && exportAllowed;
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
+  const { t } = useTranslate();
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
@@ -155,6 +156,7 @@ interface ExportMenuItemProps {
 }
 
 const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
+  const { t } = useTranslate();
   const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,

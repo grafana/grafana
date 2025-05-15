@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
 import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JobStatus } from '../Job/JobStatus';
 
@@ -20,7 +20,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: Synch
   const repoType = watch('repository.type');
   const supportsHistory = requiresMigration && repoType === 'github';
   const [job, setJob] = useState<Job>();
-
+  const { t } = useTranslate();
   const startSynchronization = async () => {
     const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
     if (!repoName) {

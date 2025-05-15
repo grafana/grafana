@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, List, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { t } from '../../../core/internationalization';
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 
 type PluginsErrorInfoProps = {
@@ -16,7 +15,7 @@ export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps)
   let errors = useGetErrors(filterByPluginType);
   const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   if (isLoading || errors.length === 0) {
     return null;
   }

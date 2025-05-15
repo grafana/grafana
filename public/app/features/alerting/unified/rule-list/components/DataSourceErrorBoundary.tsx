@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ErrorBoundary, ErrorWithStack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { DataSourceSection } from './DataSourceSection';
@@ -16,6 +16,8 @@ export function DataSourceErrorBoundary({
   children: React.ReactNode;
   rulesSourceIdentifier: RulesSourceIdentifier;
 }) {
+  const { t } = useTranslate();
+
   return (
     <ErrorBoundary>
       {({ error, errorInfo }) => {
