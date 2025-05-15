@@ -13,7 +13,6 @@ const iconWidth = 24;
 
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;
-const LOG_LIST_NAVIGATION_WIDTH = 28;
 
 export const getLineHeight = () => lineHeight;
 
@@ -149,7 +148,6 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
 
 interface DisplayOptions {
   wrap: boolean;
-  showControls: boolean;
   showTime: boolean;
 }
 
@@ -157,7 +155,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { wrap, showControls, showTime }: DisplayOptions,
+  { wrap, showTime }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -167,7 +165,6 @@ export function getLogLineSize(
   if (!wrap || !logs[index]) {
     return lineHeight + paddingBottom;
   }
-
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
   logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
@@ -182,9 +179,6 @@ export function getLogLineSize(
   let textToMeasure = '';
   const gap = gridSize * FIELD_GAP_MULTIPLIER;
   let optionsWidth = 0;
-  if (showControls) {
-    optionsWidth += LOG_LIST_NAVIGATION_WIDTH;
-  }
   if (showTime) {
     optionsWidth += gap;
     textToMeasure += logs[index].timestamp;
