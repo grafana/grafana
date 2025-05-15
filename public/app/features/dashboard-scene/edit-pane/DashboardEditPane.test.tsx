@@ -1,5 +1,4 @@
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { DashboardEditActionEvent } from './shared';
+import { DashboardScene } from '../scene/DashboardScene';
 
 describe('DashboardEditPane', () => {
   it('Handles edit action events that adds objects', () => {
