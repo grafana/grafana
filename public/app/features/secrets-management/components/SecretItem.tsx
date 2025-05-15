@@ -3,20 +3,18 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Badge, ClipboardButton, ConfirmModal, InlineField, InlineFieldRow, Button, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 
 import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
-import { deleteSecret } from '../state/actions';
 import { Secret } from '../types';
 
 interface SecretItemProps {
   secret: Secret;
   onEditSecret: (name: string) => void;
-  key: React.Attributes['key']; // Needed for typescript (at least for me).
+  onDeleteSecret: (name: string) => void;
+  key: React.Attributes['key']; // Needed for TypeScript (at least for me).
 }
 
-export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
-  const dispatch = useDispatch();
+export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemProps) {
   const styles = useStyles2(getStyles);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -24,15 +22,13 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
     onEditSecret(secret.name);
   };
 
-  const handleKeyUp = (event: React.KeyboardEvent<HTMLLIElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      handleEdit();
-    }
+  const handleDelete = () => {
+    onDeleteSecret(secret.name);
   };
 
-  const handleDelete = () => {
-    dispatch(deleteSecret(secret.name));
-  };
+  // const handleDelete = () => {
+  //   dispatch(deleteSecret(secret.name));
+  // };
 
   const handleShowDeleteModal = () => {
     setIsDeleteModalOpen(true);
@@ -44,9 +40,11 @@ export function SecretItem({ secret, onEditSecret }: SecretItemProps) {
 
   return (
     <>
-      <li className={styles.li} tabIndex={0} onKeyUp={handleKeyUp}>
+      <li className={styles.li}>
         <div className={styles.headerContainer}>
-          <h2 className={styles.heading}>{secret.name}</h2>
+          <h2 className={styles.heading}>
+            {secret.name} ({secret.status})
+          </h2>
           <div className={styles.headerActions}>
             <Button fill="outline" icon="edit" size="sm" onClick={handleEdit} variant="secondary">
               Edit

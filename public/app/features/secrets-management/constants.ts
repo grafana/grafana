@@ -14,11 +14,3 @@ export const DECRYPT_ALLOW_LIST_OPTIONS = (
 ).map(([value, label]) => {
   return { label, value };
 });
-
-export const MOCKED_SECRET_KEEPER = 'kp-default-sql';
-
-export const MOCKED_FILTER_OPTIONS = [
-  { label: 'All', value: 'all' },
-  { label: 'Enabled', value: 'enabled' },
-  { label: 'Disabled', value: 'disabled' },
-];

@@ -1,8 +1,14 @@
 import { HTMLProps, ReactNode } from 'react';
 
-interface SecretsListEmptyResponseItem {
-  metadata: { creationTimestamp: null };
-  spec: { audiences: null; title: '' };
+export enum SecretStatusPhase {
+  Succeeded = 'Succeeded',
+  Pending = 'Pending',
+  Failed = 'Failed',
+}
+
+interface SecretStatus {
+  phase: SecretStatusPhase;
+  message?: string; // Only applicable if the phase is `Failed`
 }
 
 export interface SecretsListResponseItem {
@@ -17,9 +23,10 @@ export interface SecretsListResponseItem {
   };
   spec: {
     decrypters: string[] | null;
-    title: string;
-    keeper: string;
+    description: string;
+    keeper?: string;
   };
+  status?: SecretStatus;
 }
 
 type Audiences = `${string}/${string}`;
@@ -33,7 +40,6 @@ export interface CreateSecretPayload {
   spec: {
     title: string;
     audiences: Audiences[];
-    keeper: string;
     value: string;
   };
 }
@@ -44,16 +50,17 @@ export interface SecretsListResponse {
   kind: 'SecureValueList';
   apiVersion: string;
   metadata: {};
-  items?: Array<SecretsListEmptyResponseItem | SecretsListResponseItem>;
+  items?: SecretsListResponseItem[];
 }
 
 export interface Secret {
   name: SecretsListResponseItem['metadata']['name'];
-  description: SecretsListResponseItem['spec']['title'];
+  description: SecretsListResponseItem['spec']['description'];
   audiences: SecretsListResponseItem['spec']['decrypters'];
-  keeper: SecretsListResponseItem['spec']['keeper'];
+  keeper?: SecretsListResponseItem['spec']['keeper'];
   uid: SecretsListResponseItem['metadata']['uid'];
   value?: string; // Only present when editing a secret
+  status?: SecretStatus['phase'];
 }
 
 export interface NewSecret extends Omit<Secret, 'uid'> {
@@ -63,7 +70,9 @@ export interface NewSecret extends Omit<Secret, 'uid'> {
 
 // TypeScript doesn't like `import { Props as InputProps } from '@grafana/ui/src/components/Input/Input'`, this is a copy-paste of the InputProps interface
 export interface InputProps extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
-  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
+  /** Sets the width to a multiple of 8 px.
+   * Should only be used with inline forms.
+   * Setting the width of the container is preferred in other cases.*/
   width?: number;
   /** Show an invalid state around the input */
   invalid?: boolean;

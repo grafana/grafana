@@ -1,60 +1,39 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Box, Button, EmptyState, FilterInput, InlineField, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
-import { t } from 'app/core/internationalization';
-import { useDispatch, useSelector } from 'app/types';
+import { Trans, t } from 'app/core/internationalization';
 
+import { useListSecretsQuery, useDeleteSecretMutation } from './api/secretsManagementApi';
 import { EditSecretModal } from './components/EditSecretModal';
+import { SecretsEmptyState } from './components/SecretsEmptyState';
 import { SecretsList } from './components/SecretsList';
-import { ZeroState } from './components/ZeroState';
-import { MOCKED_FILTER_OPTIONS } from './constants';
-import { fetchSecrets } from './state/actions';
-import { selectSecretsManagementIsLoading, selectSecretsManagementSecrets } from './state/selectors';
 import { Secret } from './types';
 
 export default function SecretsManagementPage() {
-  const subTitle = 'Manage secrets for use in Grafana';
-  const docsLink = (
-    <a
-      className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/secrets-management/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      documentation
-    </a>
-  );
-
-  const dispatch = useDispatch();
-
-  const secrets = useSelector(selectSecretsManagementSecrets);
-  const isLoading = useSelector(selectSecretsManagementIsLoading);
+  // Api test
+  const { data: secrets, isLoading } = useListSecretsQuery();
+  const [deleteSecret, { isLoading: isDeleting }] = useDeleteSecretMutation();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<undefined | string>();
   const [filter, setFilter] = useState('');
-  const [stateFilter, setStateFilter] = useState<'all' | 'enabled'>('all');
 
   const isEditModalOpen = !!editTarget || isCreateModalOpen;
   const styles = useStyles2(getStyles);
 
   const filteredSecrets: Secret[] = useMemo(() => {
-    return secrets?.filter((secret) => secret.name.toLowerCase().includes(filter.toLowerCase()));
+    return secrets?.filter((secret) => secret.name.toLowerCase().includes(filter.toLowerCase())) ?? [];
   }, [secrets, filter]);
 
-  useEffect(() => {
-    dispatch(fetchSecrets());
-  }, [dispatch]);
-
   const hasSecrets = secrets && secrets.length > 0;
-
+  console.log('isDeleting', isDeleting);
   const hasFilteredSecrets = filteredSecrets.length > 0;
 
-  const handleCreateSecret = () => {
+  const handleShowCreateModal = () => {
     setIsCreateModalOpen(true);
   };
 
@@ -71,44 +50,44 @@ export default function SecretsManagementPage() {
     <Page
       navId="secrets-management"
       subTitle={
-        <>
-          {subTitle}. Find out more in our {docsLink}
-        </>
+        <Trans i18nKey="secrets-management.page.sub-title">
+          Manage secrets for use in Grafana. Find out more in our{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/administration/" external>
+            documentation
+          </TextLink>
+        </Trans>
       }
       actions={
-        <div>
-          <Button disabled={isLoading} icon="plus" onClick={handleCreateSecret}>
-            Add secret
+        hasSecrets && (
+          <Button disabled={isLoading} icon="plus" onClick={handleShowCreateModal}>
+            <Trans i18nKey="secrets-management.page.actions.create-secret">Create secret</Trans>
           </Button>
-        </div>
+        )
       }
     >
       <PageContents isLoading={isLoading}>
-        <div className={'page-action-bar'}>
-          <InlineField grow>
+        <div className="page-action-bar">
+          <InlineField grow disabled={!hasSecrets}>
             <FilterInput
               className={styles.filterInput}
-              placeholder="Search secret by name"
+              placeholder={t('secrets-management.page.search.placeholder', 'Search secret by name')}
               value={filter}
               onChange={(value) => setFilter(value)}
             />
           </InlineField>
-          <Box marginBottom={1}>
-            <RadioButtonGroup
-              options={MOCKED_FILTER_OPTIONS}
-              onChange={(value) => setStateFilter(value === 'enabled' ? 'enabled' : 'all')}
-              value={stateFilter}
-              disabledOptions={['disabled']}
-            />
-          </Box>
         </div>
-        {!hasSecrets && <ZeroState onCreateSecret={handleCreateSecret} />}
-        {hasSecrets && hasFilteredSecrets && <SecretsList onEditSecret={handleEditSecret} secrets={filteredSecrets!} />}
-        {hasSecrets && !hasFilteredSecrets && (
-          <EmptyState variant="not-found" message={t('secrets-management.search-result.not-found', 'No secrets found')}>
-            Clear active filter to see all secrets.
-          </EmptyState>
+
+        {!hasSecrets && <SecretsEmptyState onCreateSecret={handleShowCreateModal} />}
+
+        {hasSecrets && hasFilteredSecrets && (
+          <SecretsList
+            onEditSecret={handleEditSecret}
+            onDeleteSecret={deleteSecret}
+            secrets={secrets}
+            filter={filter}
+          />
         )}
+
         {isEditModalOpen && <EditSecretModal isOpen onDismiss={handleDismissModal} name={editTarget} />}
       </PageContents>
     </Page>

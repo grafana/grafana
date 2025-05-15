@@ -9261,10 +9261,24 @@
     }
   },
   "secrets-management": {
+    "page": {
+      "title": "Secrets management",
+      "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>docs</2>",
+      "actions": {
+        "create-secret": "Create secret"
+      },
+      "search": {
+        "placeholder": "Search secret by name",
+        "clear": "Clear filter to see all secrets"
+      },
+      "search-result": {
+        "no-results": "No secrets found",
+        "clear-search": "Clear active filter to see all secrets."
+      }
+    },
     "empty-state": {
-      "button-title": "Add secret",
-      "more-info": "Remember, you can provide specific permissions for API access to other applications",
-      "title": "You haven't created any secrets yet"
+      "more-info": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
+      "title": "You don't have any secrets yet."
     }
   }
 }
