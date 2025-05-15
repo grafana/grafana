@@ -115,16 +115,14 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               fieldOptions.operation === GroupByOperationID.takeFirst ||
               fieldOptions.operation === GroupByOperationID.takeLast
             ) {
-              let rowContents: Field[] = [];
-              rowContents = frame.fields
+              let rowContents = frame.fields
                 .filter((f) => !groupByFieldNames.includes(f.name))
                 .map((f) => {
                   const values: any[] = [];
                   valuesByGroupKey.forEach((v) => {
+                    const groupValues = v[f.name].values;
                     values.push(
-                      v[f.name].values[
-                        fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : v[f.name].values.length - 1
-                      ]
+                      groupValues[fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : groupValues.length - 1]
                     );
                   });
                   return { ...f, values: values };
