@@ -120,7 +120,7 @@ If you want to check for missing data per-region or label, you can specify the l
 `or`  
 `absent_over_time(http_request_latency_seconds{region="region2"}[5m]) == 1`
 
-But this doesn't scale well. It is unreliable to have hardcoded queries for each label set, especially in dynamic cloud environments where instances can appear or disappear at any time.
+But this doesn't scale well. It is unreliable to have hard-coded queries for each label set, especially in dynamic cloud environments where instances can appear or disappear at any time.
 
 ## Manage No Data issues in Grafana alerts
 

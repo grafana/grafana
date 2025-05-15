@@ -114,7 +114,7 @@ Brief connectivity drops are common in real-world environments, so expect some f
 | 00:00 `up == 0`      | Timer starts                                          |
 | 01:00 `up == 0`      | Timer continues                                       |
 | 02:00 `up == 0`      | Timer continues                                       |
-| 03:00 `up == 1`      | Successful scrape resets ti mer                       |
+| 03:00 `up == 1`      | Successful scrape resets timer                        |
 | 04:00 `up == 0`      | Timer starts again                                    |
 | 05:00 `up == 0`      | No alert yet; timer hasn’t reached the `for` duration |
 
