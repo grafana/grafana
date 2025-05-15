@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -37,7 +38,7 @@ var (
 	}
 )
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
+func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {

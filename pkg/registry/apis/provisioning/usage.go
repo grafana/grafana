@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (map[string]any, error) {
@@ -22,7 +22,7 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (map[string]a
 	// We could get namespaces from the list of repos below, but that could be zero
 	// while we still have resources managed by terraform, etc
 	ns := "default"
-	count, err := b.unified.CountManagedObjects(ctx, &resource.CountManagedObjectsRequest{
+	count, err := b.unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
 		Namespace: ns,
 	})
 	if err != nil {

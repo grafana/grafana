@@ -27,8 +27,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -309,7 +311,7 @@ type bleveIndex struct {
 	fields   resource.SearchableDocumentFields
 
 	// The values returned with all
-	allFields []*resource.ResourceTableColumnDefinition
+	allFields []*resourcepb.ResourceTableColumnDefinition
 	features  featuremgmt.FeatureToggles
 	tracing   trace.Tracer
 }
@@ -330,29 +332,29 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			doc := item.Doc.UpdateCopyFields()
 			doc.References = nil // remove references (for now!)
 
-			err := batch.Index(doc.Key.SearchID(), doc)
+			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
 				return err
 			}
 		case resource.ActionDelete:
-			batch.Delete(item.Key.SearchID())
+			batch.Delete(resource.SearchID(item.Key))
 		}
 	}
 
 	return b.index.Batch(batch)
 }
 
-func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
 	if req.Kind == "" {
-		return &resource.ListManagedObjectsResponse{
+		return &resourcepb.ListManagedObjectsResponse{
 			Error: resource.NewBadRequestError("empty manager kind"),
 		}, nil
 	}
 	if req.Id == "" {
-		return &resource.ListManagedObjectsResponse{
+		return &resourcepb.ListManagedObjectsResponse{
 			Error: resource.NewBadRequestError("empty manager id"),
 		}, nil
 	}
@@ -423,17 +425,17 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListM
 		return 0
 	}
 
-	rsp := &resource.ListManagedObjectsResponse{}
+	rsp := &resourcepb.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.ListManagedObjectsResponse_Item{
-			Object: &resource.ResourceKey{},
+		item := &resourcepb.ListManagedObjectsResponse_Item{
+			Object: &resourcepb.ResourceKey{},
 			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
 			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
 			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_SOURCE_TIME]),
 			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
 			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
-		err := item.Object.ReadSearchID(hit.ID)
+		err := resource.ReadSearchID(item.Object, hit.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +444,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resource.ListM
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resource.CountManagedObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
@@ -453,14 +455,14 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resource.Count
 	if err != nil {
 		return nil, err
 	}
-	vals := make([]*resource.CountManagedObjectsResponse_ResourceCount, 0)
+	vals := make([]*resourcepb.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
 			val := v.Term
 			idx := strings.Index(val, ":")
 			if idx > 0 {
-				vals = append(vals, &resource.CountManagedObjectsResponse_ResourceCount{
+				vals = append(vals, &resourcepb.CountManagedObjectsResponse_ResourceCount{
 					Kind:     val[0:idx],
 					Id:       val[idx+1:],
 					Group:    b.key.Group,
@@ -477,19 +479,19 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resource.Count
 func (b *bleveIndex) Search(
 	ctx context.Context,
 	access authlib.AccessClient,
-	req *resource.ResourceSearchRequest,
+	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
-) (*resource.ResourceSearchResponse, error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key == nil {
-		return &resource.ResourceSearchResponse{
+		return &resourcepb.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
 		}, nil
 	}
 
-	response := &resource.ResourceSearchResponse{
+	response := &resourcepb.ResourceSearchResponse{
 		Error: b.verifyKey(req.Options.Key),
 	}
 	if response.Error != nil {
@@ -545,7 +547,7 @@ func (b *bleveIndex) Search(
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
 		if response.Facet == nil {
-			response.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
+			response.Facet = make(map[string]*resourcepb.ResourceSearchResponse_Facet)
 		}
 		response.Facet[k] = f
 	}
@@ -577,7 +579,7 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error)
 }
 
 // make sure the request key matches the index
-func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult {
+func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Namespace != b.key.Namespace {
 		return resource.NewBadRequestError("namespace mismatch (expected " + b.key.Namespace + ")")
 	}
@@ -592,7 +594,7 @@ func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult 
 
 func (b *bleveIndex) getIndex(
 	ctx context.Context,
-	req *resource.ResourceSearchRequest,
+	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
 	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
@@ -621,7 +623,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"toBleveSearchRequest")
 	defer span.End()
 
@@ -793,7 +795,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resource.ResourceSearchRequest) []string {
+func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 	sorting := []string{}
 	for _, sort := range req.SortBy {
 		input := sort.Field
@@ -826,7 +828,7 @@ var termFields = []string{
 }
 
 // Convert a "requirement" into a bleve query
-func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
+func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
@@ -946,11 +948,11 @@ func filterValue(field string, v string) string {
 	return v
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
 	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
 	defer span.End()
 
-	fields := []*resource.ResourceTableColumnDefinition{}
+	fields := []*resourcepb.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
 		if name == "_all" {
 			fields = b.allFields
@@ -964,9 +966,9 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 		if f == nil {
 			// Labels as a string
 			if strings.HasPrefix(name, "labels.") {
-				f = &resource.ResourceTableColumnDefinition{
+				f = &resourcepb.ResourceTableColumnDefinition{
 					Name: name,
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				}
 			}
 
@@ -987,18 +989,18 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 	encoders := builder.Encoders()
 
-	table := &resource.ResourceTable{
+	table := &resourcepb.ResourceTable{
 		Columns: fields,
-		Rows:    make([]*resource.ResourceTableRow, hits.Len()),
+		Rows:    make([]*resourcepb.ResourceTableRow, hits.Len()),
 	}
 	for rowID, match := range hits {
-		row := &resource.ResourceTableRow{
-			Key:   &resource.ResourceKey{},
+		row := &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{},
 			Cells: make([][]byte, len(fields)),
 		}
 		table.Rows[rowID] = row
 
-		err := row.Key.ReadSearchID(match.ID)
+		err := resource.ReadSearchID(row.Key, match.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -1048,8 +1050,8 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	return table, nil
 }
 
-func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resource.ResourceTableColumnDefinition, error) {
-	fields := []*resource.ResourceTableColumnDefinition{
+func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
+	fields := []*resourcepb.ResourceTableColumnDefinition{
 		standard.Field(resource.SEARCH_FIELD_ID),
 		standard.Field(resource.SEARCH_FIELD_TITLE),
 		standard.Field(resource.SEARCH_FIELD_TAGS),
@@ -1077,15 +1079,15 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 	return fields, nil
 }
 
-func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Facet {
-	f := &resource.ResourceSearchResponse_Facet{
+func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_Facet {
+	f := &resourcepb.ResourceSearchResponse_Facet{
 		Field:   v.Field,
 		Total:   int64(v.Total),
 		Missing: int64(v.Missing),
 	}
 	if v.Terms != nil {
 		for _, t := range v.Terms.Terms() {
-			f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
+			f.Terms = append(f.Terms, &resourcepb.ResourceSearchResponse_TermFacet{
 				Term:  t.Term,
 				Count: int64(t.Count),
 			})

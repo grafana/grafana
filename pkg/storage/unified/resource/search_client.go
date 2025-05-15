@@ -5,6 +5,8 @@ import (
 
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type DualWriter interface {
@@ -12,7 +14,8 @@ type DualWriter interface {
 	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
 }
 
-func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
+func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
+	legacyClient resourcepb.ResourceIndexClient) resourcepb.ResourceIndexClient {
 	if dual.IsEnabled(gr) {
 		return &searchWrapper{
 			dual:          dual,
@@ -32,11 +35,12 @@ type searchWrapper struct {
 	dual          DualWriter
 	groupResource schema.GroupResource
 
-	unifiedClient ResourceIndexClient
-	legacyClient  ResourceIndexClient
+	unifiedClient resourcepb.ResourceIndexClient
+	legacyClient  resourcepb.ResourceIndexClient
 }
 
-func (s *searchWrapper) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
+func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest,
+	opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	client := s.legacyClient
 	unified, err := s.dual.ReadFromUnified(ctx, s.groupResource)
 	if err != nil {
@@ -48,7 +52,8 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *ResourceStatsRequest, 
 	return client.GetStats(ctx, in, opts...)
 }
 
-func (s *searchWrapper) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
+func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest,
+	opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	client := s.legacyClient
 	unified, err := s.dual.ReadFromUnified(ctx, s.groupResource)
 	if err != nil {

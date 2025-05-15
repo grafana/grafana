@@ -4,19 +4,21 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // MigrateVersionMatch handles backwards compatibility for ResourceVersionMatch
 // by migrating from the deprecated version_match to version_match_v2.
 // It returns an error if the version match is unknown.
-func MigrateListRequestVersionMatch(req *ListRequest, logger logging.Logger) error {
-	if req.VersionMatch != nil && req.GetVersionMatchV2() == ResourceVersionMatchV2_UNKNOWN {
+func MigrateListRequestVersionMatch(req *resourcepb.ListRequest, logger logging.Logger) error {
+	if req.VersionMatch != nil && req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_UNKNOWN {
 		switch req.GetVersionMatch() {
-		case ResourceVersionMatch_DEPRECATED_NotOlderThan:
+		case resourcepb.ResourceVersionMatch_DEPRECATED_NotOlderThan:
 			// This is not a typo. The old implementation actually did behave like Unset.
-			req.VersionMatchV2 = ResourceVersionMatchV2_Unset
-		case ResourceVersionMatch_DEPRECATED_Exact:
-			req.VersionMatchV2 = ResourceVersionMatchV2_Exact
+			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Unset
+		case resourcepb.ResourceVersionMatch_DEPRECATED_Exact:
+			req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact
 		default:
 			return fmt.Errorf("unknown version match: %v", req.GetVersionMatch())
 		}

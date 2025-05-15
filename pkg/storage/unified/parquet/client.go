@@ -9,11 +9,12 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
-	_ resource.BulkStoreClient             = (*writerClient)(nil)
-	_ resource.BulkStore_BulkProcessClient = (*writerClient)(nil)
+	_ resourcepb.BulkStoreClient             = (*writerClient)(nil)
+	_ resourcepb.BulkStore_BulkProcessClient = (*writerClient)(nil)
 
 	errUnimplemented = errors.New("not implemented (BulkResourceWriter as BulkStoreClient shim)")
 )
@@ -29,12 +30,12 @@ func NewBulkResourceWriterClient(writer resource.BulkResourceWriter) *writerClie
 }
 
 // Send implements resource.ResourceStore_BulkProcessClient.
-func (w *writerClient) Send(req *resource.BulkRequest) error {
+func (w *writerClient) Send(req *resourcepb.BulkRequest) error {
 	return w.writer.Write(w.ctx, req.Key, req.Value)
 }
 
 // BulkProcess implements resource.ResourceStoreClient.
-func (w *writerClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error) {
+func (w *writerClient) BulkProcess(ctx context.Context, _ ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
 	if w.ctx != nil {
 		return nil, fmt.Errorf("only one batch request supported")
 	}
@@ -43,7 +44,7 @@ func (w *writerClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption)
 }
 
 // CloseAndRecv implements resource.ResourceStore_BulkProcessClient.
-func (w *writerClient) CloseAndRecv() (*resource.BulkResponse, error) {
+func (w *writerClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
 	return w.writer.CloseWithResults()
 }
 
@@ -63,12 +64,12 @@ func (w *writerClient) Header() (metadata.MD, error) {
 }
 
 // RecvMsg implements resource.ResourceStore_BulkProcessClient.
-func (w *writerClient) RecvMsg(m any) error {
+func (w *writerClient) RecvMsg(_ any) error {
 	return errUnimplemented
 }
 
 // SendMsg implements resource.ResourceStore_BulkProcessClient.
-func (w *writerClient) SendMsg(m any) error {
+func (w *writerClient) SendMsg(_ any) error {
 	return errUnimplemented
 }
 

@@ -7,6 +7,7 @@ replace (
 	github.com/grafana/grafana/apps/folder => ../../../../apps/folder
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../resourcepb
 )
 
 require (
@@ -21,6 +22,7 @@ require (
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grafana/grafana/apps/folder v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-00010101000000-000000000000
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -30,8 +32,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0
 	gocloud.dev v0.40.0
 	golang.org/x/sync v0.14.0
-	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.72.1
 	k8s.io/apimachinery v0.32.3
 )
 
@@ -232,6 +233,7 @@ require (
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

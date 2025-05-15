@@ -1,4 +1,6 @@
-version: v1
+version: v2
+modules:
+  - path: .
 breaking:
   use:
     - FILE

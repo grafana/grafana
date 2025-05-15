@@ -32,10 +32,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -46,7 +48,7 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
-type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
@@ -76,7 +78,7 @@ type Storage struct {
 	indexers     *cache.Indexers
 
 	store          resource.ResourceClient
-	getKey         func(string) (*resource.ResourceKey, error)
+	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
 
@@ -101,7 +103,7 @@ func NewStorage(
 	config *storagebackend.ConfigForResource,
 	store resource.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
-	keyParser func(key string) (*resource.ResourceKey, error),
+	keyParser func(key string) (*resourcepb.ResourceKey, error),
 	newFunc func() runtime.Object,
 	newListFunc func() runtime.Object,
 	getAttrsFunc storage.AttrFunc,
@@ -139,7 +141,7 @@ func NewStorage(
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
 	if s.getKey == nil {
-		s.getKey = func(key string) (*resource.ResourceKey, error) {
+		s.getKey = func(key string) (*resourcepb.ResourceKey, error) {
 			k, err := grafanaregistry.ParseKey(key)
 			if err != nil {
 				return nil, err
@@ -150,7 +152,7 @@ func NewStorage(
 			if k.Resource == "" {
 				return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 			}
-			return &resource.ResourceKey{
+			return &resourcepb.ResourceKey{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -177,10 +179,10 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
 	var permissions string
-	req := &resource.CreateRequest{}
+	req := &resourcepb.CreateRequest{}
 	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_ADDED, key, obj, out)
+		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 	}
 
 	req.Key, err = s.getKey(key)
@@ -258,7 +260,7 @@ func (s *Storage) Delete(
 	if err != nil {
 		return err
 	}
-	cmd := &resource.DeleteRequest{Key: k}
+	cmd := &resourcepb.DeleteRequest{Key: k}
 
 	if preconditions != nil {
 		if err := preconditions.Check(key, out); err != nil {
@@ -287,7 +289,7 @@ func (s *Storage) Delete(
 		return fmt.Errorf("unable to read object %w", err)
 	}
 	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_DELETED, key, out, out)
+		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
 	rsp, err := s.store.Delete(ctx, cmd)
@@ -315,7 +317,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return watch.NewEmptyWatch(), nil
 	}
 
-	cmd := &resource.WatchRequest{
+	cmd := &resourcepb.WatchRequest{
 		Since:               req.ResourceVersion,
 		Options:             req.Options,
 		SendInitialEvents:   false,
@@ -349,7 +351,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	var err error
-	req := &resource.ReadRequest{}
+	req := &resourcepb.ReadRequest{}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		if opts.IgnoreNotFound {
@@ -497,7 +499,7 @@ func (s *Storage) GuaranteedUpdate(
 		existingBytes []byte
 		err           error
 	)
-	req := &resource.UpdateRequest{}
+	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
@@ -511,7 +513,7 @@ func (s *Storage) GuaranteedUpdate(
 
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		// Read the latest value
-		readResponse, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
+		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err != nil {
 			return resource.GetError(resource.AsErrorResult(err))
 		}
@@ -587,7 +589,7 @@ func (s *Storage) GuaranteedUpdate(
 
 	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_MODIFIED, key, updatedObj, destination)
+		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
 	var rv uint64

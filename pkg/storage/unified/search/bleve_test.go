@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -21,15 +22,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestBleveBackend(t *testing.T) {
-	dashboardskey := &resource.ResourceKey{
+	dashboardskey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	folderKey := &resource.ResourceKey{
+	folderKey := &resourcepb.ResourceKey{
 		Namespace: dashboardskey.Namespace,
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
@@ -72,7 +74,7 @@ func TestBleveBackend(t *testing.T) {
 						Doc: &resource.IndexableDocument{
 							RV:   1,
 							Name: "aaa",
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      "aaa",
 								Namespace: "ns",
 								Group:     "dashboard.grafana.app",
@@ -105,7 +107,7 @@ func TestBleveBackend(t *testing.T) {
 						Doc: &resource.IndexableDocument{
 							RV:   2,
 							Name: "bbb",
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      "bbb",
 								Namespace: "ns",
 								Group:     "dashboard.grafana.app",
@@ -138,7 +140,7 @@ func TestBleveBackend(t *testing.T) {
 						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 3,
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      "ccc",
 								Namespace: "ns",
 								Group:     "dashboard.grafana.app",
@@ -172,15 +174,15 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		dashboardsIndex = index
 
-		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
 					Field: "tags",
 					Limit: 100,
@@ -221,10 +223,10 @@ func TestBleveBackend(t *testing.T) {
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
 
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
-				Labels: []*resource.Requirement{{
+				Labels: []*resourcepb.Requirement{{
 					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 					Operator: "in",
 					Values:   []string{"10", "11"},
@@ -240,13 +242,13 @@ func TestBleveBackend(t *testing.T) {
 		})
 
 		// can get sprinkles fields and sort by them
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil)
@@ -260,13 +262,13 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, int64(100), val)
 
 		// check auth will exclude results we don't have access to
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil)
@@ -274,7 +276,7 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
-		found, err := index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+		found, err := index.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 			Kind: "repo",
 			Id:   "repo-1",
 		})
@@ -352,7 +354,7 @@ func TestBleveBackend(t *testing.T) {
 						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 1,
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      "zzz",
 								Namespace: "ns",
 								Group:     "folder.grafana.app",
@@ -377,7 +379,7 @@ func TestBleveBackend(t *testing.T) {
 						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 2,
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:      "yyy",
 								Namespace: "ns",
 								Group:     "folder.grafana.app",
@@ -401,8 +403,8 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		foldersIndex = index
 
-		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit: 100000,
@@ -421,21 +423,21 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, foldersIndex)
 
 		// Use a federated query to get both results together, sorted by title
-		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -485,21 +487,21 @@ func TestBleveBackend(t *testing.T) {
 		}`, string(disp))
 
 		// now only when we have permissions to see dashboards
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -514,21 +516,21 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, "dashboards", rsp.Results.Rows[2].Key.Resource)
 
 		// now only when we have permissions to see folders
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -542,21 +544,21 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, "folders", rsp.Results.Rows[1].Key.Resource)
 
 		// now when we have permissions to see nothing
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -571,8 +573,8 @@ func TestBleveBackend(t *testing.T) {
 
 func TestGetSortFields(t *testing.T) {
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: false},
 			},
 		}
@@ -580,8 +582,8 @@ func TestGetSortFields(t *testing.T) {
 		assert.Equal(t, []string{"fields.views_total"}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: true},
 			},
 		}
@@ -589,8 +591,8 @@ func TestGetSortFields(t *testing.T) {
 		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "description", Desc: false},
 			},
 		}

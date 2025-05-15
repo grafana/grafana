@@ -16,8 +16,9 @@ import (
 	"k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
@@ -97,7 +98,7 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 
 func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	err error,
-	action resource.WatchEvent_Type,
+	action resourcepb.WatchEvent_Type,
 	key string,
 	orig runtime.Object,
 	rsp runtime.Object,
@@ -137,7 +138,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return err
 	}
 
-	if action == resource.WatchEvent_DELETED {
+	if action == resourcepb.WatchEvent_DELETED {
 		// TODO? can we copy orig into rsp without a full get?
 		if err = s.Get(ctx, key, storage.GetOptions{}, rsp); err != nil { // COPY?
 			return err
@@ -153,9 +154,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 
 	var req *rest.Request
 	switch action {
-	case resource.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED:
 		req = client.Post()
-	case resource.WatchEvent_MODIFIED:
+	case resourcepb.WatchEvent_MODIFIED:
 		req = client.Put()
 	default:
 		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)

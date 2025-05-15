@@ -14,13 +14,14 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"google.golang.org/grpc"
 )
 
 //go:generate mockery --name BlobStoreClient --structname MockBlobStoreClient --inpackage --filename blobstore_client_mock.go --with-expecter
 type BlobStoreClient interface {
-	PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error)
+	PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error)
 }
 
 // ScreenshotRenderer is an interface for rendering a preview of a file
@@ -85,14 +86,14 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 		return "", err
 	}
 
-	rsp, err := r.blobstore.PutBlob(ctx, &resource.PutBlobRequest{
-		Resource: &resource.ResourceKey{
+	rsp, err := r.blobstore.PutBlob(ctx, &resourcepb.PutBlobRequest{
+		Resource: &resourcepb.ResourceKey{
 			Namespace: repo.Namespace,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,
 			Name:      repo.Name,
 		},
-		Method:      resource.PutBlobRequest_GRPC,
+		Method:      resourcepb.PutBlobRequest_GRPC,
 		ContentType: mime.TypeByExtension(ext), // image/png
 		Value:       body,
 	})

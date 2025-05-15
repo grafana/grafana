@@ -7,7 +7,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type LargeObjectSupportFake struct {
@@ -28,12 +28,12 @@ func (s *LargeObjectSupportFake) MaxSize() int {
 	return 10 * 1024 * 1024
 }
 
-func (s *LargeObjectSupportFake) Deconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor, raw []byte) error {
+func (s *LargeObjectSupportFake) Deconstruct(_ context.Context, _ *resourcepb.ResourceKey, _ resourcepb.BlobStoreClient, _ utils.GrafanaMetaAccessor, _ []byte) error {
 	s.deconstructed = true
 	return nil
 }
 
-func (s *LargeObjectSupportFake) Reconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor) error {
+func (s *LargeObjectSupportFake) Reconstruct(_ context.Context, _ *resourcepb.ResourceKey, _ resourcepb.BlobStoreClient, _ utils.GrafanaMetaAccessor) error {
 	s.reconstructed = true
 	return nil
 }

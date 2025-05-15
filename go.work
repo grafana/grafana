@@ -30,6 +30,7 @@ use (
 	./pkg/semconv
 	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource
+	./pkg/storage/unified/resourcepb
 )
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250331083058-4563aec7a975

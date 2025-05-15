@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -74,7 +75,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -120,7 +121,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -137,7 +138,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -160,9 +161,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	require.NotNil(t, index)
 
 	t.Run("Search", func(t *testing.T) {
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -177,9 +178,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
 
 		// Search for Document
-		resp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
@@ -201,7 +202,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				{
 					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Namespace: ns.Namespace,
 							Group:     ns.Group,
 							Resource:  ns.Resource,
@@ -219,9 +220,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		// Search for Document
-		resp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
 					Group:     ns.Group,
 					Resource:  ns.Resource,
