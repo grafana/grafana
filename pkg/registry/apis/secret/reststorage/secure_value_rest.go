@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -136,7 +137,7 @@ func (s *SecureValueRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
 	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
+	_ *metav1.CreateOptions,
 ) (runtime.Object, error) {
 	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
@@ -147,12 +148,17 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValue, err := s.storage.Create(ctx, sv, "todo-user")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create secure value: %w", err)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	return createdSecureValue, nil
+	createdSecureValueMetadata, err := s.storage.Create(ctx, sv, user.GetUID())
+	if err != nil {
+		return nil, fmt.Errorf("creating secure value %+w", err)
+	}
+
+	return createdSecureValueMetadata, nil
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
@@ -161,10 +167,10 @@ func (s *SecureValueRest) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
+	_ rest.ValidateObjectFunc,
 	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
+	_forceAllowCreate bool,
+	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
@@ -190,16 +196,20 @@ func (s *SecureValueRest) Update(
 	// TODO: do we need to do this here again? Probably not, but double-check!
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
-	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValue, err := s.storage.Update(ctx, newSecureValue, "todo-user")
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, false, fmt.Errorf("missing auth info in context")
 	}
 
-	return updatedSecureValue, false, nil
+	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
+	updatedSecureValueMetadata, err := s.storage.Update(ctx, newSecureValue, user.GetUID())
+	if err != nil {
+		return updatedSecureValueMetadata, false, fmt.Errorf("updating secure value metadata: %+w", err)
+	}
+
+	return updatedSecureValueMetadata, false, nil
 }
 
-// Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
 func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
