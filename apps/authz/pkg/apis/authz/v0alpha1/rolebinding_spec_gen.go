@@ -37,8 +37,7 @@ type RoleBindingSpec struct {
 // NewRoleBindingSpec creates a new RoleBindingSpec object.
 func NewRoleBindingSpec() *RoleBindingSpec {
 	return &RoleBindingSpec{
-		Subjects: []RoleBindingspecSubject{},
-		RoleRef:  *NewRoleBindingspecRoleRef(),
+		RoleRef: *NewRoleBindingspecRoleRef(),
 	}
 }
 

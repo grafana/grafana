@@ -24,8 +24,5 @@ type GlobalRoleBindingMetadata struct {
 
 // NewGlobalRoleBindingMetadata creates a new GlobalRoleBindingMetadata object.
 func NewGlobalRoleBindingMetadata() *GlobalRoleBindingMetadata {
-	return &GlobalRoleBindingMetadata{
-		Finalizers: []string{},
-		Labels:     map[string]string{},
-	}
+	return &GlobalRoleBindingMetadata{}
 }

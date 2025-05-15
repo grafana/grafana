@@ -24,8 +24,5 @@ type ResourcePermissionMetadata struct {
 
 // NewResourcePermissionMetadata creates a new ResourcePermissionMetadata object.
 func NewResourcePermissionMetadata() *ResourcePermissionMetadata {
-	return &ResourcePermissionMetadata{
-		Finalizers: []string{},
-		Labels:     map[string]string{},
-	}
+	return &ResourcePermissionMetadata{}
 }

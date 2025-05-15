@@ -24,8 +24,5 @@ type CoreRoleMetadata struct {
 
 // NewCoreRoleMetadata creates a new CoreRoleMetadata object.
 func NewCoreRoleMetadata() *CoreRoleMetadata {
-	return &CoreRoleMetadata{
-		Finalizers: []string{},
-		Labels:     map[string]string{},
-	}
+	return &CoreRoleMetadata{}
 }

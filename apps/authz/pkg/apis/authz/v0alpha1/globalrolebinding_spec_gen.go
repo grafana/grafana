@@ -37,8 +37,7 @@ type GlobalRoleBindingSpec struct {
 // NewGlobalRoleBindingSpec creates a new GlobalRoleBindingSpec object.
 func NewGlobalRoleBindingSpec() *GlobalRoleBindingSpec {
 	return &GlobalRoleBindingSpec{
-		Subjects: []GlobalRoleBindingspecSubject{},
-		RoleRef:  *NewGlobalRoleBindingspecRoleRef(),
+		RoleRef: *NewGlobalRoleBindingspecRoleRef(),
 	}
 }
 
