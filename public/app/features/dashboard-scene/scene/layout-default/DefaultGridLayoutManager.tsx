@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -18,7 +19,6 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
@@ -146,15 +146,27 @@ export class DefaultGridLayoutManager
       });
 
       this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
-      this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
     }
   }
 
   public pastePanel() {
     const emptySpace = findSpaceForNewPanel(this.state.grid);
-    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
-    this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+
+    publishEditAction({
+      description: 'Paste panel',
+      addedObject: newGridItem,
+      source: this,
+      perform: () => {
+        this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+      },
+      undo: () => {
+        this.state.grid.setState({
+          children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+        });
+      },
+    });
+
     clearClipboard();
   }
 
@@ -181,11 +193,17 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    this.state.grid.setState({
-      children: layout.state.children.filter((child) => child !== gridItem),
+    publishEditAction({
+      description: 'Remove panel',
+      removedObject: gridItem,
+      source: this,
+      perform: () => {
+        layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      },
+      undo: () => {
+        layout.setState({ children: [...layout.state.children, gridItem] });
+      },
     });
-
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -237,7 +255,6 @@ export class DefaultGridLayoutManager
     }
 
     grid.setState({ children: [...grid.state.children, newGridItem] });
-
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 

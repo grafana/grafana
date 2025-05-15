@@ -1,8 +1,8 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Input, Field, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
@@ -18,6 +18,7 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm }: Props) {
+  const { t } = useTranslate();
   const {
     handleSubmit,
     register,

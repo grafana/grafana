@@ -4,8 +4,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2, VariableOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import checkboxPng from 'img/checkbox.png';
 import checkboxWhitePng from 'img/checkbox_white.png';
 

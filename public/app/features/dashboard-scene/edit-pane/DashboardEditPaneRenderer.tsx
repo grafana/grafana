@@ -4,9 +4,9 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useSceneObjectState } from '@grafana/scenes';
 import { useStyles2, useSplitter, ToolbarButton, ScrollContainer, Text, Icon, clearButtonStyles } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { DashboardOutline } from './DashboardOutline';
@@ -29,6 +29,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   const clearButton = useStyles2(clearButtonStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
+  const { t } = useTranslate();
   const isNewElement = selection?.isNewElement() ?? false;
   const [outlineCollapsed, setOutlineCollapsed] = useLocalStorage(
     'grafana.dashboard.edit-pane.outline.collapsed',

@@ -61,6 +61,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
         datasource={variable.datasource ?? undefined}
         onDataSourceChange={this.onDatasourceChanged}
         infoText={extended?.infoText}
+        datasourceSupported={variable.datasource === undefined ? false : true} // legacy behavior - will show data source settings even if not supported
       />
     );
   }

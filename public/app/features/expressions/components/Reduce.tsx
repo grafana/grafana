@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
 
@@ -15,6 +15,8 @@ interface Props {
 }
 
 export const Reduce = ({ labelWidth = 'auto', onChange, app, refIds, query }: Props) => {
+  const { t } = useTranslate();
+
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {

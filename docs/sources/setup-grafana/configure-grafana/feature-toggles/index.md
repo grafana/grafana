@@ -80,6 +80,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`           | Enables simplified step mode in the notifications section                                                                          | Yes                |
 | `lokiLabelNamesQueryApi`                  | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `grafanaManagedRecordingRulesDatasources` | Enables writing to data sources for Grafana-managed recording rules.                                                               |                    |
+| `alertingMigrationUI`                     | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
 | `unifiedNavbars`                          | Enables unified navbars                                                                                                            |                    |
 
 ## Public preview feature toggles
