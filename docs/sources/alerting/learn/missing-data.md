@@ -38,9 +38,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
   stale-alert-instances:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
   no-data-and-error-alerts:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-and-error-alerts
@@ -151,9 +151,9 @@ Because of this, `DatasourceNoData` alerts might require a dedicated setup to ha
 
 _MissingSeries_ occurs when only some series disappear but not all. This case is subtle — but important.
 
-Grafana marks missing series as [**stale**](ref:stale-alert-instances) after two evaluation intervals and triggers the alert instance eviction process. Here’s what happens under the hood:
+By default, Grafana marks missing series as [**stale**](ref:stale-alert-instances) after two consecutive evaluation intervals without data and triggers the alert instance eviction process. Here’s what happens under the hood:
 
-- Alert instances with missing data keep their last state for two evaluation intervals.
+- Alert instances with missing data keep their last state for a number of consecutive evaluation intervals, defined by the **Missing series evaluations to resolve** option (default: 2).
 - If still missing after that:
   - Grafana adds the annotation `grafana_state_reason: MissingSeries`.
   - The alert instance transitions to the `Normal` state.
@@ -170,8 +170,6 @@ If an alert instance becomes stale, you’ll find in the [alert history](ref:ale
 | 03:00 | 1.6s 🟢               | MissingSeries ⚠️ `Alerting`️       | 🟢🔴Region2 missing, state maintained.                                                         |
 | 04:00 | 1.4s 🟢               | —                                  | 🟢 🟢 `region2` Normal (Missing Series), resolved, and instance evicted; 📩 Notification sent. |
 | 05:00 | 1.4s 🟢               | —                                  | 🟢 No Alerts                                                                                   |
-
-###
 
 ### Why doesn’t MissingSeries match No Data behavior?
 
@@ -204,5 +202,5 @@ Grafana Alerting handles distinct scenarios automatically. Here’s how to think
 - Understand `DatasourceNoData` and `MissingSeries` notifications, since they don’t behave like regular alerts.
 - Use `absent()` or `absent_over_time()` in Prometheus for fine-grained detection when a metric or label disappears entirely.
 - Don’t alert on every instance by default. In dynamic environments, it’s better to aggregate and alert on symptoms — unless a missing individual instance directly impacts users.
-- If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State`, or routing those alerts differently.
+- If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State` and the `Missing series evaluations to resolve` option, or routing those alerts differently.
 - For connectivity issues involving alert query failures, see the sibling guide: [Handling connectivity errors in Grafana Alerting](ref:connectivity-errors-guide).
