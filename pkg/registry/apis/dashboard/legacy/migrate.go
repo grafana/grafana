@@ -153,7 +153,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				summary.Group = folders.GROUP
 				summary.Group = folders.RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
-					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
+					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
 
 			case "dashboard.grafana.app/librarypanels":
