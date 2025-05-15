@@ -3,20 +3,20 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type CoreRolespecPermission struct {
+type GlobalRolespecPermission struct {
 	// RBAC action (e.g: "dashbaords:read")
 	Action string `json:"action"`
 	// RBAC scope (e.g: "dashboards:uid:dash1")
 	Scope string `json:"scope"`
 }
 
-// NewCoreRolespecPermission creates a new CoreRolespecPermission object.
-func NewCoreRolespecPermission() *CoreRolespecPermission {
-	return &CoreRolespecPermission{}
+// NewGlobalRolespecPermission creates a new GlobalRolespecPermission object.
+func NewGlobalRolespecPermission() *GlobalRolespecPermission {
+	return &GlobalRolespecPermission{}
 }
 
 // +k8s:openapi-gen=true
-type CoreRoleSpec struct {
+type GlobalRoleSpec struct {
 	Names string `json:"names"`
 	// Display name of the role
 	Title string `json:"title"`
@@ -28,12 +28,12 @@ type CoreRoleSpec struct {
 	// delegatable?: bool
 	// created?
 	// updated?
-	Permissions []CoreRolespecPermission `json:"permissions"`
+	Permissions []GlobalRolespecPermission `json:"permissions"`
 }
 
-// NewCoreRoleSpec creates a new CoreRoleSpec object.
-func NewCoreRoleSpec() *CoreRoleSpec {
-	return &CoreRoleSpec{
-		Permissions: []CoreRolespecPermission{},
+// NewGlobalRoleSpec creates a new GlobalRoleSpec object.
+func NewGlobalRoleSpec() *GlobalRoleSpec {
+	return &GlobalRoleSpec{
+		Permissions: []GlobalRolespecPermission{},
 	}
 }

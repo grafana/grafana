@@ -17,11 +17,13 @@ func NewRolespecPermission() *RolespecPermission {
 
 // +k8s:openapi-gen=true
 type RoleSpec struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
-	Uid         string `json:"uid"`
-	Version     int64  `json:"version"`
-	Group       string `json:"group"`
+	Names string `json:"names"`
+	// Display name of the role
+	Title string `json:"title"`
+	// ToDo should we remove UID given it should be the k8s resource name?
+	Uid     string `json:"uid"`
+	Version int64  `json:"version"`
+	Group   string `json:"group"`
 	// TODO:
 	// delegatable?: bool
 	// created?

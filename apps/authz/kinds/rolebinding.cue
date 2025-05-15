@@ -23,9 +23,9 @@ rolebinding: {
 	}
 }
 
-clusterrolebinding: {
-	kind:       "ClusterRoleBinding"
-	pluralName: "ClusterRoleBindings"
+globalrolebinding: {
+	kind:       "GlobalRoleBinding"
+	pluralName: "GlobalRoleBindings"
 	current:    "v0alpha1"
 
 	codegen: {
@@ -36,7 +36,7 @@ clusterrolebinding: {
 	versions: {
 		"v0alpha1": {
 			schema: {
-				spec:   v0alpha1.RoleBindingSpec
+				spec:   v0alpha1.GlobalRoleBindingSpec
 			}
 		}
 	}

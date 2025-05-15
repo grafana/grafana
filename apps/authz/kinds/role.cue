@@ -42,9 +42,9 @@ corerole: {
 	}
 }
 
-clusterrole: {
-	kind:       "ClusterRole"
-	pluralName: "ClusterRoles"
+globalrole: {
+	kind:       "GlobalRole"
+	pluralName: "GlobalRoles"
 	current:    "v0alpha1"
 
 	codegen: {
