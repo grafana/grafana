@@ -65,6 +65,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
               variant="secondary"
               size="sm"
               icon="copy"
+              data-testid={selectors.components.EditPaneHeader.copyDropdown}
             >
               <Icon name="angle-down" />
             </Button>
