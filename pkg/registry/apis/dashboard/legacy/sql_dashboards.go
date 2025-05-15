@@ -304,14 +304,17 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if origin_name.String != "" {
+			editable := a.provisioning.GetAllowUIUpdatesFromConfig(origin_name.String)
+			prefix := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String) + "/"
 			meta.SetSourceProperties(utils.SourceProperties{
-				Path:            origin_path.String,
+				Path:            strings.TrimPrefix(origin_path.String, prefix),
 				Checksum:        origin_hash.String,
 				TimestampMillis: origin_ts.Int64,
 			})
 			meta.SetManagerProperties(utils.ManagerProperties{
-				Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
-				Identity: origin_name.String,
+				Kind:        utils.ManagerKindClassicFP, // nolint:staticcheck
+				Identity:    origin_name.String,
+				AllowsEdits: editable,
 			})
 		} else if plugin_id.String != "" {
 			meta.SetManagerProperties(utils.ManagerProperties{
