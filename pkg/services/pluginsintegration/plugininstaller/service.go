@@ -80,8 +80,7 @@ func ProvideService(
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
-	return len(s.cfg.PreinstallPlugins) == 0 ||
-		!s.cfg.PreinstallPluginsAsync
+	return len(s.cfg.PreinstallPluginsAsync) == 0
 }
 
 func (s *Service) installPluginsWithTimeout(pluginsToInstall []setting.InstallPlugin) error {
@@ -163,7 +162,7 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	err := s.installPlugins(ctx, s.cfg.PreinstallPlugins, false)
+	err := s.installPlugins(ctx, s.cfg.PreinstallPluginsAsync, false)
 	if err != nil {
 		// Unexpected error, asynchronous installation should not return errors
 		s.log.Error("Failed to install plugins", "error", err)

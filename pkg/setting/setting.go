@@ -200,9 +200,8 @@ type Cfg struct {
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
-	PreinstallPlugins                []InstallPlugin
+	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
-	PreinstallPluginsAsync           bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

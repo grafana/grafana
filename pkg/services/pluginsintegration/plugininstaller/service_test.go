@@ -24,8 +24,7 @@ func TestService_IsDisabled(t *testing.T) {
 	// Create a new service
 	s, err := ProvideService(
 		&setting.Cfg{
-			PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
-			PreinstallPluginsAsync: true,
+			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
@@ -157,8 +156,8 @@ func TestService_Run(t *testing.T) {
 			installedFromURL := 0
 			s, err := ProvideService(
 				&setting.Cfg{
-					PreinstallPlugins:     tt.pluginsToInstall,
-					PreinstallPluginsSync: tt.pluginsToInstallSync,
+					PreinstallPluginsAsync: tt.pluginsToInstall,
+					PreinstallPluginsSync:  tt.pluginsToInstallSync,
 				},
 				pluginstore.New(preg, &fakes.FakeLoader{}),
 				&fakes.FakePluginInstaller{

@@ -75,39 +75,39 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPluginsAsync := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
-		preinstallPlugins := make(map[string]InstallPlugin)
+		preinstallPluginsAsync := make(map[string]InstallPlugin)
 		// Add the default preinstalled plugins to pre install plugins async list
 		for _, plugin := range defaultPreinstallPlugins {
-			preinstallPlugins[plugin.ID] = plugin
+			preinstallPluginsAsync[plugin.ID] = plugin
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
-			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
+			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
-		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPlugins)
+		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 
 		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))
 		preinstallPluginsSync := make(map[string]InstallPlugin)
 		cfg.processPreinstallPlugins(rawInstallPluginsSync, preinstallPluginsSync)
 		// Remove from the list the plugins that have been disabled
 		for _, disabledPlugin := range cfg.DisablePlugins {
-			delete(preinstallPlugins, disabledPlugin)
+			delete(preinstallPluginsAsync, disabledPlugin)
 			delete(preinstallPluginsSync, disabledPlugin)
 		}
-		for _, plugin := range preinstallPlugins {
-			cfg.PreinstallPlugins = append(cfg.PreinstallPlugins, plugin)
+		for _, plugin := range preinstallPluginsAsync {
+			cfg.PreinstallPluginsAsync = append(cfg.PreinstallPluginsAsync, plugin)
 		}
 
 		for _, plugin := range preinstallPluginsSync {
 			cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
 		}
-		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
-		if !cfg.PreinstallPluginsAsync {
-			for key, plugin := range preinstallPlugins {
+		installPluginsInAsync := pluginsSection.Key("preinstall_async").MustBool(true)
+		if !installPluginsInAsync {
+			for key, plugin := range preinstallPluginsAsync {
 				if _, exists := preinstallPluginsSync[key]; !exists {
 					cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
 				}
 			}
-			cfg.PreinstallPlugins = nil
+			cfg.PreinstallPluginsAsync = nil
 		}
 	}
 

@@ -264,10 +264,7 @@ func Test_readPluginSettings(t *testing.T) {
 
 				err = cfg.readPluginSettings(cfg.Raw)
 				require.NoError(t, err)
-				assert.ElementsMatch(t, cfg.PreinstallPlugins, tc.expected)
-				if tc.disableAsync {
-					require.Equal(t, cfg.PreinstallPluginsAsync, false)
-				}
+				assert.ElementsMatch(t, cfg.PreinstallPluginsAsync, tc.expected)
 				if tc.expectedSync != nil {
 					assert.ElementsMatch(t, cfg.PreinstallPluginsSync, tc.expectedSync)
 				}
