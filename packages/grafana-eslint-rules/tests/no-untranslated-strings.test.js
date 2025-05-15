@@ -21,9 +21,6 @@ const TRANS_IMPORT = `import { Trans } from '${PACKAGE_IMPORT_NAME}';`;
 const T_IMPORT = `import { t } from '${PACKAGE_IMPORT_NAME}/internal';`;
 const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${PACKAGE_IMPORT_NAME}';`;
 
-const LEGACY_IMPORT = `import { Trans } from 'app/core/internationalization';`;
-const LEGACY_IMPORT_RELATIVE = `import { Trans } from '../../core/internationalization';`;
-
 const ruleTester = new RuleTester();
 
 ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
@@ -259,48 +256,6 @@ const Foo = () => <div>Untranslated text</div>`,
               messageId: 'wrapWithTrans',
               output: `
 ${TRANS_IMPORT}
-const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
-            },
-          ],
-        },
-      ],
-    },
-
-    {
-      name: 'Fixes correctly when Trans import already exists from legacy package',
-      code: `
-${LEGACY_IMPORT}
-const Foo = () => <div>Untranslated text</div>`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStrings',
-          suggestions: [
-            {
-              messageId: 'wrapWithTrans',
-              output: `
-${LEGACY_IMPORT}
-const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
-            },
-          ],
-        },
-      ],
-    },
-
-    {
-      name: 'Fixes correctly when Trans import already exists from (relative) legacy package',
-      code: `
-${LEGACY_IMPORT_RELATIVE}
-const Foo = () => <div>Untranslated text</div>`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStrings',
-          suggestions: [
-            {
-              messageId: 'wrapWithTrans',
-              output: `
-${LEGACY_IMPORT_RELATIVE}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
             },
           ],
