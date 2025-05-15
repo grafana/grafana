@@ -130,12 +130,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         },
       };
 
-      if (dash.metadata.annotations?.[AnnoKeyManagerKind]) {
-        const allowEdits =
-          dash.metadata.annotations?.[AnnoKeyManagerAllowsEdits] === 'true' ||
-          dash.metadata.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
-        result.meta.provisioned = allowEdits;
-        result.meta.provisionedExternalId = dash.metadata.annotations?.[AnnoKeySourcePath];
+      const annotations = dash.metadata.annotations ?? {};
+      const managerKind = annotations[AnnoKeyManagerKind];
+      
+      if (managerKind) {
+        result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
+        result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
       }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
