@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+const (
+	getPluginsInfoMaxPlugins = 50
+)
+
 type Manager struct {
 	client *Client
 
@@ -148,9 +152,9 @@ func (m *Manager) GetPluginsInfo(ctx context.Context, options GetPluginsInfoOpti
 	// a safe limit).
 	plugins := [][]string{}
 	results := []PluginInfo{}
-	if len(options.Plugins) > 50 {
-		for i := 0; i < len(options.Plugins); i += 50 {
-			plugins = append(plugins, options.Plugins[i:min(i+50, len(options.Plugins))])
+	if len(options.Plugins) > getPluginsInfoMaxPlugins {
+		for i := 0; i < len(options.Plugins); i += getPluginsInfoMaxPlugins {
+			plugins = append(plugins, options.Plugins[i:min(i+getPluginsInfoMaxPlugins, len(options.Plugins))])
 		}
 	} else {
 		plugins = [][]string{options.Plugins}
