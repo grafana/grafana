@@ -14,8 +14,8 @@ class GrafanaPanel extends React.Component {
 
     bindGrafana() {
         if(!this.bound){
-            window.Grafana.Context(this.props.dashboardUid).then((appContext)=>{
-                console.log("on the client side. appContext is now", appContext)
+            let doLoginRedirect = (this.props.loginRedirect === undefined || !!this.props.loginRedirect);
+            window.Grafana.Context(this.props.dashboardUid, doLoginRedirect).then((appContext)=>{
                 // signature: function(appContext, dashboardUid, panelId, HTML Element, height, width)
                 window.Grafana.bindPanelToElement(
                     appContext,
@@ -28,7 +28,6 @@ class GrafanaPanel extends React.Component {
                 this.bound = true;
             }).catch((err)=>{
                 console.log(err);
-                console.log('recursing...');
                 setTimeout(this.bindGrafana(), 1000);
             });
         }
@@ -59,10 +58,12 @@ class GrafanaPanel extends React.Component {
 
     render() {
         let styles = {
-            height: parseInt(this.props.height) + 20 + "px", // 20px for "safety"
-            width: parseInt(this.props.width) + 20 + "px",
+            height: parseInt(this.props.height) + "px",
+            width: parseInt(this.props.width) + "px",
         };
-        return <div className="grafana panel" ref={this.domTarget} style={styles} />;
+        return <div className="grafana-panel-exporter" style={styles}>
+            <div ref={this.domTarget} />;
+        </div>
     }
 }
 
