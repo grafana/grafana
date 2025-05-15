@@ -78,18 +78,20 @@ Configure the enterprise application in Azure AD to enable automated user and te
 1. In the application overview, select **Provisioning**
 2. Click **+ New Configuration**
 3. Configure the following settings:
-  - **Tenant URL:**
-    - For Grafana Cloud instances:
-      ```
-      https://{stack-name}.grafana.net/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
-      ```
-      Replace `{stack-name}` and `{stack-id}` with your Grafana Cloud stack name and ID.
-    - For self-hosted instances:
-      ```
-      https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/default
-      ```
-      Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `grafana.yourcompany.com`).
-  - **Secret Token:** Enter the service account token from Grafana
+
+- **Tenant URL:**
+  - For Grafana Cloud instances:
+    ```
+    https://{stack-name}.grafana.net/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}
+    ```
+    Replace `{stack-name}` and `{stack-id}` with your Grafana Cloud stack name and ID.
+  - For self-hosted instances:
+    ```
+    https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/default
+    ```
+    Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `grafana.yourcompany.com`).
+- **Secret Token:** Enter the service account token from Grafana
+
 4. Click **Test connection** to verify the configuration
 5. Click **Create** to save the settings
 
@@ -98,9 +100,10 @@ Configure the enterprise application in Azure AD to enable automated user and te
 After setting the Tenant URL and Secret Token, navigate to the **Mappings** section within the same **Provisioning** settings in your Azure AD enterprise application and then click **Provision Microsoft Entra ID Users**. This is where you will define how Azure AD attributes correspond to the SCIM attributes for Grafana, including the mandatory `externalId`.
 
 {{< admonition type="note" >}}
+
 - Only work email addresses are supported. Azure AD must be configured to use `emails[type eq "work"].value` for email mapping.
 - The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to the `externalId` attribute in Grafana. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, the `objectId` attribute in Azure AD is commonly used for this purpose).
-{{< /admonition >}}
+  {{< /admonition >}}
 
 Configure the following required attributes:
 
