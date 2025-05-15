@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -333,6 +332,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 // CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
 // Inserting large enough datasets causes SQL errors, so we batch the inserts
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	startIndex := 0
 	for i := 0; i < len(resources); i++ {
 		// massage the data first
 		resources[i].UID = util.GenerateShortUID()
@@ -348,12 +348,13 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 		}
 
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			_, err := sess.Insert(resources[int(math.Max(float64(i-maxResourceBatchSize), 0)):endIndex])
+			_, err := sess.Insert(resources[startIndex:endIndex])
 			return err
 		})
 		if err != nil {
 			return fmt.Errorf("creating resources: %w", err)
 		}
+		startIndex = endIndex
 	}
 
 	return nil
