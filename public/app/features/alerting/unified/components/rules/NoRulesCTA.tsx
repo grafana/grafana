@@ -1,17 +1,23 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
-import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { createRelativeUrl } from '../../utils/url';
 
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+
+  const grafanaRecordingRulesEnabled =
+    config.unifiedAlerting.recordingRulesEnabled &&
+    config.featureToggles.grafanaManagedRecordingRules &&
+    canCreateGrafanaRules;
+
+  const { t } = useTranslate();
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
 
   // User can create Grafana and DS-managed recording rules, show a dropdown
@@ -66,6 +72,7 @@ const RecordingRulesButtons = () => {
 };
 
 export const NoRulesSplash = () => {
+  const { t } = useTranslate();
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
   const canCreateAnything = canCreateGrafanaRules || canCreateCloudRules;
 
@@ -100,7 +107,12 @@ export const NoRulesSplash = () => {
 
 export function GrafanaNoRulesCTA() {
   const { canCreateGrafanaRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+  const { t } = useTranslate();
+
+  const grafanaRecordingRulesEnabled =
+    config.unifiedAlerting.recordingRulesEnabled &&
+    config.featureToggles.grafanaManagedRecordingRules &&
+    canCreateGrafanaRules;
 
   return (
     <EmptyState

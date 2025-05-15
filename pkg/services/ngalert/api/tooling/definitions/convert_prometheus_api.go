@@ -210,6 +210,12 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
 	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
+	// in: header
+	TargetDatasourceUID string `json:"x-grafana-alerting-target-datasource-uid"`
+	// in: header
+	FolderUID string `json:"x-grafana-alerting-folder-uid"`
+	// in: header
+	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
 	// in:body
 	Body PrometheusRuleGroup
 }

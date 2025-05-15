@@ -2804,6 +2804,10 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "Folder not found",
+      "title-ruler-namespace-error": "Cannot load rules"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -3420,6 +3424,11 @@
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "modal-title": "Query Variable",
+          "preview": "Preview"
+        },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -4016,6 +4025,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
+      "alert-not-supported": "This data source does not support ad hoc filters",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -4240,6 +4250,7 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-target-data-source": "Target data source",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
@@ -9015,7 +9026,8 @@
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Value or variable"
+      "placeholder-value-or-variable": "Value or variable",
+      "variable-regex-documentation": "Formats multi-value variable into a regex string"
     },
     "regression-transformer-editor": {
       "label-degree": "Degree",

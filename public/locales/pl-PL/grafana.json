@@ -2825,6 +2825,10 @@
     "actions": {
       "button-to-recently-deleted": "Ostatnio usunięte"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Ten folder jest pusty"
     },
@@ -3451,6 +3455,11 @@
         "name": "",
         "open-editor": "Otwórz edytor zmiennych",
         "open-editor-tooltip": "Aby uzyskać więcej opcji dotyczących zmiennych, otwórz edytor zmiennych",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Zezwalaj na wartości niestandardowe",
           "allow-custom-values-description": "Umożliwia użytkownikom wprowadzanie wartości",
@@ -5404,9 +5413,6 @@
     "description": "Wprowadzone zmiany mogą nie zostać zapisane.",
     "discard-button": "Odrzuć niezapisane zmiany",
     "title": "Opuścić stronę?"
-  },
-  "frontendtests": {
-    "test-key": "nie znaleziono klucza testowego"
   },
   "gen-ai": {
     "apply-suggestion": "Zastosuj",
@@ -9075,7 +9081,8 @@
       "placeholder-choose-stat": "Wybierz statystyki"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Wartość lub zmienna"
+      "placeholder-value-or-variable": "Wartość lub zmienna",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Stopień",
