@@ -78,7 +78,7 @@ describe('Dashboard edit - variables', () => {
       type: 'textbox',
       name: 'VariableUnderTest',
       value: 'foo',
-      label: 'VariableUnderTest', // constant doesn't really need a label
+      label: 'VariableUnderTest',
     };
 
     // common steps to add a new variable
