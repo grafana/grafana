@@ -137,7 +137,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
       }
-      }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);
