@@ -1,5 +1,5 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
@@ -322,7 +322,6 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultVizPanel(): VizPanel {
-  const { t } = useTranslate();
   const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
