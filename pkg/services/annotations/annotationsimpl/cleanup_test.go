@@ -16,8 +16,6 @@ import (
 )
 
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
-	t.Skip("skipping integration test because it's flaky")
-
 	if testing.Short() {
 		t.Skip("Skipping integration test")
 	}

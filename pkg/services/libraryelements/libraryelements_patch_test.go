@@ -14,8 +14,6 @@ import (
 )
 
 func TestIntegration_PatchLibraryElement(t *testing.T) {
-	t.Skip("skipping integration test because it's flaky")
-
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
