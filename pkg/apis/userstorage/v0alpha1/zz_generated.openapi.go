@@ -100,6 +100,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

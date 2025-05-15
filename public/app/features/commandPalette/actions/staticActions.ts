@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
-import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload } from 'app/mock-api-utils';
 
