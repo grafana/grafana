@@ -32,9 +32,18 @@ import (
 	_ "golang.org/x/time/rate"
 	_ "xorm.io/builder"
 
+	_ "github.com/grafana/authlib/authn"
+	_ "github.com/grafana/authlib/authz"
+	_ "github.com/grafana/authlib/cache"
+	_ "github.com/grafana/authlib/grpcutils"
+	_ "github.com/grafana/authlib/types"
 	_ "github.com/grafana/dskit/backoff"
 	_ "github.com/grafana/dskit/flagext"
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
+
+	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
+	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
 )
