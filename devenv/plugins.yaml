@@ -24,8 +24,4 @@ apps:
   - type: grafana-provisioning-app
     org_id: 1
     org_name: Main Org.
-    disabled: false
-  - type: redis-app
-    org_id: 1
-    org_name: Main Org.
-    disabled: false    
+    disabled: false 

@@ -1,4 +1,20 @@
 {
+  "__inputs": [],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.1.0-pre"
+    },
+    {
+      "type": "panel",
+      "id": "text",
+      "name": "Text",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -18,14 +34,10 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 134,
+  "id": null,
   "links": [],
   "panels": [
     {
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -47,7 +59,6 @@
       "type": "text"
     }
   ],
-  "preload": false,
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -59,7 +70,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "New dashboard",
+  "title": "Passing dashboard",
   "uid": "ca9ff30f-51c6-44e0-9040-56529f02c8d2",
-  "version": 1
+  "version": 1,
+  "weekStart": ""
 }

@@ -27,8 +27,15 @@
     },
     {
       "type": "dashboard",
-      "name": "Provisioning Test Dashboard",
-      "path": "dashboards/panels.json",
+      "name": "Provisioning Passing Test Dashboard",
+      "path": "dashboards/passing.json",
+      "role": "Admin",
+      "addToNav": false
+    },
+    {
+      "type": "dashboard",
+      "name": "Provisioning Failing Test Dashboard",
+      "path": "dashboards/failing.json",
       "role": "Admin",
       "addToNav": false
     }
