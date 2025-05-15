@@ -12,10 +12,13 @@ import (
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -27,12 +30,13 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil, nil
 	}
 
-	logger := log.New("resource-server-ring")
+	tracer := otel.Tracer(resource.RingKey)
+	logger := log.New(resource.RingKey)
 	reg := prometheus.WrapRegistererWithPrefix(metricsPrefix, ms.registerer)
 
 	grpcclientcfg := &grpcclient.Config{}
 	flagext.DefaultValues(grpcclientcfg)
-	pool := newClientPool(*grpcclientcfg, logger, reg)
+	pool := newClientPool(*grpcclientcfg, logger, reg, ms.cfg, ms.features, tracer)
 
 	ringStore, err := kv.NewClient(
 		ms.MemberlistKVConfig,
@@ -92,7 +96,7 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 	return rc
 }
 
-func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer) *ringclient.Pool {
+func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.Registerer, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) *ringclient.Pool {
 	poolCfg := ringclient.PoolConfig{
 		CheckInterval:      10 * time.Second,
 		HealthCheckEnabled: true,
@@ -119,8 +123,10 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled
-		client := resource.NewLegacyResourceClient(conn)
+		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get resource client for server %s %s: %s", inst.Id, inst.Addr, err)
+		}
 
 		return &resource.RingClient{
 			Client:       client,
