@@ -24,13 +24,13 @@ interface Props {
 
 export const LogLineMenu = ({ log, styles }: Props) => {
   const {
+    detailsDisplayed,
     getRowContextQuery,
     onOpenContext,
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
     logSupportsContext,
-    showDetails,
     toggleDetails,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
@@ -70,15 +70,13 @@ export const LogLineMenu = ({ log, styles }: Props) => {
 
   const { t } = useTranslate();
 
-  const detailsDisplayed = showDetails.find((shownLog) => shownLog.uid === log.uid);
-
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
         <Menu.Item
           onClick={toggleLogDetails}
           label={
-            detailsDisplayed
+            detailsDisplayed(log)
               ? t('logs.log-line-menu.show-details', 'Hide log details')
               : t('logs.log-line-menu.hide-details', 'Show log details')
           }
@@ -99,22 +97,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         )}
       </Menu>
     ),
-    [
-      toggleLogDetails,
-      detailsDisplayed,
-      t,
-      copyLogLine,
-      onPermalinkClick,
-      log.rowId,
-      log.uid,
-      copyLinkToLogLine,
-      shouldlogSupportsContext,
-      onPinLine,
-      onUnpinLine,
-      showContext,
-      pinned,
-      togglePinning,
-    ]
+    [toggleLogDetails, detailsDisplayed, log, t, shouldlogSupportsContext, showContext, pinned, onPinLine, togglePinning, onUnpinLine, copyLogLine, onPermalinkClick, copyLinkToLogLine]
   );
 
   return (
