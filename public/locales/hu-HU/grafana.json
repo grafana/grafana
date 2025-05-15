@@ -9019,7 +9019,8 @@
       "placeholder-choose-stat": "Válasszon statisztikát"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Érték vagy változó"
+      "placeholder-value-or-variable": "Érték vagy változó",
+      "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
       "label-degree": "Fok",
