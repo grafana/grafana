@@ -114,11 +114,13 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return fmt.Errorf("expected managed resource")
 	}
 	if repo.Kind != utils.ManagerKindRepo {
-		return fmt.Errorf("expected managed repository")
+		if !repo.AllowsEdits {
+			return fmt.Errorf("managed resource does not allow edits")
+		}
 	}
 	src, ok := obj.GetSourceProperties()
 	if !ok || src.Path == "" {
-		return fmt.Errorf("missing source properties")
+		return fmt.Errorf("managed resource is missing source path annotation")
 	}
 
 	cfg, err := s.configProvider.GetRestConfig(ctx)
