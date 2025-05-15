@@ -7,9 +7,21 @@ Cypress.Screenshot.defaults({
 
 const COMMAND_DELAY = 1000;
 
-if (Cypress.env('SLOWMO')) {
-  const commandsToModify = ['clear', 'click', 'contains', 'reload', 'then', 'trigger', 'type', 'visit'];
+function delay(ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {}
+}
 
+if (Cypress.env('SLOWMO')) {
+  Cypress.Commands.overwriteQuery("contains",
+    function (contains, filter, text, userOptions = {}) {
+      delay(COMMAND_DELAY);
+      const call = contains.bind(this);
+      return call(filter, text, userOptions);
+    }
+  );
+
+  const commandsToModify = ['clear', 'click', 'reload', 'then', 'trigger', 'type', 'visit'];
   commandsToModify.forEach((command) => {
     // @ts-ignore -- https://github.com/cypress-io/cypress/issues/7807
     Cypress.Commands.overwrite(command, (originalFn, ...args) => {
@@ -63,5 +75,12 @@ beforeEach(() => {
   if (toggles.length > 0) {
     cy.logToConsole('setting feature toggles in localstorage');
     cy.setLocalStorage('grafana.featureToggles', toggles.join(','));
+  }
+});
+
+afterEach(() => {
+  // in slowmo mode, wait to see the last command
+  if (Cypress.env('SLOWMO')) {
+    cy.wait(COMMAND_DELAY);
   }
 });
