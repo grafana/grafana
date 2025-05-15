@@ -420,7 +420,9 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     };
 
     // Transform v1 dashboard (using target) to v2 structure
-    if (layer.state.query.target) {
+    // adds extra condition to prioritize query over target
+    // if query is defined, use it
+    if (layer.state.query.target && !layer.state.query.query) {
       // Handle built-in annotations
       if (layer.state.query.builtIn) {
         result.spec.query = {
@@ -466,7 +468,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     if (Object.keys(otherProps).length > 0) {
       // Extract options property and get the rest of the properties
       const { legacyOptions, ...restProps } = otherProps;
-
       // Merge options with the rest of the properties
       result.spec.legacyOptions = { ...legacyOptions, ...restProps };
     }
