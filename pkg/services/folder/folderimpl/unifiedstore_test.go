@@ -898,7 +898,7 @@ func TestList(t *testing.T) {
 			name: "should return all folders",
 			args: args{
 				ctx:   context.Background(),
-				orgID: 1,
+				orgID: orgID,
 				opts: metav1.ListOptions{
 					Limit:    0,
 					TypeMeta: metav1.TypeMeta{},
@@ -966,7 +966,7 @@ func TestList(t *testing.T) {
 			name: "should return folders with limit",
 			args: args{
 				ctx:   context.Background(),
-				orgID: 1,
+				orgID: orgID,
 				opts: metav1.ListOptions{
 					Limit:    1,
 					TypeMeta: metav1.TypeMeta{},
@@ -1013,7 +1013,7 @@ func TestList(t *testing.T) {
 			name: "should return folders with continue token",
 			args: args{
 				ctx:   context.Background(),
-				orgID: 1,
+				orgID: orgID,
 				opts: metav1.ListOptions{
 					Limit:    1,
 					TypeMeta: metav1.TypeMeta{},
@@ -1065,7 +1065,7 @@ func TestList(t *testing.T) {
 			name: "should return error if k8s returns error",
 			args: args{
 				ctx:   context.Background(),
-				orgID: 1,
+				orgID: orgID,
 				opts: metav1.ListOptions{
 					Limit:    0,
 					TypeMeta: metav1.TypeMeta{},
