@@ -36,6 +36,7 @@ export function GlobalStyles(props: GlobalStylesProps) {
   return (
     <Global
       styles={[
+        getFontStyles(),
         getAccessibilityStyles(theme),
         getAlertingStyles(theme),
         getCodeStyles(theme),
@@ -44,7 +45,6 @@ export function GlobalStyles(props: GlobalStylesProps) {
         getElementStyles(theme, isExtensionSidebarOpen),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
-        getFontStyles(),
         getFormElementStyles(theme),
         getJsonFormatterStyles(theme),
         getCardStyles(theme),
