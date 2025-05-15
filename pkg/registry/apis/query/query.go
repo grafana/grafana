@@ -160,21 +160,17 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			// log unexpected errors
-			var k8sErr *errorsK8s.StatusError
-			if errors.As(err, &k8sErr) {
-				// we do not need to log 4xx errors as they are expected
-				if k8sErr.ErrStatus.Code >= 500 {
-					b.log.Error("hit unexpected k8s error while executing query", "err", err, "status", k8sErr.Status())
-				}
-				b.log.Debug("sending a known k8s error to the client", "err", err, "status", k8sErr.Status())
+			b.log.Error("execute error", "http code", query.GetResponseCode(rsp), "err", err)
+			if rsp != nil { // if we have a response, we assume the err is set in the response
+				responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
+					QueryDataResponse: *rsp,
+				})
+				return
 			} else {
-				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
+				// return the error to the client, will send all non k8s errors as a k8 unexpected error
+				responder.Error(err)
+				return
 			}
-
-			// return the error to the client, will send all non k8s errors as a k8 unexpected error
-			responder.Error(err)
-			return
 		}
 
 		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
@@ -270,6 +266,10 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 				}
 			}
 		}
+	}
+
+	if err != nil {
+		rsp = buildErrorResponse(err, req)
 	}
 
 	return rsp, err
