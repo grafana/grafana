@@ -488,7 +488,23 @@
     "name": "area/transformations",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/correlations",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/area/expressions/sql",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
     }
   },
   {
