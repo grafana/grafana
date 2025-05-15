@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';

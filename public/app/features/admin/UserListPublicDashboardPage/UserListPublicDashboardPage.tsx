@@ -1,7 +1,7 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Stack, Tag, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 
@@ -12,7 +12,7 @@ const selectors = e2eSelectors.pages.UserListPage.publicDashboards;
 
 export const UserListPublicDashboardPage = () => {
   const { data: users, isLoading } = useGetActiveUsersQuery();
-
+  const { t } = useTranslate();
   return (
     <Page.Contents isLoading={isLoading}>
       <table className="filter-table form-inline" data-testid={selectors.container}>

@@ -2,8 +2,8 @@ import { ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { rulerRuleToFormValues } from 'app/features/alerting/unified/utils/rule-form';
@@ -38,6 +38,7 @@ export const ConfirmVersionRestoreModal = ({
   const { result: ruleWithLocation } = useRuleWithLocation({ ruleIdentifier });
   const navigate = useNavigate();
   const [restoreMethod, { error }] = useRestoreVersion();
+  const { t } = useTranslate();
 
   const title = t('alerting.alertVersionHistory.restore-modal.title', 'Restore version');
   const errorTitle = t('alerting.alertVersionHistory.restore-modal.error', 'Could not restore alert rule version ');

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
@@ -26,7 +26,7 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
-
+  const { t } = useTranslate();
   const timeRange = query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined;
 
   const separator = <span>, </span>;
