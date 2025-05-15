@@ -6,11 +6,11 @@ import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
-import { getCellLinks } from '../../../utils';
 import { clearLinkButtonStyles } from '../../Button';
 import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
 import { CellActions } from '../CellActions';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { getCellLinks } from '../TableNG/utils';
 import { TableStyles } from '../TableRT/styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
 import { getCellColors, getCellOptions } from '../utils';
@@ -23,7 +23,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
-  const cellLinks = getCellLinks(field, row);
+  const cellLinks = getCellLinks(field, row.index);
   const hasLinks = cellLinks?.some((link) => link.href || link.onClick != null);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
@@ -81,7 +81,7 @@ export const DefaultCell = (props: TableCellProps) => {
     <div key={key} {...rest} className={cellStyle}>
       {hasLinks ? (
         <DataLinksContextMenu
-          links={() => getCellLinks(field, row)?.filter((link) => link.href || link.onClick != null) || []}
+          links={() => getCellLinks(field, row.index)?.filter((link) => link.href || link.onClick != null) || []}
         >
           {(api) => {
             if (api.openMenu) {

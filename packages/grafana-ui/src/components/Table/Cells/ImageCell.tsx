@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { getCellLinks } from '../../../utils';
 import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
+import { getCellLinks } from '../TableNG/utils';
 import { TableCellDisplayMode, TableCellProps } from '../types';
 import { getCellOptions } from '../utils';
 
@@ -13,7 +13,7 @@ export const ImageCell = (props: TableCellProps) => {
   const { title, alt } =
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasLinks = Boolean(getCellLinks(field, row.index)?.length);
 
   // The image element
   const img = (
@@ -33,7 +33,7 @@ export const ImageCell = (props: TableCellProps) => {
       {hasLinks ? (
         <DataLinksContextMenu
           style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
-          links={() => getCellLinks(field, row) || []}
+          links={() => getCellLinks(field, row.index) || []}
         >
           {(api) => {
             if (api.openMenu) {

@@ -2,11 +2,11 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 
 import { useStyles2 } from '../../../themes';
-import { getCellLinks } from '../../../utils';
 import { Button, clearLinkButtonStyles } from '../../Button';
 import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
 import { CellActions } from '../CellActions';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { getCellLinks } from '../TableNG/utils';
 import { TableCellProps } from '../types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
@@ -28,14 +28,14 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
     displayValue = JSON.stringify(value, null, ' ');
   }
 
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasLinks = Boolean(getCellLinks(field, row.index)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       <div className={cx(tableStyles.cellText, txt)}>
         {hasLinks ? (
-          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          <DataLinksContextMenu links={() => getCellLinks(field, row.index) || []}>
             {(api) => {
               if (api.openMenu) {
                 return (
