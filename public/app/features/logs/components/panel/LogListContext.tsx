@@ -29,6 +29,7 @@ import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
+  detailsDisplayed: (log: LogListModel) => boolean;
   detailsWidth?: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
@@ -54,6 +55,7 @@ export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
+  detailsDisplayed: () => false,
   displayedFields: [],
   downloadLogs: () => {},
   enableLogDetails: false,
@@ -246,6 +248,11 @@ export const LogListContextProvider = ({
     }
   }, [hasUnescapedContent, logListState]);
 
+  const detailsDisplayed = useCallback(
+    (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
+    [showDetails]
+  );
+
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
@@ -393,6 +400,7 @@ export const LogListContextProvider = ({
       value={{
         app,
         closeDetails,
+        detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
         detailsWidth: Number.isInteger(detailsWidth) ? detailsWidth : undefined,
         displayedFields,
