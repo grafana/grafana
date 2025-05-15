@@ -858,7 +858,3 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     }
   }
 }
-
-export function isV2Dashboard(model: Dashboard | DashboardV2Spec): model is DashboardV2Spec {
-  return 'elements' in model;
-}
