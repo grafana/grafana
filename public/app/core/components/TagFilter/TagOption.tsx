@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import { OptionProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { TagBadge } from './TagBadge';
 
@@ -16,7 +15,7 @@ export interface TagSelectOption {
 
 export const TagOption = ({ data, className, label, isFocused, innerProps }: OptionProps<TagSelectOption>) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div
       className={cx(styles.option, isFocused && styles.optionFocused)}

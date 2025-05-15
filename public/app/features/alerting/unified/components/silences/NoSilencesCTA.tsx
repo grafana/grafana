@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getInstancesPermissions } from '../../utils/access-control';
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
+  const { t } = useTranslate();
   const permissions = getInstancesPermissions(alertManagerSourceName);
 
   if (contextSrv.hasPermission(permissions.create)) {

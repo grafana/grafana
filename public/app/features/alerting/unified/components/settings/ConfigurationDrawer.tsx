@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 
@@ -30,6 +30,7 @@ export function useEditConfigurationDrawer() {
     setActiveTab('configuration');
     setOpen(false);
   }, []);
+  const { t } = useTranslate();
 
   const drawer = useMemo(() => {
     if (!open) {
@@ -93,7 +94,16 @@ export function useEditConfigurationDrawer() {
         )}
       </Drawer>
     );
-  }, [open, dataSourceName, readOnly, handleDismiss, activeTab, updateAlertmanagerSettings, resetAlertmanagerSettings]);
+  }, [
+    open,
+    dataSourceName,
+    readOnly,
+    handleDismiss,
+    activeTab,
+    updateAlertmanagerSettings,
+    resetAlertmanagerSettings,
+    t,
+  ]);
 
   return [drawer, showConfiguration, handleDismiss] as const;
 }
