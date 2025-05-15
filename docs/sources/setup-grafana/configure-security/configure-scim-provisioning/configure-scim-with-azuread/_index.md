@@ -117,7 +117,7 @@ Configure the following required attributes:
 
 ### Enable provisioning
 
-Click **Start provisioning** from the top action bar in the **Overview** page from you Azure AD enterprise application.
+Click **Start provisioning** from the top action bar in the **Overview** page from your Azure AD enterprise application.
 
 ### Configure group provisioning
 
