@@ -1,6 +1,6 @@
+import { Trans } from '@grafana/i18n';
 import mimirLogoSvg from 'img/alerting/mimir_logo.svg';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';

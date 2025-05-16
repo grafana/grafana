@@ -144,6 +144,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -343,6 +344,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

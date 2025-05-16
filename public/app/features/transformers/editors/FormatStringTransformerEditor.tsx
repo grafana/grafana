@@ -13,10 +13,10 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {
@@ -35,6 +35,8 @@ function FormatStringTransfomerEditor({
   options,
   onChange,
 }: TransformerUIProps<FormatStringTransformerOptions>) {
+  const { t } = useTranslate();
+
   const onSelectField = useCallback(
     (value: string | undefined) => {
       const val = value ?? '';

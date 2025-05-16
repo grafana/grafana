@@ -1,8 +1,8 @@
 import { noop } from 'lodash';
 import { FormEvent } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { SceneVariable, TextBoxVariable } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TextBoxVariableForm } from '../components/TextBoxVariableForm';
@@ -24,6 +24,8 @@ export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEdito
 }
 
 export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  const { t } = useTranslate();
+
   if (!(variable instanceof TextBoxVariable)) {
     console.warn('getTextBoxVariableOptions: variable is not a TextBoxVariable');
     return [];
