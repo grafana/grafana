@@ -127,6 +127,8 @@ export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel;
       value={title}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => setPanelTitle(panel, title, prevTitle)}
+      // The full action (that can be undone) is done by setPanelTitle,
+      // But to see changes in the input field, canvas and outline we change the real value here
       onChange={(e) => panel.setState({ title: e.currentTarget.value })}
     />
   );
