@@ -14,11 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -41,11 +41,11 @@ func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 
 	grpcServer := grpcHandler.GetServer()
 
-	RegisterResourceStoreServer(grpcServer, distributorServer)
-	// RegisterBulkStoreServer(grpcServer, distributorServer)
-	RegisterResourceIndexServer(grpcServer, distributorServer)
-	RegisterManagedObjectIndexServer(grpcServer, distributorServer)
-	RegisterBlobStoreServer(grpcServer, distributorServer)
+	resourcepb.RegisterResourceStoreServer(grpcServer, distributorServer)
+	// resourcepb.RegisterBulkStoreServer(grpcServer, distributorServer)
+	resourcepb.RegisterResourceIndexServer(grpcServer, distributorServer)
+	resourcepb.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
+	resourcepb.RegisterBlobStoreServer(grpcServer, distributorServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
 	_, err = grpcserver.ProvideReflectionService(cfg, grpcHandler)
 	if err != nil {
@@ -151,7 +151,7 @@ func (ds *distributorServer) List(ctx context.Context, r *resourcepb.ListRequest
 	return client.List(ctx, r)
 }
 
-func (ds *distributorServer) Watch(r *resourcepb.WatchRequest, srv ResourceStore_WatchServer) error {
+func (ds *distributorServer) Watch(r *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
 	// r -> consumer watch request
 	// srv -> stream connection with consumer
 	ctx := srv.Context()
