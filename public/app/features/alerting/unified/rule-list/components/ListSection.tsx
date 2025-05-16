@@ -61,6 +61,22 @@ export const ListSection = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
+
+    // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
+    // unless we clone the React Elements and modify className
+    'li[role=treeitem]': {
+      paddingLeft: theme.spacing(6.5),
+
+      '&:before': {
+        content: "''",
+        position: 'absolute',
+        height: '100%',
+
+        marginLeft: theme.spacing(-1.5),
+        marginTop: theme.spacing(-1),
+        borderLeft: `solid 1px ${theme.colors.border.weak}`,
+      },
+    },
   }),
   wrapper: css({
     display: 'flex',
