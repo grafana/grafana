@@ -29,7 +29,7 @@ By `real-time`, we indicate a soft real-time. Due to network latencies, garbage 
 
 ## Concepts
 
-Grafana Live sends data to clients over persistent WebSocket connection. Grafana frontend subscribes on channels to receive data which was published into that channel – in other words PUB/SUB mechanics is used. All subscriptions on a page multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel](#grafana-live-channel).
+Grafana Live sends data to clients over persistent WebSocket connections, based on a Pub/Sub model. The Grafana frontend subscribes on each channel to receive data that has been published in that channel. All subscriptions on a page are multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Grafana Live channel](#grafana-live-channel).
 
 Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section](#configure-grafana-live).
 
