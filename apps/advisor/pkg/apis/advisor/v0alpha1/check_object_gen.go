@@ -22,7 +22,7 @@ type Check struct {
 	// Spec is the spec of the Check
 	Spec CheckSpec `json:"spec" yaml:"spec"`
 
-	CheckStatus CheckStatus `json:"status" yaml:"status"`
+	Status CheckStatus `json:"status" yaml:"status"`
 }
 
 func (o *Check) GetSpec() any {
@@ -40,14 +40,14 @@ func (o *Check) SetSpec(spec any) error {
 
 func (o *Check) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.CheckStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Check) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.CheckStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -60,7 +60,7 @@ func (o *Check) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type CheckStatus", value)
 		}
-		o.CheckStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -233,7 +233,7 @@ func (o *Check) DeepCopyInto(dst *Check) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.CheckStatus.DeepCopyInto(&dst.CheckStatus)
+	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check

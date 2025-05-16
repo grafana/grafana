@@ -199,7 +199,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 		checks.RetryAnnotation:  "item",
 		checks.StatusAnnotation: "processed",
 	})
-	obj.CheckStatus.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
 		{
 			ItemID: "item",
 			StepID: "step",
@@ -221,7 +221,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
-	assert.Empty(t, obj.CheckStatus.Report.Failures)
+	assert.Empty(t, obj.Status.Report.Failures)
 }
 
 type mockClient struct {

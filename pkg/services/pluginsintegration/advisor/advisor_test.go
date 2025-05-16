@@ -41,7 +41,7 @@ func TestService_ReportSummary(t *testing.T) {
 							checks.TypeLabel: plugincheck.CheckID,
 						},
 					},
-					CheckStatus: advisorv0alpha1.CheckStatus{
+					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{
 							Failures: []advisorv0alpha1.CheckReportFailure{
 								{StepID: plugincheck.UpdateStepID},
@@ -56,7 +56,7 @@ func TestService_ReportSummary(t *testing.T) {
 							checks.TypeLabel: plugincheck.CheckID,
 						},
 					},
-					CheckStatus: advisorv0alpha1.CheckStatus{
+					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{
 							Failures: []advisorv0alpha1.CheckReportFailure{
 								{StepID: plugincheck.UpdateStepID},
@@ -72,7 +72,7 @@ func TestService_ReportSummary(t *testing.T) {
 							checks.TypeLabel: datasourcecheck.CheckID,
 						},
 					},
-					CheckStatus: advisorv0alpha1.CheckStatus{
+					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{
 							Failures: []advisorv0alpha1.CheckReportFailure{
 								{StepID: datasourcecheck.HealthCheckStepID},

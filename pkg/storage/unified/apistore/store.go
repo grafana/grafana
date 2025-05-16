@@ -663,3 +663,8 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	}
 	return nil
 }
+
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	// TODO: Implement
+	return 0, nil
+}

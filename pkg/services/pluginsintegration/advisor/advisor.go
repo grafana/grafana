@@ -86,7 +86,7 @@ func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 	latestDatasourceCheck := findLatestCheck(checkList.GetItems(), datasourcecheck.CheckID)
 	reportInfo := &ReportInfo{}
 	if latestPluginCheck != nil {
-		for _, failure := range latestPluginCheck.CheckStatus.Report.Failures {
+		for _, failure := range latestPluginCheck.Status.Report.Failures {
 			switch failure.StepID {
 			case plugincheck.UpdateStepID:
 				reportInfo.PluginsOutdated++
@@ -96,7 +96,7 @@ func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
 		}
 	}
 	if latestDatasourceCheck != nil {
-		for _, failure := range latestDatasourceCheck.CheckStatus.Report.Failures {
+		for _, failure := range latestDatasourceCheck.Status.Report.Failures {
 			if failure.StepID == datasourcecheck.HealthCheckStepID {
 				reportInfo.DatasourcesUnhealthy++
 			}

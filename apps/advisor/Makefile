@@ -16,14 +16,9 @@ $(APP_SDK_BIN):
 	@touch $@
 
 .PHONY: generate
-generate: do-generate post-generate-cleanup ## Run Grafana App SDK code generation
+generate: do-generate ## Run Grafana App SDK code generation
 
 .PHONY: do-generate
 do-generate: install-app-sdk ## Run Grafana App SDK code generation
 	@grafana-app-sdk generate -g ./pkg/apis --grouping=group --postprocess --defencoding=none
 
-.PHONY: post-generate-cleanup
-post-generate-cleanup: ## Clean up the generated code
-	# This is a workaround for an unknown issue, using Status instead of CheckStatus break resource updates
-	@sed -i '' 's/Status/CheckStatus/g' pkg/apis/advisor/v0alpha1/check_object_gen.go
-	@sed -i '' 's/CheckCheckStatus/CheckStatus/g' pkg/apis/advisor/v0alpha1/check_object_gen.go

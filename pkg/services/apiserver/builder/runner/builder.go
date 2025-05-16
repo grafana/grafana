@@ -17,6 +17,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 )
 
 var _ AppBuilder = (*appBuilder)(nil)
@@ -119,6 +120,11 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
+			if registryStore, ok := store.(*genericregistry.Store); ok {
+				for subPath := range kind.ZeroValue().GetSubresources() {
+					apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath(subPath)] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, registryStore)
+				}
+			}
 		}
 	}
 	return nil

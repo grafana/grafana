@@ -73,13 +73,26 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	if err != nil {
 		return err
 	}
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status/report",
-			Value:     *report,
-		}},
-	}, resource.PatchOptions{}, obj)
+	c.Status.Report = *report
+	c.SetAnnotations(obj.GetAnnotations())
+	// This works, the updated object contains the new status
+	updated, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), c, resource.UpdateOptions{
+		Subresource: "status",
+	})
+	if err != nil {
+		return err
+	}
+	log.Info("updated", "updated", updated)
+	// This doesn't work, the patched object contains the old status
+	// patched, err := client.Patch(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+	// 	Operations: []resource.PatchOperation{{
+	// 		Operation: resource.PatchOpAdd,
+	// 		Path:      "/status",
+	// 		Value:     c.Status,
+	// 	}},
+	// }, resource.PatchOptions{})
+	// log.Info("patched", "patched", patched)
+	return err
 }
 
 func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, check checks.Check) error {
@@ -122,7 +135,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return fmt.Errorf("error running steps: %w", err)
 	}
 	// Pull failures from the report for the items to retry
-	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
+	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
 		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
 				if newFailure.StepID == f.StepID {
@@ -143,7 +156,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		Operations: []resource.PatchOperation{{
 			Operation: resource.PatchOpAdd,
 			Path:      "/status/report",
-			Value:     c.CheckStatus.Report,
+			Value:     c.Status.Report,
 		}, {
 			Operation: resource.PatchOpAdd,
 			Path:      "/metadata/annotations",

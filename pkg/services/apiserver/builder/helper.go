@@ -24,8 +24,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
+	basecompatibility "k8s.io/component-base/compatibility"
 	k8stracing "k8s.io/component-base/tracing"
-	utilversion "k8s.io/component-base/version"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -231,7 +231,7 @@ func SetupConfig(
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	v := utilversion.DefaultKubeEffectiveVersion()
+	v := basecompatibility.NewEffectiveVersionFromString("v0.0.0", "v0.0.0", "v0.0.0")
 	patchver := 0 // required for semver
 
 	info := v.BinaryVersion().Info()
