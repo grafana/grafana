@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, LogRowModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';

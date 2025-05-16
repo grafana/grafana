@@ -1,22 +1,14 @@
-# Owned by grafana-delivery-squad
-# Intended to be dropped into the base repo Ex: grafana/grafana
 name: Dispatch check for patch conflicts
-run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    branches:
+  push:
+    branches-ignore:
       - "main"
-      - "v*.*.*"
-      - "release-*"
+      - "release-*.*.*"
+    tags-ignore:
+      - "*"
 
 permissions: {}
 
-# Since this is run on a pull request, we want to apply the patches intended for the
-# target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
     permissions:
@@ -24,13 +16,11 @@ jobs:
       contents: read
       actions: write
     env:
-      HEAD_REF: ${{ github.head_ref }}
-      BASE_REF: ${{ github.base_ref }}
       REPO: ${{ github.repository }}
       SENDER: ${{ github.event.sender.login }}
       SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
@@ -51,7 +41,7 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
+            const {REPO, SENDER, SHA} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -60,11 +50,11 @@ jobs:
                 ref: 'main',
                 inputs: {
                   src_repo: REPO,
-                  src_ref: HEAD_REF,
+                  src_ref: 'main',
                   src_merge_sha: SHA,
-                  src_pr_commit_sha: PR_COMMIT_SHA,
+                  src_pr_commit_sha: SHA,
                   patch_repo: REPO + '-security-patches',
-                  patch_ref: BASE_REF,
+                  patch_ref: 'main',
                   triggering_github_handle: SENDER
                 }
             })

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -47,11 +48,13 @@ func (s *listFormatValidation) Resolution() string {
 	return "Configure the relevant SSO setting using a valid format, like space-separated (\"opt1 opt2\"), comma-separated values (\"opt1, opt2\") or JSON array format ([\"opt1\", \"opt2\"])."
 }
 
-func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, objToCheck any) (*advisor.CheckReportFailure, error) {
+func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, objToCheck any) ([]advisor.CheckReportFailure, error) {
 	setting, ok := objToCheck.(*models.SSOSettings)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", objToCheck)
 	}
+
+	reportIssues := make([]advisor.CheckReportFailure, 0, 3)
 
 	for _, settingKey := range listSettingKeys {
 		currentSettingValue, exists := setting.Settings[settingKey]
@@ -62,13 +65,13 @@ func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, ob
 
 		currentSettingStr, ok := currentSettingValue.(string)
 		if !ok {
-			return checks.NewCheckReportFailure(
+			reportIssues = append(reportIssues, checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
 				fmt.Sprintf("%s - Invalid type for '%s': expected string, got %T", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingValue),
 				setting.Provider,
 				s.generateLinks(setting.Provider),
-			), nil
+			))
 		}
 
 		if currentSettingStr == "" {
@@ -77,17 +80,17 @@ func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, ob
 
 		_, err := util.SplitStringWithError(currentSettingStr)
 		if err != nil {
-			return checks.NewCheckReportFailure(
+			reportIssues = append(reportIssues, checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
 				fmt.Sprintf("%s - Invalid format for '%s': %s", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingStr),
 				setting.Provider,
 				s.generateLinks(setting.Provider),
-			), nil
+			))
 		}
 	}
 
-	return nil, nil
+	return reportIssues, nil
 }
 
 func (s *listFormatValidation) generateLinks(provider string) []advisor.CheckErrorLink {

@@ -19,10 +19,9 @@ type DashboardSnapshot struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardSnapshotList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DashboardSnapshot `json:"items,omitempty"`
+	Items []DashboardSnapshot `json:"items"`
 }
 
 type SnapshotInfo struct {
@@ -129,8 +128,7 @@ type SharingOptions struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SharingOptionsList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []SharingOptions `json:"items,omitempty"`
+	Items []SharingOptions `json:"items"`
 }
