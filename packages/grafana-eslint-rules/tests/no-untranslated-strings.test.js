@@ -223,6 +223,66 @@ const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-featur
     },
 
     {
+      name: 'Fixes basic prop case and adds useTranslate',
+      code: `
+const Foo = () => {
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+return (
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+  )
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes correctly when useTranslate already exists',
+      code: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+  return (
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+  )
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
       name: 'Fixes and uses ID from attribute if exists',
       code: `
 ${T_IMPORT}
