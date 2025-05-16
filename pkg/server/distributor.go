@@ -39,17 +39,17 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 		return nil, err
 	}
 
-	healthServer := &healthServer{}
-	healthService, err := resource.ProvideHealthService(healthServer)
-	if err != nil {
-		return nil, err
-	}
-
 	distributorServer := &distributorServer{
 		log:        log.New("unified-storage-distributor"),
 		ring:       ms.storageRing,
 		clientPool: ms.storageRingClientPool,
 	}
+
+	healthService, err := resource.ProvideHealthService(distributorServer)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcServer := distributor.grpcHandler.GetServer()
 
 	resource.RegisterResourceStoreServer(grpcServer, distributorServer)
@@ -240,8 +240,10 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	return userutils.InjectOrgID(ctx, namespace), client.(*resource.RingClient).Client, nil
 }
 
-type healthServer struct{}
+func (ds *distributorServer) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
+	if ds.ring.State() == services.Running {
+		return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
+	}
 
-func (hs *healthServer) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
-	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
+	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_NOT_SERVING}, nil
 }
