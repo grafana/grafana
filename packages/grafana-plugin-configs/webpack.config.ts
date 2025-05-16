@@ -9,9 +9,9 @@ import { type Configuration, BannerPlugin } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
-// @ts-ignore - node 24 needs the extension to strip types successfully
+// @ts-ignore - node needs the extension to strip types successfully
 import { DIST_DIR } from './constants.ts';
-// @ts-ignore - node 24 needs the extension to strip types successfully
+// @ts-ignore - node needs the extension to strip types successfully
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
 
 function skipFiles(f: string): boolean {
