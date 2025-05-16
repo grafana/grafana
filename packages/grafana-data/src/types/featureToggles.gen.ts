@@ -269,15 +269,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Placeholder feature flag for internal testing
-  */
-  wargamesTesting?: boolean;
-  /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -354,11 +345,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-  * @default true
-  */
-  recoveryThreshold?: boolean;
-  /**
   * Enables the loki data source to request structured metadata from the Loki server
   * @default true
   */
@@ -384,10 +370,6 @@ export interface FeatureToggles {
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
-  /**
-  * Disable the internal Alertmanager and only use the external one defined.
-  */
-  alertmanagerRemoteOnly?: boolean;
   /**
   * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
@@ -438,11 +420,6 @@ export interface FeatureToggles {
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-  * @default true
-  */
-  alertingSimplifiedRouting?: boolean;
   /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true
@@ -542,6 +519,10 @@ export interface FeatureToggles {
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
+  /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
   /**
   * Enable new expression parser
   */
@@ -942,6 +923,7 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   /**
   * Enables writing to data sources for Grafana-managed recording rules.
+  * @default false
   */
   grafanaManagedRecordingRulesDatasources?: boolean;
   /**
@@ -953,11 +935,13 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+  * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
+  * @default true
   */
   alertingMigrationUI?: boolean;
   /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
@@ -1018,6 +1002,10 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
+  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
@@ -1026,4 +1014,13 @@ export interface FeatureToggles {
   * @default false
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
+  /**
+  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  */
+  extensionsReadOnlyProxy?: boolean;
 }

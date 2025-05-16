@@ -108,12 +108,12 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
         }
       }
     }
-    if (true) {
-      const s = await getStyleConfigState(config.style);
-      styles.push({
-        state: s,
-      });
-    }
+
+    const s = await getStyleConfigState(config.style);
+    styles.push({
+      state: s,
+    });
+
 
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();

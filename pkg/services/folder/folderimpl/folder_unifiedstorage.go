@@ -30,10 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const folderSearchLimit = 100000
+const folderListLimit = 100
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getFoldersFromApiServer")
@@ -151,9 +153,11 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	f, err = s.setFullpath(ctx, f, q.SignedInUser, false)
-	if err != nil {
-		return nil, err
+	if q.WithFullpath || q.WithFullpathUIDs {
+		f, err = s.setFullpath(ctx, f, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return f, err
@@ -172,20 +176,20 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		query.OrgID = requester.GetOrgID()
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Namespace: s.k8sclient.GetNamespace(query.OrgID),
 				Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 				Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 			},
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{},
 		},
 		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
-		request.Options.Fields = []*resource.Requirement{{
+		request.Options.Fields = []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   query.UIDs,
@@ -196,7 +200,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			values[i] = strconv.FormatInt(id, 10)
 		}
 
-		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+		request.Options.Labels = append(request.Options.Labels, &resourcepb.Requirement{
 			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 			Operator: string(selection.In),
 			Values:   values,
@@ -250,17 +254,17 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return &folder.GeneralFolder, nil
 	}
 
-	folderkey := &resource.ResourceKey{
+	folderkey := &resourcepb.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
 		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
 			Key:    folderkey,
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{
 				{
 					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 					Operator: string(selection.In),
@@ -306,23 +310,23 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
 
-	folderkey := &resource.ResourceKey{
+	folderkey := &resourcepb.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
 		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
 			Key:    folderkey,
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{},
 		},
 		Query: title,
 		Limit: folderSearchLimit}
 
 	if parentUID != nil {
-		req := []*resource.Requirement{{
+		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
 			Values:   []string{*parentUID},
@@ -512,8 +516,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
-	user := cmd.SignedInUser
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
@@ -527,11 +529,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err = s.setFullpath(ctx, f, user, false)
 	if err != nil {
 		return nil, err
 	}
@@ -591,6 +588,8 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		NewTitle:       cmd.NewTitle,
 		NewDescription: cmd.NewDescription,
 		SignedInUser:   user,
+		Overwrite:      cmd.Overwrite,
+		Version:        cmd.Version,
 	})
 
 	if err != nil {
@@ -672,10 +671,10 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
-		request := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Labels: []*resource.Requirement{},
-				Fields: []*resource.Requirement{
+		request := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Labels: []*resourcepb.Requirement{},
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),

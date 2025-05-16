@@ -4,13 +4,15 @@ import (
 	"context"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -35,7 +37,7 @@ type DashboardService interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
-	CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error
+	CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 	SetDefaultPermissions(ctx context.Context, dto *SaveDashboardDTO, dash *Dashboard, provisioned bool)
 	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
@@ -47,7 +49,7 @@ type PermissionsRegistrationService interface {
 	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 
 	// Used to apply default permissions in unified storage after create
-	SetDefaultPermissionsAfterCreate(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+	SetDefaultPermissionsAfterCreate(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 }
 
 // PluginService is a service for operating on plugin dashboards.

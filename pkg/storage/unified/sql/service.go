@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -60,6 +61,8 @@ type service struct {
 	indexMetrics   *resource.BleveIndexMetrics
 
 	docBuilders resource.DocumentBuilderSupplier
+
+	distributor *resource.Distributor
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -71,6 +74,7 @@ func ProvideUnifiedStorageGrpcService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	distributor *resource.Distributor,
 ) (UnifiedStorageGrpcService, error) {
 	tracer := otel.Tracer("unified-storage")
 
@@ -98,6 +102,7 @@ func ProvideUnifiedStorageGrpcService(
 		docBuilders:    docBuilders,
 		storageMetrics: storageMetrics,
 		indexMetrics:   indexMetrics,
+		distributor:    distributor,
 	}
 
 	// This will be used when running as a dskit service
@@ -117,7 +122,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features, s.distributor)
 	if err != nil {
 		return err
 	}
@@ -132,12 +137,12 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	srv := s.handler.GetServer()
-	resource.RegisterResourceStoreServer(srv, server)
-	resource.RegisterBulkStoreServer(srv, server)
-	resource.RegisterResourceIndexServer(srv, server)
-	resource.RegisterManagedObjectIndexServer(srv, server)
-	resource.RegisterBlobStoreServer(srv, server)
-	resource.RegisterDiagnosticsServer(srv, server)
+	resourcepb.RegisterResourceStoreServer(srv, server)
+	resourcepb.RegisterBulkStoreServer(srv, server)
+	resourcepb.RegisterResourceIndexServer(srv, server)
+	resourcepb.RegisterManagedObjectIndexServer(srv, server)
+	resourcepb.RegisterBlobStoreServer(srv, server)
+	resourcepb.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service

@@ -9,10 +9,15 @@ import (
 	"strings"
 	"testing"
 
-	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	dashboardv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -21,10 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -245,6 +246,20 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
 			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
+
+		t.Run("allow moving folder to general folder", func(t *testing.T) {
+			folder1 := createFolderObject(t, "folder1", "default", "")
+			folder1UID := folder1.GetName()
+			dash, err := createDashboard(t, adminClient, "Dashboard in a Folder", &folder1UID, nil)
+			require.NoError(t, err)
+
+			generalFolderUID := ""
+			_, err = updateDashboard(t, adminClient, dash, "Move dashboard into the General Folder", &generalFolderUID)
+			require.NoError(t, err)
+
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("Dashboard schema validations", func(t *testing.T) {
@@ -258,11 +273,11 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			}{
 				{
 					name:          "v0alpha1 dashboard with wrong spec should not throw on v0",
-					resourceInfo:  dashboardv0alpha1.DashboardResourceInfo,
+					resourceInfo:  dashboardV0.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardv0alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardV0.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",
@@ -279,11 +294,11 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				},
 				{
 					name:          "v1 dashboard with wrong spec should throw on v1",
-					resourceInfo:  dashboardv1.DashboardResourceInfo,
+					resourceInfo:  dashboardV1.DashboardResourceInfo,
 					expectSpecErr: true,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardv1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardV1.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",
@@ -300,11 +315,11 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				},
 				{
 					name:          "v2alpha1 dashboard with correct spec should not throw on v2",
-					resourceInfo:  dashboardv2alpha1.DashboardResourceInfo,
+					resourceInfo:  dashboardV2.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardv2alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardV2.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",
@@ -786,12 +801,12 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 
 // getDashboardGVR returns the dashboard GroupVersionResource
 func getDashboardGVR() schema.GroupVersionResource {
-	return dashboardv1.DashboardResourceInfo.GroupVersionResource()
+	return dashboardV1.DashboardResourceInfo.GroupVersionResource()
 }
 
 // getFolderGVR returns the folder GroupVersionResource
 func getFolderGVR() schema.GroupVersionResource {
-	return folders.FolderResourceInfo.GroupVersionResource()
+	return foldersV1.FolderResourceInfo.GroupVersionResource()
 }
 
 // Get a resource client for the specified user
@@ -822,8 +837,8 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 
 	folderObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": folders.FolderResourceInfo.GroupVersion().String(),
-			"kind":       folders.FolderResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+			"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-folder-",
 				"namespace":    namespace,
@@ -878,8 +893,8 @@ func createDashboardObject(t *testing.T, title string, folderUID string, generat
 
 	dashObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardV1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardV1.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"generateName": "test-",
 				"annotations": map[string]interface{}{
@@ -941,7 +956,7 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 	t.Helper()
 
 	var folderUIDStr string
-	if folderUID != nil && *folderUID != "" {
+	if folderUID != nil {
 		folderUIDStr = *folderUID
 	}
 
@@ -1464,7 +1479,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		//statusErr := ctx.Helper.AsStatusError(err)
 		//require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
 		// TODO: Find out why this throws a 500 instead of a 404 with this message:
-		// an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1alpha1/namespaces/org-3/dashboards/test-cs6xk\\\": Dashboard not found\") has prevented the request from succeeding"
+		// an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1beta1/namespaces/org-3/dashboards/test-cs6xk\\\": Dashboard not found\") has prevented the request from succeeding"
 
 		// Clean up
 		err = adminClient.Resource.Delete(context.Background(), org1DashUID, v1.DeleteOptions{})
@@ -1649,7 +1664,7 @@ func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
 				require.Error(t, err, "Should not be able to access dashboard from another org")
 				//statusErr := org1Ctx.Helper.AsStatusError(err)
 				// TODO: Find out why this throws a 500 instead of a 404 with this message:
-				// "an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1alpha1/namespaces/default/dashboards/test-rbm2q\\\": Dashboard not found\") has prevented the request from succeeding"
+				// "an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/test-rbm2q\\\": Dashboard not found\") has prevented the request from succeeding"
 				//require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code), "Should get 404 Not Found")
 
 				// Get a dashboard as admin from the target org to then send an update request
@@ -1871,7 +1886,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 					"POST", locTC.name, userTC.name)
 
 				// Construct the dashboard URL
-				dashboardPath := fmt.Sprintf("/apis/dashboard.grafana.app/v1alpha1/namespaces/%s/dashboards", ctx.Helper.Namespacer(ctx.OrgID))
+				dashboardPath := fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/%s/dashboards", ctx.Helper.Namespacer(ctx.OrgID))
 
 				// Create dashboard JSON with a single template
 				var metadata string
@@ -1884,7 +1899,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 
 				dashboardJSON := fmt.Sprintf(`{
 							"kind": "Dashboard",
-							"apiVersion": "dashboard.grafana.app/v1alpha1",
+							"apiVersion": "dashboard.grafana.app/v1beta1",
 							"metadata": {
 								%s
 							},
@@ -1915,7 +1930,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 						"Failed to %s dashboard as %s: %s", "POST", userTC.user.Identity.GetLogin(), createResp.Response.Status)
 
 					// Construct the dashboard path with the actual UID for GET/DELETE
-					dashboardPath = fmt.Sprintf("/apis/dashboard.grafana.app/v1alpha1/namespaces/%s/dashboards/%s",
+					dashboardPath = fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/%s/dashboards/%s",
 						ctx.Helper.Namespacer(ctx.OrgID), dashboardUID)
 
 					// Verify the dashboard was created by getting it via the admin client
