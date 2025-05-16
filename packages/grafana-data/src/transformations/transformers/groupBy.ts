@@ -118,12 +118,11 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               let rowContents = frame.fields
                 .filter((f) => !groupByFieldNames.includes(f.name))
                 .map((f) => {
-                  const values: any[] = [];
-                  valuesByGroupKey.forEach((v) => {
-                    const groupValues = v[f.name].values;
-                    values.push(
-                      groupValues[fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : groupValues.length - 1]
-                    );
+                  const values = Array.from(valuesByGroupKey.entries()).map((v) => {
+                    const groupValues = v[1][f.name].values;
+                    return groupValues[
+                      fieldOptions.operation === GroupByOperationID.takeFirst ? 0 : groupValues.length - 1
+                    ];
                   });
                   return { ...f, values: values };
                 });
