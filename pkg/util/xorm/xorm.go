@@ -58,9 +58,8 @@ func init() {
 	regDrvsNDialects()
 }
 
-// NewEngine new a db manager according to the parameter. Currently support four
-// drivers
-func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
+// NewEngineWithOptions creates a new engine with configurable options
+func NewEngineWithOptions(driverName string, dataSourceName string, opts ...EngineOption) (*Engine, error) {
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
 		return nil, fmt.Errorf("unsupported driver name: %v", driverName)
@@ -117,7 +116,17 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	engine.SetLogger(logger)
 	engine.SetMapper(core.NewCacheMapper(new(core.SnakeMapper)))
 
-	runtime.SetFinalizer(engine, close)
+	// Apply options
+	options := &engineOptions{
+		useFinalizer: true, // default to true for backward compatibility
+	}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.useFinalizer {
+		runtime.SetFinalizer(engine, close)
+	}
 
 	if ext, ok := dialect.(DialectWithSequenceGenerator); ok {
 		engine.sequenceGenerator, err = ext.CreateSequenceGenerator(db.DB)
@@ -127,6 +136,26 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	}
 
 	return engine, nil
+}
+
+// EngineOption defines a function that configures engine options
+type EngineOption func(*engineOptions)
+
+type engineOptions struct {
+	useFinalizer bool
+}
+
+// WithFinalizer controls whether to set a finalizer on the engine
+func WithFinalizer(use bool) EngineOption {
+	return func(o *engineOptions) {
+		o.useFinalizer = use
+	}
+}
+
+// NewEngine creates a new engine with default options (including finalizer)
+// This is kept for backward compatibility
+func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
+	return NewEngineWithOptions(driverName, dataSourceName)
 }
 
 func (engine *Engine) ResetSequenceGenerator() {
