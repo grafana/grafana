@@ -9,18 +9,14 @@ describe('Grouping panels', () => {
     e2e.flows.revertAllChanges();
   });
 
-  // Rows
+  /*
+   * Rows
+   */
+
   it('can group and ungroup new panels into row', () => {
-    e2e.flows.addDashboard({ title: 'Group new panels into row' });
-    cy.contains('Group new panels into row').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Group new panels into row' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     // Group into row
     e2e.flows.scenes.groupIntoRow();
@@ -56,16 +52,9 @@ describe('Grouping panels', () => {
   });
 
   it('can add and remove several rows', () => {
-    e2e.flows.addDashboard({ title: 'Add and remove rows' });
-    cy.contains('Add and remove rows').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Add and remove rows' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     e2e.flows.scenes.groupIntoRow();
 
@@ -116,16 +105,9 @@ describe('Grouping panels', () => {
   });
 
   it('can paste the copied row', () => {
-    e2e.flows.addDashboard({ title: 'Paste row' });
-    cy.contains('Paste row').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Paste row' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     e2e.flows.scenes.groupIntoRow();
 
@@ -155,16 +137,9 @@ describe('Grouping panels', () => {
   });
 
   it('can duplicate a row', () => {
-    e2e.flows.addDashboard({ title: 'Duplicate row' });
-    cy.contains('Duplicate row').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Duplicate row' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     e2e.flows.scenes.groupIntoRow();
 
@@ -192,16 +167,9 @@ describe('Grouping panels', () => {
   });
 
   it('can collapse rows', () => {
-    e2e.flows.addDashboard({ title: 'Collapse rows' });
-    cy.contains('Collapse rows').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Collapse rows' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     e2e.flows.scenes.groupIntoRow();
 
@@ -234,16 +202,9 @@ describe('Grouping panels', () => {
   });
 
   it('can group and ungroup new panels into row with tab', () => {
-    e2e.flows.addDashboard({ title: 'Group new panels into tab with row' });
-    cy.contains('Group new panels into tab with row').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Group new panels into tab with row' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     // Group into row with tab
     e2e.flows.scenes.groupIntoRow();
@@ -284,18 +245,14 @@ describe('Grouping panels', () => {
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
   });
 
-  // Tabs
+  /*
+   * Tabs
+   */
+
   it('can group and ungroup new panels into tab', () => {
-    e2e.flows.addDashboard({ title: 'Group new panels into tab' });
-    cy.contains('Group new panels into tab').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Group new panels into tab' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     // Group into tab
     e2e.flows.scenes.groupIntoTab();
@@ -331,16 +288,9 @@ describe('Grouping panels', () => {
   });
 
   it('can group and ungroup new panels into tab with row', () => {
-    e2e.flows.addDashboard({ title: 'Group new panels into tab with row' });
-    cy.contains('Group new panels into tab with row').should('be.visible');
+    e2e.flows.scenes.importV2Dashboard({ title: 'Group new panels into tab with row' });
 
-    // Toggle edit mode
     e2e.components.NavToolbar.editDashboard.editButton().click();
-
-    // Add 3 panels
-    e2e.flows.scenes.addFirstPanel();
-    e2e.flows.scenes.addPanel();
-    e2e.flows.scenes.addPanel();
 
     // Group into tab
     e2e.flows.scenes.groupIntoTab();
