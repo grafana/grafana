@@ -14,12 +14,13 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface Props {
+  containerElement: HTMLDivElement;
   getFieldLinks?: GetFieldLinksFn;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ getFieldLinks, logs, onResize }: Props) => {
+export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize }: Props) => {
   const {
     app,
     closeDetails,
@@ -50,7 +51,7 @@ export const LogLineDetails = ({ getFieldLinks, logs, onResize }: Props) => {
   }, [onResize, setDetailsWidth]);
 
   return (
-    <Resizable onResize={handleResize} defaultSize={detailsWidth ? { width: detailsWidth } : undefined}>
+    <Resizable onResize={handleResize} defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}>
       <div className={styles.container} ref={containerRef}>
         <IconButton
           name="times"
@@ -90,6 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
     position: 'relative',
+    height: '100%',
   }),
   closeIcon: css({
     position: 'absolute',

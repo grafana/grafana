@@ -139,9 +139,10 @@ export const LogList = ({
   return (
     <LogListContextProvider
       app={app}
-      enableLogDetails={enableLogDetails}
+      containerElement={containerElement}
       dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
+      enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
       isLabelFilterActive={isLabelFilterActive}
@@ -360,7 +361,12 @@ const LogListComponent = ({
         </InfiniteScroll>
       </div>
       {showDetails.length > 0 && (
-        <LogLineDetails getFieldLinks={getFieldLinks} logs={filteredLogs} onResize={handleLogDetailsResize} />
+        <LogLineDetails
+          containerElement={containerElement}
+          getFieldLinks={getFieldLinks}
+          logs={filteredLogs}
+          onResize={handleLogDetailsResize}
+        />
       )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
