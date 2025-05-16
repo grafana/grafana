@@ -14,8 +14,10 @@ jest.mock('../../utils');
 
 const contextProps = {
   app: CoreApp.Unknown,
+  containerElement: document.createElement('div'),
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  enableLogDetails: false,
   logs: [],
   showControls: true,
   showTime: false,
