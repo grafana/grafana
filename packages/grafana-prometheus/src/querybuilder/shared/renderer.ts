@@ -160,16 +160,6 @@ export function renderQuery(
   // Render any binary queries
   if (hasNesting) {
     for (const binQuery of query.binaryQueries!) {
-      // Use renderNestedPart for both left and right operands
-      const leftOperand = renderNestedPart(
-        {
-          metric: query.metric,
-          labels: query.labels,
-          operations: query.operations,
-          binaryQueries: undefined,
-        },
-        operationsRegistry
-      );
       const rightOperand = renderNestedPart(binQuery.query, operationsRegistry);
 
       // Add vector matching if present
