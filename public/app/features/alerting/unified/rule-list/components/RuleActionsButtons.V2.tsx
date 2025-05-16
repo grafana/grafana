@@ -71,6 +71,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
       {buttons}
       <AlertRuleMenu
         buttonSize={buttonSize}
+        fill="text"
         rulerRule={rule}
         promRule={promRule}
         groupIdentifier={groupIdentifier}
