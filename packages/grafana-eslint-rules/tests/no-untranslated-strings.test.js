@@ -21,6 +21,7 @@ const packageName = '@grafana/i18n';
 const TRANS_IMPORT = `import { Trans } from '${packageName}';`;
 const T_IMPORT = `import { t } from '${packageName}/internal';`;
 const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${packageName}';`;
+const TRANS_AND_USE_TRANSLATE_IMPORT = `import { Trans, useTranslate } from '${packageName}';`;
 
 const ruleTester = new RuleTester();
 
@@ -92,7 +93,11 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     },
     {
       name: 'Ternary with falsy strings',
-      code: `<div icon={isAThing ? foo : ''} />`,
+      code: `<div title={isAThing ? foo : ''} />`,
+    },
+    {
+      name: 'Ternary with no strings',
+      code: `<div title={isAThing ? 1 : 2} />`,
     },
   ],
   invalid: [
@@ -226,6 +231,7 @@ const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-featur
       name: 'Fixes basic prop case and adds useTranslate',
       code: `
 const Foo = () => {
+  const fooBar = 'a';
   return (
     <div title="foo" />
   )
@@ -241,6 +247,89 @@ const Foo = () => {
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
   const { t } = useTranslate();
+const fooBar = 'a';
+  return (
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+  )
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes using t when not inside something that looks like a React component',
+      code: `
+function foo() {
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+function foo() {
+  return (
+    <div title={t("some-feature.foo.title-foo", "foo")} />
+  )
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes using t when not inside something that looks like a React component - anonymous function',
+      code: `
+const foo = function() {
+  return <div title="foo" />;
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const foo = function() {
+  return <div title={t("some-feature.foo.title-foo", "foo")} />;
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes when Trans import already exists',
+      code: `
+${TRANS_IMPORT}
+const Foo = () => {
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${TRANS_AND_USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
 return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
   )
@@ -251,6 +340,33 @@ return (
       ],
     },
 
+    {
+      name: 'Fixes when looks in an upper cased function but does not return JSX',
+      code: `
+const Foo = () => {
+  return {
+    foo: <div title="foo" />
+  }
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    foo: <div title={t("some-feature.foo.title-foo", "foo")} />
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
     {
       name: 'Fixes correctly when useTranslate already exists',
       code: `
@@ -526,6 +642,62 @@ const Foo = () => {
     },
 
     /**
+     * AUTO FIXES
+     */
+    {
+      name: 'Auto fixes when options are configured',
+      code: `const Foo = () => <div>test</div>`,
+      filename,
+      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      output: `${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithTrans',
+              output: `${TRANS_IMPORT}
+const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Auto fixes when options are configured - prop',
+      code: `
+const Foo = () => {
+  return <div title="foo" />
+}`,
+      filename,
+      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+return <div title={t("some-feature.foo.title-foo", "foo")} />
+}`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+return <div title={t("some-feature.foo.title-foo", "foo")} />
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    /**
      * UNFIXABLE CASES
      */
 
@@ -609,10 +781,16 @@ const Foo = () => {
     },
 
     {
-      name: 'Invalid when ternary with string literals',
+      name: 'Invalid when ternary with string literals - both',
       code: `const Foo = () => <div>{isAThing ? 'Foo' : 'Bar'}</div>`,
       filename,
       errors: [{ messageId: 'noUntranslatedStrings' }, { messageId: 'noUntranslatedStrings' }],
+    },
+    {
+      name: 'Invalid when ternary with string literals - alternate',
+      code: `const Foo = () => <div>{isAThing ? 'Foo' : 1}</div>`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
     {
       name: 'Invalid when ternary with string literals - prop',

@@ -79,6 +79,7 @@ function canBeFixed(node, context) {
       return [
         AST_NODE_TYPES.ArrowFunctionExpression,
         AST_NODE_TYPES.FunctionDeclaration,
+        AST_NODE_TYPES.FunctionExpression,
         AST_NODE_TYPES.ClassDeclaration,
       ].includes(anc.type);
     });
@@ -350,6 +351,8 @@ const getUseTranslateFixer = (node, fixer, context) => {
   // then we can't reliably add `useTranslate`, as this may not be a React component
   if (
     !parentMethod ||
+    (parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
+      (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name))) ||
     (parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
       parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
       !firstCharIsUpper(parentMethod.parent.id.name))
