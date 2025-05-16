@@ -336,16 +336,16 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	}
 
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
-	err = am.Base.ApplyConfig(AlertingConfiguration{
-		rawAlertmanagerConfig:    rawConfig,
-		configHash:               configHash,
-		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
-		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
-		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
-		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
-		templates:                ToTemplateDefinitions(cfg),
-		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
-		receiverIntegrationsFunc: am.buildReceiverIntegrations,
+	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
+		RoutingTree:       cfg.AlertmanagerConfig.Route.AsAMRoute(),
+		InhibitRules:      cfg.AlertmanagerConfig.InhibitRules,
+		MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
+		TimeIntervals:     cfg.AlertmanagerConfig.TimeIntervals,
+		Templates:         ToTemplateDefinitions(cfg),
+		Receivers:         PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		DispatcherLimits:  &nilLimits{},
+		Raw:               rawConfig,
+		Hash:              configHash,
 	})
 	if err != nil {
 		return false, err
@@ -353,38 +353,6 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 
 	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
-}
-
-func (am *alertmanager) AppURL() string {
-	return am.Settings.AppURL
-}
-
-// buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-	if err != nil {
-		return nil, err
-	}
-	s := &emailSender{am.NotificationService}
-	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
-	integrations, err := alertingNotify.BuildReceiverIntegrations(
-		receiverCfg,
-		tmpl,
-		img,
-		LoggerFactory,
-		func(n receivers.Metadata) (receivers.EmailSender, error) {
-			return s, nil
-		},
-		func(_ string, n alertingNotify.Notifier) alertingNotify.Notifier {
-			return n
-		},
-		am.orgID,
-		setting.BuildVersion,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return integrations, nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
