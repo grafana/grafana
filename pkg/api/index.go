@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -46,6 +47,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	c, span := hs.injectSpan(c, "api.setIndexViewData")
 	defer span.End()
 
+	log := hs.log.FromContext(c.Req.Context())
+
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
@@ -58,6 +61,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug("Got preferences for user", "userId", userID, "orgId", c.GetOrgID(), "theme", prefs.Theme, "language", prefs.JSONData.Language)
 
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
@@ -113,7 +118,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
+	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme, log)
 	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
@@ -274,18 +279,22 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	c.HTML(http.StatusNotFound, "index", data)
 }
 
-func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {
+func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string, log log.Logger) *pref.ThemeDTO {
 	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
+		log.Debug("Using theme from URL param", "theme", themeURLParam)
 		return pref.GetThemeByID(themeURLParam)
 	}
 
 	if pref.IsValidThemeID(themePrefId) {
+		log.Debug("Theme pref is valid", "theme", themePrefId)
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
 		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+			log.Debug("Using theme from pref", "theme", themePrefId)
 			return theme
 		}
 	}
 
+	log.Debug("Using default theme", "theme", hs.Cfg.DefaultTheme)
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
 }

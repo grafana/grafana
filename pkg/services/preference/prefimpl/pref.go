@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
+	log      log.Logger
 	store    store
 	defaults pref.Preference
 }
@@ -21,6 +23,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
 			db: db,
 		},
 		defaults: prefsFromConfig(cfg),
+		log:      log.New("prefs-service"),
 	}
 }
 
@@ -43,6 +46,8 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		UserID: query.UserID,
 	}
 
+	s.log.Debug("Getting preferences with defaults", "teams", query.Teams, "orgId", query.OrgID, "userId", query.UserID)
+
 	prefs, err := s.store.List(ctx, listQuery)
 	if err != nil {
 		return nil, err
@@ -50,20 +55,27 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 
 	res := s.GetDefaults()
 	for _, p := range prefs {
+		prefLogger := s.log.New("PrefID", p.ID, "OrgID", p.OrgID, "TeamID", p.TeamID, "UserID", p.UserID)
+
 		if p.Theme != "" {
+			prefLogger.Debug("Applying theme preference", "theme", p.Theme)
 			res.Theme = p.Theme
 		}
 		if p.Timezone != "" {
+			prefLogger.Debug("Applying timezone preference", "timezone", p.Timezone)
 			res.Timezone = p.Timezone
 		}
 		if p.WeekStart != nil && *p.WeekStart != "" {
+			prefLogger.Debug("Applying week start preference", "weekStart", p.WeekStart)
 			res.WeekStart = p.WeekStart
 		}
 		if p.HomeDashboardID != 0 {
+			prefLogger.Debug("Applying home dashboard preference", "homeDashboardID", p.HomeDashboardID)
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
 			if p.JSONData.Language != "" {
+				prefLogger.Debug("Applying language preference", "language", p.JSONData.Language)
 				res.JSONData.Language = p.JSONData.Language
 			}
 
