@@ -1,5 +1,5 @@
 import { useRegisterActions } from 'kbar';
-import { fromPairs } from 'lodash';
+import { fromPairs, last } from 'lodash';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
@@ -97,7 +97,7 @@ export function useRegisterScopesActions(
       });
     } else {
       if (parentId) {
-        updateNode(parentId, true, searchQuery);
+        updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
         setGlobalNodes(undefined);
       }
     }
@@ -232,6 +232,6 @@ function mapScopeNodesToActions(
     }
   };
 
-  traverse(tree, nodes[''] ? 'scopes' : undefined);
+  traverse(tree, 'scopes');
   return actions;
 }

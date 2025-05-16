@@ -146,8 +146,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
-    // TODO we can just cache it here in the service
-    this.apiClient.fetchScope(scopeNode.spec.linkId);
+    this.apiClient.fetchScope(scopeNode.spec.linkId).then((scope) => {
+      if (scope) {
+        this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
+      }
+    });
 
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
     const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };

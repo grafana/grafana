@@ -33,7 +33,7 @@ export function ScopesRow({ selectedScopes, isDirty, apply, deselectScope, scope
               key={scope.scopeId}
               selected={true}
               icon={'times'}
-              label={scopes[scope.scopeId].spec.title}
+              label={scopes[scope.scopeId]?.spec.title || scope.scopeId}
               onClick={() => {
                 deselectScope(scope.scopeNodeId || scope.scopeId);
               }}
