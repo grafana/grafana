@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -114,7 +114,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder1UID,
 		})
@@ -147,7 +147,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder2UID,
 		})

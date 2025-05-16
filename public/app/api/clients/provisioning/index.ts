@@ -1,7 +1,7 @@
+import { t } from '@grafana/i18n/internal';
 import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 
 import {
   generatedAPI,
