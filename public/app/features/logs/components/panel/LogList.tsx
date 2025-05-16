@@ -224,6 +224,14 @@ const LogListComponent = ({
     [displayedFields, processedLogs, wrapLogMessage]
   );
   const styles = getStyles(dimensions, { showTime });
+  const widthContainer = wrapperRef.current ?? containerElement;
+
+  const debouncedResetAfterIndex = useMemo(() => {
+    return debounce((index: number) => {
+      listRef.current?.resetAfterIndex(index);
+      overflowIndexRef.current = Infinity;
+    }, 25);
+  }, []);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -252,6 +260,10 @@ const LogListComponent = ({
   }, [wrapLogMessage]);
 
   useEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [showDetails]);
+
+  useEffect(() => {
     const handleResize = debounce(() => {
       setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight);
     }, 50);
@@ -263,21 +275,23 @@ const LogListComponent = ({
   }, [app, containerElement.clientHeight]);
 
   useLayoutEffect(() => {
-    if (widthRef.current === containerElement.clientWidth) {
+    if (widthRef.current === widthContainer.clientWidth) {
       return;
     }
-    widthRef.current = containerElement.clientWidth;
-    listRef.current?.resetAfterIndex(0);
+    widthRef.current = widthContainer.clientWidth;
+    debouncedResetAfterIndex(0);
   });
 
+  const overflowIndexRef = useRef(Infinity);
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
-      if (containerElement && height !== undefined) {
-        storeLogLineSize(id, containerElement, height);
+      if (height !== undefined) {
+        storeLogLineSize(id, widthContainer, height);
       }
-      listRef.current?.resetAfterIndex(index);
+      overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
+      debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [containerElement]
+    [debouncedResetAfterIndex, widthContainer]
   );
 
   const handleScrollPosition = useCallback(() => {
@@ -297,8 +311,8 @@ const LogListComponent = ({
   );
 
   const handleLogDetailsResize = useCallback(() => {
-    listRef.current?.resetAfterIndex(0);
-  }, []);
+    debouncedResetAfterIndex(0);
+  }, [debouncedResetAfterIndex]);
 
   const filteredLogs = useMemo(
     () =>
@@ -328,17 +342,10 @@ const LogListComponent = ({
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
-              itemSize={getLogLineSize.bind(
-                null,
-                filteredLogs,
-                wrapperRef.current ?? containerElement,
-                displayedFields,
-                {
-                  wrap: wrapLogMessage,
-                  showControls,
-                  showTime,
-                }
-              )}
+              itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                wrap: wrapLogMessage,
+                showTime,
+              })}
               itemKey={getItemKey}
               layout="vertical"
               onItemsRendered={onItemsRendered}
