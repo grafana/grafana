@@ -89,7 +89,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     return {
       uid: v.metadata.name,
-      version: v.spec.version ?? 0,
+      version: v.metadata.generation ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
       url,
