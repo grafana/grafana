@@ -33,8 +33,12 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 		return http.StatusTeapot // rsp is nil, so we return a teapot
 	}
 	for _, res := range rsp.Responses {
-		if res.Error != nil {
+		if res.Error != nil && res.Status != 0 {
 			return int(res.Status)
+		}
+
+		if res.Error != nil {
+			return http.StatusTeapot // Status is nil but we have an error, so we return a teapot
 		}
 	}
 	return http.StatusOK
