@@ -379,6 +379,8 @@ To do this, follow these steps:
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
    - Click the resume icon - The report resumes on its previous schedule.
 
+You can also pause or resume a report from **Update report** drawer.
+
 ### Delete reports
 
 To delete a report, follow these steps:
@@ -390,6 +392,8 @@ To delete a report, follow these steps:
 
 1. On the row of the report you want to update, click the trash can icon.
 1. Click **Delete** to confirm.
+
+You can also delete a report from **Update report** drawer.
 
 Deleting a report is irreversible.
 
