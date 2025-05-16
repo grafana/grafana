@@ -20,6 +20,7 @@ export interface Props {
   disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
+  applicationId?: string;
 }
 
 const wildcardOption = { value: '*', label: '*' };
@@ -32,7 +33,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete }: Props) => {
+export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete, applicationId }: Props) => {
   const { region, namespace, metricName, dimensions, accountId } = metricStat;
   const error = useEnsureVariableHasSingleSelection(datasource, filter.key);
   const dimensionsExcludingCurrentKey = useMemo(
@@ -49,15 +50,21 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
       return [];
     }
 
+    const params = {
+      dimensionKey: filter.key,
+      dimensionFilters: dimensionsExcludingCurrentKey,
+      region,
+      namespace,
+      metricName,
+      accountId,
+    };
+
+    if (namespace === 'AWS/EMRServerless' && filter.key === 'JobId' && applicationId) {
+      (params as any).applicationId = applicationId; // Type assertion to bypass TS error
+    }
+
     return datasource.resources
-      .getDimensionValues({
-        dimensionKey: filter.key,
-        dimensionFilters: dimensionsExcludingCurrentKey,
-        region,
-        namespace,
-        metricName,
-        accountId,
-      })
+      .getDimensionValues(params)
       .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
@@ -73,6 +80,7 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
     namespace,
     metricName,
     accountId,
+    applicationId,
   ]);
   const styles = useStyles2(getOperatorStyles);
 
