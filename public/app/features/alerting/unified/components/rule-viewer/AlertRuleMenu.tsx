@@ -145,8 +145,8 @@ const AlertRuleMenu = ({
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-      <MoreButton size={buttonSize} />
+    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
+      <MoreButton size={buttonSize} fill="text" />
     </Dropdown>
   );
 };

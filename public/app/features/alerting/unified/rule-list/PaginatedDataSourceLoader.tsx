@@ -11,7 +11,6 @@ import { DataSourceSection, DataSourceSectionProps } from './components/DataSour
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -98,7 +97,6 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       name={group.name}
       href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>

@@ -1060,8 +1060,8 @@
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
       "more-button": {
-        "title": "Folder bulk Actions",
-        "tooltip": "Folder bulk Actions"
+        "title": "Folder actions",
+        "tooltip": "Folder actions"
       },
       "pause": {
         "button": {

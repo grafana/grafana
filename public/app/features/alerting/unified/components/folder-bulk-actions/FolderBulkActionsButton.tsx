@@ -81,12 +81,13 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
 
   return (
     <>
-      <Dropdown overlay={<Menu>{menuItems}</Menu>}>
+      <Dropdown placement="bottom" overlay={<Menu>{menuItems}</Menu>}>
         <IconButton
           name="ellipsis-h"
           size="sm"
-          aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder bulk Actions')}
-          tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder bulk Actions')}
+          aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
+          tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder actions')}
+          tooltipPlacement="top"
         />
       </Dropdown>
       <DeleteModal

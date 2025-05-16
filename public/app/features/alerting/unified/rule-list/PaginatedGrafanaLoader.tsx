@@ -15,7 +15,6 @@ import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -101,7 +100,6 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       name={group.name}
       href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>
