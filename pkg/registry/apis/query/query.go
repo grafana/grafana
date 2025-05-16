@@ -269,6 +269,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	if err != nil {
+		b.log.Debug("error in single datasource query", "error", err)
 		rsp = buildErrorResponse(err, req)
 	}
 
