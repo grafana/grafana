@@ -11,6 +11,6 @@ type NoopAlwaysAllowedAuthorizer struct{}
 
 var _ contracts.DecryptAuthorizer = &NoopAlwaysAllowedAuthorizer{}
 
-func (a *NoopAlwaysAllowedAuthorizer) Authorize(ctx context.Context, secureValueDecrypters []string) (identity string, allowed bool) {
+func (a *NoopAlwaysAllowedAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool) {
 	return "", true
 }
