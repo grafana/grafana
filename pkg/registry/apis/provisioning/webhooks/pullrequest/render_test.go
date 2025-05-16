@@ -15,7 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func setupTempFile(t *testing.T) (string, func()) {
@@ -170,10 +170,10 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			},
 			setupBlobstore: func(t *testing.T) BlobStoreClient {
 				blobstore := NewMockBlobStoreClient(t)
-				blobstore.On("PutBlob", mock.Anything, mock.MatchedBy(func(req *resource.PutBlobRequest) bool {
+				blobstore.On("PutBlob", mock.Anything, mock.MatchedBy(func(req *resourcepb.PutBlobRequest) bool {
 					return req.Resource.Group == provisioning.GROUP &&
 						req.Resource.Resource == provisioning.RepositoryResourceInfo.GroupResource().Resource &&
-						req.Method == resource.PutBlobRequest_GRPC &&
+						req.Method == resourcepb.PutBlobRequest_GRPC &&
 						req.ContentType == "image/png"
 				})).Return(nil, errors.New("blobstore error"))
 				return blobstore
@@ -200,7 +200,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			setupBlobstore: func(t *testing.T) BlobStoreClient {
 				blobstore := NewMockBlobStoreClient(t)
 				blobstore.On("PutBlob", mock.Anything, mock.Anything).
-					Return(&resource.PutBlobResponse{
+					Return(&resourcepb.PutBlobResponse{
 						Url: "https://example.com/test.png",
 					}, nil)
 				return blobstore
@@ -227,7 +227,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			setupBlobstore: func(t *testing.T) BlobStoreClient {
 				blobstore := NewMockBlobStoreClient(t)
 				blobstore.On("PutBlob", mock.Anything, mock.Anything).
-					Return(&resource.PutBlobResponse{
+					Return(&resourcepb.PutBlobResponse{
 						Uid: "test-uid",
 					}, nil)
 				return blobstore
@@ -257,7 +257,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			setupBlobstore: func(t *testing.T) BlobStoreClient {
 				blobstore := NewMockBlobStoreClient(t)
 				blobstore.On("PutBlob", mock.Anything, mock.Anything).
-					Return(&resource.PutBlobResponse{
+					Return(&resourcepb.PutBlobResponse{
 						Uid: "test-uid",
 					}, nil)
 				return blobstore
