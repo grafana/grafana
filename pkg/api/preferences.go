@@ -98,7 +98,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
-// swagger:route PATCH /user/preferences user preferences patchUserPreferences
+// swagger:route PATCH /user/preferences signed_in_user preferences patchUserPreferences
 //
 // Patch user preferences.
 //
