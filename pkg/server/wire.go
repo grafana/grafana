@@ -41,6 +41,7 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -418,6 +419,8 @@ var wireBasicSet = wire.NewSet(
 	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
+	secretdecrypt.ProvideDecryptAuthorizer,
+	secretdecrypt.ProvideDecryptAllowList,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
