@@ -12407,6 +12407,11 @@
             "type": "integer"
           }
         },
+        "required": [
+          "displayName",
+          "description",
+          "group"
+        ],
         "type": "object"
       },
       "UpdateRuleGroupResponse": {
