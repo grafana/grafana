@@ -17,7 +17,7 @@ import { type ActionConfig, type PlopData, isPlopData } from './types.ts';
 
 export default function plopGenerator(plop: NodePlopAPI) {
   // Grafana root path
-  const basePath = path.resolve(import.meta.dirname, '../../../..');
+  const basePath = path.resolve(import.meta.dirname, '../..');
 
   // Register custom action types
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));

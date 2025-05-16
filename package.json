@@ -68,7 +68,7 @@
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
     "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
     "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
-    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types' plop --plopfile public/app/api/generator/plopfile.ts"
+    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile scripts/rtk-client-generator/plopfile.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",

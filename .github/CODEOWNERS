@@ -402,7 +402,7 @@
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
-/packages/grafana-data/src/transformations/ @grafana/datapro 
+/packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
@@ -640,6 +640,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
+/scripts/rtk-client-generator/ @grafana/grafana-frontend-platform
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
