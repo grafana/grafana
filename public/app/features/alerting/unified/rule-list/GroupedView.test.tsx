@@ -35,7 +35,7 @@ const ui = {
   dsSection: (ds: string | RegExp) => byRole('listitem', { name: ds }),
   namespace: (ns: string | RegExp) => byRole('treeitem', { name: ns }),
   group: (group: string | RegExp) => byRole('treeitem', { name: group }),
-  nextButton: () => byRole('button', { name: /next page/ }),
+  loadMoreButton: () => byRole('button', { name: /Show more rule groups/i }),
 };
 
 describe('RuleList - GroupedView', () => {
@@ -64,10 +64,10 @@ describe('RuleList - GroupedView', () => {
     expect(firstPageGroups[24]).toHaveTextContent('test-group-25');
     expect(firstPageGroups[39]).toHaveTextContent('test-group-40');
 
-    const nextButton = await within(mimirSection).findByRole('button', { name: /next page/ });
-    await user.click(nextButton);
+    const loadMoreButton = await within(mimirSection).findByRole('button', { name: /Show more rule groups/i });
+    await user.click(loadMoreButton);
 
-    await waitFor(() => expect(nextButton).toBeEnabled());
+    await waitFor(() => expect(loadMoreButton).toBeEnabled());
 
     const secondPageGroups = await ui.group(/test-group-(4[1-9]|[5-7][0-9]|80)/).findAll(mimirNamespace);
 
@@ -82,19 +82,19 @@ describe('RuleList - GroupedView', () => {
 
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
 
-    const nextButton = await ui.nextButton().find(prometheusSection);
-    await waitFor(() => expect(nextButton).toBeEnabled());
+    const loadMoreButton = await ui.loadMoreButton().find(prometheusSection);
+    await waitFor(() => expect(loadMoreButton).toBeEnabled());
 
     // Fetch second page
-    await user.click(nextButton);
+    await user.click(loadMoreButton);
 
     // Fetch third page
-    await waitFor(() => expect(nextButton).toBeEnabled());
-    await user.click(nextButton);
+    await waitFor(() => expect(loadMoreButton).toBeEnabled());
+    await user.click(loadMoreButton);
 
     // Fetch fourth page
-    await waitFor(() => expect(nextButton).toBeEnabled(), { timeout: 10000 });
-    await user.click(nextButton);
+    await waitFor(() => expect(loadMoreButton).toBeEnabled(), { timeout: 10000 });
+    await user.click(loadMoreButton);
 
     const promNamespace = await ui.namespace(/test-prometheus-namespace/).find(prometheusSection);
     const lastPageGroups = await ui.group(/test-group-(12[1-9]|130)/).findAll(promNamespace);
@@ -103,6 +103,6 @@ describe('RuleList - GroupedView', () => {
     expect(lastPageGroups.at(0)).toHaveTextContent('test-group-121');
     expect(lastPageGroups.at(6)).toHaveTextContent('test-group-127');
     expect(lastPageGroups.at(9)).toHaveTextContent('test-group-130');
-    expect(nextButton).toBeDisabled();
+    expect(loadMoreButton).not.toBeInTheDocument();
   });
 });
