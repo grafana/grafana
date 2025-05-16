@@ -92,7 +92,6 @@ func TestQueue(t *testing.T) {
 				cancel()
 				require.ErrorIs(t, err, context.DeadlineExceeded, "Dequeue on empty queue should time out")
 				require.False(t, ok, "Dequeue on empty queue should return ok=false")
-
 			},
 		},
 		{

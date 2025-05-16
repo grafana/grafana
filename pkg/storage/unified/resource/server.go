@@ -671,7 +671,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 }
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
-
 	rsp := &resourcepb.CreateResponse{}
 
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
