@@ -6,6 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 var (
@@ -28,6 +30,12 @@ type DashboardGuardian interface {
 // New factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
 var New = func(ctx context.Context, dashId int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
+	panic("no guardian factory implementation provided")
+}
+
+// NewByFolder factory for creating a new folder guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
+var NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
@@ -84,6 +92,16 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	New = func(_ context.Context, dashID int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashID = dashID
+		mock.User = user
+		return mock, nil
+	}
+
+	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
+		mock.OrgID = orgId
+		mock.DashUID = f.UID
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Guardian).Inc()
+		// nolint:staticcheck
+		mock.DashID = f.ID
 		mock.User = user
 		return mock, nil
 	}

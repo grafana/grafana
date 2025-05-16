@@ -24,14 +24,14 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { getCustomVariableOptions } from './components/CustomVariableForm';
-import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
-import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
+import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
+import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
-import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { QueryVariableEditor } from './editors/QueryVariableEditor';
-import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
+import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
+import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
   name: string;
@@ -58,16 +58,19 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Query',
     description: 'Values are fetched from a data source query',
     editor: QueryVariableEditor,
+    getOptions: getQueryVariableOptions,
   },
   constant: {
     name: 'Constant',
     description: 'A hidden constant variable, useful for metric prefixes in dashboards you want to share',
     editor: ConstantVariableEditor,
+    getOptions: getConstantVariableOptions,
   },
   interval: {
     name: 'Interval',
     description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
+    getOptions: getIntervalVariableOptions,
   },
   datasource: {
     name: 'Data source',
@@ -78,6 +81,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
+    getOptions: getAdHocFilterOptions,
   },
   groupby: {
     name: 'Group by',
@@ -88,6 +92,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Textbox',
     description: 'Users can enter any arbitrary strings in a textbox',
     editor: TextBoxVariableEditor,
+    getOptions: getTextBoxVariableOptions,
   },
 };
 

@@ -3,9 +3,11 @@ import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -75,6 +77,8 @@ function VariableList({ set }: { set: SceneVariableSet }) {
   return (
     <Stack direction="column" gap={0}>
       {variables.map((variable) => (
+        // TODO fix keyboard a11y here
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
         <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>
           {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           <Text>${variable.state.name}</Text>
@@ -87,7 +91,14 @@ function VariableList({ set }: { set: SceneVariableSet }) {
       ))}
       {canAdd && (
         <Box paddingBottom={1} display={'flex'}>
-          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
+          <Button
+            fullWidth
+            icon="plus"
+            size="sm"
+            variant="secondary"
+            onClick={setIsAdding}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
@@ -103,6 +114,7 @@ interface VariableTypeSelectionProps {
 function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
   const options = getVariableTypeSelectOptions();
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   return (
     <Stack direction={'column'} gap={0}>
@@ -115,6 +127,7 @@ function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
           onClick={() => onAddVariable(option.value!)}
           key={option.value}
           title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
         >
           <Card.Heading>{option.label}</Card.Heading>
           <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>

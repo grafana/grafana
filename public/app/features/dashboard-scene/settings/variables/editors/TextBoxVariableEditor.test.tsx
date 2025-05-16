@@ -39,6 +39,18 @@ describe('TextBoxVariableEditor', () => {
     await userEvent.tab();
     expect(textBoxVar.state.value).toBe(newValue);
   });
+
+  it('renders inline', () => {
+    const onChange = jest.fn();
+    render(<TextBoxVariableEditor variable={textBoxVar} onChange={onChange} inline={true} />);
+
+    const input = screen.getByDisplayValue(textBoxVar.state.value);
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue(textBoxVar.state.value);
+
+    const legend = screen.queryByText('Text options');
+    expect(legend).not.toBeInTheDocument();
+  });
 });
 
 async function buildTestScene() {

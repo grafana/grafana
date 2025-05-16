@@ -239,14 +239,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagWargamesTesting
-	// Placeholder feature flag for internal testing
-	FlagWargamesTesting = "wargamesTesting"
-
-	// FlagAlertingInsights
-	// Show the new alerting insights landing page
-	FlagAlertingInsights = "alertingInsights"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -319,10 +311,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
-
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
@@ -346,10 +334,6 @@ const (
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
-
-	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and only use the external one defined.
-	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
@@ -394,10 +378,6 @@ const (
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
-
-	// FlagAlertingSimplifiedRouting
-	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
 	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
@@ -486,6 +466,10 @@ const (
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
+
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
 	// FlagExpressionParser
 	// Enable new expression parser
@@ -868,7 +852,7 @@ const (
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
 	// FlagAlertingMigrationUI
-	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
 
 	// FlagUnifiedStorageHistoryPruner
@@ -927,6 +911,10 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
+	// FlagMultiTenantFrontend
+	// Register MT frontend
+	FlagMultiTenantFrontend = "multiTenantFrontend"
+
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -934,4 +922,12 @@ const (
 	// FlagAlertRuleUseFiredAtForStartsAt
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
+
+	// FlagAlertingBulkActionsInUI
+	// Enables the alerting bulk actions in the UI
+	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
+
+	// FlagExtensionsReadOnlyProxy
+	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
+	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 )

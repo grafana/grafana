@@ -1,13 +1,13 @@
 import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-
-import { t } from '../../internationalization';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 export function BouncingLoader() {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div
       className={styles.container}
@@ -16,7 +16,7 @@ export function BouncingLoader() {
       aria-label={t('bouncing-loader.label', 'Loading')}
     >
       <div className={styles.bounce}>
-        <img alt="" src="public/img/grafana_icon.svg" className={styles.logo} />
+        <img alt="" src={grafanaIconSvg} className={styles.logo} />
       </div>
     </div>
   );
