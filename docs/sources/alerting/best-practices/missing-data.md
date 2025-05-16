@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/learn/missing-data/
+canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/missing-data/
 description: Learn how to detect missing metrics and design alerts that handle gaps in data in Prometheus and Grafana Alerting.
 keywords:
   - grafana
@@ -18,14 +18,14 @@ weight: 1020
 refs:
   connectivity-errors-guide:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/connectivity-errors/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/connectivity-errors/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/connectivity-errors/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/connectivity-errors/
   connectivity-errors-reduce-alert-fatigue:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/connectivity-errors/#reducing-notification-fatigue-from-datasourceerror-alerts
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/connectivity-errors/#reducing-notification-fatigue-from-datasourceerror-alerts
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/connectivity-errors/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/connectivity-errors/
   alert-history:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/

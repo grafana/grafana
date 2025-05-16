@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/learn/connectivity-errors/
+canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/connectivity-errors/
 description: Learn how to detect and handle connectivity issues in alerts using Prometheus, Grafana Alerting, or both.
 keywords:
   - grafana
@@ -38,9 +38,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
   missing-data-guide:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/missing-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/missing-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
 ---
 
 # Handle connectivity errors in alerts

@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/learn/
+canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/
 description: This section provides a set of guides for useful alerting practices and recommendations
 keywords:
   - grafana
@@ -8,8 +8,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Learn
-title: Grafana Alerting Guides
+menuTitle: Best Practices
+title: Grafana Alerting best practices 
 weight: 170
 ---
 

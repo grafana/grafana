@@ -57,14 +57,14 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
   guide-connectivity-errors:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/connectivity-errors/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/connectivity-errors/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/connectivity-errors/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/connectivity-errors/
   guide-missing-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/missing-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/missing-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
 ---
 
 # State and health of alerts
