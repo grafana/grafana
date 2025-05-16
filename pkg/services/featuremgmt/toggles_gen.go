@@ -467,6 +467,10 @@ const (
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
+
 	// FlagExpressionParser
 	// Enable new expression parser
 	FlagExpressionParser = "expressionParser"
