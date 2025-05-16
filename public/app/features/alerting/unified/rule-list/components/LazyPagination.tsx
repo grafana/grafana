@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { Button, Icon, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface LazyPaginationProps {
   canMoveForward: boolean;
@@ -9,6 +9,8 @@ interface LazyPaginationProps {
 }
 
 export function LazyPagination({ canMoveForward, canMoveBackward, nextPage, previousPage }: LazyPaginationProps) {
+  const { t } = useTranslate();
+
   return (
     <Stack direction="row" gap={1}>
       <Button

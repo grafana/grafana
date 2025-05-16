@@ -4,9 +4,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';
 
@@ -79,6 +79,7 @@ export const DynamicTable = <T extends object>({
   dataTestId,
 }: DynamicTableProps<T>) => {
   const defaultPaginationStyles = useStyles2(getPaginationStyles);
+  const { t } = useTranslate();
 
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
     throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');

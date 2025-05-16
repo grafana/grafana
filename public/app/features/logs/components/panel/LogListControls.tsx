@@ -4,9 +4,9 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
+import { useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
@@ -162,6 +162,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     [dedupStrategy, setDedupStrategy, styles.menuItemActive]
   );
 
+  const { t } = useTranslate();
+
   const filterLevelsMenu = useMemo(
     () => (
       <Menu>
@@ -181,7 +183,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         ))}
       </Menu>
     ),
-    [filterLevels, onFilterLevelClick, styles.menuItemActive]
+    [filterLevels, onFilterLevelClick, styles.menuItemActive, t]
   );
 
   const downloadMenu = useMemo(
@@ -201,7 +203,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
         />
       </Menu>
     ),
-    [downloadLogs]
+    [downloadLogs, t]
   );
 
   const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
