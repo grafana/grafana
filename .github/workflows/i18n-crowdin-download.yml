@@ -150,7 +150,7 @@ jobs:
         # - the PR does not modify the en-US locale
         # TODO make these paths inputs to the workflow when we move this to a shared repo
         run: |
-          filesChanged=$(gh pr diff --name-only ${PR_URL})
+          filesChanged=$(gh pr diff --name-only ${{ env.PR_URL }})
 
           if [[ $(echo "$filesChanged" | grep -cv -e 'public/locales/[a-zA-Z\-]*/grafana.json' -e 'public/app/plugins/datasource/azuremonitor/locales/[a-zA-Z\-]*/grafana-azure-monitor-datasource.json') -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
