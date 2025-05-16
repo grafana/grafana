@@ -71,7 +71,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotFound
 	}
 
-	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, sv.Decrypters)
+	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, name, sv.Decrypters)
 	if !authorized {
 		return "", contracts.ErrDecryptNotAuthorized
 	}
