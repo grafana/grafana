@@ -94,18 +94,6 @@ func (r deleteKeeper) Validate() error {
 }
 
 // This is used at keeper store to validate create & update operations
-type listByNameSecureValue struct {
-	sqltemplate.SQLTemplate
-	Namespace        string
-	UsedSecureValues []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r listByNameSecureValue) Validate() error {
-	return nil // TODO
-}
-
-// This is used at keeper store to validate create & update operations
 type listByNameKeeper struct {
 	sqltemplate.SQLTemplate
 	Namespace   string
