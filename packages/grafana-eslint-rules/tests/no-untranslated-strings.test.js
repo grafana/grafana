@@ -882,6 +882,42 @@ return <div title={t("some-feature.foo.title-foo", "foo")} />
       ],
     },
 
+    {
+      name: 'Auto fixes object property',
+      code: `
+const Foo = () => {
+  return {
+    label: 'test',
+  }
+}`,
+      filename,
+      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
+}`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
     /**
      * UNFIXABLE CASES
      */
