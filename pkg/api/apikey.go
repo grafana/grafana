@@ -19,7 +19,7 @@ import (
 //
 // Will return auth keys.
 //
-// Deprecated: true.
+// Deprecated: true
 //
 // Deprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead
 // see https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
