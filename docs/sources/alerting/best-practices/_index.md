@@ -9,12 +9,12 @@ labels:
     - enterprise
     - oss
 menuTitle: Best Practices
-title: Grafana Alerting best practices 
+title: Grafana Alerting best practices
 weight: 170
 ---
 
 # Grafana Alerting best practices
 
-This section provides a set of guides and examples of best practices for Grafana Alerting. Here you can learn more about more about how to handle common alert management problems and you can see examples of more advanced usage of Grafana Alerting. 
+This section provides a set of guides and examples of best practices for Grafana Alerting. Here you can learn more about more about how to handle common alert management problems and you can see examples of more advanced usage of Grafana Alerting.
 
 {{< section >}}
