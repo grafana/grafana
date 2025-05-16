@@ -27,10 +27,10 @@ import { DownloadFormat, downloadLogs as download } from '../../utils';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
+export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
-  detailsWidth?: number;
+  detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
@@ -56,6 +56,7 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
+  detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
   enableLogDetails: false,
@@ -113,6 +114,7 @@ export type LogListState = Pick<
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
+  containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -151,6 +153,7 @@ export interface Props {
 export const LogListContextProvider = ({
   app,
   children,
+  containerElement,
   enableLogDetails,
   dedupStrategy,
   displayedFields,
@@ -391,9 +394,10 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey]
   );
 
+  const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth = logOptionsStorageKey
     ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
-    : undefined;
+    : defaultWidth;
 
   return (
     <LogListContext.Provider
@@ -402,7 +406,7 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
-        detailsWidth: Number.isInteger(detailsWidth) ? detailsWidth : undefined,
+        detailsWidth: detailsWidth || defaultWidth,
         displayedFields,
         downloadLogs,
         enableLogDetails,
