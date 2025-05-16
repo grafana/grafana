@@ -20,7 +20,7 @@ weight: 300
 {{< admonition type="caution" >}}
 Provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. This feature is not yet available in Grafana Cloud.
 
-Sign up for Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9)
+Sign up for Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 {{< /admonition >}}
 
 Using Provisioning, you can configure how to store your dashboard JSON files in either GitHub repositories using Git Sync or a local path.
