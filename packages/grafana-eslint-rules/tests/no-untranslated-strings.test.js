@@ -613,27 +613,6 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
     },
 
     {
-      name: 'Fixes correctly when import exists from a relative path',
-      code: `
-import { t } from '../../core/internationalization';
-const Foo = () => <div title="foo" />`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStringsProp',
-          suggestions: [
-            {
-              messageId: 'wrapWithT',
-              output: `
-import { t } from '../../core/internationalization';
-const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
-            },
-          ],
-        },
-      ],
-    },
-
-    {
       name: 'Fixes correctly with a Class component',
       code: `
 class Foo extends React.Component {
@@ -763,6 +742,8 @@ const Foo = () => {
   const thing = {
     label: 'test',
   }
+
+  return <div>{thing.label}</div>;
 }`,
       filename,
       errors: [
@@ -772,11 +753,14 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  const thing = {
+  const { t } = useTranslate();
+const thing = {
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
   }
+
+  return <div>{thing.label}</div>;
 }`,
             },
           ],
@@ -787,7 +771,7 @@ const Foo = () => {
     {
       name: 'Untranslated object property with existing import',
       code: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => {
   const thing = {
     label: 'test',
@@ -801,7 +785,7 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => {
   const thing = {
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
@@ -830,7 +814,7 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => {
   const thing = doAThing({
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
