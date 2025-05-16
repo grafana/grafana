@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -422,6 +423,8 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
+	secretdecrypt.ProvideDecryptAuthorizer,
+	secretdecrypt.ProvideDecryptAllowList,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
