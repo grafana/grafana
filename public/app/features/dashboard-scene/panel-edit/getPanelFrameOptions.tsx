@@ -43,7 +43,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
-            onGenerate={(title) => setPanelTitle(panel, title)}
+            onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
           />
@@ -126,10 +126,10 @@ export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel;
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
       onFocus={() => setPrevTitle(title)}
-      onBlur={() => setPanelTitle(panel, title, prevTitle)}
+      onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
       // The full action (that can be undone) is done by setPanelTitle,
       // But to see changes in the input field, canvas and outline we change the real value here
-      onChange={(e) => panel.setState({ title: e.currentTarget.value })}
+      onChange={(e) => updatePanelTitleState(panel, e.currentTarget.value)}
     />
   );
 }
@@ -173,13 +173,20 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
   return <Switch value={displayMode === 'transparent'} id="transparent-background" onChange={onChange} />;
 }
 
-export function setPanelTitle(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+function updatePanelTitleState(panel: VizPanel, title: string) {
+  panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+}
+
+export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+  if (title === prevTitle) {
+    return;
+  }
+
   dashboardEditActions.edit({
     description: 'Change panel title',
     source: panel,
-    perform: () => panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) }),
-    undo: () =>
-      panel.setState({ title: prevTitle, hoverHeader: getUpdatedHoverHeader(prevTitle, panel.state.$timeRange) }),
+    perform: () => updatePanelTitleState(panel, title),
+    undo: () => updatePanelTitleState(panel, prevTitle),
   });
 }
 
