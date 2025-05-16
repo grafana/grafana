@@ -15,7 +15,7 @@
     "directory": "packages/grafana-i18n"
   },
   "main": "src/index.ts",
-  "types": "src/index.ts",
+  "types": "src/index.d.ts",
   "module": "src/index.ts",
   "exports": {
     "./package.json": "./package.json",
