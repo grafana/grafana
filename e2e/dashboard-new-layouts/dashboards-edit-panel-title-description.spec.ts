@@ -35,7 +35,9 @@ describe('Dashboard', () => {
     });
 
     // Check that new title is reflected in panel header
-    cy.get('[data-testid="data-testid header-container"] h2').first().should('have.text', 'New Panel Title');
+    e2e.components.Panels.Panel.headerContainer()
+      .first()
+      .within(() => cy.get('h2').should('have.text', 'New Panel Title'));
 
     // Reveal description tooltip and check that its value is as expected
     const descriptionIcon = () => cy.get('[data-testid="title-items-container"] > span').first();
