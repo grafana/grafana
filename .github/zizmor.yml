@@ -29,3 +29,6 @@ rules:
       - pr-commands.yml
       - pr-patch-check-event.yml
       - run-dashboard-search-e2e.yml
+  excessive-permissions:
+    ignore:
+      - release-comms.yml
