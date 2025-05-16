@@ -325,7 +325,7 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 }
 
-func Test_processLegacyInstallPlugins(t *testing.T) {
+func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 	tests := []struct {
 		name                string
 		installPluginsVal   string
@@ -404,16 +404,21 @@ func Test_processLegacyInstallPlugins(t *testing.T) {
 		},
 		{
 			name:              "should skip plugins that are already configured",
-			installPluginsVal: "plugin1,plugin2,plugin3",
+			installPluginsVal: "plugin1 1.0.0,plugin2,plugin3",
 			preinstallPlugins: map[string]InstallPlugin{
-				"plugin1": {ID: "plugin1"},
+				"plugin1": {ID: "plugin1", Version: "1.0.1"},
 				"plugin3": {ID: "plugin3"},
 			},
 			expectedPlugins: map[string]InstallPlugin{
 				"plugin2": {
-					ID:      "plugin2",
-					Version: "",
-					URL:     "",
+					ID: "plugin2",
+				},
+				"plugin3": {
+					ID: "plugin3",
+				},
+				"plugin1": {
+					ID:      "plugin1",
+					Version: "1.0.1",
 				},
 			},
 		},
@@ -423,12 +428,12 @@ func Test_processLegacyInstallPlugins(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewCfg()
 
-			legacyPlugins := cfg.processLegacyInstallPlugins(tc.preinstallPlugins, tc.installPluginsVal, tc.installPluginsForce)
-			assert.Equal(t, len(tc.expectedPlugins), len(legacyPlugins), "Number of plugins doesn't match")
+			cfg.migrateInstallPluginsToPreinstallPluginsSync(tc.installPluginsVal, tc.installPluginsForce, tc.preinstallPlugins)
+			assert.Equal(t, len(tc.expectedPlugins), len(tc.preinstallPlugins), "Number of plugins doesn't match")
 
 			// Check each expected plugin exists with correct values
 			for id, expectedPlugin := range tc.expectedPlugins {
-				actualPlugin, exists := legacyPlugins[id]
+				actualPlugin, exists := tc.preinstallPlugins[id]
 				assert.True(t, exists, "Expected plugin %s not found", id)
 				if exists {
 					assert.Equal(t, expectedPlugin.ID, actualPlugin.ID, "Plugin ID mismatch for %s", id)
