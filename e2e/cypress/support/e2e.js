@@ -13,13 +13,11 @@ function delay(ms) {
 }
 
 if (Cypress.env('SLOWMO')) {
-  Cypress.Commands.overwriteQuery("contains",
-    function (contains, filter, text, userOptions = {}) {
-      delay(COMMAND_DELAY);
-      const call = contains.bind(this);
-      return call(filter, text, userOptions);
-    }
-  );
+  Cypress.Commands.overwriteQuery('contains', function (contains, filter, text, userOptions = {}) {
+    delay(COMMAND_DELAY);
+    const call = contains.bind(this);
+    return call(filter, text, userOptions);
+  });
 
   const commandsToModify = ['clear', 'click', 'reload', 'then', 'trigger', 'type', 'visit'];
   commandsToModify.forEach((command) => {
