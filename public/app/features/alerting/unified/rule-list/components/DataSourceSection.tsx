@@ -112,11 +112,9 @@ export const DataSourceSection = ({
 const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
   itemsWrapper: css({
     position: 'relative',
-    paddingTop: theme.spacing(1),
-    paddingLeft: theme.spacing(0.5),
   }),
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: theme.spacing(1, 1.5),
   }),
 });

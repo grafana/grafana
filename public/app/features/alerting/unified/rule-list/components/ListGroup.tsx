@@ -93,21 +93,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   headerWrapper: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-  }),
-  childrenWrapper: css({
+    padding: theme.spacing(1),
+    paddingLeft: theme.spacing(4),
     position: 'relative',
-
-    marginLeft: theme.spacing(2),
-    paddingLeft: theme.spacing(1),
 
     '&:before': {
       content: "''",
       position: 'absolute',
       height: '100%',
 
-      marginLeft: theme.spacing(-1),
+      marginLeft: theme.spacing(-1.5),
+      marginTop: theme.spacing(-1),
       borderLeft: `solid 1px ${theme.colors.border.weak}`,
     },
+
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
+  }),
+  childrenWrapper: css({
+    position: 'relative',
   }),
 });

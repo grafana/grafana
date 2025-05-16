@@ -48,7 +48,7 @@ export function PaginatedGrafanaLoader() {
 
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;

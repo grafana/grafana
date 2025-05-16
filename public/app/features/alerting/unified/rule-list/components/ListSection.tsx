@@ -61,24 +61,16 @@ export const ListSection = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
-    marginLeft: theme.spacing(3),
-
-    '&:before': {
-      content: "''",
-      position: 'absolute',
-      height: '100%',
-
-      marginLeft: theme.spacing(-1),
-      borderLeft: `solid 1px ${theme.colors.border.weak}`,
-    },
   }),
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-
-    gap: theme.spacing(1),
   }),
   sectionTitle: css({
-    padding: `${theme.spacing(0)} ${theme.spacing(1)}`,
+    padding: theme.spacing(1, 1.5),
+
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
   }),
 });

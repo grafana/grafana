@@ -49,7 +49,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByNamespace).map(([namespace, groups]) => (
           <ListSection
             key={namespace}
