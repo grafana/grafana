@@ -66,6 +66,10 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * Subscriptions to be queried via Azure Resource Graph.
    */
   subscriptions?: Array<string>;
+  /**
+   * Used to configure the HTTP request timeout
+   */
+  timeout?: number;
 }
 
 export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
