@@ -199,7 +199,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 }
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
-func (d *dualWriter) Update(ctx context.Context, name string, updateObjInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	log := d.log.With("method", "Update").WithContext(ctx)
 
 	// update in legacy first, and then unistore. Will return a failure if either fails.
@@ -208,15 +208,15 @@ func (d *dualWriter) Update(ctx context.Context, name string, updateObjInfo rest
 	// but legacy failed, the user would get a failure, but see the update did apply to the source
 	// of truth, and be less likely to retry to save (and get the stores in sync again)
 
-	legacyInfo := updateObjInfo
+	legacyInfo := objInfo
 	legacyForceCreate := forceAllowCreate
-	unifiedInfo := updateObjInfo
+	unifiedInfo := objInfo
 	unifiedForceCreate := forceAllowCreate
 	if d.readUnified {
-		legacyInfo = &wrappedUpdateInfo{updateObjInfo}
+		legacyInfo = &wrappedUpdateInfo{objInfo}
 		legacyForceCreate = true
 	} else {
-		unifiedInfo = &wrappedUpdateInfo{updateObjInfo}
+		unifiedInfo = &wrappedUpdateInfo{objInfo}
 		unifiedForceCreate = true
 	}
 
