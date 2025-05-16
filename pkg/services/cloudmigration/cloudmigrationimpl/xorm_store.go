@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -331,29 +332,31 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 // CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
 // Inserting large enough datasets causes SQL errors, so we batch the inserts
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
-	startIndex := 0
-	for i := 0; i < len(resources); i++ {
-		// massage the data first
-		resources[i].UID = util.GenerateShortUID()
-		resources[i].SnapshotUID = snapshotUid
-
-		var endIndex int
-		if i == len(resources)-1 { // we've hit the last resource -- insert the remaining resources
-			endIndex = len(resources)
-		} else if i%maxResourceBatchSize == 0 && i > 0 { // we've hit the max batch size -- insert the the previous n resources
-			endIndex = i
-		} else {
-			continue // proceed to the next resource
-		}
-
-		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			_, err := sess.Insert(resources[startIndex:endIndex])
+	for chunk := range slices.Chunk(resources, maxResourceBatchSize) {
+		if err := ss.createSnapshotResources(ctx, snapshotUid, chunk); err != nil {
 			return err
-		})
-		if err != nil {
-			return fmt.Errorf("creating resources: %w", err)
 		}
-		startIndex = endIndex
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) createSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	for i := 0; i < len(resources); i++ {
+		resources[i].UID = util.GenerateShortUID()
+		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
+		resources[i].SnapshotUID = snapshotUid
+	}
+
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(resources)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("creating resources: %w", err)
 	}
 
 	return nil
@@ -363,8 +366,18 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 // It does preprocessing on the results in order to minimize the sql queries executed.
 // Updating large enough datasets causes SQL errors, so we batch the updates
 func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	for chunk := range slices.Chunk(resources, maxResourceBatchSize) {
+		if err := ss.updateSnapshotResources(ctx, snapshotUid, chunk); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ss *sqlStore) updateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	// refIds of resources that migrated successfully in order to update in bulk
-	okIds := make([]any, 0)
+	okIds := make([]any, 0, len(resources))
 
 	// group any failed resources by errCode and errStr
 	type errId struct {
@@ -373,13 +386,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 	errorIds := make(map[errId][]any)
 
-	// used to prepare the sql statements to execute later
-	type statement struct {
-		sql  string
-		args []any
-	}
-
-	for i, r := range resources {
+	for _, r := range resources {
 		switch r.Status {
 		case cloudmigration.ItemStatusPending:
 			// Do nothing. A pending item should not be updated, as it is still in progress.
@@ -393,53 +400,54 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 				errorIds[key] = []any{r.RefID}
 			}
 		}
+	}
 
-		// If we've hit the end of the batch or the end of the list, prepare the statements that we've accumulated
-		if i == len(resources)-1 || (i%maxResourceBatchSize == 0 && i > 0) {
-			// Prepare a sql statement for all of the OK statuses
-			var okUpdateStatement *statement
-			if len(okIds) > 0 {
-				okUpdateStatement = &statement{
-					sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
-					args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds...),
-				}
-			}
+	type statement struct {
+		sql  string
+		args []any
+	}
 
-			// Prepare however many sql statements are necessary for the error statuses
-			errorStatements := make([]statement, 0, len(errorIds))
-			for k, ids := range errorIds {
-				errorStatements = append(errorStatements, statement{
-					sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=?, error_code=?, error_string=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(ids)-1)),
-					args: append([]any{cloudmigration.ItemStatusError, k.errCode, k.errStr, snapshotUid}, ids...),
-				})
-			}
-
-			// Execute the minimum number of required statements for this chunk
-			err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-				if okUpdateStatement != nil {
-					if _, err := sess.Exec(append([]any{okUpdateStatement.sql}, okUpdateStatement.args...)...); err != nil {
-						return err
-					}
-				}
-
-				for _, q := range errorStatements {
-					if _, err := sess.Exec(append([]any{q.sql}, q.args...)...); err != nil {
-						return err
-					}
-				}
-				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("updating resources: %w", err)
-			}
-
-			// Reset the accumulators for the next batch
-			okIds = make([]any, 0)
-			errorIds = make(map[errId][]any)
+	// Prepare a sql statement for all of the OK statuses
+	var okUpdateStatement *statement
+	if len(okIds) > 0 {
+		okUpdateStatement = &statement{
+			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
+			args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds...),
 		}
 	}
 
-	return nil
+	// Prepare however many sql statements are necessary for the error statuses
+	errorStatements := make([]statement, 0, len(errorIds))
+	for k, ids := range errorIds {
+		errorStatements = append(errorStatements, statement{
+			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=?, error_code=?, error_string=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(ids)-1)),
+			args: append([]any{cloudmigration.ItemStatusError, k.errCode, k.errStr, snapshotUid}, ids...),
+		})
+	}
+
+	// Execute the minimum number of required statements!
+
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if okUpdateStatement != nil {
+				if _, err := sess.Exec(append([]any{okUpdateStatement.sql}, okUpdateStatement.args...)...); err != nil {
+					return err
+				}
+			}
+
+			for _, q := range errorStatements {
+				if _, err := sess.Exec(append([]any{q.sql}, q.args...)...); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("updating resources: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, params cloudmigration.SnapshotResultQueryParams) ([]cloudmigration.CloudMigrationResource, error) {
