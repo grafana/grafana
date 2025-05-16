@@ -417,17 +417,16 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 			}
 		}
 
-		actual := extractActualError(writeErr)
 		// Check for expected user errors.
 		for _, e := range ExpectedErrors {
 			if strings.Contains(msg, e) {
+				actual := extractActualError(writeErr)
 				return fmt.Errorf("%w: %s", ErrRejectedWrite, actual), false
 			}
 		}
 
-		// For now, all 400s that are not previously known are considered unexpected.
-		// TODO: Consider blanket-converting all 400s to be known errors. This should only be done once we are confident this is not a problem with this client.
-		return fmt.Errorf("%w: %s", ErrRejectedWrite, actual), false
+		// return full error if we don't have a match.'
+		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
 	}
 
 	if writeErr.StatusCode() == 401 {
