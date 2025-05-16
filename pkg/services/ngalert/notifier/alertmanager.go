@@ -10,8 +10,6 @@ import (
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
-	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -51,14 +49,11 @@ type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
-	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
-	Settings            *setting.Cfg
-	Store               AlertingStore
-	stateStore          stateStore
-	NotificationService notifications.Service
-
-	decryptFn alertingNotify.GetDecryptedValueFn
-	orgID     int64
+	ConfigMetrics        *metrics.AlertmanagerConfigMetrics
+	Store                AlertingStore
+	stateStore           stateStore
+	DefaultConfiguration string
+	orgID                int64
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -122,7 +117,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
 
-	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
+	opts := alertingNotify.GrafanaAlertmanagerOpts{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -132,23 +127,31 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
+		EmailSender:   &emailSender{ns},
+		ImageProvider: newImageProvider(store, log.New("ngalert.notifier.image-provider")),
+		Decrtypter:    decryptFn,
+		LoggerFactory: LoggerFactory,
+		Version:       setting.BuildVersion,
+		TenantKey:     "orgID",
+		TenantID:      orgID,
+		Peer:          peer,
+		Logger:        l,
+		Metrics:       alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
 	}
 
-	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
+	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	am := &alertmanager{
-		Base:                gam,
-		ConfigMetrics:       m.AlertmanagerConfigMetrics,
-		Settings:            cfg,
-		Store:               store,
-		NotificationService: ns,
-		orgID:               orgID,
-		decryptFn:           decryptFn,
-		stateStore:          stateStore,
-		logger:              l,
+		Base:                 gam,
+		ConfigMetrics:        m.AlertmanagerConfigMetrics,
+		DefaultConfiguration: cfg.UnifiedAlerting.DefaultConfiguration,
+		Store:                store,
+		stateStore:           stateStore,
+		logger:               l,
+		orgID:                orgID,
 	}
 
 	return am, nil
@@ -171,14 +174,14 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
 	am.Base.WithLock(func() {
 		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
+			AlertmanagerConfiguration: am.DefaultConfiguration,
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
-		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+		cfg, err := Load([]byte(am.DefaultConfiguration))
 		if err != nil {
 			outerErr = err
 			return
