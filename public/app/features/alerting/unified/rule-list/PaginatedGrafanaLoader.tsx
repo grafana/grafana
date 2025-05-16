@@ -6,7 +6,7 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
