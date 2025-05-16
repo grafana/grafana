@@ -1284,6 +1284,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 export interface GroupByVariableSpec {
 	name: string;
 	datasource?: DataSourceRef;
+	defaultValues?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
