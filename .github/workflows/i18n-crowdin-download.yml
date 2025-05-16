@@ -150,7 +150,10 @@ jobs:
         # - the PR does not modify the en-US locale
         # TODO make these paths inputs to the workflow when we move this to a shared repo
         run: |
-          filesChanged="$(gh pr diff --name-only "${{ env.PR_URL }}")"
+          filesChanged="$(gh pr diff --name-only "$PR_URL")"
+
+          echo "PR URL: $PR_URL"
+          echo "Files changed: $filesChanged"
 
           if [[ $(echo "$filesChanged" | grep -cv -e 'public/locales/[a-zA-Z\-]*/grafana.json' -e 'public/app/plugins/datasource/azuremonitor/locales/[a-zA-Z\-]*/grafana-azure-monitor-datasource.json') -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
@@ -163,8 +166,8 @@ jobs:
           fi
 
           echo "Approving and enabling automerge"
-          gh pr review "${{ env.PR_URL }}" --approve
-          gh pr merge --auto --squash "${{ env.PR_URL }}"
+          gh pr review "$PR_URL" --approve
+          gh pr merge --auto --squash "$PR_URL"
         env:
           GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
           PR_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
