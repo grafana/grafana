@@ -140,6 +140,10 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+   - The menu icon to access the following options:
+       - **Download CSV**
+       - **Preview PDF**
+       - **Report settings** - Takes you to **Reporting** and opens the **Report template settings** drawer where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="screenshot-send-preview.png" max-width="350px" alt="The Send preview modal" >}}
@@ -167,6 +171,10 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+   - The menu icon to access the following options:
+       - **Download CSV**
+       - **Preview PDF**
+       - **Report settings** - Opens the **Report template settings** drawer where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="screenshot-send-preview.png" max-width="350px" alt="The Send preview modal" >}}
@@ -191,13 +199,11 @@ The options are:
 | Option | Description |
 | ------ | ----------- |
 | Source dashboard (required) | Select or update the dashboard from which you want to generate the report. If you've created your report directly from a dashboard, this field is already filled in with the name of the current dashboard. |
-| [Time range](#time-range) | Update the report time range. By default, the report uses the time range of the dashboard. |
+| [Time range](#time-range) | Update the report time range. If the dashboard is preselected, the default time range is that of the dashboard. Otherwise, the default time range is **Last 6 hours**. |
 | [Customize template variables](#template-variables) | Select and customize the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
 | + Add dashboard | Add more dashboards to the report. |
 
 <!-- prettier-ignore-end -->
-
-<!--need to see time range behaviour when the report is created from Reporting -->
 
 #### Template variables
 
@@ -268,7 +274,7 @@ At this step, enter information related to setup of the report email:
 | ------ | ----------- |
 | Email subject | If you leave this field empty, the report name is used as the email subject line. |
 | Message | The body of the message in the email with the report. |
-| Reply-to email address | The address that appears in the **Reply to** field of the email. |
+| Reply-to-email address | The address that appears in the **Reply to** field of the email. |
 | Include a dashboard link | Include a links to the dashboards in the report email. |
 | Embed dashboard image | The report email is sent with an image of the dashboard embedded in it so recipients see the dashboard at a glance. |
 
@@ -303,7 +309,7 @@ If you selected a PDF attachment, you can configure the following options:
 | Combine all dashboard PDFs in one file     | Click the checkbox if you want to generate one PDF file for all the dashboards included in the report. |
 | Show template variables         | Click the checkbox to show dashboard variables.                    |
 | [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. Public preview only. |
-<!-- prettier-ignore-end --> 
+<!-- prettier-ignore-end -->
 
 ##### Layout and orientation
 
