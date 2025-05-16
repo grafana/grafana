@@ -444,6 +444,9 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	var orgID int64 = 1
 
@@ -551,6 +554,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	var orgID int64 = 1
 
@@ -657,6 +663,10 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			},
 			expectedResult: []string{"subfolder"},
 		},
+	}
+
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
 	}
 
 	var orgID int64 = 1

@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
@@ -33,7 +33,7 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
 
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
-
+  const { t } = useTranslate();
   const modeSwitchCounter = useRef(0);
 
   const allowInterval = item.settings?.allowInterval ?? false;

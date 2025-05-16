@@ -900,13 +900,11 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		evaluator := ac.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
-		canEdit, err := l.AccessControl.Evaluate(c, signedInUser, evaluator)
-		if err != nil {
+		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
+			if errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return dashboards.ErrFolderNotFound
+			}
 			return err
-		}
-		if !canEdit {
-			return dashboards.ErrFolderAccessDenied
 		}
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`

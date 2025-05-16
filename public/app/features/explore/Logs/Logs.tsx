@@ -32,6 +32,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -47,7 +48,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
@@ -381,6 +381,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       );
     }
   });
+
+  const { t } = useTranslate();
 
   const updatePanelState = useCallback(
     (logsPanelState: Partial<ExploreLogsPanelState>) => {
@@ -1151,6 +1153,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
+                  loading={loading}
                   loadMore={loadMoreLogs}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
@@ -1253,7 +1256,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     scrollableLogRows: css({
       overflowY: 'scroll',
       width: '100%',
-      maxHeight: '75vh',
+      maxHeight: '80vh',
     }),
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,

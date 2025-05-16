@@ -6,7 +6,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   FileDropzone,
-  HorizontalGroup,
+  Stack,
   InlineField,
   InlineFieldRow,
   Modal,
@@ -116,7 +116,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         </Modal>
         <InlineFieldRow>
           <InlineField label="Query type" grow={true}>
-            <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
+            <Stack gap={1} alignItems="center" justifyContent="space-between">
               <RadioButtonGroup<TempoQueryType>
                 options={queryTypeOptions}
                 value={query.queryType}
@@ -146,7 +146,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
               >
                 Import trace
               </Button>
-            </HorizontalGroup>
+            </Stack>
           </InlineField>
         </InlineFieldRow>
         {query.queryType === 'traceqlSearch' && (

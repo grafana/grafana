@@ -262,9 +262,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, alertingNode)
 				treeRoot.RemoveSection(alertingNode)
 			}
-			if appLink.Id == "plugin-page-grafana-irm-app" {
-				appLink.IsNew = true
-			}
 			alertsAndIncidentsChildren = append(alertsAndIncidentsChildren, appLink)
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Alerts & IRM",

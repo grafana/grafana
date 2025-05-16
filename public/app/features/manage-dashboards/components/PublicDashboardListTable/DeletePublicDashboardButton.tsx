@@ -1,8 +1,8 @@
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ModalsController, ButtonProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -29,7 +29,7 @@ export const DeletePublicDashboardButton = ({
   onDismiss?: () => void;
 } & ButtonProps) => {
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
-
+  const { t } = useTranslate();
   const onDeletePublicDashboardClick = (pd: PublicDashboardDeletion, onDelete: () => void) => {
     deletePublicDashboard({
       dashboard,
