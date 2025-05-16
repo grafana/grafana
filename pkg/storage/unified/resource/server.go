@@ -705,9 +705,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		return rsp, nil
 	}
 	if req.ResourceVersion < 0 {
-		return &resourcepb.UpdateResponse{
-			Error: AsErrorResult(apierrors.NewBadRequest("update must include the previous version")),
-		}, nil
+		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
+		return rsp, nil
 	}
 
 	var (
@@ -811,14 +810,12 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Key: req.Key,
 	})
 	if latest.Error != nil {
-		return &resourcepb.DeleteResponse{
-			Error: latest.Error,
-		}, nil
+		rsp.Error = latest.Error
+		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return &resourcepb.DeleteResponse{
-			Error: AsErrorResult(ErrOptimisticLockingFailed),
-		}, nil
+		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		return rsp, nil
 	}
 
 	access, err := s.access.Check(ctx, user, claims.CheckRequest{
@@ -830,9 +827,8 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		Folder:    latest.Folder,
 	})
 	if err != nil {
-		return &resourcepb.DeleteResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 	if !access.Allowed {
 		rsp.Error = &resourcepb.ErrorResult{
