@@ -53,18 +53,21 @@ export const QueryPatternsModal = (props: Props) => {
       createNewQuery: hasNewQueryOption && selectAsNewQuery,
     });
 
+    // Apply the pattern operations before rendering the expression
     visualQuery.query.operations = pattern.operations;
     visualQuery.query.binaryQueries = pattern.binaryQueries;
+    const renderedExpr = promQueryModeller.renderQuery(visualQuery.query);
+
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
         refId: getNextRefId(queries ?? [query]),
-        expr: promQueryModeller.renderQuery(visualQuery.query),
+        expr: renderedExpr,
       });
     } else {
       onChange({
         ...query,
-        expr: promQueryModeller.renderQuery(visualQuery.query),
+        expr: renderedExpr,
       });
     }
     setSelectedPatternName(null);

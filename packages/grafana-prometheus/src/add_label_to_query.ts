@@ -2,7 +2,7 @@
 import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
 
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { buildMetricQuery } from './querybuilder/shared/query-builder-utils';
+import { renderQuery } from './querybuilder/shared/renderer';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
 
@@ -83,7 +83,7 @@ function addFilter(
       // We don't want to add duplicate labels.
       match.query.labels.push(filter);
     }
-    const newLabels = buildMetricQuery(match.query.metric, match.query.labels);
+    const newLabels = renderQuery(match.query);
     newQuery += start + newLabels + end;
     prev = match.to;
   }
