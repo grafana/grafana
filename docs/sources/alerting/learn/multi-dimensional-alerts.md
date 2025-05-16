@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/learn/examples/multi-dimensional-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/learn/multi-dimensional-alerts/
 description: This example shows how a single alert rule can generate multiple alert instances using time series data.
 keywords:
   - grafana
@@ -19,9 +19,9 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
   table-data-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/multi-dimensional-alerts/table-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/multi-dimensional-alerts/table-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/multi-dimensional-alerts/table-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/multi-dimensional-alerts/table-data/
   annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations

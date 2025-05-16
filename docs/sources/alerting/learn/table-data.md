@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/learn/examples/table-data
+canonical: https://grafana.com/docs/grafana/latest/alerting/learn/table-data
 description: This example shows how to create an alert rule using table data.
 keywords:
   - grafana
@@ -19,9 +19,9 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
   multi-dimensional-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/multi-dimensional-alerts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/multi-dimensional-alerts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/multi-dimensional-alerts/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/multi-dimensional-alerts/
 ---
 
 # Example of alerting on tabular data

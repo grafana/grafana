@@ -56,7 +56,7 @@ When this happens, alerts won’t fire, and you might not notice the system has 
 
 Sometimes it's just a lack of data from a few instances. Other times, it's a connectivity issue where the entire target is unreachable.
 
-This guide covers different scenarios where the underlying data is missing and shows how to design your alerts to act on those cases. If you're troubleshooting an unreachable host or a network failure, see [Handling connectivity errors](ref:connectivity-errors-guide) as well.
+This guide covers different scenarios where the underlying data is missing and shows how to design your alerts to act on those cases. If you're troubleshooting an unreachable host or a network failure, see the [Handle connectivity errors documentation](ref:connectivity-errors-guide) as well.
 
 ## No Data vs. Missing Series
 
