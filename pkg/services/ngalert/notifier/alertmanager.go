@@ -53,7 +53,6 @@ type alertmanager struct {
 	Store                AlertingStore
 	stateStore           stateStore
 	DefaultConfiguration string
-	orgID                int64
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -151,7 +150,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Store:                store,
 		stateStore:           stateStore,
 		logger:               l,
-		orgID:                orgID,
 	}
 
 	return am, nil
@@ -177,7 +175,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			AlertmanagerConfiguration: am.DefaultConfiguration,
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
+			OrgID:                     am.Base.TenantID(),
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
@@ -216,7 +214,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(rawConfig),
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
+			OrgID:                     am.Base.TenantID(),
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
@@ -257,7 +255,7 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 			return
 		}
 		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.orgID,
+			OrgID:             am.Base.TenantID(),
 			ConfigurationHash: dbCfg.ConfigurationHash,
 		}
 		err = am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
@@ -286,11 +284,11 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, c
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
 
 	am.ConfigMetrics.ConfigHash.
-		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
 		Set(hashAsMetricValue(am.Base.ConfigHash()))
 
 	am.ConfigMetrics.ConfigSizeBytes.
-		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
 		Set(float64(cfgSize))
 }
 
@@ -319,7 +317,7 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, skipInvalid bool) (bool, error) {
-	err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, skipInvalid)
+	err := AddAutogenConfig(ctx, am.logger, am.Store, am.Base.TenantID(), &cfg.AlertmanagerConfig, skipInvalid)
 	if err != nil {
 		return false, err
 	}
