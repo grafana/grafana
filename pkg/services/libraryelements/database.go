@@ -912,7 +912,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		sql := "SELECT lec.connection_id FROM library_element AS le"
 		sql += " INNER JOIN " + model.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
 		sql += " WHERE le.folder_uid=? AND le.org_id=?"
-		err = session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
+		err := session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
 		if err != nil {
 			return err
 		}
