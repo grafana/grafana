@@ -17,6 +17,9 @@ weight: 300
 
 {{< admonition type="note" >}}
 Git Sync and File path provisioning an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana. These features aren't available in Grafana Cloud.
+
+Sign up for Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9)
+
 {{< /admonition >}}
 
 Using Provisioning, you can choose to store your dashboard JSON files in either GitHub repositories using Git Sync or a local file path.
