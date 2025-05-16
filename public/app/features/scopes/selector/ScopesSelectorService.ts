@@ -106,7 +106,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
     // We are expanding node that wasn't yet expanded so we don't have any query to filter by yet.
-    const childNodes = await this.apiClient.fetchNode({ parent: treeNode.scopeNodeId, query });
+    const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
 
     const newNodes = { ...this.state.nodes };
 
@@ -147,17 +147,21 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
     this.apiClient.fetchScope(scopeNode.spec.linkId).then((scope) => {
+      // We don't need to wait for the update here, so we can use then instead of await.
       if (scope) {
         this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
       }
     });
 
+    // TODO: if we do global search we may not have a prent node loaded. We have the ID but there is not an API that
+    //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
+    //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
     const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
 
     if (
       // Parent says we can only select one scope at a time.
-      parentNode.spec.disableMultiSelect ||
+      parentNode?.spec.disableMultiSelect ||
       // If nothing is selected yet we just add this one.
       this.state.selectedScopes.length === 0 ||
       // if something is selected we look at parent and see if we are selecting in the same category or not. As we
@@ -310,7 +314,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: [...this.state.appliedScopes] });
   };
 
-  public searchAllNodes = (query: string, limit: number) => {
-    return this.apiClient.fetchNode({ query, limit });
+  public searchAllNodes = async (query: string, limit: number) => {
+    const scopeNodes = await this.apiClient.fetchNodes({ query, limit });
+    const newNodes = { ...this.state.nodes };
+    for (const node of scopeNodes) {
+      newNodes[node.metadata.name] = node;
+    }
+    this.updateState({ nodes: newNodes });
+    return scopeNodes;
   };
 }

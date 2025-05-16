@@ -56,7 +56,7 @@ export function getPathOfNode(scopeNodeId: string, nodes: NodesMap): string[] {
   let parent = nodes[scopeNodeId]?.spec.parentName;
   while (parent) {
     path.unshift(parent);
-    parent = nodes[parent].spec.parentName;
+    parent = nodes[parent]?.spec.parentName;
   }
   path.unshift('');
   return path;

@@ -60,14 +60,14 @@ describe('ScopesSelectorService', () => {
     it('should update node and fetch children when expanded', async () => {
       await service.updateNode([''], true, '');
 
-      expect(apiClient.fetchNode).toHaveBeenCalledWith('', '');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith('', '');
       expect(service.state.nodes[''].expanded).toBe(true);
     });
 
     it('should update node query and fetch children when query changes', async () => {
       await service.updateNode([''], false, 'new-query');
 
-      expect(apiClient.fetchNode).toHaveBeenCalledWith('', 'new-query');
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith('', 'new-query');
     });
 
     it('should not fetch children when node is collapsed and query is unchanged', async () => {
@@ -78,7 +78,7 @@ describe('ScopesSelectorService', () => {
       await service.updateNode([''], false, '');
 
       // fetchNode should be called only once (for the expansion)
-      expect(apiClient.fetchNode).toHaveBeenCalledTimes(1);
+      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -161,7 +161,7 @@ describe('ScopesSelectorService', () => {
       await service.updateNode([''], true, '');
 
       // Reset the mock to check if it's called again
-      apiClient.fetchNode.mockClear();
+      apiClient.fetchNodes.mockClear();
 
       // Open the selector
       await service.open();

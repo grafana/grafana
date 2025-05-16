@@ -69,7 +69,7 @@ describe('Tree', () => {
     const result = await renderDashboard();
     scopesService = result.scopesService;
     scopesSelectorService = result.scopesSelectorService;
-    fetchNodesSpy = jest.spyOn(result.client, 'fetchNode');
+    fetchNodesSpy = jest.spyOn(result.client, 'fetchNodes');
     fetchScopeSpy = jest.spyOn(result.client, 'fetchScope');
   });
 

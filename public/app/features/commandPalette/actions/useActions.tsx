@@ -1,9 +1,10 @@
 import { useRegisterActions } from 'kbar';
 import { fromPairs, last } from 'lodash';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
+import { ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { t } from '../../../core/internationalization';
@@ -85,23 +86,14 @@ export function useRegisterScopesActions(
     };
   }, [updateNode, resetSelection]);
 
-  const [globalNodes, setGlobalNodes] = useState<NodesMap | undefined>(undefined);
+  const globalNodes = useGlobalScopesSearch(searchQuery, searchAllNodes, parentId);
 
   // Load next level of scopes when the parentId changes.
   useEffect(() => {
-    if (!parentId && searchQuery && config.featureToggles.scopeSearchAllLevels) {
-      // We only search globally if there is no parentId
-      searchAllNodes(searchQuery, 10).then((nodes) => {
-        const nodesMap = fromPairs(nodes.map((n) => [n.metadata.name, n]));
-        setGlobalNodes(nodesMap);
-      });
-    } else {
-      if (parentId) {
-        updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
-        setGlobalNodes(undefined);
-      }
+    if (parentId) {
+      updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
     }
-  }, [updateNode, searchAllNodes, searchQuery, parentId]);
+  }, [updateNode, searchQuery, parentId]);
 
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services.scopesSelectorService.stateObservable ?? new Observable(),
@@ -109,7 +101,11 @@ export function useRegisterScopesActions(
   );
 
   const { nodes, scopes, loading, loadingNodeName, tree, selectedScopes, appliedScopes } = selectorServiceState;
-  const nodesActions = mapScopeNodesToActions(globalNodes || nodes, tree!, selectedScopes, selectScope);
+
+  // We either mat the tree in similar tree of action, or just flat list of action when global searching
+  const nodesActions = globalNodes
+    ? Object.values(globalNodes).map((node) => mapScopeNodeToAction(node, selectScope))
+    : mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
 
   // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
   // scopes tree though is loaded on demand, and it would be a deep check to see if something changes these deps are
@@ -157,12 +153,40 @@ export function useRegisterScopesActions(
   };
 }
 
-function mapScopeNodesToActions(
+function useGlobalScopesSearch(
+  searchQuery: string,
+  searchAllNodes: (search: string, limit: number) => Promise<ScopeNode[]>,
+  parentId?: string | null
+) {
+  const [nodes, setNodes] = useState<NodesMap | undefined>(undefined);
+  const searchQueryRef = useRef<string>();
+
+  // Load next level of scopes when the parentId changes.
+  useEffect(() => {
+    if (!parentId && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+      // We only search globally if there is no parentId
+      searchQueryRef.current = searchQuery;
+      searchAllNodes(searchQuery, 10).then((nodes) => {
+        if (searchQueryRef.current === searchQuery) {
+          const nodesMap = fromPairs(nodes.map((n) => [n.metadata.name, n]));
+          setNodes(nodesMap);
+        }
+      });
+    } else {
+      searchQueryRef.current = undefined;
+      setNodes(undefined);
+    }
+  }, [searchAllNodes, searchQuery, parentId]);
+
+  return nodes;
+}
+
+function mapScopesNodesTreeToActions(
   nodes: NodesMap,
   tree: TreeNode,
   selectedScopes: SelectedScope[],
   selectScope: (id: string) => void
-) {
+): CommandPaletteAction[] {
   const actions: CommandPaletteAction[] = [
     {
       id: 'scopes',
@@ -197,36 +221,7 @@ function mapScopeNodesToActions(
           continue;
         }
       }
-
-      let action: CommandPaletteAction;
-      if (parentId) {
-        action = {
-          id: `${parentId}/${child.metadata.name}`,
-          name: child.spec.title,
-          keywords: `${child.spec.title} ${child.metadata.name}`,
-          priority: SCOPES_PRIORITY,
-          parent: parentId,
-        };
-
-        if (child.spec.nodeType === 'leaf') {
-          action.perform = () => {
-            selectScope(child.metadata.name);
-          };
-        }
-      } else {
-        action = {
-          id: `scopes/${child.metadata.name}`,
-          name: child.spec.title,
-          keywords: `${child.spec.title} ${child.metadata.name}`,
-          priority: SCOPES_PRIORITY,
-          section: t('command-palette.action.scopes', 'Scopes'),
-          subtitle: child.spec.parentName,
-          perform: () => {
-            selectScope(child.metadata.name);
-          },
-        };
-      }
-
+      let action = mapScopeNodeToAction(child, selectScope, parentId);
       actions.push(action);
       traverse(childTreeNode, action.id);
     }
@@ -234,4 +229,48 @@ function mapScopeNodesToActions(
 
   traverse(tree, 'scopes');
   return actions;
+}
+
+/**
+ * Map scopeNode to cmdK action. The typing is a bit strict and we have 2 different cases where ew create actions
+ * from global search sort of flatten out or a part of the tree structure.
+ * @param scopeNode
+ * @param selectScope
+ * @param parentId
+ */
+function mapScopeNodeToAction(
+  scopeNode: ScopeNode,
+  selectScope: (id: string) => void,
+  parentId?: string
+): CommandPaletteAction {
+  let action: CommandPaletteAction;
+  if (parentId) {
+    action = {
+      id: `${parentId}/${scopeNode.metadata.name}`,
+      name: scopeNode.spec.title,
+      keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
+      priority: SCOPES_PRIORITY,
+      parent: parentId,
+    };
+
+    // TODO: some non leaf nodes can also be selectable, but we don't have a way to show that in the UI yet.
+    if (scopeNode.spec.nodeType === 'leaf') {
+      action.perform = () => {
+        selectScope(scopeNode.metadata.name);
+      };
+    }
+  } else {
+    action = {
+      id: `scopes/${scopeNode.metadata.name}`,
+      name: scopeNode.spec.title,
+      keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
+      priority: SCOPES_PRIORITY,
+      section: t('command-palette.action.scopes', 'Scopes'),
+      subtitle: scopeNode.spec.parentName,
+      perform: () => {
+        selectScope(scopeNode.metadata.name);
+      },
+    };
+  }
+  return action;
 }

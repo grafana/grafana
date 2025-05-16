@@ -35,7 +35,7 @@ export class ScopesApiClient {
    * @param {number|undefined} options.limit The maximum number of nodes to fetch, defaults to 1000 if undefined. Must be between 1 and 10000.
    * @return {Promise<ScopeNode[]>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
    */
-  async fetchNode(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
+  async fetchNodes(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
     const limit = options.limit ?? 1000;
 
     if (!(0 < limit && limit <= 10000)) {
