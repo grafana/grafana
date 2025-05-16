@@ -13,7 +13,6 @@ const {
   elementIsTrans,
   shouldBeFixed,
   isStringNonAlphanumeric,
-  getPropertyFixer,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -99,12 +98,12 @@ const noUntranslatedStrings = createRule({
           context.report({
             node,
             messageId: 'noUntranslatedStringsProperties',
-            fix: errorShouldBeFixed && errorCanBeFixed ? getPropertyFixer(node, context) : undefined,
+            fix: errorShouldBeFixed && errorCanBeFixed ? getTFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
                     messageId: 'wrapWithT',
-                    fix: getPropertyFixer(node, context),
+                    fix: getTFixers(node, context),
                   },
                 ]
               : undefined,

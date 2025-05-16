@@ -343,7 +343,7 @@ const firstCharIsUpper = (str) => {
 };
 
 /**
- * @param {JSXAttribute} node
+ * @param {JSXAttribute|Property} node
  * @param {RuleFixer} fixer
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
@@ -411,7 +411,7 @@ const getUseTranslateFixer = (node, fixer, context) => {
 };
 
 /**
- * @param {JSXAttribute} node
+ * @param {JSXAttribute|Property} node
  * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
  */
@@ -421,9 +421,13 @@ const getTFixers = (node, context) => (fixer) => {
   const value = getNodeValue(node);
   const wrappingQuotes = value.includes('"') ? "'" : '"';
 
-  fixes.push(
-    fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
-  );
+  if (node.type === AST_NODE_TYPES.Property) {
+    fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+  } else {
+    fixes.push(
+      fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
+    );
+  }
 
   // Check if we need to add `useTranslate` to the node
   const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
@@ -434,28 +438,6 @@ const getTFixers = (node, context) => (fixer) => {
   // Check if we need to add `t` or `useTranslate` to the imports
   const importToAdd = useTranslateFixer ? 'useTranslate' : 't';
   const importsFixer = getImportsFixer(node, fixer, importToAdd, context);
-  if (importsFixer) {
-    fixes.push(importsFixer);
-  }
-
-  return fixes;
-};
-
-/**
- * @param {Property} node
- * @param {RuleContextWithOptions} context
- * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
- */
-const getPropertyFixer = (node, context) => (fixer) => {
-  const fixes = [];
-  const i18nKey = getI18nKey(node, context);
-
-  const value = getNodeValue(node);
-  const wrappingQuotes = value.includes('"') ? "'" : '"';
-
-  fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
-
-  const importsFixer = getImportsFixer(node, fixer, 't', context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
@@ -498,7 +480,6 @@ module.exports = {
   getNodeValue,
   getTFixers,
   getTransFixers,
-  getPropertyFixer,
   getTranslationPrefix,
   canBeFixed,
   shouldBeFixed,
