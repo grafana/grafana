@@ -1206,15 +1206,6 @@
     "grafana-rules-export-preview": {
       "text-loading": "Loading...."
     },
-    "group-actions": {
-      "actions-trigger": "Rule group actions",
-      "details": "Details",
-      "edit": "Edit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Failed to load group details",
-      "unknown-error": "Unknown error"
-    },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Group",
       "namespace-picker-label-namespace": "Namespace"
