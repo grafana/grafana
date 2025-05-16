@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -197,13 +198,13 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 		}
 		stream <- &resource.WrittenEvent{
 			Value: rec.Value,
-			Key: &resource.ResourceKey{
+			Key: &resourcepb.ResourceKey{
 				Namespace: rec.Key.Namespace,
 				Group:     rec.Key.Group,
 				Resource:  rec.Key.Resource,
 				Name:      rec.Key.Name,
 			},
-			Type:            resource.WatchEvent_Type(rec.Action),
+			Type:            resourcepb.WatchEvent_Type(rec.Action),
 			PreviousRV:      *prevRV,
 			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,
