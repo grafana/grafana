@@ -307,7 +307,7 @@ func TestQueryFrames_Limits(t *testing.T) {
 				FROM (SELECT 1 AS val UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5) a
 				CROSS JOIN (SELECT 1 AS val UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5) b
 			`,
-			opts:        []QueryOption{WithTimeout(5 * time.Microsecond)},
+			opts:        []QueryOption{WithTimeout(1 * time.Nanosecond)},
 			expectError: "did not complete within the timeout",
 		},
 	}
@@ -315,8 +315,7 @@ func TestQueryFrames_Limits(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := DB{}
-			ctx := context.Background()
-			frame, err := db.QueryFrames(ctx, &testTracer{}, "test", tt.query, nil, tt.opts...)
+			frame, err := db.QueryFrames(t.Context(), &testTracer{}, "test", tt.query, nil, tt.opts...)
 
 			if tt.expectError != "" {
 				require.Error(t, err)

@@ -3,8 +3,8 @@ import { saveAs } from 'file-saver';
 import { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { Trans } from '@grafana/i18n';
 import { Button, ClipboardButton, Stack, CodeEditor, Box, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../scene/DashboardScene';
 

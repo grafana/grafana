@@ -13,12 +13,14 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -157,7 +159,7 @@ func TestClientServer(t *testing.T) {
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
 	require.NoError(t, err)
-	var client resource.ResourceStoreClient
+	var client resourcepb.ResourceStoreClient
 
 	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -193,7 +195,7 @@ func TestClientServer(t *testing.T) {
 			},
 			"spec": {}
 		}`)
-		resp, err := client.Create(clientCtx, &resource.CreateRequest{
+		resp, err := client.Create(clientCtx, &resourcepb.CreateRequest{
 			Key:   resourceKey("item1"),
 			Value: raw,
 		})
@@ -203,7 +205,7 @@ func TestClientServer(t *testing.T) {
 	})
 
 	t.Run("Read the resource", func(t *testing.T) {
-		resp, err := client.Read(clientCtx, &resource.ReadRequest{
+		resp, err := client.Read(clientCtx, &resourcepb.ReadRequest{
 			Key: resourceKey("item1"),
 		})
 		require.NoError(t, err)
@@ -217,8 +219,8 @@ func TestClientServer(t *testing.T) {
 	})
 }
 
-func resourceKey(name string) *resource.ResourceKey {
-	return &resource.ResourceKey{
+func resourceKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
 		Namespace: "namespace",
 		Group:     "group",
 		Resource:  "resource",

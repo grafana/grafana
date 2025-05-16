@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t, Trans } from 'app/core/internationalization';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 interface EmailDTO {
@@ -20,7 +20,7 @@ export const VerifyEmail = () => {
     formState: { errors },
   } = useForm<EmailDTO>();
   const [emailSent, setEmailSent] = useState(false);
-
+  const { t } = useTranslate();
   const onSubmit = (formModel: EmailDTO) => {
     getBackendSrv()
       .post('/api/user/signup', formModel)

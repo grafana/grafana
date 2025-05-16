@@ -1,8 +1,8 @@
 import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
@@ -24,7 +24,7 @@ export function RedirectToCloneRule({
   // Users have to be aware that the cloned rule will NOT be marked as provisioned
   const location = useLocation();
   const [stage, setStage] = useState<'redirect' | 'confirm'>(isProvisioned ? 'confirm' : 'redirect');
-
+  const { t } = useTranslate();
   if (stage === 'redirect') {
     const copyFrom = ruleId.stringifyIdentifier(identifier);
     const returnTo = location.pathname + location.search;
@@ -73,7 +73,7 @@ interface CloneRuleButtonProps {
 export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
-
+    const { t } = useTranslate();
     return (
       <>
         <Button

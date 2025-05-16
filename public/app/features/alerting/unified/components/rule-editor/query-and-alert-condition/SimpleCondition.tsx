@@ -4,8 +4,8 @@ import { Dispatch, FormEvent } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
@@ -83,7 +83,7 @@ export const SimpleConditionEditor = ({
   };
 
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.condition.wrapper}>
       <Stack direction="column" gap={0} width="100%">

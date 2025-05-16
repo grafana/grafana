@@ -1,8 +1,8 @@
 import { ReactNode, useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, EmptyState } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -94,6 +94,7 @@ export function SearchView({
     },
     [selectionChecker, dispatch]
   );
+  const { t } = useTranslate();
 
   if (value.totalRows === 0) {
     const emptyState = emptyStateProp ?? (
