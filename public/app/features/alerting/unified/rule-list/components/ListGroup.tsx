@@ -91,10 +91,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   groupWrapper: css({
     display: 'flex',
     flexDirection: 'column',
-  }),
-  headerWrapper: css({
-    padding: theme.spacing(1),
-    paddingLeft: theme.spacing(4),
     position: 'relative',
 
     '&:before': {
@@ -102,10 +98,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
       position: 'absolute',
       height: '100%',
 
-      marginLeft: theme.spacing(-1.5),
-      marginTop: theme.spacing(-1),
+      marginLeft: theme.spacing(2.5),
       borderLeft: `solid 1px ${theme.colors.border.weak}`,
     },
+  }),
+  headerWrapper: css({
+    padding: theme.spacing(1),
+    paddingLeft: theme.spacing(4),
+    position: 'relative',
 
     '&:hover': {
       background: theme.colors.action.hover,

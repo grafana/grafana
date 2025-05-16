@@ -70,7 +70,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
       )}
       {canDelete && (
         <Menu.Item
-          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete rules')}
+          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete all rules')}
           icon="trash-alt"
           onClick={() => setIsDeleteModalOpen(true)}
           disabled={deleteState.isLoading}
@@ -83,7 +83,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>}>
         <IconButton
-          name="ellipsis-v"
+          name="ellipsis-h"
           size="sm"
           aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder bulk Actions')}
           tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder bulk Actions')}

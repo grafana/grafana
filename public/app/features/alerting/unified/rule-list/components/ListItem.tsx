@@ -82,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyle: 'none',
 
     padding: theme.spacing(1),
-    paddingLeft: theme.spacing(4),
+    paddingLeft: theme.spacing(6.5),
 
     '&:before': {
       content: "''",

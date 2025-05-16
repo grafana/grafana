@@ -1050,7 +1050,7 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": "Delete rules"
+          "label": "Delete all rules"
         }
       },
       "delete-modal-confirmation-text": "Delete",
@@ -1065,12 +1065,12 @@
       },
       "pause": {
         "button": {
-          "label": "Pause all rule evaluation"
+          "label": "Pause all rules"
         }
       },
       "unpause": {
         "button": {
-          "label": "Resume all rule evaluation"
+          "label": "Resume all rules"
         }
       }
     },
