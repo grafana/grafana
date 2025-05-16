@@ -442,35 +442,53 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
 }
 
+// extractActualError extracts the meaningful error message from a Prometheus remote client error.
+// The client includes downstream errors with "body=" prefixes.
+// This function parses the content after this prefix, handling both plain text
+// and JSON-formatted error messages.
+// https://github.com/m3dbx/prometheus_remote_client_golang/blob/master/promremote/client.go#L254-L265
 func extractActualError(err promremote.WriteError) string {
-	// https://github.com/m3dbx/prometheus_remote_client_golang/blob/master/promremote/client.go#L254-L265
-	// client adds either `body=%s or `body_read_error=%s`.
-	// trying to extract everything after body= .
+	const (
+		bodyPrefix    = "body="
+		bodyPrefixLen = len(bodyPrefix)
+	)
+
+	// Handle nil error case
 	if err == nil {
 		return ""
 	}
+
 	errMsg := err.Error()
-	bodyIdx := strings.Index(errMsg, "body=")
-	if bodyIdx == -1 {
-		return errMsg
+
+	// Find the body content prefix
+	bodyIndex := strings.Index(errMsg, bodyPrefix)
+	if bodyIndex == -1 {
+		return errMsg // Return original if no body prefix found
 	}
 
-	// Extract the body part (skip the "body=" prefix)
-	bodyContent := strings.TrimSpace(errMsg[bodyIdx+5:])
-	raw := []byte(bodyContent)
+	// Extract content after "body=" prefix
+	bodyContent := strings.TrimSpace(errMsg[bodyIndex+bodyPrefixLen:])
+	if bodyContent == "" {
+		return errMsg // Return original if body is empty
+	}
 
-	// if it starts with {, consider it a json and try to extract the error message'
-	if !strings.HasPrefix(bodyContent, "{") || !json.Valid(raw) {
+	// Check if content is possibly a JSON with error field
+	if !strings.HasPrefix(bodyContent, "{") || !strings.Contains(bodyContent, "\"error\"") {
 		return bodyContent
 	}
-	d := struct {
+
+	// Parse JSON content and extract error field if present
+	var errorData struct {
 		Error string `json:"error"`
-	}{}
+	}
 
-	_ = json.Unmarshal([]byte(bodyContent), &d)
-
-	if d.Error == "" {
+	if err := json.Unmarshal([]byte(bodyContent), &errorData); err != nil {
 		return bodyContent
 	}
-	return d.Error
+
+	if errorData.Error == "" {
+		return bodyContent
+	}
+
+	return errorData.Error
 }
