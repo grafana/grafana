@@ -7,9 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -48,7 +51,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		}
 
 		for _, doc := range initialResources {
-			key := &resource.ResourceKey{
+			key := &resourcepb.ResourceKey{
 				Group:     "test.grafana.app",
 				Resource:  "testresources",
 				Namespace: nsPrefix,
@@ -80,7 +83,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 			// Create document
 			rv, err := backend.WriteEvent(ctx, resource.WriteEvent{
-				Type:   resource.WatchEvent_ADDED,
+				Type:   resourcepb.WatchEvent_ADDED,
 				Key:    key,
 				Value:  value,
 				Object: meta,
@@ -111,9 +114,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 	t.Run("Search for initial resources", func(t *testing.T) {
 		// Test 1: Search for initial resources
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -152,7 +155,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		}
 
 		for _, doc := range testDocs {
-			key := &resource.ResourceKey{
+			key := &resourcepb.ResourceKey{
 				Group:     "test.grafana.app",
 				Resource:  "testresources",
 				Namespace: nsPrefix,
@@ -180,7 +183,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.NoError(t, err)
 
 			// Create document
-			createResp, err := server.Create(ctx, &resource.CreateRequest{
+			createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
 				Key:   key,
 				Value: value,
 			})
@@ -194,9 +197,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search for documents", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -212,9 +215,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search with tags", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
@@ -230,9 +233,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search with specific tag", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
 					Resource:  "testresources",
 					Namespace: nsPrefix,
