@@ -26,7 +26,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -123,15 +122,8 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		return dashFolder, nil
 	}
 
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
+	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
@@ -385,28 +377,16 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 		return s.getRootFoldersFromApiServer(ctx, q)
 	}
 
-	var err error
-	// TODO: figure out what to do with Guardian
 	// we only need to check access to the folder
 	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	f := &folder.Folder{
-		UID: q.UID,
-	}
-	g, err := guardian.NewByFolder(ctx, f, q.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	guardianFunc := g.CanView
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID))
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanEdit
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID))
 	}
-
-	hasAccess, err := guardianFunc()
-	if err != nil {
-		return nil, err
-	}
-	if !hasAccess {
+	if hasAccess, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !hasAccess {
+		if err != nil {
+			return nil, err
+		}
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
@@ -565,15 +545,8 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	f := &folder.Folder{
-		UID: cmd.UID,
-	}
-	g, err := guardian.NewByFolder(ctx, f, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canSave, err := g.CanSave(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
 		if err != nil {
 			return nil, err
 		}
@@ -624,15 +597,8 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	f := &folder.Folder{
-		UID: cmd.UID,
-	}
-	guard, err := guardian.NewByFolder(ctx, f, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return err
-	}
-
-	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
 		if err != nil {
 			return toFolderError(err)
 		}
