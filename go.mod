@@ -249,7 +249,7 @@ require (
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
 	github.com/microsoft/go-mssqldb v1.8.0 // @grafana/grafana-bi-squad
 	github.com/ory/fosite v0.49.0 // @grafana/grafana-authnz-team
-	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
+	github.com/redis/go-redis/v9 v9.6.3 // @grafana/alerting-squad-backend
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // @grafana/grafana-as-code
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.29.0 // @grafana/backend-platform
 	golang.org/x/mod v0.24.0 // @grafana/backend-platform
