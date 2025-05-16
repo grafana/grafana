@@ -2070,8 +2070,7 @@
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
-        "next-page": "next page",
-        "previous-page": "previous page"
+        "next-page": "Show more rule groups"
       },
       "recording-rules": "Recording rules",
       "return-button": {
