@@ -83,7 +83,8 @@ func TestDebouncer(t *testing.T) {
 			}
 		}
 
-		require.WithinDuration(t, start.Add(time.Millisecond*500), clockMock.Now(), time.Millisecond*100)
+		// Make sure that the execution happened after the maxTimeout of 500ms, but before the next MaxTimeout.
+		require.WithinDuration(t, start.Add(time.Millisecond*500), clockMock.Now(), time.Millisecond*499)
 	})
 
 	t.Run("should handle buffer full", func(t *testing.T) {
