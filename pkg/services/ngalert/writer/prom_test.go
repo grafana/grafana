@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -270,6 +271,83 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+}
+
+func TestExtractActualError(t *testing.T) {
+	testCases := []struct {
+		name     string
+		inputErr promremote.WriteError
+		expected string
+	}{
+		{
+			name:     "nil error",
+			inputErr: nil,
+			expected: "",
+		},
+		{
+			name: "non-JSON error message",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("body=non-JSON error"),
+			},
+			expected: "non-JSON error",
+		},
+		{
+			name: "no body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`test message {"message":"some message"}`),
+			},
+			expected: `test message {"message":"some message"}`,
+		},
+		{
+			name: "error message with body= and valid JSON with error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"error":"nested error message"}`),
+			},
+			expected: "nested error message",
+		},
+		{
+			name: "error message with body= and invalid JSON",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusBadRequest,
+				msg:        util.Pointer(`body={"error":"some error`), // Missing closing brace
+			},
+			expected: `{"error":"some error`,
+		},
+		{
+			name: "error message with nothing after body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error without body="),
+			},
+			expected: "random error without body=",
+		},
+		{
+			name: "error message with string body",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error body=invalid-json-content"),
+			},
+			expected: "invalid-json-content",
+		},
+		{
+			name: "error message with body and valid JSON without error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"key":"value"}`),
+			},
+			expected: `{"key":"value"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := extractActualError(tc.inputErr)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }
 
 func extractValue(t *testing.T, frames data.Frames, labels map[string]string, frameType data.FrameType) float64 {

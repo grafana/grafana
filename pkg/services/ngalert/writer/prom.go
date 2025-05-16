@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -107,8 +108,10 @@ var (
 	// Unexpected, 500-like write errors.
 	ErrUnexpectedWriteFailure = errors.New("failed to write time series")
 	// Expected, user-level write errors like trying to write an invalid series.
-	ErrRejectedWrite = errors.New("series was rejected")
-	ErrBadFrame      = errors.New("failed to read dataframe")
+	ErrRejectedWrite          = errors.New("series was rejected")
+	ErrBadFrame               = errors.New("failed to read dataframe")
+	ErrDatasourceUnauthorized = errors.New("failed to authenticate in datasource")
+	ErrDatasourceForbidden    = errors.New("failed to authorize in datasource")
 
 	// IgnoredErrors don't cause the Write to fail, but are still logged.
 	IgnoredErrors = []string{
@@ -417,15 +420,75 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		// Check for expected user errors.
 		for _, e := range ExpectedErrors {
 			if strings.Contains(msg, e) {
-				return errors.Join(ErrRejectedWrite, writeErr), false
+				actual := extractActualError(writeErr)
+				return fmt.Errorf("%w: %s", ErrRejectedWrite, actual), false
 			}
 		}
 
-		// For now, all 400s that are not previously known are considered unexpected.
-		// TODO: Consider blanket-converting all 400s to be known errors. This should only be done once we are confident this is not a problem with this client.
+		// return full error if we don't have a match.'
 		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
+	}
+
+	if writeErr.StatusCode() == 401 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrDatasourceUnauthorized, actual), false
+	}
+	if writeErr.StatusCode() == 403 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrDatasourceForbidden, actual), false
 	}
 
 	// All other errors which do not fit into the above categories are also unexpected.
 	return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
+}
+
+// extractActualError extracts the meaningful error message from a Prometheus remote client error.
+// The client includes downstream errors with "body=" prefixes.
+// This function parses the content after this prefix, handling both plain text
+// and JSON-formatted error messages.
+// https://github.com/m3dbx/prometheus_remote_client_golang/blob/master/promremote/client.go#L254-L265
+func extractActualError(err promremote.WriteError) string {
+	const (
+		bodyPrefix    = "body="
+		bodyPrefixLen = len(bodyPrefix)
+	)
+
+	// Handle nil error case
+	if err == nil {
+		return ""
+	}
+
+	errMsg := err.Error()
+
+	// Find the body content prefix
+	bodyIndex := strings.Index(errMsg, bodyPrefix)
+	if bodyIndex == -1 {
+		return errMsg // Return original if no body prefix found
+	}
+
+	// Extract content after "body=" prefix
+	bodyContent := strings.TrimSpace(errMsg[bodyIndex+bodyPrefixLen:])
+	if bodyContent == "" {
+		return errMsg // Return original if body is empty
+	}
+
+	// Check if content is possibly a JSON with error field
+	if !strings.HasPrefix(bodyContent, "{") || !strings.Contains(bodyContent, "\"error\"") {
+		return bodyContent
+	}
+
+	// Parse JSON content and extract error field if present
+	var errorData struct {
+		Error string `json:"error"`
+	}
+
+	if err := json.Unmarshal([]byte(bodyContent), &errorData); err != nil {
+		return bodyContent
+	}
+
+	if errorData.Error == "" {
+		return bodyContent
+	}
+
+	return errorData.Error
 }
