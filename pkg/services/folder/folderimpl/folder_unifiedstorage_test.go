@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type rcp struct {
@@ -368,7 +369,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -381,7 +382,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := false
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -394,7 +395,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 
 				expectedForceDeleteRules := true
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -555,37 +556,37 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 
 	t.Run("Should call search with uids, if provided", func(t *testing.T) {
-		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
 					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
-				Fields: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_NAME,
 						Operator: string(selection.In),
 						Values:   []string{"uid1", "uid2"}, // should only search by uid since it is provided
 					},
 				},
-				Labels: []*resource.Requirement{},
+				Labels: []*resourcepb.Requirement{},
 			},
-			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid1",
 							Resource: "folder",
 						},
@@ -595,7 +596,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid2",
 							Resource: "folder",
 						},
@@ -645,15 +646,15 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			IDs:          []int64{123},
 			SignedInUser: user,
 		}
-		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
 					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
-				Fields: []*resource.Requirement{},
-				Labels: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{},
+				Labels: []*resourcepb.Requirement{
 					{
 						Key:      utils.LabelKeyDeprecatedInternalID,
 						Operator: string(selection.In),
@@ -661,21 +662,21 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "foo",
 							Resource: "folder",
 						},
@@ -714,33 +715,33 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Title: "parent title",
 		}
 		service.unifiedStore = fakeFolderStore
-		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
 					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
-				Fields: []*resource.Requirement{},
-				Labels: []*resource.Requirement{},
+				Fields: []*resourcepb.Requirement{},
+				Labels: []*resourcepb.Requirement{},
 			},
 			Query:  "*test*",
 			Fields: dashboardsearch.IncludeFields,
-			Limit:  folderSearchLimit}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Limit:  folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "folder",
 						},
@@ -798,7 +799,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	folderkey := &resource.ResourceKey{
+	folderkey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
@@ -816,29 +817,29 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 			URL:       "/dashboards/f/foouid/foo-title",
 		}
 		service.unifiedStore = fakeFolderStore
-		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key:    folderkey,
-				Fields: []*resource.Requirement{},
-				Labels: []*resource.Requirement{},
+				Fields: []*resourcepb.Requirement{},
+				Labels: []*resourcepb.Requirement{},
 			},
 			Query: "foo title",
 			Limit: folderSearchLimit}).
-			Return(&resource.ResourceSearchResponse{
-				Results: &resource.ResourceTable{
-					Columns: []*resource.ResourceTableColumnDefinition{
+			Return(&resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
 						{
 							Name: "title",
-							Type: resource.ResourceTableColumnDefinition_STRING,
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
 						},
 						{
 							Name: "folder",
-							Type: resource.ResourceTableColumnDefinition_STRING,
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
 						},
 					},
-					Rows: []*resource.ResourceTableRow{
+					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Name:     "uid",
 								Resource: "folder",
 							},
@@ -903,7 +904,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
-		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resource.ResourceSearchResponse{Results: &resource.ResourceTable{}}, nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid1",
 			OrgID:        1,
@@ -918,10 +919,10 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		fakeFolderStore.ExpectedFolders = []*folder.Folder{{UID: "uid2", ID: 2}}
 		dashboardK8sclient.On("Delete", mock.Anything, "test", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Delete", mock.Anything, "test2", int64(1), mock.Anything).Return(nil).Once()
-		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Labels: []*resource.Requirement{},
-				Fields: []*resource.Requirement{
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Labels: []*resourcepb.Requirement{},
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -929,21 +930,21 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
-			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "test",
 							Resource: "dashboard",
 						},
@@ -953,7 +954,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "test2",
 							Resource: "dashboard",
 						},

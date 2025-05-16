@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	sysruntime "runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -30,6 +31,7 @@ type check struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
+	GrafanaVersion        string
 }
 
 func New(
@@ -38,6 +40,7 @@ func New(
 	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 	pluginRepo repo.Service,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
 		DatasourceSvc:         datasourceSvc,
@@ -45,6 +48,7 @@ func New(
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
 		PluginRepo:            pluginRepo,
+		GrafanaVersion:        grafanaVersion,
 	}
 }
 
@@ -75,6 +79,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Init(ctx context.Context) error {
+	return nil
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&uidValidationStep{},
@@ -83,8 +91,9 @@ func (c *check) Steps() []checks.Step {
 			PluginClient:          c.PluginClient,
 		},
 		&missingPluginStep{
-			PluginStore: c.PluginStore,
-			PluginRepo:  c.PluginRepo,
+			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
 		},
 	}
 }
@@ -108,7 +117,7 @@ func (s *uidValidationStep) Resolution() string {
 		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -116,13 +125,13 @@ func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *ad
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
 			ds.UID,
 			[]advisor.CheckErrorLink{},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
@@ -148,7 +157,7 @@ func (s *healthCheckStep) ID() string {
 	return HealthCheckStepID
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -184,7 +193,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		} else {
 			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
 		}
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
@@ -195,14 +204,15 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
 
 type missingPluginStep struct {
-	PluginStore pluginstore.Store
-	PluginRepo  repo.Service
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	GrafanaVersion string
 }
 
 func (s *missingPluginStep) Title() string {
@@ -221,7 +231,7 @@ func (s *missingPluginStep) ID() string {
 	return MissingPluginStepID
 }
 
-func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -235,8 +245,14 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 			},
 		}
-		_, err := s.PluginRepo.PluginInfo(ctx, ds.Type)
-		if err == nil {
+		plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+			IncludeDeprecated: true,
+			Plugins:           []string{ds.Type},
+		}, repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
+		if err != nil {
+			return nil, err
+		}
+		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
 				Message: "Install plugin",
@@ -244,13 +260,13 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 			})
 		}
 		// The plugin is not installed
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
 			ds.UID,
 			links,
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }

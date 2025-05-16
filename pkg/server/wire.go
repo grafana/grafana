@@ -41,6 +41,7 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -158,7 +159,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -215,8 +216,8 @@ var wireBasicSet = wire.NewSet(
 	localcache.ProvideService,
 	bundleregistry.ProvideService,
 	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
-	updatechecker.ProvideGrafanaService,
-	updatechecker.ProvidePluginsService,
+	updatemanager.ProvideGrafanaService,
+	updatemanager.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
@@ -418,6 +419,8 @@ var wireBasicSet = wire.NewSet(
 	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
+	secretdecrypt.ProvideDecryptAuthorizer,
+	secretdecrypt.ProvideDecryptAllowList,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

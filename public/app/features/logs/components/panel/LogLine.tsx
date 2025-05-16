@@ -3,8 +3,8 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
@@ -70,12 +70,15 @@ export const LogLine = ({
     onOverflow?.(index, log.uid);
   }, [collapsed, index, log, onOverflow]);
 
+  const { t } = useTranslate();
+
   return (
     <div style={style}>
       <div
         className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
+        onFocus={handleMouseOver}
       >
         <LogLineMenu styles={styles} log={log} />
         <div

@@ -3,6 +3,7 @@ package checkscheduler
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strconv"
 	"time"
@@ -18,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const defaultEvaluationInterval = 24 * time.Hour
+const defaultEvaluationInterval = 7 * 24 * time.Hour // 7 days
 const defaultMaxHistory = 10
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
@@ -90,11 +91,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		}
 	}
 
-	nextSendInterval := time.Until(lastCreated.Add(r.evaluationInterval))
-	if nextSendInterval < time.Minute {
-		nextSendInterval = 1 * time.Minute
-	}
-
+	nextSendInterval := getNextSendInterval(lastCreated, r.evaluationInterval)
 	ticker := time.NewTicker(nextSendInterval)
 	defer ticker.Stop()
 
@@ -215,6 +212,17 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 		}
 	}
 	return evaluationInterval, nil
+}
+
+func getNextSendInterval(lastCreated time.Time, evaluationInterval time.Duration) time.Duration {
+	nextSendInterval := time.Until(lastCreated.Add(evaluationInterval))
+	// Add random variation of one hour
+	randomVariation := time.Duration(rand.Int63n(time.Hour.Nanoseconds()))
+	nextSendInterval += randomVariation
+	if nextSendInterval < time.Minute {
+		nextSendInterval = 1 * time.Minute
+	}
+	return nextSendInterval
 }
 
 func getMaxHistory(pluginConfig map[string]string) (int, error) {
