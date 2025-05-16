@@ -105,7 +105,9 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
     let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
     // Get reed of empty root section and the actual scope node
     path = path.slice(1, -1);
-    nicePath = path.map((p) => nodes[p].spec.title);
+
+    // We may not have all the nodes in path loaded
+    nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
   }
 
   const scopeNames = appliedScopes.map((s) => {
@@ -118,7 +120,9 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
 
   return (
     <>
-      <p className={styles.scopePath}>{(nicePath ? nicePath.join(' > ') + ' > ' : '') + scopeNames.join(', ')}</p>
+      <p className={styles.scopePath}>
+        {(nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '') + scopeNames.join(', ')}
+      </p>
     </>
   );
 }

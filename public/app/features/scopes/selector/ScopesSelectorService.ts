@@ -27,15 +27,21 @@ export interface ScopesSelectorServiceState {
   // Whether the scopes selector drawer is opened
   opened: boolean;
 
+  // A cache for a specific scope objects that come from the API. nodes being objects in the categories tree and scopes
+  // the actual scope definitions. They are not guaranteed to be there! For example we may have a scope applied from
+  // url for which we don't have a node, or scope is still loading after it is selected in the UI. This means any
+  // access needs to be guarded and not automatically assumed it will return an object.
   nodes: NodesMap;
   scopes: ScopesMap;
 
   // Scopes that are selected and applied.
   appliedScopes: SelectedScope[];
 
-  // Scopes that are selected but not applied.
+  // Scopes that are selected but not applied yet.
   selectedScopes: SelectedScope[];
 
+  // Simple tree structure for the scopes categories. Each node in a tree has a scopeNodeId which keys the nodes cache
+  // map.
   tree: TreeNode | undefined;
 }
 
@@ -106,7 +112,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
     // We are expanding node that wasn't yet expanded so we don't have any query to filter by yet.
-    const childNodes = await this.apiClient.fetchNode({ parent: treeNode.scopeNodeId, query });
+    const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
 
     const newNodes = { ...this.state.nodes };
 
@@ -147,22 +153,31 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
     this.apiClient.fetchScope(scopeNode.spec.linkId).then((scope) => {
+      // We don't need to wait for the update here, so we can use then instead of await.
       if (scope) {
         this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
       }
     });
 
+    // TODO: if we do global search we may not have a prent node loaded. We have the ID but there is not an API that
+    //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
+    //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
     const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
 
+    // if something is selected we look at parent and see if we are selecting in the same category or not. As we
+    // cannot select in multiple categories we only need to check the first selected node. It is possible we have
+    // something selected without knowing the parent so we default to assuming it's not the same parent.
+    const sameParent =
+      this.state.selectedScopes[0].scopeNodeId &&
+      this.state.nodes[this.state.selectedScopes[0].scopeNodeId].spec.parentName === scopeNode.spec.parentName;
+
     if (
+      !sameParent ||
       // Parent says we can only select one scope at a time.
-      parentNode.spec.disableMultiSelect ||
+      parentNode?.spec.disableMultiSelect ||
       // If nothing is selected yet we just add this one.
-      this.state.selectedScopes.length === 0 ||
-      // if something is selected we look at parent and see if we are selecting in the same category or not. As we
-      // cannot select in multiple categories we only need to check the first selected node.
-      this.state.nodes[this.state.selectedScopes[0].scopeNodeId!].spec.parentName !== scopeNode.spec.parentName
+      this.state.selectedScopes.length === 0
     ) {
       this.updateState({ selectedScopes: [selectedScope] });
     } else {
@@ -310,7 +325,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes: [...this.state.appliedScopes] });
   };
 
-  public searchAllNodes = (query: string, limit: number) => {
-    return this.apiClient.fetchNode({ query, limit });
+  public searchAllNodes = async (query: string, limit: number) => {
+    const scopeNodes = await this.apiClient.fetchNodes({ query, limit });
+    const newNodes = { ...this.state.nodes };
+    for (const node of scopeNodes) {
+      newNodes[node.metadata.name] = node;
+    }
+    this.updateState({ nodes: newNodes });
+    return scopeNodes;
   };
 }
