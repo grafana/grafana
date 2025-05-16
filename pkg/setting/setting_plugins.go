@@ -1,6 +1,8 @@
 package setting
 
 import (
+	"os"
+	"regexp"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -40,6 +42,52 @@ var (
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
 	}
 )
+
+func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, installPluginsForce string, preinstallPluginsSync map[string]InstallPlugin) {
+	if strings.ToLower(installPluginsForce) == "true" || rawInstallPlugins == "" {
+		return
+	}
+	installPluginsEntries := strings.Split(rawInstallPlugins, ",")
+
+	// Format 1: ID only (e.g., "grafana-clock-panel")
+	// Format 2: ID with version (e.g., "grafana-clock-panel 1.0.1")
+	// Format 3: URL with folder (e.g., "https://grafana.com/api/plugins/grafana-clock-panel/versions/latest/download;grafana-clock-panel")
+	pluginRegex := regexp.MustCompile(`(?:([^;]+);)?([^;\s]+)(?:\s+(.+))?`)
+	for _, entry := range installPluginsEntries {
+		trimmedEntry := strings.TrimSpace(entry)
+		if trimmedEntry == "" {
+			continue
+		}
+
+		matches := pluginRegex.FindStringSubmatch(trimmedEntry)
+
+		if matches == nil {
+			// No match found at all, skip this entry
+			continue
+		}
+
+		url := ""
+		if len(matches) > 1 {
+			url = strings.TrimSpace(matches[1])
+		}
+
+		id := ""
+		if len(matches) > 2 {
+			id = strings.TrimSpace(matches[2])
+		}
+		if _, exists := preinstallPluginsSync[id]; exists {
+			continue
+		}
+
+		version := ""
+		if len(matches) > 3 {
+			version = strings.TrimSpace(matches[3])
+		}
+		if id != "" {
+			preinstallPluginsSync[id] = InstallPlugin{ID: id, Version: version, URL: url}
+		}
+	}
+}
 
 func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallPlugins map[string]InstallPlugin) {
 	// Add the plugins defined in the configuration
@@ -88,6 +136,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))
 		preinstallPluginsSync := make(map[string]InstallPlugin)
 		cfg.processPreinstallPlugins(rawInstallPluginsSync, preinstallPluginsSync)
+		cfg.migrateInstallPluginsToPreinstallPluginsSync(os.Getenv("GF_INSTALL_PLUGINS"), os.Getenv("GF_INSTALL_PLUGINS_FORCE"), preinstallPluginsSync)
 		// Remove from the list the plugins that have been disabled
 		for _, disabledPlugin := range cfg.DisablePlugins {
 			delete(preinstallPluginsAsync, disabledPlugin)

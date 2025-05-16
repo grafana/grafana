@@ -87,7 +87,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
-		require.Equal(t, cfg.LegacyInstallPlugins, []InstallPlugin{{ID: "grafana-piechart-panel", Version: "", URL: "https://grafana.com/grafana/plugins/grafana-piechart-panel/"}})
+		require.Equal(t, cfg.PreinstallPluginsSync, []InstallPlugin{{ID: "grafana-piechart-panel", Version: "", URL: "https://grafana.com/grafana/plugins/grafana-piechart-panel/"}})
 	})
 
 	t.Run("Should be able to expand parameter from environment variables", func(t *testing.T) {
