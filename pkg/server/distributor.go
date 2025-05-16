@@ -85,7 +85,7 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 })
 
 func (ds *distributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (ds *distributorServer) Search(ctx context.Context, r *resource.ResourceSea
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resource.ResourceS
 }
 
 func (ds *distributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Read")
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (ds *distributorServer) Read(ctx context.Context, r *resource.ReadRequest) 
 }
 
 func (ds *distributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Create")
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (ds *distributorServer) Create(ctx context.Context, r *resource.CreateReque
 }
 
 func (ds *distributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Update")
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (ds *distributorServer) Update(ctx context.Context, r *resource.UpdateReque
 }
 
 func (ds *distributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Delete")
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (ds *distributorServer) Delete(ctx context.Context, r *resource.DeleteReque
 }
 
 func (ds *distributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "List")
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (ds *distributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 	// r -> consumer watch request
 	// srv -> stream connection with consumer
 	ctx := srv.Context()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Watch")
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (ds *distributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 // }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourc
 }
 
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource
 }
 
 func (ds *distributorServer) PutBlob(ctx context.Context, r *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "PutBlob")
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (ds *distributorServer) PutBlob(ctx context.Context, r *resource.PutBlobReq
 }
 
 func (ds *distributorServer) GetBlob(ctx context.Context, r *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "GetBlob")
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (ds *distributorServer) GetBlob(ctx context.Context, r *resource.GetBlobReq
 	return client.GetBlob(ctx, r)
 }
 
-func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (context.Context, resource.ResourceClient, error) {
+func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string, methodName string) (context.Context, resource.ResourceClient, error) {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
@@ -235,7 +235,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	ds.log.Info("distributing request to ", "instanceId", rs.Instances[0].Id)
+	ds.log.Info("distributing %s request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
 
 	return userutils.InjectOrgID(ctx, namespace), client.(*resource.RingClient).Client, nil
 }
