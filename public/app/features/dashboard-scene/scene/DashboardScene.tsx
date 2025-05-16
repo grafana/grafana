@@ -304,6 +304,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         slug: result.slug,
         folderUid: folderUid,
         version: result.version,
+        // this is to just keep this k8s prop in sync with serializer
+        // this prop should be removed from scene and live in serializer's metadata
+        k8s: this.serializer.getK8SMetadata(),
       },
       overlay: undefined,
     });
