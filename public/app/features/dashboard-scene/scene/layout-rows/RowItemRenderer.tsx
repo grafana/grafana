@@ -59,8 +59,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
-            isEditing && !isCollapsed && styles.wrapperEditing,
-            isEditing && isCollapsed && styles.wrapperEditingCollapsed,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
@@ -179,7 +177,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(2),
-      fontSize: theme.typography.h5.fontSize,
+      ...theme.typography.h5,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
@@ -207,7 +205,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       // Without this min height, the custom grid (SceneGridLayout) wont render
-      minHeight: `42px`,
+      // should be 1px more than row header + padding + margin
+      // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
+      minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
@@ -228,21 +228,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dragging: css({
       cursor: 'move',
-    }),
-    wrapperEditing: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        padding: 0,
-      },
-    }),
-    wrapperEditingCollapsed: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        marginBottom: theme.spacing(0),
-        padding: 0,
-      },
     }),
     wrapperGrow: css({
       flexGrow: 1,
