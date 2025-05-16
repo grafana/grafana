@@ -114,7 +114,47 @@ Used to find all instances of `theme` tokens being used in the codebase and emit
 
 ### `no-untranslated-strings`
 
-Check if strings are marked for translation.
+Check if strings are marked for translation inside JSX Elements, in certain JSX props, and in certain object properties.
+
+### Options
+
+#### `forceFix`
+
+Allows specifying directories that, if the file is present within, then the rule will automatically fix the errors. This is primarily a workaround to allow for automatic mark up of new violations as the rule evolves.
+
+#### Example:
+
+```ts
+{
+  '@grafana/no-untranslated-strings': ['error', { forceFix: ['app/features/some-feature'] }],
+}
+```
+
+#### `calleesToIgnore`
+
+Allows specifying regexes for methods that should be ignored when checking if object properties are untranslated.
+
+This is particularly useful to exclude references to properties such as `label` inside `css()` calls.
+
+#### Example:
+
+```ts
+{
+  '@grafana/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$'] }],
+}
+
+// The below would not be reported as an error
+const foo = css({
+  label: 'test',
+});
+
+// The below would still be reported as an error
+const bar = {
+  label: 'test',
+};
+```
+
+#### JSXText
 
 ```tsx
 // Bad ❌
@@ -126,7 +166,30 @@ Check if strings are marked for translation.
 <InlineToast placement="top" referenceElement={buttonRef.current}>
   <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
 </InlineToast>
+```
 
+#### JSXAttributes
+
+```tsx
+// Bad ❌
+<div title="foo bar" />
+
+// Good ✅
+<div title={t('some.key.foo-bar', 'foo bar')} />
+```
+
+#### Object properties
+
+```tsx
+// Bad ❌
+const someConfig = {
+  label: 'Some label',
+};
+
+// Good ✅
+const getSomeConfig = () => ({
+  label: t('some.key.label', 'Some label'),
+});
 ```
 
 #### Passing variables to translations
@@ -166,8 +229,11 @@ The below props are checked for untranslated strings:
 - `placeholder`
 - `aria-label`
 - `title`
+- `subTitle`
 - `text`
 - `tooltip`
+- `message`
+- `name`
 
 ```tsx
 // Bad ❌

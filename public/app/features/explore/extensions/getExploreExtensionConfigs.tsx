@@ -16,6 +16,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
   try {
     return [
       createAddedLinkConfig<PluginExtensionExploreContext>({
+<<<<<<< HEAD
+=======
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+>>>>>>> 81b76a6893e (Ignore some problematic translation cases)
         title: 'Add to dashboard',
         description: 'Use the query and panel from explore and create/add it to a dashboard',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
@@ -41,7 +46,14 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         },
       }),
       createAddedLinkConfig<PluginExtensionExploreContext>({
+<<<<<<< HEAD
         title: 'Add correlation',
+=======
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        title: 'Add correlation',
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+>>>>>>> 81b76a6893e (Ignore some problematic translation cases)
         description: 'Create a correlation from this query',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'link',
