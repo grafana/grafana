@@ -8,6 +8,7 @@ import { createLogLine } from '../__mocks__/logRow';
 import { getStyles } from './LogLine';
 import { LogLineMenu } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 
 jest.mock('./LogListContext');
@@ -15,6 +16,8 @@ jest.mock('./LogListContext');
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
+  ...defaultProps,
+  ...defaultValue,
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],

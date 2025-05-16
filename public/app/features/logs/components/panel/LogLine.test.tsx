@@ -8,6 +8,7 @@ import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogListContextProvider } from './LogListContext';
+import { defaultProps } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { getTruncationLength } from './virtualization';
 
@@ -17,6 +18,7 @@ jest.mock('./virtualization');
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
+  ...defaultProps,
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
@@ -39,6 +41,7 @@ describe('LogLine', () => {
         displayedFields={[]}
         index={0}
         log={log}
+        onClick={jest.fn()}
         showTime={true}
         style={{}}
         styles={styles}
@@ -55,6 +58,7 @@ describe('LogLine', () => {
         displayedFields={[]}
         index={0}
         log={log}
+        onClick={jest.fn()}
         showTime={false}
         style={{}}
         styles={styles}
@@ -71,6 +75,7 @@ describe('LogLine', () => {
         displayedFields={['place']}
         index={0}
         log={log}
+        onClick={jest.fn()}
         showTime={true}
         style={{}}
         styles={styles}
@@ -88,6 +93,7 @@ describe('LogLine', () => {
         displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]}
         index={0}
         log={log}
+        onClick={jest.fn()}
         showTime={true}
         style={{}}
         styles={styles}
@@ -107,6 +113,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -125,6 +132,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -148,6 +156,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -167,6 +176,7 @@ describe('LogLine', () => {
             displayedFields={[]}
             index={0}
             log={log}
+            onClick={jest.fn()}
             showTime={true}
             style={{}}
             styles={styles}
@@ -190,6 +200,7 @@ describe('LogLine', () => {
             displayedFields={[]}
             index={0}
             log={log}
+            onClick={jest.fn()}
             showTime={true}
             style={{}}
             styles={styles}
@@ -214,6 +225,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -231,6 +243,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -249,6 +262,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           showTime={true}
           style={{}}
           styles={styles}
@@ -270,6 +284,7 @@ describe('LogLine', () => {
           displayedFields={[]}
           index={0}
           log={log}
+          onClick={jest.fn()}
           onOverflow={onOverflow}
           showTime={true}
           style={{}}
