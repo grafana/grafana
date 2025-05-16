@@ -225,6 +225,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a // @grafana/grafana-search-and-storage
 )
 
 require (
@@ -571,8 +572,6 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-require github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
