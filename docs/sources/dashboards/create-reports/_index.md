@@ -191,9 +191,9 @@ The options are:
 | Option | Description |
 | ------ | ----------- |
 | Source dashboard (required) | Select or update the dashboard from which you want to generate the report. If you've created your report directly from a dashboard, this field is already filled in with the name of the current dashboard. |
-| [Template variables](#template-variables) | Select the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
 | [Time range](#time-range) | Update the report time range. By default, the report uses the time range of the dashboard. |
-| Add dashboard | Add more dashboards to the report. |
+| [Customize template variables](#template-variables) | Select and customize the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
+| + Add dashboard | Add more dashboards to the report. |
 
 <!-- prettier-ignore-end -->
 
