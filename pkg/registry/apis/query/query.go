@@ -168,6 +168,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				return
 			} else {
 				// return the error to the client, will send all non k8s errors as a k8 unexpected error
+				b.log.Error("execute respond with error, no rsp", "err", err)
 				responder.Error(err)
 				return
 			}
