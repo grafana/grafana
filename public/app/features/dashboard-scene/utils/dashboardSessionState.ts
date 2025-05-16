@@ -5,6 +5,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 export const PRESERVED_SCENE_STATE_KEY = `grafana.dashboard.preservedUrlFiltersState`;
 
+// TODO - deal with all this complexity, more details here https://github.com/grafana/grafana/pull/104780
 export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
   const preservedUrlState = window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY);
 
