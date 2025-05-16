@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -87,7 +88,7 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 	return s != ring.ACTIVE
 })
 
-func (ds *distributorServer) Search(ctx context.Context, r *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
 	if err != nil {
 		return nil, err
@@ -96,7 +97,7 @@ func (ds *distributorServer) Search(ctx context.Context, r *ResourceSearchReques
 	return client.Search(ctx, r)
 }
 
-func (ds *distributorServer) GetStats(ctx context.Context, r *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
 	if err != nil {
 		return nil, err
@@ -105,7 +106,7 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *ResourceStatsReque
 	return client.GetStats(ctx, r)
 }
 
-func (ds *distributorServer) Read(ctx context.Context, r *ReadRequest) (*ReadResponse, error) {
+func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Read")
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func (ds *distributorServer) Read(ctx context.Context, r *ReadRequest) (*ReadRes
 	return client.Read(ctx, r)
 }
 
-func (ds *distributorServer) Create(ctx context.Context, r *CreateRequest) (*CreateResponse, error) {
+func (ds *distributorServer) Create(ctx context.Context, r *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Create")
 	if err != nil {
 		return nil, err
@@ -123,7 +124,7 @@ func (ds *distributorServer) Create(ctx context.Context, r *CreateRequest) (*Cre
 	return client.Create(ctx, r)
 }
 
-func (ds *distributorServer) Update(ctx context.Context, r *UpdateRequest) (*UpdateResponse, error) {
+func (ds *distributorServer) Update(ctx context.Context, r *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Update")
 	if err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (ds *distributorServer) Update(ctx context.Context, r *UpdateRequest) (*Upd
 	return client.Update(ctx, r)
 }
 
-func (ds *distributorServer) Delete(ctx context.Context, r *DeleteRequest) (*DeleteResponse, error) {
+func (ds *distributorServer) Delete(ctx context.Context, r *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Delete")
 	if err != nil {
 		return nil, err
@@ -141,7 +142,7 @@ func (ds *distributorServer) Delete(ctx context.Context, r *DeleteRequest) (*Del
 	return client.Delete(ctx, r)
 }
 
-func (ds *distributorServer) List(ctx context.Context, r *ListRequest) (*ListResponse, error) {
+func (ds *distributorServer) List(ctx context.Context, r *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "List")
 	if err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func (ds *distributorServer) List(ctx context.Context, r *ListRequest) (*ListRes
 	return client.List(ctx, r)
 }
 
-func (ds *distributorServer) Watch(r *WatchRequest, srv ResourceStore_WatchServer) error {
+func (ds *distributorServer) Watch(r *resourcepb.WatchRequest, srv ResourceStore_WatchServer) error {
 	// r -> consumer watch request
 	// srv -> stream connection with consumer
 	ctx := srv.Context()
@@ -185,7 +186,7 @@ func (ds *distributorServer) Watch(r *WatchRequest, srv ResourceStore_WatchServe
 // 	return nil
 // }
 
-func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
+func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
 	if err != nil {
 		return nil, err
@@ -194,7 +195,7 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *CountMa
 	return client.CountManagedObjects(ctx, r)
 }
 
-func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
 	if err != nil {
 		return nil, err
@@ -203,7 +204,7 @@ func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *ListMana
 	return client.ListManagedObjects(ctx, r)
 }
 
-func (ds *distributorServer) PutBlob(ctx context.Context, r *PutBlobRequest) (*PutBlobResponse, error) {
+func (ds *distributorServer) PutBlob(ctx context.Context, r *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "PutBlob")
 	if err != nil {
 		return nil, err
@@ -212,7 +213,7 @@ func (ds *distributorServer) PutBlob(ctx context.Context, r *PutBlobRequest) (*P
 	return client.PutBlob(ctx, r)
 }
 
-func (ds *distributorServer) GetBlob(ctx context.Context, r *GetBlobRequest) (*GetBlobResponse, error) {
+func (ds *distributorServer) GetBlob(ctx context.Context, r *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "GetBlob")
 	if err != nil {
 		return nil, err
@@ -243,10 +244,10 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	return userutils.InjectOrgID(ctx, namespace), client.(*RingClient).Client, nil
 }
 
-func (ds *distributorServer) IsHealthy(ctx context.Context, r *HealthCheckRequest) (*HealthCheckResponse, error) {
+func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	if ds.ring.State() == services.Running {
-		return &HealthCheckResponse{Status: HealthCheckResponse_SERVING}, nil
+		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 	}
 
-	return &HealthCheckResponse{Status: HealthCheckResponse_NOT_SERVING}, nil
+	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_NOT_SERVING}, nil
 }

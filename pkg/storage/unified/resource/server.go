@@ -18,9 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
-	ringclient "github.com/grafana/dskit/ring/client"
-	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
