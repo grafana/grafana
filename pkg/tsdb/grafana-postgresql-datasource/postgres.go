@@ -174,52 +174,137 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	logger := s.logger
 	var host string
 	var port int
+	var err error
+	var urlUser, urlPassword, urlDatabase string
+
+	// Handle Unix socket paths
 	if strings.HasPrefix(dsInfo.URL, "/") {
 		host = dsInfo.URL
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
-		index := strings.LastIndex(dsInfo.URL, ":")
-		v6Index := strings.Index(dsInfo.URL, "]")
-		sp := strings.SplitN(dsInfo.URL, ":", 2)
-		host = sp[0]
-		if v6Index == -1 {
-			if len(sp) > 1 {
-				var err error
-				port, err = strconv.Atoi(sp[1])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
-				}
+		// Clean and normalize the URL
+		url := strings.TrimSpace(dsInfo.URL)
 
-				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+		// Remove protocol prefix if present
+		if strings.HasPrefix(url, "postgresql://") {
+			url = url[13:]
+		} else if strings.HasPrefix(url, "postgres://") {
+			url = url[11:]
+		}
+
+		// Handle credentials if present
+		if strings.Contains(url, "@") {
+			// Split at @ to separate credentials from host
+			parts := strings.SplitN(url, "@", 2)
+			credentials := parts[0]
+			url = parts[1] // Use only the host part
+
+			// Extract username and password if present
+			if strings.Contains(credentials, ":") {
+				credParts := strings.SplitN(credentials, ":", 2)
+				urlUser = credParts[0]
+				urlPassword = credParts[1]
 			} else {
-				logger.Debug("Generating connection string with network host", "host", host)
+				urlUser = credentials
+			}
+		}
+
+		// Handle database name if present
+		if strings.Contains(url, "/") {
+			parts := strings.SplitN(url, "/", 2)
+			url = parts[0]
+			urlDatabase = parts[1]
+			// Remove any query parameters from database name
+			if strings.Contains(urlDatabase, "?") {
+				urlDatabase = strings.SplitN(urlDatabase, "?", 2)[0]
+			}
+		}
+
+		// Handle IPv6 addresses
+		if strings.HasPrefix(url, "[") {
+			closeBracket := strings.LastIndex(url, "]")
+			if closeBracket == -1 {
+				return "", fmt.Errorf("invalid IPv6 address format: missing closing bracket")
+			}
+			host = url[1:closeBracket]
+
+			// Check if there's a port after the closing bracket
+			if len(url) > closeBracket+1 {
+				if !strings.HasPrefix(url[closeBracket+1:], ":") {
+					return "", fmt.Errorf("invalid IPv6 address format: expected ':' after closing bracket")
+				}
+				portStr := url[closeBracket+2:]
+				// Remove any trailing path or query parameters
+				if strings.Contains(portStr, "/") {
+					portStr = strings.SplitN(portStr, "/", 2)[0]
+				}
+				if strings.Contains(portStr, "?") {
+					portStr = strings.SplitN(portStr, "?", 2)[0]
+				}
+				port, err = strconv.Atoi(portStr)
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", portStr, err)
+				}
+				logger.Debug("Extracted IPv6 host and port", "host", host, "port", port)
+			} else {
+				logger.Debug("Extracted IPv6 host without port", "host", host)
 			}
 		} else {
-			if index == v6Index+1 {
-				host = dsInfo.URL[1 : index-1]
-				var err error
-				port, err = strconv.Atoi(dsInfo.URL[index+1:])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
+			// Handle IPv4 addresses
+			if strings.Contains(url, ":") {
+				parts := strings.SplitN(url, ":", 2)
+				host = parts[0]
+				portStr := parts[1]
+				// Remove any trailing path or query parameters
+				if strings.Contains(portStr, "/") {
+					portStr = strings.SplitN(portStr, "/", 2)[0]
 				}
-
-				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
+				if strings.Contains(portStr, "?") {
+					portStr = strings.SplitN(portStr, "?", 2)[0]
+				}
+				port, err = strconv.Atoi(portStr)
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", portStr, err)
+				}
+				logger.Debug("Extracted host and port", "host", host, "port", port)
 			} else {
-				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-				logger.Debug("Generating ipv6 connection string with network host", "host", host)
+				host = url
+				logger.Debug("Extracted host without port", "host", host)
 			}
 		}
 	}
 
+	// Use credentials from URL if dsInfo fields are empty
+	user := dsInfo.User
+	if user == "" {
+		user = urlUser
+	}
+
+	password := dsInfo.DecryptedSecureJSONData["password"]
+	if password == "" {
+		password = urlPassword
+	}
+
+	database := dsInfo.Database
+	if database == "" {
+		database = urlDatabase
+	}
+
+	// Build connection string with proper escaping
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
+		escape(user),
+		escape(password),
+		escape(host),
+		escape(database))
+
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
 
+	// Get and apply TLS settings
 	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get TLS settings: %w", err)
 	}
 
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
@@ -241,7 +326,9 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	// Attach client certificate and key if both are provided
 	if tlsSettings.CertFile != "" && tlsSettings.CertKeyFile != "" {
 		logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsSettings.CertFile, "tlsKey", tlsSettings.CertKeyFile)
-		connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsSettings.CertFile), escape(tlsSettings.CertKeyFile))
+		connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'",
+			escape(tlsSettings.CertFile),
+			escape(tlsSettings.CertKeyFile))
 	} else if tlsSettings.CertFile != "" || tlsSettings.CertKeyFile != "" {
 		return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 	}
