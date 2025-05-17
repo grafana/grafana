@@ -120,10 +120,6 @@ export function getPromOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
-export function getOperationParamId(operationId: string, paramIndex: number) {
-  return `operations.${operationId}.param.${paramIndex}`;
-}
-
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
   const options: Array<SelectableValue<string>> = [
     {

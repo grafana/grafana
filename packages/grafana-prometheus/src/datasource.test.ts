@@ -16,13 +16,9 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
-import {
-  extractRuleMappingFromGroups,
-  PrometheusDatasource,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
-} from './datasource';
+import { extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
 import PromQlLanguageProvider from './language_provider';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './language_utils';
 import {
   createDataRequest,
   createDefaultPromResponse,

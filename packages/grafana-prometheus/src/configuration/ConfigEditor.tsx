@@ -12,8 +12,6 @@ import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 
-export const PROM_CONFIG_LABEL_WIDTH = 30;
-
 export type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: PrometheusConfigProps) => {
