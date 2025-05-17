@@ -2037,6 +2037,75 @@ func TestResetStateByRuleUID(t *testing.T) {
 	}
 }
 
+func TestAlertStateMetricsWriter(t *testing.T) {
+	evaluationTime := time.Now()
+	ctx := context.Background()
+
+	rule := &models.AlertRule{
+		OrgID:           1,
+		Title:           "test_title",
+		UID:             "test_alert_rule_uid",
+		NamespaceUID:    "test_namespace_uid",
+		Annotations:     map[string]string{"annotation": "test"},
+		Labels:          map[string]string{"label": "test"},
+		IntervalSeconds: 60,
+	}
+
+	evalResults := eval.Results{
+		eval.Result{
+			Instance:    data.Labels{"test": "test", "foo": "bar"},
+			State:       eval.Alerting,
+			EvaluatedAt: evaluationTime,
+		},
+	}
+
+	expectedTransitionCount := 1
+	expectedTitle := "test_title"
+
+	t.Run("processing evaluation results writes state metrics", func(t *testing.T) {
+		fakeStateMetricsWriter := &state.FakeAlertStateMetricsWriter{}
+		cfg := state.ManagerCfg{
+			AlertStateMetricsWriter: fakeStateMetricsWriter,
+			Clock:                   clock.NewMock(),
+			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.NewNopLogger(),
+			Images:                  &state.NoopImageService{},
+		}
+		st := state.NewManager(cfg, state.NewNoopPersister())
+
+		st.ProcessEvalResults(ctx, evaluationTime, rule, evalResults, nil, nil)
+
+		require.Len(t, fakeStateMetricsWriter.Calls, 1)
+		require.Equal(t, expectedTitle, fakeStateMetricsWriter.Calls[0].RuleMeta.Title)
+		require.Len(t, fakeStateMetricsWriter.Calls[0].States, expectedTransitionCount)
+		require.Equal(t, eval.Alerting, fakeStateMetricsWriter.Calls[0].States[0].State.State)
+	})
+
+	t.Run("state reset writes state metrics", func(t *testing.T) {
+		fakeStateMetricsWriter := &state.FakeAlertStateMetricsWriter{}
+		cfg := state.ManagerCfg{
+			AlertStateMetricsWriter: fakeStateMetricsWriter,
+			Clock:                   clock.NewMock(),
+			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.NewNopLogger(),
+			Images:                  &state.NoopImageService{},
+		}
+		st := state.NewManager(cfg, state.NewNoopPersister())
+
+		// First process some results to create states
+		st.ProcessEvalResults(ctx, evaluationTime, rule, evalResults, nil, nil)
+
+		// Reset the calls to leave only the ResetStateByRuleUID
+		fakeStateMetricsWriter.Calls = nil
+
+		st.ResetStateByRuleUID(ctx, rule, "test reset")
+
+		require.Len(t, fakeStateMetricsWriter.Calls, 1)
+		require.Equal(t, expectedTitle, fakeStateMetricsWriter.Calls[0].RuleMeta.Title)
+		require.Len(t, fakeStateMetricsWriter.Calls[0].States, expectedTransitionCount)
+	})
+}
+
 func setCacheID(s *state.State) *state.State {
 	if s.CacheID != 0 {
 		return s
