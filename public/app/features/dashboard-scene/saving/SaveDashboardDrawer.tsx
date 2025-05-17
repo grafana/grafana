@@ -55,7 +55,8 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
-    const { provisioned: isProvisioned, folderTitle } = meta;
+    const { folderTitle } = meta;
+    const isProvisioned = dashboard.getIsProvisioned();
     const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
@@ -65,7 +66,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
           active={!showDiff}
           onChangeTab={() => model.setState({ showDiff: false })}
         />
-        {changesCount > 0 && (
+        {changesCount > 0 && !isProvisioned && (
           <Tab
             label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
             active={showDiff}

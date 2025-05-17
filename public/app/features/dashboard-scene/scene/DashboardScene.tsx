@@ -34,7 +34,13 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind, ResourceForCreate } from '../../apiserver/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+  ResourceForCreate,
+} from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -322,7 +328,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm) {
+    if (!this.state.isDirty || skipConfirm || this.getIsProvisioned()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       this.state.scopesBridge?.setReadOnly(false);
       return;
@@ -819,6 +825,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  }
+
+  getIsProvisioned() {
+    return (
+      Boolean(this.state.meta.provisioned) || this.state.meta.k8s?.annotations?.[AnnoKeyCreatedBy] === 'provisioning:'
+    );
   }
 }
 
