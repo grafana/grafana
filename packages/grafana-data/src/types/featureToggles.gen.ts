@@ -1023,4 +1023,8 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Enables new design for data source configuration pages
+  */
+  newDataSourceConfigPageDesign?: boolean;
 }
