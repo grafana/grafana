@@ -952,15 +952,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:              "grafanaManagedRecordingRules",
-			Description:       "Enables Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
 			Stage:          FeatureStageExperimental,
