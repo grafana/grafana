@@ -4,6 +4,7 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
+import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
 import { TransProps, TransType } from './types';
 
@@ -121,6 +122,14 @@ export function getNamespaces() {
 export async function changeLanguage(language?: string) {
   const validLanguage = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
   await getI18nInstance().changeLanguage(validLanguage);
+}
+
+export async function initializeI18n(
+  { language, ns, module }: InitializeI18nOptions,
+  regionalFormat: string
+): Promise<{ language: string | undefined }> {
+  initRegionalFormat(regionalFormat);
+  return initTranslations({ language, ns, module });
 }
 
 type ResourceKey = string;
