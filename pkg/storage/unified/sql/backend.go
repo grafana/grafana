@@ -343,7 +343,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
-			if isRowAlreadyExistsError(err) {
+			if IsRowAlreadyExistsError(err) {
 				return guid, resource.ErrResourceAlreadyExists
 			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
@@ -387,8 +387,8 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-// isRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
-func isRowAlreadyExistsError(err error) bool {
+// IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
+func IsRowAlreadyExistsError(err error) bool {
 	var sqlite sqlite3.Error
 	if errors.As(err, &sqlite) {
 		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
