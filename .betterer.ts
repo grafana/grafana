@@ -5,8 +5,6 @@ import { promises as fs } from 'fs';
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
-  'packages/grafana-ui/src/graveyard', // will be removed alongside angular in Grafana 12
-  'public/app/angular', // will be removed in Grafana 12
   'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
   'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
 ];
