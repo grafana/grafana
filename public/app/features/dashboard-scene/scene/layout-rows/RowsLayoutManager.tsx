@@ -10,7 +10,7 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import {
-  NewObjectAddedToCanvasEvent,
+  dashboardEditActions,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
@@ -104,8 +104,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       newRow.setState({ title: newTitle });
     }
 
-    this.setState({ rows: [...this.state.rows, newRow] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    dashboardEditActions.addElement({
+      addedObject: newRow,
+      source: this,
+      perform: () => this.setState({ rows: [...this.state.rows, newRow] }),
+      undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
+    });
+
     return newRow;
   }
 
