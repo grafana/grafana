@@ -689,7 +689,16 @@ export const TooltipPlugin2 = ({
         // it would end up re-dispatching mouseleave
         const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
 
-        !isStaleEvent && plot!.over.dispatchEvent(event);
+        // in some cases the panel exporter feature got duplicate events here.
+        // it's possible this indicates an issue with the `isStaleEvent` check above,
+        // but it seems like this can possibly just happen in a broader set of circumstances.
+        // log an error. It's possible that even the error logging is overkill.
+        try {
+          !isStaleEvent && plot!.over.dispatchEvent(event);
+        } catch(e) {
+          console.error(e);
+        }
+
       } else {
         plot!.setCursor(
           {
