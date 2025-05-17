@@ -466,6 +466,15 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "panelExporter",
+			Description:     "Allows users to render Grafana Panels in external applications.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			FrontendOnly:    true,
+			AllowSelfServe:  false,
+			RequiresRestart: false,
+		},
+		{
 			Name:              "enableNativeHTTPHistogram",
 			Description:       "Enables native HTTP Histograms",
 			Stage:             FeatureStageExperimental,
