@@ -26,6 +26,7 @@ type KerberosAuth struct {
 	ConfigFilePath            string
 	UDPConnectionLimit        int
 	EnableDNSLookupKDC        string
+	ServerSPN                 string
 }
 
 func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosAuth KerberosAuth, err error) {
@@ -36,6 +37,7 @@ func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosA
 		ConfigFilePath:            "",
 		UDPConnectionLimit:        1,
 		EnableDNSLookupKDC:        "",
+		ServerSPN:                 "",
 	}
 
 	err = json.Unmarshal(settings.JSONData, &kerberosAuth)
@@ -98,6 +100,10 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 
 	if kerberosAuth.EnableDNSLookupKDC != "" {
 		krb5DriverParams += "krb5-dnslookupkdc=" + kerberosAuth.EnableDNSLookupKDC + ";"
+	}
+
+	if kerberosAuth.ServerSPN != "" {
+		krb5DriverParams += "serverSpn=" + kerberosAuth.ServerSPN + ";"
 	}
 
 	return krb5DriverParams
