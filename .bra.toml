@@ -15,7 +15,7 @@ watch_dirs = [
 ]
 watch_exts = [".go", ".ini", ".toml", ".template.html"]
 ignore_files = [".*_gen.go"]
-build_delay = 1500
+build_delay = 4000
 cmds = [
   ["make", "GO_BUILD_DEV=1", "build-go-fast"],
   ["make", "gen-jsonnet"],
