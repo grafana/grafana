@@ -202,6 +202,8 @@ var (
 
 	grafanaPluginTargetInfoDesc *prometheus.GaugeVec
 
+	grafanaPluginLoadInfoDesc *prometheus.GaugeVec
+
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
 	StatsTotalLibraryPanels prometheus.Gauge
 
@@ -578,6 +580,13 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "target"})
 
+	// TODO: loading strategy?
+	grafanaPluginLoadInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "plugin_load_info",
+		Help:      "A metric with a constant '1' value labeled by pluginId, version, cloud provisioning method and loading method",
+		Namespace: ExporterName,
+	}, []string{"plugin_id", "version", "cloud_provisioning_method", "plugin_loading_method"})
+
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
 		Help:      "total amount of dashboard versions in the database",
@@ -722,6 +731,10 @@ func SetPluginTargetInformation(pluginID, target string) {
 	grafanaPluginTargetInfoDesc.WithLabelValues(pluginID, target).Set(1)
 }
 
+func SetPluginLoadInformation(pluginID, version, cloudProvisiningMethod, loadingMethod string) {
+	grafanaPluginLoadInfoDesc.WithLabelValues(pluginID, version, cloudProvisiningMethod, loadingMethod).Set(1)
+}
+
 func initMetricVars(reg prometheus.Registerer) {
 	reg.MustRegister(
 		MInstanceStart,
@@ -777,6 +790,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		StatsTotalDataSources,
 		grafanaPluginBuildInfoDesc,
 		grafanaPluginTargetInfoDesc,
+		grafanaPluginLoadInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		StatsTotalAlertRules,

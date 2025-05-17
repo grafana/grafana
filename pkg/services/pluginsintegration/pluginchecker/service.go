@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/Masterminds/semver"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -51,10 +52,13 @@ func (s *Service) isManaged(ctx context.Context, pluginID string) bool {
 
 func (s *Service) isProvisioned(ctx context.Context, pluginID string) bool {
 	if s.provisionedPlugins == nil {
-		var err error
-		s.provisionedPlugins, err = s.provisionedPluginsManager.ProvisionedPlugins(ctx)
+		pps, err := s.provisionedPluginsManager.ProvisionedPlugins(ctx)
 		if err != nil {
 			return false
+		}
+		s.provisionedPlugins = make([]string, len(pps))
+		for _, pp := range pps {
+			s.provisionedPlugins = append(s.provisionedPlugins, pp.ID)
 		}
 	}
 	return slices.Contains(s.provisionedPlugins, pluginID)

@@ -66,6 +66,8 @@ type Plugin struct {
 	mu sync.Mutex
 
 	Translations map[string]string
+
+	CloudProvisioningMethod CloudProvisioningMethod
 }
 
 var (
