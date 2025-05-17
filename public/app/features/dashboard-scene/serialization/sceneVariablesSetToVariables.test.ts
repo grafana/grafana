@@ -881,6 +881,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "QueryVariable",
       "spec": {
         "allValue": "test-all",
+        "allowCustomValue": true,
         "current": {
           "text": [
             "selected-value-text",
@@ -945,6 +946,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "CustomVariable",
       "spec": {
         "allValue": "test-all",
+        "allowCustomValue": true,
         "current": {
           "text": [
             "test",
@@ -1009,6 +1011,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "DatasourceVariable",
       "spec": {
         "allValue": "test-all",
+        "allowCustomValue": true,
         "current": {
           "text": [
             "selected-ds-1-text",
@@ -1197,6 +1200,7 @@ describe('sceneVariablesSetToVariables', () => {
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "key": "baseFilterTest",
@@ -1272,6 +1276,7 @@ describe('sceneVariablesSetToVariables', () => {
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "key": "baseFilterTest",

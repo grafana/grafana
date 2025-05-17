@@ -310,6 +310,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(queryVariable);
@@ -325,6 +326,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(customVariable);
@@ -340,6 +342,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           pluginId: variable.state.pluginId,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
 
@@ -432,6 +435,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           baseFilters: validateFiltersOrigin(variable.state.baseFilters),
           filters: validateFiltersOrigin(variable.state.filters),
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(adhocVariable);
