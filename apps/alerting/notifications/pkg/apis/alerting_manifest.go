@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName: "alerting",
 	Group:   "notifications.alerting.grafana.app",
