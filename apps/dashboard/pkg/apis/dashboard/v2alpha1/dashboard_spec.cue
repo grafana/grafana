@@ -397,7 +397,7 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	options?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
