@@ -171,30 +171,36 @@ type ProvisioningServiceImpl struct {
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
-	err := ps.ProvisionDatasources(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision data sources", "error", err)
-		return err
-	}
-
-	err = ps.ProvisionPlugins(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
+	// We had to move the initialization of OSS provisioners to Run()
+	// because they need the /apis/* endpoints to be ready and listening.
+	// They query these endpoints to retrieve folders and dashboards.
 	return nil
 }
 
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
+	// Run Datasources, Plugins and Alerting Provisioning only once.
+	// It can't be initialized at RunInitProvisioners because it
+	// depends on the /apis endpoints to be already running and listeningq
 	ps.onceInitProvisioners.Do(func() {
-		// Run Alerting Provisioning only once.
-		// It can't be initialized at RunInitProvisioners because it
-		// depends on the Server to be already running and listening
-		// to /apis endpoints.
+		err = ps.ProvisionDatasources(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision data sources", "error", err)
+			return
+		}
+
+		err = ps.ProvisionPlugins(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision plugins", "error", err)
+			return
+		}
+
 		err = ps.ProvisionAlerting(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision alerting", "error", err)
+			return
+		}
 	})
 
 	if err != nil {
