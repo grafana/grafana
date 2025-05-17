@@ -226,7 +226,7 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	if s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
-	return s.SocialBase.Config.AuthCodeURL(state, opts...)
+	return s.Config.AuthCodeURL(state, opts...)
 }
 
 func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
@@ -270,7 +270,7 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
+	s.log.Debug("Retrieving groups", "scopes", s.Scopes)
 	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}

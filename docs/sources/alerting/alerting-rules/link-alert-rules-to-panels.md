@@ -48,7 +48,7 @@ Grafana allows you to link an alert rule to a dashboard panel. This can help you
 - Visualize the alert state directly from dashboards.
 - Include a screenshot of the panel in notification messages.
 
-An alert rule is linked to a panel by setting the [`dashboardUId` and `panelId` annotations](ref:annotations). Both annotations must be set together.
+An alert rule is linked to a panel by setting the [`__dashboardUid__` and `__panelId__` annotations](ref:annotations). Both annotations must be set together.
 
 ## Link alert rules to panels
 
@@ -73,7 +73,7 @@ To streamline alert creation, you can create an alert rule directly from a panel
 1. Hover over the top-right corner of a panel and click the panel menu icon.
 1. From the dropdown menu, select **More...** > **New alert rule**.
 1. This opens the **Edit rule** form and pre-fills some values:
-   - Sets the `dashboardUId` and `panelId` annotations to the corresponding dashboard and panel.
+   - Sets the annotations to the corresponding dashboard and panel.
    - Sets the alert rule query using the panel query.
 1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 

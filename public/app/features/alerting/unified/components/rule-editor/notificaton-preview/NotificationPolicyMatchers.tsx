@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { MatcherFormatter } from '../../../utils/matchers';
@@ -16,9 +17,17 @@ interface Props {
 export function NotificationPolicyMatchers({ route, matcherFormatter }: Props) {
   const styles = useStyles2(getStyles);
   if (isDefaultPolicy(route)) {
-    return <div className={styles.defaultPolicy}>Default policy</div>;
+    return (
+      <div className={styles.defaultPolicy}>
+        <Trans i18nKey="alerting.notification-policy-matchers.default-policy">Default policy</Trans>
+      </div>
+    );
   } else if (hasEmptyMatchers(route)) {
-    return <div className={styles.textMuted}>No matchers</div>;
+    return (
+      <div className={styles.textMuted}>
+        <Trans i18nKey="alerting.notification-policy-matchers.no-matchers">No matchers</Trans>
+      </div>
+    );
   } else {
     return <Matchers matchers={route.object_matchers ?? []} formatter={matcherFormatter} />;
   }

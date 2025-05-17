@@ -74,14 +74,14 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 	ctx, span := s.tracer.Start(ctx, "SSE.TransformData")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		s.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		s.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
 		span.End()
 	}()

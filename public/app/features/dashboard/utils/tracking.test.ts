@@ -47,10 +47,8 @@ describe('trackDashboardLoaded', () => {
       version_before_migration: 16,
       panel_type_row_count: 1,
       panel_type_stat_count: 1,
-      panel_type_graph_count: 2,
-      panel_type_timeseries_count: 1,
-      'panel_type_grafana-worldmap-panel_count': 1,
-      panel_type_geomap_count: 1,
+      panel_type_timeseries_count: 3,
+      panel_type_geomap_count: 2,
       settings_nowdelay: '1m',
       settings_livenow: true,
     });

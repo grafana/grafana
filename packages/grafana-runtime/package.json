@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "11.6.0-pre",
+  "version": "12.1.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -16,6 +16,22 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "module": "src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./internal": {
+      "import": "./src/internal/index.ts",
+      "require": "./src/internal/index.ts"
+    },
+    "./unstable": {
+      "import": "./src/unstable.ts",
+      "require": "./src/unstable.ts"
+    }
+  },
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
@@ -37,11 +53,12 @@
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
-    "@grafana/data": "11.6.0-pre",
-    "@grafana/e2e-selectors": "11.6.0-pre",
+    "@grafana/data": "12.1.0-pre",
+    "@grafana/e2e-selectors": "12.1.0-pre",
     "@grafana/faro-web-sdk": "^1.13.2",
-    "@grafana/schema": "11.6.0-pre",
-    "@grafana/ui": "11.6.0-pre",
+    "@grafana/schema": "12.1.0-pre",
+    "@grafana/ui": "12.1.0-pre",
+    "@types/systemjs": "6.15.1",
     "history": "4.10.1",
     "lodash": "4.17.21",
     "react-loading-skeleton": "3.5.0",
@@ -56,13 +73,11 @@
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.15",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "@types/systemjs": "6.15.1",
     "esbuild": "0.25.0",
     "lodash": "4.17.21",
     "react": "18.3.1",

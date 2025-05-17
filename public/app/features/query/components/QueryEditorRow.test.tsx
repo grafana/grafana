@@ -13,15 +13,16 @@ const mockDS = mockDataSource({
   name: 'test',
   type: DataSourceType.Alertmanager,
 });
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: () => {},
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: () => {},
+    getInstanceSettings: () => mockDS,
+  }),
+}));
+
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
   QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
@@ -353,6 +354,7 @@ describe('QueryEditorRow', () => {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
+    onReplace: jest.fn(),
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });

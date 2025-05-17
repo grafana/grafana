@@ -110,7 +110,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries including search string, it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
-			sc.reqContext.Req.Form.Add("searchString", "2")
+			sc.reqContext.Req.Form.Add("searchString", "TeSt") // Using mixed-case to test case-insensitive search
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -225,7 +225,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(sc.service.now().UnixMilli(), 10))
 			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(sc.service.now().UnixMilli()-60*1000, 10))
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
-			sc.reqContext.Req.Form.Add("searchString", "2")
+			sc.reqContext.Req.Form.Add("searchString", "TeSt") // Using mixed-case to test case-insensitive search
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -239,7 +239,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			sc.reqContext.Req.Form.Add("to", "now")
 			sc.reqContext.Req.Form.Add("from", "now-1m")
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
-			sc.reqContext.Req.Form.Add("searchString", "2")
+			sc.reqContext.Req.Form.Add("searchString", "TeSt") // Using mixed-case to test case-insensitive search
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)

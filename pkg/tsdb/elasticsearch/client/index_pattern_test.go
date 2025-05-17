@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -106,6 +107,21 @@ func TestIndexPattern(t *testing.T) {
 				require.Equal(t, indices[0], "data-2018.03")
 			})
 		})
+	})
+
+	t.Run("Dynamic index pattern with error", func(t *testing.T) {
+		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
+		ip, err := NewIndexPattern(intervalHourly, "kibana-sample-data-logs")
+		require.NoError(t, err)
+		indices, err := ip.GetIndices(timeRange)
+		assert.Equal(t, indices, []string{})
+		require.Error(t, err)
+		assert.Equal(t, err.Error(), "invalid index pattern kibana-sample-data-logs. Specify an index with a time pattern or select 'No pattern'")
 	})
 
 	t.Run("Hourly interval", func(t *testing.T) {

@@ -23,9 +23,15 @@ type ResultConverter struct {
 func (c *ResultConverter) Convert(ctx context.Context,
 	datasourceType string,
 	frames data.Frames,
+	forSqlInput bool,
 ) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
+	}
+
+	if forSqlInput {
+		results, err := handleSqlInput(frames)
+		return "sql input", results, err
 	}
 
 	var dt data.FrameType
@@ -120,6 +126,43 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}, nil
 }
 
+// copied from pkg/expr/nodes.go from within the Execute method
+func handleSqlInput(dataFrames data.Frames) (mathexp.Results, error) {
+	var result mathexp.Results
+	var needsConversion bool
+	// Convert it if Multi:
+	if len(dataFrames) > 1 {
+		needsConversion = true
+	}
+
+	// Convert it if Wide (has labels):
+	if len(dataFrames) == 1 {
+		for _, field := range dataFrames[0].Fields {
+			if len(field.Labels) > 0 {
+				needsConversion = true
+				break
+			}
+		}
+	}
+
+	if needsConversion {
+		convertedFrames, err := ConvertToFullLong(dataFrames)
+		if err != nil {
+			return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
+		}
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: convertedFrames[0]},
+		}
+		return result, nil
+	}
+
+	// Otherwise it is already Long format; return as is
+	result.Values = mathexp.Values{
+		mathexp.TableData{Frame: dataFrames[0]},
+	}
+	return result, nil
+}
+
 func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
 	response, ok := resp.Responses[refID]
 	if !ok {
@@ -139,7 +182,7 @@ func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataRespons
 }
 
 func isAllFrameVectors(datasourceType string, frames data.Frames) bool {
-	if datasourceType != datasources.DS_PROMETHEUS {
+	if datasourceType != datasources.DS_PROMETHEUS && datasourceType != datasources.DS_AMAZON_PROMETHEUS && datasourceType != datasources.DS_AZURE_PROMETHEUS {
 		return false
 	}
 	allVector := false

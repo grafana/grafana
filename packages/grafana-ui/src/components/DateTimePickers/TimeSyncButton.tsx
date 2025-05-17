@@ -1,3 +1,4 @@
+import { t } from '../../utils/i18n';
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip';
 
@@ -19,7 +20,11 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
       <ToolbarButton
         icon="link"
         variant={isSynced ? 'active' : 'canvas'}
-        aria-label={isSynced ? 'Un sync times' : 'Sync times'}
+        aria-label={
+          isSynced
+            ? t('grafana-ui.time-sync-button.aria-label-unsync', 'Unsync times')
+            : t('grafana-ui.time-sync-button.aria-label-sync', 'Sync times')
+        }
         onClick={onClick}
       />
     </Tooltip>

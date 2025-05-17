@@ -13,8 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -28,8 +30,8 @@ func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 		schema:  newSchema(nil),
 		buffer:  1024 * 10 * 100 * 10, // 10MB
 		logger:  logging.DefaultLogger.With("logger", "parquet.writer"),
-		rsp:     &resource.BulkResponse{},
-		summary: make(map[string]*resource.BulkResponse_Summary),
+		rsp:     &resourcepb.BulkResponse{},
+		summary: make(map[string]*resourcepb.BulkResponse_Summary),
 	}
 
 	props := parquet.NewWriterProperties(
@@ -44,7 +46,7 @@ func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 }
 
 // ProcessBulk implements resource.BulkProcessingBackend.
-func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resource.BulkResponse {
+func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
 	defer func() { _ = w.Close() }()
 
 	var err error
@@ -66,7 +68,7 @@ func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSe
 		w.logger.Warn("error closing parquet file", "err", err)
 	}
 	if rsp == nil {
-		rsp = &resource.BulkResponse{}
+		rsp = &resourcepb.BulkResponse{}
 	}
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
@@ -92,11 +94,11 @@ type parquetWriter struct {
 	action    *array.Int8Builder
 	value     *array.StringBuilder
 
-	rsp     *resource.BulkResponse
-	summary map[string]*resource.BulkResponse_Summary
+	rsp     *resourcepb.BulkResponse
+	summary map[string]*resourcepb.BulkResponse_Summary
 }
 
-func (w *parquetWriter) CloseWithResults() (*resource.BulkResponse, error) {
+func (w *parquetWriter) CloseWithResults() (*resourcepb.BulkResponse, error) {
 	err := w.Close()
 	return w.rsp, err
 }
@@ -143,7 +145,7 @@ func (w *parquetWriter) init() error {
 	return nil
 }
 
-func (w *parquetWriter) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (w *parquetWriter) Write(ctx context.Context, key *resourcepb.ResourceKey, value []byte) error {
 	w.rsp.Processed++
 	obj := &unstructured.Unstructured{}
 	err := obj.UnmarshalJSON(value)
@@ -164,14 +166,14 @@ func (w *parquetWriter) Write(ctx context.Context, key *resource.ResourceKey, va
 	w.folder.Append(meta.GetFolder())
 	w.value.Append(string(value))
 
-	var action resource.WatchEvent_Type
+	var action resourcepb.WatchEvent_Type
 	switch meta.GetGeneration() {
 	case 0, 1:
-		action = resource.WatchEvent_ADDED
+		action = resourcepb.WatchEvent_ADDED
 	case utils.DeletedGeneration:
-		action = resource.WatchEvent_DELETED
+		action = resourcepb.WatchEvent_DELETED
 	default:
-		action = resource.WatchEvent_MODIFIED
+		action = resourcepb.WatchEvent_MODIFIED
 	}
 	w.action.Append(int8(action))
 
@@ -181,14 +183,14 @@ func (w *parquetWriter) Write(ctx context.Context, key *resource.ResourceKey, va
 		return w.flush()
 	}
 
-	summary := w.summary[key.NSGR()]
+	summary := w.summary[resource.NSGR(key)]
 	if summary == nil {
-		summary = &resource.BulkResponse_Summary{
+		summary = &resourcepb.BulkResponse_Summary{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}
-		w.summary[key.NSGR()] = summary
+		w.summary[resource.NSGR(key)] = summary
 		w.rsp.Summary = append(w.rsp.Summary, summary)
 	}
 	summary.Count++

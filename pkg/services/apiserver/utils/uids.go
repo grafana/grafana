@@ -29,7 +29,7 @@ func CalculateClusterWideUID(obj runtime.Object) types.UID {
 	}
 	v := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	return types.UID(strings.Map(func(r rune) rune {
-		if !(unicode.IsLetter(r) || unicode.IsDigit(r)) {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
 			return 'X'
 		}
 		return r

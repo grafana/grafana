@@ -222,6 +222,25 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 		ResultFingerprint: data.Fingerprint(2).String(),
 	})
+
+	labels = models.InstanceLabels{"test6": "testValue6"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateRecovering,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		LastSentAt:        nil,
+		ResolvedAt:        nil,
+		Labels:            labels,
+		ResultFingerprint: data.Fingerprint(2).String(),
+	})
+
 	for _, instance := range instances {
 		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 	}
@@ -331,6 +350,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	t2 := tn(2)
 	t3 := tn(3)
+
 	m := models.RuleMuts
 	baseRule := &models.AlertRule{
 		OrgID: 1,
@@ -456,6 +476,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t1, eval.Alerting),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
+					FiredAt:            t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 				},
@@ -504,6 +525,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Alerting),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
+					FiredAt:            t2,
 					LastEvaluationTime: t2,
 					LastSentAt:         &t2,
 				},
@@ -535,6 +557,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					FiredAt:            tn(4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
 				},
@@ -560,6 +583,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
+					FiredAt:            t1,
 					LastEvaluationTime: t2,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -589,6 +613,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
+					FiredAt:            t1,
 					LastEvaluationTime: t3,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -621,6 +646,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					FiredAt:            t2,
 					LastEvaluationTime: tn(4),
 					ResolvedAt:         &t3,
 					LastSentAt:         &t3,
@@ -687,6 +713,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.NoData),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					FiredAt:            t3,
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
@@ -940,6 +967,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Error),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
+					FiredAt:            tn(5),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
 				},
@@ -1007,6 +1035,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Alerting),
 					StartsAt:           t3,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
+					FiredAt:            t3,
 					LastEvaluationTime: t3,
 					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
 				},
@@ -1038,6 +1067,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
+					FiredAt:            t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
@@ -1073,12 +1103,151 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
+					FiredAt:            t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
 						"B0": 1.0,
 						"B1": 2.0,
 					},
+				},
+			},
+		},
+		{
+			desc:      "normal -> alerting -> normal (recovering) when KeepFiringFor is set but is not exceeded",
+			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Recovering,
+					LatestResult:       newEvaluation(t3, eval.Normal),
+					StartsAt:           t3,
+					EndsAt:             t3.Add(state.ResendDelay * 4),
+					FiredAt:            t2,
+					LastEvaluationTime: t3,
+					LastSentAt:         util.Pointer(t2),
+				},
+			},
+		},
+		{
+			desc:      "normal -> alerting -> normal (recovering) -> normal (recovering) -> normal (resolved) when KeepFiringFor is set and has passed",
+			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				tn(5): {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 3,
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Normal,
+					LatestResult:       newEvaluation(tn(5), eval.Normal),
+					StartsAt:           tn(5),
+					EndsAt:             tn(5),
+					FiredAt:            t2,
+					LastEvaluationTime: tn(5),
+					LastSentAt:         util.Pointer(tn(5)),
+					ResolvedAt:         util.Pointer(tn(5)),
+				},
+			},
+		},
+		{
+			desc:      "normal -> alerting -> normal(recovering) -> alerting -> alerting -> recovering when KeepFiringFor is set",
+			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(3)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(5): {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(6): {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 4,
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Recovering,
+					LatestResult:       newEvaluation(tn(6), eval.Normal),
+					StartsAt:           tn(6),
+					EndsAt:             tn(6).Add(state.ResendDelay * 4),
+					FiredAt:            tn(4),
+					LastEvaluationTime: tn(6),
+					LastSentAt:         util.Pointer(tn(5)),
+				},
+			},
+		},
+		{
+			desc:      "normal -> alerting (pending) -> alerting -> normal (recovering) -> alerting when both KeepFiringFor and For are set",
+			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2), m.WithForNTimes(1)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				tn(5): {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+			},
+			expectedAnnotations: 4,
+			expectedStates: []*state.State{
+				{
+					Labels:             labels["system + rule + labels1"],
+					ResultFingerprint:  labels1.Fingerprint(),
+					State:              eval.Alerting,
+					LatestResult:       newEvaluation(tn(5), eval.Alerting),
+					StartsAt:           tn(5),
+					EndsAt:             tn(5).Add(state.ResendDelay * 4),
+					FiredAt:            tn(5),
+					LastEvaluationTime: tn(5),
+					LastSentAt:         util.Pointer(t3),
 				},
 			},
 		},

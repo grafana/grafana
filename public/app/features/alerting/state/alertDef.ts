@@ -147,6 +147,13 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
         stateClass: 'alert-state-warning',
       };
     }
+    case 'recovering': {
+      return {
+        text: 'RECOVERING',
+        iconClass: 'hourglass',
+        stateClass: 'alert-state-warning',
+      };
+    }
 
     case 'firing': {
       return {

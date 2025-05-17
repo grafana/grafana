@@ -10,6 +10,8 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/tempo/pkg/tempopb"
+	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
+	resourcev1 "github.com/grafana/tempo/pkg/tempopb/resource/v1"
 	v1 "github.com/grafana/tempo/pkg/tempopb/trace/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,6 +117,83 @@ func TestTraceToFrame(t *testing.T) {
 		require.NotNil(t, traceID64Bit)
 		require.Equal(t, "0001020304050607", traceID64Bit["traceID"])
 	})
+}
+
+func TestScopeAttributesAddedToTags(t *testing.T) {
+	span := &v1.Span{
+		TraceId:           []byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7},
+		SpanId:            []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		ParentSpanId:      []byte{0, 0, 0, 0, 0, 0, 0, 0},
+		Name:              "test-span",
+		StartTimeUnixNano: 1616072924070497000,
+		EndTimeUnixNano:   1616072924078918000,
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key: "span.attribute",
+				Value: &commonv11.AnyValue{
+					Value: &commonv11.AnyValue_StringValue{
+						StringValue: "span-value",
+					},
+				},
+			},
+		},
+		Status: &v1.Status{},
+	}
+
+	// Create instrumentation scope with attributes
+	scope := &commonv11.InstrumentationScope{
+		Name:    "my.library",
+		Version: "1.0.0",
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key: "scope.attribute",
+				Value: &commonv11.AnyValue{
+					Value: &commonv11.AnyValue_StringValue{
+						StringValue: "scope-value",
+					},
+				},
+			},
+		},
+	}
+
+	resource := &resourcev1.Resource{
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key: "service.name",
+				Value: &commonv11.AnyValue{
+					Value: &commonv11.AnyValue_StringValue{
+						StringValue: "test-service",
+					},
+				},
+			},
+		},
+	}
+
+	row, err := spanToSpanRow(span, scope, resource)
+	require.NoError(t, err)
+
+	// Check that both span and scope attributes are in tags
+	// Tags are at index 16 in the row (based on frame field ordering)
+	tagsJson := row[16].(json.RawMessage)
+
+	var tags []*KeyValue
+	err = json.Unmarshal(tagsJson, &tags)
+	require.NoError(t, err)
+
+	foundSpanAttr := false
+	foundScopeAttr := false
+
+	for _, tag := range tags {
+		if tag.Key == "span.attribute" && tag.Value == "span-value" {
+			foundSpanAttr = true
+		}
+		if tag.Key == "scope.attribute" && tag.Value == "scope-value" {
+			foundScopeAttr = true
+		}
+	}
+
+	assert.True(t, foundSpanAttr, "Span attribute should be present in tags")
+	assert.True(t, foundScopeAttr, "Scope attribute should be present in tags")
 }
 
 type Row map[string]any

@@ -75,6 +75,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
     "points": {
       "fill": [Function],
+      "one": true,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],

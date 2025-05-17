@@ -5,7 +5,8 @@ import {
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   checkBinaryValueType,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+} from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -15,6 +16,7 @@ export const BinaryOperationOptionsEditor = (props: {
   onChange: (options: CalculateFieldTransformerOptions) => void;
   names: string[];
 }) => {
+  const { t } = useTranslate();
   const { options, onChange } = props;
   const newLeft = checkBinaryValueType(props.options.binary?.left ?? '', props.names);
   const newRight = checkBinaryValueType(props.options.binary?.right ?? '', props.names);
@@ -130,10 +132,16 @@ export const BinaryOperationOptionsEditor = (props: {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
+        <InlineField
+          label={t('transformers.binary-operation-options-editor.label-operation', 'Operation')}
+          labelWidth={LABEL_WIDTH}
+        >
           <Select
             allowCustomValue={true}
-            placeholder="Field(s) or number"
+            placeholder={t(
+              'transformers.binary-operation-options-editor.placeholder-fields-or-number',
+              'Field(s) or number'
+            )}
             options={leftNames}
             className="min-width-18"
             value={JSON.stringify(binary?.left)}
@@ -151,7 +159,10 @@ export const BinaryOperationOptionsEditor = (props: {
         <InlineField>
           <Select
             allowCustomValue={true}
-            placeholder="Field or number"
+            placeholder={t(
+              'transformers.binary-operation-options-editor.placeholder-field-or-number',
+              'Field or number'
+            )}
             className="min-width-10"
             options={rightNames}
             value={JSON.stringify(binary?.right)}

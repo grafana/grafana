@@ -3,8 +3,10 @@ import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {
   title: string;
@@ -33,15 +35,22 @@ class PanelPluginError extends PureComponent<Props> {
 }
 
 export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): PanelPlugin {
+  const { t } = useTranslate();
+
   const LoadError = class LoadError extends PureComponent<PanelProps> {
     render() {
       const text = (
-        <>
+        <Trans i18nKey="panel.panel-plugin-error.text-load-error">
           Check the server startup logs for more information. <br />
           If this plugin was loaded from Git, then make sure it was compiled.
-        </>
+        </Trans>
       );
-      return <PanelPluginError title={`Error loading: ${meta.id}`} text={text} />;
+      return (
+        <PanelPluginError
+          title={t('panel.panel-plugin-error.title-load-error', 'Error loading: {{panelId}}', { panelId: meta.id })}
+          text={text}
+        />
+      );
     }
   };
   const plugin = new PanelPlugin(LoadError);
@@ -51,9 +60,15 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
 }
 
 export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
+  const { t } = useTranslate();
+
   const NotFound = class NotFound extends PureComponent<PanelProps> {
     render() {
-      return <PanelPluginError title={`Panel plugin not found: ${id}`} />;
+      return (
+        <PanelPluginError
+          title={t('panel.panel-plugin-error.title-not-found', 'Panel plugin not found: {{id}}', { id })}
+        />
+      );
     }
   };
 
@@ -74,7 +89,7 @@ export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugi
       links: [],
       logos: {
         large: '',
-        small: 'public/img/grafana_icon.svg',
+        small: grafanaIconSvg,
       },
       screenshots: [],
       updated: '',

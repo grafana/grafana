@@ -158,7 +158,8 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
     return;
   }
 
-  let oldTarget = state.queryModel.target.target;
+  const oldResolvedTarget = state.queryModel.target.targetFull ?? state.queryModel.target.target;
+  const oldTargetRemovedSpaces = oldResolvedTarget.replace(/\s+/g, '');
   // Interpolate from other queries:
   // Because of mixed data sources the list may contain queries for non-Graphite data sources. To ensure a valid query
   // is used for interpolation we should check required properties are passed though in theory it allows to interpolate
@@ -167,11 +168,10 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
     (state.queries || []).filter((query) => 'target' in query && typeof query.target === 'string')
   );
 
-  // remove spaces from old and new targets
-  const newTarget = state.queryModel.target.target.replace(/\s+/g, '');
-  oldTarget = oldTarget.replace(/\s+/g, '');
+  const newResolvedTarget = state.queryModel.target.targetFull ?? state.queryModel.target.target;
+  const newTargetRemovedSpaces = newResolvedTarget.replace(/\s+/g, '');
 
-  if (newTarget !== oldTarget && !state.paused) {
+  if (newTargetRemovedSpaces !== oldTargetRemovedSpaces && !state.paused) {
     state.refresh();
   }
 }

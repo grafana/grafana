@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -104,7 +105,8 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 
 			t.Run("Resource API provides a reasonable error for this case", func(t *testing.T) {
 				t.Parallel()
-				cfg := newCfgFromIniMap(t, cfgMap)
+				cfg := setting.NewCfg()
+				cfg.SectionWithEnvOverrides("database").Key(grafanaDBInstrumentQueriesKey).SetValue("true")
 				resourceDB, err := ProvideResourceDB(grafanaDB, cfg, nil)
 				require.Nil(t, resourceDB)
 				require.Error(t, err)

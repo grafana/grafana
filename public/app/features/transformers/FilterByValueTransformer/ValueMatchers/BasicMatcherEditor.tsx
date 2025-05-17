@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
@@ -11,6 +12,7 @@ import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryIt
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
+  const { t } = useTranslate();
   return function Render({ options, onChange }) {
     const { validator } = config;
     const { value } = options;
@@ -33,7 +35,7 @@ export function basicMatcherEditor<T = any>(
         value={value}
         error={'Value needs to be a number or a variable'}
         onChange={onChangeVariableValue}
-        placeholder="Value or variable"
+        placeholder={t('transformers.basic-matcher-editor.placeholder-value-or-variable', 'Value or variable')}
         suggestions={getVariableSuggestions()}
       />
     );

@@ -18,12 +18,12 @@ import (
 // ExportFromPayload converts the rule groups from the argument `ruleGroupConfig` to export format. All rules are expected to be fully specified. The access to data sources mentioned in the rules is not enforced.
 // Can return 403 StatusForbidden if user is not authorized to read folder `namespaceUID`
 func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
+	rulesWithOptionals, err := apivalidation.ValidateRuleGroup(&ruleGroupConfig, c.GetOrgID(), namespace.UID, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -74,7 +74,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 			)
 		}
 		rulesGroup, err := srv.getRuleGroupWithFolderFullPath(c, ngmodels.AlertRuleGroupKey{
-			OrgID:        c.SignedInUser.GetOrgID(),
+			OrgID:        c.GetOrgID(),
 			NamespaceUID: folderUIDs[0],
 			RuleGroup:    group,
 		})
@@ -110,7 +110,7 @@ func (srv RulerSrv) getRuleWithFolderFullpathByRuleUid(c *contextmodel.ReqContex
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
 	}
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
@@ -119,7 +119,7 @@ func (srv RulerSrv) getRuleWithFolderFullpathByRuleUid(c *contextmodel.ReqContex
 
 // getRuleGroupWithFolderFullPath calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
 func (srv RulerSrv) getRuleGroupWithFolderFullPath(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
@@ -136,12 +136,12 @@ func (srv RulerSrv) getRuleGroupWithFolderFullPath(c *contextmodel.ReqContext, r
 // getRulesWithFolderFullPathInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
 // If argument folderUIDs is not empty it intersects it with the list of folders available for user and then retrieves rules that are in those folders.
 func (srv RulerSrv) getRulesWithFolderFullPathInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderFullpath, error) {
-	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
+	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
 	query := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.GetOrgID(),
+		OrgID:         c.GetOrgID(),
 		NamespaceUIDs: nil,
 	}
 	if len(folderUIDs) > 0 {

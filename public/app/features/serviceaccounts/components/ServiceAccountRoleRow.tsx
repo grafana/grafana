@@ -1,3 +1,4 @@
+import { useTranslate } from '@grafana/i18n';
 import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRoleChange }: Props): JSX.Element => {
+  const { t } = useTranslate();
   const inputId = `${label}-input`;
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
 
@@ -38,7 +40,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
             <OrgRolePicker
               width={24}
               inputId={inputId}
-              aria-label="Role"
+              aria-label={t('serviceaccounts.service-account-role-row.aria-label-role', 'Role')}
               value={serviceAccount.role}
               disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
               onChange={onRoleChange}

@@ -48,3 +48,43 @@ type TestStruct struct {
 	Comment string
 	Json    json.RawMessage
 }
+
+func TestRandomID(t *testing.T) {
+	type RandomIDRecord struct {
+		ID      int64 `xorm:"'id' pk randomid"`
+		Comment string
+	}
+
+	eng, err := NewEngine("sqlite3", ":memory:")
+	require.NoError(t, err)
+	require.NoError(t, eng.Sync(new(RandomIDRecord)))
+
+	// Test sequence of different snowflake values
+	testCases := []struct {
+		name    string
+		id      int64
+		comment string
+	}{
+		{"first insert", 42, "first comment"},
+		{"second insert", 123, "second comment"},
+		{"third insert", 1337, "third comment"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			eng.randomIDGen = func() int64 { return tc.id }
+
+			obj := &RandomIDRecord{Comment: tc.comment}
+			_, err := eng.Insert(obj)
+			require.NoError(t, err)
+			require.Equal(t, tc.id, obj.ID, "ID should match current snowflake value")
+
+			// Verify database entry
+			var retrieved RandomIDRecord
+			has, err := eng.ID(tc.id).Get(&retrieved)
+			require.NoError(t, err)
+			require.True(t, has)
+			require.Equal(t, tc.comment, retrieved.Comment)
+		})
+	}
+}

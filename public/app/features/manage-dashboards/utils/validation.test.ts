@@ -1,4 +1,7 @@
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -20,7 +23,7 @@ const legacyDashboard: DashboardDTO = {
 
 const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v2alpha0',
+  apiVersion: 'v2alpha1',
   metadata: {
     creationTimestamp: '2021-09-29T14:00:00Z',
     name: 'dashboard-uid',

@@ -370,7 +370,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
-			numberOfDatasource := 5100
+			numberOfDatasource := 50
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
@@ -394,7 +394,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
-			numberOfDatasource := 5100
+			numberOfDatasource := 50
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,

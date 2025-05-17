@@ -1,6 +1,7 @@
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
@@ -27,6 +28,8 @@ const pageNav: NavModelItem = {
 };
 
 export const NewOrgPage = ({ createOrganization }: Props) => {
+  const { t } = useTranslate();
+
   const createOrg = async (newOrg: { name: string }) => {
     await createOrganization(newOrg);
     window.location.href = getConfig().appSubUrl + '/org';
@@ -36,9 +39,11 @@ export const NewOrgPage = ({ createOrganization }: Props) => {
     <Page navId="global-orgs" pageNav={pageNav}>
       <Page.Contents>
         <p className="muted">
-          Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
-          shared between organizations. While users might belong to more than one organization, multiple organizations
-          are most frequently used in multi-tenant deployments.
+          <Trans i18nKey="org.new-org-page.description">
+            Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
+            shared between organizations. While users might belong to more than one organization, multiple organizations
+            are most frequently used in multi-tenant deployments.
+          </Trans>
         </p>
 
         <Form<CreateOrgFormDTO> onSubmit={createOrg}>
@@ -46,16 +51,22 @@ export const NewOrgPage = ({ createOrganization }: Props) => {
             return (
               <>
                 <FieldSet>
-                  <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
+                  <Field
+                    label={t('org.new-org-page.label-organization-name', 'Organization name')}
+                    invalid={!!errors.name}
+                    error={errors.name && errors.name.message}
+                  >
                     <Input
-                      placeholder="Org name"
+                      placeholder={t('org.new-org-page.placeholder-org-name', 'Org name')}
                       {...register('name', {
                         required: 'Organization name is required',
                       })}
                     />
                   </Field>
                 </FieldSet>
-                <Button type="submit">Create</Button>
+                <Button type="submit">
+                  <Trans i18nKey="org.new-org-page.create">Create</Trans>
+                </Button>
               </>
             );
           }}

@@ -1,8 +1,8 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { ProfileUpdateFields } from './types';
@@ -16,13 +16,18 @@ export interface Props {
 const { disableLoginForm } = config;
 
 export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
+  const { t } = useTranslate();
+
   const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
     updateProfile(data);
   };
 
   // check if authLabels is longer than 0 otherwise false
   const isExternalUser: boolean = (user && user.isExternal) ?? false;
-  const authSource = isExternalUser && user && user.authLabels ? user.authLabels[0] : '';
+  let authSource = isExternalUser && user && user.authLabels ? user.authLabels[0] : '';
+  if (user?.isProvisioned) {
+    authSource = 'SCIM';
+  }
   const lockMessage = authSource ? ` (Synced via ${authSource})` : '';
   const disabledEdit = disableLoginForm || isExternalUser;
 
@@ -90,8 +95,15 @@ export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props
 export default UserProfileEditForm;
 
 const InputSuffix = () => {
+  const { t } = useTranslate();
+
   return disableLoginForm ? (
-    <Tooltip content="Login details locked because they are managed in another system.">
+    <Tooltip
+      content={t(
+        'profile.input-suffix.content-login-details-locked-because-managed-another',
+        'Login details locked because they are managed in another system.'
+      )}
+    >
       <Icon name="lock" />
     </Tooltip>
   ) : null;

@@ -7,7 +7,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const baseConfig = await grafanaConfig(env);
 
   return merge(baseConfig, {
-    externals: ['@kusto/monaco-kusto'],
+    externals: ['@kusto/monaco-kusto', 'i18next'],
   });
 };
 

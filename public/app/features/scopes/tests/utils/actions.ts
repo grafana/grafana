@@ -12,7 +12,10 @@ import {
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilterClear,
+  getPersistedApplicationsGrafanaSelect,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudDevSelect,
   getResultApplicationsCloudExpand,
   getResultApplicationsCloudSelect,
@@ -25,6 +28,7 @@ import {
   getResultCloudSelect,
   getSelectorApply,
   getSelectorCancel,
+  getSelectorClear,
   getSelectorInput,
   getTreeSearch,
 } from './selectors';
@@ -38,6 +42,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
 export const updateScopes = async (service: ScopesService, scopes: string[]) =>
   act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
+export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);
   await jest.runOnlyPendingTimersAsync();
@@ -45,11 +50,14 @@ export const applyScopes = async () => {
 export const cancelScopes = async () => click(getSelectorCancel);
 export const searchScopes = async (value: string) => type(getTreeSearch, value);
 export const clearScopesSearch = async () => type(getTreeSearch, '');
+export const expandRecentScopes = async () => click(getRecentScopesSection);
 export const expandResultApplications = async () => click(getResultApplicationsExpand);
 export const expandResultApplicationsCloud = async () => click(getResultApplicationsCloudExpand);
 export const expandResultCloud = async () => click(getResultCloudExpand);
+export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
 export const selectResultApplicationsGrafana = async () => click(getResultApplicationsGrafanaSelect);
 export const selectPersistedApplicationsMimir = async () => click(getPersistedApplicationsMimirSelect);
+export const selectPersistedApplicationsGrafana = async () => click(getPersistedApplicationsGrafanaSelect);
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);

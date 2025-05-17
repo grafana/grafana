@@ -15,7 +15,7 @@ func (hs *HTTPServer) databaseHealthy(ctx context.Context) bool {
 	}
 
 	err := hs.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Exec("SELECT 1")
+		_, err := session.Query("SELECT 1")
 		return err
 	})
 	healthy := err == nil

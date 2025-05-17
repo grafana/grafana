@@ -7,7 +7,7 @@ import { PermissionLevelString } from 'app/types';
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
-import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
+import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
 import { replaceCurrentFolderQuery } from './utils';
 
 interface APIQuery {
@@ -132,8 +132,8 @@ export class SQLSearcher implements GrafanaSearcher {
     //     }
     //   ]
     // }
-    const opts = await backendSrv.get('/api/search/sorting');
-    return opts.sortOptions.map((v: any) => ({
+    const opts = await backendSrv.get<SortOptions>('/api/search/sorting');
+    return opts.sortOptions.map((v) => ({
       value: v.name,
       label: v.displayName,
     }));

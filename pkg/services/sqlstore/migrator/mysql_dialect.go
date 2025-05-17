@@ -10,7 +10,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type MySQLDialect struct {
@@ -19,8 +19,8 @@ type MySQLDialect struct {
 
 func NewMysqlDialect() Dialect {
 	d := MySQLDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = MySQL
+	d.dialect = &d
+	d.driverName = MySQL
 	return &d
 }
 
@@ -171,7 +171,7 @@ func (db *MySQLDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}

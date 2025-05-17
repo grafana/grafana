@@ -18,6 +18,5 @@ type ExtractedPluginArchive struct {
 }
 
 type Dependency struct {
-	ID      string
-	Version string
+	ID string
 }

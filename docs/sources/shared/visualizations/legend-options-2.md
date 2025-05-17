@@ -28,6 +28,6 @@ Choose where to display the legend.
 - **Bottom -** Below the graph.
 - **Right -** To the right of the graph.
 
-#### Width
+### Width
 
 Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.

@@ -1,9 +1,10 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from '../../shared/InfoItem';
 
 export const InfoPaneLeft = () => {
+  const { t } = useTranslate();
   return (
     <Stack gap={4} direction="column">
       <InfoItem

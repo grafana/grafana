@@ -35,7 +35,7 @@ func (tapi *TeamAPI) getTeamMembers(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := team.GetTeamMembersQuery{OrgID: c.SignedInUser.GetOrgID(), TeamID: teamId, SignedInUser: c.SignedInUser}
+	query := team.GetTeamMembersQuery{OrgID: c.GetOrgID(), TeamID: teamId, SignedInUser: c.SignedInUser}
 
 	queryResult, err := tapi.teamService.GetTeamMembers(c.Req.Context(), &query)
 	if err != nil {
@@ -83,7 +83,12 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
+	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
+
+	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), c.GetOrgID(), teamID, cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add team member.", err)
 	}
@@ -93,7 +98,7 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 
 	err = addOrUpdateTeamMember(
 		c.Req.Context(), tapi.teamPermissionsService,
-		cmd.UserID, c.SignedInUser.GetOrgID(), teamID, team.PermissionTypeMember.String(),
+		cmd.UserID, c.GetOrgID(), teamID, team.PermissionTypeMember.String(),
 	)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add Member to Team", err)
@@ -127,7 +132,12 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
-	orgId := c.SignedInUser.GetOrgID()
+	orgId := c.GetOrgID()
+
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
 
 	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), orgId, teamId, userId)
 	if err != nil {
@@ -166,7 +176,12 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
-	orgId := c.SignedInUser.GetOrgID()
+	orgId := c.GetOrgID()
+
+	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	if resp != nil {
+		return resp
+	}
 
 	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgId, teamId, cmd, c.SignedInUser)
 	if err != nil {
@@ -265,7 +280,7 @@ func (tapi *TeamAPI) getUserIDs(ctx context.Context, emails map[string]struct{})
 // 404: notFoundError
 // 500: internalServerError
 func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Response {
-	orgId := c.SignedInUser.GetOrgID()
+	orgId := c.GetOrgID()
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -273,6 +288,19 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
+
+	existingTeam, err := tapi.getTeamDTOByID(c, teamId)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned {
+		return response.Error(http.StatusBadRequest, "Team memberships cannot be updated for provisioned teams", err)
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)

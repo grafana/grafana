@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
@@ -52,6 +53,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     },
     [onEdit, value]
   );
+  const { t } = useTranslate();
 
   return !isEditing ? (
     <div className={styles.textContainer}>
@@ -64,7 +66,12 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
         <Text element="h1" truncate>
           {localValue}
         </Text>
-        <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
+        <IconButton
+          name="pen"
+          size="lg"
+          tooltip={t('page.editable-title.edit-tooltip', 'Edit title')}
+          onClick={() => setIsEditing(true)}
+        />
       </div>
     </div>
   ) : (

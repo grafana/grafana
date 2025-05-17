@@ -73,6 +73,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	interval := (rand.Int63n(6) + 1) * 10
 	forInterval := time.Duration(interval*rand.Int63n(6)) * time.Second
+	keepFiringFor := time.Duration(interval*rand.Int63n(6)) * time.Second
 
 	var annotations map[string]string = nil
 	if rand.Int63()%2 == 0 {
@@ -122,6 +123,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		NoDataState:                 randNoDataState(),
 		ExecErrState:                randErrState(),
 		For:                         forInterval,
+		KeepFiringFor:               keepFiringFor,
 		Annotations:                 annotations,
 		Labels:                      labels,
 		NotificationSettings:        ns,
@@ -296,7 +298,7 @@ func (a *AlertRuleMutators) WithNamespaceUID(namespaceUID string) AlertRuleMutat
 	}
 }
 
-func (a *AlertRuleMutators) WithNamespace(namespace *folder.Folder) AlertRuleMutator {
+func (a *AlertRuleMutators) WithNamespace(namespace *folder.FolderReference) AlertRuleMutator {
 	return a.WithNamespaceUID(namespace.UID)
 }
 
@@ -341,6 +343,18 @@ func (a *AlertRuleMutators) WithFor(duration time.Duration) AlertRuleMutator {
 func (a *AlertRuleMutators) WithForNTimes(timesOfInterval int64) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringFor(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = interval
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
 	}
 }
 
@@ -855,6 +869,7 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 			InstanceStatePending,
 			InstanceStateNoData,
 			InstanceStateError,
+			InstanceStateRecovering,
 		}
 		return s[rand.Intn(len(s))]
 	}
@@ -910,6 +925,10 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 		c.MuteTimeIntervals = make([]string, len(ns.MuteTimeIntervals))
 		copy(c.MuteTimeIntervals, ns.MuteTimeIntervals)
 	}
+	if ns.ActiveTimeIntervals != nil {
+		c.ActiveTimeIntervals = make([]string, len(ns.ActiveTimeIntervals))
+		copy(c.ActiveTimeIntervals, ns.ActiveTimeIntervals)
+	}
 	for _, mutator := range mutators {
 		mutator(&c)
 	}
@@ -920,12 +939,13 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
 	return func() NotificationSettings {
 		c := NotificationSettings{
-			Receiver:          util.GenerateShortUID(),
-			GroupBy:           []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
-			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			Receiver:            util.GenerateShortUID(),
+			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
+			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupInterval:       util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			RepeatInterval:      util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			MuteTimeIntervals:   []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			ActiveTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
 		}
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -987,6 +1007,12 @@ func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ..
 	}
 }
 
+func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.ActiveTimeIntervals = activeTimeIntervals
+	}
+}
+
 // Silences
 
 // CopySilenceWith creates a deep copy of Silence and then applies mutators to it.
@@ -1013,20 +1039,20 @@ func CopySilence(s Silence) Silence {
 	if s.UpdatedAt != nil {
 		c.UpdatedAt = util.Pointer(*s.UpdatedAt)
 	}
-	if s.Silence.Comment != nil {
-		c.Silence.Comment = util.Pointer(*s.Silence.Comment)
+	if s.Comment != nil {
+		c.Comment = util.Pointer(*s.Comment)
 	}
-	if s.Silence.CreatedBy != nil {
-		c.Silence.CreatedBy = util.Pointer(*s.Silence.CreatedBy)
+	if s.CreatedBy != nil {
+		c.CreatedBy = util.Pointer(*s.CreatedBy)
 	}
-	if s.Silence.EndsAt != nil {
-		c.Silence.EndsAt = util.Pointer(*s.Silence.EndsAt)
+	if s.EndsAt != nil {
+		c.EndsAt = util.Pointer(*s.EndsAt)
 	}
-	if s.Silence.StartsAt != nil {
-		c.Silence.StartsAt = util.Pointer(*s.Silence.StartsAt)
+	if s.StartsAt != nil {
+		c.StartsAt = util.Pointer(*s.StartsAt)
 	}
-	if s.Silence.Matchers != nil {
-		c.Silence.Matchers = CopyMatchers(s.Silence.Matchers)
+	if s.Matchers != nil {
+		c.Matchers = CopyMatchers(s.Matchers)
 	}
 
 	return c
@@ -1091,7 +1117,7 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 			IsRegex: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
 			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
@@ -1103,13 +1129,13 @@ func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
 			IsRegex: util.Pointer(false),
 			IsEqual: util.Pointer(true),
 		}
-		for _, matcher := range s.Silence.Matchers {
+		for _, matcher := range s.Matchers {
 			if isRuleUIDMatcher(*matcher) {
 				*matcher = m
 				return
 			}
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) Expired() Mutator[Silence] {

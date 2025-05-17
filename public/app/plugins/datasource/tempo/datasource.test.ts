@@ -68,7 +68,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
@@ -172,16 +171,6 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
-        groupBy: [
-          {
-            id: 'groupBy1',
-            tag: '$interpolationVar',
-          },
-          {
-            id: 'groupBy2',
-            tag: '$interpolationVar',
-          },
-        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -214,8 +203,6 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
-      expect(queries[0].groupBy?.[0].tag).toBe(text);
-      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -228,8 +215,6 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
-      expect(resp.groupBy?.[0].tag).toBe(scopedText);
-      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -318,7 +303,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('000000000000000060ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -350,18 +335,6 @@ describe('Tempo data source', () => {
     const edgesFrame = response.data[1];
     expect(edgesFrame.name).toBe('Edges');
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
-  });
-
-  it('should format metrics summary query correctly', () => {
-    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
-    const queryGroupBy = [
-      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
-      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
-      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
-      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
-    ];
-    const groupBy = ds.formatGroupBy(queryGroupBy);
-    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   describe('test the testDatasource function', () => {
@@ -774,6 +747,20 @@ describe('Tempo service graph view', () => {
     );
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
+    );
+
+    targets = {
+      targets: [
+        { queryType: 'serviceMap', serviceMapQuery: '{client="app",client_deployment_environment="production"}' },
+      ],
+    } as DataQueryRequest<TempoQuery>;
+    builtQuery = buildExpr(
+      { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",deployment_environment="production"}[$__range])) by (span_name))'
     );
   });
 

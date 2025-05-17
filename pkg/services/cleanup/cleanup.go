@@ -111,7 +111,6 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old user invites", srv.expireOldUserInvites},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
 		{"expire old email verifications", srv.expireOldVerifications},
-		{"cleanup trash dashboards", srv.cleanUpTrashDashboards},
 	}
 
 	if srv.Cfg.ShortLinkExpiration > 0 {
@@ -311,16 +310,6 @@ func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
 		logger.Error("Problem with enforcing row limit for query_history_star", "error", err.Error())
 	} else {
 		logger.Debug("Enforced row limit for query_history_star", "rows affected", rowsCount)
-	}
-}
-
-func (srv *CleanUpService) cleanUpTrashDashboards(ctx context.Context) {
-	logger := srv.log.FromContext(ctx)
-	affected, err := srv.dashboardService.CleanUpDeletedDashboards(ctx)
-	if err != nil {
-		logger.Error("Problem cleaning up deleted dashboards", "error", err)
-	} else {
-		logger.Debug("Cleaned up deleted dashboards", "dashboards affected", affected)
 	}
 }
 

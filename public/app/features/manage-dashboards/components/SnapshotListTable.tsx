@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
@@ -41,6 +41,8 @@ export const SnapshotListTable = () => {
     },
     [snapshots]
   );
+
+  const { t } = useTranslate();
 
   if (!isFetching && snapshots.length === 0) {
     return (
@@ -103,7 +105,7 @@ export const SnapshotListTable = () => {
       <ConfirmModal
         isOpen={!!removeSnapshot}
         icon="trash-alt"
-        title="Delete"
+        title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
         body={`Are you sure you want to delete '${removeSnapshot?.name}'?`}
         confirmText="Delete"
         onDismiss={() => setRemoveSnapshot(undefined)}

@@ -1,0 +1,85 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "nodeGraph"
+//  }
+//  Name: test_nodes
+//  Dimensions: 2 Fields by 8 Rows
+//  +-------------------+-------------------+
+//  | Name: id          | Name: title       |
+//  | Labels:           | Labels:           |
+//  | Type: []string    | Type: []string    |
+//  +-------------------+-------------------+
+//  | api-gateway       | api-gateway       |
+//  | auth-service      | auth-service      |
+//  | database          | database          |
+//  | frontend          | frontend          |
+//  | inventory-service | inventory-service |
+//  | order-service     | order-service     |
+//  | payment-service   | payment-service   |
+//  | user-service      | user-service      |
+//  +-------------------+-------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test_nodes",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "nodeGraph"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "api-gateway",
+            "auth-service",
+            "database",
+            "frontend",
+            "inventory-service",
+            "order-service",
+            "payment-service",
+            "user-service"
+          ],
+          [
+            "api-gateway",
+            "auth-service",
+            "database",
+            "frontend",
+            "inventory-service",
+            "order-service",
+            "payment-service",
+            "user-service"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -90,6 +90,7 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
 							},
 						},
 						Includes: []*plugins.Includes{
@@ -165,8 +166,8 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
 							Plugins: []plugins.Dependency{
-								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+								{Type: "datasource", ID: "graphite", Name: "Graphite"},
+								{Type: "panel", ID: "graph", Name: "Graph"},
 							},
 							Extensions: plugins.ExtensionsDependencies{
 								ExposedComponents: []string{},

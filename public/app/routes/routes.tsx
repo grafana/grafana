@@ -22,6 +22,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
@@ -448,13 +449,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    config.featureToggles.dashboardRestore && {
-      path: '/dashboard/recently-deleted',
-      roles: () => ['Admin', 'ServerAdmin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
-      ),
-    },
     {
       path: '/playlists',
       component: SafeDynamicImport(
@@ -519,28 +513,24 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    config.featureToggles.exploreMetrics && {
+    {
+      // A redirect to the Grafana Metrics Drilldown app from legacy Explore Metrics routes
       path: '/explore/metrics/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
-        ? {
-            component: SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
-            ),
-          }
-        : {
-            chromeless: false,
-            component: SafeDynamicImport(
-              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-            ),
-          }),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
+      ),
     },
     {
       path: '/bookmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
+    },
+    {
+      // Redirect the /femt dev page to the root
+      path: '/femt',
+      component: () => <Navigate replace to="/" />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
@@ -549,6 +539,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    ...getProvisioningRoutes(),
     {
       path: '/goto/*',
       component: HandleGoToRedirect,

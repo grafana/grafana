@@ -1,6 +1,7 @@
 import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -23,7 +24,7 @@ export function RedirectToCloneRule({
   // Users have to be aware that the cloned rule will NOT be marked as provisioned
   const location = useLocation();
   const [stage, setStage] = useState<'redirect' | 'confirm'>(isProvisioned ? 'confirm' : 'redirect');
-
+  const { t } = useTranslate();
   if (stage === 'redirect') {
     const copyFrom = ruleId.stringifyIdentifier(identifier);
     const returnTo = location.pathname + location.search;
@@ -39,15 +40,19 @@ export function RedirectToCloneRule({
   return (
     <ConfirmModal
       isOpen={stage === 'confirm'}
-      title="Copy provisioned alert rule"
+      title={t('alerting.redirect-to-clone-rule.title-copy-provisioned-alert-rule', 'Copy provisioned alert rule')}
       body={
         <div>
           <p>
-            The new rule will <strong>not</strong> be marked as a provisioned rule.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-not-provisioned">
+              The new rule will <strong>not</strong> be marked as a provisioned rule.
+            </Trans>
           </p>
           <p>
-            You will need to set a new evaluation group for the copied rule because the original one has been
-            provisioned and cannot be used for rules created in the UI.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-evaluation-group">
+              You will need to set a new evaluation group for the copied rule because the original one has been
+              provisioned and cannot be used for rules created in the UI.
+            </Trans>
           </p>
         </div>
       }
@@ -68,11 +73,11 @@ interface CloneRuleButtonProps {
 export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
-
+    const { t } = useTranslate();
     return (
       <>
         <Button
-          title="Copy"
+          title={t('alerting.clone-rule-button.title-copy', 'Copy')}
           className={className}
           size="sm"
           key="clone"

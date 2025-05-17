@@ -143,7 +143,7 @@ Annotations are displayed in Grafana and are included by default in notification
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `dashboardUId` and `panelId`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
+- `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
 
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 

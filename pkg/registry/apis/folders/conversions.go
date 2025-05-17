@@ -2,12 +2,14 @@ package folders
 
 import (
 	"fmt"
+	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	claims "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -16,10 +18,11 @@ import (
 
 func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstructured.Unstructured, error) {
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		Object: map[string]any{
+			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
+				"version":     1,
 			},
 		},
 	}
@@ -38,22 +41,23 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 	return obj, nil
 }
 
-func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
+func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMapper) (*folders.Folder, error) {
 	return convertToK8sResource(v, namespacer)
 }
 
-func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
-	f := &v0alpha1.Folder{
-		TypeMeta: v0alpha1.FolderResourceInfo.TypeMeta(),
+func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*folders.Folder, error) {
+	f := &folders.Folder{
+		TypeMeta: folders.FolderResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
+			Generation:        int64(v.Version),
 		},
-		Spec: v0alpha1.Spec{
+		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: v.Description,
+			Description: descr(v.Description),
 		},
 	}
 
@@ -70,15 +74,30 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
 
-	if v.CreatedByUID != "" {
-		meta.SetCreatedBy(v.UpdatedByUID)
+	if v.Fullpath != "" {
+		meta.SetFullpath(v.Fullpath)
 	}
-	if v.UpdatedByUID != "" {
-		meta.SetUpdatedBy(v.UpdatedByUID)
+
+	if v.FullpathUIDs != "" {
+		meta.SetFullpathUIDs(v.FullpathUIDs)
+	}
+
+	if v.CreatedBy != 0 {
+		meta.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.CreatedBy, 10)))
+	}
+	if v.UpdatedBy != 0 {
+		meta.SetUpdatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(v.UpdatedBy, 10)))
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
+}
+
+func descr(str string) *string {
+	if str == "" {
+		return nil
+	}
+	return &str
 }

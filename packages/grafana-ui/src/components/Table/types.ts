@@ -15,7 +15,7 @@ import {
 import * as schema from '@grafana/schema';
 
 import { TableCellInspectorMode } from './TableCellInspector';
-import { TableStyles } from './styles';
+import { TableStyles } from './TableRT/styles';
 
 export {
   type FieldTextAlignment,
@@ -96,7 +96,8 @@ export interface TableStateReducerProps {
   data: DataFrame;
 }
 
-export interface Props {
+// export interface Props {
+export interface TableRTProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;

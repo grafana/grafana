@@ -279,7 +279,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		params = append(params, query.OrgID)
 
 		if query.AnnotationID != 0 {
-			// fmt.Print("annotation query")
+			// fmt.Println("annotation query")
 			sql.WriteString(` AND a.id = ?`)
 			params = append(params, query.AnnotationID)
 		}
@@ -312,9 +312,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.To, query.From)
 		}
 
-		if query.Type == "alert" {
+		switch query.Type {
+		case "alert":
 			sql.WriteString(` AND a.alert_id > 0`)
-		} else if query.Type == "annotation" {
+		case "annotation":
 			sql.WriteString(` AND a.alert_id = 0`)
 		}
 
@@ -333,10 +334,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 
 			if len(tags) > 0 {
+				// "at" is a keyword in Spanner and needs to be quoted.
 				tagsSubQuery := fmt.Sprintf(`
-			SELECT SUM(1) FROM annotation_tag at
-			INNER JOIN tag on tag.id = at.tag_id
-			WHERE at.annotation_id = a.id
+			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
+			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
+			WHERE `+r.db.Quote("at")+`.annotation_id = a.id
 				AND (
 				%s
 				)
@@ -474,8 +476,16 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
-		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (`)
+		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(" OR ")
+
+		s, p = r.db.GetDialect().LikeOperator(tagValue, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(")")
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)

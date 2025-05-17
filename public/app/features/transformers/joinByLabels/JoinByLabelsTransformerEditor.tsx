@@ -8,6 +8,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -18,6 +19,8 @@ import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByL
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
 export function JoinByLabelsTransformerEditor({ input, options, onChange }: Props) {
+  const { t } = useTranslate();
+
   const info = useMemo(() => {
     let warn: React.ReactNode = undefined;
     const distinct = getDistinctLabels(input);
@@ -29,9 +32,23 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     if (!input.length) {
-      warn = <Alert title="No input found">No input (or labels) found</Alert>;
+      warn = (
+        <Alert title={t('transformers.join-by-labels-transformer-editor.info.title-no-input-found', 'No input found')}>
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.no-input-or-labels-found">
+            No input (or labels) found
+          </Trans>
+        </Alert>
+      );
     } else if (distinct.size === 0) {
-      warn = <Alert title="No labels found">The input does not contain any labels</Alert>;
+      warn = (
+        <Alert
+          title={t('transformers.join-by-labels-transformer-editor.info.title-no-labels-found', 'No labels found')}
+        >
+          <Trans i18nKey="transformers.join-by-labels-transformer-editor.info.input-contain-labels">
+            The input does not contain any labels
+          </Trans>
+        </Alert>
+      );
     }
 
     // Show the selected values
@@ -48,7 +65,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
-  }, [options, input]);
+  }, [options, input, t]);
 
   const updateJoinValue = (idx: number, value?: string) => {
     if (!options.join) {
@@ -95,9 +112,12 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         <InlineField
           error="required"
           invalid={!Boolean(options.value?.length)}
-          label={'Value'}
+          label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}
-          tooltip="Select the label indicating the values name"
+          tooltip={t(
+            'transformers.join-by-labels-transformer-editor.tooltip-select-label-indicating-values',
+            'Select the label indicating the values name'
+          )}
         >
           <Select
             options={info.valueOptions}
@@ -111,7 +131,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         options.join!.map((v, idx) => (
           <InlineFieldRow key={v + idx}>
             <InlineField
-              label={'Join'}
+              label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
               labelWidth={labelWidth}
               error="Unable to join by the value label"
               invalid={v === options.value}
@@ -127,6 +147,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                 {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
                   <ValuePicker
                     icon="plus"
+                    // eslint-disable-next-line @grafana/no-untranslated-strings
                     label={''}
                     options={info.addOptions}
                     onChange={addJoin}
@@ -141,7 +162,10 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         <>
           {Boolean(info.addOptions.length) && (
             <InlineFieldRow>
-              <InlineField label={'Join'} labelWidth={labelWidth}>
+              <InlineField
+                label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
+                labelWidth={labelWidth}
+              >
                 <Select
                   options={info.addOptions}
                   placeholder={info.addText}

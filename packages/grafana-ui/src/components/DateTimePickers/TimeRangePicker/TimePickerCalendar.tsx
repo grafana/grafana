@@ -35,7 +35,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       padding: theme.spacing(1),
       label: 'calendar',
       boxShadow: theme.shadows.z3,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
     }),

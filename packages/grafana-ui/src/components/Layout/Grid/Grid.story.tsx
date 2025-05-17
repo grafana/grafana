@@ -1,6 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
 import { useTheme2 } from '../../../themes';
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
@@ -39,6 +40,9 @@ ColumnsNumber.argTypes = {
     control: 'select',
     options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
   },
+  gap: SpacingTokenControl,
+  rowGap: SpacingTokenControl,
+  columnGap: SpacingTokenControl,
 };
 ColumnsNumber.args = {
   columns: 3,
@@ -52,7 +56,7 @@ ColumnsNumber.parameters = {
 export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
   const theme = useTheme2();
   return (
-    <Grid gap={args.gap} minColumnWidth={args.minColumnWidth}>
+    <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
         <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
           N# {i}
@@ -60,6 +64,11 @@ export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
       ))}
     </Grid>
   );
+};
+ColumnsMinWidth.argTypes = {
+  gap: SpacingTokenControl,
+  rowGap: SpacingTokenControl,
+  columnGap: SpacingTokenControl,
 };
 ColumnsMinWidth.args = {
   minColumnWidth: 21,

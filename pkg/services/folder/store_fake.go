@@ -5,7 +5,7 @@ import (
 )
 
 type fakeStore struct {
-	ExpectedChildFolders  []*Folder
+	ExpectedChildFolders  []*FolderReference
 	ExpectedParentFolders []*Folder
 	ExpectedFolders       []*Folder
 	ExpectedFolder        *Folder
@@ -47,7 +47,7 @@ func (f *fakeStore) GetParents(ctx context.Context, q GetParentsQuery) ([]*Folde
 	return f.ExpectedParentFolders, f.ExpectedError
 }
 
-func (f *fakeStore) GetChildren(ctx context.Context, cmd GetChildrenQuery) ([]*Folder, error) {
+func (f *fakeStore) GetChildren(ctx context.Context, cmd GetChildrenQuery) ([]*FolderReference, error) {
 	return f.ExpectedChildFolders, f.ExpectedError
 }
 
@@ -61,4 +61,8 @@ func (f *fakeStore) GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) 
 
 func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
+}
+
+func (f *fakeStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	return int64(len(f.ExpectedFolders)), f.ExpectedError
 }

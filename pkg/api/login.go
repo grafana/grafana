@@ -130,8 +130,8 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		// LDAP users authenticated by auth proxy are also assigned login token but their auth module is LDAP
 		if hs.Cfg.AuthProxy.Enabled &&
 			hs.Cfg.AuthProxy.EnableLoginToken &&
-			c.SignedInUser.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule) {
-			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			c.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule) {
+			user := &user.User{ID: c.UserID, Email: c.Email, Login: c.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
 				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
@@ -290,7 +290,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// FIXME: restructure saml client to implement authn.LogoutClient
 	if hs.samlSingleLogoutEnabled() {
-		if c.SignedInUser.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
+		if c.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
 			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 			return
 		}
@@ -305,7 +305,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		return
 	}
 
-	hs.log.Info("Successful Logout", "id", c.SignedInUser.GetID())
+	hs.log.Info("Successful Logout", "id", c.GetID())
 	c.Redirect(redirect.URL)
 }
 
@@ -350,15 +350,15 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 	setCookie := true
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		var userID int64
-		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
+		if c.SignedInUser != nil && !c.IsNil() {
 			var errID error
-			userID, errID = identity.UserIdentifier(c.SignedInUser.GetID())
+			userID, errID = identity.UserIdentifier(c.GetID())
 			if errID != nil {
 				hs.log.Error("failed to retrieve user ID", "error", errID)
 			}
 		}
 
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
 		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 		if err != nil {
 			c.Redirect(hs.Cfg.AppSubURL + "/login")

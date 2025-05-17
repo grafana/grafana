@@ -1,6 +1,6 @@
 import { startCase, uniq } from 'lodash';
 
-import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { ScopedVars, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -79,23 +79,6 @@ export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[],
   }
 
   return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
-};
-
-export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
-  return `{${filters
-    .filter((f) => f.key && f.operator && f.value)
-    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f, lp)}`)
-    .join(' && ')}}`;
-};
-
-const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => {
-  if (lp.getIntrinsics().find((t) => t === f.key)) {
-    return f.value;
-  }
-  if (parseInt(f.value, 10).toString() === f.value) {
-    return f.value;
-  }
-  return `"${f.value}"`;
 };
 
 export const getTagWithoutScope = (tag: string) => {

@@ -1,4 +1,5 @@
 import { isIconName } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Badge, Card, Icon } from '@grafana/ui';
 
 import { UIMap } from '../constants';
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function ProviderCard({ providerId, enabled, configPath, authType, onClick }: Props) {
+  const { t } = useTranslate();
   //@ts-expect-error
   const url = getProviderUrl({ configPath, id: providerId });
   const [iconName, displayName] = UIMap[providerId] || ['lock', providerId.toUpperCase()];
@@ -26,7 +28,14 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
         </Card.Figure>
       )}
       <Card.Actions>
-        <Badge text={enabled ? 'Enabled' : 'Not enabled'} color={enabled ? 'green' : 'blue'} />
+        <Badge
+          text={
+            enabled
+              ? t('auth-config.provider-card.text-badge-enabled', 'Enabled')
+              : t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')
+          }
+          color={enabled ? 'green' : 'blue'}
+        />
       </Card.Actions>
     </Card>
   );

@@ -29,11 +29,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
 
-	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
-	if errors.As(err, &secretsPlugin) {
-		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
-	}
-
 	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
 }
 

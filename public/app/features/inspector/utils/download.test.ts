@@ -105,7 +105,7 @@ describe('inspector download', () => {
           rows: [{ timeEpochMs: 100, entry: 'testEntry' } as unknown as LogRowModel],
         },
         'test',
-        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\ttestEntry\n`,
+        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\t1970-01-01T00:00:00.100Z\ttestEntry\n`,
       ],
     ])('should, when logsModel is %s and title is %s, resolve in %s', async (logsModel, title, expected) => {
       downloadLogsModelAsTxt(logsModel, title);
@@ -116,6 +116,13 @@ describe('inspector download', () => {
 
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-logs-${dateTimeFormat(1400000000000)}.txt`);
+    });
+
+    it('should, when title is empty, resolve in %s', async () => {
+      downloadLogsModelAsTxt({ meta: [], rows: [] });
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
+      const filename = call[1];
+      expect(filename).toEqual(`Logs-${dateTimeFormat(1400000000000)}.txt`);
     });
   });
 });

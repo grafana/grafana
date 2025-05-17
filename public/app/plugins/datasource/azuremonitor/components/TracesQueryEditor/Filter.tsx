@@ -5,6 +5,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import {
   HorizontalGroup,
@@ -208,6 +209,7 @@ const Filter = (
   const [selected, setSelected] = useState<SelectableValue[]>(
     item.filters ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter })) : []
   );
+  const { t } = useTranslate();
 
   const loadOptions = async () => {
     setLoading(true);
@@ -240,7 +242,7 @@ const Filter = (
     <HorizontalGroup spacing="none">
       <Select
         menuShouldPortal
-        placeholder="Property"
+        placeholder={t('components.filter.placeholder-property', 'Property')}
         value={item.property ? { value: item.property, label: item.property } : null}
         options={addValueToOptions(
           properties.map((type) => ({ label: type, value: type })),
@@ -261,7 +263,7 @@ const Filter = (
       <AsyncMultiSelect
         blurInputOnSelect={false}
         menuShouldPortal
-        placeholder="Value"
+        placeholder={t('components.filter.placeholder-value', 'Value')}
         value={selected}
         loadOptions={loadOptions}
         isLoading={loading}
@@ -280,7 +282,13 @@ const Filter = (
         onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
         hideSelectedOptions={false}
       />
-      <AccessoryButton aria-label="Remove filter" icon="times" variant="secondary" onClick={onDelete} type="button" />
+      <AccessoryButton
+        aria-label={t('components.filter.aria-label-remove-filter', 'Remove filter')}
+        icon="times"
+        variant="secondary"
+        onClick={onDelete}
+        type="button"
+      />
     </HorizontalGroup>
   );
 };

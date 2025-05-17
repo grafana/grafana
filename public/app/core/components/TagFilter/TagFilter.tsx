@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';
 import { TagOption, TagSelectOption } from './TagOption';
@@ -55,7 +55,7 @@ export const TagFilter = ({
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
-
+  const { t } = useTranslate();
   const onLoadOptions = useCallback(async () => {
     const options = await tagOptions();
     return options.map((option) => {
@@ -159,7 +159,12 @@ export const TagFilter = ({
           <Trans i18nKey="tag-filter.clear-button">Clear tags</Trans>
         </button>
       )}
-      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect
+        key={selectKey}
+        {...selectOptions}
+        prefix={<Icon name="tag-alt" />}
+        aria-label={t('tag-filter.select-aria-label', 'Tag filter')}
+      />
     </div>
   );
 };

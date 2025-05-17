@@ -214,7 +214,7 @@ def rgm_main():
         name = "rgm-main-prerelease",
         trigger = main_trigger,
         steps = rgm_run("rgm-build", "drone_build_main.sh"),
-        depends_on = ["main-test-backend", "main-test-frontend"],
+        depends_on = ["main-test-backend"],
     )
 
 def rgm_tag():

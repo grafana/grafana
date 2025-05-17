@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 
-import { FieldType, FormattedValue, toDataFrame } from '@grafana/data/src';
+import { FieldType, FormattedValue, toDataFrame } from '@grafana/data';
 
 import RawListContainer, { RawListContainerProps } from './RawListContainer';
 

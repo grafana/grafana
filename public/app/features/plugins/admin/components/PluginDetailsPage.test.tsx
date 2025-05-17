@@ -106,12 +106,6 @@ describe('PluginDetailsPage', () => {
     expect(screen.getByText('Plugin not found')).toBeInTheDocument();
   });
 
-  it('should show angular deprecation notice when angular is detected', () => {
-    mockUseGetSingle.mockReturnValue({ ...plugin, angularDetected: true });
-    render(<PluginDetailsPage pluginId="test-plugin" />);
-    expect(screen.getByText(/legacy platform based on AngularJS/i)).toBeInTheDocument();
-  });
-
   it('should not show right panel when feature toggle is disabled', () => {
     config.featureToggles.pluginsDetailsRightPanel = false;
     render(<PluginDetailsPage pluginId="test-plugin" />);

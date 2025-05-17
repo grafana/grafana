@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from '@hello-pangea/dnd';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';

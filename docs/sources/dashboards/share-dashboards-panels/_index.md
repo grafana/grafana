@@ -41,7 +41,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
   configure-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report

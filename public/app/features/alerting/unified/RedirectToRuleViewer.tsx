@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
@@ -52,6 +53,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
     loading,
     rules = [],
   } = useCloudCombinedRulesMatching(name, sourceName, { namespace, groupName: group });
+  const { t } = useTranslate();
 
   if (!name || !sourceName) {
     return <Navigate replace to="/notfound" />;
@@ -60,7 +62,13 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (error) {
     return (
       <RuleViewerLayout title={pageTitle}>
-        <Alert title={`Failed to load rules from ${sourceName}`}>
+        <Alert
+          title={t(
+            'alerting.redirect-to-rule-viewer.title-failed-to-load',
+            'Failed to load rules from {{sourceName}}',
+            { sourceName }
+          )}
+        >
           {isFetchError(error) && (
             <details className={styles.errorMessage}>
               {error.message}
@@ -76,7 +84,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (loading) {
     return (
       <RuleViewerLayout title={pageTitle}>
-        <LoadingPlaceholder text="Loading rule..." />
+        <LoadingPlaceholder text={t('alerting.redirect-to-rule-viewer.text-loading-rule', 'Loading rule...')} />
       </RuleViewerLayout>
     );
   }
@@ -86,7 +94,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (!rulesSource) {
     return (
       <RuleViewerLayout title={pageTitle}>
-        <Alert title="Could not view rule">
+        <Alert title={t('alerting.redirect-to-rule-viewer.title-could-not-view-rule', 'Could not view rule')}>
           <details className={styles.errorMessage}>{`Could not find data source with name: ${sourceName}.`}</details>
         </Alert>
       </RuleViewerLayout>
@@ -103,8 +111,10 @@ export function RedirectToRuleViewer(): JSX.Element | null {
     return (
       <RuleViewerLayout title={pageTitle}>
         <div data-testid="no-rules">
-          No rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
-          <span className={styles.param}>{name}</span>
+          <Trans i18nKey="alerting.redirect-to-rule-viewer.no-rules-found" values={{ sourceName, name }}>
+            No rules in <span className={styles.param}>{'{{sourceName}}'}</span> matched the name{' '}
+            <span className={styles.param}>{'{{name}}'}</span>
+          </Trans>
         </div>
       </RuleViewerLayout>
     );
@@ -113,8 +123,10 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   return (
     <RuleViewerLayout title={pageTitle}>
       <div>
-        Several rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
-        <span className={styles.param}>{name}</span>, please select the rule you want to view.
+        <Trans i18nKey="alerting.redirect-to-rule-viewer.several-rules-found" values={{ sourceName, name }}>
+          Several rules in <span className={styles.param}>{'{{sourceName}}'}</span> matched the name{' '}
+          <span className={styles.param}>{'{{name}}'}</span>, please select the rule you want to view.
+        </Trans>
       </div>
       <div className={styles.rules}>
         {rules.map((rule, index) => {

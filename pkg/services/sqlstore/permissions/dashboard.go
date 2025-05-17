@@ -58,14 +58,15 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	var dashboardAction string
 	var folderActionSets []string
 	var dashboardActionSets []string
-	if queryType == searchstore.TypeFolder {
+	switch queryType {
+	case searchstore.TypeFolder:
 		folderAction = dashboards.ActionFoldersRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	} else if queryType == searchstore.TypeDashboard {
+	case searchstore.TypeDashboard:
 		dashboardAction = dashboards.ActionDashboardsRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
@@ -74,18 +75,18 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
-	} else if queryType == searchstore.TypeAlertFolder {
+	case searchstore.TypeAlertFolder:
 		folderAction = accesscontrol.ActionAlertingRuleRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = accesscontrol.ActionAlertingRuleCreate
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	} else if queryType == searchstore.TypeAnnotation {
+	case searchstore.TypeAnnotation:
 		dashboardAction = accesscontrol.ActionAnnotationsRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-	} else {
+	default:
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}

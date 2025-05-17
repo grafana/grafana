@@ -18,6 +18,9 @@ type ZanzanaClientSettings struct {
 	// Addr is the address of the Zanzana server.
 	// Only used when mode is set to client.
 	Addr string
+	// Certificate used to authenticate the Server
+	// Only used when mode is set to client
+	ServerCertFile string
 	// Token used to perform the exchange request.
 	// Only used when mode is set to client.
 	Token string
@@ -60,6 +63,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zc.Token = clientSec.Key("token").MustString("")
 	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
+	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
 
 	cfg.ZanzanaClient = zc
 

@@ -3,7 +3,7 @@ package migrations
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/usermig"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -150,6 +150,12 @@ func addUserMigrations(mg *Migrator) {
 		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Make sure users uid are set", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid is NULL OR uid = '';").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid is NULL OR uid = '';").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid is NULL OR uid = '';").
+		Spanner("UPDATE user SET uid=concat('u',lpad(CAST(id AS STRING),9,'0')) WHERE uid IS NULL OR uid = '';"))
 
 	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,

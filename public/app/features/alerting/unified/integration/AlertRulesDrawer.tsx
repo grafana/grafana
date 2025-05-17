@@ -1,8 +1,8 @@
 import { Suspense, lazy } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
 import { createRelativeUrl } from '../utils/url';
 
 const AlertRulesDrawerContent = lazy(
@@ -15,9 +15,20 @@ interface Props {
 }
 
 export function AlertRulesDrawer({ dashboardUid, onDismiss }: Props) {
+  const { t } = useTranslate();
+
   return (
-    <Drawer title="Alert rules" subtitle={<DrawerSubtitle dashboardUid={dashboardUid} />} onClose={onDismiss} size="lg">
-      <Suspense fallback={<LoadingPlaceholder text="Loading alert rules" />}>
+    <Drawer
+      title={t('alerting.alert-rules-drawer.title-alert-rules', 'Alert rules')}
+      subtitle={<DrawerSubtitle dashboardUid={dashboardUid} />}
+      onClose={onDismiss}
+      size="lg"
+    >
+      <Suspense
+        fallback={
+          <LoadingPlaceholder text={t('alerting.alert-rules-drawer.text-loading-alert-rules', 'Loading alert rules')} />
+        }
+      >
         <AlertRulesDrawerContent dashboardUid={dashboardUid} />
       </Suspense>
     </Drawer>
@@ -25,6 +36,7 @@ export function AlertRulesDrawer({ dashboardUid, onDismiss }: Props) {
 }
 
 function DrawerSubtitle({ dashboardUid }: { dashboardUid: string }) {
+  const { t } = useTranslate();
   const searchParams = new URLSearchParams({ search: `dashboard:${dashboardUid}` });
 
   return (

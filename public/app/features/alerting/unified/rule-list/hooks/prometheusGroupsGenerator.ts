@@ -1,42 +1,116 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
-import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
+import { useDispatch } from 'app/types/store';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { BaseQueryFnArgs } from '../../api/alertingApi';
+import { alertRuleApi } from '../../api/alertRuleApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
+
+interface UseGeneratorHookOptions {
+  populateCache?: boolean;
+}
 
 interface FetchGroupsOptions {
   groupLimit?: number;
   groupNextToken?: string;
 }
 
-export function usePrometheusGroupsGenerator() {
+export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
+  const dispatch = useDispatch();
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
-      const getRuleSourceGroups = (options: FetchGroupsOptions) =>
-        getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
+      const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
+        const response = await getGroups({
+          ruleSource: { uid: ruleSource.uid },
+          notificationOptions: { showErrorAlert: false },
+          ...fetchOptions,
+        }).unwrap();
 
-      yield* genericGroupsGenerator(getRuleSourceGroups, groupLimit);
+        if (hookOptions.populateCache) {
+          response.data.groups.forEach((group) => {
+            dispatch(
+              prometheusApi.util.upsertQueryData(
+                'getGroups',
+                { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
+                { data: { groups: [group] }, status: 'success' }
+              )
+            );
+          });
+        }
+
+        return response;
+      };
+
+      yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
-    [getGroups]
+    [getGroups, dispatch, hookOptions.populateCache]
   );
 }
 
-export function useGrafanaGroupsGenerator() {
+export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
+  const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+
+  const getGroupsAndProvideCache = useCallback(
+    async (fetchOptions: FetchGroupsOptions) => {
+      const response = await getGrafanaGroups(fetchOptions).unwrap();
+
+      // This is not mandatory to preload ruler rules, but it improves the UX
+      // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
+      if (hookOptions.populateCache) {
+        const cacheAndRulerPreload = response.data.groups.map(async (group) => {
+          dispatch(
+            alertRuleApi.util.prefetch(
+              'getGrafanaRulerGroup',
+              { folderUid: group.folderUid, groupName: group.name },
+              { force: true }
+            )
+          );
+          await dispatch(
+            prometheusApi.util.upsertQueryData(
+              'getGrafanaGroups',
+              { folderUid: group.folderUid, groupName: group.name },
+              { data: { groups: [group] }, status: 'success' }
+            )
+          );
+        });
+
+        await Promise.allSettled(cacheAndRulerPreload);
+      }
+
+      return response;
+    },
+    [getGrafanaGroups, dispatch, hookOptions.populateCache]
+  );
 
   return useCallback(
     async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGrafanaGroups, groupLimit);
+      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
     },
-    [getGrafanaGroups]
+    [getGroupsAndProvideCache]
   );
+}
+
+/**
+ * Converts a Prometheus groups generator yielding arrays of groups to a generator yielding groups one by one
+ * @param generator - The paginated generator to convert
+ * @returns A non-paginated generator that yields all groups from the original generator one by one
+ */
+export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO>(
+  generator: AsyncGenerator<TGroup[], void, unknown>
+): AsyncGenerator<TGroup, void, unknown> {
+  return (async function* () {
+    for await (const batch of generator) {
+      for (const item of batch) {
+        yield item;
+      }
+    }
+  })();
 }
 
 // Generator lazily provides groups one by one only when needed
@@ -44,38 +118,17 @@ export function useGrafanaGroupsGenerator() {
 // For unpaginated data sources we fetch everything in one go
 // For paginated we fetch the next page when needed
 async function* genericGroupsGenerator<TGroup>(
-  fetchGroups: TypedLazyQueryTrigger<PromRulesResponse<TGroup>, FetchGroupsOptions, BaseQueryFn<BaseQueryFnArgs>>,
+  fetchGroups: (options: FetchGroupsOptions) => Promise<PromRulesResponse<TGroup>>,
   groupLimit: number
 ) {
-  const response = await fetchGroups({ groupLimit });
+  let response = await fetchGroups({ groupLimit });
+  yield response.data.groups;
 
-  if (!response.isSuccess) {
-    return;
-  }
-
-  if (response.data?.data) {
-    yield* response.data.data.groups;
-  }
-
-  let lastToken: string | undefined = undefined;
-  if (response.data?.data?.groupNextToken) {
-    lastToken = response.data.data.groupNextToken;
-  }
+  let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
-    const response = await fetchGroups({
-      groupNextToken: lastToken,
-      groupLimit: groupLimit,
-    });
-
-    if (!response.isSuccess) {
-      return;
-    }
-
-    if (response.data?.data) {
-      yield* response.data.data.groups;
-    }
-
-    lastToken = response.data?.data?.groupNextToken;
+    response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
+    yield response.data.groups;
+    lastToken = response.data?.groupNextToken;
   }
 }

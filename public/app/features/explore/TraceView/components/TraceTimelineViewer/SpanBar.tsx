@@ -20,6 +20,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -216,7 +217,9 @@ function SpanBar({
             placement="top"
             content={
               <div>
-                A segment on the <em>critical path</em> of the overall trace / request / workflow.
+                <Trans i18nKey="explore.span-bar.tooltip-critical-path">
+                  A segment on the <em>critical path</em> of the overall trace / request / workflow.
+                </Trans>
               </div>
             }
           >

@@ -4,10 +4,10 @@ import classNames from 'classnames';
 import { ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
@@ -57,8 +57,12 @@ export function VariableEditorList({
       >
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Definition</th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.variable">Variable</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.definition">Definition</Trans>
+            </th>
             <th colSpan={5} />
           </tr>
         </thead>
@@ -90,7 +94,7 @@ export function VariableEditorList({
       <Stack>
         <VariablesDependenciesButton variables={variables} />
         <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
-          New variable
+          <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>
     </Stack>
@@ -98,6 +102,7 @@ export function VariableEditorList({
 }
 
 function EmptyVariablesList({ onAdd }: { onAdd: () => void }) {
+  const { t } = useTranslate();
   return (
     <Stack direction="column">
       <EmptyState

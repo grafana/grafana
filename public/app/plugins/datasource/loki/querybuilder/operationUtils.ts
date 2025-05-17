@@ -336,11 +336,14 @@ export function getLineFilterRenderer(operation: string, caseInsensitive?: boole
     return `${innerExpr} ${operation} ${delimiter}${params.join(`${delimiter} or ${delimiter}`)}${delimiter}`;
   };
 }
+
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
     name: 'Range',
     type: 'string',
-    options: ['$__auto', '1m', '5m', '10m', '1h', '24h'],
+    options: ['$__auto'],
+    description:
+      'Use the default value "$__auto". Change the "step" value in the query options to change the bucket size.',
   };
 }
 

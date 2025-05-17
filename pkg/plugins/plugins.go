@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,14 +57,15 @@ type Plugin struct {
 
 	ExternalService *auth.ExternalService
 
-	Renderer       pluginextensionv2.RendererPlugin
-	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
-	client         backendplugin.Plugin
-	log            log.Logger
+	Renderer pluginextensionv2.RendererPlugin
+	client   backendplugin.Plugin
+	log      log.Logger
 
 	SkipHostEnvVars bool
 
 	mu sync.Mutex
+
+	Translations map[string]string
 }
 
 var (
@@ -126,11 +126,14 @@ type JSONData struct {
 	SDK                       bool            `json:"sdk,omitempty"`
 	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
-	// Backend (Datasource + Renderer + SecretsManager)
+	// Backend (Datasource + Renderer)
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
 	IAM *auth.IAM `json:"iam,omitempty"`
+
+	// List of languages supported by the plugin
+	Languages []string `json:"languages,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -442,10 +445,6 @@ func (p *Plugin) ExecutablePath() string {
 		return p.executablePath("plugin_start")
 	}
 
-	if p.IsSecretsManager() {
-		return p.executablePath("secrets_plugin_start")
-	}
-
 	return p.executablePath(p.Executable)
 }
 
@@ -486,10 +485,6 @@ func (p *Plugin) IsRenderer() bool {
 	return p.Type == TypeRenderer
 }
 
-func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == TypeSecretsManager
-}
-
 func (p *Plugin) IsApp() bool {
 	return p.Type == TypeApp
 }
@@ -519,22 +514,20 @@ var PluginTypes = []Type{
 	TypePanel,
 	TypeApp,
 	TypeRenderer,
-	TypeSecretsManager,
 }
 
 type Type string
 
 const (
-	TypeDataSource     Type = "datasource"
-	TypePanel          Type = "panel"
-	TypeApp            Type = "app"
-	TypeRenderer       Type = "renderer"
-	TypeSecretsManager Type = "secretsmanager"
+	TypeDataSource Type = "datasource"
+	TypePanel      Type = "panel"
+	TypeApp        Type = "app"
+	TypeRenderer   Type = "renderer"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case TypeDataSource, TypePanel, TypeApp, TypeRenderer, TypeSecretsManager:
+	case TypeDataSource, TypePanel, TypeApp, TypeRenderer:
 		return true
 	}
 	return false

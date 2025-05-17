@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 
+import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
 
 import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
@@ -275,6 +276,9 @@ describe('LokiQueryBuilderOptions', () => {
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), propOverrides: Partial<Props> = {}) {
+  const datasource = createLokiDatasource();
+  datasource.maxLines = 20;
+
   const props = {
     query: {
       refId: 'A',
@@ -283,7 +287,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), pr
     },
     onRunQuery: jest.fn(),
     onChange,
-    maxLines: 20,
+    datasource,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
     ...propOverrides,
   };

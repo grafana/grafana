@@ -15,6 +15,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -245,7 +246,9 @@ export function TraceView(props: Props) {
           />
         </>
       ) : (
-        <div className={styles.noDataMsg}>No data</div>
+        <div className={styles.noDataMsg}>
+          <Trans i18nKey="explore.trace-view.no-data">No data</Trans>
+        </div>
       )}
     </>
   );

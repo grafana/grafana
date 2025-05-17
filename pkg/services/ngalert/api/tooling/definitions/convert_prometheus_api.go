@@ -82,6 +82,36 @@ import (
 //       403: ForbiddenError
 //       404: NotFound
 
+// swagger:route POST /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusPostRuleGroups
+//
+// Converts the submitted rule groups into Grafana-Managed Rules.
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// swagger:route POST /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
+//
+// Converts the submitted rule groups into Grafana-Managed Rules.
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
 // Route for mimirtool
 // swagger:route POST /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusPostRuleGroup
 //
@@ -180,6 +210,12 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
 	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
+	// in: header
+	TargetDatasourceUID string `json:"x-grafana-alerting-target-datasource-uid"`
+	// in: header
+	FolderUID string `json:"x-grafana-alerting-folder-uid"`
+	// in: header
+	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
 	// in:body
 	Body PrometheusRuleGroup
 }
@@ -192,9 +228,12 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name     string           `yaml:"name"`
-	Interval model.Duration   `yaml:"interval"`
-	Rules    []PrometheusRule `yaml:"rules"`
+	Name        string            `yaml:"name"`
+	Interval    model.Duration    `yaml:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
 }
 
 // swagger:model

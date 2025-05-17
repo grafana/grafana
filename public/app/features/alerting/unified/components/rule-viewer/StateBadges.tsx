@@ -44,6 +44,14 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
       color = 'warning';
       stateLabel = 'Pending';
       break;
+    case PromAlertingRuleState.Recovering:
+      color = 'warning';
+      stateLabel = 'Recovering';
+      break;
+    case PromAlertingRuleState.Unknown:
+      color = 'info';
+      stateLabel = 'Unknown';
+      break;
   }
 
   // if the rule is in "error" health we don't really care about the state
@@ -61,7 +69,7 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
 };
 
 // the generic badge component
-type BadgeColor = 'success' | 'error' | 'warning';
+type BadgeColor = 'success' | 'error' | 'warning' | 'info';
 
 interface BadgeProps {
   color: BadgeColor;

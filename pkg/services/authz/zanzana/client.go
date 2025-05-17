@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 )
@@ -20,6 +22,10 @@ type Client interface {
 
 func NewClient(cc grpc.ClientConnInterface) (*client.Client, error) {
 	return client.New(cc)
+}
+
+func WithShadowClient(accessClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	return client.WithShadowClient(accessClient, zanzanaClient, reg), nil
 }
 
 func NewNoopClient() *client.NoopClient {

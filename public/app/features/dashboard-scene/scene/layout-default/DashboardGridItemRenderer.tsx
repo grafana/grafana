@@ -14,7 +14,11 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
 
   if (!variableName) {
     if (body instanceof VizPanel) {
-      return <body.Component model={body} key={body.state.key} />;
+      return (
+        <div className={panelWrapper} ref={model.containerRef}>
+          <body.Component model={body} key={body.state.key} />
+        </div>
+      );
     }
   }
 
@@ -23,9 +27,9 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   }
 
   return (
-    <div className={layoutStyle}>
+    <div className={layoutStyle} ref={model.containerRef}>
       {repeatedPanels.map((panel) => (
-        <div className={itemStyle} key={panel.state.key}>
+        <div className={panelWrapper} key={panel.state.key}>
           <panel.Component model={panel} key={panel.state.key} />
         </div>
       ))}
@@ -75,8 +79,10 @@ function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow
   }, [direction, itemCount, maxPerRow, itemHeight]);
 }
 
-const itemStyle = css({
+const panelWrapper = css({
   display: 'flex',
   flexGrow: 1,
   position: 'relative',
+  width: '100%',
+  height: '100%',
 });

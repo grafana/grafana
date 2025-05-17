@@ -44,6 +44,20 @@
       "priority": 0
     },
     {
+      "name": "grafana.app/deprecatedInternalID",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the resource",
+      "priority": 0
+    },
+    {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
+    },
+    {
       "name": "schema_version",
       "type": "number",
       "format": "int32",
@@ -168,13 +182,6 @@
       "format": "int64",
       "description": "Total number of views",
       "priority": 0
-    },
-    {
-      "name": "legacy_id",
-      "type": "number",
-      "format": "int64",
-      "description": "Deprecated legacy id of the dashboard",
-      "priority": 0
     }
   ],
   "rows": [
@@ -189,6 +196,7 @@
         null,
         null,
         null,
+        "repo",
         null,
         null,
         null,
@@ -228,6 +236,8 @@
         "xxx",
         null,
         null,
+        11,
+        "repo",
         null,
         null,
         [
@@ -245,7 +255,6 @@
         null,
         null,
         100,
-        null,
         null,
         null,
         null
@@ -271,6 +280,8 @@
         "xxx",
         null,
         null,
+        10,
+        "repo",
         null,
         null,
         [
@@ -289,7 +300,6 @@
         null,
         null,
         50,
-        null,
         null,
         null,
         null

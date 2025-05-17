@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -12,13 +13,20 @@ interface Props {
 
 export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.wrapper}>
       {labelKey}
       {operator}
       {value}
-      {!!onRemoveLabel && <IconButton name="times" size="xs" onClick={onRemoveLabel} tooltip="Remove label" />}
+      {!!onRemoveLabel && (
+        <IconButton
+          name="times"
+          size="xs"
+          onClick={onRemoveLabel}
+          tooltip={t('alerting.alert-label.tooltip-remove-label', 'Remove label')}
+        />
+      )}
     </div>
   );
 };

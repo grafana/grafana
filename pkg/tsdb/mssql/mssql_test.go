@@ -35,7 +35,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !(db.IsTestDBMSSQL() || runMssqlTests) {
+	if !db.IsTestDBMSSQL() && !runMssqlTests {
 		t.Skip()
 	}
 

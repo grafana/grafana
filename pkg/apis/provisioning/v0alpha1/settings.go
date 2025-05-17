@@ -25,12 +25,15 @@ type RepositoryView struct {
 	// Repository display
 	Title string `json:"title"`
 
-	// Edit options within the repository
-	ReadOnly bool `json:"readOnly"`
-
 	// The repository type
 	Type RepositoryType `json:"type"`
 
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
+
+	// For git, this is the target branch
+	Branch string `json:"branch,omitempty"`
+
+	// The supported workflows
+	Workflows []Workflow `json:"workflows"`
 }

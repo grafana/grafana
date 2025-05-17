@@ -183,6 +183,14 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"itemID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ID of the item that failed",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"links": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Links to actions that can be taken to resolve the failure",
@@ -198,7 +206,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"severity", "stepID", "item", "links"},
+				Required: []string{"severity", "stepID", "item", "itemID", "links"},
 			},
 		},
 		Dependencies: []string{

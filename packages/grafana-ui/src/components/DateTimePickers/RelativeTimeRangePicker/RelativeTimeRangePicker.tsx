@@ -14,7 +14,6 @@ import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
-import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../options';
@@ -170,13 +169,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                   <div className={styles.rightSide}>
                     <div className={styles.title}>
                       <TimePickerTitle>
-                        <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
-                          <div>
-                            <Trans i18nKey="time-picker.time-range.specify">
-                              Specify time range <Icon name="info-circle" />
-                            </Trans>
-                          </div>
-                        </Tooltip>
+                        <Trans i18nKey="time-picker.time-range.specify">Specify time range</Trans>
                       </TimePickerTitle>
                     </div>
                     <Field
@@ -219,48 +212,6 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     </div>
   );
 }
-
-const TooltipContent = () => {
-  const styles = useStyles2(toolTipStyles);
-  return (
-    <>
-      <div className={styles.supported}>
-        <Trans i18nKey="time-picker.time-range.supported-formats">
-          Supported formats: <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
-        </Trans>
-      </div>
-      <div>
-        <Trans i18nKey="time-picker.time-range.example">
-          Example: to select a time range from 10 minutes ago to now
-        </Trans>
-      </div>
-      <code className={styles.tooltip}>
-        <Trans i18nKey="time-picker.time-range.example-details">From: now-10m To: now</Trans>
-      </code>
-      <div className={styles.link}>
-        <Trans i18nKey="time-picker.time-range.more-info">
-          For more information see{' '}
-          <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
-            docs <Icon name="external-link-alt" />
-          </a>
-          .
-        </Trans>
-      </div>
-    </>
-  );
-};
-
-const toolTipStyles = (theme: GrafanaTheme2) => ({
-  supported: css({
-    marginBottom: theme.spacing(1),
-  }),
-  tooltip: css({
-    margin: 0,
-  }),
-  link: css({
-    marginTop: theme.spacing(1),
-  }),
-});
 
 const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });

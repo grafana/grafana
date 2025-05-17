@@ -259,11 +259,9 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
-		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
-			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-			if err != nil {
-				return err
-			}
+		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+		if err != nil {
+			return err
 		}
 
 		cmd.UpdateSecretFn = func() error {
@@ -922,7 +920,7 @@ func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 		} else {
 			return "es"
 		}
-	case datasources.DS_PROMETHEUS, datasources.DS_ALERTMANAGER:
+	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
@@ -948,11 +946,9 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	cmd.EncryptedSecureJsonData = make(map[string][]byte)
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
-		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
-		if err != nil {
-			return err
-		}
+	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err != nil {
+		return err
 	}
 
 	return nil

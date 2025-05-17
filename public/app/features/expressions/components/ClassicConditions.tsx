@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
 
 import { ClassicCondition, ExpressionQuery } from '../types';
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
+  const { t } = useTranslate();
+
   const onConditionChange = (condition: ClassicCondition, index: number) => {
     if (query.conditions) {
       onChange({
@@ -60,7 +63,7 @@ export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label="Conditions" labelWidth={14}>
+        <InlineField label={t('expressions.classic-conditions.label-conditions', 'Conditions')} labelWidth={14}>
           <div>
             {query.conditions?.map((condition, index) => {
               if (!condition) {

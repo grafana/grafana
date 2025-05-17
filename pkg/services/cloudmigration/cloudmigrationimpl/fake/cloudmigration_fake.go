@@ -83,13 +83,13 @@ func (m FakeServiceImpl) GetSessionList(_ context.Context, _ int64) (*cloudmigra
 	}, nil
 }
 
-func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, cmd cloudmigration.CreateSnapshotCommand) (*cloudmigration.CloudMigrationSnapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
-		SessionUID: sessionUid,
+		SessionUID: cmd.SessionUID,
 		Status:     cloudmigration.SnapshotStatusCreating,
 	}, nil
 }

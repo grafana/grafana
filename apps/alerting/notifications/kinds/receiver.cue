@@ -1,36 +1,27 @@
-package core
+package kinds
+
+import (
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+)
 
 receiver: {
-	kind:  "Receiver"
-	group: "notifications"
+	kind: "Receiver"
 	apiResource: {
 		groupOverride: "notifications.alerting.grafana.app"
 	}
-	codegen: {
-		frontend: false
-		backend:  true
-	}
 	pluralName: "Receivers"
 	current:    "v0alpha1"
+	codegen: {
+		ts: {enabled: false}
+		go: {enabled: true}
+	}
 	versions: {
 		"v0alpha1": {
 			schema: {
-				#Integration: {
-					uid?: string
-					type: string
-					disableResolveMessage?: bool
-					settings: {
-						[string]: _
-					}
-					secureFields?: [string]: bool
-				}
-				spec: {
-					title: string
-					integrations : [...#Integration]
-				}
+				spec: v0alpha1.ReceiverSpec
 			}
 			selectableFields: [
-				 "spec.title",
+				"spec.title",
 			]
 		}
 	}

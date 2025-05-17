@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
@@ -138,7 +139,9 @@ export const DataHoverView = ({
           ))}
           {links.map((link, i) => (
             <tr key={i}>
-              <th>Link</th>
+              <th>
+                <Trans i18nKey="visualization.data-hover-view.link">Link</Trans>
+              </th>
               <td colSpan={2}>
                 <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
                   {link.title}

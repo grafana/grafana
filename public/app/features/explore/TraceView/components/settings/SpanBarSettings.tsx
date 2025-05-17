@@ -7,6 +7,7 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
@@ -27,12 +28,18 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (
     <div className={css({ width: '100%' })}>
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Label" labelWidth={26} tooltip="Default: duration" grow>
+        <InlineField
+          label={t('explore.span-bar-settings.label-label', 'Label')}
+          labelWidth={26}
+          tooltip={t('explore.span-bar-settings.tooltip-default-duration', 'Default: duration')}
+          grow
+        >
           <Select
             inputId="label"
             options={selectOptions}
@@ -43,9 +50,9 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
                 type: v?.value ?? '',
               });
             }}
-            placeholder="Duration"
+            placeholder={t('explore.span-bar-settings.placeholder-duration', 'Duration')}
             isClearable
-            aria-label={'select-label-name'}
+            aria-label={t('explore.span-bar-settings.aria-label-selectlabelname', 'Select label name')}
             width={40}
           />
         </InlineField>
@@ -53,13 +60,16 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
           <InlineField
-            label="Tag key"
+            label={t('explore.span-bar-settings.label-tag-key', 'Tag key')}
             labelWidth={26}
-            tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            tooltip={t(
+              'explore.span-bar-settings.tooltip-tag-key',
+              "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            )}
           >
             <Input
               type="text"
-              placeholder="Enter tag key"
+              placeholder={t('explore.span-bar-settings.placeholder-enter-tag-key', 'Enter tag key')}
               onChange={(v) =>
                 updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'spanBar', {
                   ...options.jsonData.spanBar,
@@ -77,15 +87,19 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 }
 
 export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  const { t } = useTranslate();
   let suffix = options.type;
   suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#span-bar' : '/#span-bar';
 
   return (
     <ConfigSubSection
-      title="Span bar"
+      title={t('explore.span-bar-section.title-span-bar', 'Span bar')}
       description={
         <ConfigDescriptionLink
-          description="Add additional info next to the service and operation on a span bar row in the trace view."
+          description={t(
+            'explore.span-bar-section.description-link',
+            'Add additional info next to the service and operation on a span bar row in the trace view.'
+          )}
           suffix={suffix}
           feature="the span bar"
         />

@@ -22,6 +22,8 @@ type ListFoldersRequest = QueryActionCreatorResult<
   >
 >;
 
+const PENDING_STATUS = 'pending';
+
 const listAllFoldersSelector = createSelector(
   [(state: RootState) => state, (state: RootState, requests: ListFoldersRequest[]) => requests],
   (state: RootState, requests: ListFoldersRequest[]) => {
@@ -43,7 +45,7 @@ const listAllFoldersSelector = createSelector(
         permission: req.arg.permission,
       })(state);
 
-      if (page.status === 'pending') {
+      if (page.status === PENDING_STATUS) {
         isLoading = true;
       }
 
@@ -68,17 +70,18 @@ const listAllFoldersSelector = createSelector(
 );
 
 /**
- * Returns the whether the set of pages are 'fully loaded', and the last page number
+ * Returns whether the set of pages are 'fully loaded', the last page number, and if the last page is currently loading
  */
-function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined] {
+function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined, boolean] {
   const lastPage = pages.at(-1);
   const lastPageNumber = lastPage?.originalArgs?.page;
+  const lastPageLoading = lastPage?.status === PENDING_STATUS;
 
   if (!lastPage?.data) {
     // If there's no pages yet, or the last page is still loading
-    return [false, lastPageNumber];
+    return [false, lastPageNumber, lastPageLoading];
   } else {
-    return [lastPage.data.length < lastPage.originalArgs.limit, lastPageNumber];
+    return [lastPage.data.length < lastPage.originalArgs.limit, lastPageNumber, lastPageLoading];
   }
 }
 
@@ -106,8 +109,10 @@ export function useFoldersQuery(
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
       const pages = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
-      const [fullyLoaded, pageNumber] = getPagesLoadStatus(pages ?? []);
-      if (fullyLoaded) {
+      const [fullyLoaded, pageNumber, lastPageLoading] = getPagesLoadStatus(pages ?? []);
+
+      // If fully loaded or the last page is still loading, don't request a new page
+      if (fullyLoaded || lastPageLoading) {
         return;
       }
 
@@ -146,7 +151,6 @@ export function useFoldersQuery(
 
         return pageItems.flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
-
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),
             level: level,
@@ -154,6 +158,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
+              managedBy: item.managedBy,
             },
           };
 

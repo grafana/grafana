@@ -239,7 +239,7 @@
             "additionalProperties": false
           },
           "scenarioId": {
-            "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+            "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
             "type": "string",
             "enum": [
               "annotations",
@@ -265,6 +265,7 @@
               "random_walk_with_error",
               "raw_frame",
               "server_error_500",
+              "steps",
               "simulation",
               "slow_query",
               "streaming_client",
@@ -377,18 +378,12 @@
               "from": {
                 "description": "From is the start time of the query.",
                 "type": "string",
-                "default": "now-6h",
-                "examples": [
-                  "now-1h"
-                ]
+                "default": "now-6h"
               },
               "to": {
                 "description": "To is the end time of the query.",
                 "type": "string",
-                "default": "now",
-                "examples": [
-                  "now"
-                ]
+                "default": "now"
               }
             },
             "additionalProperties": false

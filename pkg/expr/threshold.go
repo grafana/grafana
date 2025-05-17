@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -130,7 +130,7 @@ type ConditionEvalJSON struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles) (Command, error) {
+func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 	cmdConfig := ThresholdCommandConfig{}
 	if err := json.Unmarshal(rn.QueryRaw, &cmdConfig); err != nil {
 		return nil, fmt.Errorf("failed to parse the threshold command: %w", err)
@@ -150,7 +150,7 @@ func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles)
 	if err != nil {
 		return nil, fmt.Errorf("invalid condition: %w", err)
 	}
-	if firstCondition.UnloadEvaluator != nil && features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
+	if firstCondition.UnloadEvaluator != nil {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
@@ -174,7 +174,7 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 	return []string{tc.ReferenceVar}
 }
 
-func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars, _ tracing.Tracer) (mathexp.Results, error) {
+func (tc *ThresholdCommand) Execute(_ context.Context, _ time.Time, vars mathexp.Vars, _ tracing.Tracer, _ *metrics.ExprMetrics) (mathexp.Results, error) {
 	eval := func(maybeValue *float64) *float64 {
 		if maybeValue == nil {
 			return nil

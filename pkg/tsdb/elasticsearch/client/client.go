@@ -162,7 +162,11 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
 	var err error
-	multiRequests := c.createMultiSearchRequests(r.Requests)
+	multiRequests, err := c.createMultiSearchRequests(r.Requests)
+	if err != nil {
+		return nil, err
+	}
+
 	queryParams := c.getMultiSearchQueryParameters()
 	_, span := tracing.DefaultTracer().Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch", trace.WithAttributes(
 		attribute.String("queryParams", queryParams),
@@ -340,11 +344,19 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			return err
 		}
 
-		if tok == "hits" {
+		switch tok {
+		case "hits":
 			if err := streamHitsArray(dec, sr); err != nil {
 				return err
 			}
-		} else {
+		case "total":
+			var total *SearchResponseHitsTotal
+			err := dec.Decode(&total)
+			if err != nil {
+				return err
+			}
+			sr.Hits.Total = total
+		default:
 			// ignore these fields as they are not used in the current implementation
 			err := skipUnknownField(dec)
 			if err != nil {
@@ -429,14 +441,14 @@ func skipUnknownField(dec *json.Decoder) error {
 	}
 }
 
-func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
+func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) ([]*multiRequest, error) {
 	multiRequests := []*multiRequest{}
 
 	for _, searchReq := range searchRequests {
 		indices, err := c.indexPattern.GetIndices(searchReq.TimeRange)
 		if err != nil {
-			c.logger.Error("Failed to get indices from index pattern", "error", err)
-			continue
+			err := fmt.Errorf("failed to get indices from index pattern. %s", err)
+			return nil, backend.DownstreamError(err)
 		}
 		mr := multiRequest{
 			header: map[string]any{
@@ -451,7 +463,7 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 		multiRequests = append(multiRequests, &mr)
 	}
 
-	return multiRequests
+	return multiRequests, nil
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {

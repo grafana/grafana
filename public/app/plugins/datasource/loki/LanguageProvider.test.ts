@@ -566,7 +566,13 @@ describe('Language completion provider', () => {
     });
 
     it('should filter internal labels', async () => {
-      const datasourceWithLabels = setup({ foo: [], bar: [], __name__: [], __stream_shard__: [] });
+      const datasourceWithLabels = setup({
+        foo: [],
+        bar: [],
+        __name__: [],
+        __stream_shard__: [],
+        __aggregated_metric__: [],
+      });
 
       const instance = new LanguageProvider(datasourceWithLabels);
       const labels = await instance.fetchLabels();

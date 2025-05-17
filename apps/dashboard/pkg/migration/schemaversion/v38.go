@@ -94,9 +94,10 @@ func migrateTableDisplayModeToCellOptions(displayMode string) map[string]interfa
 	switch displayMode {
 	case "basic", "gradient-gauge", "lcd-gauge":
 		gaugeMode := "basic"
-		if displayMode == "gradient-gauge" {
+		switch displayMode {
+		case "gradient-gauge":
 			gaugeMode = "gradient"
-		} else if displayMode == "lcd-gauge" {
+		case "lcd-gauge":
 			gaugeMode = "lcd"
 		}
 		return map[string]interface{}{

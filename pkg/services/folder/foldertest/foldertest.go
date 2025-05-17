@@ -8,11 +8,13 @@ import (
 )
 
 type FakeService struct {
+	ExpectedFoldersRef       []*folder.FolderReference
 	ExpectedFolders          []*folder.Folder
 	ExpectedFolder           *folder.Folder
 	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
+	LastQuery                folder.GetFoldersQuery
 }
 
 func NewFakeService() *FakeService {
@@ -21,11 +23,11 @@ func NewFakeService() *FakeService {
 
 var _ folder.Service = (*FakeService)(nil)
 
-func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	return s.ExpectedFoldersRef, s.ExpectedError
 }
-func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	return s.ExpectedFoldersRef, s.ExpectedError
 }
 
 func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -90,5 +92,10 @@ func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQ
 }
 
 func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	s.LastQuery = q
 	return s.ExpectedFolders, s.ExpectedError
+}
+
+func (s *FakeService) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
+	return int64(len(s.ExpectedFolders)), s.ExpectedError
 }

@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestPatchLibraryElement(t *testing.T) {
+func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
@@ -323,9 +324,10 @@ func TestPatchLibraryElement(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := model.PatchLibraryElementCommand{
-				Name:    "Text - Library Panel",
-				Version: 1,
-				Kind:    int64(model.PanelElement),
+				Name:      "Text - Library Panel",
+				Version:   1,
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)

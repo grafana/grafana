@@ -14,7 +14,7 @@ const (
 var (
 	bundleReaderRole = accesscontrol.RoleDTO{
 		Name:        "fixed:support.bundles:reader",
-		DisplayName: "Support bundle reader",
+		DisplayName: "Reader",
 		Description: "List and download support bundles",
 		Group:       "Support bundles",
 		Permissions: []accesscontrol.Permission{
@@ -24,7 +24,7 @@ var (
 
 	bundleWriterRole = accesscontrol.RoleDTO{
 		Name:        "fixed:support.bundles:writer",
-		DisplayName: "Support bundle writer",
+		DisplayName: "Writer",
 		Description: "Create, delete, list and download support bundles",
 		Group:       "Support bundles",
 		Permissions: []accesscontrol.Permission{

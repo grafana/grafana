@@ -35,14 +35,32 @@ const DATAPLANE_SEVERITY_NAME = 'severity';
 const DATAPLANE_ID_NAME = 'id';
 const DATAPLANE_LABELS_NAME = 'labels';
 
+// NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
-  const result: Labels = {};
+  let needsSerialization = false;
 
-  Object.entries(logFrameLabels).forEach(([k, v]) => {
-    result[k] = typeof v === 'string' ? v : JSON.stringify(v);
-  });
+  for (const k in logFrameLabels) {
+    const v = logFrameLabels[k];
 
-  return result;
+    if (typeof v !== 'string') {
+      needsSerialization = true;
+      break;
+    }
+  }
+
+  if (needsSerialization) {
+    let labels: Labels = {};
+
+    for (const k in logFrameLabels) {
+      const v = logFrameLabels[k];
+      labels[k] = typeof v === 'string' ? v : JSON.stringify(v);
+    }
+
+    return labels;
+  }
+
+  // @ts-ignore
+  return logFrameLabels as Labels;
 }
 
 export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {

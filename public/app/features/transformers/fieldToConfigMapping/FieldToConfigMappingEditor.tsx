@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
 import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 
 import {
@@ -85,10 +86,24 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Field</th>
-          <th>Use as</th>
-          {withReducers && <th>Select</th>}
-          {hasAdditionalSettings && <th>Additional settings</th>}
+          <th>
+            <Trans i18nKey="transformers.field-to-config-mapping-editor.field">Field</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="transformers.field-to-config-mapping-editor.use-as">Use as</Trans>
+          </th>
+          {withReducers && (
+            <th>
+              <Trans i18nKey="transformers.field-to-config-mapping-editor.select">Select</Trans>
+            </th>
+          )}
+          {hasAdditionalSettings && (
+            <th>
+              <Trans i18nKey="transformers.field-to-config-mapping-editor.additional-settings">
+                Additional settings
+              </Trans>
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>

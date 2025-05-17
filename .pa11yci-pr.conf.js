@@ -115,7 +115,7 @@ var config = {
       url: '${HOST}/org/users',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 2,
     },
     {
       url: '${HOST}/org/teams',
@@ -133,19 +133,19 @@ var config = {
       url: '${HOST}/org',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 2,
     },
     {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 2,
+      threshold: 4,
     },
     {
       url: '${HOST}/dashboards',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 2,
     },
   ],
 };

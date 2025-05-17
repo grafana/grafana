@@ -3,8 +3,8 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
+import { IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
 
@@ -14,6 +14,7 @@ interface GroupProps extends PropsWithChildren {
   metaRight?: ReactNode;
   actions?: ReactNode;
   isOpen?: boolean;
+  href?: string;
 }
 
 export const ListGroup = ({
@@ -22,6 +23,7 @@ export const ListGroup = ({
   isOpen = true,
   metaRight = null,
   actions = null,
+  href,
   children,
 }: GroupProps) => {
   const styles = useStyles2(getStyles);
@@ -36,6 +38,7 @@ export const ListGroup = ({
         name={name}
         metaRight={metaRight}
         actions={actions}
+        href={href}
       />
       {open && <div role="group">{children}</div>}
     </div>
@@ -47,10 +50,10 @@ type GroupHeaderProps = GroupProps & {
 };
 
 const GroupHeader = (props: GroupHeaderProps) => {
-  const { name, description, metaRight = null, actions = null, isOpen = false, onToggle } = props;
+  const { name, description, metaRight = null, actions = null, isOpen = false, onToggle, href } = props;
 
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -60,9 +63,15 @@ const GroupHeader = (props: GroupHeaderProps) => {
             onClick={onToggle}
             aria-label={t('common.collapse', 'Collapse')}
           />
-          <Text truncate variant="body" element="h4">
-            {name}
-          </Text>
+          {href ? (
+            <TextLink href={href} color="primary" inline={false}>
+              {name}
+            </TextLink>
+          ) : (
+            <Text truncate variant="body" element="h4">
+              {name}
+            </Text>
+          )}
         </Stack>
 
         {description}

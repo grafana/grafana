@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types';
 
@@ -22,6 +22,7 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
       stateManager.clearState();
     };
   }, [stateManager, props.uid]);
+  const { t } = useTranslate();
 
   if (loadError) {
     return (

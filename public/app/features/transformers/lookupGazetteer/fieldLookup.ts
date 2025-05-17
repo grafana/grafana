@@ -53,7 +53,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
 
       if (matcher(field, frame, frames)) {
         const values = field.values;
-        const gazetteerFieldValuesBuffer: any[][] = [];
+        const gazetteerFieldValuesBuffer: unknown[][] = [];
 
         for (const gazetteerField of gazetteerFields) {
           const buffer = new Array(frameLength);

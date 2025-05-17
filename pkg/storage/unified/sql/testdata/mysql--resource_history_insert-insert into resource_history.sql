@@ -7,6 +7,7 @@ INSERT INTO `resource_history`
         `name`,
         `folder`,
         `previous_resource_version`,
+        `generation`,
         `value`,
         `action`
     )
@@ -18,6 +19,7 @@ INSERT INTO `resource_history`
         'name',
         'fldr',
         1234,
+        789,
         '[]',
         'UNKNOWN'
     )

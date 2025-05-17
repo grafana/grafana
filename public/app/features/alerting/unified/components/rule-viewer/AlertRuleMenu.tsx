@@ -1,4 +1,5 @@
 import { AppEvents } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
@@ -15,7 +16,7 @@ import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  promRule: Rule;
+  promRule?: Rule;
   rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;
@@ -66,6 +67,7 @@ const AlertRuleMenu = ({
   const canExport = exportSupported && exportAllowed;
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
+  const { t } = useTranslate();
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
@@ -89,15 +91,33 @@ const AlertRuleMenu = ({
       {canPause && rulerRuleType.grafana.rule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
         <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
       )}
-      {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
+      {canSilence && (
+        <Menu.Item
+          label={t('alerting.alert-menu.silence-notifications', 'Silence notifications')}
+          icon="bell-slash"
+          onClick={handleSilence}
+        />
+      )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
-      {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
+      {canDuplicate && (
+        <Menu.Item
+          label={t('alerting.alert-menu.duplicate', 'Duplicate')}
+          icon="copy"
+          onClick={() => handleDuplicateRule(identifier)}
+        />
+      )}
       {showDivider && <Menu.Divider />}
-      {shareUrl && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
+      {shareUrl && (
+        <Menu.Item
+          label={t('alerting.alert-menu.copy-link', 'Copy link')}
+          icon="share-alt"
+          onClick={() => copyToClipboard(shareUrl)}
+        />
+      )}
       {canExport && (
         <Menu.Item
-          label="Export"
+          label={t('alerting.alert-menu.export', 'Export')}
           icon="download-alt"
           childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
         />
@@ -114,7 +134,7 @@ const AlertRuleMenu = ({
         <>
           <Menu.Divider />
           <Menu.Item
-            label="Delete"
+            label={t('alerting.common.delete', 'Delete')}
             icon="trash-alt"
             destructive
             onClick={() => handleDelete(rulerRule, groupIdentifier)}
@@ -136,7 +156,8 @@ interface ExportMenuItemProps {
 }
 
 const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
-  const returnTo = location.pathname + location.search;
+  const { t } = useTranslate();
+  const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
     {
@@ -144,7 +165,14 @@ const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
     }
   );
 
-  return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
+  return (
+    <Menu.Item
+      key="with-modifications"
+      label={t('alerting.alert-menu.with-modifications', 'With modifications')}
+      icon="file-edit-alt"
+      url={url}
+    />
+  );
 };
 
 function copyToClipboard(text: string) {

@@ -83,7 +83,7 @@ export const Pagination = ({
           // Renders and ellipsis to represent condensed pages
           pagesToRender.push(
             <li key={page} className={styles.item}>
-              <Icon className={styles.ellipsis} name="ellipsis-v" />
+              <Icon className={styles.ellipsis} name="ellipsis-v" data-testid="pagination-ellipsis-icon" />
             </li>
           );
         }

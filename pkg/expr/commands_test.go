@@ -119,7 +119,7 @@ func TestReduceExecute(t *testing.T) {
 				},
 			}
 
-			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest())
+			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest(), nil)
 			require.NoError(t, err)
 
 			require.Len(t, execute.Values, len(numbers))
@@ -163,7 +163,7 @@ func TestReduceExecute(t *testing.T) {
 		t.Run("drop all non numbers if mapper is DropNonNumber", func(t *testing.T) {
 			cmd, err := NewReduceCommand(util.GenerateShortUID(), randomReduceFunc(), varToReduce, &mathexp.DropNonNumber{})
 			require.NoError(t, err)
-			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest())
+			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest(), nil)
 			require.NoError(t, err)
 			require.Len(t, execute.Values, 2)
 		})
@@ -171,7 +171,7 @@ func TestReduceExecute(t *testing.T) {
 		t.Run("replace all non numbers if mapper is ReplaceNonNumberWithValue", func(t *testing.T) {
 			cmd, err := NewReduceCommand(util.GenerateShortUID(), randomReduceFunc(), varToReduce, &mathexp.ReplaceNonNumberWithValue{Value: 1})
 			require.NoError(t, err)
-			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest())
+			execute, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest(), nil)
 			require.NoError(t, err)
 			require.Len(t, execute.Values, len(numbers))
 			for _, value := range execute.Values[1 : len(numbers)-1] {
@@ -194,7 +194,7 @@ func TestReduceExecute(t *testing.T) {
 		}
 		cmd, err := NewReduceCommand(util.GenerateShortUID(), randomReduceFunc(), varToReduce, nil)
 		require.NoError(t, err)
-		results, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest())
+		results, err := cmd.Execute(context.Background(), time.Now(), vars, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 
 		require.Len(t, results.Values, 1)
@@ -253,7 +253,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 				varToReduce: mathexp.Results{Values: mathexp.Values{test.vals}},
-			}, tracing.InitializeTracerForTest())
+			}, tracing.InitializeTracerForTest(), nil)
 			if test.isError {
 				require.Error(t, err)
 			} else {
@@ -268,7 +268,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 	t.Run("should return empty result if input is nil Value", func(t *testing.T) {
 		result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 			varToReduce: mathexp.Results{Values: mathexp.Values{nil}},
-		}, tracing.InitializeTracerForTest())
+		}, tracing.InitializeTracerForTest(), nil)
 		require.Empty(t, result.Values)
 		require.NoError(t, err)
 	})

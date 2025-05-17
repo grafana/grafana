@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -54,7 +55,7 @@ func TestDirectSQLStats(t *testing.T) {
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	// create parent folder
 
@@ -113,7 +114,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder1UID,
 		})
@@ -146,7 +147,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder2UID,
 		})

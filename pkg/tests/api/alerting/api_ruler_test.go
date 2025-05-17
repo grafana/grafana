@@ -813,9 +813,10 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		require.NoError(t, err)
 		alertRule := apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         &interval,
-				Labels:      map[string]string{"label1": "val1"},
-				Annotations: map[string]string{"annotation1": "val1"},
+				For:           &interval,
+				KeepFiringFor: &interval,
+				Labels:        map[string]string{"label1": "val1"},
+				Annotations:   map[string]string{"annotation1": "val1"},
 			},
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     "AlwaysFiring",
@@ -1000,28 +1001,20 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	require.Equal(t, http.StatusAccepted, status)
 	require.Len(t, createdRuleGroup.Rules, 2)
 
-	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
+	t.Run("trying to create alert with same title under same folder should not fail", func(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
-		assert.Equal(t, http.StatusConflict, status)
-
-		var res map[string]any
-		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
+		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
-	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
+	t.Run("trying to update an alert to the title of an existing alert in the same folder should not fail", func(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup.GettableRuleGroupConfig)
 		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, "folder1", &rulesWithUID, false)
-		assert.Equal(t, http.StatusConflict, status)
-
-		var res map[string]any
-		require.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Contains(t, res["message"], ngmodels.ErrAlertRuleUniqueConstraintViolation.Error())
+		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
@@ -1088,8 +1081,9 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    &interval,
-						Labels: map[string]string{},
+						For:           &interval,
+						KeepFiringFor: &interval,
+						Labels:        map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
 							"__panelId__":      "1",
@@ -1151,6 +1145,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1197,6 +1192,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		}, {
 			"expr": "",
 			"for":"0s",
+            "keep_firing_for": "0s",
 			"grafana_alert": {
 				"title": "AlwaysFiringButSilenced",
 				"condition": "A",
@@ -1247,6 +1243,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1556,7 +1553,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: util.Pointer(model.Duration(2 * time.Minute)),
+						For:           util.Pointer(model.Duration(2 * time.Minute)),
+						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1589,7 +1587,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.GettableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: util.Pointer(model.Duration(2 * time.Minute)),
+						For:           util.Pointer(model.Duration(2 * time.Minute)),
+						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1715,24 +1714,133 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 	})
+
+	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		keepFiringFor := model.Duration(10 * time.Second)
+		group.Rules[0].KeepFiringFor = &keepFiringFor
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].KeepFiringFor)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		newKeepFiringFor := model.Duration(0)
+		group.Rules[0].KeepFiringFor = &newKeepFiringFor
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].KeepFiringFor)
+	})
+
+	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			initialValue   *int
+			updatedValue   *int
+			expectedValue  *int
+			expectedStatus int
+		}{
+			{
+				name:           "should be able to set missing_series_evals_to_resolve to 5",
+				initialValue:   nil,
+				updatedValue:   util.Pointer(5),
+				expectedValue:  util.Pointer(5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should be able to update missing_series_evals_to_resolve",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(2),
+				expectedValue:  util.Pointer(2),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
+				initialValue:   util.Pointer(5),
+				updatedValue:   nil,
+				expectedValue:  util.Pointer(5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should reject missing_series_evals_to_resolve < 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(-1),
+				expectedStatus: http.StatusBadRequest,
+			},
+			{
+				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
+				initialValue:   util.Pointer(1),
+				updatedValue:   util.Pointer(0),
+				expectedValue:  nil,
+				expectedStatus: http.StatusAccepted,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Create a new rule
+				group := generateAlertRuleGroup(1, alertRuleGen())
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.initialValue
+
+				// Post the rule group with our alert rule
+				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+				// and the value of the missing_series_evals_to_resolve
+				getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+				if tc.initialValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.initialValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+
+				// Now let's update the initial value with the updated value
+				group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.updatedValue
+				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, tc.expectedStatus, status, "failed to post rule group. Response: %s", body)
+				// Check the response status
+				require.Equal(t, tc.expectedStatus, status)
+				if tc.expectedStatus != http.StatusAccepted {
+					// If the status is not accepted, we don't need to check the response body
+					return
+				}
+
+				// Get the group again and check that the value is updated to updatedValue
+				getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+
+				if tc.expectedValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.expectedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+			})
+		}
+	})
+
 	t.Run("when data source missing", func(t *testing.T) {
 		var groupName string
 		{
@@ -1823,7 +1931,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should set updated_by", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
@@ -2552,6 +2660,7 @@ func TestIntegrationQuota(t *testing.T) {
 					    {
 					       "expr":"",
 						   "for": "2m",
+						   "keep_firing_for": "0s",
 					       "grafana_alert":{
 						  "title":"Updated alert rule",
 						  "condition":"A",
@@ -2660,6 +2769,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 							{
 								"expr": "",
 								"for": "2m",
+								"keep_firing_for": "0s",
 								"labels": {
 									"label1": "val1"
 								},
@@ -3146,6 +3256,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 					   "expr":"",
 					   "for": "1m",
+					   "keep_firing_for": "0s",
 					   "labels": {
 							"label1": "val1"
 					   },
@@ -3177,7 +3288,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid", 
+						  "uid":"uid",
                           "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
@@ -3194,6 +3305,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					{
 					   "expr":"",
 					   "for": "0s",
+					   "keep_firing_for": "0s",
 					   "grafana_alert":{
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
@@ -3248,6 +3360,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 	// validate that a rulegroup with a new rule with a user specified UID can be created while others updated
 	{
 		interval, err := model.ParseDuration("30s")
+		require.NoError(t, err)
+
+		keepFiringFor, err := model.ParseDuration("10s")
 		require.NoError(t, err)
 
 		rules := apimodels.PostableRuleGroupConfig{
@@ -3306,7 +3421,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &interval,
+						For:           &interval,
+						KeepFiringFor: &keepFiringFor,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -3334,16 +3450,17 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 											}`),
 							},
 						},
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						MissingSeriesEvalsToResolve: util.Pointer(2), // If UID is specified, this field is required
 					},
 				},
 			},
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
-		assert.Equal(t, http.StatusAccepted, status)
+		response, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
+		assert.Equal(t, http.StatusAccepted, status, body)
 
 		require.Len(t, response.Created, 1)
 		require.Len(t, response.Updated, 2)
@@ -3537,6 +3654,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 					   "expr":"",
 					   "for": "1m",
+					   "keep_firing_for": "0s",
 					   "labels": {
 							"label1": "val1"
 					   },
@@ -3585,6 +3703,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					{
 					   "expr":"",
 					   "for": "0s",
+					   "keep_firing_for": "0s",
 					   "grafana_alert":{
 						  "title":"AlwaysFiringButSilenced",
 						  "condition":"A",
@@ -3639,12 +3758,16 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
+		keepFiringForValue, err := model.ParseDuration("5s")
+		require.NoError(t, err)
+
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &forValue,
+						For:           &forValue,
+						KeepFiringFor: &keepFiringForValue,
 						Labels: map[string]string{
 							// delete foo label
 							"label1": "val1", // update label value
@@ -3719,6 +3842,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 		               "expr":"",
 					   "for": "30s",
+                       "keep_firing_for": "5s",
 					   "labels": {
 							"label1": "val1",
 							"label2": "val2"
@@ -3776,12 +3900,16 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
+		keepFiringForValue, err := model.ParseDuration("15s")
+		require.NoError(t, err)
+
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &forValue,
+						For:           &forValue,
+						KeepFiringFor: &keepFiringForValue,
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
@@ -3841,6 +3969,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
 				       "for": "30s",
+                       "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "title":"AlwaysNormal",
 					  "condition":"A",
@@ -3938,6 +4067,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
                        "for": "30s",
+                       "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "title":"AlwaysNormal",
 					  "condition":"A",
@@ -4167,7 +4297,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4241,7 +4371,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagAlertingSimplifiedRouting},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4285,16 +4415,27 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		t.Log(body)
 	})
 
-	t.Run("create should fail if mute timing does not exist", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.MuteTimeIntervals = []string{"random-time-interval"}
+	t.Run("create should fail if time interval does not exist", func(t *testing.T) {
+		t.Run("mute time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.MuteTimeIntervals = []string{"random-time-interval"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusBadRequest, status, body)
-		t.Log(body)
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
+		t.Run("active time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.ActiveTimeIntervals = []string{"random-time-interval"}
+
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
 	})
 
 	t.Run("create should not fail if group_by is missing required labels but they should still be used", func(t *testing.T) {
@@ -4319,32 +4460,6 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		assert.Equal(t, []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel, "label1"}, ruleRoute.GroupBy)
 
 		t.Log(body)
-	})
-
-	t.Run("create with '...' groupBy followed by config post should succeed", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
-
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusAccepted, status, body)
-
-		// Now update the config with no changes.
-		_, status, body = apiClient.GetAlertmanagerConfigWithStatus(t)
-		if !assert.Equalf(t, http.StatusOK, status, body) {
-			return
-		}
-
-		cfg := apimodels.PostableUserConfig{}
-
-		err = json.Unmarshal([]byte(body), &cfg)
-		require.NoError(t, err)
-
-		ok, err := apiClient.PostConfiguration(t, cfg)
-		require.NoError(t, err)
-		require.True(t, ok)
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {
@@ -4379,6 +4494,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, autogenRoute.GroupInterval)
 			assert.Nil(c, autogenRoute.RepeatInterval)
 			assert.Empty(c, autogenRoute.MuteTimeIntervals)
+			assert.Empty(c, autogenRoute.ActiveTimeIntervals)
 			assert.Empty(c, autogenRoute.GroupBy)
 			if !canContinue {
 				return
@@ -4407,6 +4523,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, receiverRoute.GroupInterval)
 			assert.Nil(c, receiverRoute.RepeatInterval)
 			assert.Empty(c, receiverRoute.MuteTimeIntervals)
+			assert.Empty(c, receiverRoute.ActiveTimeIntervals)
 			var groupBy []string
 			for _, name := range receiverRoute.GroupBy {
 				groupBy = append(groupBy, string(name))

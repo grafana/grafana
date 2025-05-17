@@ -405,7 +405,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		t.Run("Can get organization users with query", func(t *testing.T) {
 			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
-				Query: "ac1",
+				Query: "AC1", // Use different-case to test case-insensitive search
 				User: &user.SignedInUser{
 					OrgID:       ac1.OrgID,
 					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
@@ -420,7 +420,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		t.Run("Can get organization users with query and limit", func(t *testing.T) {
 			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
-				Query: "ac",
+				Query: "aC", // Use mixed-case to test case-insensitive search
 				Limit: 1,
 				User: &user.SignedInUser{
 					OrgID:       ac1.OrgID,

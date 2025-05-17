@@ -21,7 +21,6 @@ func logf(format string, a ...any) {
 }
 
 type Options struct {
-	Dataplane bool
 }
 
 func rspErr(e error) backend.DataResponse {
@@ -286,7 +285,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *sdkjsoniter.I
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter, opt.Dataplane)
+		rsp = readScalar(iter)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -564,7 +563,7 @@ func readString(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse {
+func readScalar(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -583,12 +582,9 @@ func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeNumericMulti,
-		Custom: resultTypeToCustomMeta("scalar"),
-	}
-
-	if dataPlane {
-		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+		Type:        data.FrameTypeNumericMulti,
+		Custom:      resultTypeToCustomMeta("scalar"),
+		TypeVersion: data.FrameTypeVersion{0, 1},
 	}
 
 	return backend.DataResponse{
@@ -686,14 +682,12 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 		} else {
 			frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
 			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMulti,
-				Custom: resultTypeToCustomMeta(resultType),
+				Type:        data.FrameTypeTimeSeriesMulti,
+				Custom:      resultTypeToCustomMeta(resultType),
+				TypeVersion: data.FrameTypeVersion{0, 1},
 			}
-			if opt.Dataplane && resultType == "vector" {
+			if resultType == "vector" {
 				frame.Meta.Type = data.FrameTypeNumericMulti
-			}
-			if opt.Dataplane {
-				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 			}
 			rsp.Frames = append(rsp.Frames, frame)
 			size = len(tempTimes)

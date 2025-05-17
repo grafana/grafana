@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
 export type Props = {
@@ -16,7 +17,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const learnMoreLinkTarget = learnMoreLink?.target ?? '_blank';
 
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <Card className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
       {/* Name */}
@@ -45,7 +46,11 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       <Card.Actions className={styles.actions}>
         {learnMoreLink && (
           <LinkButton
-            aria-label={`${dataSourcePlugin.name}, learn more.`}
+            aria-label={t(
+              'datasources.data-source-type-card.aria-label-learn-more',
+              '{{dataSourcePluginName}}, learn more.',
+              { dataSourcePluginName: dataSourcePlugin.name }
+            )}
             href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             onClick={(e) => e.stopPropagation()}
             rel="noopener"

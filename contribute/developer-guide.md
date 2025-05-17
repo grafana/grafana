@@ -19,8 +19,6 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 brew install git
 brew install go
 brew install node@22
-brew install corepack
-corepack enable
 ```
 
 ### Windows
@@ -37,6 +35,15 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
 
 ### Configure precommit hooks
 

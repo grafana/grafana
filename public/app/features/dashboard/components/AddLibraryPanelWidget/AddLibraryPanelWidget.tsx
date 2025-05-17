@@ -3,9 +3,9 @@ import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import {
   LibraryPanelsSearch,
@@ -20,6 +20,8 @@ interface Props {
 }
 
 export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
+  const { t } = useTranslate();
+
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
     evt.preventDefault();
     dashboard.removePanel(panel);
@@ -49,10 +51,13 @@ export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
           </span>
           <div className="flex-grow-1" />
           <IconButton
-            aria-label="Close 'Add Panel' widget"
+            aria-label={t(
+              'dashboard.add-library-panel-widget.aria-label-close-add-panel-widget',
+              "Close 'Add Panel' widget"
+            )}
             name="times"
             onClick={onCancelAddPanel}
-            tooltip="Close widget"
+            tooltip={t('dashboard.add-library-panel-widget.tooltip-close-widget', 'Close widget')}
           />
         </div>
         <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />

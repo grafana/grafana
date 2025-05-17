@@ -116,6 +116,8 @@ export interface SelectCommonProps<T> {
   loadingMessage?: string;
   /** Disables wrapping of multi value values when closed */
   noMultiValueWrap?: boolean;
+  /** Use a custom ref because generic component as output of React.forwardRef is not directly possible */
+  selectRef?: React.Ref<HTMLElement>;
 }
 
 export interface SelectAsyncProps<T> {

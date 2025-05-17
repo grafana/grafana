@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule } from 'app/types/unified-alerting';
 
@@ -18,7 +19,9 @@ export const RuleHealth = ({ rule }: Prom) => {
       <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
         <div className={style.warn}>
           <Icon name="exclamation-triangle" />
-          <span>error</span>
+          <span>
+            <Trans i18nKey="alerting.rule-health.error">error</Trans>
+          </span>
         </div>
       </Tooltip>
     );

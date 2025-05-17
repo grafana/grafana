@@ -20,7 +20,7 @@ export function VariableTypeSelect({ onChange, type }: PropsWithChildren<Props>)
 
   return (
     <VariableSelectField
-      name="Select variable type"
+      name="Variable type"
       value={value}
       options={options}
       onChange={onChange}

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
@@ -45,6 +46,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
     setShowDeletedAlert(true);
     return response;
   });
+  const { t } = useTranslate();
 
   const onCancelClick = () => {
     onDismiss?.();

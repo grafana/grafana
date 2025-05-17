@@ -46,6 +46,7 @@ func TestProcessLogsResponse(t *testing.T) {
 					  {
 						"aggregations": {},
 						"hits": {
+						  "total": { "value": 2 },
 						  "hits": [
 							{
 							  "_id": "fdsfs",
@@ -107,7 +108,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			logsFrame := frames[0]
 
 			meta := logsFrame.Meta
-			require.Equal(t, map[string]any{"searchWords": []string{"hello", "message"}, "limit": 500}, meta.Custom)
+			require.Equal(t, map[string]any{"searchWords": []string{"hello", "message"}, "limit": 500, "total": 2}, meta.Custom)
 			require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
 			logsFieldMap := make(map[string]*data.Field)
@@ -431,6 +432,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Equal(t, map[string]any{
 			"searchWords": []string{"hello", "message"},
 			"limit":       500,
+			"total":       109,
 		}, customMeta)
 	})
 }
@@ -703,7 +705,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		"responses": [
 			{
 			"hits": {
-				"total": 100,
+				"total": { "value": 100 },
 				"hits": [
 				{
 					"_id": "1",
@@ -3239,7 +3241,7 @@ func TestParseResponse(t *testing.T) {
 				  },
 				  {
 					"hits": {
-					  "total": 2,
+					  "total": { "value": 2 },
 					  "hits": [
 						{
 						  "_id": "5",

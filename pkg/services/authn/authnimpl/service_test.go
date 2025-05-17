@@ -307,7 +307,7 @@ func TestService_OrgID(t *testing.T) {
 			desc: "should set org id from default namespace",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
-				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/default/folders"),
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v1beta1/namespaces/default/folders"),
 			}},
 			expectedOrgID: 1,
 		},
@@ -315,7 +315,7 @@ func TestService_OrgID(t *testing.T) {
 			desc: "should set org id from namespace",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
-				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/org-2/folders"),
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v1beta1/namespaces/org-2/folders"),
 			}},
 			expectedOrgID: 2,
 		},
@@ -323,7 +323,7 @@ func TestService_OrgID(t *testing.T) {
 			desc: "should set set org 1 for stack namespace",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
-				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/stacks-100/folders"),
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v1beta1/namespaces/stacks-100/folders"),
 			}},
 			stackID:       100,
 			expectedOrgID: 1,
@@ -332,7 +332,7 @@ func TestService_OrgID(t *testing.T) {
 			desc: "should error for wrong stack namespace",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
-				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v0alpha1/namespaces/stacks-100/folders"),
+				URL:    mustParseURL("http://localhost/apis/folder.grafana.app/v1beta1/namespaces/stacks-100/folders"),
 			}},
 			stackID:       101,
 			expectedOrgID: 0,

@@ -888,11 +888,11 @@ describe('Plugin details page', () => {
       config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
-    it('should display Last updated and report a concern information', async () => {
+    it('should display Latest release date and report a concern information', async () => {
       const id = 'right-panel-test-plugin';
       const updatedAt = '2023-10-26T16:54:55.000Z';
       const { queryByText } = renderPluginDetails({ id, updatedAt });
-      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('Latest release date:')).toBeVisible();
       expect(queryByText('Oct 26, 2023')).toBeVisible();
       expect(queryByText('Report a concern')).toBeVisible();
     });

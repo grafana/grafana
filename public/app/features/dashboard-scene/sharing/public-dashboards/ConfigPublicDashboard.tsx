@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -49,7 +50,9 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
             confirmText: 'Revoke public URL',
             body: (
               <p className={styles.description}>
-                Are you sure you want to revoke this URL? The dashboard will no longer be public.
+                <Trans i18nKey="public-dashboard.config.revoke-body">
+                  Are you sure you want to revoke this URL? The dashboard will no longer be public.
+                </Trans>
               </p>
             ),
             onDismiss: () => {

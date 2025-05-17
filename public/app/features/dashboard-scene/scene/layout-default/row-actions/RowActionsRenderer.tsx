@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -42,6 +42,7 @@ export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {
       }),
     [children]
   );
+  const { t } = useTranslate();
 
   const behaviour = row.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
 

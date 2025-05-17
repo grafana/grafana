@@ -91,17 +91,17 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if err := api.validateRole(cmd.Role, c.SignedInUser.GetOrgRole()); err != nil {
+	if err := api.validateRole(cmd.Role, c.GetOrgRole()); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
 	}
 
-	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), &cmd)
+	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.GetOrgID(), &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
 	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
-		if c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		if c.IsIdentityType(claims.TypeUser) {
 			// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
 			// Required for cases when caller wants to immediately interact with the newly created object
 			api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
@@ -132,7 +132,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 	}
 
 	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
-		OrgID: ctx.SignedInUser.GetOrgID(),
+		OrgID: ctx.GetOrgID(),
 		ID:    saID,
 	})
 	if err != nil {
@@ -181,11 +181,11 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	if err := api.validateRole(cmd.Role, c.SignedInUser.GetOrgRole()); err != nil {
+	if err := api.validateRole(cmd.Role, c.GetOrgRole()); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
-	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID, &cmd)
+	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.GetOrgID(), saID, &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
@@ -231,7 +231,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), saID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.GetOrgID(), saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
@@ -275,7 +275,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 		filter = serviceaccounts.FilterOnlyDisabled
 	}
 	q := serviceaccounts.SearchOrgServiceAccountsQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		Query:        c.Query("query"),
 		Page:         page,
 		Limit:        perPage,
@@ -304,7 +304,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.SignedInUser.GetOrgID())
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.GetOrgID())
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, results)
 	}
@@ -319,7 +319,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
 
-	if err := api.service.MigrateApiKey(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), keyId); err != nil {
+	if err := api.service.MigrateApiKey(ctx.Req.Context(), ctx.GetOrgID(), keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
 
@@ -331,11 +331,11 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqConte
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	if len(c.SignedInUser.GetPermissions()) == 0 {
+	if len(c.GetPermissions()) == 0 {
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	permissions := c.SignedInUser.GetPermissions()
+	permissions := c.GetPermissions()
 	return accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "serviceaccounts:id:", saIDs)
 }
 

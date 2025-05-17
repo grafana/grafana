@@ -2,6 +2,7 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -40,11 +41,17 @@ export function GroupByVariableForm({
     },
     [onDefaultOptionsChange]
   );
+  const { t } = useTranslate();
 
   return (
     <>
-      <VariableLegend>Group by options</VariableLegend>
-      <Field label="Data source" htmlFor="data-source-picker">
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.group-by-variable-form.group-by-options">Group by options</Trans>
+      </VariableLegend>
+      <Field
+        label={t('dashboard-scene.group-by-variable-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+      >
         <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
       </Field>
 
@@ -56,7 +63,17 @@ export function GroupByVariableForm({
         />
       ) : null}
 
-      <Field label="Use static Group By dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
+      <Field
+        label={t(
+          'dashboard-scene.group-by-variable-form.label-use-static-group-by-dimensions',
+          'Use static group dimensions'
+        )}
+        description={t(
+          'dashboard-scene.group-by-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
+          'Provide dimensions as CSV: {{name}}, {{value}}',
+          { name: 'dimensionName', value: 'dimensionId' }
+        )}
+      >
         <Switch
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
           value={defaultOptions !== undefined}
@@ -85,7 +102,10 @@ export function GroupByVariableForm({
       <VariableCheckboxField
         value={allowCustomValue}
         name="Allow custom values"
-        description="Enables users to add custom values to the list"
+        description={t(
+          'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
+          'Enables users to add custom values to the list'
+        )}
         onChange={onAllowCustomValueChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
       />

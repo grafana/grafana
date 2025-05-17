@@ -53,7 +53,7 @@ func (m *RawSQLMigration) SQL(dialect Dialect) string {
 		}
 	}
 
-	return dialect.NoOpSQL()
+	return ""
 }
 
 func (m *RawSQLMigration) Set(dialect string, sql string) *RawSQLMigration {

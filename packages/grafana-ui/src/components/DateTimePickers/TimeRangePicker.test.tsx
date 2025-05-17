@@ -20,7 +20,7 @@ const value: TimeRange = {
 
 describe('TimePicker', () => {
   it('renders buttons correctly', () => {
-    const container = render(
+    render(
       <TimeRangePicker
         onChangeTimeZone={() => {}}
         onChange={(value) => {}}
@@ -31,7 +31,7 @@ describe('TimePicker', () => {
       />
     );
 
-    expect(container.queryByLabelText(/Time range selected/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Time range selected/i)).toBeInTheDocument();
   });
 
   it('switches overlay content visibility when toolbar button is clicked twice', async () => {
@@ -87,14 +87,14 @@ describe('TimePicker', () => {
     expect(syncButtons.length).toBe(2);
     await userEvent.click(syncButtons[0]);
     expect(onChange2).toBeCalledWith(value1);
-    const unsyncButtons = screen.getAllByLabelText('Un sync times');
+    const unsyncButtons = screen.getAllByLabelText('Unsync times');
     expect(unsyncButtons.length).toBe(2);
   });
 });
 
 it('does not submit wrapping forms', async () => {
   const onSubmit = jest.fn();
-  const container = render(
+  render(
     <form onSubmit={onSubmit}>
       <TimeRangePicker
         onChangeTimeZone={() => {}}
@@ -107,7 +107,7 @@ it('does not submit wrapping forms', async () => {
     </form>
   );
 
-  const clicks = container.getAllByRole('button').map((button) => userEvent.click(button));
+  const clicks = screen.getAllByRole('button').map((button) => userEvent.click(button));
 
   await Promise.all(clicks);
 

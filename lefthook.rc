@@ -1,8 +1,0 @@
-# This file is used by lefthook to 'expose' the bingo-installed lefthook under
-# the name `lefthook`, as expected by the lefthook pre-commit scripts
-
-. .bingo/variables.env
-
-lefthook () {
-  ${LEFTHOOK} "$@"
-}

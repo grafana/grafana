@@ -64,30 +64,6 @@ func TestInitializer_Initialize(t *testing.T) {
 		require.NotNil(t, c)
 	})
 
-	t.Run("secretsmanager", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "test",
-				Type: plugins.TypeSecretsManager,
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: ">=8.x",
-				},
-				Backend: true,
-			},
-			Class: plugins.ClassExternal,
-		}
-
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
-
-		var err error
-		p, err = stepFunc(context.Background(), p)
-		require.NoError(t, err)
-
-		c, exists := p.Client()
-		require.True(t, exists)
-		require.NotNil(t, c)
-	})
-
 	t.Run("non backend plugin app", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { DataFrame, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
@@ -31,9 +32,11 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
     };
   }, [data, annotations?.length, config.topic]);
 
+  const { t } = useTranslate();
+
   return (
     <div className={styles.wrapper}>
-      <Field label="Apply transformation to">
+      <Field label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}>
         <>
           {opts.showTopic && (
             <Select

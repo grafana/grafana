@@ -16,10 +16,13 @@ import (
 
 // +k8s:openapi-gen=true
 type InvestigationIndex struct {
-	metav1.TypeMeta          `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta        `json:"metadata" yaml:"metadata"`
-	Spec                     InvestigationIndexSpec   `json:"spec" yaml:"spec"`
-	InvestigationIndexStatus InvestigationIndexStatus `json:"status" yaml:"status"`
+	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+
+	// Spec is the spec of the InvestigationIndex
+	Spec InvestigationIndexSpec `json:"spec" yaml:"spec"`
+
+	Status InvestigationIndexStatus `json:"status" yaml:"status"`
 }
 
 func (o *InvestigationIndex) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *InvestigationIndex) SetSpec(spec any) error {
 
 func (o *InvestigationIndex) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.InvestigationIndexStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *InvestigationIndex) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.InvestigationIndexStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *InvestigationIndex) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type InvestigationIndexStatus", value)
 		}
-		o.InvestigationIndexStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -219,6 +222,20 @@ func (o *InvestigationIndex) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *InvestigationIndex) DeepCopy() *InvestigationIndex {
+	cpy := &InvestigationIndex{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *InvestigationIndex) DeepCopyInto(dst *InvestigationIndex) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &InvestigationIndex{}
 
@@ -262,5 +279,41 @@ func (o *InvestigationIndexList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *InvestigationIndexList) DeepCopy() *InvestigationIndexList {
+	cpy := &InvestigationIndexList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *InvestigationIndexList) DeepCopyInto(dst *InvestigationIndexList) {
+	resource.CopyObjectInto(dst, o)
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &InvestigationIndexList{}
+
+// Copy methods for all subresource types
+
+// DeepCopy creates a full deep copy of Spec
+func (s *InvestigationIndexSpec) DeepCopy() *InvestigationIndexSpec {
+	cpy := &InvestigationIndexSpec{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies Spec into another Spec object
+func (s *InvestigationIndexSpec) DeepCopyInto(dst *InvestigationIndexSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of InvestigationIndexStatus
+func (s *InvestigationIndexStatus) DeepCopy() *InvestigationIndexStatus {
+	cpy := &InvestigationIndexStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies InvestigationIndexStatus into another InvestigationIndexStatus object
+func (s *InvestigationIndexStatus) DeepCopyInto(dst *InvestigationIndexStatus) {
+	resource.CopyObjectInto(dst, s)
+}

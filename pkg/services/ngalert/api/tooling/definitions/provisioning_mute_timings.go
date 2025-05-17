@@ -128,7 +128,7 @@ func (mt *MuteTimeInterval) ResourceType() string {
 }
 
 func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.MuteTimeInterval.Name
+	return mt.Name
 }
 
 type MuteTimeIntervalExport struct {

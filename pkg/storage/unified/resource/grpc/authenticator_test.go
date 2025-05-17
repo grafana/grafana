@@ -7,7 +7,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestBasicEncodeDecode(t *testing.T) {
@@ -20,7 +20,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 		OrgRole: identity.RoleAdmin,
 	}
 
-	auth := &Authenticator{Tracer: tracing.NewNoopTracerService()}
+	auth := &Authenticator{Tracer: noop.NewTracerProvider().Tracer("")}
 
 	md := encodeIdentityInMetadata(before)
 	after, err := auth.decodeMetadata(md)

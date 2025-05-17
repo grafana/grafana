@@ -1,14 +1,19 @@
-import { ScopesDashboardsTreeDashboardItem } from './ScopesDashboardsTreeDashboardItem';
+import { urlUtil } from '@grafana/data';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
-import { OnFolderUpdate, SuggestedDashboardsFoldersMap } from './types';
+import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
+import { OnFolderUpdate, SuggestedNavigationsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeProps {
-  folders: SuggestedDashboardsFoldersMap;
+  folders: SuggestedNavigationsFoldersMap;
   folderPath: string[];
   onFolderUpdate: OnFolderUpdate;
 }
 
 export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: ScopesDashboardsTreeProps) {
+  const [queryParams] = useQueryParams();
+
   const folderId = folderPath[folderPath.length - 1];
   const folder = folders[folderId];
 
@@ -23,9 +28,13 @@ export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: Sc
           onFolderUpdate={onFolderUpdate}
         />
       ))}
-
-      {Object.values(folder.dashboards).map((dashboard) => (
-        <ScopesDashboardsTreeDashboardItem key={dashboard.dashboard} dashboard={dashboard} />
+      {Object.values(folder.suggestedNavigations).map((navigation) => (
+        <ScopesNavigationTreeLink
+          key={navigation.id + navigation.title}
+          to={urlUtil.renderUrl(navigation.url, queryParams)}
+          title={navigation.title}
+          id={navigation.id}
+        />
       ))}
     </div>
   );

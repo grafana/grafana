@@ -16,7 +16,7 @@ import {
   ExploreLogsPanelState,
   DataQuery,
 } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';

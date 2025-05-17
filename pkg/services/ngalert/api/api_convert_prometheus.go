@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -31,6 +33,8 @@ import (
 const (
 	// datasourceUIDHeader is the name of the header that specifies the UID of the datasource to be used for the rules.
 	datasourceUIDHeader = "X-Grafana-Alerting-Datasource-UID"
+	// targetDatasourceUIDHeader is the name of the header that specifies the UID of the target datasource to be used for recording rules.
+	targetDatasourceUIDHeader = "X-Grafana-Alerting-Target-Datasource-UID"
 
 	// If the folderUIDHeader is present, namespaces and rule groups will be created in the specified folder.
 	// If not, the root folder will be used as the default.
@@ -39,6 +43,10 @@ const (
 	// These headers control the paused state of newly created rules. By default, rules are not paused.
 	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
 	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
+
+	// notificationSettingsHeader is the header that specifies the notification settings to be used for the rules.
+	// The value should be a JSON-encoded AlertRuleNotificationSettings object.
+	notificationSettingsHeader = "X-Grafana-Alerting-Notification-Settings"
 )
 
 var (
@@ -47,7 +55,7 @@ var (
 		errutil.WithPublicMessage(fmt.Sprintf("Missing datasource UID header: %s", datasourceUIDHeader)),
 	).Errorf("missing datasource UID header")
 
-	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: must be 'true' or 'false'"
+	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: {{.Public.Error}}"
 	errInvalidHeaderValueBase = errutil.ValidationFailed("alerting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
 
 	errRecordingRulesNotEnabled = errutil.ValidationFailed(
@@ -61,8 +69,8 @@ var (
 	).Errorf("recording rules target datasources configuration not enabled")
 )
 
-func errInvalidHeaderValue(header string) error {
-	return errInvalidHeaderValueBase.Build(errutil.TemplateData{Public: map[string]any{"Header": header}})
+func errInvalidHeaderValue(header string, err error) error {
+	return errInvalidHeaderValueBase.Build(errutil.TemplateData{Public: map[string]any{"Header": header, "Error": err}})
 }
 
 // ConvertPrometheusSrv converts Prometheus rules to Grafana rules
@@ -139,7 +147,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
-	folders, err := srv.ruleStore.GetNamespaceChildren(c.Req.Context(), workingFolderUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	folders, err := srv.ruleStore.GetNamespaceChildren(c.Req.Context(), workingFolderUID, c.GetOrgID(), c.SignedInUser)
 	if len(folders) == 0 || errors.Is(err, dashboards.ErrFolderNotFound) {
 		// If there is no such folder or no children, return empty response
 		// because mimirtool expects 200 OK response in this case.
@@ -182,7 +190,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
@@ -213,7 +221,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
@@ -241,7 +249,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
@@ -275,7 +283,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	logger = logger.New("working_folder_uid", workingFolderUID)
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
-	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser, workingFolderUID)
+	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		logger.Error("Failed to get folder", "error", err)
 		return namespaceErrorResponse(err)
@@ -318,30 +326,24 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 // If the group already exists and was not imported from a Prometheus-compatible source initially,
 // it will not be replaced and an error will be returned.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, promGroup apimodels.PrometheusRuleGroup) response.Response {
+	return srv.RouteConvertPrometheusPostRuleGroups(c, map[string][]apimodels.PrometheusRuleGroup{namespaceTitle: {promGroup}})
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
+	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
-	logger = logger.New("folder_title", namespaceTitle, "group", promGroup.Name, "working_folder_uid", workingFolderUID)
+	logger = logger.New("working_folder_uid", workingFolderUID)
 
-	// If we're importing recording rules, we can only import them if the feature is enabled,
-	// and the feature flag that enables configuring target datasources per-rule is also enabled.
-	if promGroupHasRecordingRules(promGroup) {
-		if !srv.cfg.RecordingRules.Enabled {
-			logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
-			return errorToResponse(errRecordingRulesNotEnabled)
-		}
-
-		if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-			logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
-			return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
-		}
+	pauseRecordingRules, err := parseBooleanHeader(c.Req.Header.Get(recordingRulesPausedHeader), recordingRulesPausedHeader)
+	if err != nil {
+		return errorToResponse(err)
 	}
 
-	logger.Info("Converting Prometheus rule group", "rules", len(promGroup.Rules))
-
-	ns, errResp := srv.getOrCreateNamespace(c, namespaceTitle, logger, workingFolderUID)
-	if errResp != nil {
-		return errResp
+	pauseAlertRules, err := parseBooleanHeader(c.Req.Header.Get(alertRulesPausedHeader), alertRulesPausedHeader)
+	if err != nil {
+		return errorToResponse(err)
 	}
 
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
@@ -351,7 +353,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	ds, err := srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), datasourceUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		logger.Error("Failed to get datasource", "datasource_uid", datasourceUID, "error", err)
-		return errorToResponse(err)
+		return errorToResponse(fmt.Errorf("failed to get datasource: %w", err))
+	}
+
+	// By default the target datasource is the same as the query datasource,
+	// but if the header "X-Grafana-Alerting-Target-Datasource-UID" is present, we use that instead.
+	tds := ds
+	if uid := strings.TrimSpace(c.Req.Header.Get(targetDatasourceUIDHeader)); uid != "" {
+		tds, err = srv.datasourceCache.GetDatasourceByUID(c.Req.Context(), uid, c.SignedInUser, c.SkipDSCache)
+		if err != nil {
+			logger.Error("Failed to get target datasource for recording rules", "datasource_uid", uid, "error", err)
+			return errorToResponse(fmt.Errorf("failed to get recording rules target datasource: %w", err))
+		}
 	}
 
 	provenance := getProvenance(c)
@@ -362,28 +375,74 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 	// to ensure we can return them in this API in Prometheus format.
 	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
 
-	group, err := srv.convertToGrafanaRuleGroup(c, ds, ns.UID, promGroup, keepOriginalRuleDefinition, logger)
+	notificationSettings, err := parseNotificationSettingsHeader(c)
 	if err != nil {
-		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
+		logger.Error("Failed to parse notification settings header", "error", err)
 		return errorToResponse(err)
 	}
 
-	err = srv.alertRuleService.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, *group, provenance)
+	// 2. Convert Prometheus Rules to GMA
+	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
+	for ns, rgs := range promNamespaces {
+		logger.Debug("Creating a new namespace", "title", ns)
+		namespace, errResp := srv.getOrCreateNamespace(c, ns, logger, workingFolderUID)
+		if errResp != nil {
+			logger.Error("Failed to create a new namespace", "folder_uid", workingFolderUID)
+			return errResp
+		}
+
+		for _, rg := range rgs {
+			// If we're importing recording rules, we can only import them if the feature is enabled,
+			// and the feature flag that enables configuring target datasources per-rule is also enabled.
+			if promGroupHasRecordingRules(rg) {
+				if !srv.cfg.RecordingRules.Enabled {
+					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
+					return errorToResponse(errRecordingRulesNotEnabled)
+				}
+
+				if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
+					logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
+					return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
+				}
+			}
+
+			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
+				c,
+				ds,
+				tds,
+				namespace.UID,
+				rg,
+				pauseRecordingRules,
+				pauseAlertRules,
+				keepOriginalRuleDefinition,
+				notificationSettings,
+				logger,
+			)
+			if err != nil {
+				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
+				return errorToResponse(err)
+			}
+			grafanaGroups = append(grafanaGroups, grafanaGroup)
+		}
+	}
+
+	// 3. Update the GMA Rules in the DB
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance)
 	if err != nil {
-		logger.Error("Failed to replace rule group", "error", err)
+		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
 	}
 
 	return successfulResponse()
 }
 
-func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.Folder, response.Response) {
+func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext, title string, logger log.Logger, workingFolderUID string) (*folder.FolderReference, response.Response) {
 	logger.Debug("Getting or creating a new folder")
 
 	ns, err := srv.ruleStore.GetOrCreateNamespaceByTitle(
 		c.Req.Context(),
 		title,
-		c.SignedInUser.GetOrgID(),
+		c.GetOrgID(),
 		c.SignedInUser,
 		workingFolderUID,
 	)
@@ -400,9 +459,13 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	c *contextmodel.ReqContext,
 	ds *datasources.DataSource,
+	tds *datasources.DataSource,
 	namespaceUID string,
 	promGroup apimodels.PrometheusRuleGroup,
+	pauseRecordingRules bool,
+	pauseAlertRules bool,
 	keepOriginalRuleDefinition bool,
+	notificationSettings []models.NotificationSettings,
 	logger log.Logger,
 ) (*models.AlertRuleGroup, error) {
 	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
@@ -425,21 +488,13 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		Rules:    rules,
 	}
 
-	pauseRecordingRules, err := parseBooleanHeader(c.Req.Header.Get(recordingRulesPausedHeader), recordingRulesPausedHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	pauseAlertRules, err := parseBooleanHeader(c.Req.Header.Get(alertRulesPausedHeader), alertRulesPausedHeader)
-	if err != nil {
-		return nil, err
-	}
-
 	converter, err := prom.NewConverter(
 		prom.Config{
-			DatasourceUID:   ds.UID,
-			DatasourceType:  ds.Type,
-			DefaultInterval: srv.cfg.DefaultRuleEvaluationInterval,
+			DatasourceUID:        ds.UID,
+			DatasourceType:       ds.Type,
+			TargetDatasourceUID:  tds.UID,
+			TargetDatasourceType: tds.Type,
+			DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
 			RecordingRules: prom.RulesConfig{
 				IsPaused: pauseRecordingRules,
 			},
@@ -447,6 +502,8 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 				IsPaused: pauseAlertRules,
 			},
 			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
+			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
+			NotificationSettings:       notificationSettings,
 		},
 	)
 	if err != nil {
@@ -454,7 +511,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		return nil, err
 	}
 
-	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespaceUID, group)
+	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.GetOrgID(), namespaceUID, group)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return nil, err
@@ -471,7 +528,7 @@ func parseBooleanHeader(header string, headerName string) (bool, error) {
 	}
 	val, err := strconv.ParseBool(header)
 	if err != nil {
-		return false, errInvalidHeaderValue(headerName)
+		return false, errInvalidHeaderValue(headerName, errors.New("must be 'true' or 'false'"))
 	}
 	return val, nil
 }
@@ -564,4 +621,24 @@ func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
 		return models.ProvenanceNone
 	}
 	return models.ProvenanceConvertedPrometheus
+}
+
+func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) ([]models.NotificationSettings, error) {
+	var notificationSettings []models.NotificationSettings
+	notificationSettingsJSON := ctx.Req.Header.Get(notificationSettingsHeader)
+
+	if notificationSettingsJSON != "" {
+		var settings apimodels.AlertRuleNotificationSettings
+		var err error
+
+		if err := json.Unmarshal([]byte(notificationSettingsJSON), &settings); err != nil {
+			return nil, errInvalidHeaderValue(notificationSettingsHeader, errors.New("invalid JSON"))
+		}
+		notificationSettings, err = validation.ValidateNotificationSettings(&settings)
+		if err != nil {
+			return nil, errInvalidHeaderValue(notificationSettingsHeader, err)
+		}
+	}
+
+	return notificationSettings, nil
 }

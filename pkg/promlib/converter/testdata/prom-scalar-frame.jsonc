@@ -4,7 +4,7 @@
 //      "type": "numeric-multi",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "custom": {
 //          "resultType": "scalar"
@@ -31,7 +31,7 @@
           "type": "numeric-multi",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "custom": {
             "resultType": "scalar"

@@ -27,6 +27,7 @@ import {
   LogRowContextOptions,
   LogRowContextQueryDirection,
   LogRowModel,
+  ScopedVars,
   getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
@@ -92,56 +93,11 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
-        this.templateSrv,
-        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
-        options.scopedVars
-      );
-
-      // need to support legacy format variables too
-      const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
-        this.templateSrv,
-        target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
-        options.scopedVars,
-        'text'
-      );
-
-      // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
-      // Otherwise the StartLogQuery API will return a permission error
-      const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
-      const logGroupNames = uniq(interpolatedLogGroupNames);
-
-      const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
-        if (
-          (typeof value === 'string' && value.startsWith('arn:') && value.endsWith(':*')) ||
-          (Array.isArray(value) &&
-            value.every((v) => typeof v === 'string' && v.startsWith('arn:') && v.endsWith(':*')))
-        ) {
-          const varName = model.name || '';
-          const variable = this.templateSrv.getVariables().find(({ name }) => name === varName);
-          // checks the raw query string for a log group template variable that occurs inside `logGroups(logGroupIdentifier:[ ... ])\`
-          // to later surround the log group names with backticks
-          // this assumes there's only a single template variable used inside the [ ]
-          const shouldSurroundInQuotes = target.expression
-            ?.replaceAll(/[\r\n\t\s]+/g, '')
-            .includes(`\`logGroups(logGroupIdentifier:[$${varName}])\``);
-          if (variable && 'current' in variable && 'text' in variable.current) {
-            if (Array.isArray(variable.current.text)) {
-              return variable.current.text.map((v) => (shouldSurroundInQuotes ? `'${v}'` : v)).join(',');
-            }
-            return shouldSurroundInQuotes ? `'${variable.current.text}'` : variable.current.text;
-          }
-        }
-
-        return value;
-      };
-      const formatter = target.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
-      const queryString = this.templateSrv.replace(target.expression || '', options.scopedVars, formatter);
-
+      const { expression, logGroups, logGroupNames } = this.interpolateLogsQueryVariables(target, options.scopedVars);
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString,
+        queryString: expression ?? '',
         logGroups,
         logGroupNames,
         queryLanguage: target.queryLanguage,
@@ -223,6 +179,62 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams], queryFn));
   };
+
+  interpolateLogsQueryVariables(
+    query: CloudWatchLogsQuery,
+    scopedVars: ScopedVars
+  ): Pick<CloudWatchLogsQuery, 'expression' | 'logGroups' | 'logGroupNames'> {
+    const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
+      scopedVars
+    );
+
+    // need to support legacy format variables too
+    const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      query.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+      scopedVars,
+      'text'
+    );
+
+    // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
+    // Otherwise the StartLogQuery API will return a permission error
+    const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
+    const logGroupNames = uniq(interpolatedLogGroupNames);
+
+    const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
+      if (
+        (typeof value === 'string' && value.startsWith('arn:') && value.endsWith(':*')) ||
+        (Array.isArray(value) && value.every((v) => typeof v === 'string' && v.startsWith('arn:') && v.endsWith(':*')))
+      ) {
+        const varName = model.name || '';
+        const variable = this.templateSrv.getVariables().find(({ name }) => name === varName);
+        // checks the raw query string for a log group template variable that occurs inside `logGroups(logGroupIdentifier:[ ... ])\`
+        // to later surround the log group names with backticks
+        // this assumes there's only a single template variable used inside the [ ]
+        const shouldSurroundInQuotes = query.expression
+          ?.replaceAll(/[\r\n\t\s]+/g, '')
+          .includes(`\`logGroups(logGroupIdentifier:[$${varName}])\``);
+        if (variable && 'current' in variable && 'text' in variable.current) {
+          if (Array.isArray(variable.current.text)) {
+            return variable.current.text.map((v) => (shouldSurroundInQuotes ? `'${v}'` : v)).join(',');
+          }
+          return shouldSurroundInQuotes ? `'${variable.current.text}'` : variable.current.text;
+        }
+      }
+
+      return value;
+    };
+    const formatter = query.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
+    const expression = this.templateSrv.replace(query.expression || '', scopedVars, formatter);
+
+    return {
+      logGroups,
+      logGroupNames,
+      expression,
+    };
+  }
 
   /**
    * Check if an already started query is complete and returns results if it is. Otherwise it will start polling for results.

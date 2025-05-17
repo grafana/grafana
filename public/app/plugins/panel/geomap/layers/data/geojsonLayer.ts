@@ -9,6 +9,7 @@ import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
 import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
@@ -75,8 +76,11 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
   create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
+    // Interpolate variables in the URL
+    const interpolatedUrl = getTemplateSrv().replace(config.src || '');
+
     const source = new VectorSource({
-      url: config.src,
+      url: interpolatedUrl,
       format: new GeoJSON(),
     });
 
@@ -102,12 +106,11 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         }
       }
     }
-    if (true) {
-      const s = await getStyleConfigState(config.style);
-      styles.push({
-        state: s,
-      });
-    }
+
+    const s = await getStyleConfigState(config.style);
+    styles.push({
+      state: s,
+    });
 
     const polyStyleStrings: string[] = Object.values(GeoJSONPolyStyles);
     const pointStyleStrings: string[] = Object.values(GeoJSONPointStyles);
@@ -195,6 +198,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             settings: {
               options: getPublicGeoJSONFiles() ?? [],
               allowCustomValue: true,
+              supportVariables: true,
             },
             defaultValue: defaultOptions.src,
           })

@@ -36,10 +36,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler Reduc
 	for !t.After(to) && idx <= newSeriesLength {
 		vals := make([]*float64, 0)
 		sIdx := bookmark
-		for {
-			if sIdx == s.Len() {
-				break
-			}
+		for sIdx != s.Len() {
 			st, v := s.GetPoint(sIdx)
 			if st.After(t) {
 				break

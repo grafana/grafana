@@ -282,11 +282,7 @@ func (fi *flamegraphIterator) iterate(fn func(name string, level, value, self in
 	cumulative := fi.columnCumulative(0)
 	fn("total", 0, cumulative, cumulative-childrenValue)
 
-	for {
-		if len(stack) == 0 {
-			break
-		}
-
+	for len(stack) != 0 {
 		// shift stack
 		node := stack[0]
 		stack = stack[1:]

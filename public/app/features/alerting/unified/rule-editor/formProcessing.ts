@@ -1,14 +1,15 @@
-import { omit } from 'lodash';
+import { isEmpty, omit } from 'lodash';
 
 import { config } from '@grafana/runtime';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { isStrictReducer } from 'app/features/expressions/utils/expressionTypes';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { SimpleConditionIdentifier } from '../components/rule-editor/query-and-alert-condition/SimpleCondition';
 import { KVObject, RuleFormValues } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
-import { DataSourceType } from '../utils/datasource';
+import { isSupportedExternalRulesSourceType } from '../utils/datasource';
+import { getInstantFromDataQuery } from '../utils/rule-form';
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   const isQuerySwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
@@ -47,9 +48,9 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
         return query;
       }
       // data query
-      const defaultToInstant =
-        query.model.datasource?.type === DataSourceType.Loki ||
-        query.model.datasource?.type === DataSourceType.Prometheus;
+      const defaultToInstant = query.model.datasource?.type
+        ? isSupportedExternalRulesSourceType(query.model.datasource.type)
+        : false;
       const isInstant =
         'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
       return {
@@ -64,47 +65,63 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
   };
 }
 
+/**
+ * A alert rule is "transformable" to a simple condition editor if
+ * 1. we have a single data query
+ * 2. we have _either_
+ *   2.1 a reduce expression (pointing to the data query) _and_ a threshold expression pointing to the reducer
+ *   2.2 a threshold expression pointing to a (instant) data query
+ * ⚠️ do not assert on refIds or indexes of the queries
+ */
 export function areQueriesTransformableToSimpleCondition(
-  dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>,
+  dataQueries: Array<AlertQuery<AlertDataQuery>>,
   expressionQueries: Array<AlertQuery<ExpressionQuery>>
 ) {
+  // 1. check if we only have a _single_ data query
   if (dataQueries.length !== 1) {
     return false;
   }
-  const singleReduceExpressionInInstantQuery =
-    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2 && !singleReduceExpressionInInstantQuery) {
+  // short-circuit when we have more than 2 expressions, we don't know what to do with that
+  if (expressionQueries.length > 2) {
     return false;
   }
 
-  const query = dataQueries[0];
+  const dataQuery = dataQueries.at(0);
 
-  if (query.refId !== SimpleConditionIdentifier.queryId) {
-    return false;
+  // find the reduce or threshold expressions
+  const reduceExpression = expressionQueries.find((query) => query.model.type === ExpressionQueryType.reduce);
+  const thresholdExpression = expressionQueries.find((query) => query.model.type === ExpressionQueryType.threshold);
+
+  // reducer should be set to "strict" mode
+  const reducerIsStrict = reduceExpression ? isStrictReducer(reduceExpression.model) : false;
+  // threshold expression shouldn't have an unload evaluator (custom recovery threshold)
+  const thresholdExpressionIsClean =
+    thresholdExpression?.model.conditions?.every((condition) => {
+      return isEmpty(condition.unloadEvaluator);
+    }) ?? true;
+
+  const validReducerExpression = reduceExpression && reducerIsStrict;
+  const validThresholdExpression = thresholdExpression && thresholdExpressionIsClean;
+
+  const thresholdPointingToReducer = thresholdExpression?.model.expression === reduceExpression?.refId;
+  const reducerPointingToDataQuery = reduceExpression?.model.expression === dataQuery?.refId;
+
+  // 2.1 check for a reduce + threshold expression and their targets
+  if (validReducerExpression && reducerPointingToDataQuery && validThresholdExpression && thresholdPointingToReducer) {
+    return true;
   }
 
-  const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
-  );
-  const reduceExpression = expressionQueries.at(reduceExpressionIndex);
-  const reduceOk =
-    reduceExpression &&
-    reduceExpressionIndex === 0 &&
-    (reduceExpression.model.settings?.mode === ReducerMode.Strict ||
-      reduceExpression.model.settings?.mode === undefined);
+  // 2.2 check for a single threshold expression pointing to an "instant" data query
+  const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
+  const hasSingleThresholdExpression = expressionQueries.length === 1 && thresholdExpression;
+  const thresholdPointingToDataQuery = thresholdExpression?.model.expression === dataQuery?.refId;
 
-  const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) =>
-      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
-  );
-  const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
-  const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdIndexOk = singleReduceExpressionInInstantQuery
-    ? thresholdExpressionIndex === 0
-    : thresholdExpressionIndex === 1;
-  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
-  return (Boolean(reduceOk) || Boolean(singleReduceExpressionInInstantQuery)) && Boolean(thresholdOk);
+  if (isInstantDataQuery && hasSingleThresholdExpression && validThresholdExpression && thresholdPointingToDataQuery) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isExpressionQueryInAlert(

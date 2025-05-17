@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
@@ -62,6 +63,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       return acc;
     }, {});
   });
+
+  const { t } = useTranslate();
 
   const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;
@@ -158,7 +161,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
         <div className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
-            tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
+            tooltip={
+              contentOutlineExpanded
+                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+            }
             tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={cx(styles.toggleContentOutlineButton, {
