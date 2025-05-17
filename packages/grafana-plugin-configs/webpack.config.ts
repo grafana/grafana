@@ -4,11 +4,13 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 // @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
-import { Configuration } from 'webpack';
+import { type Configuration } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
-import { DIST_DIR } from './constants';
-import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
+// @ts-ignore - node needs the extension to strip types successfully
+import { DIST_DIR } from './constants.ts';
+// @ts-ignore - node needs the extension to strip types successfully
+import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -36,9 +38,13 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
     cache: {
       type: 'filesystem',
       buildDependencies: {
-        config: [__filename],
+        config: [import.meta.filename],
       },
-      cacheDirectory: path.resolve(__dirname, '../../node_modules/.cache/webpack', path.basename(process.cwd())),
+      cacheDirectory: path.resolve(
+        import.meta.dirname,
+        '../../node_modules/.cache/webpack',
+        path.basename(process.cwd())
+      ),
     },
 
     context: process.cwd(),
@@ -93,10 +99,10 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: require.resolve('swc-loader'),
+            loader: 'swc-loader',
             options: {
               jsc: {
-                baseUrl: path.resolve(__dirname),
+                baseUrl: path.resolve(import.meta.dirname),
                 target: 'es2015',
                 loose: false,
                 parser: {
@@ -209,7 +215,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
               extensions: ['.ts', '.tsx'],
               lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
               cacheLocation: path.resolve(
-                __dirname,
+                import.meta.dirname,
                 '../../node_modules/.cache/eslint-webpack-plugin',
                 path.basename(process.cwd()),
                 '.eslintcache'
