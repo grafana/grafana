@@ -2816,7 +2816,7 @@ This section controls system-wide defaults for the time picker, such as the defa
 
 #### `quick_ranges`
 
-Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry should have a `from`, `to` and `display`field.
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry should have a `from`, `to` and `display`field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
 
 The following format is used for the `from` and `to` fields:
 
