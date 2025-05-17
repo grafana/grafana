@@ -79,6 +79,7 @@ function canBeFixed(node, context) {
       return [
         AST_NODE_TYPES.ArrowFunctionExpression,
         AST_NODE_TYPES.FunctionDeclaration,
+        AST_NODE_TYPES.FunctionExpression,
         AST_NODE_TYPES.ClassDeclaration,
       ].includes(anc.type);
     });
@@ -213,20 +214,67 @@ function getComponentNames(node, context) {
  * Gets the import fixer for a node
  * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
- * @param {string} importName The import name
+ * @param {'Trans'|'t'|'useTranslate'} importName The import name
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
 function getImportsFixer(node, fixer, importName, context) {
   const body = context.sourceCode.ast.body;
 
+  /** Map of where we expect to import each translation util from */
+  const importPackage = {
+    Trans: '@grafana/i18n',
+    useTranslate: '@grafana/i18n',
+    t: '@grafana/i18n/internal',
+  };
+  const ancestors = context.sourceCode.getAncestors(node);
+  const parentMethod = ancestors.find((anc) => {
+    return [
+      AST_NODE_TYPES.ArrowFunctionExpression,
+      AST_NODE_TYPES.FunctionDeclaration,
+      AST_NODE_TYPES.ClassDeclaration,
+    ].includes(anc.type);
+  });
+
+  // If we're trying to import `t`,
+  // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
+  // do nothing
+  if (importName === 't') {
+    // Find any t variable declarations in the parent method
+    const tDeclaration = parentMethod
+      ? context.sourceCode.getScope(parentMethod).variables.find((v) => v.name === 't')
+      : null;
+    const tIsFromUseTranslate =
+      tDeclaration &&
+      tDeclaration.defs.find((definition) => {
+        const { node: defNode } = definition;
+        const isVariableDeclaration = defNode.type === AST_NODE_TYPES.VariableDeclarator;
+        const init = isVariableDeclaration ? defNode.init : null;
+        if (
+          isVariableDeclaration &&
+          init &&
+          init.type === AST_NODE_TYPES.CallExpression &&
+          init.callee.type === AST_NODE_TYPES.Identifier
+        ) {
+          return init.callee.name === 'useTranslate';
+        }
+        return false;
+      });
+
+    if (tDeclaration && tIsFromUseTranslate) {
+      return;
+    }
+  }
+
+  const expectedImport = importPackage[importName];
+
   const existingAppCoreI18n = body.find(
-    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === 'app/core/internationalization'
+    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === importPackage[importName]
   );
 
   // If there's no existing import at all, add it
   if (!existingAppCoreI18n) {
-    return fixer.insertTextBefore(body[0], `import { ${importName} } from 'app/core/internationalization';\n`);
+    return fixer.insertTextBefore(body[0], `import { ${importName} } from '${expectedImport}';\n`);
   }
 
   // To keep the typechecker happy - we have to explicitly check the type
@@ -277,6 +325,81 @@ const getTransFixers = (node, context) => (fixer) => {
 };
 
 /**
+ * @param {string} str
+ */
+const firstCharIsUpper = (str) => {
+  return str.charAt(0) === str.charAt(0).toUpperCase();
+};
+
+/**
+ * @param {JSXAttribute} node
+ * @param {RuleFixer} fixer
+ * @param {RuleContextWithOptions} context
+ * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
+ */
+const getUseTranslateFixer = (node, fixer, context) => {
+  const ancestors = context.sourceCode.getAncestors(node);
+  const parentMethod = ancestors.find((anc) => {
+    return (
+      anc.type === AST_NODE_TYPES.ArrowFunctionExpression ||
+      anc.type === AST_NODE_TYPES.FunctionDeclaration ||
+      anc.type === AST_NODE_TYPES.ClassDeclaration
+    );
+  });
+
+  // If the node is not within a function, or the parent method does not start with an uppercase letter,
+  // then we can't reliably add `useTranslate`, as this may not be a React component
+  if (
+    !parentMethod ||
+    (parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
+      (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name))) ||
+    (parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
+      parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
+      !firstCharIsUpper(parentMethod.parent.id.name))
+  ) {
+    return;
+  }
+  if (parentMethod.body.type !== AST_NODE_TYPES.BlockStatement) {
+    return;
+  }
+
+  const useTranslateExists = parentMethod.body.body.find((node) => {
+    return (
+      node.type === AST_NODE_TYPES.VariableDeclaration &&
+      node.declarations.some((declaration) => {
+        if (
+          declaration.type === AST_NODE_TYPES.VariableDeclarator &&
+          declaration.init?.type === AST_NODE_TYPES.CallExpression &&
+          declaration.init.callee.type === AST_NODE_TYPES.Identifier
+        ) {
+          return declaration.init.callee.name === 'useTranslate';
+        }
+
+        return false;
+      })
+    );
+  });
+
+  // Get the return statement from the parent method
+  const returnStatement = parentMethod.body.body.find((node) => node.type === AST_NODE_TYPES.ReturnStatement);
+
+  if (useTranslateExists || !returnStatement) {
+    return;
+  }
+
+  const returnStatementIsJsx =
+    returnStatement.argument &&
+    (returnStatement.argument.type === AST_NODE_TYPES.JSXElement ||
+      returnStatement.argument.type === AST_NODE_TYPES.JSXFragment);
+
+  if (returnStatementIsJsx) {
+    return fixer.insertTextBefore(parentMethod.body.body[0], 'const { t } = useTranslate();\n');
+  }
+
+  return;
+};
+
+/**
  * @param {JSXAttribute} node
  * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
@@ -291,10 +414,19 @@ const getTFixers = (node, context) => (fixer) => {
     fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
   );
 
-  const importsFixer = getImportsFixer(node, fixer, 't', context);
+  // Check if we need to add `useTranslate` to the node
+  const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
+  if (useTranslateFixer) {
+    fixes.push(useTranslateFixer);
+  }
+
+  // Check if we need to add `t` or `useTranslate` to the imports
+  const importToAdd = useTranslateFixer ? 'useTranslate' : 't';
+  const importsFixer = getImportsFixer(node, fixer, importToAdd, context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
+
   return fixes;
 };
 
