@@ -3,18 +3,7 @@ import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
 
-import {
-  generatedAPI,
-  JobSpec,
-  JobStatus,
-  RepositorySpec,
-  RepositoryStatus,
-  Job,
-  JobList,
-  Repository,
-  RepositoryList,
-  ErrorDetails,
-} from './endpoints.gen';
+import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails } from './endpoints.gen';
 import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
@@ -26,16 +15,14 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         url: `/jobs`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus, Job, JobList>('jobs'),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs'),
     },
     listRepository: {
       query: ({ watch, ...queryArg }) => ({
         url: `/repositories`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus, Repository, RepositoryList>(
-        'repositories'
-      ),
+      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
     },
     deleteRepository: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
