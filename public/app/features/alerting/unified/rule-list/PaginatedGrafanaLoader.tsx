@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, take } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -6,7 +6,7 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -15,7 +15,6 @@ import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -33,22 +32,19 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const {
-    page: groupsPage,
-    nextPage,
-    previousPage,
-    canMoveForward,
-    canMoveBackward,
-    isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, GRAFANA_GROUP_PAGE_SIZE);
+  const { currentPage, groups, nextPage, canMoveForward, isLoading } = usePaginatedPrometheusGroups(
+    groupsGenerator.current,
+    GRAFANA_GROUP_PAGE_SIZE
+  );
 
+  const groupsPage = take(groups, GRAFANA_GROUP_PAGE_SIZE * currentPage);
   const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;
@@ -75,12 +71,7 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {canMoveForward && <LazyPagination loadMore={nextPage} />}
       </Stack>
     </DataSourceSection>
   );
@@ -109,7 +100,6 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       name={group.name}
       href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>

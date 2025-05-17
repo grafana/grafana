@@ -73,5 +73,14 @@ export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
     return groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [groups, currentPage, pageSize]);
 
-  return { isLoading: fetchInProgress, page: groupsPage, nextPage, previousPage, canMoveForward, canMoveBackward };
+  return {
+    isLoading: fetchInProgress,
+    groups,
+    currentPage,
+    page: groupsPage,
+    nextPage,
+    previousPage,
+    canMoveForward,
+    canMoveBackward,
+  };
 }

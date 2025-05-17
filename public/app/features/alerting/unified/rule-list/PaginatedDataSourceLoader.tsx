@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, take } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
@@ -11,7 +11,6 @@ import { DataSourceSection, DataSourceSectionProps } from './components/DataSour
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
-import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -36,20 +35,17 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     };
   }, [groupsGenerator]);
 
-  const {
-    page: groupsPage,
-    nextPage,
-    previousPage,
-    canMoveForward,
-    canMoveBackward,
-    isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, DATA_SOURCE_GROUP_PAGE_SIZE);
+  const { currentPage, groups, nextPage, canMoveForward, isLoading } = usePaginatedPrometheusGroups(
+    groupsGenerator.current,
+    DATA_SOURCE_GROUP_PAGE_SIZE
+  );
 
+  const groupsPage = take(groups, DATA_SOURCE_GROUP_PAGE_SIZE * currentPage);
   const groupsByNamespace = useMemo(() => groupBy(groupsPage, 'file'), [groupsPage]);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         {Object.entries(groupsByNamespace).map(([namespace, groups]) => (
           <ListSection
             key={namespace}
@@ -72,12 +68,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
             ))}
           </ListSection>
         ))}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {canMoveForward && <LazyPagination loadMore={nextPage} />}
       </Stack>
     </DataSourceSection>
   );
@@ -106,7 +97,6 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       name={group.name}
       href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
-      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>
