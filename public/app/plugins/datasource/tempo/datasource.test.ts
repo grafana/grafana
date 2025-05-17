@@ -864,7 +864,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-service',
           valueType: 'string',
         },
       ],
@@ -961,7 +961,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.namespace',
-          value: 'my-namespace',
+          value: 'my-target-namespace-service',
           valueType: 'string',
         },
         {
@@ -969,7 +969,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-name-service',
           valueType: 'string',
         },
       ],
@@ -1495,7 +1495,10 @@ const serviceGraphLinks = [
 
 const replaceVariablesInstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.target}}`]: 'my-target-service',
+    [`\${__data.fields.targetName}`]: 'my-target-name-service',
+    [`\${__data.fields.targetNamespace}`]: 'my-target-namespace-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'true',
   };
@@ -1504,7 +1507,7 @@ const replaceVariablesInstrumented = (variable: string): string => {
 
 const replaceVariablesUninstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'false',
   };
