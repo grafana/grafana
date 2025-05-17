@@ -165,15 +165,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	permissions := accessTokenClaims.Rest.Permissions
 	fetchPermissionsParams := authn.FetchPermissionsParams{}
 	if len(permissions) > 0 {
-		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
-		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
-		for i := range permissions {
-			if strings.HasPrefix(permissions[i], "fixed:") {
-				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
-			} else {
-				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
-			}
-		}
+		fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions...)
 	}
 
 	return &authn.Identity{
