@@ -1,10 +1,10 @@
-import { getCellLinks } from '../../../utils';
+import { getCellLinks } from '../TableNG/utils';
 import { TableCellProps } from '../types';
 
 export const DataLinksCell = (props: TableCellProps) => {
   const { field, row, cellProps, tableStyles } = props;
 
-  const links = getCellLinks(field, row);
+  const links = getCellLinks(field, row.index);
 
   return (
     <div {...cellProps} className={tableStyles.cellContainerText}>
