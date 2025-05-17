@@ -68,6 +68,14 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceCurrentRV: {
+				{
+					Name: "current rv",
+					Data: &sqlCurrentRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+			},
 			sqlResourceRead: {
 				{
 					Name: "without_resource_version",

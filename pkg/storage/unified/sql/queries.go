@@ -37,6 +37,7 @@ var (
 	sqlResourceStats               = mustTemplate("resource_stats.sql")
 	sqlResourceList                = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList         = mustTemplate("resource_history_list.sql")
+	sqlResourceCurrentRV           = mustTemplate("resource_current_rv.sql")
 	sqlResourceUpdateRV            = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead         = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryReadLatestRV = mustTemplate("resource_history_read_latest_rv.sql")
@@ -97,6 +98,29 @@ func (r sqlResourceInsertFromHistoryRequest) Validate() error {
 		return fmt.Errorf("missing key")
 	}
 	return nil
+}
+
+type sqlCurrentRVRequest struct {
+	sqltemplate.SQLTemplate
+	Response *currentRVResponse
+}
+
+func (r sqlCurrentRVRequest) Validate() error {
+	return nil
+}
+
+func (r sqlCurrentRVRequest) Results() (*currentRVResponse, error) {
+	return &currentRVResponse{
+		ResourceVersion: r.Response.ResourceVersion,
+	}, nil
+}
+
+type currentRVResponse struct {
+	ResourceVersion int64
+}
+
+func (r *currentRVResponse) Results() (*currentRVResponse, error) {
+	return r, nil
 }
 
 type sqlStatsRequest struct {

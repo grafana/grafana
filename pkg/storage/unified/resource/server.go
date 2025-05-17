@@ -113,6 +113,9 @@ type StorageBackend interface {
 
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
+
+	// Get the latest RV
+	CurrentResourceVersion(ctx context.Context) (int64, error)
 }
 
 type ResourceStats struct {
@@ -322,7 +325,6 @@ type server struct {
 	distributor     Distributor
 	reg             prometheus.Registerer
 }
-
 type Distributor struct {
 	ClientPool *ringclient.Pool
 	Ring       *ring.Ring
@@ -1117,6 +1119,17 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	}
 
 	return s.search.Search(ctx, req)
+}
+
+// CurrentResourceVersion implements ResourceServer.
+func (s *server) CurrentResourceVersion(ctx context.Context, _ *resourcepb.CurrentResourceVersionRequest) (*resourcepb.CurrentResourceVersionResponse, error) {
+	rv, err := s.backend.CurrentResourceVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &resourcepb.CurrentResourceVersionResponse{
+		ResourceVersion: rv,
+	}, nil
 }
 
 // GetStats implements ResourceServer.
