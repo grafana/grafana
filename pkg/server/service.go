@@ -36,10 +36,30 @@ func (s *coreService) start(_ context.Context) error {
 	return s.server.Init()
 }
 
-func (s *coreService) running(_ context.Context) error {
-	return s.server.Run()
+func (s *coreService) running(ctx context.Context) error {
+	errChan := make(chan error, 1)
+
+	go func() {
+		err := s.server.Run()
+		if err != nil {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return nil
+	}
 }
 
 func (s *coreService) stop(failureReason error) error {
-	return s.server.Shutdown(context.Background(), failureReason.Error())
+	ctx := context.Background()
+	reason := "context canceled"
+	if failureReason != nil {
+		reason = failureReason.Error()
+	}
+	err := s.server.Shutdown(ctx, reason)
+	return err
 }

@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -18,8 +19,21 @@ type BleveIndexMetrics struct {
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
+var (
+	bleveIndexMetricsInstance *BleveIndexMetrics
+	bleveIndexMetricsMutex    sync.Mutex
+)
+
+// ProvideIndexMetrics returns the BleveIndexMetrics instance using the singleton pattern to avoid duplicate registration
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
-	return &BleveIndexMetrics{
+	bleveIndexMetricsMutex.Lock()
+	defer bleveIndexMetricsMutex.Unlock()
+
+	if bleveIndexMetricsInstance != nil {
+		return bleveIndexMetricsInstance
+	}
+
+	bleveIndexMetricsInstance = &BleveIndexMetrics{
 		IndexLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "index_server",
 			Name:                            "index_latency_seconds",
@@ -54,4 +68,5 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Help:      "Number of tenants in the index",
 		}, []string{"index_storage"}), // index_storage is either "file" or "memory"
 	}
+	return bleveIndexMetricsInstance
 }
