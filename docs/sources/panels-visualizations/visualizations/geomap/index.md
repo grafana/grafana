@@ -220,6 +220,7 @@ There are seven map layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
+- [H3 grid](#h3-grid-layer) visualizes aggregated data using the [H3 Spatial Index](https://h3geo.org/).
 
 {{% admonition type="note" %}}
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
@@ -528,6 +529,46 @@ The XYZ Tile layer is a map from a generic tile layer.
 
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
+
+#### H3 grid layer
+
+Visualizes geospatial data using an H3 Spatial Index. Automatically renders the cells and can be styled according to the data.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-h3-layer.png" max-width="750px" alt="H3 grid layer" >}}
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
+| H3 index field | The field name containing the H3 index. The index must be in hexadecimal notation, without the 0x prefix, for example: `81953ffffffffff` |
+| Color | Configures the color of the cells. The default `Fixed color` sets all cells to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | Configures the transparency of each cell. |
+| Text label | Configures a text label for each cell.  The default `Fixed` sets all cells with the same label. There is also an option to have labels depending on the selected field data point values.|
+| Update variables on move | Updates dashboard variables `$h3cellsInView` and `$h3Resolution` when the map is moved (after panning or zooming for example). See below for more information. |
+| Show legend | Allows you to toggle the legend for the layer. |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
+
+<!-- prettier-ignore-end -->
+
+##### More information
+
+If _Update variables on move_ is activated, The variables will dynamically change with the map extent and/or zoom level changes. This variables should be configured in the dashboard as Custom variables and multi-value. They can be hidden too.
+
+These variables are useful if H3 gridded data is generated dynamically from a DB or an API.
+
+`$h3Resolution` will provide a hint of the proper resolution to use to generate the data based on the current zoom level of the map to avoid having cells that are too big or too small (and too many) at any point in time. The current mapping is used:
+
+| Web map zoom level | H3 Resolution |
+| ------------------ | ------------- |
+| 0                  | 0             |
+| 1                  | 1             |
+| 2.5                | 2             |
+| 3.5                | 3             |
+| 4.5                | 4             |
+| 5.5                | 5             |
+| 7                  | 6             |
+
+`$h3CellsInView` will provide a list of Resolution 1 cells that are visible in the current map extent. This list can be usefull to narrow searches on APIs and DBs.
 
 ### Basemap layer options
 
