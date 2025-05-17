@@ -1023,4 +1023,8 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
 }
