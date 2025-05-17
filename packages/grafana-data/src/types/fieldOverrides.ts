@@ -147,4 +147,5 @@ export enum FieldConfigProperty {
   Actions = 'actions',
   Color = 'color',
   Filterable = 'filterable',
+  TimeCompare = 'timeCompare',
 }
