@@ -704,7 +704,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/signingkeys/ @grafana/identity-squad
 /pkg/services/dashboards/accesscontrol.go @grafana/access-squad
 /pkg/services/datasources/guardian/ @grafana/access-squad
-/pkg/services/guardian/ @grafana/access-squad
 /pkg/services/ldap/ @grafana/identity-squad
 /pkg/services/login/ @grafana/identity-squad
 /pkg/services/loginattempt/ @grafana/identity-squad
