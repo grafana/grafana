@@ -86,11 +86,7 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <FolderPicker
-          onChange={(uid) => setFolderUid(uid)}
-          value={folderUid}
-          inputId="share-panel-library-panel-folder-picker"
-        />
+        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
       {config.featureToggles.newDashboardSharingComponent ? (
         <Stack gap={1} justifyContent={'start'}>
