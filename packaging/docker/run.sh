@@ -62,7 +62,7 @@ done
 
 export HOME="$GF_PATHS_HOME"
 
-if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
+if [ ! -z "${GF_INSTALL_PLUGINS}" ] && [ "${GF_INSTALL_PLUGINS_FORCE}" = "true" ]; then
   OLDIFS=$IFS
   IFS=','
   for plugin in ${GF_INSTALL_PLUGINS}; do
