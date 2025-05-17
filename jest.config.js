@@ -45,6 +45,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
+    '\\.(woff|woff2|ttf|eot|otf)': '<rootDir>/public/test/mocks/fonts.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     // resolve directly as monaco and kusto don't have main property in package.json which jest needs
