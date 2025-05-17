@@ -250,7 +250,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	})
 }
 
-// swagger:route GET /dashboard/snapshots snapshots searchDashboardSnapshots
+// swagger:route GET /dashboard/snapshots dashboards snapshots searchDashboardSnapshots
 //
 // List snapshots.
 //
