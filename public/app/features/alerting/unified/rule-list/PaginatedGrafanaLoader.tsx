@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -46,6 +47,8 @@ export function PaginatedGrafanaLoader() {
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
+  const hasNoRules = isEmpty(groupsByFolder) && !isLoading;
+
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
       <Stack direction="column" gap={1}>
@@ -75,12 +78,15 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {hasNoRules && <GrafanaNoRulesCTA />}
+        {!hasNoRules && (
+          <LazyPagination
+            nextPage={nextPage}
+            previousPage={previousPage}
+            canMoveForward={canMoveForward}
+            canMoveBackward={canMoveBackward}
+          />
+        )}
       </Stack>
     </DataSourceSection>
   );
