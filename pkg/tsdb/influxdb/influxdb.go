@@ -92,6 +92,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			Token:         settings.DecryptedSecureJSONData["token"],
 			Timeout:       opts.Timeouts.Timeout,
 			ProxyClient:   proxyClient,
+			TLSConfig:     opts.TLS,
 		}
 		return model, nil
 	}
