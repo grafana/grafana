@@ -47,13 +47,25 @@ func NewFilteredDataPlaneServiceInformer(client versioned.Interface, resyncPerio
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().List(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(ctx, options)
 			},
 		},
 		&apisaggregationv0alpha1.DataPlaneService{},

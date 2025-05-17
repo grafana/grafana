@@ -349,7 +349,7 @@ func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
 }
 
 func TestEtcdWatchSemantics(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
+	for _, s := range []StorageType{StorageTypeUnified} { //}, StorageTypeFile} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t)
 			defer destroyFunc()

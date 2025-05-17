@@ -39,7 +39,9 @@ type Spec struct {
 
 // NewSpec creates a new Spec object.
 func NewSpec() *Spec {
-	return &Spec{}
+	return &Spec{
+		Model: map[string]any{},
+	}
 }
 
 type LibraryElementDTOMeta struct {

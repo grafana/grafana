@@ -223,6 +223,10 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *resourcepb.ReadReque
 	}
 }
 
+func (s *cdkBackend) CurrentResourceVersion(ctx context.Context) (int64, error) {
+	return 0, nil // TODO!
+}
+
 func isDeletedValue(raw []byte) bool {
 	if bytes.Contains(raw, []byte(`"generation":-999`)) {
 		tmp := &unstructured.Unstructured{}
