@@ -33,7 +33,7 @@ var (
 
 // ClientFactory is a factory for creating clients for a given namespace
 //
-//go:generate mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
+//go:generate go tool mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
 type ClientFactory interface {
 	Clients(ctx context.Context, namespace string) (ResourceClients, error)
 }
@@ -45,7 +45,7 @@ type clientFactory struct {
 // TODO: Rename to NamespacedClients
 // ResourceClients provides access to clients within a namespace
 //
-//go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter
+//go:generate go tool mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter
 type ResourceClients interface {
 	ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
 	ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)

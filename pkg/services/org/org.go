@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-//go:generate mockery --name Service --structname MockService --outpkg orgtest --filename mock.go --output ./orgtest/
+//go:generate go tool mockery --name Service --structname MockService --outpkg orgtest --filename mock.go --output ./orgtest/
 type Service interface {
 	GetIDForNewUser(context.Context, GetOrgIDForNewUserCommand) (int64, error)
 	InsertOrgUser(context.Context, *OrgUser) (int64, error)

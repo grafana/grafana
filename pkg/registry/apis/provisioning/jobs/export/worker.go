@@ -13,10 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-//go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
+//go:generate go tool mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
 type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
 
-//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
+//go:generate go tool mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
 type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
 
 type ExportWorker struct {

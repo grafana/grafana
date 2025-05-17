@@ -9,14 +9,14 @@ import (
 
 // RepoGetter is a function that can be called to get a repository by name
 //
-//go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
+//go:generate go tool mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
 type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (repository.Repository, error)
 }
 
 // JobProgressRecorder is a function that can be called to record the progress of a job
 //
-//go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
+//go:generate go tool mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
 type JobProgressRecorder interface {
 	Record(ctx context.Context, result JobResourceResult)
 	ResetResults()
@@ -30,7 +30,7 @@ type JobProgressRecorder interface {
 
 // Worker is a worker that can process a job
 //
-//go:generate mockery --name Worker --structname MockWorker --inpackage --filename worker_mock.go --with-expecter
+//go:generate go tool mockery --name Worker --structname MockWorker --inpackage --filename worker_mock.go --with-expecter
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
 	// Process the job. The job status should be updated as the job progresses.
@@ -41,5 +41,5 @@ type Worker interface {
 
 // ProgressFn is a function that can be called to update the progress of a job
 //
-//go:generate mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock.go --with-expecter
+//go:generate go tool mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock.go --with-expecter
 type ProgressFn func(ctx context.Context, status provisioning.JobStatus) error

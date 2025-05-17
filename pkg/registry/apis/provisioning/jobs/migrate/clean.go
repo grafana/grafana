@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-//go:generate mockery --name NamespaceCleaner --structname MockNamespaceCleaner --inpackage --filename mock_namespace_cleaner.go --with-expecter
+//go:generate go tool mockery --name NamespaceCleaner --structname MockNamespaceCleaner --inpackage --filename mock_namespace_cleaner.go --with-expecter
 type NamespaceCleaner interface {
 	Clean(ctx context.Context, namespace string, progress jobs.JobProgressRecorder) error
 }

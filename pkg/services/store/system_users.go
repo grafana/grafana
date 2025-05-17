@@ -25,7 +25,7 @@ type SystemUsersProvider interface {
 	GetUser(userType SystemUserType, orgID int64) (*user.SignedInUser, error)
 }
 
-//go:generate mockery --name SystemUsers --structname FakeSystemUsers --inpackage --filename system_users_mock.go
+//go:generate go tool mockery --name SystemUsers --structname FakeSystemUsers --inpackage --filename system_users_mock.go
 type SystemUsers interface {
 	SystemUsersFilterProvider
 	SystemUsersProvider

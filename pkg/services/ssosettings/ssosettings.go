@@ -14,7 +14,7 @@ var (
 
 // Service is a SSO settings service
 //
-//go:generate mockery --name Service --structname MockService --outpkg ssosettingstests --filename service_mock.go --output ./ssosettingstests/
+//go:generate go tool mockery --name Service --structname MockService --outpkg ssosettingstests --filename service_mock.go --output ./ssosettingstests/
 type Service interface {
 	// List returns all SSO settings from DB and config files
 	List(ctx context.Context) ([]*models.SSOSettings, error)
@@ -38,7 +38,7 @@ type Service interface {
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
 //
-//go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
+//go:generate go tool mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
 	Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error
@@ -55,7 +55,7 @@ type FallbackStrategy interface {
 
 // Store is a SSO settings store
 //
-//go:generate mockery --name Store --structname MockStore --outpkg ssosettingstests --filename store_mock.go --output ./ssosettingstests/
+//go:generate go tool mockery --name Store --structname MockStore --outpkg ssosettingstests --filename store_mock.go --output ./ssosettingstests/
 type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)

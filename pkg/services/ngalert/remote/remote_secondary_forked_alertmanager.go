@@ -18,7 +18,7 @@ type configStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
-//go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
+//go:generate go tool mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
 type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error

@@ -56,7 +56,7 @@ func (t *sqlTemplate) UnmarshalJSON([]byte) error {
 	return ErrSQLTemplateNoSerialize
 }
 
-//go:generate mockery --with-expecter --name SQLTemplate
+//go:generate go tool mockery --with-expecter --name SQLTemplate
 
 // SQLTemplate can be used as argument in general purpose utilities
 // expecting a struct embedding *SQLTemplate.
@@ -74,7 +74,7 @@ type SQLTemplate interface {
 	Validate() error
 }
 
-//go:generate mockery --with-expecter --name WithResults
+//go:generate go tool mockery --with-expecter --name WithResults
 
 // WithResults has an additional method suited for structs embedding
 // *SQLTemplate and returning a set of rows.

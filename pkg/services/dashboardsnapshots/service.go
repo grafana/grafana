@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go
+//go:generate go tool mockery --name Service --structname MockService --inpackage --filename service_mock.go
 type Service interface {
 	CreateDashboardSnapshot(context.Context, *CreateDashboardSnapshotCommand) (*DashboardSnapshot, error)
 	DeleteDashboardSnapshot(context.Context, *DeleteDashboardSnapshotCommand) error

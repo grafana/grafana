@@ -12,7 +12,7 @@ const (
 
 type AuthProvider string
 
-//go:generate mockery --name ExternalServiceRegistry --structname ExternalServiceRegistryMock --output tests --outpkg tests --filename extsvcregmock.go
+//go:generate go tool mockery --name ExternalServiceRegistry --structname ExternalServiceRegistryMock --output tests --outpkg tests --filename extsvcregmock.go
 type ExternalServiceRegistry interface {
 	// HasExternalService returns whether an external service has been saved with that name.
 	HasExternalService(ctx context.Context, name string) (bool, error)

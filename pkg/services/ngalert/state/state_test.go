@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/grafana/alerting/models"
 

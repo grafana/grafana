@@ -64,6 +64,7 @@ COPY .citools/bra .citools/bra
 COPY .citools/cue .citools/cue
 COPY .citools/cog .citools/cog
 COPY .citools/lefthook .citools/lefthook
+COPY .citools/mockery .citools/mockery
 COPY .citools/jb .citools/jb
 COPY .citools/golangci-lint .citools/golangci-lint
 COPY .citools/swagger .citools/swagger

@@ -37,7 +37,7 @@ type MigrateOptions struct {
 
 // Read from legacy and write into unified storage
 //
-//go:generate mockery --name LegacyMigrator --structname MockLegacyMigrator --inpackage --filename legacy_migrator_mock.go --with-expecter
+//go:generate go tool mockery --name LegacyMigrator --structname MockLegacyMigrator --inpackage --filename legacy_migrator_mock.go --with-expecter
 type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 }

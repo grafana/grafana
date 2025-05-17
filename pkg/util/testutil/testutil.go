@@ -9,7 +9,7 @@ import (
 //go:embed data/*
 var dataFS embed.FS
 
-//go:generate mockery --with-expecter --name T
+//go:generate go tool mockery --with-expecter --name T
 
 // T provides a clean way to test the utilities of this package.
 type T interface {

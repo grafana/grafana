@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-//go:generate mockery --name Signer --structname MockSigner --inpackage --filename signer_mock.go --with-expecter
+//go:generate go tool mockery --name Signer --structname MockSigner --inpackage --filename signer_mock.go --with-expecter
 type Signer interface {
 	Sign(ctx context.Context, item utils.GrafanaMetaAccessor) (context.Context, error)
 }
@@ -20,7 +20,7 @@ type SignOptions struct {
 
 // SignerFactory is a factory for creating Signers
 //
-//go:generate mockery --name SignerFactory --structname MockSignerFactory --inpackage --filename signature_factory_mock.go --with-expecter
+//go:generate go tool mockery --name SignerFactory --structname MockSignerFactory --inpackage --filename signature_factory_mock.go --with-expecter
 type SignerFactory interface {
 	New(ctx context.Context, opts SignOptions) (Signer, error)
 }

@@ -173,7 +173,7 @@ type GetFileOptions struct {
 	WithContents bool
 }
 
-//go:generate mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
+//go:generate go tool mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
 type FileStorage interface {
 	Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error)
 	Delete(ctx context.Context, path string) error

@@ -44,7 +44,7 @@ type Service interface {
 	GetOAuthInfoProviders() map[string]*OAuthInfo
 }
 
-//go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ./socialtest/
+//go:generate go tool mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ./socialtest/
 type SocialConnector interface {
 	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool

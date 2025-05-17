@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-//go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
+//go:generate go tool mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
 type Migrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
 }

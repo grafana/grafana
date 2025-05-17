@@ -6,11 +6,11 @@ import (
 	"fmt"
 )
 
-//go:generate mockery --with-expecter --name DB
-//go:generate mockery --with-expecter --name Tx
-//go:generate mockery --with-expecter --name Row
-//go:generate mockery --with-expecter --name Rows
-//go:generate mockery --with-expecter --exported --name result
+//go:generate go tool mockery --with-expecter --name DB
+//go:generate go tool mockery --with-expecter --name Tx
+//go:generate go tool mockery --with-expecter --name Row
+//go:generate go tool mockery --with-expecter --name Rows
+//go:generate go tool mockery --with-expecter --exported --name result
 
 const (
 	DriverPostgres = "postgres"

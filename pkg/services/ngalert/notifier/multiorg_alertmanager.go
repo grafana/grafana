@@ -44,7 +44,7 @@ var (
 	ErrSilenceInternal    = errutil.Internal("alerting.notifications.silences.internal")
 )
 
-//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
+//go:generate go tool mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, *models.AlertConfiguration) error

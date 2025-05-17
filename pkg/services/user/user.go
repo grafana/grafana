@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 )
 
-//go:generate mockery --name Service --structname MockService --outpkg usertest --filename mock.go --output ./usertest/
+//go:generate go tool mockery --name Service --structname MockService --outpkg usertest --filename mock.go --output ./usertest/
 type Service interface {
 	registry.ProvidesUsageStats
 	Create(context.Context, *CreateUserCommand) (*User, error)

@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-//go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
+//go:generate go tool mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
 type RepositoryResourcesFactory interface {
 	Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error)
 }
 
-//go:generate mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
+//go:generate go tool mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
 type RepositoryResources interface {
 	// Folders
 	SetTree(tree FolderTree)
