@@ -25,7 +25,7 @@
     "lodash": "4.17.21",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-select": "5.10.0",
+    "react-select": "5.10.1",
     "react-use": "17.6.0",
     "react-virtualized-auto-sizer": "1.0.25",
     "rxjs": "7.8.1",
