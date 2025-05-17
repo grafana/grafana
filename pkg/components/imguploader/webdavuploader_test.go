@@ -33,7 +33,7 @@ func TestUploadToWebdav(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, webdavUploader)
 
-		path, err := webdavUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
+		path, err := webdavUploader.Upload(context.Background(), "../../../public/build/img/logo_transparent_400x.png")
 		require.NoError(t, err)
 		require.True(t, strings.HasPrefix(path, server.URL))
 	})
@@ -57,7 +57,7 @@ func TestUploadToWebdav(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, webdavUploader)
 
-		path, err := webdavUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
+		path, err := webdavUploader.Upload(context.Background(), "../../../public/build/img/logo_transparent_400x.png")
 		require.NoError(t, err)
 		require.True(t, strings.HasPrefix(path, "http://publicurl:8888/webdav/"))
 	})
