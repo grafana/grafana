@@ -246,7 +246,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Volt (V)', id: 'volt', fn: SIPrefix('V') },
       { name: 'Kilovolt (kV)', id: 'kvolt', fn: SIPrefix('V', 1) },
       { name: 'Millivolt (mV)', id: 'mvolt', fn: SIPrefix('V', -1) },
-      { name: 'Decibel-milliwatt (dBm)', id: 'dBm', fn: SIPrefix('dBm') },
+      { name: 'Decibel-milliwatt (dBm)', id: 'dBm', fn: toFixedUnit('dBm') },
       { name: 'Milliohm (mΩ)', id: 'mohm', fn: SIPrefix('Ω', -1) },
       { name: 'Ohm (Ω)', id: 'ohm', fn: SIPrefix('Ω') },
       { name: 'Kiloohm (kΩ)', id: 'kohm', fn: SIPrefix('Ω', 1) },
