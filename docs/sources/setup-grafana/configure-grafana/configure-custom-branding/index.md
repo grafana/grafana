@@ -32,7 +32,7 @@ With custom branding, you have the ability to modify the following elements:
 - Side menu top logo
 - Footer and help menu links
 - Fav icon (shown in browser tab)
-- Login title (will not appear if a login logo is set)
+- Login title
 - Login subtitle (will not appear if a login logo is set)
 - Login box background
 - Loading logo
