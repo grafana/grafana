@@ -95,7 +95,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
-			frames, err := seriesToDataFrames(seriesResp)
+			withAnnotations := qm.Annotations != nil && *qm.Annotations
+			frames, err := seriesToDataFrames(seriesResp, withAnnotations)
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
@@ -432,7 +433,7 @@ func (ta *TimedAnnotation) getValue() string {
 	return ta.Annotation.Value
 }
 
-func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
+func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
 	annotations := make([]*TimedAnnotation, 0)
 
@@ -457,11 +458,13 @@ func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
-			for _, a := range point.Annotations {
-				annotations = append(annotations, &TimedAnnotation{
-					Timestamp:  point.Timestamp,
-					Annotation: a,
-				})
+			if withAnnotations {
+				for _, a := range point.Annotations {
+					annotations = append(annotations, &TimedAnnotation{
+						Timestamp:  point.Timestamp,
+						Annotation: a,
+					})
+				}
 			}
 		}
 

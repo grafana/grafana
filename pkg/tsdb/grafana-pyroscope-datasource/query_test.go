@@ -253,10 +253,34 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames, err := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series, true)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
+	})
+
+	t.Run("annotations frame can be skipped", func(t *testing.T) {
+		rawAnnotation := `{"body":{"periodType":"day","periodLimitMb":1024,"limitResetTime":1609459200}}`
+
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Points: []*Point{
+						{
+							Timestamp: int64(1609455600000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		frames, err := seriesToDataFrames(series, false)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
 	})
 
 	t.Run("throttling annotations are correctly processed", func(t *testing.T) {
@@ -278,7 +302,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			},
 		}
 
-		frames, err := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 
@@ -324,7 +348,7 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 			},
 		}
 
-		frames, err := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 
@@ -351,7 +375,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames, err := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, data.NewField("time", nil, []time.Time{time.UnixMilli(1000), time.UnixMilli(2000)}), frames[0].Fields[0])
@@ -366,7 +390,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames, err = seriesToDataFrames(series)
+		frames, err = seriesToDataFrames(series, true)
 		require.NoError(t, err)
 		require.Equal(t, data.NewField("samples", map[string]string{"app": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 	})
@@ -380,7 +404,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames, err := seriesToDataFrames(resp)
+		frames, err := seriesToDataFrames(resp, true)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
