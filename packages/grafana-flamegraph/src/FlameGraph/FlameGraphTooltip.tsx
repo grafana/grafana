@@ -110,7 +110,7 @@ export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, t
     unitTitle,
     unitValue,
     unitSelf,
-    samples: displayValue.numeric.toLocaleString(),
+    samples: displayValue.numeric.toLocaleString('en-US'),
   };
 };
 
@@ -120,6 +120,16 @@ type DiffTableData = {
   baseline: string | number;
   comparison: string | number;
   diff: string | number;
+};
+
+export const formatDiff = (value: number): string => {
+  if (Math.abs(value) >= 1000) {
+    return (value / 1000).toFixed(2) + 'K%';
+  }
+  if (value === 0) {
+    return '0.00%';
+  }
+  return value % 1 === 0 ? `${value}%` : value.toFixed(2) + '%';
 };
 
 export const getDiffTooltipData = (
@@ -148,7 +158,7 @@ export const getDiffTooltipData = (
       label: '% of total',
       baseline: percentageLeft + '%',
       comparison: percentageRight + '%',
-      diff: shortValFormat(diff).text + '%',
+      diff: formatDiff(diff),
     },
     {
       rowId: '2',

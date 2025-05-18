@@ -2,6 +2,7 @@ import { Field, FieldType, createDataFrame } from '@grafana/data';
 
 import { getDiffTooltipData, getTooltipData } from './FlameGraphTooltip';
 import { FlameGraphDataContainer } from './dataTransform';
+import { formatDiff } from './FlameGraphTooltip';
 
 function setupData(unit?: string) {
   const flameGraphData = createDataFrame({
@@ -28,6 +29,23 @@ function setupDiffData() {
   });
   return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 }
+
+describe('formatDiff', () => {
+  it('must correctly format values ​​less than 1000', () => {
+    expect(formatDiff(8.08)).toBe('8.08%');
+    expect(formatDiff(999.99)).toBe('999.99%');
+  });
+
+  it('must correctly format values ​​equal to or greater than 1000', () => {
+    expect(formatDiff(1000)).toBe('1.00K%');
+    expect(formatDiff(8081.25)).toBe('8.08K%');
+    expect(formatDiff(-2500)).toBe('-2.50K%');
+  });
+
+  it('must handle zero correctly', () => {
+    expect(formatDiff(0)).toBe('0.00%');
+  });
+});''
 
 describe('FlameGraphTooltip', () => {
   it('for bytes', () => {
