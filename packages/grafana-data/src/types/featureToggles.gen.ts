@@ -520,6 +520,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregator?: boolean;
   /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enable new expression parser
   */
   expressionParser?: boolean;
@@ -919,6 +923,7 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   /**
   * Enables writing to data sources for Grafana-managed recording rules.
+  * @default false
   */
   grafanaManagedRecordingRulesDatasources?: boolean;
   /**
@@ -930,7 +935,8 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+  * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
+  * @default true
   */
   alertingMigrationUI?: boolean;
   /**

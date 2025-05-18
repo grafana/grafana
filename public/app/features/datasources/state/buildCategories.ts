@@ -17,6 +17,7 @@ import dynatracePng from 'img/plugins/dynatrace.png';
 import gitlabSvg from 'img/plugins/gitlab.svg';
 import honeycombPng from 'img/plugins/honeycomb.png';
 import jiraLogoPng from 'img/plugins/jira_logo.png';
+import logicMonitorSvg from 'img/plugins/logicmonitor.svg';
 import mongodbSvg from 'img/plugins/mongodb.svg';
 import netlifySvg from 'img/plugins/netlify.svg';
 import newrelicSvg from 'img/plugins/newrelic.svg';
@@ -298,6 +299,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       description: 'Aurora data source',
       name: 'Aurora',
       imgUrl: auroraSvg,
+    }),
+    getPhantomPlugin({
+      id: 'grafana-logicmonitor-datasource',
+      description: 'LogicMonitor Devices datasource',
+      name: 'LogicMonitor Devices',
+      imgUrl: logicMonitorSvg,
     }),
   ];
 }

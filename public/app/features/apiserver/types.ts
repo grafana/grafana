@@ -48,6 +48,7 @@ export enum ManagerKind {
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
+export const AnnoKeyManagerAllowsEdits = 'grafana.app/managerAllowsEdits';
 export const AnnoKeySourcePath = 'grafana.app/sourcePath';
 export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
 export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
@@ -84,6 +85,7 @@ type GrafanaAnnotations = {
 
   [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
+  [AnnoKeyManagerAllowsEdits]?: string;
   [AnnoKeySourcePath]?: string;
   [AnnoKeySourceChecksum]?: string;
   [AnnoKeySourceTimestamp]?: string;
@@ -97,7 +99,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: string;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
   [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
