@@ -74,7 +74,6 @@ interface Props {
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
-  storageKey?: string;
   timeRange: TimeRange;
   timeZone: string;
   syntaxHighlighting?: boolean;
