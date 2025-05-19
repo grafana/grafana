@@ -75,23 +75,25 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	}
 	c.Status.Report = *report
 	c.SetAnnotations(obj.GetAnnotations())
-	// This works, the updated object contains the new status
-	updated, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), c, resource.UpdateOptions{
+	// // This works, the updated object contains the new status
+	// updated, err := client.Update(ctx, obj.GetStaticMetadata().Identifier(), c, resource.UpdateOptions{
+	// 	Subresource: "status",
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+	// log.Info("updated", "updated", updated)
+	// This also works now, need to use "status" subresource
+	patched, err := client.Patch(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/status",
+			Value:     c.Status,
+		}},
+	}, resource.PatchOptions{
 		Subresource: "status",
 	})
-	if err != nil {
-		return err
-	}
-	log.Info("updated", "updated", updated)
-	// This doesn't work, the patched object contains the old status
-	// patched, err := client.Patch(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-	// 	Operations: []resource.PatchOperation{{
-	// 		Operation: resource.PatchOpAdd,
-	// 		Path:      "/status",
-	// 		Value:     c.Status,
-	// 	}},
-	// }, resource.PatchOptions{})
-	// log.Info("patched", "patched", patched)
+	log.Info("patched", "patched", patched)
 	return err
 }
 
