@@ -110,7 +110,7 @@ export const ScopesSelector = () => {
                     deselectScope={deselectScope}
                     onRecentScopesSelect={(scopeIds: string[]) => {
                       scopesSelectorService.changeScopes(scopeIds);
-                      scopesSelectorService.closeAndApply();
+                      scopesSelectorService.closeAndReset();
                     }}
                   />
                 </>

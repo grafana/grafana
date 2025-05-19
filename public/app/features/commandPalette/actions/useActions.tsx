@@ -1,6 +1,6 @@
 import { useRegisterActions } from 'kbar';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { fromPairs, last } from 'lodash';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
