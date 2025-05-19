@@ -18,6 +18,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { initTranslations } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -61,7 +62,8 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initializeI18n } from './core/internationalization';
+import { NAMESPACES } from './core/internationalization/constants';
+import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
@@ -124,7 +126,14 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
 
-      const initI18nPromise = initializeI18n(config.bootData.user.language);
+      // This is a placeholder so we can put a 'comment' in the message json files.
+      // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+      // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
+      const initI18nPromise = initTranslations({
+        language: config.bootData.user.language,
+        ns: NAMESPACES,
+        module: loadTranslations,
+      });
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
