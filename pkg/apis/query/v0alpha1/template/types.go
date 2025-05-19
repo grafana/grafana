@@ -17,6 +17,9 @@ type QueryTemplate struct {
 	// Toggle for visible/hidden queries
 	IsVisible bool `json:"isVisible,omitempty"`
 
+	// Whether the query is locked and cannot be edited
+	IsLocked bool `json:"isLocked,omitempty"`
+
 	// The variables that can be used to render
 	// +listType=map
 	// +listMapKey=key
