@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans } from '@grafana/i18n';
@@ -8,6 +8,7 @@ import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
+import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
@@ -40,6 +41,7 @@ export function PaginatedGrafanaLoader() {
   );
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
+  const hasNoRules = isEmpty(groups) && !isLoading;
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
@@ -81,6 +83,7 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
+        {hasNoRules && <GrafanaNoRulesCTA />}
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>

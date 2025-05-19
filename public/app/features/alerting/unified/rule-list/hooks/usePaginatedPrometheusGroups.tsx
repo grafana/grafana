@@ -3,7 +3,7 @@ import { useEffectOnce } from 'react-use';
 
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
+import { isLoading as isLoadingState, isUninitialized as isUninitializedState, useAsync } from '../../hooks/useAsync';
 
 /**
  * Provides pagination functionality for rule groups with lazy loading.
@@ -48,11 +48,12 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   });
 
   const isLoading = isLoadingState(groupsRequestState);
+  const isUninitialized = isUninitializedState(groupsRequestState);
 
   return {
     isLoading,
     groups,
-    hasMoreGroups: !isLoading && hasMoreGroups,
+    hasMoreGroups: !isUninitialized && hasMoreGroups,
     fetchMoreGroups,
   };
 }
