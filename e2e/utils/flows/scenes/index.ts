@@ -5,4 +5,6 @@ export * from './toggleEditMode';
 export * from './movePanel';
 export * from './groupPanels';
 export * from './saveDashboard';
+export * from './importDashboard';
+export * from './editPaneActions';
 export * from './selectPanel';

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -53,11 +54,23 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
             </Droppable>
             {isEditing && (
               <div className="dashboard-canvas-add-button">
-                <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewTab()}>
+                <Button
+                  icon="plus"
+                  variant="primary"
+                  fill="text"
+                  onClick={() => model.addNewTab()}
+                  data-testid={selectors.components.CanvasGridAddActions.addTab}
+                >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
                 {hasCopiedTab && (
-                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteTab()}>
+                  <Button
+                    icon="clipboard-alt"
+                    variant="primary"
+                    fill="text"
+                    onClick={() => model.pasteTab()}
+                    data-testid={selectors.components.CanvasGridAddActions.pasteTab}
+                  >
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                   </Button>
                 )}

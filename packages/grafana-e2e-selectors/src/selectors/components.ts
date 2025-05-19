@@ -33,6 +33,18 @@ export const versionedComponents = {
     ungroup: {
       '12.1.0': 'data-testid CanvasGridAddActions ungroup',
     },
+    addRow: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-row',
+    },
+    pasteRow: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-row',
+    },
+    addTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-tab',
+    },
+    pasteTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
@@ -42,6 +54,18 @@ export const versionedComponents = {
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
+    },
+    copyDropdown: {
+      '12.1.0': 'data-testid EditPaneHeader copy dropdown',
+    },
+    copy: {
+      '12.1.0': 'data-testid EditPaneHeader copy',
+    },
+    duplicate: {
+      '12.1.0': 'data-testid EditPaneHeader duplicate',
+    },
+    backButton: {
+      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {
