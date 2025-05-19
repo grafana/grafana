@@ -156,17 +156,20 @@ export class SharedPreferences extends PureComponent<Props, State> {
         language,
       });
       this.setState({ isSubmitting: true });
-      await this.service.update({
-        homeDashboardUID,
-        theme,
-        timezone,
-        weekStart,
-        language,
-        locale,
-        queryHistory,
-        navbar,
-      });
-      this.setState({ isSubmitting: false });
+      await this.service
+        .update({
+          homeDashboardUID,
+          theme,
+          timezone,
+          weekStart,
+          language,
+          locale,
+          queryHistory,
+          navbar,
+        })
+        .finally(() => {
+          this.setState({ isSubmitting: false });
+        });
       window.location.reload();
     }
   };
