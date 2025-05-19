@@ -224,7 +224,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
-      cursor: 'pointer',
       '&:hover': {
         background: `hsla(0, 0%, 0%, 0.2)`,
       },
@@ -323,12 +322,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
       outline: 'solid 1px red',
     }),
     unwrappedLogLine: css({
+      cursor: 'pointer',
       display: 'grid',
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
+      cursor: 'pointer',
       alignSelf: 'flex-start',
       paddingBottom: theme.spacing(0.75),
       whiteSpace: 'pre-wrap',
