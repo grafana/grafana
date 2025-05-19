@@ -9,7 +9,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type PostgresDialect struct {
@@ -18,8 +18,8 @@ type PostgresDialect struct {
 
 func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Postgres
+	d.dialect = &d
+	d.driverName = Postgres
 	return &d
 }
 
@@ -31,8 +31,15 @@ func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (db *PostgresDialect) LikeStr() string {
-	return "ILIKE"
+func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := pattern
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("%s ILIKE ?", column), param
 }
 
 func (db *PostgresDialect) AutoIncrStr() string {

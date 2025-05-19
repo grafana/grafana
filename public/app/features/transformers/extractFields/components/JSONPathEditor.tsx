@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JSONPath } from '../types';
 
@@ -14,6 +14,7 @@ interface Props {
 
 export function JSONPathEditor({ options, onChange }: Props) {
   const [paths, setPaths] = useState<JSONPath[]>(options);
+  const { t } = useTranslate();
   const tooltips = getTooltips();
   const style = getStyle();
 
@@ -102,7 +103,7 @@ const getTooltips = () => {
   return {
     field: (
       <div>
-        A valid path of an json object.
+        <Trans i18nKey="transformers.get-tooltips.description">A valid path of an json object.</Trans>
         <div>
           <strong>
             <Trans i18nKey="transformers.get-tooltips.json-value">JSON Value:</Trans>
@@ -113,7 +114,9 @@ const getTooltips = () => {
             {['{', '  "object": {', '    "value1": "hello world"', '    "value2": [1, 2, 3, 4]', '  }', '}'].join('\n')}
           </code>
         </pre>
-        <strong>Valid Paths:</strong>
+        <strong>
+          <Trans i18nKey="transformers.get-tooltips.valid-paths">Valid Paths:</Trans>
+        </strong>
         {mapValidPaths.map((value, key) => {
           return (
             <p key={key}>

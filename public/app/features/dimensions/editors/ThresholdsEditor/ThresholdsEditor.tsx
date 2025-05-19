@@ -12,8 +12,9 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -146,8 +147,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
+    const thresholdNumber = idx + 1;
 
-    const ariaLabel = `Threshold ${idx + 1}`;
+    const ariaLabel = t('dimensions.thresholds-editor.aria-label-threshold', 'Threshold {{thresholdNumber}}', {
+      thresholdNumber,
+    });
     if (!isFinite(threshold.value)) {
       return (
         <Input
@@ -187,7 +191,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 enableNamedColors={true}
               />
             </div>
-            {isPercent && <div className={styles.percentIcon}>%</div>}
+            {isPercent && (
+              // eslint-disable-next-line @grafana/no-untranslated-strings
+              <div className={styles.percentIcon}>%</div>
+            )}
           </div>
         }
         suffix={
@@ -195,7 +202,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             className={styles.trashIcon}
             name="trash-alt"
             onClick={() => this.onRemoveThreshold(threshold)}
-            tooltip={`Remove ${ariaLabel}`}
+            tooltip={t('dimensions.threshold-editor.tooltip-remove-threshold', 'Remove threshold {{thresholdNumber}}', {
+              thresholdNumber,
+            })}
           />
         }
       />

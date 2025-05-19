@@ -855,6 +855,23 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+### `[dashboard_cleanup]`
+
+Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
+
+#### `interval`
+
+How often to run the job to cleanup associated resources. The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
+
+The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
+
+#### `batch_size`
+
+Number of deleted dashboards to process in each batch during the cleanup process.
+Default: `10`, Minimum: `5`, Maximum: `200`.
+
+Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
+
 <hr />
 
 ### `[datasources]`
@@ -2475,18 +2492,21 @@ These plugins are hidden in the catalog.
 Enter a comma-separated list of plugin identifiers to install on startup, using the Grafana catalog as the source.
 Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
 
+Plugins are installed asynchronously, as a background process.
+This means that Grafana starts up faster, but the plugins may not be available immediately.
+
 To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
 
 To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
 
-By default, Grafana installs some suggested plugins on startup. Refer to the default configuration file for that list of plugins.
+By default, Grafana installs some suggested plugins on startup. For a list of default preinstalled plugins, refer to [pkg/setting/setting_plugins.go:35](https://github.com/grafana/grafana/blob/main/pkg/setting/setting_plugins.go#L35-L40).
 
-#### `preinstall_async`
+#### `preinstall_sync`
 
-By default, plugins are preinstalled asynchronously, as a background process.
-This means that Grafana starts up faster, but the plugins may not be available immediately.
-If you need a plugin to be installed for provisioning, set this option to `false`.
-This causes Grafana to wait for the plugins to be installed before starting up and fail if a plugin can't be installed.
+Enter a comma-separated list of plugin identifiers to install on startup, using the Grafana catalog as the source.
+Same as `preinstall`, but installs plugins synchronously.
+
+These will be installed before starting Grafana. Useful when used with provisioning.
 
 #### `preinstall_disabled`
 
@@ -2536,7 +2556,8 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ```ini
 [live]
 ha_engine = redis
-ha_engine_address = 127.0.0.1:6379
+ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
 
 <hr>
@@ -2763,6 +2784,14 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 #### `sql_expression_cell_limit`
 
 Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+
+#### `sql_expression_cell_output_limit`
+
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+
+#### `sql_expression_timeout`
+
+The duration a SQL expression will run before being cancelled. The default is `10s`.
 
 ### `[geomap]`
 

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -361,9 +362,12 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	errorIds := make(map[errId][]any)
 
 	for _, r := range resources {
-		if r.Status == cloudmigration.ItemStatusOK {
+		switch r.Status {
+		case cloudmigration.ItemStatusPending:
+			// Do nothing. A pending item should not be updated, as it is still in progress.
+		case cloudmigration.ItemStatusOK:
 			okIds = append(okIds, r.RefID)
-		} else if r.Status == cloudmigration.ItemStatusError {
+		case cloudmigration.ItemStatusError:
 			key := errId{errCode: r.ErrorCode, errStr: r.Error}
 			if ids, ok := errorIds[key]; ok {
 				errorIds[key] = append(ids, r.RefID)
@@ -431,7 +435,13 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 		if errorsOnly {
 			sess.Where("status = ?", cloudmigration.ItemStatusError)
 		}
-		return sess.OrderBy(fmt.Sprintf("%s %s", col, dir)).Find(&resources, &cloudmigration.CloudMigrationResource{
+		// TODO: It would be better if the query builder supported a case-insensitive flag for the .OrderBy() method
+		orderByClause := fmt.Sprintf("lower(%s) %s", col, dir)
+		if ss.db.GetDBType() == migrator.Postgres || // Postgres does not support lower() in ORDER BY -- sorts by case-insensitive by default
+			params.SortColumn == cloudmigration.SortColumnID { // Don't apply a string sort to a numeric column
+			orderByClause = fmt.Sprintf("%s %s", col, dir)
+		}
+		return sess.OrderBy(orderByClause).Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})

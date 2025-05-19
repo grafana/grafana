@@ -44,11 +44,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -99,7 +101,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
 			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
-			hs.Cfg.PreinstallPlugins = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
+			hs.Cfg.PreinstallPluginsAsync = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
@@ -112,7 +114,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
-			hs.pluginPreinstall = plugininstaller.ProvidePreinstall(hs.Cfg)
+			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -365,11 +367,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
-	for {
-		if resp.Flushed {
-			break
-		}
-	}
+	require.True(t, resp.Flushed, "response should be flushed after request is processed")
 
 	res := resp.Result()
 	require.NoError(t, res.Body.Close())
@@ -402,11 +400,7 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			err := hs.makePluginResourceRequest(resp, req, pCtx)
 			require.NoError(t, err)
 
-			for {
-				if resp.Flushed {
-					break
-				}
-			}
+			require.True(t, resp.Flushed, "response should be flushed after request is processed")
 			require.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
 			require.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
 		})
@@ -428,12 +422,7 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
-	for {
-		if resp.Flushed {
-			break
-		}
-	}
-
+	require.True(t, resp.Flushed, "response should be flushed after request is processed")
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
@@ -657,7 +646,14 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				hs.managedPluginsService = managedplugins.NewNoop()
 				var err error
-				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					nil, // plugins.Installer
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+				)
 				require.NoError(t, err)
 			})
 
@@ -849,7 +845,14 @@ func Test_PluginsSettings(t *testing.T) {
 				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error
-				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					&fakes.FakePluginInstaller{},
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+				)
 				require.NoError(t, err)
 			})
 

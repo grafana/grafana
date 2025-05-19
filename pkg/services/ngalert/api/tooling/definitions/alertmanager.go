@@ -16,17 +16,6 @@ import (
 	alertingmodels "github.com/grafana/alerting/models"
 )
 
-// swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
-//
-// sets an Alerting config
-//
-// This API is designated to internal use only and can be removed or changed at any time without prior notice.
-//
-// Deprecated: true
-//     Responses:
-//       201: Ack
-//       400: ValidationError
-
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
@@ -703,7 +692,7 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -807,7 +796,7 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -943,7 +932,7 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	hasGrafanaReceivers := len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0
+	hasGrafanaReceivers := len(r.GrafanaManagedReceivers) > 0
 
 	if hasGrafanaReceivers {
 		if len(r.EmailConfigs) > 0 {
@@ -976,14 +965,14 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 }
 
 func (r *GettableApiReceiver) Type() ReceiverType {
-	if len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
+	if len(r.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
 	return AlertmanagerReceiverType
 }
 
 func (r *GettableApiReceiver) GetName() string {
-	return r.Receiver.Name
+	return r.Name
 }
 
 type GettableGrafanaReceivers struct {

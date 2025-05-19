@@ -199,9 +199,9 @@ In order to make any configuration changes, download the `values.yaml` file from
 
 https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Enable persistent storage **(recommended)**
 

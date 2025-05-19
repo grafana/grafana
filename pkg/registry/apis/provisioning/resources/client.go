@@ -10,20 +10,25 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 var (
-	UserResource      = iam.UserResourceInfo.GroupVersionResource()
-	FolderResource    = folders.FolderResourceInfo.GroupVersionResource()
-	DashboardResource = dashboard.DashboardResourceInfo.GroupVersionResource()
+	UserResource        = iam.UserResourceInfo.GroupVersionResource()
+	FolderResource      = folders.FolderResourceInfo.GroupVersionResource()
+	DashboardResource   = dashboardV1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResourceV2 = dashboardV2.DashboardResourceInfo.GroupVersionResource()
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
+
+	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
+	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
 // ClientFactory is a factory for creating clients for a given namespace
@@ -37,6 +42,7 @@ type clientFactory struct {
 	configProvider apiserver.RestConfigProvider
 }
 
+// TODO: Rename to NamespacedClients
 // ResourceClients provides access to clients within a namespace
 //
 //go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter

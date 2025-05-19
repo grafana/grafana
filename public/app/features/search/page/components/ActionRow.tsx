@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { t, Trans } from 'app/core/internationalization';
 
 import { SearchLayout, SearchState } from '../../types';
 
-function getLayoutOptions() {
+function getLayoutOptions(t: TFunction) {
   return [
     {
       value: SearchLayout.Folders,
@@ -67,6 +68,7 @@ export const ActionRow = ({
   onSetIncludePanels,
 }: ActionRowProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
@@ -107,7 +109,9 @@ export const ActionRow = ({
         )}
         {state.panel_type && (
           <Button icon="times" variant="secondary" onClick={() => onPanelTypeChange(undefined)}>
-            Panel: {state.panel_type}
+            <Trans i18nKey="search.action-row.panel-type" values={{ panel: state.panel_type }}>
+              Panel: {'{{panel}}'}
+            </Trans>
           </Button>
         )}
       </Stack>
@@ -115,7 +119,7 @@ export const ActionRow = ({
       <Stack gap={2}>
         {showLayout && (
           <RadioButtonGroup
-            options={getLayoutOptions()}
+            options={getLayoutOptions(t)}
             disabledOptions={disabledOptions}
             onChange={onLayoutChange}
             value={layout}

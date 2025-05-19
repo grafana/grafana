@@ -11,6 +11,8 @@ import (
 //
 // FIXME: this is a temporary service/package until we can make use of
 // the new secrets service in app platform.
+//
+//go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
 	Encrypt(ctx context.Context, data []byte) ([]byte, error)
 	Decrypt(ctx context.Context, data []byte) ([]byte, error)

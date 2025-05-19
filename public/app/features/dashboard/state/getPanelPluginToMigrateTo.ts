@@ -1,10 +1,6 @@
-import { autoMigrateRemovedPanelPlugins, autoMigrateAngular } from './PanelModel';
+import { autoMigrateAngular } from './PanelModel';
 
 export function getPanelPluginToMigrateTo(panel: any): string | undefined {
-  if (autoMigrateRemovedPanelPlugins[panel.type]) {
-    return autoMigrateRemovedPanelPlugins[panel.type];
-  }
-
   // Graph needs special logic as it can be migrated to multiple panels
   if (panel.type === 'graph') {
     if (panel.xaxis?.mode === 'series') {

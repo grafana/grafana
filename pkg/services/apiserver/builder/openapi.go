@@ -86,7 +86,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 
 						// Delete has all parameters in the query string already
 						if v.Delete != nil {
-							action, ok := v.Delete.VendorExtensible.Extensions.GetString("x-kubernetes-action")
+							action, ok := v.Delete.Extensions.GetString("x-kubernetes-action")
 							if ok && (action == "deletecollection" || action == "delete") {
 								v.Delete.RequestBody = nil // duplicates all the parameters
 							}

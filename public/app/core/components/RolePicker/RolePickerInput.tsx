@@ -3,9 +3,9 @@ import { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
 
 import { Role } from '../../../types';
 
@@ -44,6 +44,7 @@ export const RolePickerInput = ({
 }: InputProps): JSX.Element => {
   const styles = useStyles2(getRolePickerInputStyles, false, !!isFocused, !!disabled, false, width);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslate();
 
   useEffect(() => {
     if (isFocused) {
@@ -89,7 +90,7 @@ export const RolePickerInput = ({
           onMouseDown={stopPropagation}
           onChange={onInputChange}
           data-testid="role-picker-input"
-          placeholder={isFocused ? 'Select role' : ''}
+          placeholder={isFocused ? t('role-picker.input.placeholder-select-role', 'Select role') : undefined}
           value={query}
         />
       )}

@@ -18,9 +18,7 @@ type githubClient struct {
 	gh *github.Client
 }
 
-var _ Client = (*githubClient)(nil)
-
-func NewClient(client *github.Client) *githubClient {
+func NewClient(client *github.Client) Client {
 	return &githubClient{client}
 }
 
@@ -141,6 +139,7 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 				if currentRef != ref {
 					// We're operating with a subpath which doesn't exist yet.
 					// Pretend as if there is simply no files.
+					// FIXME: why should we pretend this?
 					return nil, false, nil
 				}
 				// currentRef == ref
@@ -309,6 +308,8 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 
 	ret := make([]Commit, 0, len(commits))
 	for _, c := range commits {
+		// FIXME: This code is a mess. I am pretty sure that we have issue in
+		// some situations
 		var createdAt time.Time
 		var author *CommitAuthor
 		if c.GetCommit().GetAuthor() != nil {
@@ -373,12 +374,22 @@ func (r *githubClient) CompareCommits(ctx context.Context, owner, repository, ba
 }
 
 func (r *githubClient) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
-	branch, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	branch, resp, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
 	if err != nil {
+		// For some reason, GitHub client handles this case differently by failing with a wrapped error
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return Branch{}, ErrResourceNotFound
+		}
+
+		if resp != nil && resp.StatusCode == http.StatusServiceUnavailable {
+			return Branch{}, ErrServiceUnavailable
+		}
+
 		var ghErr *github.ErrorResponse
 		if !errors.As(err, &ghErr) {
 			return Branch{}, err
 		}
+		// Leaving these just in case
 		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
 			return Branch{}, ErrServiceUnavailable
 		}
@@ -520,6 +531,8 @@ func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string,
 
 	contentType := hook.GetConfig().GetContentType()
 	if contentType == "" {
+		// FIXME: Not sure about the value of the contentType
+		// we default to form in the other ones but to JSON here
 		contentType = "json"
 	}
 
@@ -608,60 +621,6 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 			return ErrServiceUnavailable
 		}
 		return err
-	}
-
-	return nil
-}
-
-func (r *githubClient) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
-	commentRequest := &github.PullRequestComment{
-		Body:     &comment.Content,
-		CommitID: &comment.Ref,
-		Path:     &comment.Path,
-		Position: &comment.Position,
-	}
-
-	if _, _, err := r.gh.PullRequests.CreateComment(ctx, owner, repository, number, commentRequest); err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return ErrServiceUnavailable
-		}
-
-		return err
-	}
-
-	return nil
-}
-
-func (r *githubClient) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.PullRequestComment, *github.Response, error) {
-		return r.gh.PullRequests.ListComments(ctx, owner, repository, number, &github.PullRequestListCommentsOptions{
-			ListOptions: *opts,
-		})
-	}
-
-	comments, err := paginatedList(ctx, listFn, defaultListOptions(maxPullRequestsFileComments))
-	if errors.Is(err, ErrTooManyItems) {
-		return fmt.Errorf("too many comments to process (more than %d)", maxPullRequestsFileComments)
-	}
-	if err != nil {
-		return err
-	}
-
-	userLogin, _, err := r.gh.Users.Get(ctx, "")
-	if err != nil {
-		return fmt.Errorf("get user: %w", err)
-	}
-
-	for _, c := range comments {
-		// skip if comments were not created by us
-		if c.User.GetLogin() != userLogin.GetLogin() {
-			continue
-		}
-
-		if _, err := r.gh.PullRequests.DeleteComment(ctx, owner, repository, c.GetID()); err != nil {
-			return fmt.Errorf("delete comment: %w", err)
-		}
 	}
 
 	return nil

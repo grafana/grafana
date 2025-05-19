@@ -56,17 +56,17 @@ func (_c *MockFolderTree_Add_Call) RunAndReturn(run func(Folder, string)) *MockF
 	return _c
 }
 
-// AddUnstructured provides a mock function with given fields: item, skipRepo
-func (_m *MockFolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo string) error {
-	ret := _m.Called(item, skipRepo)
+// AddUnstructured provides a mock function with given fields: item
+func (_m *MockFolderTree) AddUnstructured(item *unstructured.Unstructured) error {
+	ret := _m.Called(item)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddUnstructured")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*unstructured.Unstructured, string) error); ok {
-		r0 = rf(item, skipRepo)
+	if rf, ok := ret.Get(0).(func(*unstructured.Unstructured) error); ok {
+		r0 = rf(item)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -81,14 +81,13 @@ type MockFolderTree_AddUnstructured_Call struct {
 
 // AddUnstructured is a helper method to define mock.On call
 //   - item *unstructured.Unstructured
-//   - skipRepo string
-func (_e *MockFolderTree_Expecter) AddUnstructured(item interface{}, skipRepo interface{}) *MockFolderTree_AddUnstructured_Call {
-	return &MockFolderTree_AddUnstructured_Call{Call: _e.mock.On("AddUnstructured", item, skipRepo)}
+func (_e *MockFolderTree_Expecter) AddUnstructured(item interface{}) *MockFolderTree_AddUnstructured_Call {
+	return &MockFolderTree_AddUnstructured_Call{Call: _e.mock.On("AddUnstructured", item)}
 }
 
-func (_c *MockFolderTree_AddUnstructured_Call) Run(run func(item *unstructured.Unstructured, skipRepo string)) *MockFolderTree_AddUnstructured_Call {
+func (_c *MockFolderTree_AddUnstructured_Call) Run(run func(item *unstructured.Unstructured)) *MockFolderTree_AddUnstructured_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*unstructured.Unstructured), args[1].(string))
+		run(args[0].(*unstructured.Unstructured))
 	})
 	return _c
 }
@@ -98,7 +97,7 @@ func (_c *MockFolderTree_AddUnstructured_Call) Return(_a0 error) *MockFolderTree
 	return _c
 }
 
-func (_c *MockFolderTree_AddUnstructured_Call) RunAndReturn(run func(*unstructured.Unstructured, string) error) *MockFolderTree_AddUnstructured_Call {
+func (_c *MockFolderTree_AddUnstructured_Call) RunAndReturn(run func(*unstructured.Unstructured) error) *MockFolderTree_AddUnstructured_Call {
 	_c.Call.Return(run)
 	return _c
 }

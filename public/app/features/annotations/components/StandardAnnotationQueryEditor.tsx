@@ -11,8 +11,9 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -103,6 +104,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     this.props.onChange({
       ...this.props.annotation,
       target,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
     });
   };
 
@@ -156,9 +159,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
 
     const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
+    const numEvents = events.length;
+    const numFields = frame?.fields.length;
     return (
       <p>
-        {events.length} events (from {frame?.fields.length} fields)
+        <Trans i18nKey="annotations.standard-annotation-query-editor.events-found">
+          {{ numEvents }} events (from {{ numFields }} fields)
+        </Trans>
       </p>
     );
   }
@@ -202,7 +209,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   onAnnotationChange = (annotation: AnnotationQuery) => {
-    this.props.onChange(annotation);
+    // Also preserve any options field that might exist when migrating from V2 to V1
+    this.props.onChange({
+      ...annotation,
+      // Keep options from the original annotation if they exist
+      ...(this.props.annotation.options ? { options: this.props.annotation.options } : {}),
+    });
   };
 
   render() {
@@ -212,13 +224,38 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     // Find the annotation runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
-      return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
+      return (
+        <div>
+          <Trans i18nKey="annotations.standard-annotation-query-editor.no-query-editor">
+            Annotations are not supported. This datasource needs to export a QueryEditor
+          </Trans>
+        </div>
+      );
     }
 
-    const query = {
+    // For v2 dashboards, target is not available, only query
+    let target = annotation.target;
+
+    // For v2 dashboards, use query.spec
+    if (annotation.query && annotation.query.spec) {
+      target = {
+        ...annotation.query.spec,
+      };
+    }
+
+    let query = {
       ...datasource.annotations?.getDefaultQuery?.(),
-      ...(annotation.target ?? { refId: 'Anno' }),
+      ...(target ?? { refId: 'Anno' }),
     };
+
+    // Create annotation object that respects annotations API
+    let editorAnnotation = annotation;
+
+    // For v2 dashboards: propagate options to root level for datasource compatibility
+    if (annotation.query && annotation.options) {
+      editorAnnotation = { ...annotation };
+      Object.assign(editorAnnotation, annotation.options);
+    }
 
     return (
       <>
@@ -231,7 +268,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             onRunQuery={this.onRunQuery}
             data={response?.panelData}
             range={getTimeSrv().timeRange()}
-            annotation={annotation}
+            annotation={editorAnnotation}
             onAnnotationChange={this.onAnnotationChange}
           />
         </DataSourcePluginContextProvider>

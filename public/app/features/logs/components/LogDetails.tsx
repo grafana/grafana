@@ -1,9 +1,11 @@
 import { cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameType, LogRowModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
@@ -24,7 +26,7 @@ export interface Props extends Themeable2 {
 
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;

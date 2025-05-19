@@ -1,11 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { ConnectedProps, connect } from 'react-redux';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
 
@@ -33,6 +33,8 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     formState: { errors },
   } = useForm<Team>({ defaultValues: team });
 
+  const { t } = useTranslate();
+
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
@@ -54,7 +56,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
           </Field>
           <Field
             label={t('teams.team-settings.label-name', 'Name')}
-            disabled={!canWriteTeamSettings}
+            disabled={!canWriteTeamSettings || !!team.isProvisioned}
             required
             invalid={!!errors.name}
             error="Name is required"
@@ -70,7 +72,10 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
 
           <Field
             label={t('teams.team-settings.label-email', 'Email')}
-            description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
+            description={t(
+              'teams.team-settings.description-email',
+              'This is optional and is primarily used to set the team profile avatar (via gravatar service)'
+            )}
             disabled={!canWriteTeamSettings}
           >
             {/* eslint-disable-next-line @grafana/no-untranslated-strings */}

@@ -8,6 +8,7 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   InlineField,
   InlineFieldRow,
@@ -18,7 +19,6 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -90,6 +90,7 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
+  const { t } = useTranslate();
 
   if (input.length > 1) {
     return (
@@ -132,10 +133,11 @@ export function PartitionByValuesEditor({
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          tooltip={
+          tooltip={t(
+            'transformers.partion-by-values-editor.tooltip-naming',
             'Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data'
-          }
-          label={'Naming'}
+          )}
+          label={t('transformers.partition-by-values-editor.label-naming', 'Naming')}
           labelWidth={10}
         >
           <RadioButtonGroup
@@ -152,7 +154,14 @@ export function PartitionByValuesEditor({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField tooltip={'Keeps the partition fields in the frames.'} label={'Keep fields'} labelWidth={16}>
+        <InlineField
+          tooltip={t(
+            'transformers.partition-by-values-editor.tooltip-keeps-partition-fields-frames',
+            'Keeps the partition fields in the frames'
+          )}
+          label={t('transformers.partition-by-values-editor.label-keep-fields', 'Keep fields')}
+          labelWidth={16}
+        >
           <RadioButtonGroup
             options={KeepFieldsOptions}
             value={options.keepFields}

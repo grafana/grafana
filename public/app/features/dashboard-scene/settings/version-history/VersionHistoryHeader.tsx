@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { noop } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 type VersionHistoryHeaderProps = {
   onClick?: () => void;
@@ -19,7 +19,7 @@ export const VersionHistoryHeader = ({
   isNewLatest = false,
 }: VersionHistoryHeaderProps) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <h3 className={styles.header}>
       <IconButton
@@ -29,7 +29,9 @@ export const VersionHistoryHeader = ({
         tooltip={t('dashboard-scene.version-history-header.tooltip-reset-version', 'Reset version')}
       />
       <span>
-        Comparing {baseVersion} <Icon name="arrows-h" /> {newVersion}{' '}
+        <Trans i18nKey="dashboard-scene.version-history-header.compare-versions">
+          Comparing {{ baseVersion }} <Icon name="arrows-h" /> {{ newVersion }}
+        </Trans>{' '}
         {isNewLatest && (
           <cite className="muted">
             <Trans i18nKey="dashboard-scene.version-history-header.latest">(Latest)</Trans>

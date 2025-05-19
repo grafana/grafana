@@ -47,6 +47,7 @@ const (
 `
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
+	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
@@ -148,11 +149,11 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable       bool
 	URL          string
 	TenantID     string
 	Password     string
 	SyncInterval time.Duration
+	Timeout      time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -389,12 +390,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
-		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
 	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
+	if err != nil {
+		return err
+	}
+	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {
 		return err
 	}

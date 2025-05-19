@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -17,7 +18,6 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
@@ -31,7 +31,7 @@ type ActiveTab = 'custom' | 'saved';
 export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
-
+  const { t } = useTranslate();
   const filterOptions = useMemo(() => {
     return (
       <PopupCard
@@ -48,13 +48,13 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
             <Tab
               active={activeTab === 'custom'}
               icon="filter"
-              label={'Custom filter'}
+              label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
               onChangeTab={() => setActiveTab('custom')}
             />
             <Tab
               active={activeTab === 'saved'}
               icon="bookmark"
-              label={'Saved searches'}
+              label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
               onChangeTab={() => setActiveTab('saved')}
             />
           </TabsBar>
@@ -66,7 +66,7 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
         />
       </PopupCard>
     );
-  }, [activeTab, styles.content, styles.fixTabsMargin]);
+  }, [activeTab, styles.content, styles.fixTabsMargin, t]);
 
   return (
     <Stack direction="column" gap={0}>
@@ -113,6 +113,7 @@ const FilterOptions = () => {
             { label: 'All', value: '*' },
             { label: 'Normal', value: 'normal' },
             { label: 'Pending', value: 'pending' },
+            { label: 'Recovering', value: 'recovering' },
             { label: 'Firing', value: 'firing' },
           ]}
         />
@@ -159,6 +160,7 @@ type TableColumns = {
 
 const SavedSearches = () => {
   const applySearch = useCallback((name: string) => {}, []);
+  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-end">

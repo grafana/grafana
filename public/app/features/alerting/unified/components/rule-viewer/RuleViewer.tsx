@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   LinkButton,
@@ -17,7 +18,6 @@ import {
 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
@@ -85,7 +85,7 @@ const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
-
+  const { t } = useTranslate();
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
@@ -248,7 +248,11 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   if (interval) {
     metadata.push({
       label: 'Evaluation interval',
-      value: <Text color="primary">Every {interval}</Text>,
+      value: (
+        <Text color="primary">
+          <Trans i18nKey="alerting.rule-viewer.evaluation-interval">Every {{ interval }}</Trans>
+        </Text>
+      ),
     });
   }
 
@@ -271,16 +275,17 @@ interface TitleProps {
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
+  returnToHref?: string;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin, returnToHref = '' }: TitleProps) => {
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
-  const { returnTo } = useReturnTo('/alerting/list');
+  const { returnTo } = useReturnTo(returnToHref);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
+      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
@@ -324,6 +329,7 @@ const PrometheusConsistencyCheck = withErrorBoundary(
         waitAction.execute(ruleLocation.groupIdentifier);
       }
     }, [ruleLocation, hasRuler, waitAction]);
+    const { t } = useTranslate();
 
     if (isError(waitState)) {
       return (
@@ -472,6 +478,7 @@ export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) =
     .pick([
       AlertInstanceTotalState.Alerting,
       AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Recovering,
       AlertInstanceTotalState.Normal,
       AlertInstanceTotalState.NoData,
       AlertInstanceTotalState.Error,

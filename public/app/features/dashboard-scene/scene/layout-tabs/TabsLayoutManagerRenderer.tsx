@@ -1,11 +1,12 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
@@ -19,6 +20,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -55,7 +57,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
                 {hasCopiedTab && (
-                  <Button icon="plus" variant="primary" fill="text" onClick={() => model.pasteTab()}>
+                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteTab()}>
                     <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
                   </Button>
                 )}
@@ -64,9 +66,19 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
           </div>
         </DragDropContext>
       </TabsBar>
-      <TabContent className={styles.tabContentContainer}>
-        {currentTab && <layout.Component model={layout} />}
-      </TabContent>
+
+      {isEditing && (
+        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
+          {currentTab && <layout.Component model={layout} />}
+          {conditionalRenderingOverlay}
+        </TabContent>
+      )}
+
+      {!isEditing && (
+        <TabContent className={styles.tabContentContainer}>
+          {currentTab && <layout.Component model={layout} />}
+        </TabContent>
+      )}
     </div>
   );
 }
@@ -101,10 +113,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    minHeight: 0,
+    // Without this min height, the custom grid (SceneGridLayout) wont render
+    // Should be bigger than paddingTop value
+    // consist of paddingTop + 0.125 = 9px
+    minHeight: theme.spacing(1 + 0.125),
     paddingTop: theme.spacing(1),
   }),
 });

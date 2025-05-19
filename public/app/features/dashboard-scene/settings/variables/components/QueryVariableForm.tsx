@@ -3,11 +3,11 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
-import { Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Field, TextLink } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -78,6 +78,7 @@ export function QueryVariableEditorForm({
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
+  const { t } = useTranslate();
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   return (
@@ -108,17 +109,20 @@ export function QueryVariableEditorForm({
         name="Regex"
         description={
           <div>
-            Optional, if you want to extract part of a series name or metric node segment.
+            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
+              Optional, if you want to extract part of a series name or metric node segment.
+            </Trans>
             <br />
-            Named capture groups can be used to separate the display text and value (
-            <a
-              className="external-link"
-              href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
-              target="__blank"
-            >
-              see examples
-            </a>
-            ).
+            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
+              Named capture groups can be used to separate the display text and value (
+              <TextLink
+                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                external
+              >
+                see examples
+              </TextLink>
+              ).
+            </Trans>
           </div>
         }
         // eslint-disable-next-line @grafana/no-untranslated-strings

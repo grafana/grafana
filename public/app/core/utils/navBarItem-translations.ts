@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
@@ -284,10 +284,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'storage':
       return t('nav.storage.subtitle', 'Manage file storage');
     case 'migrate-to-cloud':
-      return t(
-        'nav.migrate-to-cloud.subtitle',
-        'Copy configuration from your self-managed installation to a cloud stack'
-      );
+      return t('nav.migrate-to-cloud.subtitle', 'Copy resources from your self-managed installation to a cloud stack');
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':

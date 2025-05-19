@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -63,6 +63,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
     500,
     [amSourceName, matchers]
   );
+  const { t } = useTranslate();
 
   if (isError) {
     return (
@@ -70,7 +71,9 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
         title={t('alerting.silenced-instances-preview.title-preview-not-available', 'Preview not available')}
         severity="error"
       >
-        Error occurred when generating preview of affected alerts. Are your matchers valid?
+        <Trans i18nKey="alerting.silenced-instances-preview.error-generating-preview">
+          Error occurred when generating preview of affected alerts. Are your matchers valid?
+        </Trans>
       </Alert>
     );
   }

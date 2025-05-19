@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -48,10 +49,12 @@ var _ Store = (*persistentStore)(nil)
 // There may be multiple jobDrivers running in parallel.
 // The jobDriver deals with cleaning up upon death and ensuring that jobs remain claimable.
 type jobDriver struct {
-	// Timeout for processing a job. This should be the same or less than a claim expiry.
-	timeout time.Duration
+	// Timeout for processing a job. This must be less than a claim expiry.
+	jobTimeout time.Duration
+
 	// CleanupInterval is the time between cleanup runs.
 	cleanupInterval time.Duration
+
 	// JobInterval is the time between job ticks. This should be relatively low.
 	jobInterval time.Duration
 
@@ -69,21 +72,25 @@ type jobDriver struct {
 }
 
 func NewJobDriver(
-	timeout, cleanupInterval, jobInterval time.Duration,
+	jobTimeout, cleanupInterval, jobInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs History,
 	workers ...Worker,
-) *jobDriver {
+) (*jobDriver, error) {
+	if cleanupInterval < jobTimeout {
+		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout (cleanup:%s < job:%s)",
+			cleanupInterval.String(), jobTimeout.String())
+	}
 	return &jobDriver{
-		timeout:         timeout,
+		jobTimeout:      jobTimeout,
 		cleanupInterval: cleanupInterval,
 		jobInterval:     jobInterval,
 		store:           store,
 		repoGetter:      repoGetter,
 		historicJobs:    historicJobs,
 		workers:         workers,
-	}
+	}, nil
 }
 
 // Run drives jobs to completion. This is a blocking function.
@@ -104,8 +111,13 @@ func (d *jobDriver) Run(ctx context.Context) {
 		panic("unreachable?: failed to grant provisioning identity: " + err.Error())
 	}
 
+	// Remove old jobs
+	if err = d.store.Cleanup(ctx); err != nil {
+		logger.Error("failed to clean up old jobs at start", "error", err)
+	}
+
 	// Drive without waiting on startup.
-	d.startDriving(ctx)
+	d.processJobsUntilDoneOrError(ctx)
 
 	for {
 		select {
@@ -113,28 +125,30 @@ func (d *jobDriver) Run(ctx context.Context) {
 			if err := d.store.Cleanup(ctx); err != nil {
 				logger.Error("failed to cleanup jobs", "error", err)
 			}
+
+		// These events do not queue if the worker is already running
 		case <-jobTicker.C:
-			d.startDriving(ctx)
+			d.processJobsUntilDoneOrError(ctx)
 		case <-d.store.InsertNotifications():
-			d.startDriving(ctx)
+			d.processJobsUntilDoneOrError(ctx)
 		}
 	}
 }
 
-func (d *jobDriver) startDriving(ctx context.Context) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, d.timeout)
-	defer cancel()
-	for timeoutCtx.Err() == nil {
-		if err := d.drive(timeoutCtx); err != nil {
-			if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrNoJobs) {
+// This will keep processing jobs until there are none left (or we hit an error)
+func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
+	for {
+		err := d.claimAndProcessOneJob(ctx)
+		if err != nil {
+			if !errors.Is(err, ErrNoJobs) {
 				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
 			}
-			break
+			return
 		}
 	}
 }
 
-func (d *jobDriver) drive(ctx context.Context) error {
+func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	logger := logging.FromContext(ctx)
 
 	// Claim a job to work on.
@@ -158,12 +172,20 @@ func (d *jobDriver) drive(ctx context.Context) error {
 		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
 	}
 
+	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
+	defer cancel() // Ensure resources are released when the function returns
+
 	// Process the job.
 	start := time.Now()
 	job.Status.Started = start.UnixMilli()
-	err = d.processJob(ctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
+	err = d.processJob(jobctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
+
+	// Capture job timeout
+	if jobctx.Err() != nil && err == nil {
+		err = jobctx.Err()
+	}
 
 	// Mark the job as failed and remove from queue
 	if err != nil {

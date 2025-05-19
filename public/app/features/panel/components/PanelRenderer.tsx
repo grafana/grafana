@@ -9,10 +9,10 @@ import {
   OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
@@ -65,7 +65,11 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }, [pluginId, plugin]);
 
   if (error) {
-    return <div>Failed to load plugin: {error}</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.failed-to-load-plugin">Failed to load plugin: {{ error }}</Trans>
+      </div>
+    );
   }
 
   if (!plugin || !plugin.hasPluginId(pluginId)) {
@@ -77,7 +81,13 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }
 
   if (!plugin.panel) {
-    return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
+    return (
+      <div>
+        <Trans i18nKey="panel.panel-renderer.no-panel-component">
+          Seems like the plugin you are trying to load does not have a panel component.
+        </Trans>
+      </div>
+    );
   }
 
   if (!dataWithOverrides) {

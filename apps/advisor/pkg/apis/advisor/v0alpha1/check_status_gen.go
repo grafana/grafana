@@ -23,6 +23,8 @@ type CheckReportFailure struct {
 	StepID string `json:"stepID"`
 	// Human readable identifier of the item that failed
 	Item string `json:"item"`
+	// ID of the item that failed
+	ItemID string `json:"itemID"`
 	// Links to actions that can be taken to resolve the failure
 	Links []CheckErrorLink `json:"links"`
 }

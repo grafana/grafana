@@ -2,11 +2,15 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Label, RadioButtonGroup, Tag, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing;
+export type InstanceStateFilter =
+  | GrafanaAlertState
+  | PromAlertingRuleState.Pending
+  | PromAlertingRuleState.Firing
+  | PromAlertingRuleState.Recovering;
 
 interface Props {
   className?: string;

@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -88,5 +89,31 @@ func TestFolderTree(t *testing.T) {
 			assert.Empty(t, id.Path)
 			assert.Empty(t, id.Title)
 		}
+	})
+
+	t.Run("walk tree", func(t *testing.T) {
+		tree := &folderTree{
+			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
+			folders: map[string]Folder{
+				"x": newFid("x", "X!"),
+				"c": newFid("c", "C :)"),
+				"b": newFid("b", "!!B#!"),
+				"a": newFid("a", "[€]@£a"),
+			},
+		}
+
+		visited := make(map[string]string)
+		err := tree.Walk(context.Background(), func(ctx context.Context, folder Folder, parent string) error {
+			visited[folder.ID] = parent
+			return nil
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{
+			"x": "",
+			"c": "x",
+			"b": "c",
+			"a": "b",
+		}, visited)
 	})
 }

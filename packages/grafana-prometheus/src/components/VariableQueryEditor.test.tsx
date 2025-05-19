@@ -145,10 +145,19 @@ describe('PromVariableQueryEditor', () => {
           fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
         } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
         getDebounceTimeInMilliseconds: jest.fn(),
-        getTagKeys: jest.fn().mockImplementation(() => Promise.resolve(['this'])),
+        getTagKeys: jest
+          .fn()
+          .mockImplementation(() => Promise.resolve([{ text: 'this', value: 'this', label: 'this' }])),
         getVariables: jest.fn().mockImplementation(() => []),
-        metricFindQuery: jest.fn().mockImplementation(() => Promise.resolve(['that'])),
-        getSeriesLabels: jest.fn().mockImplementation(() => Promise.resolve(['that'])),
+        metricFindQuery: jest.fn().mockImplementation(() =>
+          Promise.resolve([
+            {
+              text: 'that',
+              value: 'that',
+              label: 'that',
+            },
+          ])
+        ),
       } as Partial<PrometheusDatasource> as PrometheusDatasource,
       query: {
         refId: 'test',
@@ -291,9 +300,9 @@ describe('PromVariableQueryEditor', () => {
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
 
-    const metricSelect = screen.getByLabelText('Metric');
-    await userEvent.type(metricSelect, 'that');
-    await selectOptionInTest(metricSelect, 'that');
+    const combobox = screen.getByPlaceholderText('Select metric');
+    await userEvent.type(combobox, 'that');
+    await userEvent.keyboard('{Enter}');
 
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({

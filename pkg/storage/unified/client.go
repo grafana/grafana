@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"time"
 
-	otgrpc "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -52,13 +53,14 @@ type clientMetrics struct {
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
-	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
+	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:      apiserverCfg.Key("address").MustString(""), // client address
-		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
+		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:           apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:            apiserverCfg.Key("address").MustString(""), // client address
+		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
+		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
 	if err == nil {
 		// Used to get the folder stats
@@ -157,7 +159,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features, nil)
 		if err != nil {
 			return nil, err
 		}

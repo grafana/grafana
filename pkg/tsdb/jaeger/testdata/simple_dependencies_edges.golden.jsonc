@@ -1,0 +1,97 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "nodeGraph"
+//  }
+//  Name: test_edges
+//  Dimensions: 4 Fields by 3 Rows
+//  +--------------------+----------------+----------------+----------------+
+//  | Name: id           | Name: source   | Name: target   | Name: mainstat |
+//  | Labels:            | Labels:        | Labels:        | Labels:        |
+//  | Type: []string     | Type: []string | Type: []string | Type: []int64  |
+//  +--------------------+----------------+----------------+----------------+
+//  | serviceA--serviceB | serviceA       | serviceB       | 1              |
+//  | serviceA--serviceC | serviceA       | serviceC       | 2              |
+//  | serviceB--serviceC | serviceB       | serviceC       | 3              |
+//  +--------------------+----------------+----------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test_edges",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "nodeGraph"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "source",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "target",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "mainstat",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64"
+            },
+            "config": {
+              "displayName": "Call count"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "serviceA--serviceB",
+            "serviceA--serviceC",
+            "serviceB--serviceC"
+          ],
+          [
+            "serviceA",
+            "serviceA",
+            "serviceB"
+          ],
+          [
+            "serviceB",
+            "serviceC",
+            "serviceC"
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      }
+    }
+  ]
+}

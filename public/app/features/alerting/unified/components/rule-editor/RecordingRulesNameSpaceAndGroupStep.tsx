@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
 
 import { RuleFormValues } from '../../types/rule-form';
 
@@ -9,7 +9,7 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 export function RecordingRulesNameSpaceAndGroupStep() {
   const { watch } = useFormContext<RuleFormValues>();
-
+  const { t } = useTranslate();
   const dataSourceName = watch('dataSourceName');
 
   if (!dataSourceName) {
@@ -19,7 +19,10 @@ export function RecordingRulesNameSpaceAndGroupStep() {
   return (
     <RuleEditorSection
       stepNo={3}
-      title={'Add namespace and group'}
+      title={t(
+        'alerting.recording-rules-name-space-and-group-step.title-add-namespace-and-group',
+        'Add namespace and group'
+      )}
       description={t(
         'alerting.recording-rules-name-space-and-group-step.description-select-namespace-group-recording',
         'Select the Namespace and Group for your recording rule.'

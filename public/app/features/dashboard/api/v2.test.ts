@@ -5,9 +5,10 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
-  AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
+  AnnoKeySavedFromUI,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 
@@ -58,6 +59,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    buildInfo: {
+      ...jest.requireActual('@grafana/runtime').config.buildInfo,
+      versionString: '10.0.0',
+    },
   },
 }));
 
@@ -100,7 +105,6 @@ describe('v2 dashboard API', () => {
     // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
     // access
     const result = (await api.getDashboardDTO('test')) as DashboardWithAccessInfo<DashboardV2Spec>;
-    expect(result.metadata.annotations![AnnoKeyFolderId]).toBe(1);
     expect(result.metadata.annotations![AnnoKeyFolderTitle]).toBe('New Folder');
     expect(result.metadata.annotations![AnnoKeyFolderUrl]).toBe('/folder/url');
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
@@ -138,6 +142,7 @@ describe('v2 dashboard API', () => {
 
         annotations: {
           [AnnoKeyFolder]: 'new-folder',
+          [AnnoKeyMessage]: 'test save',
         },
       },
     };
@@ -192,7 +197,6 @@ describe('v2 dashboard API', () => {
           annotations: {
             [AnnoKeyFolder]: 'folderUidXyz',
             [AnnoKeyFolderUrl]: 'url folder used in the client',
-            [AnnoKeyFolderId]: 42,
             [AnnoKeyFolderTitle]: 'title folder used in the client',
           },
         },
@@ -205,21 +209,46 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
           spec: {
             ...defaultSaveCommand.dashboard,
             title: 'chaing-title-dashboard',
           },
-        }
+        },
+        { params: undefined }
       );
     });
   });
 
   describe('version error handling', () => {
-    it('should throw DashboardVersionError for v0alpha1 conversion error', async () => {
+    it('should not throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
+        status: {
+          conversion: {
+            failed: true,
+            error: 'backend conversion not yet implemented',
+            storedVersion: 'v0alpha1',
+          },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardV2API();
+      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+    });
+
+    it('should throw DashboardVersionError for v0alpha1 conversion error and v1 spec', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        spec: {
+          // this is a v1 dashboard
+          title: 'test-dashboard',
+          panels: [],
+        },
         status: {
           conversion: {
             failed: true,
@@ -235,14 +264,37 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should throw DashboardVersionError for v1alpha1 conversion error', async () => {
+    it('should not throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
           conversion: {
             failed: true,
             error: 'backend conversion not yet implemented',
-            storedVersion: 'v1alpha1',
+            storedVersion: 'v1beta1',
+          },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(mockDashboardWithError);
+
+      const api = new K8sDashboardV2API();
+      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+    });
+
+    it('should throw DashboardVersionError for v1beta1 conversion error and v1 spec', async () => {
+      const mockDashboardWithError = {
+        ...mockDashboardDto,
+        spec: {
+          // this is a v1 dashboard
+          title: 'test-dashboard',
+          panels: [],
+        },
+        status: {
+          conversion: {
+            failed: true,
+            error: 'backend conversion not yet implemented',
+            storedVersion: 'v1beta1',
           },
         },
       };

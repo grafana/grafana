@@ -67,7 +67,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleStats, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleStats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -115,7 +115,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleSettings, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
 		},
 	}
@@ -162,12 +162,17 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
 	}
 	for i, val := range all {
+		branch := ""
+		if val.Spec.GitHub != nil {
+			branch = val.Spec.GitHub.Branch
+		}
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:     val.ObjectMeta.Name,
-			Title:    val.Spec.Title,
-			Type:     val.Spec.Type,
-			ReadOnly: len(val.Spec.Workflows) == 0,
-			Target:   val.Spec.Sync.Target,
+			Name:      val.Name,
+			Title:     val.Spec.Title,
+			Type:      val.Spec.Type,
+			Target:    val.Spec.Sync.Target,
+			Branch:    branch,
+			Workflows: val.Spec.Workflows,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

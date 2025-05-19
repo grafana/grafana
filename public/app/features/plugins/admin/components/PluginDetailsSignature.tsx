@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { Alert, TextLink } from '@grafana/ui';
 
 import { CatalogPlugin } from '../types';
 
@@ -14,6 +14,7 @@ type Props = {
 
 // Designed to show signature information inside the active tab on the plugin's details page
 export function PluginDetailsSignature({ className, plugin }: Props): React.ReactElement | null {
+  const { t } = useTranslate();
   const isSignatureValid = plugin.signature === PluginSignatureStatus.valid;
   const isCore = plugin.signature === PluginSignatureStatus.internal;
   const isDisabled = plugin.isDisabled && isDisabledDueTooSignatureError(plugin.error);
@@ -31,21 +32,18 @@ export function PluginDetailsSignature({ className, plugin }: Props): React.Reac
       className={className}
     >
       <p>
-        Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
-        is part of our security measures to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the
-        integrity of this unsigned plugin. Ask the plugin author to request it to be signed.
+        <Trans i18nKey="plugins.plugin-details-signature.body-invalid-plugin-signature">
+          Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
+          is part of our security measures to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the
+          integrity of this unsigned plugin. Ask the plugin author to request it to be signed.
+        </Trans>
       </p>
 
-      <a
-        href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
-        className="external-link"
-        target="_blank"
-        rel="noreferrer"
-      >
+      <TextLink href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/" external>
         <Trans i18nKey="plugins.plugin-details-signature.read-more-about-plugins-signing">
           Read more about plugins signing.
         </Trans>
-      </a>
+      </TextLink>
     </Alert>
   );
 }

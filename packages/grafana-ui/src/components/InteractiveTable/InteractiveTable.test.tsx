@@ -1,4 +1,4 @@
-import { getByRole, render, screen, cleanup } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -55,8 +55,8 @@ describe('InteractiveTable', () => {
 
     const valueColumnHeader = screen.getByRole('columnheader', { name: 'Value' });
     const countryColumnHeader = screen.getByRole('columnheader', { name: 'Country' });
-    const valueColumnSortButton = getByRole(valueColumnHeader, 'button');
-    const countryColumnSortButton = getByRole(countryColumnHeader, 'button');
+    const valueColumnSortButton = within(valueColumnHeader).getByRole('button');
+    const countryColumnSortButton = within(countryColumnHeader).getByRole('button');
 
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
@@ -95,8 +95,9 @@ describe('InteractiveTable', () => {
 
       expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
 
-      expect(expanderButton.getAttribute('aria-controls')).toBe(
+      expect(expanderButton).toHaveAttribute(
         // ancestor tr's id should match the expander button's aria-controls attribute
+        'aria-controls',
         screen.getByTestId('test-1').parentElement?.parentElement?.id
       );
     });
@@ -168,9 +169,9 @@ describe('InteractiveTable', () => {
       const expandAllButton = screen.getByRole('button', { name: 'Expand all rows' });
       await user.click(expandAllButton);
 
-      expect(screen.queryByTestId('test-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('test-2')).toBeInTheDocument();
-      expect(screen.queryByTestId('test-3')).toBeInTheDocument();
+      expect(screen.getByTestId('test-1')).toBeInTheDocument();
+      expect(screen.getByTestId('test-2')).toBeInTheDocument();
+      expect(screen.getByTestId('test-3')).toBeInTheDocument();
     });
   });
   describe('pagination', () => {
@@ -181,8 +182,6 @@ describe('InteractiveTable', () => {
 
       expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
-
-      cleanup();
 
       render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={0} />);
 

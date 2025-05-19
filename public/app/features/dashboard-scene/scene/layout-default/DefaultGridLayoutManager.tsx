@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -18,7 +19,6 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
@@ -27,7 +27,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
-import { isClonedKey, joinCloneKeys } from '../../utils/clone';
+import { isClonedKey, joinCloneKeys, useHasClonedParents } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import {
   forceRenderChildren,
@@ -40,6 +40,7 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -72,6 +73,7 @@ export class DefaultGridLayoutManager
     id: 'GridLayout',
     createFromLayout: DefaultGridLayoutManager.createFromLayout,
     isGridLayout: true,
+    icon: 'window-grid',
   };
 
   public serialize(): DashboardV2Spec['layout'] {
@@ -228,22 +230,35 @@ export class DefaultGridLayoutManager
   }
 
   public duplicate(): DashboardLayoutManager {
+    const children = this.state.grid.state.children;
+    const hasGridItem = children.find((child) => child instanceof DashboardGridItem);
+    const clonedChildren: SceneGridItemLike[] = [];
+
+    if (children.length) {
+      let panelId = hasGridItem ? dashboardSceneGraph.getNextPanelId(hasGridItem.state.body) : 1;
+
+      children.forEach((child) => {
+        if (child instanceof DashboardGridItem) {
+          const clone = child.clone({
+            key: undefined,
+            body: child.state.body.clone({
+              key: getVizPanelKeyForPanelId(panelId),
+            }),
+          });
+
+          clonedChildren.push(clone);
+          panelId++;
+        } else {
+          clonedChildren.push(child.clone({ key: undefined }));
+        }
+      });
+    }
+
     const clone = this.clone({
       key: undefined,
       grid: this.state.grid.clone({
         key: undefined,
-        children: this.state.grid.state.children.map((child) => {
-          if (child instanceof DashboardGridItem) {
-            return child.clone({
-              key: undefined,
-              body: child.state.body.clone({
-                key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
-              }),
-            });
-          }
-
-          return child.clone({ key: undefined });
-        }),
+        children: clonedChildren,
       }),
     });
 
@@ -476,6 +491,8 @@ export class DefaultGridLayoutManager
     let currentX = 0;
 
     for (let panel of panels) {
+      const variableName = panel.parent instanceof AutoGridItem ? panel.parent.state.variableName : undefined;
+
       panel.clearParent();
 
       children.push(
@@ -485,7 +502,9 @@ export class DefaultGridLayoutManager
           y: currentY,
           width: panelWidth,
           height: panelHeight,
+          itemHeight: panelHeight,
           body: panel,
+          variableName,
         })
       );
 
@@ -532,8 +551,9 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
   const { isEditing } = dashboard.useState();
+  const hasClonedParents = useHasClonedParents(model);
   const styles = useStyles2(getStyles);
-  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts;
+  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
 
   // If we are top level layout and we have no children, show empty state
   if (model.parent === dashboard && children.length === 0) {

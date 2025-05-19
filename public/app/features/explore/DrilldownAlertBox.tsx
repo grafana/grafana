@@ -1,20 +1,24 @@
 import { useLocalStorage } from 'react-use';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, LinkButton, Stack } from '@grafana/ui';
-
-import { t, Trans } from '../../core/internationalization';
 
 type Props = {
   datasourceType: string;
 };
 
 export function DrilldownAlertBox(props: Props) {
-  const isDsCompatibleWithDrilldown = ['prometheus', 'loki', 'tempo', 'grafana-pyroscope-datasource'].includes(
-    props.datasourceType
-  );
+  const isDsCompatibleWithDrilldown = [
+    'prometheus',
+    'grafana-amazonprometheus-datasource',
+    'grafana-azureprometheus-datasource',
+    'loki',
+    'tempo',
+    'grafana-pyroscope-datasource',
+  ].includes(props.datasourceType);
 
   const [dismissed, setDismissed] = useLocalStorage('grafana.explore.drilldownsBoxDismissed', false);
-
+  const { t } = useTranslate();
   return (
     isDsCompatibleWithDrilldown &&
     !dismissed && (

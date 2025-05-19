@@ -1,11 +1,13 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { Playlist, PlaylistMode } from './types';
+import { Playlist } from '../../api/clients/playlist';
+
+import { PlaylistMode } from './types';
 
 export interface Props {
   playlist: Playlist;
@@ -18,7 +20,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
-
+  const { t } = useTranslate();
   const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: 'Normal', value: false },
     { label: 'Kiosk', value: true },
@@ -43,7 +45,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       params['_dash.hideLinks'] = true;
     }
 
-    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
+    locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata.name}`, params));
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       mode: mode,
@@ -108,7 +110,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          Start {playlist.name}
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec.title }}>
+            Start {'{{title}}'}
+          </Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

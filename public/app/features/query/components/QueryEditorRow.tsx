@@ -19,6 +19,8 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
@@ -31,7 +33,6 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 
@@ -52,6 +53,7 @@ export interface Props<TQuery extends DataQuery> {
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
   onChange: (query: TQuery) => void;
+  onReplace?: (query: DataQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideHideQueryButton?: boolean;
@@ -63,6 +65,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
 }
@@ -354,7 +357,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false } = this.props;
+    const {
+      query,
+      hideHideQueryButton: hideHideQueryButton = false,
+      onReplace,
+      onQueryReplacedFromLibrary,
+    } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -376,6 +384,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
           onClick={this.onCopyQuery}
+        />
+        <ReplaceQueryFromLibrary
+          datasourceFilters={datasource?.name ? [datasource.name] : []}
+          onSelectQuery={(query) => {
+            onQueryReplacedFromLibrary?.();
+            onReplace?.(query);
+          }}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -513,6 +528,30 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
   return renderSaveQueryButton(props.query);
+}
+
+interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
+  datasourceFilters: string[];
+  onSelectQuery: (query: DataQuery) => void;
+}
+
+function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
+  datasourceFilters,
+  onSelectQuery,
+}: ReplaceQueryFromLibraryProps<TQuery>) {
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+
+  const onReplaceQueryFromLibrary = () => {
+    openDrawer(datasourceFilters, onSelectQuery);
+  };
+
+  return queryLibraryEnabled ? (
+    <QueryOperationAction
+      title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
+      icon="book"
+      onClick={onReplaceQueryFromLibrary}
+    />
+  ) : null;
 }
 
 function AdaptiveTelemetryQueryActions({ query }: { query: DataQuery }) {

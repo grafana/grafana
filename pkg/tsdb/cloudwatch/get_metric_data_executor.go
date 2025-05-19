@@ -4,16 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
-func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client models.CWClient,
+func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudwatchiface.CloudWatchAPI,
 	metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.GetMetricDataOutput, error) {
 	mdo := make([]*cloudwatch.GetMetricDataOutput, 0)
 
@@ -27,7 +26,7 @@ func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client models.C
 			*metricDataInput.EndTime = metricDataInput.EndTime.Truncate(time.Minute).Add(time.Minute)
 		}
 
-		resp, err := client.GetMetricData(ctx, metricDataInput)
+		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
 			return mdo, backend.DownstreamError(err)
 		}

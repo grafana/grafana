@@ -16,8 +16,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
@@ -135,7 +135,7 @@ type ReferenceItemProps = {
 export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
@@ -152,7 +152,8 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 ) : (
                   <span className={cx('span-svc-name', styles.title)}>
-                    View Linked Span <Icon name="external-link-alt" />
+                    <Trans i18nKey="explore.accordian-references.view-linked-span">View Linked Span</Trans>{' '}
+                    <Icon name="external-link-alt" />
                   </span>
                 )}
                 <small className={styles.debugInfo}>
@@ -174,7 +175,7 @@ export function References(props: ReferenceItemProps) {
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
-                label={'attributes'}
+                label={t('explore.references.label-attributes', 'attributes')}
                 linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />

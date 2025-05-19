@@ -160,9 +160,9 @@ oauth_allow_insecure_email_lookup = true
 
 You can also enable email lookup using the API:
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/) since Grafana v10.4.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```
 curl --request PUT \
@@ -226,9 +226,9 @@ a Grafana admin user, you can also do the same for any user from the Server Admi
 
 ### Protected roles
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](../../../introduction/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.
 

@@ -89,7 +89,7 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
 	}
 
-	lm.ConcreteLogger.Swap(&compositeLogger{loggers: defaultLoggers})
+	lm.Swap(&compositeLogger{loggers: defaultLoggers})
 	lm.logFilters = loggers
 
 	loggersByName := []string{}

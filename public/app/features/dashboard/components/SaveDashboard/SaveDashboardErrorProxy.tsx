@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -31,16 +31,22 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
+  const { t } = useTranslate();
   const isRestoreDashboardsEnabled = false;
+
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (
         <ConfirmModal
           isOpen={true}
-          title={t('dashboard.save-dashboard-error-proxy.title-conflict', 'Conflict')}
+          title={t('dashboard.save-dashboard-error-proxy.title-version-mismatch', 'Conflict')}
           body={
             <div>
-              Someone else has updated this dashboard <br /> <small>Would you still like to save this dashboard?</small>
+              <Trans i18nKey="dashboard.save-dashboard-error-proxy.body-version-mismatch">
+                Someone else has updated this dashboard
+                <br />
+                <small>Would you still like to save this dashboard?</small>
+              </Trans>
             </div>
           }
           confirmText="Save and overwrite"
@@ -74,11 +80,14 @@ export const SaveDashboardErrorProxy = ({
           ) : (
             <ConfirmModal
               isOpen={true}
-              title={t('dashboard.save-dashboard-error-proxy.title-conflict', 'Conflict')}
+              title={t('dashboard.save-dashboard-error-proxy.title-name-exists', 'Conflict')}
               body={
                 <div>
-                  A dashboard with the same name in selected folder already exists. <br />
-                  <small>Would you still like to save this dashboard?</small>
+                  <Trans i18nKey="dashboard.save-dashboard-error-proxy.body-name-exists">
+                    A dashboard with the same name in selected folder already exists.
+                    <br />
+                    <small>Would you still like to save this dashboard?</small>
+                  </Trans>
                 </div>
               }
               confirmText="Save and overwrite"
@@ -106,6 +115,7 @@ export const SaveDashboardErrorProxy = ({
 
 const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboardModalProps) => {
   const { onDashboardSave } = useDashboardSave();
+  const { t } = useTranslate();
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (
@@ -117,11 +127,13 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
       onDismiss={onDismiss}
     >
       <div className={styles.modalText}>
-        Your changes will be lost when you update the plugin.
-        <br />
-        <small>
-          Use <strong>Save As</strong> to create custom version.
-        </small>
+        <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.body-plugin-dashboard">
+          Your changes will be lost when you update the plugin.
+          <br />
+          <small>
+            Use <strong>Save As</strong> to create custom version.
+          </small>
+        </Trans>
       </div>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">

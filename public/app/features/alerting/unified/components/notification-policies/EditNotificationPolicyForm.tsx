@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -16,7 +17,6 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
@@ -52,8 +52,9 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
+  const { t } = useTranslate();
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const formAmRoute = {
@@ -95,7 +96,10 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
             color="orange"
             className={styles.noMatchersWarning}
             icon="exclamation-triangle"
-            text="If no matchers are specified, this notification policy will handle all alert instances."
+            text={t(
+              'alerting.am-routes-expanded-form.badge-no-matchers',
+              'If no matchers are specified, this notification policy will handle all alert instances.'
+            )}
           />
         )}
         {fields.length > 0 && (
@@ -115,7 +119,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       autoFocus
                     />
                   </Field>
-                  <Field label={'Operator'}>
+                  <Field label={t('alerting.am-routes-expanded-form.label-operator', 'Operator')}>
                     <Controller
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
@@ -197,7 +201,10 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
       {watch().overrideGrouping && (
         <Field
           label={t('alerting.am-routes-expanded-form.label-group-by', 'Group by')}
-          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
+          description={t(
+            'alerting.am-routes-expanded-form.description-group-by',
+            'Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy.'
+          )}
         >
           <Controller
             rules={{
@@ -301,6 +308,30 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           )}
           control={control}
           name="muteTimeIntervals"
+        />
+      </Field>
+      <Field
+        label={t('alerting.am-routes-expanded-form.am-active-timing-select-label-active-timings', 'Active timings')}
+        data-testid="am-active-timing-select"
+        description={t(
+          'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-active-timing-to-policy',
+          'Add active timing to policy'
+        )}
+        invalid={!!errors.activeTimeIntervals}
+      >
+        <Controller
+          render={({ field: { onChange, ref, ...field } }) => (
+            <MuteTimingsSelector
+              alertmanager={selectedAlertmanager!}
+              selectProps={{
+                ...field,
+                disabled: !canSeeMuteTimings,
+                onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+              }}
+            />
+          )}
+          control={control}
+          name="activeTimeIntervals"
         />
       </Field>
       {actionButtons}

@@ -3,9 +3,9 @@ import { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
 
 import { DocsId, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Card, Container, VerticalGroup, Alert, Input, useStyles2 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
-import { t, Trans } from 'app/core/internationalization';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -23,7 +23,7 @@ interface TransformationPickerProps {
 
 export function TransformationPicker(props: TransformationPickerProps) {
   const { noTransforms, search, xforms, onSearchChange, onSearchKeyDown, onTransformationAdd, suffix } = props;
-
+  const { t } = useTranslate();
   return (
     <VerticalGroup>
       {noTransforms && (
@@ -43,11 +43,19 @@ export function TransformationPicker(props: TransformationPickerProps) {
                   }}
                 >
                   <p>
-                    Transformations allow you to join, calculate, re-order, hide, and rename your query results before
-                    they are visualized. <br />
-                    Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently only
-                    supports time series data. <br />
-                    It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
+                    <Trans i18nKey="dashboard.transformation-picker.info">
+                      Transformations allow you to join, calculate, re-order, hide, and rename your query results before
+                      they are visualized.
+                    </Trans>
+                    <br />
+                    <Trans i18nKey="dashboard.transformation-picker.info-graph-not-suitable">
+                      Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
+                      only supports time series data.
+                    </Trans>
+                    <br />
+                    <Trans i18nKey="dashboard.transformation-picker.info-switch-to-table">
+                      It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
+                    </Trans>
                   </p>
                   <a
                     href={getDocsLink(DocsId.Transformations)}

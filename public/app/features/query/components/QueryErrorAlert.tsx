@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -21,7 +22,12 @@ export function QueryErrorAlert({ error }: Props) {
         {message}
         {error.traceId != null && (
           <>
-            <br /> <span>(Trace ID: {error.traceId})</span>
+            <br />{' '}
+            <span>
+              <Trans i18nKey="query.query-error-alert.trace-id" values={{ traceId: error.traceId }}>
+                (Trace ID: {'{{traceId}}'})
+              </Trans>
+            </span>
           </>
         )}
       </div>
