@@ -11,6 +11,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/dskit/services"
@@ -104,9 +106,10 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	MemberlistKVConfig kv.Config
-	httpServerRouter   *mux.Router
-	distributor        *resource.Distributor
+	MemberlistKVConfig    kv.Config
+	httpServerRouter      *mux.Router
+	storageRing           *ring.Ring
+	storageRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -150,6 +153,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.StorageRing, s.initRing)
+	m.RegisterModule(modules.Distributor, s.initDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -169,7 +173,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics, s.distributor)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

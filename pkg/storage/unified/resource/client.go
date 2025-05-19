@@ -22,6 +22,9 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -43,6 +46,22 @@ type resourceClient struct {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+}
+
+func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+		return NewLegacyResourceClient(conn), nil
+	}
+
+	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
+
+	return NewRemoteResourceClient(tracer, conn, RemoteResourceClientConfig{
+		Token:            clientCfg.Token,
+		TokenExchangeURL: clientCfg.TokenExchangeURL,
+		Audiences:        []string{"resourceStore"},
+		Namespace:        clientCfg.TokenNamespace,
+		AllowInsecure:    cfg.Env == setting.Dev,
+	})
 }
 
 func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
