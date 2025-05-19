@@ -426,7 +426,6 @@ func (ss *sqlStore) updateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 
 	// Execute the minimum number of required statements!
-
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			if okUpdateStatement != nil {
