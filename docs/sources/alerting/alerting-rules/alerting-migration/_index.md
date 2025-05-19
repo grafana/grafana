@@ -14,6 +14,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/migration-api/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/migration-api/
+  configure-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed alert rules
@@ -22,7 +27,8 @@ Grafana provides an internal tool in Alerting which allows you to import Mimir a
 
 ## Before you begin
 
-The `alertingMigrationUI` and `grafanaManagedRecordingRulesDatasources` [feature flags](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
+The `alertingMigrationUI` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
+To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 
