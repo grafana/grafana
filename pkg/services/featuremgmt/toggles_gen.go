@@ -827,10 +827,6 @@ const (
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
 
-	// FlagGrafanaManagedRecordingRulesDatasources
-	// Enables writing to data sources for Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
-
 	// FlagInfinityRunQueriesInParallel
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
