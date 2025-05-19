@@ -92,7 +92,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   // handle null and NaN mapped values when drawing a box
-  const shouldDrawBox = (sidx: number, yVal: number | null): boolean => {
+  const shouldDrawYVal = (sidx: number, yVal: number | null): boolean => {
     if (yVal == null) {
       return isDiscrete(sidx) && hasMappedNull(sidx);
     }
@@ -220,7 +220,7 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
 
-              if (shouldDrawBox(sidx, yVal)) {
+              if (shouldDrawYVal(sidx, yVal)) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
@@ -264,7 +264,7 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
 
-              if (shouldDrawBox(sidx, yVal)) {
+              if (shouldDrawYVal(sidx, yVal)) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
                 let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
@@ -320,7 +320,7 @@ export function getConfig(opts: TimelineCoreOptions) {
               let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
-                if (shouldDrawBox(sidx, dataY[ix])) {
+                if (shouldDrawYVal(sidx, dataY[ix])) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   if (!boxRect || boxRect.x >= xDim) {

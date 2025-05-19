@@ -116,7 +116,7 @@ describe('StateTimeline uPlot integration', () => {
 
     describe('#drawPaths', () => {
       describe('null and NaN values', () => {
-        // these tests are attempting to determine whether `shouldDrawBox` is returning false
+        // these tests are attempting to determine whether `shouldDrawYVal` is returning false
         // and preventing a draw for a given value. this is being done by checking the number of
         // calls to `rect` by the `orient` callback created by a `drawPaths` call. Even
 
