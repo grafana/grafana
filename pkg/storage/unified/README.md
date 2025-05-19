@@ -342,7 +342,7 @@ Example unified storage ini file:
 * Give it a unique `instance_id` (defaults to hostname, so you need to define it locally)
 * Bind `memberlist` to `127.0.0.2` and join the member on `127.0.0.1` (the distributor module above)
 
-You can repeat the same configuration for many different storage-api instances. You just need to change the bind address
+You can repeat the same configuration for many different storage-api instances by changing the bind address
 from `127.0.0.2` to something else, eg `127.0.0.3`
 
 ```ini
