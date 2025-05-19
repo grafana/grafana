@@ -6,7 +6,7 @@ import (
 	"dagger.io/dagger"
 )
 
-func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cache *dagger.CacheVolume, suite string) *dagger.Container {
+func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cache *dagger.CacheVolume, runMode, suite string) *dagger.Container {
 	return WithYarnCache(WithGrafanaFrontend(d.Container().From("cypress/included:13.1.0"), src), cache).
 		WithWorkdir("/src").
 		WithEnvVariable("HOST", "grafana").
@@ -15,7 +15,7 @@ func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cach
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{
 			"/bin/bash", "-c",
-			fmt.Sprintf("./e2e/run-suite %s true", suite),
+			fmt.Sprintf("./e2e/run-suite %s %s true", runMode, suite),
 		}, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
 		})
