@@ -41,7 +41,6 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	}
 
 	options := getCookieOptions()
-
 	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
