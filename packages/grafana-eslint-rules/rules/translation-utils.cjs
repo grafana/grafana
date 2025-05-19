@@ -129,7 +129,7 @@ function canBeFixed(node, context) {
  * @returns {string|null} The translation prefix or null
  */
 function getTranslationPrefix(context) {
-  const filename = context.getFilename();
+  const filename = context.filename;
   const match = filename.match(/public\/app\/features\/([^/]+)/);
   if (match) {
     return match[1];
@@ -218,7 +218,8 @@ function getComponentNames(node, context) {
 }
 
 /**
- * Checks if a method has a `useTranslate` call
+ * Checks if a method has a variable declaration of `t`
+ * that came from a `useTranslate` call
  * @param {Node} method The node
  * @param {RuleContextWithOptions} context
  */
@@ -260,10 +261,10 @@ function getImportsFixer(node, fixer, importName, context) {
 
   const parentMethod = getParentMethod(node, context);
 
-  // If we're trying to import `t`,
-  // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
-  // do nothing
   if (importName === 't') {
+    // If we're trying to import `t`,
+    // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
+    // do nothing
     const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod, context) : false;
     if (declarationFromUseTranslate) {
       return;
