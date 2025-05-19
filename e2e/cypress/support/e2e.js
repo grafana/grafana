@@ -10,7 +10,7 @@ const COMMAND_DELAY = 1000;
 function delay(ms) {
   let now = Date.now();
   const end = now + ms;
-  
+
   do {
     now = Date.now();
   } while (now < end);
