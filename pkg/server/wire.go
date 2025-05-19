@@ -90,7 +90,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
@@ -345,7 +344,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideService,
 	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
 	plugindashboardsservice.ProvideDashboardUpdater,
-	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
