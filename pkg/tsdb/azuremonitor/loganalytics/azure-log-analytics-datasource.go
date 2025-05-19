@@ -44,6 +44,9 @@ func writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
 
+	// Log the raw error message
+	backend.Logger.Error(message)
+
 	// Set error response to initial error message
 	errorBody := map[string]string{"error": message}
 
@@ -125,8 +128,8 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
-			writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %w", err))
-			return nil, fmt.Errorf("failed to fetch metadata: %w", err)
+			writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
 		}
 
 		defer func() {
@@ -138,19 +141,17 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		encoding := resp.Header.Get("Content-Encoding")
 		body, err := decode(encoding, resp.Body)
 		if err != nil {
-			writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to read metadata response: %s", err))
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to read metadata response: %s", err))
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("metadata API error: %s", string(body)))
-			return nil, fmt.Errorf("metadata API error: %s", string(body))
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("metadata API error: %s", string(body)))
 		}
 
 		var metadata types.AzureLogAnalyticsMetadata
 		err = json.Unmarshal(body, &metadata)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to unmarshal metadata response: %s", err))
-			return nil, fmt.Errorf("failed to unmarshal metadata response: %w", err)
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to unmarshal metadata response: %s", err))
 		}
 
 		// AppInsights metadata requests do not return the HasData field
@@ -161,8 +162,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 
 		responseBody, err := json.Marshal(metadata)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to marshal metadata response: %s", err))
-			return nil, fmt.Errorf("failed to marshal metadata response: %w", err)
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to marshal metadata response: %s", err))
 		}
 
 		rw.Header().Set("Content-Type", "application/json")
