@@ -353,7 +353,15 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			var total *SearchResponseHitsTotal
 			err := dec.Decode(&total)
 			if err != nil {
-				return err
+				totalInt := 0
+				err = dec.Decode(&totalInt)
+				if err != nil {
+					return err
+				}
+
+				total = &SearchResponseHitsTotal{
+					Value: totalInt,
+				}
 			}
 			sr.Hits.Total = total
 		default:
