@@ -1001,30 +1001,29 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {(config.featureToggles.newLogsPanel || !config.featureToggles.logsPanelControls) &&
-            visualisationType === 'table' &&
-            hasData && (
-              <div className={styles.logRows} data-testid="logRowsTable">
-                {/* Width should be full width minus logs navigation and padding */}
-                <LogsTableWrap
-                  logsSortOrder={logsSortOrder}
-                  range={props.range}
-                  splitOpen={splitOpen}
-                  timeZone={timeZone}
-                  width={width - 80}
-                  logsFrames={props.logsFrames ?? []}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  panelState={panelState?.logs}
-                  theme={theme}
-                  updatePanelState={updatePanelState}
-                  datasourceType={props.datasourceType}
-                />
-              </div>
-            )}
+          {(config.featureToggles.newLogsPanel || !config.featureToggles.logsPanelControls) && visualisationType === 'table' && hasData && (
+            <div className={styles.logRows} data-testid="logRowsTable">
+              {/* Width should be full width minus logs navigation and padding */}
+              <LogsTableWrap
+                logsSortOrder={logsSortOrder}
+                range={props.range}
+                splitOpen={splitOpen}
+                timeZone={timeZone}
+                width={width - 80}
+                logsFrames={props.logsFrames ?? []}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                panelState={panelState?.logs}
+                theme={theme}
+                updatePanelState={updatePanelState}
+                datasourceType={props.datasourceType}
+              />
+            </div>
+          )}
           {!config.featureToggles.newLogsPanel && config.featureToggles.logsPanelControls && hasData && (
             <div className={styles.logRowsWrapper} data-testid="logRows">
               <ControlledLogRows
+
                 logsTableFrames={props.logsFrames}
                 width={width}
                 updatePanelState={updatePanelState}
