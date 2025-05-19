@@ -1072,6 +1072,9 @@
         "button": {
           "label": "Resume all rules"
         }
+      },
+      "view": {
+        "folder": "View folder"
       }
     },
     "folder-selector": {
