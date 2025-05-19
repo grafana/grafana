@@ -7,10 +7,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
 
-  const grafanaRecordingRulesEnabled =
-    config.unifiedAlerting.recordingRulesEnabled &&
-    config.featureToggles.grafanaManagedRecordingRules &&
-    canCreateGrafanaRules;
+  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
   const { t } = useTranslate();
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;

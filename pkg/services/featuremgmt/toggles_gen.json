@@ -1401,7 +1401,8 @@
       "metadata": {
         "name": "grafanaManagedRecordingRules",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-22T17:53:16Z"
+        "creationTimestamp": "2024-04-22T17:53:16Z",
+        "deletionTimestamp": "2025-05-16T18:56:20Z"
       },
       "spec": {
         "description": "Enables Grafana-managed recording rules.",

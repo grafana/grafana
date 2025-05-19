@@ -534,95 +534,46 @@ func TestProvisioningApi(t *testing.T) {
 	})
 
 	t.Run("recording rules", func(t *testing.T) {
-		t.Run("are enabled", func(t *testing.T) {
-			env := createTestEnv(t, testConfig)
-			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
+		env := createTestEnv(t, testConfig)
 
-			t.Run("POST returns 201", func(t *testing.T) {
-				sut := createProvisioningSrvSutFromEnv(t, &env)
-				rc := createTestRequestCtx()
-				rule := createTestRecordingRule("rule", 1)
+		t.Run("POST returns 201", func(t *testing.T) {
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			rc := createTestRequestCtx()
+			rule := createTestRecordingRule("rule", 1)
 
-				response := sut.RoutePostAlertRule(&rc, rule)
+			response := sut.RoutePostAlertRule(&rc, rule)
 
-				require.Equal(t, 201, response.Status())
-			})
-
-			t.Run("PUT returns 200", func(t *testing.T) {
-				sut := createProvisioningSrvSutFromEnv(t, &env)
-				uid := util.GenerateShortUID()
-				rule := createTestAlertRule("rule", 3)
-				rule.UID = uid
-
-				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          rule.FolderUID,
-					Title:        "Folder Title",
-					OrgID:        rule.OrgID,
-					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
-				})
-				require.NoError(t, err)
-
-				insertRuleInOrg(t, sut, rule, 3)
-
-				// make rule a recording rule
-				rule.Record = &definitions.Record{
-					Metric: "test_metric",
-					From:   "A",
-				}
-
-				rc := createTestRequestCtx()
-				rc.OrgID = 3
-
-				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
-
-				require.Equal(t, 200, response.Status())
-			})
+			require.Equal(t, 201, response.Status())
 		})
 
-		t.Run("are not enabled", func(t *testing.T) {
-			t.Run("POST returns 400", func(t *testing.T) {
-				sut := createProvisioningSrvSut(t)
-				rc := createTestRequestCtx()
-				rule := createTestRecordingRule("rule", 1)
+		t.Run("PUT returns 200", func(t *testing.T) {
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			uid := util.GenerateShortUID()
+			rule := createTestAlertRule("rule", 3)
+			rule.UID = uid
 
-				response := sut.RoutePostAlertRule(&rc, rule)
-
-				require.Equal(t, 400, response.Status())
-				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				UID:          rule.FolderUID,
+				Title:        "Folder Title",
+				OrgID:        rule.OrgID,
+				SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
 			})
+			require.NoError(t, err)
 
-			t.Run("PUT returns 400", func(t *testing.T) {
-				sut := createProvisioningSrvSut(t)
-				uid := util.GenerateShortUID()
-				rule := createTestAlertRule("rule", 3)
-				rule.UID = uid
+			insertRuleInOrg(t, sut, rule, 3)
 
-				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          rule.FolderUID,
-					Title:        "Folder Title",
-					OrgID:        rule.OrgID,
-					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
-				})
-				require.NoError(t, err)
+			// make rule a recording rule
+			rule.Record = &definitions.Record{
+				Metric: "test_metric",
+				From:   "A",
+			}
 
-				insertRuleInOrg(t, sut, rule, 3)
+			rc := createTestRequestCtx()
+			rc.OrgID = 3
 
-				// make rule a recording rule
-				rule.Record = &definitions.Record{
-					Metric: "test_metric",
-					From:   "A",
-				}
+			response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
 
-				rc := createTestRequestCtx()
-				rc.OrgID = 3
-
-				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
-
-				require.Equal(t, 400, response.Status())
-				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
-			})
+			require.Equal(t, 200, response.Status())
 		})
 	})
 
