@@ -98,7 +98,7 @@ const noUntranslatedStrings = createRule({
           context.report({
             node,
             messageId: 'noUntranslatedStringsProperties',
-            fix: errorShouldBeFixed && errorCanBeFixed ? getTFixers(node, context) : undefined,
+            fix: errorCanBeFixed && errorShouldBeFixed ? getTFixers(node, context) : undefined,
             suggest: errorCanBeFixed
               ? [
                   {
