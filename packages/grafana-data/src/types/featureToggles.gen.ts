@@ -558,10 +558,6 @@ export interface FeatureToggles {
   */
   disableNumericMetricsSortingInExpressions?: boolean;
   /**
-  * Enables Grafana-managed recording rules.
-  */
-  grafanaManagedRecordingRules?: boolean;
-  /**
   * Enables Query Library feature in Explore
   */
   queryLibrary?: boolean;
