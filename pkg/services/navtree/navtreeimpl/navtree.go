@@ -427,7 +427,7 @@ func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.Nav
 
 	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
 	if err != nil {
-		s.log.Error("Failed to get plugin settings", "error", err)
+		s.log.Error("Navigation: Failed to get ML plugin settings", "error", err)
 		return nil
 	}
 
@@ -452,11 +452,13 @@ func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.Nav
 
 	// Return nil if plugin is not enabled
 	if !isMLPluginEnabled {
+		s.log.Error("Navigation: ML Plugin not enabled")
 		return nil
 	}
 
 	// Check if user has access to the plugin
-	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "grafana-ml-app")) {
+	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "plugins:id:grafana-ml-app")) {
+		s.log.Error("Navigation: User does not have access to the ML plugin")
 		return nil
 	}
 
