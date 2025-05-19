@@ -30,6 +30,7 @@ describe('Dashboard edit - Query variable', () => {
     flows.newEditPaneVariableClick();
     flows.newEditPanelCommonVariableInputs(variable);
 
+    // open the modal query variable editor
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton().should('be.visible').click();
 
     // mock the API call to get the query results
@@ -44,11 +45,11 @@ describe('Dashboard edit - Query variable', () => {
       },
     }).as('query');
 
+    // select a core data source that just runs a query during preview
     e2e.components.DataSourcePicker.container().should('be.visible').click();
-
     const dataSource = 'gdev-postgres';
     cy.contains(dataSource).scrollIntoView().should('be.visible').click();
-
+    // enter a query that returns the variable options
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
       .type('*')
