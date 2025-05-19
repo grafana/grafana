@@ -7,7 +7,7 @@ describe('Dashboard', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('can edit panel title and description', () => {
+  it('can toggle transparent background switch', () => {
     e2e.pages.Dashboards.visit();
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
