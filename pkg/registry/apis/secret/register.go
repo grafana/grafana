@@ -425,7 +425,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Description: "A secret in default",
 													Value:       "this is super duper secure",
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -439,7 +439,7 @@ spec:
 													Description: "A secret in aws",
 													Value:       "this is super duper secure",
 													Keeper:      &exampleKeeperAWS,
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -453,7 +453,7 @@ spec:
 													Description: "A secret from aws",
 													Ref:         &exampleRef,
 													Keeper:      &exampleKeeperAWS,
-													Decrypters:  []string{"actor_k6"},
+													Decrypters:  []string{"k6"},
 												},
 											},
 										},
@@ -469,7 +469,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Description: "XYZ secret",
 													Value:       "this is super duper secure",
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -498,8 +498,8 @@ spec:
   description: A secret value
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 								"secret to store in aws keeper": {
@@ -518,8 +518,8 @@ spec:
   keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 								"secret to reference in aws keeper": {
@@ -538,7 +538,7 @@ spec:
   keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
-    - actor_k6`,
+    - k6`,
 									},
 								},
 								"secret with name specified": {
@@ -557,8 +557,8 @@ spec:
   description: XYZ secret
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 							},

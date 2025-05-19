@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -306,7 +305,7 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 	return errs
 }
 
-// validateDecrypters validates that (if populated) the `decrypters` must match "actor_{name}" and must be unique.
+// validateDecrypters validates that (if populated) the `decrypters` must be unique.
 func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
@@ -325,7 +324,6 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 
 	for i, decrypter := range decrypters {
 		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
-		// This means an allow list item should have the format "actor_{name}" and not just "{name}".
 		if len(decryptersAllowList) > 0 {
 			if _, exists := decryptersAllowList[decrypter]; !exists {
 				errs = append(
@@ -339,17 +337,7 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 			continue
 		}
 
-		actor, name, found := strings.Cut(strings.TrimSpace(decrypter), "_")
-		if !found || actor != "actor" || name == "" {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter must have the format `actor_{name}`"),
-			)
-
-			continue
-		}
-
-		if _, exists := decrypterNames[name]; exists {
+		if _, exists := decrypterNames[decrypter]; exists {
 			errs = append(
 				errs,
 				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters must be unique"),
@@ -358,7 +346,7 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 			continue
 		}
 
-		decrypterNames[name] = struct{}{}
+		decrypterNames[decrypter] = struct{}{}
 	}
 
 	return errs
