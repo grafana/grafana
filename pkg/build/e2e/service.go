@@ -25,6 +25,7 @@ type GrafanaServiceOpts struct {
 	GrafanaDir   *dagger.Directory
 	GrafanaTarGz *dagger.File
 	YarnCache    *dagger.CacheVolume
+	License      *dagger.File
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -71,7 +72,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "e2e:plugin:build"})
 
-	svc := d.Container().From("alpine").
+	container := d.Container().From("alpine").
 		WithExec([]string{"apk", "add", "bash"}).
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
@@ -84,8 +85,15 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithEnvVariable("GF_APP_MODE", "development").
 		WithEnvVariable("GF_SERVER_HTTP_PORT", "3001").
 		WithEnvVariable("GF_SERVER_ROUTER_LOGGING", "1").
-		WithExposedPort(3001).
-		AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server"}})
+		WithExposedPort(3001)
+
+	var licenseArg string
+	if opts.License != nil {
+		container = container.WithMountedFile("/src/license.jwt", opts.License)
+		licenseArg = "/src/license.jwt"
+	}
+
+	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
 
 	return svc, nil
 }

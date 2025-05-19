@@ -16,6 +16,7 @@ func main() {
 		grafanaPath = flag.String("grafana-dir", ".", "Path to cloned grafana repo")
 		targzPath   = flag.String("package", "grafana.tar.gz", "Path to grafana tar.gz package")
 		suite       = flag.String("suite", "", "e2e suite name (used in arg to run-suite script)")
+		licensePath = flag.String("license", "", "the path to the Grafana Enterprise license file (optional)")
 	)
 	flag.Parse()
 
@@ -28,17 +29,23 @@ func main() {
 
 	log.Println("grafana dir:", *grafanaPath)
 	log.Println("targz:", *targzPath)
+	log.Println("license path:", *licensePath)
 
 	grafana := d.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{".git", "node_modules", "*.tar.gz"},
 	})
 
 	targz := d.Host().File("grafana.tar.gz")
+	var license *dagger.File
+	if *licensePath != "" {
+		license = d.Host().File(*licensePath)
+	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
 		GrafanaDir:   grafana,
 		GrafanaTarGz: targz,
 		YarnCache:    yarnCache,
+		License:      license,
 	})
 	if err != nil {
 		panic(err)
