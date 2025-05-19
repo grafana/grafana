@@ -16,9 +16,9 @@ use (
 	./apps/alerting/notifications
 	./apps/dashboard
 	./apps/folder
+	./apps/iam
 	./apps/investigations
 	./apps/playlist
-	./apps/iam
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
