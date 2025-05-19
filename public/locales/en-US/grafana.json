@@ -5416,8 +5416,11 @@
         "action-variables-title": "Action variables",
         "confirm": "Confirm",
         "confirm-action": "Confirm action",
-        "style": "Button style"
+        "style": "Button style",
+        "variable-value-placeholder": "Value"
       },
+      "close": "Close",
+      "continue": "Continue",
       "inline": {
         "add-action": "Add action",
         "edit-action": "Edit action"

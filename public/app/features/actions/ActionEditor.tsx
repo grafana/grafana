@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
+import {
+  Action,
+  ActionVariable,
+  GrafanaTheme2,
+  httpMethodOptions,
+  HttpRequestMethod,
+  VariableSuggestion,
+} from '@grafana/data';
 import {
   Switch,
   Field,
@@ -12,7 +19,6 @@ import {
   useStyles2,
   ColorPicker,
   useTheme2,
-  ActionVariable,
 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 

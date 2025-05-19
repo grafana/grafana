@@ -815,6 +815,7 @@ export {
   type Action,
   type ActionModel,
   type ActionVariable,
+  type ActionVariableInput,
   HttpRequestMethod,
   ActionVariableType,
   defaultActionConfig,

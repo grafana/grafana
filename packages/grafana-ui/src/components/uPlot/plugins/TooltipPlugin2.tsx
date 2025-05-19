@@ -229,7 +229,7 @@ export const TooltipPlugin2 = ({
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if (!domRef.current!.contains(e.target as Node)) {
+      if (!domRef.current!.contains(e.target as Node) && portalRoot.current!.contains(e.target as Node)) {
         dismiss();
       }
     };

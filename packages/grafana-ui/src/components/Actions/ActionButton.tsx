@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
-import { ActionModel, ActionVariable, Field } from '@grafana/data';
+import { ActionModel, Field, ActionVariableInput } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Button, ButtonProps } from '../Button';
+import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 
 import { VariablesInputModal } from './VariablesInputModal';
 
@@ -21,43 +22,62 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
   const textColor = theme.colors.getContrastText(backgroundColor);
 
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Action variables
+  const [showVarsModal, setShowVarsModal] = useState(false);
+  const [inputValues, setInputValues] = useState<ActionVariableInput>({});
+
   const actionHasVariables = action.variables && action.variables.length > 0;
 
-  console.log('showConfirm', showConfirm);
+  const onClick = () => {
+    if (actionHasVariables) {
+      setShowVarsModal(true);
+    } else {
+      setShowConfirm(true);
+    }
+  };
+
+  const getVariables = (vars: { [key: string]: string }) => {
+    setInputValues(vars);
+  };
 
   return (
     <>
       <Button
         variant="primary"
         size="sm"
-        onClick={() => setShowConfirm(true)}
+        onClick={onClick}
         {...buttonProps}
         style={{ width: 'fit-content', backgroundColor, color: textColor }}
       >
         {action.title}
       </Button>
 
-      {actionHasVariables && showConfirm && (
-        //onDismiss={() => setShowConfirm(false)}
-        <VariablesInputModal onDismiss={() => console.log('on dismiss')} action={action} />
+      {actionHasVariables && showVarsModal && (
+        <VariablesInputModal
+          onDismiss={() => setShowVarsModal(false)}
+          action={action}
+          onShowConfirm={() => setShowConfirm(true)}
+          getVariables={getVariables}
+        />
       )}
 
-      {/*{showConfirm && (*/}
-      {/*  <ConfirmModal*/}
-      {/*    isOpen={true}*/}
-      {/*    title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}*/}
-      {/*    body={action.confirmation}*/}
-      {/*    confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}*/}
-      {/*    confirmButtonVariant="primary"*/}
-      {/*    onConfirm={() => {*/}
-      {/*      setShowConfirm(false);*/}
-      {/*      action.onClick(new MouseEvent('click'));*/}
-      {/*    }}*/}
-      {/*    onDismiss={() => {*/}
-      {/*      setShowConfirm(false);*/}
-      {/*    }}*/}
-      {/*  />*/}
-      {/*)}*/}
+      {showConfirm && (
+        <ConfirmModal
+          isOpen={true}
+          title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
+          body={action.confirmation}
+          confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
+          confirmButtonVariant="primary"
+          onConfirm={() => {
+            setShowConfirm(false);
+            action.onClick(new MouseEvent('click'), null, inputValues);
+          }}
+          onDismiss={() => {
+            setShowConfirm(false);
+          }}
+        />
+      )}
     </>
   );
 }

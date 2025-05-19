@@ -1,26 +1,44 @@
+import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { ActionModel, ActionVariable } from '@grafana/data';
+import { ActionModel, ActionVariable, ActionVariableInput } from '@grafana/data';
 
+import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
+import { Button } from '../Button/Button';
+import { Field } from '../Forms/Field';
+import { FieldSet } from '../Forms/FieldSet';
 import { Input } from '../Input/Input';
 import { Modal } from '../Modal/Modal';
 
 interface Props {
   action: ActionModel;
   onDismiss: () => void;
+  onShowConfirm: () => void;
+  getVariables: (vars: ActionVariableInput) => void;
 }
 
 /**
  * @internal
  */
-export function VariablesInputModal({ action, onDismiss }: Props) {
-  const [variables, setVariables] = useState(action.variables || []);
+export function VariablesInputModal({ action, onDismiss, onShowConfirm, getVariables }: Props) {
+  const styles = useStyles2(getStyles);
 
-  const handleOnChange = (variable: ActionVariable, value: string) => {
-    console.log('handleOnChange', variable, value);
-    // const newVariables = variables.map((v) => (v.key === variable.key ? { ...v, key: value } : v));
-    // setVariables(newVariables);
+  const [variables, setVariables] = useState<ActionVariable[]>(action.variables || []);
+  const [inputValues, setInputValues] = useState<ActionVariableInput>({});
+
+  const handleVariableChange = (index: number, key: string, value: string) => {
+    const newVariables = [...variables];
+    newVariables[index] = { ...newVariables[index], [key]: value };
+    setVariables(newVariables);
+    setInputValues({ ...inputValues, [`${key}`]: value });
+
+    getVariables({ ...inputValues, [`${key}`]: value });
+  };
+
+  const onModalContinue = () => {
+    onDismiss();
+    onShowConfirm();
   };
 
   return (
@@ -28,16 +46,37 @@ export function VariablesInputModal({ action, onDismiss }: Props) {
       isOpen={true}
       title={t('grafana-ui.action-editor.button.action-variables-title', 'Action variables')}
       onDismiss={onDismiss}
+      className={styles.variablesModal}
     >
-      <Input type="text" value={''} onChange={(e) => handleOnChange(variables[0], e.currentTarget.value)} width={20} />
-
-      {/*<FieldSet>*/}
-      {/*    {action.variables!.map((variable) => (*/}
-      {/*      <Field key={variable.key} label={variable.name}>*/}
-      {/*        <Input type="text" value={variable.key} onChange={(e) => { e.preventDefault(); e.stopPropagation(); handleOnChange(variable, e.currentTarget.value)}} width={20} onClick={handleOnClick}/>*/}
-      {/*      </Field>*/}
-      {/*    ))}*/}
-      {/*</FieldSet>*/}
+      <FieldSet>
+        {variables.map((variable, index) => (
+          <Field key={index} label={variable.name}>
+            <Input
+              type="text"
+              value={inputValues[`${variable.key}`] ?? ''}
+              onChange={(e) => handleVariableChange(index, variable.key, e.currentTarget.value)}
+              placeholder={t('grafana-ui.action-editor.button.variable-value-placeholder', 'Value')}
+              width={20}
+            />
+          </Field>
+        ))}
+      </FieldSet>
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss}>
+          {t('grafana-ui.action-editor.close', 'Close')}
+        </Button>
+        <Button variant="primary" onClick={onModalContinue}>
+          {t('grafana-ui.action-editor.continue', 'Continue')}
+        </Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 }
+
+const getStyles = () => {
+  return {
+    variablesModal: css({
+      zIndex: 10000,
+    }),
+  };
+};

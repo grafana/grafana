@@ -27,7 +27,7 @@ export interface Action {
  */
 export interface ActionModel<T = any> {
   title: string;
-  onClick: (event: any, origin?: any) => void;
+  onClick: (event: any, origin?: any, actionVars?: ActionVariableInput) => void;
   confirmation?: string;
   oneClick?: boolean;
   style: ActionButtonCssProperties;
@@ -82,3 +82,5 @@ export const defaultActionConfig: Action = {
     headers: [['Content-Type', 'application/json']],
   },
 };
+
+export type ActionVariableInput = { [key: string]: string };

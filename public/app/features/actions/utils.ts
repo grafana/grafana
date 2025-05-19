@@ -1,6 +1,7 @@
 import {
   Action,
   ActionModel,
+  ActionVariableInput,
   AppEvents,
   DataContextScopedVar,
   DataFrame,
@@ -13,7 +14,7 @@ import {
   textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, config as grafanaConfig } from '@grafana/runtime';
+import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
@@ -59,8 +60,12 @@ export const getActions = (
     const actionModel: ActionModel<Field> = {
       title,
       confirmation,
-      onClick: (evt: MouseEvent, origin: Field) => {
-        buildActionOnClick(action, boundReplaceVariables);
+      onClick: (evt: MouseEvent, origin: Field, actionVars: ActionVariableInput | undefined) => {
+        let interpolatedAction = action;
+        if (action.variables && actionVars) {
+          interpolatedAction = interpolateActionVariables(action, actionVars);
+        }
+        buildActionOnClick(interpolatedAction, boundReplaceVariables);
       },
       oneClick: action.oneClick ?? false,
       style: {
@@ -73,6 +78,77 @@ export const getActions = (
   });
 
   return actionModels.filter((action): action is ActionModel => !!action);
+};
+
+const interpolateActionVariables = (action: Action, actionVars: ActionVariableInput): Action => {
+  if (!action.variables || !actionVars || !action.fetch) {
+    return action;
+  }
+
+  const actionCopy = JSON.parse(JSON.stringify(action));
+  for (const variable of action.variables) {
+    const value = actionVars[variable.key];
+    if (!value) {
+      continue;
+    }
+
+    const variableKey = '$' + variable.key;
+
+    if (actionCopy.fetch) {
+      // URL
+      const urlRegex = new RegExp('\\${{' + variable.key + '}}', 'g');
+      actionCopy.fetch.url = actionCopy.fetch.url.replace(urlRegex, value);
+
+      if (actionCopy.fetch.body) {
+        try {
+          const parsedBody: object = JSON.parse(actionCopy.fetch.body);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const replaceValues = (actionBody: any): Action => {
+            if (typeof actionBody !== 'object' || actionBody === null) {
+              return actionBody;
+            }
+
+            const result = { ...actionBody };
+            for (const [key, val] of Object.entries(result)) {
+              if (typeof val === 'string') {
+                if (val === variableKey) {
+                  result[key] = value;
+                }
+              } else if (typeof val === 'object' && val !== null) {
+                result[key] = replaceValues(val);
+              }
+            }
+            return result;
+          };
+
+          actionCopy.fetch.body = JSON.stringify(replaceValues(parsedBody), null, 2);
+        } catch (e) {
+          console.error('Error interpolating action body:', e);
+        }
+      }
+
+      if (Array.isArray(actionCopy.fetch.queryParams)) {
+        actionCopy.fetch.queryParams = actionCopy.fetch.queryParams.map(([key, val]: [string, string]) => {
+          if (val === variableKey) {
+            return [key, value];
+          }
+          return [key, val];
+        });
+      }
+
+      if (Array.isArray(actionCopy.fetch.headers)) {
+        actionCopy.fetch.headers = actionCopy.fetch.headers.map(([key, val]: [string, string]) => {
+          if (val === variableKey) {
+            return [key, value];
+          }
+          return [key, val];
+        });
+      }
+    }
+  }
+
+  return actionCopy;
 };
 
 /** @internal */
