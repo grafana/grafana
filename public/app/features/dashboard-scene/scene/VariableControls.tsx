@@ -29,8 +29,8 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   const styles = useStyles2(getStyles);
 
   if (state.hide === VariableHide.hideVariable) {
-    if (variable.hiddenRender) {
-      return variable.hiddenRender();
+    if (variable.UNSAFE_renderAsHidden) {
+      return <variable.Component model={variable} />;
     }
 
     return null;
