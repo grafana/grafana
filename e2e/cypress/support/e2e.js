@@ -8,8 +8,12 @@ Cypress.Screenshot.defaults({
 const COMMAND_DELAY = 1000;
 
 function delay(ms) {
-  const end = Date.now() + ms;
-  while (Date.now() < end) {}
+  let now = Date.now();
+  const end = now + ms;
+  
+  do {
+    now = Date.now();
+  } while (now < end);
 }
 
 if (Cypress.env('SLOWMO')) {
