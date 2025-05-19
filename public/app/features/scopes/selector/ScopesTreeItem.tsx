@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
@@ -35,6 +35,7 @@ export function ScopesTreeItem({
   deselectScope,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   if (anyChildExpanded && !treeNode.expanded) {
     return null;

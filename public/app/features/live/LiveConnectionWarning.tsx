@@ -3,9 +3,9 @@ import { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {}

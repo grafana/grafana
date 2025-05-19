@@ -1,13 +1,13 @@
 import { useRegisterActions } from 'kbar';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { fromPairs, last } from 'lodash';
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
-import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';

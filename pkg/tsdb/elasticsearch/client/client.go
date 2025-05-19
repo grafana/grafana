@@ -344,11 +344,19 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			return err
 		}
 
-		if tok == "hits" {
+		switch tok {
+		case "hits":
 			if err := streamHitsArray(dec, sr); err != nil {
 				return err
 			}
-		} else {
+		case "total":
+			var total *SearchResponseHitsTotal
+			err := dec.Decode(&total)
+			if err != nil {
+				return err
+			}
+			sr.Hits.Total = total
+		default:
 			// ignore these fields as they are not used in the current implementation
 			err := skipUnknownField(dec)
 			if err != nil {

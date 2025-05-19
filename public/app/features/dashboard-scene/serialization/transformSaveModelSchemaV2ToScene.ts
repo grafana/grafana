@@ -59,7 +59,6 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -87,7 +86,7 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
-  const { spec: dashboard, metadata } = dto;
+  const { spec: dashboard, metadata, apiVersion } = dto;
 
   // annotations might not come with the builtIn Grafana annotation, we need to add it
 
@@ -195,7 +194,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-        preserveDashboardSceneStateInLocalStorage,
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
@@ -221,7 +219,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     'v2'
   );
 
-  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
 
   return dashboardScene;
 }

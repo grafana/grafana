@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, FilterPill, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../core/internationalization';
 import { getModKey } from '../../core/utils/browser';
 import { ScopesMap, SelectedScope } from '../scopes/selector/types';
 

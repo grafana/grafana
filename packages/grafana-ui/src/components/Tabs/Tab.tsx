@@ -39,7 +39,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const content = () => (
       <>
-        {icon && <Icon name={icon} />}
+        {icon && <Icon name={icon} data-testid={`tab-icon-${icon}`} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}

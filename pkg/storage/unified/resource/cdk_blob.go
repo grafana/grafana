@@ -2,7 +2,7 @@ package resource
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -16,6 +16,7 @@ import (
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	// Supported drivers
 	_ "gocloud.dev/blob/azureblob"
@@ -85,7 +86,7 @@ type cdkBlobSupport struct {
 	expiration  time.Duration
 }
 
-func (s *cdkBlobSupport) getBlobPath(key *ResourceKey, info *utils.BlobInfo) (string, error) {
+func (s *cdkBlobSupport) getBlobPath(key *resourcepb.ResourceKey, info *utils.BlobInfo) (string, error) {
 	var buffer bytes.Buffer
 	buffer.WriteString(s.root)
 
@@ -129,7 +130,7 @@ func (s *cdkBlobSupport) SupportsSignedURLs() bool {
 	return s.cansignurls
 }
 
-func (s *cdkBlobSupport) PutResourceBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResponse, error) {
+func (s *cdkBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	info := &utils.BlobInfo{
 		UID: uuid.New().String(),
 	}
@@ -139,8 +140,8 @@ func (s *cdkBlobSupport) PutResourceBlob(ctx context.Context, req *PutBlobReques
 		return nil, err
 	}
 
-	rsp := &PutBlobResponse{Uid: info.UID, MimeType: info.MimeType, Charset: info.Charset}
-	if req.Method == PutBlobRequest_HTTP {
+	rsp := &resourcepb.PutBlobResponse{Uid: info.UID, MimeType: info.MimeType, Charset: info.Charset}
+	if req.Method == resourcepb.PutBlobRequest_HTTP {
 		rsp.Url, err = s.bucket.SignedURL(ctx, path, &blob.SignedURLOptions{
 			Method:      "PUT",
 			Expiry:      s.expiration,
@@ -176,12 +177,13 @@ func (s *cdkBlobSupport) PutResourceBlob(ctx context.Context, req *PutBlobReques
 	return rsp, err
 }
 
-func (s *cdkBlobSupport) GetResourceBlob(ctx context.Context, resource *ResourceKey, info *utils.BlobInfo, mustProxy bool) (*GetBlobResponse, error) {
+func (s *cdkBlobSupport) GetResourceBlob(ctx context.Context, resource *resourcepb.ResourceKey, info *utils.BlobInfo,
+	mustProxy bool) (*resourcepb.GetBlobResponse, error) {
 	path, err := s.getBlobPath(resource, info)
 	if err != nil {
 		return nil, err
 	}
-	rsp := &GetBlobResponse{ContentType: info.ContentType()}
+	rsp := &resourcepb.GetBlobResponse{ContentType: info.ContentType()}
 	if mustProxy || !s.cansignurls {
 		rsp.Value, err = s.bucket.ReadAll(ctx, path)
 		return rsp, err
