@@ -11,7 +11,7 @@ import {
   SetStateAction,
   RefObject,
 } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle, Column } from 'react-data-grid';
+import { DataGrid, RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle, Column } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {

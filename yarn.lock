@@ -3703,7 +3703,7 @@ __metadata:
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
-    react-data-grid: "npm:7.0.0-beta.46"
+    react-data-grid: "leeoniya/react-data-grid-builds#c589d2c7a0794e66536b2edaf61174d6d5a22513"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.5"
     react-highlight-words: "npm:0.21.0"
@@ -25916,15 +25916,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@npm:7.0.0-beta.46":
-  version: 7.0.0-beta.46
-  resolution: "react-data-grid@npm:7.0.0-beta.46"
+"react-data-grid@leeoniya/react-data-grid-builds#c589d2c7a0794e66536b2edaf61174d6d5a22513":
+  version: 7.0.0-beta.52
+  resolution: "react-data-grid@https://github.com/leeoniya/react-data-grid-builds.git#commit=c589d2c7a0794e66536b2edaf61174d6d5a22513"
   dependencies:
     clsx: "npm:^2.0.0"
   peerDependencies:
-    react: ^18.0 || ^19.0
-    react-dom: ^18.0 || ^19.0
-  checksum: 10/d8a679b5e22a07293923894591adcac5ad57b8bd28dcc93f7438563384f6acc2287f14394a3ef360bc1dc901defa00b4030aa9af37c70cf53cf121437e0882bc
+    react: ^19.0
+    react-dom: ^19.0
+  checksum: 10/1a652567435385401275ea750ffaff865494b7f8fca1d88753bfe977b82bc97cce99efdd5727f58eb30887500bcd8ee132548329a39891b34a3719e2b8917ed4
   languageName: node
   linkType: hard
 
