@@ -24,3 +24,4 @@ export {
 } from './constants';
 export { initPluginTranslations, Trans, useTranslate } from './i18n';
 export type { TransProps } from './types';
+export { formatDate, formatDuration, formatDateRange } from './dates';
