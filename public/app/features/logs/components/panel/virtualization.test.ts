@@ -26,13 +26,19 @@ describe('Virtualization', () => {
 
   describe('getLogLineSize', () => {
     test('Returns the a single line if the display mode is unwrapped', () => {
-      const size = getLogLineSize([log], container, [], { wrap: false, showTime: true }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: false, showTime: true, showDuplicates: false }, 0);
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
     test('Returns the a single line if the line is not loaded yet', () => {
       const logs = [log];
-      const size = getLogLineSize(logs, container, [], { wrap: true, showTime: true }, logs.length + 1);
+      const size = getLogLineSize(
+        logs,
+        container,
+        [],
+        { wrap: true, showTime: true, showDuplicates: false },
+        logs.length + 1
+      );
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
@@ -40,12 +46,12 @@ describe('Virtualization', () => {
       // Very small container
       log.collapsed = true;
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(10);
-      const size = getLogLineSize([log], container, [], { wrap: true, showTime: true }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: true, showDuplicates: false }, 0);
       expect(size).toBe((TRUNCATION_LINE_COUNT + 1) * LINE_HEIGHT);
     });
 
     test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
-      const size = getLogLineSize([log], container, [], { wrap: true, showTime }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime, showDuplicates: false }, 0);
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
@@ -57,7 +63,7 @@ describe('Virtualization', () => {
         logLevel: undefined,
       });
 
-      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false, showDuplicates: false }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
     });
 
@@ -65,7 +71,7 @@ describe('Virtualization', () => {
       const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
       log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
 
-      const size = getLogLineSize([log], container, [], { wrap: true, showTime: true }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: true, showDuplicates: false }, 0);
       // Two lines for the log and one extra for level and time
       expect(size).toBe(THREE_LINES_HEIGHT);
     });
@@ -82,7 +88,7 @@ describe('Virtualization', () => {
         [log],
         container,
         ['place', LOG_LINE_BODY_FIELD_NAME],
-        { wrap: true, showTime: false },
+        { wrap: true, showTime: false, showDuplicates: false },
         0
       );
       // Two lines for the log and one extra for the displayed fields
@@ -93,7 +99,13 @@ describe('Virtualization', () => {
       const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 2;
       log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
 
-      const size = getLogLineSize([log], container, ['place'], { wrap: true, showTime: true }, 0);
+      const size = getLogLineSize(
+        [log],
+        container,
+        ['place'],
+        { wrap: true, showTime: true, showDuplicates: false },
+        0
+      );
       // Only renders a short displayed field, so a single line
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
@@ -101,7 +113,7 @@ describe('Virtualization', () => {
     test('Adds an extra line for the expand/collapse controls if present', () => {
       jest.spyOn(log, 'updateCollapsedState').mockImplementation(() => undefined);
       log.collapsed = false;
-      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false }, 0);
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false, showDuplicates: false }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
     });
   });

@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
+import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
@@ -150,8 +150,33 @@ interface LogProps {
 }
 
 const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+  const { dedupStrategy } = useLogListContext();
+  const { t } = useTranslate();
   return (
     <>
+      {dedupStrategy !== LogsDedupStrategy.none && (
+        <span className={`${styles.duplicates} field`}>
+          {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
+        </span>
+      )}
+      {log.hasError && (
+        <span className={`${styles.hasError} field`}>
+          <Tooltip
+            content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', { errorMessage: log.errorMessage })}
+            placement="right"
+            theme="error"
+          >
+            <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
+          </Tooltip>
+        </span>
+      )}
+      {log.isSampled && (
+        <span className={`${styles.isSampled} field`}>
+          <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
+            <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
+          </Tooltip>
+        </span>
+      )}
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
@@ -291,6 +316,33 @@ export const getStyles = (theme: GrafanaTheme2) => {
     timestamp: css({
       color: theme.colors.text.disabled,
       display: 'inline-block',
+    }),
+    duplicates: css({
+      display: 'inline-block',
+      textAlign: 'center',
+      width: theme.spacing(4.5),
+    }),
+    hasError: css({
+      display: 'inline-block',
+      width: theme.spacing(2),
+      '& svg': {
+        position: 'relative',
+        top: -1,
+      },
+    }),
+    isSampled: css({
+      display: 'inline-block',
+      width: theme.spacing(2),
+      '& svg': {
+        position: 'relative',
+        top: -1,
+      },
+    }),
+    logIconError: css({
+      color: theme.colors.warning.main,
+    }),
+    logIconInfo: css({
+      color: theme.colors.info.main,
     }),
     level: css({
       color: theme.colors.text.secondary,

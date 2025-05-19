@@ -147,15 +147,16 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
 }
 
 interface DisplayOptions {
-  wrap: boolean;
+  showDuplicates: boolean;
   showTime: boolean;
+  wrap: boolean;
 }
 
 export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { wrap, showTime }: DisplayOptions,
+  { showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -179,6 +180,15 @@ export function getLogLineSize(
   let textToMeasure = '';
   const gap = gridSize * FIELD_GAP_MULTIPLIER;
   let optionsWidth = 0;
+  if (showDuplicates) {
+    optionsWidth += gridSize * 4.5 + gap;
+  }
+  if (logs[index].hasError) {
+    optionsWidth += gridSize * 2 + gap;
+  }
+  if (logs[index].isSampled) {
+    optionsWidth += gridSize * 2 + gap;
+  }
   if (showTime) {
     optionsWidth += gap;
     textToMeasure += logs[index].timestamp;

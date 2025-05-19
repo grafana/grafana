@@ -203,6 +203,7 @@ const LogListComponent = ({
   const {
     app,
     displayedFields,
+    dedupStrategy,
     filterLevels,
     forceEscape,
     showDetails,
@@ -340,8 +341,9 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
-                wrap: wrapLogMessage,
+                showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
+                wrap: wrapLogMessage,
               })}
               itemKey={getItemKey}
               layout="vertical"
