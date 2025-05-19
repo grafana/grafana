@@ -114,7 +114,7 @@ export type LogListState = Pick<
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
-  containerElement: HTMLDivElement;
+  containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -394,7 +394,7 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey]
   );
 
-  const defaultWidth = containerElement.clientWidth * 0.4;
+  const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
   const detailsWidth = logOptionsStorageKey
     ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
     : defaultWidth;
