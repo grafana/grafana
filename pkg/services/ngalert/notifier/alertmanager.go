@@ -128,7 +128,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		},
 		EmailSender:   &emailSender{ns},
 		ImageProvider: newImageProvider(store, log.New("ngalert.notifier.image-provider")),
-		Decrtypter:    decryptFn,
+		Decrypter:     decryptFn,
 		LoggerFactory: LoggerFactory,
 		Version:       setting.BuildVersion,
 		TenantKey:     "orgID",
