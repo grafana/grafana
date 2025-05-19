@@ -8,7 +8,6 @@ RoleSpec: {
 		scope: string
 	}
 	
-	name: string
 	// Display name of the role
 	title: string
 	
