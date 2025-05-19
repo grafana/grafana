@@ -1,4 +1,4 @@
-import { groupBy, take } from 'lodash';
+import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -16,7 +16,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 const GRAFANA_GROUP_PAGE_SIZE = 40;
 
@@ -32,13 +32,12 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const { currentPage, groups, nextPage, canMoveForward, isLoading } = usePaginatedPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     GRAFANA_GROUP_PAGE_SIZE
   );
 
-  const groupsPage = take(groups, GRAFANA_GROUP_PAGE_SIZE * currentPage);
-  const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
+  const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
@@ -71,7 +70,7 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        {canMoveForward && <LazyPagination loadMore={nextPage} />}
+        {hasMoreGroups && <LazyPagination loadMore={fetchMoreGroups} />}
       </Stack>
     </DataSourceSection>
   );

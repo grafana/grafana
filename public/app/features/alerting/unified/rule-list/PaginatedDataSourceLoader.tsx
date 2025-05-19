@@ -1,4 +1,4 @@
-import { groupBy, take } from 'lodash';
+import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
@@ -12,7 +12,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
@@ -35,13 +35,12 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     };
   }, [groupsGenerator]);
 
-  const { currentPage, groups, nextPage, canMoveForward, isLoading } = usePaginatedPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     DATA_SOURCE_GROUP_PAGE_SIZE
   );
 
-  const groupsPage = take(groups, DATA_SOURCE_GROUP_PAGE_SIZE * currentPage);
-  const groupsByNamespace = useMemo(() => groupBy(groupsPage, 'file'), [groupsPage]);
+  const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -68,7 +67,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
             ))}
           </ListSection>
         ))}
-        {canMoveForward && <LazyPagination loadMore={nextPage} />}
+        {hasMoreGroups && <LazyPagination loadMore={fetchMoreGroups} />}
       </Stack>
     </DataSourceSection>
   );
