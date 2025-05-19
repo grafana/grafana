@@ -1,11 +1,13 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) => {
+  const { t } = useTranslate();
+
   const title = config.featureToggles.newDashboardSharingComponent
     ? t(
         'public-dashboard.share-externally.no-upsert-perm-alert-title',

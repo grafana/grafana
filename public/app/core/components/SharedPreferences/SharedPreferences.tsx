@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PSEUDO_LOCALE } from '@grafana/i18n';
+import { PSEUDO_LOCALE, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 import {
@@ -23,7 +24,6 @@ import {
   isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';

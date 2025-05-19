@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -28,6 +28,8 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
+  const { t } = useTranslate();
+
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -51,7 +53,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, []);
+  }, [t]);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
