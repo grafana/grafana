@@ -103,4 +103,49 @@ describe('Dashboard edit - variables', () => {
         cy.get('.markdown-html').should('include.text', `VariableUnderTest: ${variable.value}`);
       });
   });
+
+  it('can add a new interval variable', () => {
+    e2e.pages.Dashboards.visit();
+
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
+    cy.contains(DASHBOARD_NAME).should('be.visible');
+
+    const variable: Variable = {
+      type: 'interval',
+      name: 'VariableUnderTest',
+      value: '1m',
+      label: 'VariableUnderTest',
+    };
+
+    // common steps to add a new variable
+    flows.newEditPaneVariableClick();
+    flows.newEditPanelCommonVariableInputs(variable);
+
+    // enable the auto option
+    e2e.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.autoEnabledCheckbox().click({ force: true });
+
+    // select the variable in the dashboard and confirm the variable value is set
+    e2e.pages.Dashboard.SubMenu.submenuItem().should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
+
+    // assert the panel is visible and has the correct value
+    e2e.components.Panels.Panel.content()
+      .should('be.visible')
+      .first()
+      .within(() => {
+        cy.get('.markdown-html').should('include.text', `VariableUnderTest: ${variable.value}`);
+      });
+
+    // select the variable in the dashboard and set the Auto option
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.name).next().should('have.text', `1m`).click();
+    e2e.components.Select.option().contains('Auto').click();
+
+    // assert the panel is visible and has the correct "Auto" value
+    e2e.components.Panels.Panel.content()
+      .should('be.visible')
+      .first()
+      .within(() => {
+        cy.get('.markdown-html').should('include.text', `VariableUnderTest: 10m`);
+      });
+  });
 });
