@@ -13,12 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"go.opentelemetry.io/otel/trace"
 )
 
-func ProvideService(sqlStore db.DB, tracer trace.Tracer) *ServerLockService {
+func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
 	return &ServerLockService{
 		SQLStore: sqlStore,
 		tracer:   tracer,
@@ -31,7 +31,7 @@ func ProvideService(sqlStore db.DB, tracer trace.Tracer) *ServerLockService {
 // them up (ie, use the same actionName for both of them).
 type ServerLockService struct {
 	SQLStore db.DB
-	tracer   trace.Tracer
+	tracer   tracing.Tracer
 	log      log.Logger
 }
 

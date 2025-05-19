@@ -429,7 +429,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, actest.FakeService{}, serviceWithFlagOn, nil,
 				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-				serverlock.ProvideService(db, tracer),
+				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
 			)
 			require.NoError(t, err)
@@ -509,7 +509,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
 				folderPermissions, ac, actest.FakeService{}, serviceWithFlagOff, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-				serverlock.ProvideService(db, tracer),
+				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
 			)
 			require.NoError(t, err)
@@ -649,7 +649,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, actest.FakeService{}, tc.service,
 					nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
 					dualwrite.ProvideTestService(), sort.ProvideService(),
-					serverlock.ProvideService(db, tracer),
+					serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 					kvstore.NewFakeKVStore(),
 				)
 				require.NoError(t, err)
@@ -1338,7 +1338,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
-		serverlock.ProvideService(db, tracer),
+		serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
