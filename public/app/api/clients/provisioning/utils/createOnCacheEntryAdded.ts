@@ -1,20 +1,14 @@
 import { Subscription } from 'rxjs';
 
-import { ScopedResourceClient } from '../../../../features/apiserver/client';
-import { ListOptions } from '../../../../features/apiserver/types';
-import { ListMeta, ObjectMeta } from '../endpoints.gen';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
 /**
  * Creates a cache entry handler for RTK Query that watches for changes to a resource
  * and updates the cache accordingly.
  */
-export function createOnCacheEntryAdded<
-  Spec,
-  Status,
-  T extends { spec?: Spec; status?: Status; metadata?: ObjectMeta },
-  List extends { items?: T[]; metadata?: ListMeta },
->(resourceName: string) {
-  return async function onCacheEntryAdded(
+export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
+  return async function onCacheEntryAdded<List extends ResourceList<Spec, Status>>(
     arg: ListOptions | undefined,
     {
       updateCachedData,
@@ -41,24 +35,24 @@ export function createOnCacheEntryAdded<
       // Wait for the initial query to resolve before proceeding
       const response = await cacheDataLoaded;
       const resourceVersion = response.data.metadata?.resourceVersion;
+
       subscription = client.watch({ resourceVersion }).subscribe((event) => {
         updateCachedData((draft) => {
           if (!draft.items) {
             draft.items = [];
           }
+          // Find the item with the matching name
           const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
 
           if (event.type === 'ADDED' && existingIndex === -1) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            draft.items.push(event.object as unknown as T);
+            draft.items.push(event.object);
           } else if (event.type === 'DELETED' && existingIndex !== -1) {
             // Remove the item if it exists
             draft.items.splice(existingIndex, 1);
           } else if (existingIndex !== -1) {
             // Could be ADDED or MODIFIED
             // Update the existing item if it exists
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            draft.items[existingIndex] = event.object as unknown as T;
+            draft.items[existingIndex] = event.object;
           }
         });
       });
