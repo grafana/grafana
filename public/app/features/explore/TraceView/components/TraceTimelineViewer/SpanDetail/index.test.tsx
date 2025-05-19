@@ -271,7 +271,7 @@ describe('<SpanDetail>', () => {
       expect.objectContaining({
         context: expect.objectContaining({
           attributes: expect.objectContaining({
-            'http.url': expect.any(String),
+            'http.url': expect.arrayContaining([expect.any(String)]),
           }),
           datasource: {
             type: 'tempo',

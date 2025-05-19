@@ -192,7 +192,7 @@ export enum PluginExtensionPoints {
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
-  ResourceAttributes = 'grafana/resource-attributes',
+  TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
 }
 
 export type PluginExtensionPanelContext = {
@@ -237,9 +237,9 @@ export type PluginExtensionDataSourceConfigContext<
 
 export type PluginExtensionCommandPaletteContext = {};
 
-export type PluginExtensionResourceAttributesContext = {
+export type PluginExtensionTraceViewResourceAttributesContext = {
   // Key-value pairs of resource attributes
-  attributes: Record<string, string>;
+  attributes: Record<string, string[]>;
   datasource: {
     type: string;
     uid: string;

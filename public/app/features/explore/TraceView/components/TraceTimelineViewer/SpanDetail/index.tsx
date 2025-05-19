@@ -54,9 +54,12 @@ import SpanFlameGraph from './SpanFlameGraph';
 const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
-    // TODO: Can we have the same tag.key multiple times?
-    const attributes = (process.tags ?? []).reduce<Record<string, string>>((acc, tag) => {
-      acc[tag.key] = tag.value;
+    const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
       return acc;
     }, {});
 
@@ -70,9 +73,8 @@ const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceTy
   }, [process.tags, datasourceType, datasourceUid]);
 
   const { links } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.ResourceAttributes,
-    // TODO: What limit should we use?
-    limitPerPlugin: 2,
+    extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
+    limitPerPlugin: 10,
     context,
   });
 
