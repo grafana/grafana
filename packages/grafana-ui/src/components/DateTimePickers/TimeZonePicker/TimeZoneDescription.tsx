@@ -7,9 +7,10 @@ import { useStyles2 } from '../../../themes';
 
 interface Props {
   info?: TimeZoneInfo;
+  testId?: string;
 }
 
-export const TimeZoneDescription = ({ info }: Props) => {
+export const TimeZoneDescription = ({ info, testId }: Props) => {
   const styles = useStyles2(getStyles);
   const description = useDescription(info);
 
@@ -17,7 +18,11 @@ export const TimeZoneDescription = ({ info }: Props) => {
     return null;
   }
 
-  return <div className={styles.description}>{description}</div>;
+  return (
+    <div data-testid={testId} className={styles.description}>
+      {description}
+    </div>
+  );
 };
 
 const useDescription = (info?: TimeZoneInfo): string => {

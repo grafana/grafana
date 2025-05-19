@@ -13,6 +13,7 @@ import {
   TimeRange,
   TimeZone,
   dateMath,
+  getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -25,6 +26,7 @@ import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
@@ -243,16 +245,23 @@ const ZoomOutTooltip = () => (
 
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
+  const now = Date.now();
+
+  // Get timezone info only if timeZone is provided
+  const timeZoneInfo = timeZone ? getTimeZoneInfo(timeZone, now) : undefined;
 
   return (
     <>
-      {dateTimeFormat(timeRange.from, { timeZone })}
       <div className="text-center">
-        <Trans i18nKey="time-picker.range-picker.to">to</Trans>
+        {dateTimeFormat(timeRange.from, { timeZone })}
+        <div className="text-center">
+          <Trans i18nKey="time-picker.range-picker.to">to</Trans>
+        </div>
+        {dateTimeFormat(timeRange.to, { timeZone })}
       </div>
-      {dateTimeFormat(timeRange.to, { timeZone })}
-      <div className="text-center">
+      <div className={styles.container}>
         <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
+        <TimeZoneDescription testId="time-picker-tooltip-timezone" info={timeZoneInfo} />
       </div>
     </>
   );
@@ -321,6 +330,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       whiteSpace: 'nowrap',
+      columnGap: '4px',
     }),
     utc: css({
       color: theme.v1.palette.orange,
