@@ -69,6 +69,11 @@ type dashboardSqlAccess struct {
 	log         log.Logger
 }
 
+// CurrentResourceVersion implements DashboardAccess.
+func (a *dashboardSqlAccess) CurrentResourceVersion(ctx context.Context) (int64, error) {
+	return 0, nil
+}
+
 func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
