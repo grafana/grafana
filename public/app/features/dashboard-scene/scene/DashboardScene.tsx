@@ -34,7 +34,7 @@ import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
-  AnnoKeyCreatedBy,
+  AnnoKeyManagerAllowsEdits,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
@@ -317,7 +317,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm || this.getIsProvisioned()) {
+    if (!this.state.isDirty || skipConfirm || this.managerAllowsEdits()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }
@@ -810,14 +810,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
-  getPath() {
-    return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
+  managerAllowsEdits() {
+    return (
+      this.isManaged() &&
+      (!this.isManagedRepository() || !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits])
+    );
   }
 
-  getIsProvisioned() {
-    return (
-      Boolean(this.state.meta.provisioned) || this.state.meta.k8s?.annotations?.[AnnoKeyCreatedBy] === 'provisioning:'
-    );
+  getPath() {
+    return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
   }
 }
 
