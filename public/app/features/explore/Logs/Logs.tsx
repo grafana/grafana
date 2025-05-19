@@ -1001,7 +1001,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {(config.featureToggles.newLogsPanel || !config.featureToggles.logsPanelControls) && visualisationType === 'table' && hasData && (
+          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
@@ -1020,10 +1020,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {!config.featureToggles.newLogsPanel && config.featureToggles.logsPanelControls && hasData && (
+          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') && config.featureToggles.logsPanelControls && hasData && (
             <div className={styles.logRowsWrapper} data-testid="logRows">
               <ControlledLogRows
-
                 logsTableFrames={props.logsFrames}
                 width={width}
                 updatePanelState={updatePanelState}
