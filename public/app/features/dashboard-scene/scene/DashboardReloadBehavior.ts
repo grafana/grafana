@@ -5,7 +5,6 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneScopesBridge,
   SceneTimeRangeLike,
   VariableDependencyConfig,
 } from '@grafana/scenes';
@@ -22,7 +21,6 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _timeRange: SceneTimeRangeLike | undefined;
-  private _scopesBridge: SceneScopesBridge | undefined;
   private _dashboardScene: DashboardScene | undefined;
 
   constructor(state: DashboardReloadBehaviorState) {
@@ -40,17 +38,11 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
       }
 
       this._timeRange = sceneGraph.getTimeRange(this);
-      this._scopesBridge = sceneGraph.getScopesBridge(this);
       this._dashboardScene = sceneGraph.getAncestor(this, DashboardScene);
 
       this._variableDependency = new VariableDependencyConfig(this, {
         onAnyVariableChanged: this.reloadDashboard,
-      });
-
-      this._scopesBridge?.subscribeToValue(() => {
-        if (shouldReload) {
-          this.reloadDashboard();
-        }
+        dependsOnScopes: true,
       });
 
       this._subs.add(
@@ -82,9 +74,11 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
     // This is wrapped in setTimeout in order to allow variables and scopes to be set in the URL before actually reloading the dashboard
     setTimeout(() => {
+      const scopes = sceneGraph.getScopes(this) ?? [];
+
       getDashboardScenePageStateManager().reloadDashboard({
         version: this.state.version!,
-        scopes: this._scopesBridge?.getValue().map((scope) => scope.metadata.name) ?? [],
+        scopes: scopes.map((scope) => scope.metadata.name),
         // We're not using the getUrlState from timeRange since it makes more sense to pass the absolute timestamps as opposed to relative time
         timeRange: {
           from: this._timeRange!.state.value.from.toISOString(),

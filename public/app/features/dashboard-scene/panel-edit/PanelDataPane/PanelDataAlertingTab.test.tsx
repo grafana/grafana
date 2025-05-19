@@ -144,6 +144,9 @@ const dashboard = {
     to: 'now',
   },
   timepicker: { refresh_intervals: ['5s', '30s', '1m'] },
+  templating: {
+    list: [],
+  },
   meta: {
     canSave: true,
     folderId: 1,
