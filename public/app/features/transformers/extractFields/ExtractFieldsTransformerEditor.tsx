@@ -9,9 +9,9 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -35,6 +35,8 @@ export const extractFieldsTransformerEditor = ({
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
+  const { t } = useTranslate();
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,

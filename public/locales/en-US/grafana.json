@@ -4524,12 +4524,6 @@
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
     },
-    "time-regions": {
-      "advanced-description-cron": "Cron syntax",
-      "advanced-description-rest": " to define a recurrence schedule and duration",
-      "advanced-description-use": "Use ",
-      "advanced-label": "Advanced"
-    },
     "variables": {
       "title": "Variables"
     },
@@ -7379,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
-      "last-updated": "Last updated",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
+      "latest-release-date": "Latest release date",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }

@@ -78,8 +78,8 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // @grafana/grafana-search-and-storage
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // @grafana/identity-access-team
+	github.com/grafana/alerting v0.0.0-20250513184957-2484dbaf55cf // @grafana/alerting-backend
+	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -187,13 +187,13 @@ require (
 	golang.org/x/tools v0.33.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.72.0 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.72.1 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.32.3 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.32.3 // indirect; @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.32.3 // @grafana/grafana-app-platform-squad
@@ -225,6 +225,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a // @grafana/grafana-search-and-storage
 )
 
 require (
@@ -452,12 +453,10 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.6.0 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
-	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
