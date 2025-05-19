@@ -1,5 +1,5 @@
 import { useTranslate } from '@grafana/i18n';
-import { Button, Icon, Stack } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 interface LazyPaginationProps {
   loadMore: () => void;
@@ -7,16 +7,11 @@ interface LazyPaginationProps {
 
 export function LazyPagination({ loadMore }: LazyPaginationProps) {
   const { t } = useTranslate();
-  const label = t('alerting.rule-list.pagination.next-page', 'Show more rule groups');
+  const label = t('alerting.rule-list.pagination.next-page', 'Show more…');
 
   return (
-    <Stack direction="row" alignItems="center">
-      <Button aria-label={label} fill="outline" size="sm" variant="secondary" onClick={loadMore}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Icon name="angle-down" />
-          {label}
-        </Stack>
-      </Button>
-    </Stack>
+    <Button aria-label={label} fill="text" size="sm" variant="secondary" onClick={loadMore}>
+      {label}
+    </Button>
   );
 }

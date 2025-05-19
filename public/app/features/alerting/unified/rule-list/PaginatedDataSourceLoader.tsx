@@ -67,7 +67,12 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
             ))}
           </ListSection>
         ))}
-        {hasMoreGroups && <LazyPagination loadMore={fetchMoreGroups} />}
+        {hasMoreGroups && (
+          // this div will make the button not stretch
+          <div>
+            <LazyPagination loadMore={fetchMoreGroups} />
+          </div>
+        )}
       </Stack>
     </DataSourceSection>
   );

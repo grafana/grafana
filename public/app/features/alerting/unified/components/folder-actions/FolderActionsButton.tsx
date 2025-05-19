@@ -11,8 +11,8 @@ import { FolderBulkAction, useFolderBulkActionAbility } from '../../hooks/useAbi
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
+import MoreButton from '../MoreButton';
 
 import { DeleteModal } from './DeleteModal';
 import { PauseUnpauseActionMenuItem } from './PauseUnpauseActionMenuItem';
@@ -45,7 +45,6 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
 
   // URLs
   const redirectToListView = useRedirectToListView(viewComponent);
-  const folderBaseUrl = makeFolderLink(folderUID);
 
   if (!canPause && !canDelete) {
     return null;
@@ -58,19 +57,6 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
 
   const menuItems = (
     <>
-      {/* for the v2 list we'll add the regular folder actions here too */}
-      {listView2Enabled && (
-        <>
-          <Menu.Item
-            label={t('alerting.folder-bulk-actions.view.folder', 'View folder')}
-            icon="folder-open"
-            url={folderBaseUrl}
-          />
-          {/* TODO implement this, but needs access to a FolderDTO :( */}
-          {/* <Menu.Item label={t('alerting.folder-bulk-actions.export.rules', 'Export rules')} icon="download-alt" /> */}
-          <Menu.Divider />
-        </>
-      )}
       {canPause && (
         <>
           <PauseUnpauseActionMenuItem
@@ -101,19 +87,37 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
           disabled={deleteState.isLoading}
         />
       )}
+      {listView2Enabled && (
+        <>
+          <Menu.Divider />
+          <Menu.Item
+            label={t('alerting.folder-bulk-actions.export.button.label', 'Export rules')}
+            icon="download-alt"
+            onClick={() => {}}
+          />
+        </>
+      )}
     </>
   );
 
   return (
     <>
       <Dropdown placement="bottom" overlay={<Menu>{menuItems}</Menu>}>
-        <IconButton
-          name="ellipsis-h"
-          size="sm"
-          aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
-          tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder actions')}
-          tooltipPlacement="top"
-        />
+        {listView2Enabled ? (
+          <MoreButton
+            fill="text"
+            size="sm"
+            aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
+          />
+        ) : (
+          <IconButton
+            name="ellipsis-h"
+            size="sm"
+            aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
+            tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder actions')}
+            tooltipPlacement="top"
+          />
+        )}
       </Dropdown>
       <DeleteModal
         isOpen={isDeleteModalOpen}

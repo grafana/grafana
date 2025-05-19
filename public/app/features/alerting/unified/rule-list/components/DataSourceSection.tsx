@@ -4,7 +4,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { IconButton, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { IconButton, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -82,9 +82,9 @@ export const DataSourceSection = ({
                 {showImportLink && (
                   <LinkButton
                     variant="secondary"
+                    fill="text"
                     size="sm"
                     href={`/alerting/import-datasource-managed-rules?datasourceUid=${String(uid)}`}
-                    icon="arrow-up"
                   >
                     <Trans i18nKey="alerting.data-source-section.import-to-grafana">Import to Grafana rules</Trans>
                   </LinkButton>
@@ -93,9 +93,9 @@ export const DataSourceSection = ({
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
                     component={
-                      <TextLink variant="bodySmall" color="secondary" href={configureLink} inline={false}>
+                      <LinkButton variant="secondary" fill="text" size="sm" href={configureLink}>
                         <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
-                      </TextLink>
+                      </LinkButton>
                     }
                   />
                 )}

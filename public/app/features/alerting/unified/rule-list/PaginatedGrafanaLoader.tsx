@@ -1,13 +1,15 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { makeFolderLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
@@ -47,6 +49,8 @@ export function PaginatedGrafanaLoader() {
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;
+          const folderUrl = makeFolderLink(folderUid);
+
           return (
             <ListSection
               key={folderUid}
@@ -58,7 +62,14 @@ export function PaginatedGrafanaLoader() {
                   </Text>
                 </Stack>
               }
-              actions={isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
+              actions={
+                <>
+                  <LinkButton variant="secondary" fill="text" size="sm" href={folderUrl}>
+                    <Trans i18nKey="alerting.folder-bulk-actions.view.folder">View folder</Trans>
+                  </LinkButton>
+                  {isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
+                </>
+              }
             >
               {groups.map((group) => (
                 <GrafanaRuleGroupListItem
@@ -70,7 +81,12 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        {hasMoreGroups && <LazyPagination loadMore={fetchMoreGroups} />}
+        {hasMoreGroups && (
+          // this div will make the button not stretch
+          <div>
+            <LazyPagination loadMore={fetchMoreGroups} />
+          </div>
+        )}
       </Stack>
     </DataSourceSection>
   );
