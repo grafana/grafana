@@ -40,6 +40,7 @@ export interface Props {
 
 export type State = UserPreferencesDTO & {
   isLoading: boolean;
+  isSubmitting: boolean;
 };
 function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
@@ -98,6 +99,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.service = new PreferencesService(props.resourceUri);
     this.state = {
       isLoading: false,
+      isSubmitting: false,
       theme: '',
       timezone: '',
       weekStart: '',
@@ -153,6 +155,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
         theme,
         language,
       });
+      this.setState({ isSubmitting: true });
       await this.service.update({
         homeDashboardUID,
         theme,
@@ -163,6 +166,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
         queryHistory,
         navbar,
       });
+      this.setState({ isSubmitting: false });
       window.location.reload();
     }
   };
@@ -213,7 +217,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, locale } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
@@ -346,7 +350,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
             </Field>
           )}
         </FieldSet>
-        <Button type="submit" variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
+        <Button
+          disabled={isSubmitting}
+          type="submit"
+          variant="primary"
+          data-testid={selectors.components.UserProfile.preferencesSaveButton}
+        >
           <Trans i18nKey="common.save">Save</Trans>
         </Button>
       </form>
