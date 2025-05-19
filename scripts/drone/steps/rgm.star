@@ -10,6 +10,7 @@ load(
 load(
     "scripts/drone/variables.star",
     "golang_version",
+    "dagger_version",
 )
 load(
     "scripts/drone/vault.star",
@@ -65,7 +66,7 @@ def rgm_artifacts_step(
             "--verify='{}' ".format(verify) +
             "--grafana-dir=$$PWD > {}".format(file),
             "find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i",
-        ]),
+        ], dagger_version),
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
@@ -103,7 +104,7 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "--grafana-dir=$$PWD " +
             "--ubuntu-tag-format='{}' > {}".format(ubuntu_tag_format, file),
             "find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i",
-        ]),
+        ], dagger_version),
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
         "depends_on": depends_on,
     }
