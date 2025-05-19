@@ -8,6 +8,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -99,6 +100,7 @@ func TestGetParents(t *testing.T) {
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
+		tracer:      tracing.InitializeTracerForTest(),
 	}
 
 	ctx := context.Background()
