@@ -3175,11 +3175,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
   dependencies:
+    "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@types/react": "npm:18.3.18"
+    fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^24.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-pseudo: "npm:^2.2.1"
+    micro-memoize: "npm:^4.1.2"
     react-i18next: "npm:^15.0.0"
     rollup: "npm:^4.22.4"
     typescript: "npm:5.7.3"
@@ -3471,11 +3474,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.10.4":
-  version: 6.10.4
-  resolution: "@grafana/scenes-react@npm:6.10.4"
+"@grafana/scenes-react@npm:^6.12.0":
+  version: 6.12.0
+  resolution: "@grafana/scenes-react@npm:6.12.0"
   dependencies:
-    "@grafana/scenes": "npm:6.10.4"
+    "@grafana/scenes": "npm:6.12.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3487,13 +3490,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/73aee4eca47a27e1fbb7a8f09ddf6a365b121cb361b01c7daabf698677f192c188de0dd64a424db4195139f625660f40371619abbb95a999e14c94e313e25755
+  checksum: 10/56113394d169c96537a46ca5dc4c62eda54c6addd348c9e3321a122a6d01c19a14c57b04945ee3d836638f3dc1c1941f7647fa649495226432664e0ff8bd0af0
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.10.4":
-  version: 6.10.4
-  resolution: "@grafana/scenes@npm:6.10.4"
+"@grafana/scenes@npm:6.12.0, @grafana/scenes@npm:^6.12.0":
+  version: 6.12.0
+  resolution: "@grafana/scenes@npm:6.12.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3511,7 +3514,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/ffd51ad71fe3b89c3cd16bfaa0f11e003bf11e4a4fb7513c5c55fdc5e569f51dcf9fb70cb125e63b5b2269d68e86a961769e07a8078cad70163de2c2ed779ef7
+  checksum: 10/1bcddada8bf626d552aaa29ae4f916a50968bb36761285b0517500f50d8f52314148a8ed73419f381f8e5b901308cdf2450f0b82754691af512a2cff9f52b6bb
   languageName: node
   linkType: hard
 
@@ -3608,6 +3611,7 @@ __metadata:
     "@grafana/data": "npm:12.1.0-pre"
     "@grafana/e2e-selectors": "npm:12.1.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
+    "@grafana/i18n": "npm:12.1.0-pre"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@hello-pangea/dnd": "npm:17.0.0"
@@ -17713,8 +17717,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.5"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.10.4"
-    "@grafana/scenes-react": "npm:6.10.4"
+    "@grafana/scenes": "npm:^6.12.0"
+    "@grafana/scenes-react": "npm:^6.12.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
