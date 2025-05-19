@@ -80,6 +80,7 @@ const (
 	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
 	provisioningConcurrencyLimit         = 10
+	listAllDashboardsLimit               = 100000
 )
 
 type DashboardServiceImpl struct {
@@ -1628,18 +1629,6 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	return hits, nil
 }
 
-func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return dr.listDashboardsThroughK8s(ctx, requester.GetOrgID())
-	}
-
-	return dr.dashboardStore.GetAllDashboards(ctx)
-}
-
 func (dr *DashboardServiceImpl) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.listDashboardsThroughK8s(ctx, orgID)
@@ -1935,29 +1924,40 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 }
 
 func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
-	out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	} else if out == nil {
-		return nil, dashboards.ErrDashboardNotFound
-	}
+	dashes := make([]*dashboards.Dashboard, 0)
 
-	// get users ahead of time to do just one db call, rather than 2 per item in the list
-	users, err := dr.getUsersForList(ctx, out.Items, orgID)
-	if err != nil {
-		return nil, err
-	}
+	for continueToken := ""; true; {
+		out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
+			Limit:    listAllDashboardsLimit,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		} else if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
+		}
 
-	dashboards := make([]*dashboards.Dashboard, 0)
-	for _, item := range out.Items {
-		dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
+		// get users ahead of time to do just one db call, rather than 2 per item in the list
+		users, err := dr.getUsersForList(ctx, out.Items, orgID)
 		if err != nil {
 			return nil, err
 		}
-		dashboards = append(dashboards, dash)
+
+		for _, item := range out.Items {
+			dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
+			if err != nil {
+				return nil, err
+			}
+			dashes = append(dashes, dash)
+		}
+
+		continueToken = out.GetContinue()
+		if continueToken == "" {
+			break
+		}
 	}
 
-	return dashboards, nil
+	return dashes, nil
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {

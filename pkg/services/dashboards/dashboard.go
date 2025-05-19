@@ -35,7 +35,6 @@ type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
@@ -104,6 +103,5 @@ type Store interface {
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 
-	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 }
