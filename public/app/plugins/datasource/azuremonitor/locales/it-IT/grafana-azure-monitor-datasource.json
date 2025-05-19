@@ -1,0 +1,291 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Avanzate"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Aggiungi",
+      "aria-label-remove": "Rimuovi",
+      "button-add-resource": "",
+      "button-add-resource-uri": "",
+      "label-namespace": "Namespace",
+      "label-region": "",
+      "label-resource-group": "",
+      "label-resource-name": "",
+      "label-resource-number": "",
+      "label-resource-uri": "",
+      "label-subscription": "",
+      "placeholder-resource-name": "nome",
+      "tooltip-region": "",
+      "tooltip-resource-uri": ""
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "",
+      "aria-label-column": "Colonna",
+      "aria-label-remove": "Rimuovi",
+      "label-percentile": "DI"
+    },
+    "aggregate-section": {
+      "label-aggregate": "",
+      "tooltip-aggregate": ""
+    },
+    "aggregation-field": {
+      "label-aggregation": ""
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "",
+      "aria-label-client-id": "",
+      "aria-label-client-secret": "",
+      "aria-label-symbol-client-secret": "",
+      "aria-label-tenant-id": "",
+      "label-azure-cloud": "",
+      "label-client-id": "",
+      "label-client-secret": "",
+      "label-symbol-client-secret": "",
+      "label-tenant-id": "",
+      "placeholder-symbol-client-secret": "",
+      "reset-symbol-client-secret": "Ripristina"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "",
+      "aria-label-use-query": "",
+      "button-use-query": "",
+      "label-categories": "",
+      "label-query-results": "",
+      "placeholder-all-categories": "",
+      "placeholder-search-logs": "",
+      "text-loading": "Caricamento in corso..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "",
+      "title-kick-start": ""
+    },
+    "azure-credentials-form": {
+      "description-authentication": "",
+      "label-authentication": "Autenticazione",
+      "title-authentication": "Autenticazione"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "",
+      "description-basic-logs": "",
+      "label-enable-basic-logs": ""
+    },
+    "config-editor": {
+      "description-additional-settings": "",
+      "title-additional-settings": "Impostazioni aggiuntive",
+      "title-request-timeout": "",
+      "description-request-timeout": ""
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "",
+      "body-service-credentials": "",
+      "description-authentication": "",
+      "description-service-credentials": "",
+      "label-authentication": "Autenticazione",
+      "label-service-credentials": "",
+      "note-service-credentials": "",
+      "title-fallback-credentials-disabled": "",
+      "title-fallback-service-credentials": "",
+      "title-service-credentials": ""
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "",
+      "label-default-subscription": "",
+      "load-subscriptions": ""
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Rimuovi",
+      "label-dimensions": "",
+      "placeholder-field": "Campo",
+      "placeholder-operation": "Operazione",
+      "placeholder-select-value": "Seleziona valore",
+      "placeholder-select-values": ""
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "",
+      "title-unknown-query-type": ""
+    },
+    "filter": {
+      "aria-label-remove-filter": "",
+      "placeholder-property": "",
+      "placeholder-value": "Valore"
+    },
+    "filter-item": {
+      "aria-label-column": "Colonna",
+      "aria-label-column-value": "",
+      "aria-label-operator": "Operatore",
+      "label-or": ""
+    },
+    "filter-section": {
+      "label-add-group": "Aggiungi gruppo",
+      "label-and": "E",
+      "label-filters": "",
+      "tooltip-filters": ""
+    },
+    "filters": {
+      "label-filters": ""
+    },
+    "format-as-field": {
+      "label-format-as": ""
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "",
+      "label-fuzzy-search": "",
+      "placeholder-search-team": "",
+      "tooltip-fuzzy-search": ""
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "",
+      "placeholder-grafana-template-variable": ""
+    },
+    "group-by-item": {
+      "aria-label-column": "Colonna",
+      "aria-label-remove": "Rimuovi"
+    },
+    "group-by-section": {
+      "label-group-by": "Raggruppa per",
+      "tooltip-group-by": ""
+    },
+    "kql-preview": {
+      "button-hide": "Nascondi",
+      "button-show": "Mostra",
+      "label-query-preview": ""
+    },
+    "legend-format-field": {
+      "label-legend-format": "",
+      "placeholder-legend-format": ""
+    },
+    "limit-section": {
+      "label-limit": "Limite",
+      "placeholder-limit": "",
+      "tooltip-limit": ""
+    },
+    "logs-management": {
+      "description-basic-logs-queries": "",
+      "label-logs": "Registri",
+      "title-basic-logs-queries": "",
+      "tooltip-logs": ""
+    },
+    "logs-query-builder": {
+      "title-no-tables": ""
+    },
+    "logs-query-editor": {
+      "learn-more": "",
+      "view-query": ""
+    },
+    "metric-name-field": {
+      "label-metric": "Metrica"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": ""
+    },
+    "nested-row": {
+      "text-loading": "Caricamento in corso..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "",
+      "aria-label-order-direction": "",
+      "label-by": "",
+      "label-order-by": "",
+      "tooltip-order-by": ""
+    },
+    "query-editor": {
+      "alert-error-occurred": ""
+    },
+    "query-header": {
+      "aria-label-kick-start": "",
+      "button-kick-start-your-query": "",
+      "button-run-query": "Esegui query",
+      "label-service": "",
+      "placeholder-service": "",
+      "title-switch-mode": ""
+    },
+    "raw-query": {
+      "aria-label-selector": ""
+    },
+    "resource-field": {
+      "label-resource": "",
+      "title-select-resource": ""
+    },
+    "resource-label": {
+      "select-resource": ""
+    },
+    "resource-picker": {
+      "button-apply": "Applica",
+      "button-cancel": "Annulla",
+      "header-location": "Posizione",
+      "header-scope": "",
+      "header-type": "Tipo",
+      "heading-selection": "",
+      "result-limit": "",
+      "text-loading": "Caricamento in corso...",
+      "text-no-resources": "",
+      "title-error-occurred": ""
+    },
+    "search": {
+      "aria-label-resource-search": "",
+      "placeholder-resource-search": ""
+    },
+    "subscription-field": {
+      "label-subscriptions": "",
+      "validation-subscriptions": ""
+    },
+    "table-section": {
+      "aria-label-columns": "",
+      "aria-label-table": "Tabella",
+      "label-columns": "",
+      "label-table": "Tabella",
+      "placeholder-select-columns": "",
+      "placeholder-select-table": ""
+    },
+    "time-grain-field": {
+      "label-time-grain": ""
+    },
+    "time-management": {
+      "label-time-column": "",
+      "label-time-range": "",
+      "tooltip-time-column": "",
+      "tooltip-time-range": ""
+    },
+    "top-field": {
+      "label-top": ""
+    },
+    "trace-type-field": {
+      "label-event-type": "",
+      "placeholder-event-type": ""
+    },
+    "traces-query-editor": {
+      "label-operation-id": ""
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "",
+      "title-unsupported-auth": ""
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "",
+      "title-no-fallback-credentials": ""
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "",
+      "aria-label-select-namespace": "Seleziona spazio di nomi",
+      "aria-label-select-query-type": "",
+      "aria-label-select-region": "",
+      "aria-label-select-resource": "",
+      "aria-label-select-resource-group": "",
+      "aria-label-select-subscription": "",
+      "label-custom-namespace": "",
+      "label-namespace": "Namespace",
+      "label-query-type": "",
+      "label-region": "",
+      "label-resource": "",
+      "label-resource-group": "",
+      "label-resource-type": "",
+      "label-subscription": "",
+      "placeholder-custom-namespace": "",
+      "placeholder-namespace": "",
+      "placeholder-region": "",
+      "placeholder-resource-group": "",
+      "title-error-occurred": ""
+    }
+  }
+}

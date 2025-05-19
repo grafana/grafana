@@ -154,6 +154,18 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestCheck_Item(t *testing.T) {
+	t.Run("should return nil when plugin is not found", func(t *testing.T) {
+		pluginStore := &mockPluginStore{plugins: []pluginstore.Plugin{}}
+		check := &check{
+			PluginStore: pluginStore,
+		}
+		item, err := check.Item(context.Background(), "invalid-uid")
+		assert.NoError(t, err)
+		assert.Nil(t, item)
+	})
+}
+
 type mockPluginStore struct {
 	pluginstore.Store
 	plugins []pluginstore.Plugin
@@ -161,6 +173,13 @@ type mockPluginStore struct {
 
 func (m *mockPluginStore) Plugins(ctx context.Context, t ...plugins.Type) []pluginstore.Plugin {
 	return m.plugins
+}
+
+func (m *mockPluginStore) Plugin(ctx context.Context, id string) (pluginstore.Plugin, bool) {
+	if len(m.plugins) == 0 {
+		return pluginstore.Plugin{}, false
+	}
+	return m.plugins[0], true
 }
 
 type mockPluginRepo struct {
