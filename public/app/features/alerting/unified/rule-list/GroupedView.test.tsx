@@ -98,6 +98,7 @@ describe('RuleList - GroupedView', () => {
     await waitFor(() => expect(loadMoreButton).toBeEnabled());
     await user.click(loadMoreButton);
 
+    // we should now have all groups 1-130
     await ui.group(/test-group-([1-9]|[1-9][0-9]|1[0-2][0-9]|130)/).findAll(promNamespace);
 
     expect(loadMoreButton).not.toBeInTheDocument();
