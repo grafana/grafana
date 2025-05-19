@@ -52,8 +52,7 @@ describe('Dashboard edit - Query variable', () => {
     // enter a query that returns the variable options
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
-      .type('*')
-      .blur();
+      .type('*');
 
     // show the preview of the query results
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton().should('be.visible').click();
