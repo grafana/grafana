@@ -1,12 +1,7 @@
 import { Subscription } from 'rxjs';
 
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ListMeta, ListOptions, ObjectMeta } from 'app/features/apiserver/types';
-
-interface ResourceList<Spec, Status, K = string> {
-  metadata?: Partial<ListMeta>;
-  items?: Array<{ metadata?: Partial<ObjectMeta>; spec?: Spec; status?: Status }>;
-}
+import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
 /**
  * Creates a cache entry handler for RTK Query that watches for changes to a resource
