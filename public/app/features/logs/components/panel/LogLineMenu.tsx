@@ -97,7 +97,21 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         )}
       </Menu>
     ),
-    [toggleLogDetails, detailsDisplayed, log, t, shouldlogSupportsContext, showContext, pinned, onPinLine, togglePinning, onUnpinLine, copyLogLine, onPermalinkClick, copyLinkToLogLine]
+    [
+      toggleLogDetails,
+      detailsDisplayed,
+      log,
+      t,
+      shouldlogSupportsContext,
+      showContext,
+      pinned,
+      onPinLine,
+      togglePinning,
+      onUnpinLine,
+      copyLogLine,
+      onPermalinkClick,
+      copyLinkToLogLine,
+    ]
   );
 
   return (
