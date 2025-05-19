@@ -656,6 +656,7 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
 			cfg := writer.DatasourceWriterConfig{
 				Timeout:              settings.Timeout,
+				CustomHeaders:        settings.CustomHeaders,
 				DefaultDatasourceUID: settings.DefaultDatasourceUID,
 			}
 
