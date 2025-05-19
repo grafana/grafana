@@ -218,6 +218,29 @@ function getComponentNames(node, context) {
 }
 
 /**
+ * Checks if a method has a `useTranslate` call
+ * @param {Node} method The node
+ * @param {RuleContextWithOptions} context
+ */
+function methodHasUseTranslate(method, context) {
+  const tDeclaration = method ? context.sourceCode.getScope(method).variables.find((v) => v.name === 't') : null;
+  return (
+    tDeclaration &&
+    tDeclaration.defs.find((definition) => {
+      const isVariableDeclaration = definition.node.type === AST_NODE_TYPES.VariableDeclarator;
+      const declarationInit = isVariableDeclaration ? definition.node.init : null;
+      return (
+        isVariableDeclaration &&
+        declarationInit &&
+        declarationInit.type === AST_NODE_TYPES.CallExpression &&
+        declarationInit.callee.type === AST_NODE_TYPES.Identifier &&
+        declarationInit.callee.name === 'useTranslate'
+      );
+    })
+  );
+}
+
+/**
  * Gets the import fixer for a node
  * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
@@ -241,28 +264,8 @@ function getImportsFixer(node, fixer, importName, context) {
   // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
   // do nothing
   if (importName === 't') {
-    // Find any t variable declarations in the parent method
-    const tDeclaration = parentMethod
-      ? context.sourceCode.getScope(parentMethod).variables.find((v) => v.name === 't')
-      : null;
-    const tIsFromUseTranslate =
-      tDeclaration &&
-      tDeclaration.defs.find((definition) => {
-        const { node: defNode } = definition;
-        const isVariableDeclaration = defNode.type === AST_NODE_TYPES.VariableDeclarator;
-        const init = isVariableDeclaration ? defNode.init : null;
-        if (
-          isVariableDeclaration &&
-          init &&
-          init.type === AST_NODE_TYPES.CallExpression &&
-          init.callee.type === AST_NODE_TYPES.Identifier
-        ) {
-          return init.callee.name === 'useTranslate';
-        }
-        return false;
-      });
-
-    if (tDeclaration && tIsFromUseTranslate) {
+    const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod, context) : false;
+    if (declarationFromUseTranslate) {
       return;
     }
   }
@@ -341,43 +344,30 @@ const firstCharIsUpper = (str) => {
 const getUseTranslateFixer = (node, fixer, context) => {
   const parentMethod = getParentMethod(node, context);
 
+  const functionIsNotUpperCase =
+    parentMethod &&
+    parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
+    (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name));
+
+  const variableDeclaratorIsNotUpperCase =
+    parentMethod &&
+    parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
+    parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
+    !firstCharIsUpper(parentMethod.parent.id.name);
+
   // If the node is not within a function, or the parent method does not start with an uppercase letter,
   // then we can't reliably add `useTranslate`, as this may not be a React component
   if (
     !parentMethod ||
-    (parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
-      (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name))) ||
-    (parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
-      parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
-      !firstCharIsUpper(parentMethod.parent.id.name))
+    functionIsNotUpperCase ||
+    variableDeclaratorIsNotUpperCase ||
+    parentMethod.body.type !== AST_NODE_TYPES.BlockStatement
   ) {
     return;
   }
-  if (parentMethod.body.type !== AST_NODE_TYPES.BlockStatement) {
-    return;
-  }
 
-  const useTranslateExists = parentMethod.body.body.find((node) => {
-    return (
-      node.type === AST_NODE_TYPES.VariableDeclaration &&
-      node.declarations.some((declaration) => {
-        if (
-          declaration.type === AST_NODE_TYPES.VariableDeclarator &&
-          declaration.init?.type === AST_NODE_TYPES.CallExpression &&
-          declaration.init.callee.type === AST_NODE_TYPES.Identifier
-        ) {
-          return declaration.init.callee.name === 'useTranslate';
-        }
-
-        return false;
-      })
-    );
-  });
-
-  // Get the return statement from the parent method
   const returnStatement = parentMethod.body.body.find((node) => node.type === AST_NODE_TYPES.ReturnStatement);
-
-  if (useTranslateExists || !returnStatement) {
+  if (!returnStatement) {
     return;
   }
 
@@ -386,11 +376,22 @@ const getUseTranslateFixer = (node, fixer, context) => {
     (returnStatement.argument.type === AST_NODE_TYPES.JSXElement ||
       returnStatement.argument.type === AST_NODE_TYPES.JSXFragment);
 
-  if (returnStatementIsJsx) {
-    return fixer.insertTextBefore(parentMethod.body.body[0], 'const { t } = useTranslate();\n');
+  if (!returnStatementIsJsx) {
+    return;
+  }
+  const useTranslateExists = methodHasUseTranslate(parentMethod, context);
+
+  if (useTranslateExists) {
+    return;
   }
 
-  return;
+  // If we've got all this way, then:
+  // - There is a parent method
+  // - It returns JSX
+  // - The method name starts with a capital letter
+  // - There is not already a call to `useTranslate` in the parent method
+  // In that scenario, we assume that we can fix and add a usage of the hook to the start of the body of the method
+  return fixer.insertTextBefore(parentMethod.body.body[0], 'const { t } = useTranslate();\n');
 };
 
 /**
