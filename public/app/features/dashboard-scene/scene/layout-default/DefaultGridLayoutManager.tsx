@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -18,7 +19,6 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { t } from 'app/core/internationalization';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
@@ -40,6 +40,7 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -490,6 +491,8 @@ export class DefaultGridLayoutManager
     let currentX = 0;
 
     for (let panel of panels) {
+      const variableName = panel.parent instanceof AutoGridItem ? panel.parent.state.variableName : undefined;
+
       panel.clearParent();
 
       children.push(
@@ -499,7 +502,9 @@ export class DefaultGridLayoutManager
           y: currentY,
           width: panelWidth,
           height: panelHeight,
+          itemHeight: panelHeight,
           body: panel,
+          variableName,
         })
       );
 

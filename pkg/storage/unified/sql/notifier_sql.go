@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -150,11 +151,6 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 
 					// We don't need to poll if the RV hasn't changed.
 					if since[group][resource] >= latestRV {
-						p.log.Debug("polling for resource skipped",
-							"group", group,
-							"resource", resource,
-							"latestKnownRV", since[group][resource],
-							"latestFetchedRV", latestRV)
 						continue
 					}
 
@@ -202,13 +198,13 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 		}
 		stream <- &resource.WrittenEvent{
 			Value: rec.Value,
-			Key: &resource.ResourceKey{
+			Key: &resourcepb.ResourceKey{
 				Namespace: rec.Key.Namespace,
 				Group:     rec.Key.Group,
 				Resource:  rec.Key.Resource,
 				Name:      rec.Key.Name,
 			},
-			Type:            resource.WatchEvent_Type(rec.Action),
+			Type:            resourcepb.WatchEvent_Type(rec.Action),
 			PreviousRV:      *prevRV,
 			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,

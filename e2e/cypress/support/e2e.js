@@ -1,4 +1,5 @@
 require('./commands');
+require('./assertions');
 
 Cypress.Screenshot.defaults({
   screenshotOnRunFailure: false,
@@ -46,15 +47,10 @@ Cypress.on('uncaught:exception', (err) => {
 //
 
 // TODO: read from toggles_gen.csv?
-const featureToggles = ['kubernetesDashboards', 'dashboardNewLayouts'];
+const featureToggles = ['kubernetesDashboards', 'dashboardNewLayouts', 'dashboardScene'];
 
 beforeEach(() => {
   let toggles = [];
-
-  if (Cypress.env('DISABLE_SCENES')) {
-    cy.logToConsole('disabling dashboardScene feature toggle in localstorage');
-    toggles.push('dashboardScene=false');
-  }
 
   for (const toggle of featureToggles) {
     const toggleValue = Cypress.env(toggle);
