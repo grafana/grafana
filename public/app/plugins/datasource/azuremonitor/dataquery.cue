@@ -59,6 +59,9 @@ composableKinds: DataQuery: {
 
 					// Used only for exemplar queries from Prometheus
 					query?: string
+
+					// Used to configure the HTTP request timeout
+					timeout?: number
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated

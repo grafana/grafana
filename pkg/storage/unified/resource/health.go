@@ -7,6 +7,8 @@ import (
 
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Compile-time assertion
@@ -17,13 +19,13 @@ type HealthService interface {
 	grpcAuth.ServiceAuthFuncOverride
 }
 
-func ProvideHealthService(server DiagnosticsServer) (grpc_health_v1.HealthServer, error) {
+func ProvideHealthService(server resourcepb.DiagnosticsServer) (grpc_health_v1.HealthServer, error) {
 	h := &healthServer{srv: server}
 	return h, nil
 }
 
 type healthServer struct {
-	srv DiagnosticsServer
+	srv resourcepb.DiagnosticsServer
 }
 
 // AuthFuncOverride for no auth for health service.
@@ -45,8 +47,8 @@ func (s *healthServer) List(ctx context.Context, req *grpc_health_v1.HealthListR
 	}, nil
 }
 
-func (s *healthServer) Check(ctx context.Context, req *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
-	r, err := s.srv.IsHealthy(ctx, &HealthCheckRequest{})
+func (s *healthServer) Check(ctx context.Context, _ *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+	r, err := s.srv.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +58,8 @@ func (s *healthServer) Check(ctx context.Context, req *grpc_health_v1.HealthChec
 	}, nil
 }
 
-func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc_health_v1.Health_WatchServer) error {
-	h, err := s.srv.IsHealthy(stream.Context(), &HealthCheckRequest{})
+func (s *healthServer) Watch(_ *grpc_health_v1.HealthCheckRequest, stream grpc_health_v1.Health_WatchServer) error {
+	h, err := s.srv.IsHealthy(stream.Context(), &resourcepb.HealthCheckRequest{})
 	if err != nil {
 		return err
 	}
@@ -77,7 +79,7 @@ func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc
 		select {
 		case <-ticker.C:
 			// get current health status
-			h, err := s.srv.IsHealthy(stream.Context(), &HealthCheckRequest{})
+			h, err := s.srv.IsHealthy(stream.Context(), &resourcepb.HealthCheckRequest{})
 			if err != nil {
 				return err
 			}

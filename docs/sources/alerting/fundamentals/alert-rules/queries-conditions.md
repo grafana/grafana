@@ -49,9 +49,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
   table-data-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/examples/table-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/examples/table-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
 ---
 
 # Queries and conditions
