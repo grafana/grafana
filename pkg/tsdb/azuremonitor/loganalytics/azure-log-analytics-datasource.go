@@ -128,7 +128,6 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
-			writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
 			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
 		}
 
