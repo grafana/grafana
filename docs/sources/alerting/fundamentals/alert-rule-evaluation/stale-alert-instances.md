@@ -26,9 +26,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
   guide-missing-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/missing-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/missing-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/missing-data/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
 ---
 
 # Stale alert instances
