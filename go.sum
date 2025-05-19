@@ -1569,10 +1569,10 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35 h1:/FvrKg5ZtJ09oWOt91lIPpeWtWGcNqXv/9UOQaRDyQE=
-github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
-github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a h1:irEH0Abl6mKbkPx/xtmB5Wai4ipzEB6hGPNsLya/p9Y=
-github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
+github.com/grafana/alerting v0.0.0-20250513184957-2484dbaf55cf h1:cbwO+P4La7EnDY1gdzFxsAf9u8ygM/7Laimuh7lYrNo=
+github.com/grafana/alerting v0.0.0-20250513184957-2484dbaf55cf/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
+github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb h1:oTl2j6/4miQUYmXANp2pBuYCWA5f8NVYFfCWpczpFso=
+github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -1633,6 +1633,8 @@ github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:/eXW4g4cROVmDxH0OhCoXmp9n+xULrmnncMUyFHXxP0=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a h1:7QIwgb9nZmVPRjSi+UQDhjxrAWmEVExXLh4+TfoN/MU=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:fs8tmn4kliX1914EZfGOL+A6BUqejjbdL+7Dj9ZmZPA=
+github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a h1:fWG9hWi5V7Lj/x1/SZwbvHOpVpGixUcdV7Prc6wO2uk=
+github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a/go.mod h1:hKusgccNxdAcv1x3cMSM46XYcUeLB7tWjnPP6m9tbG4=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718kSXOiIKdjZKljWLgBpzL5z1yutKABksQCMg=
@@ -2029,8 +2031,6 @@ github.com/mithrandie/ternary v1.1.1 h1:k/joD6UGVYxHixYmSR8EGgDFNONBMqyD373xT4QR
 github.com/mithrandie/ternary v1.1.1/go.mod h1:0D9Ba3+09K2TdSZO7/bFCC0GjSXetCvYuYq0u8FY/1g=
 github.com/moby/docker-image-spec v1.3.1 h1:jMKff3w6PgbfSa69GfNg+zN/XLhfXJGnEx3Nl2EsFP0=
 github.com/moby/docker-image-spec v1.3.1/go.mod h1:eKmb5VW8vQEh/BAr2yvVNvuiJuY6UIocYsFu/DxxRpo=
-github.com/moby/spdystream v0.5.0 h1:7r0J1Si3QO/kjRitvSLVVFUjxMEb/YLj6S9FF62JBCU=
-github.com/moby/spdystream v0.5.0/go.mod h1:xBAYlnt/ay+11ShkdFKNAG7LsyK/tmNBVvVOwrfMgdI=
 github.com/mocktools/go-smtp-mock/v2 v2.3.1 h1:wq75NDSsOy5oHo/gEQQT0fRRaYKRqr1IdkjhIPXxagM=
 github.com/mocktools/go-smtp-mock/v2 v2.3.1/go.mod h1:h9AOf/IXLSU2m/1u4zsjtOM/WddPwdOUBz56dV9f81M=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
@@ -2053,7 +2053,6 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8m
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+SVif2QVs3tOP0zanoHgBEVAwHxUSIzRqU=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f h1:y5//uYreIhSUg3J1GEMiLbxo1LJaP8RfCpH6pymGZus=
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/nakagami/firebirdsql v0.0.0-20190310045651-3c02a58cfed8/go.mod h1:86wM1zFnC6/uDBfZGNwB65O+pR2OFi5q/YQaEUid1qA=
 github.com/natefinch/wrap v0.2.0 h1:IXzc/pw5KqxJv55gV0lSOcKHYuEZPGbQrOOXr/bamRk=
@@ -3404,8 +3403,8 @@ google.golang.org/grpc v1.53.0/go.mod h1:OnIrk0ipVdj4N5d9IUoFUx72/VlD7+jUsHwZgwS
 google.golang.org/grpc v1.54.0/go.mod h1:PUSEXI6iWghWaB6lXM4knEgpJNu2qUcKfDtNci3EC2g=
 google.golang.org/grpc v1.55.0/go.mod h1:iYEXKGkEBhg1PjZQvoYEVPTDkHo1/bjTnfwTeGONTY8=
 google.golang.org/grpc v1.56.3/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
-google.golang.org/grpc v1.72.0 h1:S7UkcVa60b5AAQTaO6ZKamFp1zMZSU0fGDK2WZLbBnM=
-google.golang.org/grpc v1.72.0/go.mod h1:wH5Aktxcg25y1I3w7H69nHfXdOG3UiadoBtjh3izSDM=
+google.golang.org/grpc v1.72.1 h1:HR03wO6eyZ7lknl75XlxABNVLLFc2PAb6mHlYh756mA=
+google.golang.org/grpc v1.72.1/go.mod h1:wH5Aktxcg25y1I3w7H69nHfXdOG3UiadoBtjh3izSDM=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=

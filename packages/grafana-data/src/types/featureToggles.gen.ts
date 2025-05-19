@@ -520,6 +520,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregator?: boolean;
   /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enable new expression parser
   */
   expressionParser?: boolean;
