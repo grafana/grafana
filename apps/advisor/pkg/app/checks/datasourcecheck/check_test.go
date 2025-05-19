@@ -231,6 +231,19 @@ func TestCheck_Run(t *testing.T) {
 	})
 }
 
+func TestCheck_Item(t *testing.T) {
+	t.Run("should return nil when datasource is not found", func(t *testing.T) {
+		mockDatasourceSvc := &MockDatasourceSvc{dss: []*datasources.DataSource{}}
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+		}
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+		item, err := check.Item(ctx, "invalid-uid")
+		assert.NoError(t, err)
+		assert.Nil(t, item)
+	})
+}
+
 type MockDatasourceSvc struct {
 	datasources.DataSourceService
 
@@ -239,6 +252,13 @@ type MockDatasourceSvc struct {
 
 func (m *MockDatasourceSvc) GetAllDataSources(context.Context, *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
 	return m.dss, nil
+}
+
+func (m *MockDatasourceSvc) GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if len(m.dss) == 0 {
+		return nil, datasources.ErrDataSourceNotFound
+	}
+	return m.dss[0], nil
 }
 
 type MockPluginContextProvider struct {
