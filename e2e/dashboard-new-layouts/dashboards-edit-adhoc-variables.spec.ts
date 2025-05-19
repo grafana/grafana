@@ -19,7 +19,7 @@ describe('Dashboard edit - Ad hoc variables', () => {
     const variable: Variable = {
       type: 'adhoc',
       name: 'VariableUnderTest',
-      value: 'job',
+      value: 'label1',
       label: 'VariableUnderTest',
     };
 
