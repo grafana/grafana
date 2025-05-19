@@ -488,6 +488,10 @@ steps:
     token:
       from_secret: drone_token
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download//dagger__linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
@@ -1772,6 +1776,10 @@ steps:
   image: node:22.11.0-alpine
   name: build-frontend-packages
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download//dagger__linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
@@ -3626,9 +3634,13 @@ platform:
 services: []
 steps:
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_main.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3647,7 +3659,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3659,7 +3670,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -3701,9 +3712,13 @@ platform:
 services: []
 steps:
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_tag_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3722,7 +3737,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3734,7 +3748,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -3818,9 +3832,13 @@ platform:
 services: []
 steps:
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_tag_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3839,7 +3857,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3851,7 +3868,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -4055,9 +4072,13 @@ platform:
 services: []
 steps:
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_nightly_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_nightly_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4076,7 +4097,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4088,7 +4108,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -4197,9 +4217,13 @@ steps:
   image: google/cloud-sdk:alpine
   name: rgm-copy
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_publish_nightly_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_publish_nightly_grafana.sh
   depends_on:
   - rgm-copy
   environment:
@@ -4220,7 +4244,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4232,7 +4255,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-publish
   pull: always
   volumes:
@@ -4324,10 +4347,13 @@ steps:
   - name: github-app
     path: /github-app
 - commands:
+  - wget https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    /tmp
+  - tar zxf /tmp/dagger*.tar.gz
+  - mv /tmp/dagger /bin/dagger
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+  - dagger run --silent ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION}
-    --go-version=1.24.3
   depends_on:
   - github-app-generate-token
   environment:
@@ -4348,7 +4374,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -5190,6 +5215,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5f4ce778b0c86c6c2267b9045f6019917983e352c8c62df1f898e6db16c9e935
+hmac: 3a7566dcda74c902345debef26796733dd00dc50bf77333fa664f3fa3b616c26
 
 ...
