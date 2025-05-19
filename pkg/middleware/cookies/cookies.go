@@ -3,7 +3,6 @@ package cookies
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,9 +41,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	}
 
 	options := getCookieOptions()
-	if !featuremgmt.AnyEnabled(&featuremgmt.FeatureManager{}, featuremgmt.FlagPanelExporterCookieDomain) {
-		options.Domain = ""
-	}
+
 	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
