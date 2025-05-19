@@ -363,7 +363,7 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 					}
 				} else {
 					// Log the error but do not fail the query
-					backend.Logger.Error("failed to decode total hits", "error", err)
+					backend.Logger.Debug("failed to decode total hits", "error", err)
 				}
 			}
 			sr.Hits.Total = total
