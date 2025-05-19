@@ -196,9 +196,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		featuremgmt.FlagKubernetesClientDashboardsFolders}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
+	tracer := tracing.InitializeTracerForTest()
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
 	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
-	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
+	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -227,11 +228,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
 		features:               features,
-		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		bus:                    bus.ProvideBus(tracer),
 		accessControl:          acimpl.ProvideAccessControl(features),
 		registry:               make(map[string]folder.RegistryService),
 		metrics:                newFoldersMetrics(nil),
-		tracer:                 tracing.InitializeTracerForTest(),
+		tracer:                 tracer,
 		k8sclient:              k8sCli,
 		dashboardK8sClient:     fakeK8sClient,
 		publicDashboardService: publicDashboardService,

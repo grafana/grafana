@@ -125,7 +125,7 @@ func ProvideService(
 			sorter,
 		)
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
