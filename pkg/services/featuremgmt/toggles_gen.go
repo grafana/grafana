@@ -503,10 +503,6 @@ const (
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
 
-	// FlagGrafanaManagedRecordingRules
-	// Enables Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
-
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
