@@ -63,6 +63,14 @@ export const LogLine = ({
     }
   });
 
+  useEffect(() => {
+    if (collapsed === undefined && log.collapsed !== undefined) {
+      setCollapsed(log.collapsed);
+    } else if (collapsed !== undefined && log.collapsed === undefined) {
+      setCollapsed(log.collapsed);
+    }
+  }, [collapsed, log.collapsed]);
+
   const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
   const handleExpandCollapse = useCallback(() => {
