@@ -13,6 +13,7 @@ export interface Props {
   onChange: (dimensions: DimensionsType) => void;
   datasource: CloudWatchDatasource;
   disableExpressions: boolean;
+  applicationId?: string;
 }
 
 export interface DimensionFilterCondition {
@@ -27,11 +28,6 @@ const dimensionsToFilterConditions = (dimensions: DimensionsType | undefined) =>
       return acc;
     }
 
-    // Previously, we only appended to the `acc`umulated dimensions if the value was a string.
-    // However, Cloudwatch can present dimensions with single-value arrays, e.g.
-    //   k: FunctionName
-    //   v: ['MyLambdaFunction']
-    // in which case we grab the single-value from the Array and use that as the value.
     let v = '';
     if (typeof value === 'string') {
       v = value;
@@ -60,14 +56,12 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
   }, {});
 };
 
-export const Dimensions = ({ metricStat, datasource, disableExpressions, onChange }: Props) => {
+export const Dimensions = ({ metricStat, datasource, disableExpressions, onChange, applicationId }: Props) => {
   const dimensionFilters = useMemo(() => dimensionsToFilterConditions(metricStat.dimensions), [metricStat.dimensions]);
   const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
     setItems(newItems);
 
-    // The onChange event should only be triggered in the case there is a complete dimension object.
-    // So when a new key is added that does not yet have a value, it should not trigger an onChange event.
     const newDimensions = filterConditionsToDimensions(newItems);
     if (!isEqual(newDimensions, metricStat.dimensions)) {
       onChange(newDimensions);
@@ -78,12 +72,12 @@ export const Dimensions = ({ metricStat, datasource, disableExpressions, onChang
     <EditorList
       items={items}
       onChange={onDimensionsChange}
-      renderItem={makeRenderFilter(datasource, metricStat, disableExpressions)}
+      renderItem={makeRenderFilter(datasource, metricStat, disableExpressions, applicationId)}
     />
   );
 };
 
-function makeRenderFilter(datasource: CloudWatchDatasource, metricStat: MetricStat, disableExpressions: boolean) {
+function makeRenderFilter(datasource: CloudWatchDatasource, metricStat: MetricStat, disableExpressions: boolean, applicationId?: string) {
   function renderFilter(
     item: DimensionFilterCondition,
     onChange: (item: DimensionFilterCondition) => void,
@@ -96,6 +90,7 @@ function makeRenderFilter(datasource: CloudWatchDatasource, metricStat: MetricSt
         datasource={datasource}
         metricStat={metricStat}
         disableExpressions={disableExpressions}
+        applicationId={applicationId}
         onDelete={onDelete}
       />
     );
