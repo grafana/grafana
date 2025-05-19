@@ -24,6 +24,22 @@ const elementIsTrans = (node) => {
 
 /**
  * @param {Node} node
+ * @param {RuleContextWithOptions} context
+ */
+const getParentMethod = (node, context) => {
+  const ancestors = context.sourceCode.getAncestors(node);
+  return ancestors.find((anc) => {
+    return (
+      anc.type === AST_NODE_TYPES.ArrowFunctionExpression ||
+      anc.type === AST_NODE_TYPES.FunctionDeclaration ||
+      anc.type === AST_NODE_TYPES.FunctionExpression ||
+      anc.type === AST_NODE_TYPES.ClassDeclaration
+    );
+  });
+};
+
+/**
+ * @param {Node} node
  */
 const isStringLiteral = (node) => {
   return node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string';
@@ -72,18 +88,9 @@ function canBeFixed(node, context) {
 
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
-
   if (node.type === AST_NODE_TYPES.JSXAttribute) {
-    const ancestors = context.sourceCode.getAncestors(node);
-    const isInFunction = ancestors.some((anc) => {
-      return [
-        AST_NODE_TYPES.ArrowFunctionExpression,
-        AST_NODE_TYPES.FunctionDeclaration,
-        AST_NODE_TYPES.FunctionExpression,
-        AST_NODE_TYPES.ClassDeclaration,
-      ].includes(anc.type);
-    });
-    if (!isInFunction) {
+    const parentMethod = getParentMethod(node, context);
+    if (!parentMethod) {
       return false;
     }
     if (node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
@@ -214,7 +221,7 @@ function getComponentNames(node, context) {
  * Gets the import fixer for a node
  * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
- * @param {'Trans'|'t'|'useTranslate'} importName The import name
+ * @param {'Trans'|'t'|'useTranslate'} importName The member to import from either `@grafana/i18n` or `@grafana/i18n/internal`
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
@@ -227,14 +234,8 @@ function getImportsFixer(node, fixer, importName, context) {
     useTranslate: '@grafana/i18n',
     t: '@grafana/i18n/internal',
   };
-  const ancestors = context.sourceCode.getAncestors(node);
-  const parentMethod = ancestors.find((anc) => {
-    return [
-      AST_NODE_TYPES.ArrowFunctionExpression,
-      AST_NODE_TYPES.FunctionDeclaration,
-      AST_NODE_TYPES.ClassDeclaration,
-    ].includes(anc.type);
-  });
+
+  const parentMethod = getParentMethod(node, context);
 
   // If we're trying to import `t`,
   // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
@@ -338,14 +339,7 @@ const firstCharIsUpper = (str) => {
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
 const getUseTranslateFixer = (node, fixer, context) => {
-  const ancestors = context.sourceCode.getAncestors(node);
-  const parentMethod = ancestors.find((anc) => {
-    return (
-      anc.type === AST_NODE_TYPES.ArrowFunctionExpression ||
-      anc.type === AST_NODE_TYPES.FunctionDeclaration ||
-      anc.type === AST_NODE_TYPES.ClassDeclaration
-    );
-  });
+  const parentMethod = getParentMethod(node, context);
 
   // If the node is not within a function, or the parent method does not start with an uppercase letter,
   // then we can't reliably add `useTranslate`, as this may not be a React component
