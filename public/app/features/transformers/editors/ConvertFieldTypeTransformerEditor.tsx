@@ -13,9 +13,9 @@ import {
   getTimeZones,
 } from '@grafana/data';
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 import { findField } from 'app/features/dimensions';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -32,6 +32,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
+  const { t } = useTranslate();
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
@@ -129,6 +130,14 @@ export const ConvertFieldTypeTransformerEditor = ({
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
         const targetField = findField(input?.[0], c.targetField);
+
+        // Show "Join with" input when:
+        // - A join value exists (maintains backward compatibility)
+        // - Target field type is 'other' (Grafana 10) or 'string' (Grafana 11)
+        // This ensures consistent UI across versions where arrays may be classified differently.
+        const shouldRenderJoinWith =
+          c.joinWith?.length || (targetField?.type && [FieldType.other, FieldType.string].includes(targetField.type));
+
         return (
           <div key={`${c.targetField}-${idx}`}>
             <InlineFieldRow>
@@ -168,7 +177,7 @@ export const ConvertFieldTypeTransformerEditor = ({
               )}
               {c.destinationType === FieldType.string && (
                 <>
-                  {(c.joinWith?.length || targetField?.type === FieldType.other) && (
+                  {shouldRenderJoinWith && (
                     <InlineField
                       label={t('transformers.convert-field-type-transformer-editor.label-join-with', 'Join with')}
                       tooltip={t(
@@ -181,7 +190,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                         // eslint-disable-next-line @grafana/no-untranslated-strings
                         placeholder={'JSON'}
                         onChange={onJoinWithChange(idx)}
-                        width={9}
+                        width={16}
                       />
                     </InlineField>
                   )}

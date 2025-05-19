@@ -2,6 +2,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Box,
   Button,
@@ -17,7 +18,6 @@ import {
 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useDatasource } from 'app/features/datasources/hooks';
 
@@ -76,7 +76,7 @@ const ImportFromDSRules = () => {
   const [optionsShowing, toggleOptions] = useToggle(true);
   const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
   const [showConfirmModal, setShowConfirmModal] = useToggle(false);
-
+  const { t } = useTranslate();
   const onSubmit = async () => {
     setShowConfirmModal(true);
   };
@@ -151,6 +151,7 @@ const ImportFromDSRules = () => {
                         render={({ field: { onChange, ref, ...field } }) => (
                           <Stack width={42}>
                             <NestedFolderPicker
+                              permission="view"
                               showRootFolder={false}
                               invalid={!!errors.targetFolder?.message}
                               {...field}

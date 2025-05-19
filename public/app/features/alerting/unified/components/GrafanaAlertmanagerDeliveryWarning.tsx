@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -28,6 +28,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
       skip: externalAlertmanager || !canReadConfigurationStatus,
     }
   );
+  const { t } = useTranslate();
 
   const interactsWithExternalAMs =
     amChoiceStatus?.alertmanagersChoice &&

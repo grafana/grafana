@@ -6,7 +6,6 @@ import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
-  AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
@@ -23,6 +22,13 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { isDashboardV2Spec } from './utils';
+
+export const K8S_V2_DASHBOARD_API_CONFIG = {
+  group: 'dashboard.grafana.app',
+  version: 'v2alpha1',
+  resource: 'dashboards',
+};
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -30,18 +36,17 @@ export class K8sDashboardV2API
   private client: ResourceClient<DashboardV2Spec>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardV2Spec>({
-      group: 'dashboard.grafana.app',
-      version: 'v2alpha1',
-      resource: 'dashboards',
-    });
+    this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
   }
 
   async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
+      // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
+      // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       if (
+        !isDashboardV2Spec(dashboard.spec) &&
         dashboard.status?.conversion?.failed &&
         (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
           dashboard.status.conversion.storedVersion === 'v1beta1' ||
@@ -56,7 +61,6 @@ export class K8sDashboardV2API
           const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
-          dashboard.metadata.annotations[AnnoKeyFolderId] = folder.id;
         } catch (e) {
           throw new Error('Failed to load folder');
         }
@@ -119,7 +123,6 @@ export class K8sDashboardV2API
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
-      delete obj.metadata.annotations?.[AnnoKeyFolderId];
 
       obj.metadata.annotations = {
         ...obj.metadata.annotations,

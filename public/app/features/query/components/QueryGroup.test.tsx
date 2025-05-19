@@ -121,6 +121,12 @@ describe('QueryGroup', () => {
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
   });
+
+  it('correctly renders query options', async () => {
+    renderScenario({});
+    expect(await screen.findByText('MD = 100')).toBeInTheDocument();
+    expect(await screen.findByText('Interval = 1m')).toBeInTheDocument();
+  });
 });
 
 function renderScenario(overrides: Partial<Props>) {
@@ -132,6 +138,8 @@ function renderScenario(overrides: Partial<Props>) {
       getTransformations: jest.fn(),
     }),
     options: {
+      maxDataPoints: 100,
+      minInterval: '1m',
       queries: [
         {
           datasource: mockDS,
