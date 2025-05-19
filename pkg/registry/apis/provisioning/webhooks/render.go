@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type renderConnector struct {
@@ -132,8 +133,8 @@ func (c *renderConnector) Connect(
 			return
 		}
 
-		rsp, err := c.unified.GetBlob(ctx, &resource.GetBlobRequest{
-			Resource: &resource.ResourceKey{
+		rsp, err := c.unified.GetBlob(ctx, &resourcepb.GetBlobRequest{
+			Resource: &resourcepb.ResourceKey{
 				Namespace: namespace,
 				Group:     provisioning.GROUP,
 				Resource:  provisioning.RepositoryResourceInfo.GroupResource().Resource,

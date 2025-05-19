@@ -2,6 +2,7 @@ package sqleng
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"testing"
 
@@ -46,6 +47,15 @@ func TestErrToHealthCheckResult(t *testing.T) {
 				Status:      backend.HealthStatusError,
 				Message:     "internal server error",
 				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"internal server error"}`),
+			},
+		},
+		{
+			name: "invalid port specifier error",
+			err:  fmt.Errorf("%w %q: %w", ErrInvalidPortSpecified, `"foo.bar.co"`, errors.New(`strconv.Atoi: parsing "foo.bar.co": invalid syntax`)),
+			want: &backend.CheckHealthResult{
+				Status:      backend.HealthStatusError,
+				Message:     "Connection string error: invalid port in host specifier",
+				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"invalid port in host specifier \"\\\"foo.bar.co\\\"\": strconv.Atoi: parsing \"foo.bar.co\": invalid syntax"}`),
 			},
 		},
 	}
