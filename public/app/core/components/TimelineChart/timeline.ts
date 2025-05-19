@@ -207,24 +207,9 @@ export function getConfig(opts: TimelineCoreOptions) {
     uPlot.orient(
       u,
       sidx,
-      (
-        series,
-        dataX,
-        dataY,
-        scaleX,
-        _scaleY,
-        valToPosX,
-        _valToPosY,
-        xOff,
-        yOff,
-        xDim,
-        yDim,
-        _moveTo,
-        _lineTo,
-        rect
-      ) => {
-        const strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-        const discrete = isDiscrete(sidx);
+      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
+        let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
+        let discrete = isDiscrete(sidx);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -233,9 +218,10 @@ export function getConfig(opts: TimelineCoreOptions) {
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
-              const yVal = dataY[ix];
+              let yVal = dataY[ix];
+
               if (shouldDrawBox(sidx, yVal)) {
-                const left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
+                let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
                 while (
@@ -244,7 +230,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                 ) {}
 
                 // to now (not to end of chart)
-                const right =
+                let right =
                   nextIx === dataY.length
                     ? xOff + xDim + strokeWidth
                     : Math.round(valToPosX(dataX[nextIx], scaleX, xDim, xOff));
@@ -269,17 +255,18 @@ export function getConfig(opts: TimelineCoreOptions) {
               }
             }
           } else if (mode === TimelineMode.Samples) {
-            const colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
-            const gapWid = colWid * gapFactor;
-            const barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
-            const xShift = barWid / 2;
+            let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
+            let gapWid = colWid * gapFactor;
+            let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
+            let xShift = barWid / 2;
             //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
 
             for (let ix = idx0; ix <= idx1; ix++) {
-              const yVal = dataY[ix];
+              let yVal = dataY[ix];
+
               if (shouldDrawBox(sidx, yVal)) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
-                const left = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
                 putBox(
                   u.ctx,
@@ -328,9 +315,9 @@ export function getConfig(opts: TimelineCoreOptions) {
           uPlot.orient(
             u,
             sidx,
-            (series, _dataX, dataY, _scaleX, scaleY, _valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
-              const strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-              const y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
+            (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+              let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
+              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (shouldDrawBox(sidx, dataY[ix])) {
@@ -350,7 +337,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                     continue;
                   }
 
-                  const txt = formatValue(sidx, dataY[ix]);
+                  let txt = formatValue(sidx, dataY[ix]);
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
