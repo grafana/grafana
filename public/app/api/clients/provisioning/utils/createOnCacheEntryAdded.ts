@@ -41,23 +41,18 @@ export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
           if (!draft.items) {
             draft.items = [];
           }
-          // Create a new array with the added item
-          // This avoids direct assignment of incompatible types
-          const newItems = [...draft.items];
           // Find the item with the matching name
           const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
 
           if (event.type === 'ADDED' && existingIndex === -1) {
-            newItems.push(event.object);
-            draft.items = newItems;
+            draft.items.push(event.object);
           } else if (event.type === 'DELETED' && existingIndex !== -1) {
-            // Remove the item at the specified index
-            newItems.splice(existingIndex, 1);
-            draft.items = newItems;
+            // Remove the item if it exists
+            draft.items.splice(existingIndex, 1);
           } else if (existingIndex !== -1) {
-            // Replace the item at the specified index
-            newItems[existingIndex] = event.object;
-            draft.items = newItems;
+            // Could be ADDED or MODIFIED
+            // Update the existing item if it exists
+            draft.items[existingIndex] = event.object;
           }
         });
       });
