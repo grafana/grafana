@@ -31,6 +31,7 @@ const (
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
 	ClientLDAP         = "ldap"
+	ClientProvisioning = "auth.client.apiserver.provisioning"
 )
 
 const (
