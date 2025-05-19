@@ -22,18 +22,21 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 const DEFAULT_DATASOURCE = 'default';
 
 export function createVariablesForDashboard(oldModel: DashboardModel) {
-  const variableObjects = oldModel.templating.list
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModel(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    // TODO: Remove filter
-    // Added temporarily to allow skipping non-compatible variables
-    .filter((v): v is SceneVariable => Boolean(v));
+  let variableObjects: SceneVariable[] = [];
+  if (oldModel.templating?.list?.length) {
+    variableObjects = oldModel.templating.list
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModel(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      // TODO: Remove filter
+      // Added temporarily to allow skipping non-compatible variables
+      .filter((v): v is SceneVariable => Boolean(v));
+  }
 
   if (config.featureToggles.scopeFilters) {
     variableObjects.push(new ScopesVariable({ enable: true }));
@@ -45,40 +48,45 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
 }
 
 export function createVariablesForSnapshot(oldModel: DashboardModel) {
-  const variableObjects = oldModel.templating.list
-    .map((v) => {
-      try {
-        // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
-        if (v.type === 'adhoc') {
-          return new AdHocFiltersVariable({
-            name: v.name,
-            label: v.label,
-            readOnly: true,
-            description: v.description,
-            skipUrlSync: v.skipUrlSync,
-            hide: v.hide,
-            datasource: v.datasource,
-            applyMode: 'auto',
-            filters: v.filters ?? [],
-            baseFilters: v.baseFilters ?? [],
-            defaultKeys: v.defaultKeys,
-            useQueriesAsFilterForOptions: true,
-            layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
-            supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
-            ),
-          });
-        }
-        // for other variable types we are using the SnapshotVariable
-        return createSnapshotVariable(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    // TODO: Remove filter
-    // Added temporarily to allow skipping non-compatible variables
-    .filter((v): v is SceneVariable => Boolean(v));
+  let variableObjects: SceneVariable[] = [];
+  if (oldModel.templating?.list?.length) {
+    variableObjects.concat(
+      oldModel.templating.list
+        .map((v) => {
+          try {
+            // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
+            if (v.type === 'adhoc') {
+              return new AdHocFiltersVariable({
+                name: v.name,
+                label: v.label,
+                readOnly: true,
+                description: v.description,
+                skipUrlSync: v.skipUrlSync,
+                hide: v.hide,
+                datasource: v.datasource,
+                applyMode: 'auto',
+                filters: v.filters ?? [],
+                baseFilters: v.baseFilters ?? [],
+                defaultKeys: v.defaultKeys,
+                useQueriesAsFilterForOptions: true,
+                layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+                supportsMultiValueOperators: Boolean(
+                  getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
+                ),
+              });
+            }
+            // for other variable types we are using the SnapshotVariable
+            return createSnapshotVariable(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+        // TODO: Remove filter
+        // Added temporarily to allow skipping non-compatible variables
+        .filter((v): v is SceneVariable => Boolean(v))
+    );
+  }
 
   return new SceneVariableSet({
     variables: variableObjects,
