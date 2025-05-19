@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -298,12 +297,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			},
 		}
 		require.NotEqual(t, viewer.UserID, admin.UserID)
-
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-		})
 
 		folderStore := folderimpl.ProvideStore(sqlStore)
 		folderSvc := folderimpl.ProvideService(
