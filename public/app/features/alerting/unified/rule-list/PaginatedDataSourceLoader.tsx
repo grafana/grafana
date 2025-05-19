@@ -14,7 +14,7 @@ import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
-const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
+export const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
 interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;

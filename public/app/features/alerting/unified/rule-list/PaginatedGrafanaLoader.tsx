@@ -20,7 +20,7 @@ import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
-const GRAFANA_GROUP_PAGE_SIZE = 40;
+export const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
