@@ -6155,6 +6155,7 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
+      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -6175,7 +6176,8 @@
     },
     "log-line": {
       "show-less": "show less",
-      "show-more": "show more"
+      "show-more": "show more",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
