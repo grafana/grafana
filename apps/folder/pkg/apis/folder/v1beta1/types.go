@@ -16,7 +16,7 @@ type FolderInfoList struct {
 
 	// +listType=map
 	// +listMapKey=uid
-	Items []FolderInfo `json:"items,omitempty"`
+	Items []FolderInfo `json:"items"`
 }
 
 // FolderInfo briefly describes a folder -- unlike a folder resource,

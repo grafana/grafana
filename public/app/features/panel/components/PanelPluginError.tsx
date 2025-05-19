@@ -3,10 +3,10 @@ import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
-
-import { t, Trans } from '../../../core/internationalization';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {
   title: string;
@@ -35,6 +35,8 @@ class PanelPluginError extends PureComponent<Props> {
 }
 
 export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): PanelPlugin {
+  const { t } = useTranslate();
+
   const LoadError = class LoadError extends PureComponent<PanelProps> {
     render() {
       const text = (
@@ -58,6 +60,8 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
 }
 
 export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
+  const { t } = useTranslate();
+
   const NotFound = class NotFound extends PureComponent<PanelProps> {
     render() {
       return (
@@ -85,7 +89,7 @@ export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugi
       links: [],
       logos: {
         large: '',
-        small: 'public/img/grafana_icon.svg',
+        small: grafanaIconSvg,
       },
       screenshots: [],
       updated: '',

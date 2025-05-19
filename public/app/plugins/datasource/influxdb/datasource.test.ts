@@ -284,7 +284,11 @@ describe('interpolateQueryExpr', () => {
   it('should return the escaped value if the value wrapped in regex', () => {
     const value = '/special/path';
     const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
-    const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /$tempVar/');
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      'select atan(z/sqrt(3.14)), that where path =~ /$tempVar/'
+    );
     const expectation = `\\/special\\/path`;
     expect(result).toBe(expectation);
   });
@@ -292,7 +296,11 @@ describe('interpolateQueryExpr', () => {
   it('should return the escaped value if the value wrapped in regex 2', () => {
     const value = '/special/path';
     const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
-    const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /^$tempVar$/');
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      'select atan(z/sqrt(3.14)), that where path !~ /^$tempVar$/'
+    );
     const expectation = `\\/special\\/path`;
     expect(result).toBe(expectation);
   });
@@ -305,7 +313,11 @@ describe('interpolateQueryExpr', () => {
       .withMulti(false)
       .withIncludeAll(true)
       .build();
-    const result = ds.interpolateQueryExpr(value, variableMock, 'select from /^($tempVar)$/');
+    const result = ds.interpolateQueryExpr(
+      value,
+      variableMock,
+      'select atan(z/sqrt(3.14)), thing from path =~ /^($tempVar)$/'
+    );
     const expectation = `(env|env2|env3)`;
     expect(result).toBe(expectation);
   });
@@ -358,7 +370,7 @@ describe('interpolateQueryExpr', () => {
       )
       .build();
     const value = [`/special/path`, `/some/other/path`];
-    const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = /$tempVar/`);
+    const result = ds.interpolateQueryExpr(value, variableMock, `select that where path =~ /$tempVar/`);
     const expectation = `(\\/special\\/path|\\/some\\/other\\/path)`;
     expect(result).toBe(expectation);
   });
@@ -404,5 +416,6 @@ describe('interpolateQueryExpr', () => {
     const adhocFilter: AdHocVariableFilter[] = [{ key: 'bar', value: templateVarName, operator: '=' }];
     const result = ds.applyTemplateVariables(mockInfluxQueryRequest() as unknown as InfluxQuery, {}, adhocFilter);
     expect(result.tags![0].value).toBe(templateVarValue);
+    expect(result.adhocFilters![0].value).toBe(templateVarValue);
   });
 });
