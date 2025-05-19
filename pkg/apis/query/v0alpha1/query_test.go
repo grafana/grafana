@@ -93,8 +93,8 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}))
 	})
-	t.Run("return 418 if there is an error in the responses but no status code", func(t *testing.T) {
-		assert.Equal(t, 418, query.GetResponseCode(&backend.QueryDataResponse{
+	t.Run("return 400 if there is an error in the responses but no status code", func(t *testing.T) {
+		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
 					Error: fmt.Errorf("some wild error"),
@@ -102,8 +102,8 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}))
 	})
-	t.Run("return 418 if there is a partial error but no status code", func(t *testing.T) {
-		assert.Equal(t, 418, query.GetResponseCode(&backend.QueryDataResponse{
+	t.Run("return 400 if there is a partial error but no status code", func(t *testing.T) {
+		assert.Equal(t, 400, query.GetResponseCode(&backend.QueryDataResponse{
 			Responses: map[string]backend.DataResponse{
 				"A": {
 					Error: nil,
