@@ -8,7 +8,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
-	"go.opentelemetry.io/otel/trace"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // HandlerFunc defines a handler function interface.
@@ -29,10 +29,10 @@ type Bus interface {
 // InProcBus defines the bus structure.
 type InProcBus struct {
 	listeners map[string][]HandlerFunc
-	tracer    trace.Tracer
+	tracer    tracing.Tracer
 }
 
-func ProvideBus(tracer trace.Tracer) *InProcBus {
+func ProvideBus(tracer tracing.Tracer) *InProcBus {
 	return &InProcBus{
 		listeners: make(map[string][]HandlerFunc),
 		tracer:    tracer,

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -71,7 +72,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		store := ProvideStore(db)
 		tracer := noop.NewTracerProvider().Tracer("TestIntegrationProvideFolderService")
 		ProvideService(
-			store, ac, bus.ProvideBus(tracer),
+			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
 			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracer, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 			apiserver.WithoutRestConfig)
 
@@ -107,7 +108,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			store:                  nestedFolderStore,
 			publicDashboardService: publicDashboardService,
 			features:               features,
-			bus:                    bus.ProvideBus(tracer),
+			bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                     db,
 			accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 			metrics:                newFoldersMetrics(nil),
@@ -373,7 +374,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationNestedFolderService")
 
-	b := bus.ProvideBus(tracer)
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 
 	serviceWithFlagOn := &Service{
@@ -778,7 +779,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		accessControl:        actest.FakeAccessControl{ExpectedEvaluate: true},
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracer,
-		bus:                  bus.ProvideBus(tracer),
+		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 
 	t.Run("When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables", func(t *testing.T) {
@@ -1303,7 +1304,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationNestedFolderSharedWithMe")
 
-	b := bus.ProvideBus(tracer)
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOn)
 
 	serviceWithFlagOn := &Service{
@@ -1711,7 +1712,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		nestedFolderStore := ProvideStore(db)
 		tracer := noop.NewTracerProvider().Tracer("TestFolderServiceGetFolder")
 
-		b := bus.ProvideBus(tracer)
+		b := bus.ProvideBus(tracing.InitializeTracerForTest())
 		ac := acimpl.ProvideAccessControl(featuresFlagOff)
 
 		return Service{
@@ -1810,7 +1811,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 	tracer := noop.NewTracerProvider().Tracer("TestFolderServiceGetFolders")
 
-	b := bus.ProvideBus(tracer)
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
 
 	serviceWithFlagOff := &Service{
@@ -1890,7 +1891,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	nestedFolderStore := ProvideStore(db)
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildrenFilterByPermission")
 
-	b := bus.ProvideBus(tracer)
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
