@@ -122,16 +122,6 @@ type DiffTableData = {
   diff: string | number;
 };
 
-export const formatDiff = (value: number): string => {
-  if (Math.abs(value) >= 1000) {
-    return (value / 1000).toFixed(2) + 'K%';
-  }
-  if (value === 0) {
-    return '0.00%';
-  }
-  return value % 1 === 0 ? `${value}%` : value.toFixed(2) + '%';
-};
-
 export const getDiffTooltipData = (
   data: FlameGraphDataContainer,
   item: LevelItem,
@@ -151,6 +141,8 @@ export const getDiffTooltipData = (
   const displayValueRight = getValueWithUnit(data, data.valueDisplayProcessor(item.valueRight!));
 
   const shortValFormat = getValueFormat('short');
+  
+  const formatted = shortValFormat(diff);
 
   return [
     {
@@ -158,7 +150,7 @@ export const getDiffTooltipData = (
       label: '% of total',
       baseline: percentageLeft + '%',
       comparison: percentageRight + '%',
-      diff: formatDiff(diff),
+      diff: formatted.text + '%',
     },
     {
       rowId: '2',
