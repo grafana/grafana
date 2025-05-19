@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   SortOrder,
   RichHistorySearchFilters,
@@ -50,7 +51,7 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
-
+  const { t } = useTranslate();
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
   };

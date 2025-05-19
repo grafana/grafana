@@ -3,12 +3,13 @@ import { memo } from 'react';
 
 import {
   Action,
-  ActionVariable,
   GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
   VariableSuggestion,
+  ActionVariable,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import {
   Switch,
   Field,
@@ -20,7 +21,6 @@ import {
   ColorPicker,
   useTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -40,7 +40,7 @@ const LABEL_WIDTH = 13;
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-
+  const { t } = useTranslate();
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
   };
@@ -220,7 +220,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         </InlineField>
       </InlineFieldRow>
 
-      <Field label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}>
+      <Field label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')} noMargin>
         <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
       </Field>
 
