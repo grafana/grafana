@@ -19,9 +19,7 @@ func NewGlobalRolespecPermission() *GlobalRolespecPermission {
 type GlobalRoleSpec struct {
 	Name string `json:"name"`
 	// Display name of the role
-	Title string `json:"title"`
-	// ToDo should we remove UID given it should be the k8s resource name?
-	Uid     string `json:"uid"`
+	Title   string `json:"title"`
 	Version int64  `json:"version"`
 	Group   string `json:"group"`
 	// TODO:

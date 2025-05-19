@@ -4,7 +4,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 
 const (
 	// Group is the API group used by all kinds in this package
-	Group = "authz.grafana.app"
+	Group = "iam.grafana.app"
 	// Version is the API version used by all kinds in this package
 	Version = "v0alpha1"
 )

@@ -1,7 +1,7 @@
 package kinds
 
 import (
-	"github.com/grafana/grafana/apps/authz/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
 rolebinding: {

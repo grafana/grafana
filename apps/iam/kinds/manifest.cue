@@ -1,7 +1,7 @@
 package kinds
 
 manifest: {
-	appName:       "authz"
-	groupOverride: "authz.grafana.app"
+	appName:       "iam"
+	groupOverride: "iam.grafana.app"
 	kinds: [ globalrole, globalrolebinding, corerole, role, rolebinding, resourcepermission ]
 }

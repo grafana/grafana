@@ -14,8 +14,8 @@ import (
 var ()
 
 var appManifestData = app.ManifestData{
-	AppName: "authz",
-	Group:   "authz.grafana.app",
+	AppName: "iam",
+	Group:   "iam.grafana.app",
 	Kinds: []app.ManifestKind{
 		{
 			Kind:       "GlobalRole",
@@ -96,5 +96,5 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("authz")
+	return app.NewAPIServerManifest("iam")
 }
