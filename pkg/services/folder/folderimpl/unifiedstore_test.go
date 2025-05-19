@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -97,10 +97,11 @@ func TestComputeFullPath(t *testing.T) {
 
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
+	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
-		tracer:      tracing.InitializeTracerForTest(),
+		tracer:      tracer,
 	}
 
 	ctx := context.Background()

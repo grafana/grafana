@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestFolderConversions(t *testing.T) {
@@ -49,7 +49,7 @@ func TestFolderConversions(t *testing.T) {
 	created = created.Local()
 	require.NoError(t, err)
 
-	tracer := tracing.InitializeTracerForTest()
+	tracer := noop.NewTracerProvider().Tracer("TestFolderConversions")
 	fake := usertest.NewUserServiceFake()
 	fake.ExpectedListUsersByIdOrUid = []*user.User{
 		{
@@ -241,7 +241,7 @@ func TestFolderListConversions(t *testing.T) {
 	created = created.Local()
 	require.NoError(t, err)
 
-	tracer := tracing.InitializeTracerForTest()
+	tracer := noop.NewTracerProvider().Tracer("TestFolderListConversions")
 	fake := usertest.NewUserServiceFake()
 	fake.ExpectedListUsersByIdOrUid = []*user.User{
 		{
