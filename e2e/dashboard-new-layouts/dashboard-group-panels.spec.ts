@@ -63,7 +63,7 @@ describe('Grouping panels', () => {
 
     e2e.components.CanvasGridAddActions.addRow().click({ scrollBehavior: 'bottom' });
     e2e.components.DashboardEditPaneSplitter.primaryBody().scrollTo('bottom', { ensureScrollable: false });
-    e2e.flows.scenes.addPanel();
+    e2e.components.CanvasGridAddActions.addPanel().should('have.length', 3).last().click();
 
     e2e.components.DashboardRow.title('New row').should('exist');
     e2e.components.DashboardRow.title('New row 1').should('exist');
