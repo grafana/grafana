@@ -118,7 +118,7 @@ describe('StateTimeline uPlot integration', () => {
       describe('null and NaN values', () => {
         // these tests are attempting to determine whether `shouldDrawYVal` is returning false
         // and preventing a draw for a given value. this is being done by checking the number of
-        // calls to `rect` by the `orient` callback created by a `drawPaths` call. Even
+        // calls to `rect` by the `orient` callback created by a `drawPaths` call.
 
         it('should draw boxes for null values when hasMappedNull returns true and isDiscrete returns true', () => {
           const { drawClear, drawPaths } = getConfig(
