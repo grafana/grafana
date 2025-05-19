@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,7 +19,6 @@ import (
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -35,13 +35,13 @@ type FolderUnifiedStoreImpl struct {
 	log         log.Logger
 	k8sclient   client.K8sHandler
 	userService user.Service
-	tracer      tracing.Tracer
+	tracer      trace.Tracer
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer tracing.Tracer) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer trace.Tracer) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
