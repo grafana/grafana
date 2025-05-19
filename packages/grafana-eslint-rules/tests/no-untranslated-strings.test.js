@@ -497,6 +497,32 @@ const Foo = () => {
     },
 
     {
+      name: 'Fixes correctly when no return statement',
+      code: `
+const Foo = () => {
+  const foo = <div title="foo" />
+}
+`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  const foo = <div title={t(\"some-feature.foo.foo.title-foo\", \"foo\")} />
+}
+`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
       name: 'Fixes correctly when import exists but needs to add t()',
       code: `
 ${TRANS_IMPORT}
