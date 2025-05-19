@@ -131,7 +131,9 @@ export class LogListModel implements LogRowModel {
 
   updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
     const lineLength =
-      displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length + this.raw.length;
+      displayedFields.length > 0
+        ? displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length
+        : this.raw.length;
     const collapsed = lineLength >= getTruncationLength(container) ? true : undefined;
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
