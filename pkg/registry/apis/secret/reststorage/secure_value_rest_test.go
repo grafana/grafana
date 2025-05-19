@@ -247,6 +247,33 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 	})
 
+	t.Run("`decrypters` must be a valid label value", func(t *testing.T) {
+		decrypters := []string{
+			"",              // invalid
+			"is/this/valid", // invalid
+			"is this valid", // invalid
+			"is.this.valid",
+			"is-this-valid",
+			"is_this_valid",
+			"0isthisvalid9",
+			"isthisvalid9",
+			"0isthisvalid",
+			"isthisvalid",
+		}
+
+		ref := "ref"
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "description", Ref: &ref,
+
+				Decrypters: decrypters,
+			},
+		}
+
+		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
+		require.Len(t, errs, 3)
+	})
+
 	t.Run("`decrypters` cannot have more than 64 items", func(t *testing.T) {
 		decrypters := make([]string, 0, 64+1)
 		for i := 0; i < 64+1; i++ {

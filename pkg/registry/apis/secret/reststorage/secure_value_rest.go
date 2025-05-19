@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -323,6 +325,16 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 	decrypterNames := make(map[string]struct{}, 0)
 
 	for i, decrypter := range decrypters {
+		decrypter = strings.TrimSpace(decrypter)
+		if decrypter == "" {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters cannot be empty if specified"),
+			)
+
+			continue
+		}
+
 		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
 		if len(decryptersAllowList) > 0 {
 			if _, exists := decryptersAllowList[decrypter]; !exists {
@@ -332,6 +344,18 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 				)
 
 				return errs
+			}
+
+			continue
+		}
+
+		// Use the same validation as labels for the decrypters.
+		if verrs := validation.IsValidLabelValue(decrypter); len(verrs) > 0 {
+			for _, verr := range verrs {
+				errs = append(
+					errs,
+					field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, verr),
+				)
 			}
 
 			continue
