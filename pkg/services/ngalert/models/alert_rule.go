@@ -469,7 +469,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	ops = append(
 		ops,
 		cmp.Reporter(&reporter),
-		cmpopts.IgnoreFields(AlertQuery{}, "modelProps"),
+		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)

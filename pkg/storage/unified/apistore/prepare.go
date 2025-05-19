@@ -17,8 +17,9 @@ import (
 	"k8s.io/klog/v2"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func logN(n, b float64) float64 {
@@ -197,7 +198,7 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 			return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
 		}
 
-		key := &resource.ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     s.gr.Group,
 			Resource:  s.gr.Resource,
 			Namespace: obj.GetNamespace(),

@@ -3,8 +3,9 @@ import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { CreateSessionApiArg } from '../../../api';
@@ -22,7 +23,7 @@ interface FormData {
   token: string;
 }
 
-function getTMessage(messageId: string): string {
+function getTMessage(messageId: string, t: TFunction): string {
   switch (messageId) {
     case 'cloudmigrations.createMigration.tokenInvalid':
       return t(
@@ -81,6 +82,8 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
       token: '',
     },
   });
+
+  const { t } = useTranslate();
 
   const token = watch('token');
 
@@ -148,7 +151,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
                 <Text element="p">
-                  {getTMessage(maybeAPIError(error)?.messageId || '') ||
+                  {getTMessage(maybeAPIError(error)?.messageId || '', t) ||
                     'There was an error saving the token. See the Grafana server logs for more details.'}
                 </Text>
               </AlertWithTraceID>

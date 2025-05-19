@@ -8,8 +8,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
@@ -19,6 +19,8 @@ import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByL
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
 export function JoinByLabelsTransformerEditor({ input, options, onChange }: Props) {
+  const { t } = useTranslate();
+
   const info = useMemo(() => {
     let warn: React.ReactNode = undefined;
     const distinct = getDistinctLabels(input);
@@ -63,7 +65,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     }
 
     return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
-  }, [options, input]);
+  }, [options, input, t]);
 
   const updateJoinValue = (idx: number, value?: string) => {
     if (!options.join) {

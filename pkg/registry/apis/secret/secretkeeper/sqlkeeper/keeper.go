@@ -21,12 +21,12 @@ func NewSQLKeeper(
 	tracer tracing.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
-) (*SQLKeeper, error) {
+) *SQLKeeper {
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
-	}, nil
+	}
 }
 
 func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {

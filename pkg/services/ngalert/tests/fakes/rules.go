@@ -2,7 +2,6 @@ package fakes
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"slices"
 	"sync"
@@ -270,7 +269,7 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 			return folder, nil
 		}
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, dashboards.ErrFolderNotFound
 }
 
 func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {

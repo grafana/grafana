@@ -1,8 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
   FilterCategory,
@@ -43,6 +43,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
+  const { t } = useTranslate();
 
   const transformations = allTransformations.filter((t) => {
     if (

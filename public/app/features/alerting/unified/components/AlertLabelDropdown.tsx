@@ -3,8 +3,8 @@ import { FC, forwardRef } from 'react';
 import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
@@ -38,7 +38,7 @@ const handleIsValidNewOption = (
 const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
   function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
     const styles = useStyles2(getStyles);
-
+    const { t } = useTranslate();
     return (
       <div ref={ref}>
         <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>

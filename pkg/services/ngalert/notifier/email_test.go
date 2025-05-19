@@ -206,43 +206,11 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {
 	t.Helper()
 
-	mailer := ns.ns.GetMailer().(*notifications.FakeMailer)
+	mailer := ns.ns.(*notifications.NotificationService).GetMailer().(*notifications.FakeMailer)
 	require.Len(t, mailer.Sent, 1)
 	sent := mailer.Sent[0]
 	mailer.Sent = []*notifications.Message{}
 	return sent
-}
-
-type emailSender struct {
-	ns *notifications.NotificationService
-}
-
-func (e emailSender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSettings) error {
-	panic("not implemented")
-}
-
-func (e emailSender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
-	sendEmailCommand := notifications.SendEmailCommand{
-		To:            cmd.To,
-		SingleEmail:   cmd.SingleEmail,
-		Template:      cmd.Template,
-		Subject:       cmd.Subject,
-		Data:          cmd.Data,
-		ReplyTo:       cmd.ReplyTo,
-		EmbeddedFiles: cmd.EmbeddedFiles,
-	}
-	if len(cmd.EmbeddedContents) > 0 {
-		sendEmailCommand.EmbeddedContents = make([]notifications.EmbeddedContent, len(cmd.EmbeddedContents))
-		for i, ec := range cmd.EmbeddedContents {
-			sendEmailCommand.EmbeddedContents[i] = notifications.EmbeddedContent{
-				Name:    ec.Name,
-				Content: ec.Content,
-			}
-		}
-	}
-	return e.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
-		SendEmailCommand: sendEmailCommand,
-	})
 }
 
 func createEmailSender(t *testing.T) *emailSender {

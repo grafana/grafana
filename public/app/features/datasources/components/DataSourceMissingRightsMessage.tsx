@@ -1,10 +1,12 @@
+import { useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export const missingRightsMessage =
   'You are not allowed to modify this data source. Please contact your server admin to update this data source.';
 
 export function DataSourceMissingRightsMessage() {
+  const { t } = useTranslate();
+
   return (
     <Alert
       severity="info"

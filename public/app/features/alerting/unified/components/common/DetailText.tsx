@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import ConditionalWrap from '../ConditionalWrap';
 
@@ -35,6 +35,7 @@ export const DetailText = ({
   copyValue,
   tooltipValue,
 }: DetailTextProps) => {
+  const { t } = useTranslate();
   const copyToClipboardLabel = t('alerting.copy-to-clipboard', 'Copy "{{label}}" to clipboard', { label });
   return (
     <Box>

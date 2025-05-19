@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { RadioButtonGroup, Box } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -44,6 +44,8 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   );
 }
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
+  const { t } = useTranslate();
+
   return useMemo(() => {
     const isGridLayout = layoutManager.descriptor.isGridLayout;
 
@@ -94,5 +96,5 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     }
 
     return [groupLayout, gridLayout];
-  }, [layoutManager]);
+  }, [layoutManager, t]);
 }

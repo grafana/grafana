@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
@@ -190,7 +191,7 @@ const LogsQueryEditor = ({
                   href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
                   external
                 >
-                  Learn More
+                  <Trans i18nKey="components.logs-query-editor.learn-more">Learn More</Trans>
                 </TextLink>
               </Text>
             </>
@@ -218,7 +219,7 @@ const LogsQueryEditor = ({
             style={{ marginTop: '22px' }}
             href={querySeries.meta?.custom?.azurePortalLink}
           >
-            View query in Azure Portal
+            <Trans i18nKey="components.logs-query-editor.view-query">View query in Azure Portal</Trans>
           </LinkButton>
         </>
       );

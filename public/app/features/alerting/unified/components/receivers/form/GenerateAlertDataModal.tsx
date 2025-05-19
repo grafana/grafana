@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';
@@ -40,6 +40,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   const annotations = formMethods.watch('annotations');
   const labels = formMethods.watch('labels');
   const [status, setStatus] = useState<'firing' | 'resolved'>('firing');
+  const { t } = useTranslate();
 
   const onAdd = () => {
     const alert: TestTemplateAlert = {

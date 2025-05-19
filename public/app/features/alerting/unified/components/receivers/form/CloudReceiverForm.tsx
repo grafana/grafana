@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import {
   useCreateContactPoint,
@@ -52,6 +52,7 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
     }
     return cloudReceiverToFormValues(contactPoint, cloudNotifierTypes);
   }, [contactPoint]);
+  const { t } = useTranslate();
 
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);

@@ -13,8 +13,11 @@ function _debounce<T>(f: (...args: T[]) => void, timeout: number) {
   };
 }
 
+// Do not use window.self here, as it will not work in the worker context
+// eslint-disable-next-line no-restricted-globals
 self.onmessage = _debounce((e: MessageEvent<{ initial: Dashboard; changed: Dashboard }>) => {
   const result = detectDashboardChanges(e.data.initial, e.data.changed);
+  // eslint-disable-next-line no-restricted-globals
   self.postMessage(result);
 }, 500);
 

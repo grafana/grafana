@@ -1,5 +1,5 @@
+import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface UpdateAllButtonProps {
   disabled: boolean;
@@ -14,7 +14,7 @@ const UpdateAllButton = ({ disabled, onUpdateAll, updatablePluginsLength }: Upda
         <Trans i18nKey="plugins.catalog.no-updates-available">No updates available</Trans>
       ) : (
         <Trans i18nKey="plugins.catalog.update-all.button" values={{ length: updatablePluginsLength }}>
-          Update all ({{ length }})
+          Update all ({'{{length}}'})
         </Trans>
       )}
     </Button>

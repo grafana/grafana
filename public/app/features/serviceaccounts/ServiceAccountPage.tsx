@@ -3,10 +3,10 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
@@ -93,6 +93,8 @@ export const ServiceAccountPageUnconnected = ({
       fetchACOptions();
     }
   }, [loadServiceAccount, loadServiceAccountTokens, id]);
+
+  const { t } = useTranslate();
 
   const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
     updateServiceAccount(serviceAccount);

@@ -1,7 +1,9 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export function FederatedRuleWarning() {
+  const { t } = useTranslate();
+
   return (
     <Alert
       severity="info"

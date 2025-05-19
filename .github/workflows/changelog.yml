@@ -81,13 +81,13 @@ jobs:
           ref: main
           sparse-checkout: |
             .github/workflows
+            .github/actions
             CHANGELOG.md
             .nvmrc
             .prettierignore
             .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
-          persist-credentials: false
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -142,12 +142,12 @@ jobs:
       - name: "Commit changelog changes"
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
-        if: ${{ inputs.dry_run }} != true
+        if: inputs.dry_run != true
         run: git push
       - name: "Create changelog PR"
         run: >
           gh pr create \
-            --dry-run=${DRY_RUN} \
+            --dry-run="${DRY_RUN}" \
             --label "no-backport" \
             --label "no-changelog" \
             -B "${TARGET}" \

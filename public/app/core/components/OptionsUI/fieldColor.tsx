@@ -13,9 +13,8 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { ColorValueEditor } from './color';
 
@@ -24,6 +23,7 @@ type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSetting
 export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const colorMode = getFieldColorMode(value?.mode);
   const availableOptions = item.settings?.byValueSupport

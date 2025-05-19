@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
@@ -16,7 +17,7 @@ interface EditPaneHeaderProps {
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -78,6 +79,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             fill="outline"
             icon="trash-alt"
             tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            data-testid={selectors.components.EditPaneHeader.deleteButton}
           />
         )}
       </Stack>

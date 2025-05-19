@@ -5,6 +5,7 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { toggleMockApiAndReload } from 'app/mock-api-utils';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import {
@@ -55,6 +56,10 @@ export class KeybindingSrv {
 
     this.bind('c t', () => toggleTheme(false));
     this.bind('c r', () => toggleTheme(true));
+
+    if (process.env.NODE_ENV === 'development') {
+      this.bind('c m', () => toggleMockApiAndReload());
+    }
   }
 
   bindGlobalEsc() {

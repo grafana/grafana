@@ -21,7 +21,7 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterP
   return (
     <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
       <span>{label}</span>
-      {selected && <Icon name={icon} className={styles.icon} />}
+      {selected && <Icon name={icon} className={styles.icon} data-testid="filter-pill-icon" />}
     </button>
   );
 };

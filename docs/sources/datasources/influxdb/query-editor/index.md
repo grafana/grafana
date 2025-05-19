@@ -31,7 +31,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
     - pattern: /docs/grafana-cloud/
-      destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
   query-editor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors

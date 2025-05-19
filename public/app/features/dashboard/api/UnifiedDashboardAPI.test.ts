@@ -1,5 +1,8 @@
 import { Dashboard } from '@grafana/schema/dist/esm/index';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -12,6 +15,27 @@ import { K8sDashboardV2API } from './v2';
 
 jest.mock('./v1');
 jest.mock('./v2');
+
+let mockBackendSrvGet = {};
+
+// Mocking just for the sake of not importing the entire universe.
+// backendSrv.getFolderByUid is used in the v2 client
+jest.mock('app/core/services/backend_srv', () => {
+  return {
+    backendSrv: {},
+  };
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: jest.fn(() => {
+      return new Promise((resolve) => {
+        resolve(mockBackendSrvGet);
+      });
+    }),
+  }),
+}));
 
 describe('UnifiedDashboardAPI', () => {
   let api: UnifiedDashboardAPI;
@@ -45,6 +69,33 @@ describe('UnifiedDashboardAPI', () => {
       const result = await api.getDashboardDTO('123');
 
       expect(result).toBe(mockV2Response);
+      expect(v2Client.getDashboardDTO).toHaveBeenCalledWith('123');
+    });
+
+    it('should return v2 even if there is a conversion error', async () => {
+      const mockV2Response = {
+        spec: defaultDashboardV2Spec(),
+        status: {
+          conversion: {
+            failed: true,
+            storedVersion: 'v0alpha1',
+            error: 'backend conversion not yet implemented',
+          },
+        },
+        metadata: {
+          annotations: {},
+        },
+      };
+
+      v1Client.getDashboardDTO.mockRejectedValue(new DashboardVersionError('v2alpha1', 'Dashboard is V1 format'));
+      v2Client.getDashboardDTO.mockImplementation((params) => {
+        const actualClient = jest.requireActual('./v2').K8sDashboardV2API;
+        const client = new actualClient();
+        return client.getDashboardDTO(params);
+      });
+      mockBackendSrvGet = mockV2Response;
+      const result = await api.getDashboardDTO('123');
+      expect(result).toEqual(mockV2Response);
       expect(v2Client.getDashboardDTO).toHaveBeenCalledWith('123');
     });
   });

@@ -3,10 +3,10 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t, Trans } from 'app/core/internationalization';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -27,6 +27,8 @@ export const ScopesSelector = () => {
     services?.scopesSelectorService.stateObservable ?? new Observable(),
     services?.scopesSelectorService.state
   );
+
+  const { t } = useTranslate();
 
   if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;

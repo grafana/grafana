@@ -1,7 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 
+import { useTranslate } from '@grafana/i18n';
 import { Alert, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
@@ -14,6 +14,7 @@ export interface Props {
 
 export const DescendantCount = ({ selectedItems }: Props) => {
   const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
+  const { t } = useTranslate();
 
   return error ? (
     <Alert

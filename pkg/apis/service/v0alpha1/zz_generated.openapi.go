@@ -100,6 +100,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalNameList(ref common.ReferenceCallb
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

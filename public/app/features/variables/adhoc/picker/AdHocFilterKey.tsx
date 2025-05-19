@@ -1,8 +1,8 @@
 import { ReactElement } from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, SegmentAsync } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
@@ -16,6 +16,8 @@ interface Props {
 
 const MIN_WIDTH = 90;
 export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, allFilters }: Props) => {
+  const { t } = useTranslate();
+
   const loadKeys = () => fetchFilterKeys(datasource, filterKey, allFilters);
   const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, filterKey, allFilters);
 

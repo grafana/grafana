@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
 
@@ -13,6 +13,8 @@ interface Props {
 }
 
 export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: Props) => {
+  const { t } = useTranslate();
+
   const options = useMemo<Array<SelectableValue<GroupConditionItemType>>>(() => {
     const allOptions: Array<SelectableValue<GroupConditionItemType>> = [
       { label: t('dashboard.conditional-rendering.conditions.group.add.data', 'Query result'), value: 'data' },
@@ -32,7 +34,7 @@ export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: 
     }
 
     return allOptions;
-  }, [itemType, hasVariables]);
+  }, [itemType, hasVariables, t]);
 
   return (
     <ValuePicker

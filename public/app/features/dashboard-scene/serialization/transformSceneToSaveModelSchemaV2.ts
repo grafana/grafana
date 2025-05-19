@@ -117,7 +117,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2, true);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);

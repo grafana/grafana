@@ -60,11 +60,11 @@ jobs:
           # Check if user is in the allowed list
           for allowed_user in "${ALLOWED_USERS[@]}"; do
             if [ "$allowed_user" = "$USERNAME" ]; then
-              echo "user_allowed=true" >> $GITHUB_OUTPUT
+              echo "user_allowed=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           done
-          echo "user_allowed=false" >> $GITHUB_OUTPUT
+          echo "user_allowed=false" >> "$GITHUB_OUTPUT"
 
       # Convert the issue/PR number to a node ID for the GraphQL API
       - name: Get node ID for item

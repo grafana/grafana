@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DataSourcePluginCategory } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';
@@ -26,7 +26,7 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
   const handleClick = useCallback(() => {
     reportInteraction('connections_add_datasource_find_more_ds_plugins_clicked', {
       targetPath: moreDataSourcesLink,
-      path: location.pathname,
+      path: window.location.pathname,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
     });

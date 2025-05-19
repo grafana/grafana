@@ -1280,6 +1280,38 @@ func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTi
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 }
 
+func (a apiClient) UpdateNamespaceRules(t *testing.T, folder string, body *apimodels.UpdateNamespaceRulesRequest) (apimodels.UpdateNamespaceRulesResponse, int, string) {
+	t.Helper()
+
+	client := &http.Client{}
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(body)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
+
+	req, err := http.NewRequest(http.MethodPatch, u, &buf)
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	var m apimodels.UpdateNamespaceRulesResponse
+	if resp.StatusCode == http.StatusAccepted {
+		require.NoError(t, json.Unmarshal(b, &m))
+	}
+	return m, resp.StatusCode, string(b)
+}
+
 func sendRequestRaw(t *testing.T, req *http.Request) ([]byte, int, error) {
 	t.Helper()
 	client := &http.Client{}

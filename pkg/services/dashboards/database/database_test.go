@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -863,17 +862,6 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 		},
 	}
 
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-		CanSaveValue: true,
-		CanViewValue: true,
-		// CanEditValue is required to create library elements
-		CanEditValue: true,
-	})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
 	f0, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
 		Title:        "f0",
@@ -982,17 +970,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			},
 		},
 	}
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-		CanSaveValue: true,
-		CanViewValue: true,
-		// CanEditValue is required to create library elements
-		CanEditValue: true,
-	})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	f0, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,

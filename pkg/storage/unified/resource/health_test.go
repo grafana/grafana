@@ -3,7 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
-	sync "sync"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,11 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestHealthCheck(t *testing.T) {
 	t.Run("will return serving response when healthy", func(t *testing.T) {
-		stub := &diag{healthResponse: HealthCheckResponse_SERVING}
+		stub := &diag{healthResponse: resourcepb.HealthCheckResponse_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -27,7 +29,7 @@ func TestHealthCheck(t *testing.T) {
 	})
 
 	t.Run("will return not serving response when not healthy", func(t *testing.T) {
-		stub := &diag{healthResponse: HealthCheckResponse_NOT_SERVING}
+		stub := &diag{healthResponse: resourcepb.HealthCheckResponse_NOT_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -41,7 +43,7 @@ func TestHealthCheck(t *testing.T) {
 
 func TestHealthWatch(t *testing.T) {
 	t.Run("watch will return message when called", func(t *testing.T) {
-		stub := &diag{healthResponse: HealthCheckResponse_SERVING}
+		stub := &diag{healthResponse: resourcepb.HealthCheckResponse_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -58,7 +60,7 @@ func TestHealthWatch(t *testing.T) {
 	})
 
 	t.Run("watch will return error when context cancelled", func(t *testing.T) {
-		stub := &diag{healthResponse: HealthCheckResponse_NOT_SERVING}
+		stub := &diag{healthResponse: resourcepb.HealthCheckResponse_NOT_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -72,19 +74,19 @@ func TestHealthWatch(t *testing.T) {
 	})
 }
 
-var _ DiagnosticsServer = &diag{}
+var _ resourcepb.DiagnosticsServer = &diag{}
 
 type diag struct {
-	healthResponse HealthCheckResponse_ServingStatus
+	healthResponse resourcepb.HealthCheckResponse_ServingStatus
 	error          error
 }
 
-func (s *diag) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
+func (s *diag) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	if s.error != nil {
 		return nil, s.error
 	}
 
-	return &HealthCheckResponse{Status: s.healthResponse}, nil
+	return &resourcepb.HealthCheckResponse{Status: s.healthResponse}, nil
 }
 
 type fakeHealthWatchServer struct {

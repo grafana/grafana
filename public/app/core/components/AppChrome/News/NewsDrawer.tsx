@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Drawer, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
+import grotNewsSvg from 'img/grot-news.svg';
 
 import { NewsWrapper } from './NewsWrapper';
 
@@ -15,7 +16,7 @@ interface NewsContainerProps {
 
 export function NewsContainer({ onClose }: NewsContainerProps) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <Drawer
       title={
@@ -28,7 +29,7 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
             title={t('news.link-title', 'Go to Grafana labs blog')}
             className={styles.grot}
           >
-            <img src="public/img/grot-news.svg" alt="Grot reading news" />
+            <img src={grotNewsSvg} alt="Grot reading news" />
           </a>
           <div className={styles.actions}>
             <IconButton

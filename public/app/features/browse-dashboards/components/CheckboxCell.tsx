@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ManagerKind } from '../../apiserver/types';
 import { DashboardsTreeCellProps, SelectionState } from '../types';
@@ -15,6 +15,7 @@ export default function CheckboxCell({
   isSelected,
   onItemSelectionChange,
 }: DashboardsTreeCellProps) {
+  const { t } = useTranslate();
   const item = row.item;
 
   if (!isSelected) {

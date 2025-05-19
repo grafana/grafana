@@ -13,6 +13,7 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -26,7 +27,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
@@ -74,6 +74,7 @@ const ExistingSilenceEditor = () => {
     const filteredMatchers = silence.matchers?.filter((m) => m.name !== MATCHER_ALERT_RULE_UID);
     return getFormFieldsForSilence({ ...silence, matchers: filteredMatchers });
   }, [silence]);
+  const { t } = useTranslate();
 
   if (silenceId && getSilenceIsLoading) {
     return (
@@ -215,6 +216,7 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+  const { t } = useTranslate();
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
   return (

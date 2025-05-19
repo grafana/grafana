@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
@@ -177,24 +175,16 @@ describe('getDefaultManualRouting', () => {
     window.localStorage.clear();
   });
 
-  it('returns false if the feature toggle is not enabled', () => {
-    config.featureToggles.alertingSimplifiedRouting = false;
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns true if localStorage is not set', () => {
     expect(getDefautManualRouting()).toBe(true);
   });
 
-  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns false if localStorage is set to "false"', () => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     expect(getDefautManualRouting()).toBe(false);
   });
 
-  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns true if localStorage is set to any value other than "false"', () => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);

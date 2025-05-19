@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	alertingHttp "github.com/grafana/alerting/http"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -60,8 +59,6 @@ type alertmanager struct {
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 	orgID     int64
-
-	withAutogen bool
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -152,9 +149,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		decryptFn:           decryptFn,
 		stateStore:          stateStore,
 		logger:              l,
-
-		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
-		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
 	}
 
 	return am, nil
@@ -191,13 +185,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if am.withAutogen {
-				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-				if err != nil {
-					return err
-				}
-			}
-			_, err = am.applyConfig(cfg)
+			_, err = am.applyConfig(ctx, cfg, true)
 			return err
 		})
 		if err != nil {
@@ -230,14 +218,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if am.withAutogen {
-				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
-				if err != nil {
-					return err
-				}
-			}
-
-			_, err = am.applyConfig(cfg)
+			_, err = am.applyConfig(ctx, cfg, false) // fail if the autogen config is invalid
 			return err
 		})
 		if err != nil {
@@ -259,20 +240,26 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if am.withAutogen {
-			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-			if err != nil {
-				outerErr = err
-				return
-			}
-		}
 		// Note: Adding the autogen config here causes alert_configuration_history to update last_applied more often.
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
 		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
 		// autogen config, which may introduce cross-cutting complexity.
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
+		configChanged, err := am.applyConfig(ctx, cfg, true)
+		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
+		}
+
+		if !configChanged {
+			return
+		}
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.orgID,
+			ConfigurationHash: dbCfg.ConfigurationHash,
+		}
+		err = am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
+		if err != nil {
+			outerErr = fmt.Errorf("unable to mark configuration as applied: %w", err)
 		}
 	})
 
@@ -328,7 +315,12 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
+func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, skipInvalid bool) (bool, error) {
+	err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, skipInvalid)
+	if err != nil {
+		return false, err
+	}
+
 	// First, let's make sure this config is not already loaded
 	rawConfig, err := json.Marshal(cfg)
 	if err != nil {
@@ -363,24 +355,6 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 	return true, nil
 }
 
-// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
-	configChanged, err := am.applyConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	if configChanged {
-		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.orgID,
-			ConfigurationHash: hash,
-		}
-		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
-	}
-
-	return nil
-}
-
 func (am *alertmanager) AppURL() string {
 	return am.Settings.AppURL
 }
@@ -391,14 +365,13 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 	if err != nil {
 		return nil, err
 	}
-	s := &sender{am.NotificationService}
+	s := &emailSender{am.NotificationService}
 	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
 	integrations, err := alertingNotify.BuildReceiverIntegrations(
 		receiverCfg,
 		tmpl,
 		img,
 		LoggerFactory,
-		alertingHttp.DefaultClientConfiguration,
 		func(n receivers.Metadata) (receivers.EmailSender, error) {
 			return s, nil
 		},

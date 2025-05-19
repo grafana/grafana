@@ -446,6 +446,22 @@ describe('graphiteDatasource', () => {
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
+    it('should replace target placeholder when nesting query references with template variables', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['aMetricName'] } }]);
+      const originalTargetMap = {
+        A: '[[metric]]',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '[[metric]]' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
+      expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(aMetricName,sumSeries(aMetricName))'));
+    });
+
     it('should fix wrong minute interval parameters', () => {
       const originalTargetMap = {
         A: "summarize(prod.25m.count, '25m', 'sum')",

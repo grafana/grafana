@@ -5,11 +5,11 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -55,6 +55,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     },
     [variable, nameError]
   );
+
+  const { t } = useTranslate();
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
     if (!nameError) {

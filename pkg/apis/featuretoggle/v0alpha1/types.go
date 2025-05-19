@@ -56,7 +56,7 @@ type FeatureList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Feature `json:"items,omitempty"`
+	Items []Feature `json:"items"`
 }
 
 // FeatureToggles define the feature state
@@ -74,7 +74,7 @@ type FeatureTogglesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []FeatureToggles `json:"items,omitempty"`
+	Items []FeatureToggles `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

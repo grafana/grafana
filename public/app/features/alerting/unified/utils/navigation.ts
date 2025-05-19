@@ -51,9 +51,15 @@ export const rulesNav = {
   /**
    * Creates a link to the details page of a rule. Encodes the rules source name and rule identifier.
    */
-  detailsPageLink: (rulesSourceName: string, ruleIdentifier: RuleIdentifier, params?: QueryParams) =>
+  detailsPageLink: (
+    rulesSourceName: string,
+    ruleIdentifier: RuleIdentifier,
+    params?: QueryParams,
+    options?: { skipSubPath?: boolean }
+  ) =>
     createRelativeUrl(
       `/alerting/${encodeURIComponent(rulesSourceName)}/${encodeURIComponent(stringifyIdentifier(ruleIdentifier))}/view`,
-      params
+      params,
+      { skipSubPath: options?.skipSubPath }
     ),
 };

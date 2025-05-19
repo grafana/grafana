@@ -136,12 +136,23 @@ Interpolation result: 'test1.|test2'
 
 ### Raw
 
-The raw format for a data source variable returns the UID (unique identifier) of the data source, rather than its name.
+Doesn't apply any data source-specific formatting to the variable.
+
+For example, in this case, there's a dashboard with a Prometheus data source and a multi-value variable.
+Grafana typically converts the variable values as follows to accommodate Prometheus:
 
 ```bash
-datasourceVariable = 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
-String to interpolate: '${datasourceVariable:raw}'
-Interpolation result: 'd7bbe725-9e48-4af8-a0cb-6cb255d873a3'
+servers = ['test1.', 'test2']
+String to interpolate: '${servers}'
+Interpolation result: '(test1 | test2)'
+```
+
+Using the raw format, the values are returned without that formatting:
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:raw}'
+Interpolation result: 'test1,test2'
 ```
 
 ### Regex

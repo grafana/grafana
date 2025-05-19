@@ -12,8 +12,8 @@ import {
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -145,6 +145,7 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries, onQueriesValidationError]
   );
+  const { t } = useTranslate();
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
@@ -218,7 +219,7 @@ export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition, isRecordingRule = false }) => {
   const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
@@ -359,7 +360,7 @@ const Header: FC<HeaderProps> = ({
    * 3. "false": This means we're not editing either of those
    */
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
-
+  const { t } = useTranslate();
   const editing = editMode !== false;
   const editingRefId = editing && editMode === 'refId';
 

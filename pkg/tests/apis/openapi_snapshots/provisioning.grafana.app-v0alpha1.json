@@ -1131,6 +1131,9 @@
                 "schema": {
                   "description": "Information we can get just from the file listing",
                   "type": "object",
+                  "required": [
+                    "items"
+                  ],
                   "properties": {
                     "apiVersion": {
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2560,6 +2563,9 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2677,6 +2683,9 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoryList": {
         "description": "HistoryList is a list of versions of a resource",
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2750,6 +2759,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList": {
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -3056,6 +3068,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList": {
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -3336,6 +3351,9 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",

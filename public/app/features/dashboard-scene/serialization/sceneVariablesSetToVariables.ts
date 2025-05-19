@@ -1,5 +1,10 @@
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
+import {
+  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  MultiValueVariable,
+  SceneVariables,
+  sceneUtils,
+} from '@grafana/scenes';
 import {
   VariableModel,
   VariableRefresh as OldVariableRefresh,
@@ -18,6 +23,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -181,8 +187,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: variable.state.baseFilters,
-        filters: variable.state.filters,
+        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+        filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
     } else {
@@ -423,8 +429,8 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: variable.state.baseFilters || [],
-          filters: variable.state.filters,
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+          filters: validateFiltersOrigin(variable.state.filters),
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
         },
       };
@@ -435,4 +441,21 @@ export function sceneVariablesSetToSchemaV2Variables(
   }
 
   return variables;
+}
+
+function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  return (
+    filters?.map((filter) => {
+      const { origin: initialOrigin, ...restOfFilter } = filter;
+
+      if (initialOrigin === 'dashboard' || initialOrigin === 'scope') {
+        return {
+          ...restOfFilter,
+          origin: initialOrigin,
+        };
+      }
+
+      return restOfFilter;
+    }) || []
+  );
 }

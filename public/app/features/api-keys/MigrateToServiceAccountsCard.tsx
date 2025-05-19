@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onMigrate: () => void;
@@ -14,7 +14,7 @@ interface Props {
 export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled }: Props): JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const docsLink = (
     <a
       className="external-link"

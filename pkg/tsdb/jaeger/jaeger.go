@@ -59,7 +59,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		logger := logger.FromContext(ctx)
-		jaegerClient, err := New(settings.URL, httpClient, logger, jsonData.TraceIdTimeParams.Enabled)
+		jaegerClient, err := New(httpClient, logger, settings)
 		return &datasourceInfo{JaegerClient: jaegerClient}, err
 	}
 }

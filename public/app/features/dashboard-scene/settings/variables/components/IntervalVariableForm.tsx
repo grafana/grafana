@@ -3,8 +3,8 @@ import { ChangeEvent, FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
@@ -20,6 +20,7 @@ interface IntervalVariableFormProps {
   autoEnabled: boolean;
   autoMinInterval: string;
   autoStepCount: number;
+  inline?: boolean;
 }
 
 export function IntervalVariableForm({
@@ -31,20 +32,23 @@ export function IntervalVariableForm({
   autoEnabled,
   autoMinInterval,
   autoStepCount,
+  inline = false,
 }: IntervalVariableFormProps) {
   const STEP_OPTIONS = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map((count) => ({
     label: `${count}`,
     value: count,
   }));
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const stepCount = STEP_OPTIONS.find((option) => option.value === autoStepCount) ?? STEP_OPTIONS[0];
 
   return (
     <>
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.interval-variable-form.interval-options">Interval options</Trans>
-      </VariableLegend>
+      {!inline && (
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.interval-variable-form.interval-options">Interval options</Trans>
+        </VariableLegend>
+      )}
       <VariableTextField
         defaultValue={intervals}
         name="Values"

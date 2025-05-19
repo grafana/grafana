@@ -38,7 +38,9 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
   }
 
   onDismiss = () => {
-    if (this.state.panelRef) {
+    if (this.state.activeShare?.onDismiss) {
+      this.state.activeShare.onDismiss();
+    } else if (this.state.panelRef) {
       const dashboard = getDashboardSceneFor(this);
       dashboard.closeModal();
     } else {

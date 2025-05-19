@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Card, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export type FilterProgressState = 'searching' | 'done' | 'aborted';
 interface FilterStatusProps {
@@ -9,6 +9,8 @@ interface FilterStatusProps {
 }
 
 export function FilterStatus({ state, numberOfRules, onCancel }: FilterStatusProps) {
+  const { t } = useTranslate();
+
   return (
     <Card>
       <Text color="secondary">

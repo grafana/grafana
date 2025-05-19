@@ -12,9 +12,7 @@ import {
   ExternalAlertmanagersConnectionStatus,
   ExternalAlertmanagersStatusResponse,
   GrafanaAlertingConfiguration,
-  GrafanaManagedContactPoint,
   Matcher,
-  MuteTimeInterval,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
@@ -292,16 +290,6 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         }));
       },
       providesTags: ['ContactPointsStatus'],
-    }),
-    // Grafana Managed Alertmanager only
-    // TODO: Remove as part of migration to k8s API for receivers
-    getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
-      query: () => ({ url: '/api/v1/notifications/receivers' }),
-      providesTags: ['ContactPoint'],
-    }),
-    getMuteTimingList: build.query<MuteTimeInterval[], void>({
-      query: () => ({ url: '/api/v1/notifications/time-intervals' }),
-      providesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });

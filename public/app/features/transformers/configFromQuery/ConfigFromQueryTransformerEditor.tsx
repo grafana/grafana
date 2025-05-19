@@ -9,8 +9,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
@@ -21,7 +21,7 @@ export interface Props extends TransformerUIProps<ConfigFromQueryTransformOption
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const refIds = input
     .map((x) => x.refId)
     .filter((x) => x != null)

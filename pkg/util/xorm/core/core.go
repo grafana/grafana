@@ -34,6 +34,7 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
+	IsRandomID      bool
 	IsCreated       bool
 	IsUpdated       bool
 	IsDeleted       bool
@@ -1580,6 +1581,7 @@ type Table struct {
 	Indexes       map[string]*Index
 	PrimaryKeys   []string
 	AutoIncrement string
+	RandomID      string
 	Created       map[string]bool
 	Updated       string
 	Deleted       string
@@ -1694,6 +1696,9 @@ func (table *Table) AddColumn(col *Column) {
 	}
 	if col.IsAutoIncrement {
 		table.AutoIncrement = col.Name
+	}
+	if col.IsRandomID {
+		table.RandomID = col.Name
 	}
 	if col.IsCreated {
 		table.Created[col.Name] = true

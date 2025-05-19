@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { OnNodeUpdate } from './types';
 
@@ -35,6 +35,8 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
     500,
     [inputState.dirty, inputState.value]
   );
+
+  const { t } = useTranslate();
 
   if (anyChildExpanded) {
     return null;

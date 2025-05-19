@@ -1,8 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
+import { useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Dropdown, Icon, IconButton, LinkButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -57,6 +57,7 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
         }
       : skipToken
   );
+  const { t } = useTranslate();
 
   const isFederated = rulerRuleGroup ? isFederatedRuleGroup(rulerRuleGroup) : false;
   const isPluginProvided = rulerRuleGroup ? isPluginProvidedGroup(rulerRuleGroup) : false;
@@ -135,7 +136,7 @@ function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuPro
 
   const folderUid = groupIdentifier.namespace.uid;
   const { folder } = useFolder(folderUid);
-
+  const { t } = useTranslate();
   const canEdit = folder?.canSave && !isProvisioned && !isPluginProvided && canEditRules(GRAFANA_RULES_SOURCE_NAME);
 
   if (!canEdit) {

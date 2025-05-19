@@ -23,7 +23,8 @@ export const DefaultCell = (props: TableCellProps) => {
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const cellLinks = getCellLinks(field, row);
+  const hasLinks = cellLinks?.some((link) => link.href || link.onClick != null);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
 
@@ -79,7 +80,9 @@ export const DefaultCell = (props: TableCellProps) => {
   return (
     <div key={key} {...rest} className={cellStyle}>
       {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu
+          links={() => getCellLinks(field, row)?.filter((link) => link.href || link.onClick != null) || []}
+        >
           {(api) => {
             if (api.openMenu) {
               return (

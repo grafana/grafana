@@ -187,7 +187,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(sp[1])
 				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
+					return "", fmt.Errorf("%w %q: %w", sqleng.ErrInvalidPortSpecified, sp[1], err)
 				}
 
 				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
@@ -200,7 +200,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(dsInfo.URL[index+1:])
 				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
+					return "", fmt.Errorf("%w %q: %w", sqleng.ErrInvalidPortSpecified, dsInfo.URL[index+1:], err)
 				}
 
 				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
@@ -260,7 +260,7 @@ func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err e
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+		return sqleng.ErrToHealthCheckResult(err)
 	}
 	return dsHandler.CheckHealth(ctx, req)
 }

@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   isOpen: boolean;
@@ -8,6 +8,8 @@ interface Props {
 }
 
 export const UnlinkModal = ({ isOpen, onConfirm, onDismiss }: Props) => {
+  const { t } = useTranslate();
+
   return (
     <ConfirmModal
       title={t('dashboard-scene.unlink-modal.title-really-unlink-panel', 'Do you really want to unlink this panel?')}

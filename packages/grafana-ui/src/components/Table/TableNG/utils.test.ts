@@ -1781,18 +1781,18 @@ describe('TableNG utils', () => {
       const props = createMockProps(1, false, 0);
       const expandedRows: number[] = []; // No expanded rows
 
-      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
+      const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
 
-      expect(result).toBeNull();
+      expect(view).toBeNull();
     });
 
     it('renders child rows when parent is expanded', () => {
       const props = createMockProps(1, false, 0);
       const expandedRows: number[] = [0]; // Row 0 is expanded
 
-      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
+      const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
 
-      expect(result).not.toBeNull();
+      expect(view).not.toBeNull();
     });
 
     it('adds aria-expanded attribute to parent rows with nested data', () => {

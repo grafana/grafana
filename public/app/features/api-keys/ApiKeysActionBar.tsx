@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { FilterInput, InlineField } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   searchQuery: string;
@@ -8,6 +8,8 @@ interface Props {
 }
 
 export const ApiKeysActionBar = ({ searchQuery, disabled, onSearchChange }: Props) => {
+  const { t } = useTranslate();
+
   return (
     <div className="page-action-bar">
       <InlineField grow>

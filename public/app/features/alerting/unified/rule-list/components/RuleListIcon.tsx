@@ -29,13 +29,15 @@ const icons: Record<PromAlertingRuleState, IconName> = {
   [PromAlertingRuleState.Pending]: 'circle',
   [PromAlertingRuleState.Recovering]: 'exclamation-circle',
   [PromAlertingRuleState.Firing]: 'exclamation-circle',
+  [PromAlertingRuleState.Unknown]: 'question-circle',
 };
 
-const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning'> = {
+const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning' | 'info'> = {
   [PromAlertingRuleState.Inactive]: 'success',
   [PromAlertingRuleState.Pending]: 'warning',
   [PromAlertingRuleState.Recovering]: 'warning',
   [PromAlertingRuleState.Firing]: 'error',
+  [PromAlertingRuleState.Unknown]: 'info',
 };
 
 const stateNames: Record<PromAlertingRuleState, string> = {
@@ -43,6 +45,7 @@ const stateNames: Record<PromAlertingRuleState, string> = {
   [PromAlertingRuleState.Pending]: 'Pending',
   [PromAlertingRuleState.Firing]: 'Firing',
   [PromAlertingRuleState.Recovering]: 'Recovering',
+  [PromAlertingRuleState.Unknown]: 'Unknown',
 };
 
 const operationIcons: Record<RuleOperation, IconName> = {
