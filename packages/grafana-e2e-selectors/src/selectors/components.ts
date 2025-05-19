@@ -39,6 +39,12 @@ export const versionedComponents = {
     pasteRow: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-row',
     },
+    addTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-tab',
+    },
+    pasteTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
@@ -57,6 +63,9 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
+    },
+    backButton: {
+      '12.1.0': 'data-testid EditPaneHeader back',
     },
   },
   TimePicker: {

@@ -15,7 +15,7 @@ export const importV2Dashboard = ({ title }: ImportDashboardConfig) => {
   e2e.components.DashboardImportPage.submit().click();
 
   if (title) {
-    e2e.components.ImportDashboardForm.name().type(title);
+    e2e.components.ImportDashboardForm.name().clear().type(title);
   }
   e2e.components.ImportDashboardForm.submit().click();
 };

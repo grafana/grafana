@@ -36,6 +36,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             onClick={onGoBack}
             tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
             aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            data-testid={selectors.components.EditPaneHeader.backButton}
           />
         )}
         <Text>{elementInfo.typeName}</Text>
