@@ -24,5 +24,3 @@ export {
   getResolvedLanguage,
   initTranslations,
 } from '../i18n';
-
-export { initRegionalFormat } from '../dates';
