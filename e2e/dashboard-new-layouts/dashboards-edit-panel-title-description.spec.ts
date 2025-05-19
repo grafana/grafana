@@ -1,5 +1,7 @@
 import { e2e } from '../utils';
 
+import { flows } from './dashboard-edit-flows';
+
 const PAGE_UNDER_TEST = '5SdHCadmz/panel-tests-graph';
 
 describe('Dashboard', () => {
@@ -13,31 +15,17 @@ describe('Dashboard', () => {
 
     e2e.flows.scenes.toggleEditMode();
 
-    // Check that panel title is as expected
-    e2e.components.Panels.Panel.headerContainer()
-      .first()
-      .within(() => cy.get('h2').first().should('have.text', 'No Data Points Warning'));
+    const oldTitle = 'No Data Points Warning';
+    flows.firstPanelTitleShouldBe(oldTitle);
 
-    e2e.flows.scenes.selectPanel(/^No Data Points Warning$/);
-
-    // Change panel title
-    e2e.components.PanelEditor.OptionsPane.fieldInput('Title')
-      .should('have.value', 'No Data Points Warning')
-      .clear()
-      .type('New Panel Title');
-    e2e.components.PanelEditor.OptionsPane.fieldInput('Title').should('have.value', 'New Panel Title');
-
-    // Change panel description
     const newDescription = 'A description of this panel';
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description').within(() => {
-      cy.get('textarea').type(newDescription);
-      cy.get('textarea').should('have.value', newDescription);
-    });
+    flows.changePanelDescription(oldTitle, newDescription);
+
+    const newTitle = 'New Panel Title';
+    flows.changePanelTitle(oldTitle, newTitle);
 
     // Check that new title is reflected in panel header
-    e2e.components.Panels.Panel.headerContainer()
-      .first()
-      .within(() => cy.get('h2').should('have.text', 'New Panel Title'));
+    flows.firstPanelTitleShouldBe(newTitle);
 
     // Reveal description tooltip and check that its value is as expected
     const descriptionIcon = () => cy.get('[data-testid="title-items-container"] > span').first();
