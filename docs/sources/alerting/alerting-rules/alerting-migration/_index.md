@@ -28,7 +28,7 @@ Grafana provides an internal tool in Alerting which allows you to import Mimir a
 ## Before you begin
 
 The `alertingMigrationUI` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
-If you are importing recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
+To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 

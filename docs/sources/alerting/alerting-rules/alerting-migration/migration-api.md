@@ -22,7 +22,7 @@ You can convert data source-managed alert rules to Grafana-managed alert rules w
 
 ## Before you begin
 
-If you are importing recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
+To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To import data source-managed alert rules with Grafana Mimirtool, you need to have the Grafana Mimirtool command-line tool installed.
 
@@ -115,4 +115,4 @@ Additional configuration headers for more granular import control include the fo
 - `X-Grafana-Alerting-Alert-Rules-Paused` - Set to "true" to import alert rules in paused state.
 - `X-Grafana-Alerting-Target-Datasource-UID` - The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
 - `X-Grafana-Alerting-Folder-UID` - Enter the UID of the target destination folder for imported rules.
-- `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, allowing them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
+- `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
