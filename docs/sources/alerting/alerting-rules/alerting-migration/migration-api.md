@@ -9,6 +9,11 @@ title: Import data source-managed alert rules with Grafana Mimirtool
 menuTitle: API alert rules import
 weight: 601
 refs:
+  configure-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed alert rules with Grafana Mimirtool
@@ -17,7 +22,7 @@ You can convert data source-managed alert rules to Grafana-managed alert rules w
 
 ## Before you begin
 
-The `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
+To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To import data source-managed alert rules with Grafana Mimirtool, you need to have the Grafana Mimirtool command-line tool installed.
 
@@ -92,8 +97,7 @@ POST /convert/prometheus/config/v1/rules - Create/update multiple rule groups ac
 POST /convert/prometheus/config/v1/rules/<NamespaceTitle> - Create/update a single rule group in a namespace
 ```
 
-Post rules also require the following header:
-When posting rules:
+When posting rules, the following header is required:
 `X-Grafana-Alerting-Datasource-UID` - Supply the UID of the data source to use for queries.
 
 **Delete**
@@ -109,5 +113,6 @@ Additional configuration headers for more granular import control include the fo
 
 - `X-Grafana-Alerting-Recording-Rules-Paused` - Set to "true" to import recording rules in paused state.
 - `X-Grafana-Alerting-Alert-Rules-Paused` - Set to "true" to import alert rules in paused state.
-- `X-Grafana-Alerting-Target-Datasource-UID` - Enter the UID of the target data source.
+- `X-Grafana-Alerting-Target-Datasource-UID` - The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
 - `X-Grafana-Alerting-Folder-UID` - Enter the UID of the target destination folder for imported rules.
+- `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
