@@ -353,7 +353,18 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			var total *SearchResponseHitsTotal
 			err := dec.Decode(&total)
 			if err != nil {
-				return err
+				// It's possible that the user is using an older version of Elasticsearch (or one that doesn't return what is expected)
+				// Attempt to parse the total value as an integer in this case
+				totalInt := 0
+				err = dec.Decode(&totalInt)
+				if err == nil {
+					total = &SearchResponseHitsTotal{
+						Value: totalInt,
+					}
+				} else {
+					// Log the error but do not fail the query
+					backend.Logger.Debug("failed to decode total hits", "error", err)
+				}
 			}
 			sr.Hits.Total = total
 		default:
