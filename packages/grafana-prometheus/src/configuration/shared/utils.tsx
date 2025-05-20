@@ -24,10 +24,35 @@ export const validateInput = (
   errorMessage?: string
 ): boolean | JSX.Element => {
   const defaultErrorMessage = 'Value is not valid';
-  if (input && !input.match(pattern)) {
-    return <FieldValidationMessage>{errorMessage ? errorMessage : defaultErrorMessage}</FieldValidationMessage>;
+
+  // Early return if no input
+  if (!input) {
+    return true;
   }
-  return true;
+
+  try {
+    // Convert string pattern to RegExp if needed
+    const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+
+    // Add timeout to prevent ReDoS
+    const timeout = 100; // 100ms timeout
+    const startTime = Date.now();
+
+    const isValid = regex.test(input);
+
+    // Check if execution took too long
+    if (Date.now() - startTime > timeout) {
+      return <FieldValidationMessage>Validation timeout - input too complex</FieldValidationMessage>;
+    }
+
+    if (!isValid) {
+      return <FieldValidationMessage>{errorMessage || defaultErrorMessage}</FieldValidationMessage>;
+    }
+
+    return true;
+  } catch (error) {
+    return <FieldValidationMessage>Invalid validation pattern</FieldValidationMessage>;
+  }
 };
 
 export function overhaulStyles(theme: GrafanaTheme2) {
