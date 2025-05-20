@@ -137,7 +137,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
 
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
@@ -148,16 +147,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   return (
     <ButtonGroup className={styles.container}>
-      {hasAbsolute && (
-        <ToolbarButton
-          aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
-          variant={variant}
-          onClick={onMoveBackward}
-          icon="angle-left"
-          type="button"
-          narrow
-        />
-      )}
+      <ToolbarButton
+        aria-label={t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')}
+        variant={variant}
+        onClick={onMoveBackward}
+        icon="angle-left"
+        type="button"
+        narrow
+      />
 
       <Tooltip
         ref={buttonRef}
@@ -207,16 +204,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
       {timeSyncButton}
 
-      {hasAbsolute && (
-        <ToolbarButton
-          aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
-          onClick={onMoveForward}
-          icon="angle-right"
-          narrow
-          type="button"
-          variant={variant}
-        />
-      )}
+      <ToolbarButton
+        aria-label={t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')}
+        onClick={onMoveForward}
+        icon="angle-right"
+        narrow
+        type="button"
+        variant={variant}
+      />
 
       <Tooltip content={ZoomOutTooltip} placement="bottom">
         <ToolbarButton
