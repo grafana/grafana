@@ -44,25 +44,23 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
-      - name: Checkout security mirror repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ steps.generate_token.outputs.token }}
           repository: ${{ inputs.repository }}
-          fetch-depth: 0
-
-      - name: Configure git
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          ref: release-${{ inputs.version }}
 
       - name: Create security branch
         id: branch
-        run: |
-          SECURITY_BRANCH="${{ inputs.version }}+security-${{ inputs.security_branch_number }}"
-          git checkout -b "$SECURITY_BRANCH"
-          echo "branch=$SECURITY_BRANCH" >> "$GITHUB_OUTPUT"
+        uses: grafana/grafana-github-actions-go/create-security-branch@main
+        with:
+          version: ${{ inputs.version }}
+          security_branch_number: ${{ inputs.security_branch_number }}
+          repository: ${{ inputs.repository }}
+          token: ${{ steps.generate_token.outputs.token }}
 
       - name: Push security branch
         run: |
+          git checkout -b "${{ steps.branch.outputs.branch }}"
           git push origin "${{ steps.branch.outputs.branch }}"
