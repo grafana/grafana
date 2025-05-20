@@ -63,6 +63,7 @@ done
 export HOME="$GF_PATHS_HOME"
 
 if [ ! -z "${GF_INSTALL_PLUGINS}" ] && [ "${GF_INSTALL_PLUGINS_FORCE}" = "true" ]; then
+  echo "GF_INSTALL_PLUGINS is deprecated, please use GF_PLUGINS_PREINSTALL(for async) or GF_PLUGINS_PREINSTALL_SYNC(for sync) instead"
   OLDIFS=$IFS
   IFS=','
   for plugin in ${GF_INSTALL_PLUGINS}; do

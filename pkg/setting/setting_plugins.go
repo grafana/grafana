@@ -62,7 +62,7 @@ func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, 
 		matches := pluginRegex.FindStringSubmatch(trimmedEntry)
 
 		if matches == nil {
-			// No match found at all, skip this entry
+			cfg.Logger.Debug("No match found for entry: ", trimmedEntry)
 			continue
 		}
 
@@ -85,6 +85,8 @@ func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, 
 		}
 		if id != "" {
 			preinstallPluginsSync[id] = InstallPlugin{ID: id, Version: version, URL: url}
+		} else {
+			cfg.Logger.Debug("No ID found for entry: ", trimmedEntry, "matches: ", matches)
 		}
 	}
 }

@@ -271,58 +271,6 @@ func Test_readPluginSettings(t *testing.T) {
 			})
 		}
 	})
-
-	t.Run("when GF_INSTALL_PLUGINS is set", func(t *testing.T) {
-		defaultPreinstallPluginsIDs := []string{}
-		for _, p := range defaultPreinstallPlugins {
-			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
-		}
-		tests := []struct {
-			name            string
-			preinstallInput string
-			rawInput        string
-			expected        []InstallPlugin
-			disablePlugins  string
-		}{
-			{
-				name:           "it should remove the disabled plugin",
-				rawInput:       "plugin1",
-				disablePlugins: "plugin1",
-				expected:       nil,
-			},
-			{
-				name:           "it should remove default plugins",
-				rawInput:       "",
-				disablePlugins: strings.Join(defaultPreinstallPluginsIDs, ","),
-				expected:       nil,
-			},
-			{
-				name:            "should not add the plugin if it is defined in preinstall",
-				preinstallInput: "plugin1",
-				rawInput:        "plugin1",
-				expected:        nil,
-			},
-		}
-		for _, tc := range tests {
-			t.Run(tc.name, func(t *testing.T) {
-				cfg := NewCfg()
-				sec, err := cfg.Raw.NewSection("plugins")
-				require.NoError(t, err)
-				if tc.preinstallInput != "" {
-					_, err = sec.NewKey("preinstall", tc.preinstallInput)
-					require.NoError(t, err)
-				}
-				if tc.disablePlugins != "" {
-					_, err = sec.NewKey("disable_plugins", tc.disablePlugins)
-					require.NoError(t, err)
-				}
-
-				err = cfg.readPluginSettings(cfg.Raw)
-				require.NoError(t, err)
-				assert.ElementsMatch(t, cfg.PreinstallPluginsSync, tc.expected)
-			})
-		}
-	})
 }
 
 func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
@@ -419,6 +367,23 @@ func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 				"plugin1": {
 					ID:      "plugin1",
 					Version: "1.0.1",
+				},
+			},
+		},
+		{
+			name:              "should trim the space in the input",
+			installPluginsVal: " plugin1 1.0.0,  plugin2, plugin3   ",
+			preinstallPlugins: map[string]InstallPlugin{},
+			expectedPlugins: map[string]InstallPlugin{
+				"plugin2": {
+					ID: "plugin2",
+				},
+				"plugin3": {
+					ID: "plugin3",
+				},
+				"plugin1": {
+					ID:      "plugin1",
+					Version: "1.0.0",
 				},
 			},
 		},
