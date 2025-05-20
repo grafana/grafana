@@ -18,6 +18,20 @@ on:
       branch:
         description: The new security branch that was created
         value: ${{ jobs.main.outputs.branch }}
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: 'The version to create a security branch for (e.g., 12.0.1)'
+        required: true
+      security_branch_number:
+        type: string
+        description: 'The security branch number (e.g., 01)'
+        required: true
+      repository:
+        type: string
+        description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
+        required: true
 
 permissions:
   contents: write
