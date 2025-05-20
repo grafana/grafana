@@ -7373,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana-beroende",
       "installed-version": "{{versionNumber}} (installerad version)",
-      "last-updated": "Senast uppdaterad",
       "latest-compatible-version": "{{versionNumber}} (senaste kompatibla versionen)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Ingen versionshistorik hittades.",
       "version": "Version"
     }

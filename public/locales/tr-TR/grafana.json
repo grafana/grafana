@@ -7373,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana bağımlılığı",
       "installed-version": "{{versionNumber}} (yüklü sürüm)",
-      "last-updated": "Son güncelleme",
       "latest-compatible-version": "{{versionNumber}} (en son uyumlu sürüm)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Sürüm geçmişi bulunamadı.",
       "version": "Sürüm"
     }

@@ -7425,8 +7425,8 @@
     "version-list": {
       "grafana-dependency": "Závislost Grafany",
       "installed-version": "{{versionNumber}} (nainstalovaná verze)",
-      "last-updated": "Naposledy aktualizováno",
       "latest-compatible-version": "{{versionNumber}} (nejnovější kompatibilní verze)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Nebyla nalezena žádná historie verzí.",
       "version": "Verze"
     }

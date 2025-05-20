@@ -116,3 +116,18 @@ Additional configuration headers for more granular import control include the fo
 - `X-Grafana-Alerting-Target-Datasource-UID` - The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
 - `X-Grafana-Alerting-Folder-UID` - Enter the UID of the target destination folder for imported rules.
 - `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
+- `X-Grafana-Alerting-Notification-Settings` – JSON-encoded `AlertRuleNotificationSettings` object that allows setting the contact point for the alert rules.
+
+#### AlertRuleNotificationSettings object
+
+When you set `X-Grafana-Alerting-Notification-Settings`, the header value must be a JSON-encoded object with the following keys:
+
+| Field                   | Type       | Required | Example                                    | Description                                                                                             |
+| ----------------------- | ---------- | -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `receiver`              | `string`   | Yes      | `"grafana-default-email"`                  | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
+| `group_by`              | `[]string` | No       | `["alertname","grafana_folder","cluster"]` | Label set used by Alertmanager to aggregate alerts into a single notification.                          |
+| `group_wait`            | `duration` | No       | `"30s"`                                    | How long Alertmanager waits before sending the first notification for a new group.                      |
+| `group_interval`        | `duration` | No       | `"5m"`                                     | Time to wait before adding new alerts to an existing group's next notification.                         |
+| `repeat_interval`       | `duration` | No       | `"4h"`                                     | Minimum time before a previously-sent notification is repeated. Must not be less than `group_interval`. |
+| `mute_time_intervals`   | `[]string` | No       | `["maintenance"]`                          | One or more mute time interval names that silence alerts during those windows.                          |
+| `active_time_intervals` | `[]string` | No       | `["maintenance"]`                          | List of active time interval names. Alerts are suppressed unless the current time matches one of them.  |

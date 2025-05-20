@@ -749,12 +749,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_session (id, uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+			cloud_migration_session (uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
 		VALUES
-			(1,'qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(2,'asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(3,'zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(4,'zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+			('qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
@@ -766,12 +766,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
+			cloud_migration_snapshot (session_uid, uid, created, updated, status)
 		VALUES
-			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished');
 		`,
 	)
 	require.NoError(t, err)
