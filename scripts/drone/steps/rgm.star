@@ -4,22 +4,21 @@ These aren't used in releases.
 """
 
 load(
+    "scripts/drone/dagger.star",
+    "with_dagger_install",
+)
+load(
     "scripts/drone/utils/images.star",
     "images",
 )
 load(
     "scripts/drone/variables.star",
-    "golang_version",
     "dagger_version",
 )
 load(
     "scripts/drone/vault.star",
     "from_secret",
     "rgm_dagger_token",
-)
-load(
-    "scripts/drone/dagger.star",
-    "with_dagger_install",
 )
 
 def artifacts_cmd(artifacts = []):
@@ -56,7 +55,6 @@ def rgm_artifacts_step(
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
             cmd +
-            "--go-version={} ".format(golang_version) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
             "--ubuntu-base={} ".format(ubuntu) +
@@ -97,7 +95,6 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
             "-a docker:grafana:linux/arm/v7:ubuntu " +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--go-version={} ".format(golang_version) +
             "--ubuntu-base={} ".format(ubuntu) +
             "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +

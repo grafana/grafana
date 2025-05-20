@@ -3,6 +3,10 @@
 """
 
 load(
+    "scripts/drone/dagger.star",
+    "with_dagger_install",
+)
+load(
     "scripts/drone/events/release.star",
     "verify_release_pipeline",
 )
@@ -31,7 +35,6 @@ load(
 )
 load(
     "scripts/drone/variables.star",
-    "golang_version",
     "dagger_version",
 )
 load(
@@ -44,11 +47,6 @@ load(
     "rgm_downloads_destination",
     "rgm_gcp_key_base64",
     "rgm_storybook_destination",
-)
-
-load(
-    "scripts/drone/dagger.star",
-    "with_dagger_install",
 )
 
 docs_paths = {
@@ -353,7 +351,7 @@ def rgm_promotion_pipeline():
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
             "--grafana-repo=$${GRAFANA_REPO} " +
-            "--version=$${VERSION}"
+            "--version=$${VERSION}",
         ], dagger_version),
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
