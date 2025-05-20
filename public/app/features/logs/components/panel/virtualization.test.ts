@@ -13,6 +13,7 @@ const TWO_LINES_HEIGHT = 2 * LINE_HEIGHT + PADDING_BOTTOM;
 const THREE_LINES_HEIGHT = 3 * LINE_HEIGHT + PADDING_BOTTOM;
 let LETTER_WIDTH: number;
 let CONTAINER_SIZE = 200;
+let TWO_LINES_OF_CHARACTERS: number;
 
 describe('Virtualization', () => {
   let log: LogListModel, container: HTMLDivElement;
@@ -22,6 +23,7 @@ describe('Virtualization', () => {
     jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(CONTAINER_SIZE);
     init(createTheme());
     LETTER_WIDTH = measureTextWidth('e');
+    TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
   });
 
   describe('getLogLineSize', () => {
@@ -56,7 +58,6 @@ describe('Virtualization', () => {
     });
 
     test('Measures a multi-line log line with no displayed time', () => {
-      const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
       log = createLogLine({
         labels: { place: 'luna' },
         entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
@@ -68,7 +69,6 @@ describe('Virtualization', () => {
     });
 
     test('Measures a multi-line log line with level, controls, and displayed time', () => {
-      const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
       log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
 
       const size = getLogLineSize([log], container, [], { wrap: true, showTime: true, showDuplicates: false }, 0);
@@ -77,7 +77,6 @@ describe('Virtualization', () => {
     });
 
     test('Measures a multi-line log line with displayed fields', () => {
-      const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
       log = createLogLine({
         labels: { place: 'very very long value for the displayed field that causes a new line' },
         entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
@@ -96,7 +95,6 @@ describe('Virtualization', () => {
     });
 
     test('Measures displayed fields in a log line with level, controls, and displayed time', () => {
-      const TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 2;
       log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
 
       const size = getLogLineSize(
@@ -108,6 +106,33 @@ describe('Virtualization', () => {
       );
       // Only renders a short displayed field, so a single line
       expect(size).toBe(SINGLE_LINE_HEIGHT);
+    });
+
+    test('Measures a multi-line log line with duplicates', () => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
+      log.duplicates = 1;
+
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false, showDuplicates: true }, 0);
+      // Two lines for the log and one extra for duplicates
+      expect(size).toBe(THREE_LINES_HEIGHT);
+    });
+
+    test('Measures a multi-line log line with errors', () => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
+      log.hasError = true;
+
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false, showDuplicates: false }, 0);
+      // Two lines for the log and one extra for the error icon
+      expect(size).toBe(THREE_LINES_HEIGHT);
+    });
+
+    test('Measures a multi-line sampled log line', () => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') });
+      log.isSampled = true;
+
+      const size = getLogLineSize([log], container, [], { wrap: true, showTime: false, showDuplicates: false }, 0);
+      // Two lines for the log and one extra for the sampled icon
+      expect(size).toBe(THREE_LINES_HEIGHT);
     });
 
     test('Adds an extra line for the expand/collapse controls if present', () => {
