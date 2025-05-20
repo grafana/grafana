@@ -9,6 +9,7 @@ import {
   PrometheusLanguageProvider,
   removeQuotesIfExist,
 } from './lang_provider';
+import * as languageUtils from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
 // Mock the dependencies
@@ -19,6 +20,15 @@ jest.mock('./querybuilder/parsing', () => ({
       binaryQueries: expr.includes('binary') ? [{ query: { metric: `binary_${expr}` } }] : undefined,
     },
   })),
+}));
+
+// Mock language_utils
+jest.mock('./language_utils', () => ({
+  processHistogramMetrics: jest.fn((metrics: string[]) => metrics.filter((m: string) => m.includes('histogram'))),
+  getRangeSnapInterval: jest.fn(() => ({ start: 'start', end: 'end' })),
+  getClientCacheDurationInMinutes: jest.fn(() => 1),
+  fixSummariesMetadata: jest.fn((data) => data),
+  processSeries: jest.fn(() => ({ metrics: ['metric1', 'metric2'], labelKeys: ['label1', 'label2'] })),
 }));
 
 // Mock utf8_support
@@ -72,16 +82,34 @@ describe('PrometheusLanguageProvider', () => {
       expect(result.length).toBe(2); // Promise.all with 2 promises
     });
 
-    it('should return empty array if labels match API is not supported', async () => {
+    it('should use series endpoint if labels match API is not supported', async () => {
       datasource.hasLabelsMatchAPISupport = jest.fn().mockReturnValue(false);
 
       // Create a spy for fetchLabelValues
       jest.spyOn(provider, 'fetchLabelValues');
 
+      // Mock the series fetch and process
+      const mockSeries = [{ __name__: 'metric1', label1: 'value1' }];
+      jest.spyOn(provider, 'fetchSeries').mockResolvedValue(mockSeries);
+
+      // Mock the processSeries function to return specific values
+      const processSeriesMock = languageUtils.processSeries as jest.Mock;
+      processSeriesMock.mockReturnValue({
+        metrics: ['metric1', 'histogram_bucket'],
+        labelKeys: ['label1', 'label2'],
+      });
+
       const result = await provider.start(timeRange);
 
-      expect(result).toEqual([]);
       expect(provider.fetchLabelValues).not.toHaveBeenCalled();
+      expect(provider.fetchSeries).toHaveBeenCalledWith(timeRange, '{__name__!=""}', '40000');
+      expect(processSeriesMock).toHaveBeenCalledWith(mockSeries);
+
+      // Check that the metrics and labelKeys from processSeries are used
+      expect(provider.metrics).toEqual(['metric1', 'histogram_bucket']);
+      expect(provider.labelKeys).toEqual(['label1', 'label2']);
+      expect(provider.histogramMetrics).toContain('histogram_bucket'); // mock returns metrics with 'histogram' in the name
+      expect(result.length).toBe(1); // Promise.all with 1 promise (only fetchMetadata)
     });
   });
 
@@ -216,8 +244,8 @@ describe('PrometheusLanguageProvider', () => {
         {
           start: 'start',
           end: 'end',
-          limit: '40000',
           'match[]': 'test_metric',
+          limit: '40000',
         },
         expect.any(Object)
       );

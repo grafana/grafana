@@ -15,6 +15,7 @@ import {
   getClientCacheDurationInMinutes,
   getRangeSnapInterval,
   processHistogramMetrics,
+  processSeries,
 } from './language_utils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { DEFAULT_SERIES_LIMIT, METRICS_LABEL_KEY, PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
@@ -59,9 +60,10 @@ export class PrometheusLanguageProvider extends LanguageProvider {
 
     // Fallback to series endpoint
     const series = await this.fetchSeries(timeRange, '{__name__!=""}', DEFAULT_SERIES_LIMIT);
-    this.metrics = this.getMetricsFromSeries(series);
+    const { metrics, labelKeys } = processSeries(series);
+    this.metrics = metrics;
+    this.labelKeys = labelKeys;
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
-    this.labelKeys = this.getLabelKeysFromSeries(series);
     return Promise.all([this.fetchMetadata()]);
   };
 
