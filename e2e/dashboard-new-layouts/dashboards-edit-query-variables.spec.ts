@@ -1,4 +1,3 @@
-import { newResultsMock, newStringField } from '../cypress/fixtures/queryResults';
 import { e2e } from '../utils';
 
 import { flows, Variable } from './dashboard-edit-flows';
