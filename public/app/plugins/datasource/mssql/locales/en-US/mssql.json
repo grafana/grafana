@@ -38,7 +38,7 @@
   "cheat-sheet": {
     "condtional-macros": "Or build your own conditionals using these macros which just return the values:",
     "example-time-group": "Example of group by and order by with {{timeGroupMacro}}:",
-    "fillvalue": "by setting fillvalue grafana will fill in missing values according to the interval. fillvalue can be either a literal value, {{null}} or {{previous}}; {{previous}} will fill in the previous seen value or {{null}} if none has been seen yet",
+    "fillvalue": "by setting fillvalue Grafana will fill in missing values according to the interval. fillvalue can be either a literal value, {{null}} or {{previous}}; {{previous}} will fill in the previous seen value or {{null}} if none has been seen yet",
     "macros": "Macros:",
     "optional": "Optional:",
     "optional-tip": "return column named <1>{{columnName}}</1> to represent the series name.",

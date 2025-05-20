@@ -72,7 +72,7 @@ export function CheatSheet() {
           $__timeGroup(column, &apos;5m&apos;[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, &apos;1970-01-01&apos;,
           column)/300.0, 0) as bigint)*300{' '}
           <Trans i18nKey="cheat-sheet.fillvalue" values={{ null: 'NULL', previous: 'previous' }}>
-            by setting fillvalue grafana will fill in missing values according to the interval. fillvalue can be either
+            by setting fillvalue Grafana will fill in missing values according to the interval. fillvalue can be either
             a literal value, {'{{null}}'} or {'{{previous}}'}; {'{{previous}}'} will fill in the previous seen value or{' '}
             {'{{null}}'} if none has been seen yet
           </Trans>
