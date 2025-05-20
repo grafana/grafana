@@ -3,7 +3,7 @@ import { FieldValidationMessage } from '@grafana/ui';
 
 import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from '../constants';
 
-import { validateInput } from './ConfigEditor';
+import { validateInput } from './shared/utils';
 
 const VALID_URL_REGEX = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
 
