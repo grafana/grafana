@@ -24,6 +24,7 @@ interface Props {
 
 export const LogLineMenu = ({ log, styles }: Props) => {
   const {
+    enableLogDetails,
     detailsDisplayed,
     getRowContextQuery,
     onOpenContext,
@@ -73,14 +74,16 @@ export const LogLineMenu = ({ log, styles }: Props) => {
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
-        <Menu.Item
-          onClick={toggleLogDetails}
-          label={
-            detailsDisplayed(log)
-              ? t('logs.log-line-menu.show-details', 'Hide log details')
-              : t('logs.log-line-menu.hide-details', 'Show log details')
-          }
-        />
+        {enableLogDetails && (
+          <Menu.Item
+            onClick={toggleLogDetails}
+            label={
+              detailsDisplayed(log)
+                ? t('logs.log-line-menu.show-details', 'Hide log details')
+                : t('logs.log-line-menu.hide-details', 'Show log details')
+            }
+          />
+        )}
         {shouldlogSupportsContext && (
           <Menu.Item onClick={showContext} label={t('logs.log-line-menu.show-context', 'Show context')} />
         )}
@@ -98,19 +101,20 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       </Menu>
     ),
     [
-      toggleLogDetails,
+      copyLinkToLogLine,
+      copyLogLine,
       detailsDisplayed,
+      enableLogDetails,
       log,
-      t,
+      onPermalinkClick,
+      onPinLine,
+      onUnpinLine,
+      pinned,
       shouldlogSupportsContext,
       showContext,
-      pinned,
-      onPinLine,
+      t,
+      toggleLogDetails,
       togglePinning,
-      onUnpinLine,
-      copyLogLine,
-      onPermalinkClick,
-      copyLinkToLogLine,
     ]
   );
 

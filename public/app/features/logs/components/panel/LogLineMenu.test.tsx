@@ -115,5 +115,25 @@ describe('LogLineMenu', () => {
       await userEvent.click(screen.getByText('Unpin log'));
       expect(onUnpinLine).toHaveBeenCalledTimes(1);
     });
+
+    test('Allows to open log details', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={true}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      await screen.findByText('Show log details');
+    });
+
+    test('Does not show log details option when disabled', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={false}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.queryByText('Show log details')).not.toBeInTheDocument();
+    });
   });
 });
