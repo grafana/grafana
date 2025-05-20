@@ -1,8 +1,8 @@
 import { ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -34,7 +34,7 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));
-
+  const { t } = useTranslate();
   const defaultValues = amRouteToFormAmRoute(route);
   const {
     handleSubmit,

@@ -22,7 +22,7 @@ var (
 			Name:              "disableEnvelopeEncryption",
 			Description:       "Disable envelope encryption (emergency only)",
 			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaAsCodeSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			AllowSelfServe:    false,
 			Expression:        "false",
@@ -60,7 +60,7 @@ var (
 			Name:           "featureHighlights",
 			Description:    "Highlight Grafana Enterprise features",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAsCodeSquad,
+			Owner:          grafanaOperatorExperienceSquad,
 			AllowSelfServe: true,
 			Expression:     "false",
 		},
@@ -90,7 +90,7 @@ var (
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
-			Owner:       hostedGrafanaTeam,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:              "grpcServer",
@@ -232,7 +232,7 @@ var (
 			Name:              "renderAuthJWT",
 			Description:       "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAsCodeSquad,
+			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -380,7 +380,7 @@ var (
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -442,13 +442,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "wargamesTesting",
-			Description:  "Placeholder feature flag for internal testing",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        hostedGrafanaTeam,
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -623,12 +616,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "alertmanagerRemoteOnly",
-			Description: "Disable the internal Alertmanager and only use the external one defined.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:            "annotationPermissionUpdate",
 			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
 			Stage:           FeatureStageGeneralAvailability,
@@ -712,14 +699,6 @@ var (
 			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "alertingSimplifiedRouting",
-			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -897,6 +876,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesAggregatorCapTokenAuth",
+			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "expressionParser",
 			Description:     "Enable new expression parser",
 			Stage:           FeatureStageExperimental,
@@ -964,15 +950,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaOSSBigTent,
 			RequiresRestart: true,
-		},
-		{
-			Name:              "grafanaManagedRecordingRules",
-			Description:       "Enables Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
 		},
 		{
 			Name:           "queryLibrary",
@@ -1137,10 +1114,11 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:        "tableNextGen",
-			Description: "Allows access to the new react-data-grid based table component.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatavizSquad,
+			Name:         "tableNextGen",
+			Description:  "Allows access to the new react-data-grid based table component.",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
@@ -1591,13 +1569,12 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:              "grafanaManagedRecordingRulesDatasources",
-			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
+			Name:           "grafanaManagedRecordingRulesDatasources",
+			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Expression:     "false",
 		},
 		{
 			Name:         "infinityRunQueriesInParallel",
@@ -1616,13 +1593,12 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:              "alertingMigrationUI",
-			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
-			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
+			Name:         "alertingMigrationUI",
+			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+			FrontendOnly: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "unifiedStorageHistoryPruner",

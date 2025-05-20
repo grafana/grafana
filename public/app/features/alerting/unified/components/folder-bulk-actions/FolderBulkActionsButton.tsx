@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
@@ -21,7 +21,7 @@ interface Props {
 
 export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
-  const canPause = pauseSupported && pauseAllowed && false; // lets disable pause for now
+  const canPause = pauseSupported && pauseAllowed;
   const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
@@ -30,6 +30,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
+  const { t } = useTranslate();
   const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
   const view = listView2Enabled ? 'list' : 'grouped';
   const redirectToListView = useRedirectToListView(view);

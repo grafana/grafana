@@ -1,10 +1,10 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
 import { Alert, Badge, TextLink } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
 import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
 
-import { Trans } from '../../../core/internationalization';
 import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
