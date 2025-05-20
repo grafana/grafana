@@ -41,7 +41,7 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
@@ -82,7 +82,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 

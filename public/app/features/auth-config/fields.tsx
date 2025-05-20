@@ -405,11 +405,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: [
-        { value: 'AutoDetect', label: t('auth-config.field-map.label.auto-detect', 'AutoDetect') },
-        { value: 'InParams', label: t('auth-config.field-map.label.in-params', 'InParams') },
-        { value: 'InHeader', label: t('auth-config.field-map.label.in-header', 'InHeader') },
+        /* eslint-disable @grafana/no-untranslated-strings */
+        { value: 'AutoDetect', label: 'AutoDetect' },
+        { value: 'InParams', label: 'InParams' },
+        { value: 'InHeader', label: 'InHeader' },
       ],
-      defaultValue: { value: 'AutoDetect', label: t('auth-config.field-map.label.auto-detect', 'AutoDetect') },
+      defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
+      /* eslint-enable @grafana/no-untranslated-strings */
     },
     tokenUrl: {
       label: tokenURLLabel,
@@ -884,27 +886,20 @@ function orgMappingDescription(provider: string): string {
 
 function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
   // Other options are purposefully not translated
+  /* eslint-disable @grafana/no-untranslated-strings */
   switch (provider) {
     case 'azuread':
       return [
         { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
-        {
-          value: 'client_secret_post',
-          label: t('auth-config.client-authentication-options.label.client-secret', 'Client secret'),
-        },
-        {
-          value: 'managed_identity',
-          label: t('auth-config.client-authentication-options.label.managed-identity', 'Managed identity'),
-        },
+        { value: 'client_secret_post', label: 'Client secret' },
+        { value: 'managed_identity', label: 'Managed identity' },
       ];
     // Other providers ...
     default:
       return [
-        { value: 'none', label: t('auth-config.client-authentication-options.label.none', 'None') },
-        {
-          value: 'client_secret_post',
-          label: t('auth-config.client-authentication-options.label.client-secret', 'Client secret'),
-        },
+        { value: 'none', label: 'None' },
+        { value: 'client_secret_post', label: 'Client secret' },
       ];
   }
+  /* eslint-enable @grafana/no-untranslated-strings */
 }

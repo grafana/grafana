@@ -59,7 +59,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
         size: 1,
       },
     ],
-    [styles]
+    [styles, t]
   );
 
   const items = useMemo(

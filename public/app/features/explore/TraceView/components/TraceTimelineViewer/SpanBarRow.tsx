@@ -17,7 +17,6 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
@@ -40,7 +39,6 @@ const nameColumnClassName = 'nameColumn';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
   const animations = {
-    label: t('explore.get-styles.animations.label.flash', 'flash'),
     flash: keyframes`
     from {
       background-color: ${autoColor(theme, '#68b9ff')};

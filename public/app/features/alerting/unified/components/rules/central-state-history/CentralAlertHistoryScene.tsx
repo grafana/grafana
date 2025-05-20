@@ -139,7 +139,7 @@ export const CentralAlertHistoryScene = () => {
         ],
       }),
     });
-  }, []);
+  }, [t]);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);
