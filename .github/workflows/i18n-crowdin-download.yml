@@ -152,12 +152,12 @@ jobs:
         run: |
           filesChanged="$(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }})"
 
-          if [[ $(echo "$filesChanged" | grep -cv -e 'public/locales/[a-zA-Z\-]*/grafana.json' -e 'public/app/plugins/datasource/azuremonitor/locales/[a-zA-Z\-]*/grafana-azure-monitor-datasource.json') -ne 0 ]]; then
+          if [[ $(echo "$filesChanged" | grep -cv -e 'public/locales/[a-zA-Z\-]*/grafana.json' -e 'public/app/plugins/datasource/azuremonitor/locales/[a-zA-Z\-]*/grafana-azure-monitor-datasource.json' -e 'public/app/plugins/datasource/mssql/locales/[a-zA-Z\-]*/mssql.json') -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
             exit 1
           fi
 
-          if [[ $(echo "$filesChanged" | grep -c -e "public/locales/en-US" -e "public/app/plugins/datasource/azuremonitor/locales/en-US") -ne 0 ]]; then
+          if [[ $(echo "$filesChanged" | grep -c -e "public/locales/en-US" -e "public/app/plugins/datasource/azuremonitor/locales/en-US" -e "public/app/plugins/datasource/mssql/locales/en-US") -ne 0 ]]; then
             echo "en-US changes detected, not approving"
             exit 1
           fi
