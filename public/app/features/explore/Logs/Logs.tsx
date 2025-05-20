@@ -781,6 +781,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           return;
         }
         const allLevels = logLevelsRef.current ?? Object.keys(LogLevelColor).map(getLogLevelFromKey);
+        if (!allLevels.length) {
+          // Logs panel is disabled
+          return;
+        }
         if (hiddenLogLevels.length === 0) {
           toggleLegendRef.current?.(value[0], SeriesVisibilityChangeMode.ToggleSelection);
           setHiddenLogLevels(allLevels.filter((level) => level !== value[0]));
@@ -805,7 +809,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const filterLevels: LogLevel[] | undefined = useMemo(
     () =>
-      !logLevelsRef.current
+      !logLevelsRef.current || logLevelsRef.current.length === 0
         ? undefined
         : logLevelsRef.current.filter((level) => hiddenLogLevels.length > 0 && !hiddenLogLevels.includes(level)),
     [hiddenLogLevels]

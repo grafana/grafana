@@ -226,7 +226,6 @@ export const LogListContextProvider = ({
   }, [
     app,
     dedupStrategy,
-    displayedFields,
     logListState,
     pinnedLogs,
     showControls,
