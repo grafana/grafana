@@ -7347,8 +7347,8 @@
     "version-list": {
       "grafana-dependency": "Grafana 종속 관계",
       "installed-version": "{{versionNumber}}(설치된 버전)",
-      "last-updated": "마지막 업데이트",
       "latest-compatible-version": "{{versionNumber}}(호환되는 최신 버전)",
+      "latest-release-date": "",
       "no-version-history-was-found": "버전 이력을 찾을 수 없습니다.",
       "version": "버전"
     }
