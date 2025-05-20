@@ -166,7 +166,6 @@ function TreeItemList({
         return (
           <ScopesTreeItem
             key={childNode.scopeNodeId}
-            type={'selected'}
             treeNode={childNode}
             selected={selected}
             selectedScopes={selectedScopes}

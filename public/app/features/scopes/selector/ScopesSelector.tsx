@@ -64,7 +64,6 @@ export const ScopesSelector = () => {
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
       : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
-  console.log('selector tree', tree);
   return (
     <div className={styles.container}>
       <IconButton

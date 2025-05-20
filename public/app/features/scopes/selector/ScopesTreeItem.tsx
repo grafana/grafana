@@ -12,7 +12,6 @@ export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
   loadingNodeName: string | undefined;
   treeNode: TreeNode;
-  type: 'selected' | 'result';
   scopeNodes: NodesMap;
   selected: boolean;
   selectedScopes: SelectedScope[];
@@ -26,7 +25,6 @@ export function ScopesTreeItem({
   anyChildExpanded,
   loadingNodeName,
   treeNode,
-  type,
   onNodeUpdate,
   scopeNodes,
   selected,
@@ -42,6 +40,13 @@ export function ScopesTreeItem({
   }
 
   const scopeNode = scopeNodes[treeNode.scopeNodeId];
+  if (!scopeNode) {
+    // Should not happen as only way we show a tree is if we also load the nodes.
+    return null;
+  }
+  const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
+  const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
+
   const isSelectable = isNodeSelectable(scopeNode);
   const isExpandable = isNodeExpandable(scopeNode);
 
@@ -54,13 +59,13 @@ export function ScopesTreeItem({
     >
       <div className={cx(styles.title, isSelectable && !treeNode.expanded && styles.titlePadding)}>
         {isSelectable && !treeNode.expanded ? (
-          scopeNode.spec.disableMultiSelect ? (
+          disableMultiSelect ? (
             <RadioButtonDot
               id={treeNode.scopeNodeId}
               name={treeNode.scopeNodeId}
               checked={selected}
               label=""
-              data-testid={`scopes-tree-${type}-${treeNode.scopeNodeId}-radio`}
+              data-testid={`scopes-tree-${treeNode.scopeNodeId}-radio`}
               onClick={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
               }}
@@ -68,7 +73,7 @@ export function ScopesTreeItem({
           ) : (
             <Checkbox
               checked={selected}
-              data-testid={`scopes-tree-${type}-${treeNode.scopeNodeId}-checkbox`}
+              data-testid={`scopes-tree-${treeNode.scopeNodeId}-checkbox`}
               onChange={() => {
                 selected ? deselectScope(treeNode.scopeNodeId) : selectScope(treeNode.scopeNodeId);
               }}
@@ -79,7 +84,7 @@ export function ScopesTreeItem({
         {isExpandable ? (
           <button
             className={styles.expand}
-            data-testid={`scopes-tree-${type}-${treeNode.scopeNodeId}-expand`}
+            data-testid={`scopes-tree-${treeNode.scopeNodeId}-expand`}
             aria-label={treeNode.expanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')}
             onClick={() => {
               onNodeUpdate(treeNode.scopeNodeId, !treeNode.expanded, treeNode.query);
@@ -90,7 +95,7 @@ export function ScopesTreeItem({
             {scopeNode.spec.title}
           </button>
         ) : (
-          <span data-testid={`scopes-tree-${type}-${treeNode.scopeNodeId}-title`}>{scopeNode.spec.title}</span>
+          <span data-testid={`scopes-tree-${treeNode.scopeNodeId}-title`}>{scopeNode.spec.title}</span>
         )}
       </div>
 

@@ -231,12 +231,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // Apply the scopes right away even though we don't have the metadata yet.
-    this.updateState({ appliedScopes: scopes, loading: scopes.length > 0 });
+    this.updateState({ appliedScopes: scopes, selectedScopes: scopes, loading: scopes.length > 0 });
+
+    // Fetches both dashboards and scope navigations
+    // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
+    this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId));
 
     if (scopes.length > 0) {
-      // Fetches both dashboards and scope navigations
-      this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId));
-
       const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
       const newScopesState = { ...this.state.scopes };
       for (const scope of fetchedScopes) {
