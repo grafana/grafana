@@ -777,6 +777,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport-trigger.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/backport-workflow.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/create-security-branch.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-pr.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-comms.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-developer-enablement-squad
