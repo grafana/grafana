@@ -184,7 +184,6 @@ export class V1DashboardSerializer
       k8s: {
         ...this.metadata?.k8s,
         generation: result.version,
-        resourceVersion: result.version.toString(),
       },
     };
   }
@@ -393,7 +392,6 @@ export class V2DashboardSerializer
       this.metadata = {
         ...this.metadata,
         generation: result.version,
-        resourceVersion: result.version.toString(),
       };
     }
   }
