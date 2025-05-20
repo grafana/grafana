@@ -6776,7 +6776,8 @@
       "title": "Library panels"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "Explore AI and machine learning features",
+      "title": "AI & machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
