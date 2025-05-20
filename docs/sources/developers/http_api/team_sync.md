@@ -147,3 +147,63 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 - **404** - Team not found/Group not found
+
+## Search Team Groups
+
+`GET /api/teams/:teamId/groups/search`
+
+Search for team groups with pagination support.
+
+**Required permissions**
+
+| Action                 | Scope    |
+| ---------------------- | -------- |
+| teams.permissions:read | teams:\* |
+
+**Query Parameters**:
+
+| Parameter | Type    | Required | Default | Description                            |
+| --------- | ------- | -------- | ------- | -------------------------------------- |
+| name      | string  | Yes      | -       | Exact team name to match               |
+| query     | string  | No       | -       | Search term to match against group IDs |
+| page      | integer | No       | 1       | Page number for pagination             |
+| perpage   | integer | No       | 1000    | Number of items per page               |
+
+**Example Request**:
+
+```http
+GET /api/teams/1/groups/search?name=editors&query=group&page=1&perpage=10 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "totalCount": 1,
+    "teamGroups": [
+      {
+        "orgId": 1,
+        "teamId": 1,
+        "groupId": "cn=editors,ou=groups,dc=grafana,dc=org"
+      }
+    ],
+    "page": 1,
+    "perPage": 10
+  }
+]
+```
+
+Status Codes:
+
+- **200** - Ok
+- **400** - Bad Request (invalid team ID format or missing query parameter)
+- **401** - Unauthorized
+- **403** - Permission denied
+- **500** - Internal Server Error
