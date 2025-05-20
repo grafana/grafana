@@ -10,7 +10,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
 import { PromVisualQueryBinary } from '../types';
 
-import { getQueryBuilderComponent } from './shared/registry';
+import { BaseQueryBuilder } from './shared/BaseQueryBuilder';
 
 export interface NestedQueryProps {
   nestedQuery: PromVisualQueryBinary;
@@ -25,7 +25,6 @@ export interface NestedQueryProps {
 export const NestedQuery = memo<NestedQueryProps>((props) => {
   const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
-  const QueryBuilder = getQueryBuilderComponent();
 
   return (
     <div className={styles.card}>
@@ -77,7 +76,7 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
       </div>
       <div className={styles.body}>
         <EditorRows>
-          <QueryBuilder
+          <BaseQueryBuilder
             showExplain={showExplain}
             query={nestedQuery.query}
             datasource={datasource}
