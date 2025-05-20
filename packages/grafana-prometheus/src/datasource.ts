@@ -105,7 +105,7 @@ export class PrometheusDatasource
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
   metricNamesAutocompleteSuggestionLimit: number;
-  seriesEndpoint: boolean;
+  preferSeriesEndpoint: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -130,7 +130,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
-    this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
+    this.preferSeriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
@@ -161,8 +161,6 @@ export class PrometheusDatasource
 
   /**
    * Get target signature for query caching
-   * @param request
-   * @param query
    */
   getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
     const targExpr = this.interpolateString(query.expr);
@@ -171,10 +169,16 @@ export class PrometheusDatasource
     }`;
   }
 
+  /**
+   * Determines if the current datasource version supports matchers for the labels API based on
+   * the application's version and type.
+   *
+   * @return {boolean} True if the datasource version supports matchers for the labels API; otherwise, false.
+   */
   hasLabelsMatchAPISupport(): boolean {
     // users may choose the series endpoint as it has a POST method
     // while the label values is only GET
-    if (this.seriesEndpoint) {
+    if (this.preferSeriesEndpoint) {
       return false;
     }
 
