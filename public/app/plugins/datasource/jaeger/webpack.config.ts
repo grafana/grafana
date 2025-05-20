@@ -1,4 +1,9 @@
-import config from '@grafana/plugin-configs/webpack.config';
+import { createRequire } from 'node:module';
+
+// @ts-ignore - node needs the extension to strip types successfully
+import config from '@grafana/plugin-configs/webpack.config.ts';
+
+const require = createRequire(import.meta.url);
 
 const configWithFallback = async (env: Record<string, unknown>) => {
   const response = await config(env);
