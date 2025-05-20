@@ -46,9 +46,6 @@ type ListIterator interface {
 	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
-	ContinueTokenWithCurrentRV() string
-
 	// ResourceVersion of the current item
 	ResourceVersion() int64
 
@@ -101,6 +98,9 @@ type StorageBackend interface {
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
 	ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// ListHistory is like ListIterator, but it returns the history of a resource
+	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -808,7 +808,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}}, nil
 	}
 
-	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+	iterFunc := func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
@@ -827,13 +827,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
-				if req.Source == resourcepb.ListRequest_HISTORY || req.Source == resourcepb.ListRequest_TRASH {
-					// For history lists, we need to use the current RV in the continue token
-					// to ensure consistent pagination. The order depends on VersionMatch:
-					// - NotOlderThan: ascending order (oldest to newest)
-					// - Unset: descending order (newest to oldest)
-					t = iter.ContinueTokenWithCurrentRV()
-				}
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
@@ -841,7 +834,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}
 		}
 		return iter.Error()
-	})
+	}
+
+	var rv int64
+	switch req.Source {
+	case resourcepb.ListRequest_STORE:
+		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
+	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
+		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
+	}
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
