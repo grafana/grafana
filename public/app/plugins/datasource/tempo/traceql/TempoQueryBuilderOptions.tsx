@@ -36,7 +36,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
   ({ onChange, query, searchStreaming, metricsStreaming, app }) => {
     const styles = useStyles2(getStyles);
     const [isOpen, toggleOpen] = useToggle(false);
-    const isAlerting = app === CoreApp.UnifiedAlerting || app === CoreApp.CloudAlerting;
+    const isAlerting = app === CoreApp.UnifiedAlerting;
 
     if (!query.hasOwnProperty('limit')) {
       query.limit = DEFAULT_LIMIT;
