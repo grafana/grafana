@@ -40,12 +40,12 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
-      - name: Checkout source repository
+      - name: Checkout security mirror repository
         uses: actions/checkout@v4
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          repository: grafana/grafana
-          ref: release-${{ inputs.version }}
+          repository: grafana/grafana-security-mirror
+          fetch-depth: 0
 
       - name: Configure git
         run: |
@@ -59,7 +59,6 @@ jobs:
           git checkout -b "$SECURITY_BRANCH"
           echo "branch=$SECURITY_BRANCH" >> "$GITHUB_OUTPUT"
 
-      - name: Push to security mirror
+      - name: Push security branch
         run: |
-          git remote add security-mirror https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana-security-mirror.git
-          git push security-mirror "${{ steps.branch.outputs.branch }}"
+          git push origin "${{ steps.branch.outputs.branch }}"
