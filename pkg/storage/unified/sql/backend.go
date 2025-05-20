@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -36,7 +37,7 @@ const defaultPrunerHistoryLimit = 20
 
 type Backend interface {
 	resource.StorageBackend
-	resource.DiagnosticsServer
+	resourcepb.DiagnosticsServer
 	resource.LifecycleHooks
 }
 
@@ -218,7 +219,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
 					HistoryLimit: defaultPrunerHistoryLimit,
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Namespace: key.namespace,
 						Group:     key.group,
 						Resource:  key.resource,
@@ -260,14 +261,14 @@ func (b *backend) initPruner(ctx context.Context) error {
 	return nil
 }
 
-func (b *backend) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
+func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
 	if err := b.db.PingContext(ctx); err != nil {
 		return nil, err
 	}
 
-	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
+	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
 func (b *backend) Stop(_ context.Context) error {
@@ -277,7 +278,7 @@ func (b *backend) Stop(_ context.Context) error {
 
 // GetResourceStats implements Backend.
 func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceStats")
 	defer span.End()
 
 	req := &sqlStatsRequest{
@@ -313,11 +314,11 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
-	case resource.WatchEvent_ADDED:
+	case resourcepb.WatchEvent_ADDED:
 		return b.create(ctx, event)
-	case resource.WatchEvent_MODIFIED:
+	case resourcepb.WatchEvent_MODIFIED:
 		return b.update(ctx, event)
-	case resource.WatchEvent_DELETED:
+	case resourcepb.WatchEvent_DELETED:
 		return b.delete(ctx, event)
 	default:
 		return 0, fmt.Errorf("unsupported event type")
@@ -525,7 +526,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return rv, nil
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
@@ -558,7 +559,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 	return res
 }
 
-func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
@@ -570,7 +571,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 		return 0, fmt.Errorf("missing group or resource")
 	}
 
-	if req.Source != resource.ListRequest_STORE {
+	if req.Source != resourcepb.ListRequest_STORE {
 		return b.getHistory(ctx, req, cb)
 	}
 
@@ -584,75 +585,8 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 	return b.listLatest(ctx, req, cb)
 }
 
-type listIter struct {
-	rows    db.Rows
-	offset  int64
-	listRV  int64
-	sortAsc bool
-
-	// any error
-	err error
-
-	// The row
-	guid      string
-	rv        int64
-	value     []byte
-	namespace string
-	resource  string
-	group     string
-	name      string
-	folder    string
-}
-
-// ContinueToken implements resource.ListIterator.
-func (l *listIter) ContinueToken() string {
-	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) Error() error {
-	return l.err
-}
-
-func (l *listIter) Name() string {
-	return l.name
-}
-
-func (l *listIter) Namespace() string {
-	return l.namespace
-}
-
-func (l *listIter) Folder() string {
-	return l.folder
-}
-
-// ResourceVersion implements resource.ListIterator.
-func (l *listIter) ResourceVersion() int64 {
-	return l.rv
-}
-
-// Value implements resource.ListIterator.
-func (l *listIter) Value() []byte {
-	return l.value
-}
-
-// Next implements resource.ListIterator.
-func (l *listIter) Next() bool {
-	if l.rows.Next() {
-		l.offset++
-		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.resource, &l.group, &l.name, &l.folder, &l.value)
-		return true
-	}
-	return false
-}
-
-var _ resource.ListIterator = (*listIter)(nil)
-
 // listLatest fetches the resources from the resource table.
-func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatest")
 	defer span.End()
 
@@ -673,9 +607,9 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 
 		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
-			Request:     new(resource.ListRequest),
+			Request:     new(resourcepb.ListRequest),
 		}
-		listReq.Request = proto.Clone(req).(*resource.ListRequest)
+		listReq.Request = proto.Clone(req).(*resourcepb.ListRequest)
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
 		if rows != nil {
@@ -696,7 +630,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
-func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"listAtRevision")
 	defer span.End()
 
@@ -756,7 +690,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 }
 
 // readHistory fetches the resource history from the resource_history table.
-func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv int64) *resource.BackendReadResponse {
+func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, rv int64) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".ReadHistory")
 	defer span.End()
 
@@ -787,19 +721,19 @@ func (b *backend) readHistory(ctx context.Context, key *resource.ResourceKey, rv
 }
 
 // getHistory fetches the resource history from the resource_history table.
-func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"getHistory")
 	defer span.End()
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Key:         req.Options.Key,
-		Trash:       req.Source == resource.ListRequest_TRASH,
+		Trash:       req.Source == resourcepb.ListRequest_TRASH,
 	}
 
 	// We are assuming that users want history in ascending order
 	// when they are using NotOlderThan matching, and descending order
 	// for Unset (default) and Exact matching.
-	listReq.SortAscending = req.GetVersionMatchV2() == resource.ResourceVersionMatchV2_NotOlderThan
+	listReq.SortAscending = req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
 
 	iter := &listIter{}
 	if req.NextPageToken != "" {
@@ -813,7 +747,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	iter.sortAsc = listReq.SortAscending
 
 	// Set ExactRV when using Exact matching
-	if req.VersionMatchV2 == resource.ResourceVersionMatchV2_Exact {
+	if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact {
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -821,12 +755,12 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 	}
 
 	// Set MinRV when using NotOlderThan matching to filter at the database level
-	if req.ResourceVersion > 0 && req.VersionMatchV2 == resource.ResourceVersionMatchV2_NotOlderThan {
+	if req.ResourceVersion > 0 && req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
 		listReq.MinRV = req.ResourceVersion
 	}
 
 	// Ignore last deleted history record when listing the trash, using exact matching or not older than matching with a specific RV
-	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resource.ResourceVersionMatchV2_Exact
+	useLatestDeletionAsMinRV := listReq.MinRV == 0 && !listReq.Trash && req.VersionMatchV2 != resourcepb.ResourceVersionMatchV2_Exact
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -836,7 +770,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb 
 		}
 
 		if useLatestDeletionAsMinRV {
-			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resource.WatchEvent_DELETED)
+			latestDeletedRV, err := b.fetchLatestHistoryRV(ctx, tx, b.dialect, req.Options.Key, resourcepb.WatchEvent_DELETED)
 			if err != nil {
 				return err
 			}
@@ -914,7 +848,7 @@ func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqlte
 }
 
 // fetchLatestHistoryRV returns the current maximum RV in the resource_history table
-func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey, eventType resource.WatchEvent_Type) (int64, error) {
+func (b *backend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resourcepb.ResourceKey, eventType resourcepb.WatchEvent_Type) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"fetchLatestHistoryRV")
 	defer span.End()
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceHistoryReadLatestRV, sqlResourceHistoryReadLatestRVRequest{

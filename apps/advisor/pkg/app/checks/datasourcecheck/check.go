@@ -32,7 +32,6 @@ type check struct {
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
 	GrafanaVersion        string
-	pluginIndex           map[string]repo.PluginInfo
 }
 
 func New(
@@ -70,10 +69,18 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+	ds, err := c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		UID:   id,
 		OrgID: requester.GetOrgID(),
 	})
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			// The data source does not exist, skip the check
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ds, nil
 }
 
 func (c *check) ID() string {
@@ -81,15 +88,6 @@ func (c *check) ID() string {
 }
 
 func (c *check) Init(ctx context.Context) error {
-	compatOpts := repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, compatOpts)
-	if err != nil {
-		return err
-	}
-	c.pluginIndex = make(map[string]repo.PluginInfo)
-	for _, p := range plugins {
-		c.pluginIndex[p.Slug] = p
-	}
 	return nil
 }
 
@@ -102,8 +100,8 @@ func (c *check) Steps() []checks.Step {
 		},
 		&missingPluginStep{
 			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
 			GrafanaVersion: c.GrafanaVersion,
-			pluginIndex:    c.pluginIndex,
 		},
 	}
 }
@@ -221,8 +219,8 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 
 type missingPluginStep struct {
 	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
 	GrafanaVersion string
-	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (s *missingPluginStep) Title() string {
@@ -255,8 +253,14 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 			},
 		}
-		_, ok := s.pluginIndex[ds.Type]
-		if ok {
+		plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+			IncludeDeprecated: true,
+			Plugins:           []string{ds.Type},
+		}, repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
+		if err != nil {
+			return nil, err
+		}
+		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
 				Message: "Install plugin",

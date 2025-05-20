@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,11 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 type DashboardSearchClient struct {
-	resource.ResourceIndexClient
+	resourcepb.ResourceIndexClient
 	dashboardStore dashboards.Store
 	sorter         sort.Service
 }
@@ -64,7 +66,7 @@ func ParseSortName(sortName string) (string, bool, error) {
 }
 
 // nolint:gocyclo
-func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
+func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -147,17 +149,17 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			if err != nil {
 				return nil, err
 			}
-			list := &resource.ResourceSearchResponse{
-				Results: &resource.ResourceTable{},
-				Facet: map[string]*resource.ResourceSearchResponse_Facet{
+			list := &resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{},
+				Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 					"tags": {
-						Terms: []*resource.ResourceSearchResponse_TermFacet{},
+						Terms: []*resourcepb.ResourceSearchResponse_TermFacet{},
 					},
 				},
 			}
 
 			for _, tag := range tags {
-				list.Facet["tags"].Terms = append(list.Facet["tags"].Terms, &resource.ResourceSearchResponse_TermFacet{
+				list.Facet["tags"].Terms = append(list.Facet["tags"].Terms, &resourcepb.ResourceSearchResponse_TermFacet{
 					Term:  tag.Term,
 					Count: int64(tag.Count),
 				})
@@ -230,7 +232,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		}
 	}
 	searchFields := resource.StandardSearchFields()
-	columns := []*resource.ResourceTableColumnDefinition{
+	columns := []*resourcepb.ResourceTableColumnDefinition{
 		searchFields.Field(resource.SEARCH_FIELD_TITLE),
 		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 		searchFields.Field(resource.SEARCH_FIELD_TAGS),
@@ -238,14 +240,14 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	if sortByField != "" {
-		columns = append(columns, &resource.ResourceTableColumnDefinition{
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
 			Name: sortByField,
-			Type: resource.ResourceTableColumnDefinition_INT64,
+			Type: resourcepb.ResourceTableColumnDefinition_INT64,
 		})
 	}
 
-	list := &resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
+	list := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
 			Columns: columns,
 		},
 	}
@@ -284,7 +286,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				cells = append(cells, []byte("0"))
 			}
 
-			list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
+			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
@@ -321,7 +323,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
 		}
 
-		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
+		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
 			Cells: cells,
 		})
@@ -332,9 +334,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	return list, nil
 }
 
-func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string) *resource.ResourceKey {
+func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string) *resourcepb.ResourceKey {
 	if item.IsFolder {
-		return &resource.ResourceKey{
+		return &resourcepb.ResourceKey{
 			Namespace: namespace,
 			Group:     folders.GROUP,
 			Resource:  folders.RESOURCE,
@@ -342,7 +344,7 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 		}
 	}
 
-	return &resource.ResourceKey{
+	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     dashboard.GROUP,
 		Resource:  dashboard.DASHBOARD_RESOURCE,
@@ -379,7 +381,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 	return hitList
 }
 
-func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(req.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read namespace")
@@ -410,8 +412,8 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.Reso
 		return nil, err
 	}
 
-	return &resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
+	return &resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{
 				Group:    parts[0],
 				Resource: parts[1],

@@ -17,8 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
+
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const maxBatchSize = 1000
@@ -43,8 +45,8 @@ const (
 
 type BulkIndexItem struct {
 	Action IndexAction
-	Key    *ResourceKey       // Only used for delete actions
-	Doc    *IndexableDocument // Only used for index actions
+	Key    *resourcepb.ResourceKey // Only used for delete actions
+	Doc    *IndexableDocument      // Only used for index actions
 }
 
 type BulkIndexRequest struct {
@@ -59,13 +61,13 @@ type ResourceIndex interface {
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access types.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
+	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error)
 
 	// List within an response
-	ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error)
+	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountManagedObjects(ctx context.Context) ([]*CountManagedObjectsResponse_ResourceCount, error)
+	CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -122,8 +124,8 @@ type searchSupport struct {
 }
 
 var (
-	_ ResourceIndexServer      = (*searchSupport)(nil)
-	_ ManagedObjectIndexServer = (*searchSupport)(nil)
+	_ resourcepb.ResourceIndexServer      = (*searchSupport)(nil)
+	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics) (support *searchSupport, err error) {
@@ -166,14 +168,14 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	return support, err
 }
 
-func (s *searchSupport) ListManagedObjects(ctx context.Context, req *ListManagedObjectsRequest) (*ListManagedObjectsResponse, error) {
+func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
-		return &ListManagedObjectsResponse{
+		return &resourcepb.ListManagedObjectsResponse{
 			Error: NewBadRequestError("multiple pages not yet supported"),
 		}, nil
 	}
 
-	rsp := &ListManagedObjectsResponse{}
+	rsp := &resourcepb.ListManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -197,7 +199,7 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *ListManaged
 			return rsp, nil
 		}
 		if kind.NextPageToken != "" {
-			rsp.Error = &ErrorResult{
+			rsp.Error = &resourcepb.ErrorResult{
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -206,15 +208,15 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *ListManaged
 	}
 
 	// Sort based on path
-	slices.SortFunc(rsp.Items, func(a, b *ListManagedObjectsResponse_Item) int {
+	slices.SortFunc(rsp.Items, func(a, b *resourcepb.ListManagedObjectsResponse_Item) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
 	return rsp, nil
 }
 
-func (s *searchSupport) CountManagedObjects(ctx context.Context, req *CountManagedObjectsRequest) (*CountManagedObjectsResponse, error) {
-	rsp := &CountManagedObjectsResponse{}
+func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	rsp := &resourcepb.CountManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -249,7 +251,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *CountManag
 	}
 
 	// Sort based on manager/group/resource
-	slices.SortFunc(rsp.Items, func(a, b *CountManagedObjectsResponse_ResourceCount) int {
+	slices.SortFunc(rsp.Items, func(a, b *resourcepb.CountManagedObjectsResponse_ResourceCount) int {
 		return cmp.Or(
 			cmp.Compare(a.Kind, b.Kind),
 			cmp.Compare(a.Id, b.Id),
@@ -262,7 +264,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *CountManag
 }
 
 // Search implements ResourceIndexServer.
-func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
 	defer span.End()
 
@@ -273,7 +275,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 	}
 	idx, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
-		return &ResourceSearchResponse{
+		return &resourcepb.ResourceSearchResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
@@ -285,7 +287,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 		nsr.Resource = f.Resource
 		federate[i], err = s.getOrCreateIndex(ctx, nsr)
 		if err != nil {
-			return &ResourceSearchResponse{
+			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
 			}, nil
 		}
@@ -295,17 +297,17 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 }
 
 // GetStats implements ResourceServer.
-func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if req.Namespace == "" {
-		return &ResourceStatsResponse{
+		return &resourcepb.ResourceStatsResponse{
 			Error: NewBadRequestError("missing namespace"),
 		}, nil
 	}
-	rsp := &ResourceStatsResponse{}
+	rsp := &resourcepb.ResourceStatsResponse{}
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
-		rsp.Stats = make([]*ResourceStatsResponse_Stats, len(req.Kinds))
+		rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(req.Kinds))
 		for i, k := range req.Kinds {
 			parts := strings.SplitN(k, "/", 2)
 			index, err := s.getOrCreateIndex(ctx, NamespacedResource{
@@ -322,7 +324,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    parts[0],
 				Resource: parts[1],
 				Count:    count,
@@ -333,16 +335,16 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
-		return &ResourceStatsResponse{
+		return &resourcepb.ResourceStatsResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
-	rsp.Stats = make([]*ResourceStatsResponse_Stats, len(stats))
+	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(stats))
 
 	// When not filtered by folder or repository, we can use the results directly
 	if req.Folder == "" {
 		for i, stat := range stats {
-			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
 				Resource: stat.Resource,
 				Count:    stat.Count,
@@ -366,7 +368,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		rsp.Stats[i] = &ResourceStatsResponse_Stats{
+		rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 			Group:    stat.Group,
 			Resource: stat.Resource,
 			Count:    count,
@@ -450,7 +452,7 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 	)
 
 	switch evt.Type {
-	case WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED: // OK
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED: // OK
 	default:
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
@@ -547,10 +549,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
-		rv, err = s.storage.ListIterator(ctx, &ListRequest{
+		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
-			Options: &ListOptions{
-				Key: &ResourceKey{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
 					Resource:  nsr.Resource,
 					Namespace: nsr.Namespace,
@@ -566,7 +568,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				}
 
 				// Update the key name
-				key := &ResourceKey{
+				key := &resourcepb.ResourceKey{
 					Group:     nsr.Group,
 					Resource:  nsr.Resource,
 					Namespace: nsr.Namespace,
@@ -576,7 +578,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					s.log.Error("error building search document", "key", key.SearchID(), "err", err)
+					s.log.Error("error building search document", "key", SearchID(key), "err", err)
 					continue
 				}
 
@@ -703,19 +705,19 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 }
 
 // AsResourceKey converts the given namespace and type to a search key
-func AsResourceKey(ns string, t string) (*ResourceKey, error) {
+func AsResourceKey(ns string, t string) (*resourcepb.ResourceKey, error) {
 	if ns == "" {
 		return nil, fmt.Errorf("missing namespace")
 	}
 	switch t {
 	case "folders", "folder":
-		return &ResourceKey{
+		return &resourcepb.ResourceKey{
 			Namespace: ns,
 			Group:     folders.GROUP,
 			Resource:  folders.RESOURCE,
 		}, nil
 	case "dashboards", "dashboard":
-		return &ResourceKey{
+		return &resourcepb.ResourceKey{
 			Namespace: ns,
 			Group:     dashboardv1.GROUP,
 			Resource:  dashboardv1.DASHBOARD_RESOURCE,
@@ -723,7 +725,7 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 
 	// NOT really supported in the dashboard search UI, but useful for manual testing
 	case "playlist", "playlists":
-		return &ResourceKey{
+		return &resourcepb.ResourceKey{
 			Namespace: ns,
 			Group:     "playlist.grafana.app",
 			Resource:  "playlists",
