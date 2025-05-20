@@ -1,9 +1,9 @@
-name: Add issues and PRs to Skye project board
+name: Add issues to Skye project board
 on:
   workflow_dispatch:
     inputs:
       manual_issue_number:
-        description: 'Issue/PR number to add to project'
+        description: 'Issue to add to project'
         required: false
         type: number
   # Ideally we could trigger this for PRs as well, but getting the secrets on that is tricky
@@ -56,7 +56,7 @@ jobs:
         run: |
           echo "user_allowed=${USER_IS_ALLOWED}" >> "$GITHUB_OUTPUT"
 
-      # Convert the issue/PR number to a node ID for the GraphQL API
+      # Convert the issue to a node ID for the GraphQL API
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
@@ -78,7 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-      # Finally, add the issue/PR to the project board
+      # Finally, add the issue to the project board
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
         uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32
