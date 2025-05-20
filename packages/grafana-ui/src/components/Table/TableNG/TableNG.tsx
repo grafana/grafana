@@ -48,6 +48,7 @@ import {
   getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
+  getDisplayedValue,
   getDisplayName,
   getFooterItemNG,
   getFooterStyles,
@@ -278,16 +279,6 @@ export function TableNG(props: TableNGProps) {
       return rows;
     }
 
-    // Helper function to get displayed value
-    const getDisplayedValue = (row: TableRow, key: string) => {
-      const field = props.data.fields.find((field) => getDisplayName(field) === key);
-      if (!field || !field.display) {
-        return '';
-      }
-      const displayedValue = formattedValueToString(field.display(row[key]));
-      return displayedValue;
-    };
-
     // Update crossFilterOrder
     const filterKeys = new Set(filterValues.map(([key]) => key));
     filterKeys.forEach((key) => {
@@ -308,7 +299,10 @@ export function TableNG(props: TableNGProps) {
       return processNestedTableRows(rows, (parents) =>
         parents.filter((row) => {
           for (const [key, value] of filterValues) {
-            const displayedValue = getDisplayedValue(row, key);
+            const displayedValue = getDisplayedValue(row, key, props.data.fields);
+            if (displayedValue === null) {
+              return false;
+            }
             if (!value.filteredSet.has(displayedValue)) {
               return false;
             }
@@ -327,7 +321,10 @@ export function TableNG(props: TableNGProps) {
     // Regular filtering for non-nested tables
     return rows.filter((row) => {
       for (const [key, value] of filterValues) {
-        const displayedValue = getDisplayedValue(row, key);
+        const displayedValue = getDisplayedValue(row, key, props.data.fields);
+        if (displayedValue === null) {
+          return false;
+        }
         if (!value.filteredSet.has(displayedValue)) {
           return false;
         }
