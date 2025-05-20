@@ -19,8 +19,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -37,14 +39,18 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	storage        contracts.SecureValueMetadataStorage
+	secretService  *service.SecretService
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, resource utils.ResourceInfo) *SecureValueRest {
-	return &SecureValueRest{storage, resource, resource.TableConverter()}
+func NewSecureValueRest(secretService *service.SecretService, resource utils.ResourceInfo) *SecureValueRest {
+	return &SecureValueRest{
+		secretService:  secretService,
+		resource:       resource,
+		tableConverter: resource.TableConverter(),
+	}
 }
 
 // New returns an empty `*SecureValue` that is used by the `Create` method.
@@ -82,7 +88,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.storage.List(ctx, xkube.Namespace(namespace))
+	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
@@ -114,13 +120,13 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
-func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *SecureValueRest) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{})
+	sv, err := s.secretService.Read(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -153,7 +159,7 @@ func (s *SecureValueRest) Create(
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	createdSecureValueMetadata, err := s.storage.Create(ctx, sv, user.GetUID())
+	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv, user.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value %+w", err)
 	}
@@ -201,8 +207,7 @@ func (s *SecureValueRest) Update(
 		return nil, false, fmt.Errorf("missing auth info in context")
 	}
 
-	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValueMetadata, err := s.storage.Update(ctx, newSecureValue, user.GetUID())
+	updatedSecureValueMetadata, _, err := s.secretService.Update(ctx, newSecureValue, user.GetUID())
 	if err != nil {
 		return updatedSecureValueMetadata, false, fmt.Errorf("updating secure value metadata: %+w", err)
 	}
@@ -217,7 +222,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	if err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, false, s.resource.NewNotFound(name)
 		}
