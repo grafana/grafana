@@ -15,8 +15,32 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-prometheus"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/cjs/index.d.cts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "types": "./dist/esm/index.d.ts"
+    },
+    "./language_provider": {
+      "import": "./dist/esm/language_provider.mjs",
+      "types": "./dist/esm/language_provider.d.ts"
+    },
+    "./language_utils": {
+      "import": "./dist/esm/language_utils.mjs",
+      "types": "./dist/esm/language_utils.d.ts"
+    },
+    "./querybuilder/*": {
+      "import": "./dist/esm/querybuilder/*.mjs",
+      "types": "./dist/esm/querybuilder/*.d.ts"
+    },
+    "./utf8_support": {
+      "import": "./dist/esm/utf8_support.mjs",
+      "types": "./dist/esm/utf8_support.d.ts"
+    }
+  },
   "files": [
     "./dist",
     "./README.md",
