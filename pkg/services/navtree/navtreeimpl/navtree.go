@@ -231,8 +231,8 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		// setup guide (a submenu item under Home)
 		children = append(children, &navtree.NavLink{
 			Id:         "home-setup-guide",
-			Text:       "Setup guide",
-			Url:        homeUrl + "/setup-guide",
+			Text:       "Getting Started Guide",
+			Url:        "/a/grafana-setupguide-app/getting-started",
 			SortWeight: navtree.WeightHome,
 		})
 		homeNode.Children = children
