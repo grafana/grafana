@@ -33,11 +33,16 @@ describe('Dashboard edit - Query variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton().should('be.visible').click();
     // select a core data source that just runs a query during preview
     e2e.components.DataSourcePicker.container().should('be.visible').click();
+
+    // spy on the API call to get the query options
+    cy.intercept('GET', '/api/datasources/**').as('getOptions');
+
     const dataSource = 'gdev-cloudwatch';
+    // this will trigger an API call to get the query options
     cy.contains(dataSource).scrollIntoView().should('be.visible').click();
+    // wait for the API call to finish
+    cy.wait('@getOptions');
     // show the preview of the query results
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton().should('be.visible').click();
-    // TODO: for some reason we have to click the preview button twice to get the query results ( only in this test )
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton().should('be.visible').click();
     // assert the query results are shown
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('be.visible');
