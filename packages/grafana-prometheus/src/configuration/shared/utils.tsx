@@ -24,15 +24,26 @@ export const validateInput = (
   errorMessage?: string
 ): boolean | JSX.Element => {
   const defaultErrorMessage = 'Value is not valid';
+  const MAX_INPUT_LENGTH = 1000; // Reasonable limit for most validation cases
 
   // Early return if no input
   if (!input) {
     return true;
   }
 
+  // Check input length
+  if (input.length > MAX_INPUT_LENGTH) {
+    return <FieldValidationMessage>Input is too long</FieldValidationMessage>;
+  }
+
   try {
     // Convert string pattern to RegExp if needed
-    const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+    let regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+
+    // Ensure pattern is properly anchored to prevent catastrophic backtracking
+    if (typeof pattern === 'string' && !pattern.startsWith('^') && !pattern.endsWith('$')) {
+      regex = new RegExp(`^${pattern}$`);
+    }
 
     // Add timeout to prevent ReDoS
     const timeout = 100; // 100ms timeout
