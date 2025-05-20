@@ -624,6 +624,7 @@ describe('DashboardSceneSerializer', () => {
                       value: 'region',
                     },
                   ],
+                  allowCustomValue: true,
                 },
               },
             ],
@@ -822,6 +823,7 @@ describe('DashboardSceneSerializer', () => {
               options: [],
               query: 'app1',
               skipUrlSync: false,
+              allowCustomValue: true,
             },
           },
         ]);
@@ -1293,6 +1295,7 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
             query: 'app1',
             allValue: '',
             includeAll: false,
+            allowCustomValue: true,
           },
         },
       ],

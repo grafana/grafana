@@ -212,6 +212,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "QueryVariable",
       "spec": {
         "allValue": "*",
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -245,6 +246,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "CustomVariable",
       "spec": {
         "allValue": "All",
+        "allowCustomValue": true,
         "current": {
           "text": "option1",
           "value": "option1",
@@ -274,6 +276,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "DatasourceVariable",
       "spec": {
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -389,6 +392,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "condition": "AND",
