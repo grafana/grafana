@@ -67,11 +67,6 @@ func TransformInstantMetricsResponse(query *dataquery.TempoQuery, resp tempopb.Q
 	for i, series := range resp.Series {
 		name, labels := transformLabelsAndGetName(series.Labels)
 
-		labelKeys := make([]string, 0, len(labels))
-		for key := range labels {
-			labelKeys = append(labelKeys, key)
-		}
-
 		timeField := data.NewField("time", nil, []time.Time{})
 		valueField := data.NewField("value", labels, []float64{})
 		valueField.Config = &data.FieldConfig{
