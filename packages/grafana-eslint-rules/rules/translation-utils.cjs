@@ -90,22 +90,21 @@ function canBeFixed(node, context) {
 
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
-  if (node.type === AST_NODE_TYPES.JSXAttribute) {
-    if (!parentMethod) {
+  if (!parentMethod && (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property)) {
+    return false;
+  }
+
+  // If we're going to try and fix using `t`, and it already exists in the scope,
+  // but not from `useTranslate`, then we can't fix/provide a suggestion
+  if (node.type === AST_NODE_TYPES.Property || node.type === AST_NODE_TYPES.JSXAttribute) {
+    const hasTDeclaration = getTDeclaration(parentMethod, context);
+    const hasUseTranslateDeclaration = methodHasUseTranslate(parentMethod, context);
+    if (hasTDeclaration && !hasUseTranslateDeclaration) {
       return false;
     }
   }
   if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
     return isStringLiteral(node.value.expression);
-  }
-
-  // We can only fix JSX attribute strings that are within a function,
-  // otherwise the `t` function call will be made too early
-  if (
-    node.type === AST_NODE_TYPES.JSXAttribute &&
-    (!parentMethod || node.value?.type === AST_NODE_TYPES.JSXExpressionContainer)
-  ) {
-    return false;
   }
 
   const values =
@@ -140,7 +139,7 @@ function canBeFixed(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/features\/([^/]+)/);
+  const match = filename.match(/public\/app\/features\/(.+?)\//);
   if (match) {
     return match[1];
   }
@@ -232,13 +231,21 @@ function getComponentNames(node, context) {
 }
 
 /**
- * Checks if a method has a variable declaration of `t`
- * that came from a `useTranslate` call
- * @param {Node} method The node
+ * @param {Node|undefined} method The node
  * @param {RuleContextWithOptions} context
  */
-function methodHasUseTranslate(method, context) {
-  const tDeclaration = method ? context.sourceCode.getScope(method).variables.find((v) => v.name === 't') : null;
+function getTDeclaration(method, context) {
+  return method ? context.sourceCode.getScope(method).variables.find((v) => v.name === 't') : null;
+}
+
+/**
+ * Checks if a node has a variable declaration of `t`
+ * that came from a `useTranslate` call
+ * @param {Node|undefined} node The node
+ * @param {RuleContextWithOptions} context
+ */
+function methodHasUseTranslate(node, context) {
+  const tDeclaration = getTDeclaration(node, context);
   return (
     tDeclaration &&
     tDeclaration.defs.find((definition) => {
@@ -394,9 +401,10 @@ const getUseTranslateFixer = (node, fixer, context) => {
   if (!returnStatementIsJsx) {
     return;
   }
+  const tDeclarationExists = getTDeclaration(parentMethod, context);
   const useTranslateExists = methodHasUseTranslate(parentMethod, context);
 
-  if (useTranslateExists) {
+  if (tDeclarationExists && useTranslateExists) {
     return;
   }
 
