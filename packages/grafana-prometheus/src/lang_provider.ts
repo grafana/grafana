@@ -1,4 +1,12 @@
-import { getDefaultTimeRange, LanguageProvider, TimeRange } from '@grafana/data';
+import {
+  AdHocVariableFilter,
+  getDefaultTimeRange,
+  LanguageProvider,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
+  TimeRange,
+} from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { PrometheusDatasource } from './datasource';
@@ -50,11 +58,11 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     }
 
     // Fallback to series endpoint
-    // fetch series in given time range
-    // fetch metrics metadata
-    // extract histogram metrics and sort
-    // extract labels
-    return Promise.all([]);
+    const series = await this.fetchSeries(timeRange, '{__name__!=""}', DEFAULT_SERIES_LIMIT);
+    this.metrics = this.getMetricsFromSeries(series);
+    this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
+    this.labelKeys = this.getLabelKeysFromSeries(series);
+    return Promise.all([this.fetchMetadata()]);
   };
 
   // TODO check if we need defaultValue and return it
@@ -85,6 +93,10 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     );
     this.metricsMetadata = fixSummariesMetadata(metadata);
   };
+
+  // ===================================
+  // Labels API
+  // ===================================
 
   fetchLabelKeys = async (
     timeRange: TimeRange,
@@ -122,14 +134,90 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     return value ?? [];
   };
 
+  // ===================================
+  // Series API
+  // ===================================
+
   fetchSeries = async (
     timeRange: TimeRange,
     match: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<Array<Record<string, string>>> => {
     const range = this.datasource.getTimeRangeParams(timeRange);
-    const params = { ...range, limit, 'match[]': match };
+    const params = { ...range, 'match[]': match, limit };
     return await this.request(API_V1.SERIES, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
+  };
+
+  getMetricsFromSeries = (series: Array<Record<string, string>>): string[] => {
+    return series.map((s) => s.__name__);
+  };
+
+  getLabelKeysFromSeries = (series: Array<Record<string, string>>): string[] => {
+    return series.map((s) => s.__name__);
+  };
+
+  getLabelValuesFromSeries = (series: Array<Record<string, string>>, labelKey: string): string[] => {
+    return series.map((s) => s[labelKey]);
+  };
+
+  // ===================================
+  // Suggestions API
+  // ===================================
+
+  /**
+   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   */
+  fetchSuggestions = async (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ): Promise<string[]> => {
+    if (!timeRange) {
+      timeRange = getDefaultTimeRange();
+    }
+
+    const url = '/suggestions';
+    const timeParams = this.datasource.getAdjustedInterval(timeRange);
+    const value = await this.request(
+      url,
+      [],
+      {
+        labelName,
+        queries: queries?.map((q) =>
+          this.datasource.interpolateString(q.expr, {
+            ...this.datasource.getIntervalVars(),
+            ...this.datasource.getRangeScopedVars(timeRange),
+          })
+        ),
+        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adhocFilters?.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        limit,
+        ...timeParams,
+      },
+      {
+        ...(requestId && { requestId }),
+        headers: {
+          ...getDefaultCacheHeaders(this.datasource.cacheLevel)?.headers,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+
+    return value ?? [];
   };
 }
 
