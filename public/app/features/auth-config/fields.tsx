@@ -313,7 +313,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: clientAuthenticationOptions(provider),
-      defaultValue: { value: 'none', label: 'None' },
+      defaultValue: { value: 'none', label: t('auth-config.field-map.label.none', 'None') },
       validation: {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
@@ -405,11 +405,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: [
-        { value: 'AutoDetect', label: 'AutoDetect' },
-        { value: 'InParams', label: 'InParams' },
-        { value: 'InHeader', label: 'InHeader' },
+        { value: 'AutoDetect', label: t('auth-config.field-map.label.auto-detect', 'AutoDetect') },
+        { value: 'InParams', label: t('auth-config.field-map.label.in-params', 'InParams') },
+        { value: 'InHeader', label: t('auth-config.field-map.label.in-header', 'InHeader') },
       ],
-      defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
+      defaultValue: { value: 'AutoDetect', label: t('auth-config.field-map.label.auto-detect', 'AutoDetect') },
     },
     tokenUrl: {
       label: tokenURLLabel,
@@ -888,14 +888,23 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
     case 'azuread':
       return [
         { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
-        { value: 'client_secret_post', label: 'Client secret' },
-        { value: 'managed_identity', label: 'Managed identity' },
+        {
+          value: 'client_secret_post',
+          label: t('auth-config.client-authentication-options.label.client-secret', 'Client secret'),
+        },
+        {
+          value: 'managed_identity',
+          label: t('auth-config.client-authentication-options.label.managed-identity', 'Managed identity'),
+        },
       ];
     // Other providers ...
     default:
       return [
-        { value: 'none', label: 'None' },
-        { value: 'client_secret_post', label: 'Client secret' },
+        { value: 'none', label: t('auth-config.client-authentication-options.label.none', 'None') },
+        {
+          value: 'client_secret_post',
+          label: t('auth-config.client-authentication-options.label.client-secret', 'Client secret'),
+        },
       ];
   }
 }

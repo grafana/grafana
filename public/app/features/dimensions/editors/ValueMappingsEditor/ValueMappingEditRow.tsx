@@ -122,12 +122,54 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
-    { label: 'Null', value: SpecialValueMatch.Null, description: 'Matches null and undefined values' },
-    { label: 'NaN', value: SpecialValueMatch.NaN, description: 'Matches against Number.NaN (not a number)' },
-    { label: 'Null + NaN', value: SpecialValueMatch.NullAndNaN, description: 'Matches null, undefined and NaN' },
-    { label: 'True', value: SpecialValueMatch.True, description: 'Boolean true values' },
-    { label: 'False', value: SpecialValueMatch.False, description: 'Boolean false values' },
-    { label: 'Empty', value: SpecialValueMatch.Empty, description: 'Empty string' },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.null', 'Null'),
+      value: SpecialValueMatch.Null,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-and-undefined-values',
+        'Matches null and undefined values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.na-n', 'NaN'),
+      value: SpecialValueMatch.NaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-against-number-na-n-not-a-number',
+        'Matches against Number.NaN (not a number)'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.null-na-n', 'Null + NaN'),
+      value: SpecialValueMatch.NullAndNaN,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-undefined-and-na-n',
+        'Matches null, undefined and NaN'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.true', 'True'),
+      value: SpecialValueMatch.True,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-true-values',
+        'Boolean true values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.false', 'False'),
+      value: SpecialValueMatch.False,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.boolean-false-values',
+        'Boolean false values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mapping-edit-row.special-match-options.label.empty', 'Empty'),
+      value: SpecialValueMatch.Empty,
+      description: t(
+        'dimensions.value-mapping-edit-row.special-match-options.description.empty-string',
+        'Empty string'
+      ),
+    },
   ];
 
   return (

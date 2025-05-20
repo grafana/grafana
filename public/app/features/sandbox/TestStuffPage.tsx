@@ -1,16 +1,17 @@
 import { NavModelItem } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Button, LinkButton, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 export const TestStuffPage = () => {
+  const { t } = useTranslate();
   const node: NavModelItem = {
     id: 'test-page',
-    text: 'Test page',
+    text: t('sandbox.test-stuff-page.node.text.test-page', 'Test page'),
     icon: 'dashboard',
-    subTitle: 'FOR TESTING!',
+    subTitle: t('sandbox.test-stuff-page.node.subTitle.for-testing', 'FOR TESTING!'),
     url: 'sandbox/test',
   };
 

@@ -138,7 +138,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select notification template',
+      label: t(
+        'alerting.template-selector.template-options.label.select-notification-template',
+        'Select notification template'
+      ),
       ariaLabel: 'Select notification template',
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,

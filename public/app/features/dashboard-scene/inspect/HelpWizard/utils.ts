@@ -10,6 +10,7 @@ import {
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -158,7 +159,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
         y: 20,
       },
       type: 'table',
-      title: 'Annotations',
+      title: t('dashboard-scene.get-debug-dashboard.title.annotations', 'Annotations'),
       datasource: {
         type: 'datasource',
         uid: '-- Dashboard --',
