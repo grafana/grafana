@@ -49,10 +49,14 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
+// for some reason vanilla Prometheus uses param notation with [] appended
 export enum PrometheusAPIFilters {
+  RuleName = 'rule_name',
+  RuleNameVanilla = 'rule_name[]',
   RuleGroup = 'rule_group',
+  RuleGroupVanilla = 'rule_group[]',
   Namespace = 'file',
-  NamespaceVanilla = 'file[]', // for some reason vanilla Prometheus uses this notation
+  NamespaceVanilla = 'file[]',
   FolderUID = 'folder_uid',
   LimitAlerts = 'limit_alerts',
 }
@@ -149,6 +153,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
           searchParams.set(PrometheusAPIFilters.NamespaceVanilla, identifier.namespace);
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
+          searchParams.set(PrometheusAPIFilters.RuleGroupVanilla, identifier.groupName);
         }
 
         const filterParams = getRulesFilterSearchParams(filter);
