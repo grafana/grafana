@@ -77,6 +77,13 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
+  create_security_branch:
+    name: Create security branch
+    needs: setup
+    uses: ./.github/workflows/create-security-branch.yml
+    with:
+      version: ${{ needs.setup.outputs.version }}
+      security_branch_number: "01"
   migrate_prs_grafana:
     needs:
       - setup

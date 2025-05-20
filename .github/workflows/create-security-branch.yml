@@ -1,0 +1,65 @@
+name: Create security branch
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        description: 'The version to create a security branch for (e.g., 12.0.1)'
+        required: true
+      security_branch_number:
+        type: string
+        description: 'The security branch number (e.g., 01)'
+        required: true
+    outputs:
+      branch:
+        description: The new security branch that was created
+        value: ${{ jobs.main.outputs.branch }}
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          repository: grafana/grafana
+          ref: release-${{ inputs.version }}
+
+      - name: Configure git
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create security branch
+        id: branch
+        run: |
+          SECURITY_BRANCH="${{ inputs.version }}+security-${{ inputs.security_branch_number }}"
+          git checkout -b "$SECURITY_BRANCH"
+          echo "branch=$SECURITY_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Push to security mirror
+        run: |
+          git remote add security-mirror https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana-security-mirror.git
+          git push security-mirror "${{ steps.branch.outputs.branch }}"
