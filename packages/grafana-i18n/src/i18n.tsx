@@ -48,7 +48,7 @@ interface InitializeI18nOptions {
   module?: Module;
 }
 
-export async function initTranslations({
+async function initTranslations({
   ns,
   language = DEFAULT_LANGUAGE,
   module,
