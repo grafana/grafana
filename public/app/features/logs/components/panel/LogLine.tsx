@@ -20,7 +20,7 @@ import {
   TRUNCATION_LINE_COUNT,
 } from './virtualization';
 
-interface Props {
+export interface Props {
   displayedFields: string[];
   index: number;
   log: LogListModel;
@@ -168,14 +168,24 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
             placement="right"
             theme="error"
           >
-            <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
+            <Icon
+              className={styles.logIconError}
+              name="exclamation-triangle"
+              aria-label={t('logs.log-line.has-error', 'Has errors')}
+              size="xs"
+            />
           </Tooltip>
         </span>
       )}
       {log.isSampled && (
         <span className={`${styles.isSampled} field`}>
           <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
-            <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
+            <Icon
+              className={styles.logIconInfo}
+              name="info-circle"
+              size="xs"
+              aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+            />
           </Tooltip>
         </span>
       )}
