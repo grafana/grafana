@@ -14,11 +14,11 @@ import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
-import { LazyPagination } from './components/LazyPagination';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
 export const GRAFANA_GROUP_PAGE_SIZE = 40;
 
@@ -84,7 +84,7 @@ export function PaginatedGrafanaLoader() {
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
-            <LazyPagination loadMore={fetchMoreGroups} />
+            <LoadMoreButton onClick={fetchMoreGroups} />
           </div>
         )}
       </Stack>

@@ -8,11 +8,11 @@ import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
-import { LazyPagination } from './components/LazyPagination';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
-import { useLazyLoadPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
 export const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
@@ -70,7 +70,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
-            <LazyPagination loadMore={fetchMoreGroups} />
+            <LoadMoreButton onClick={fetchMoreGroups} />
           </div>
         )}
       </Stack>

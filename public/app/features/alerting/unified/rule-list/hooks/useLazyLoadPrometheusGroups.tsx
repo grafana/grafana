@@ -6,7 +6,7 @@ import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
 
 /**
- * Provides pagination functionality for rule groups with lazy loading.
+ * Provides lazy loading for rule groups.
  * Instead of loading all groups at once, it uses a generator to fetch them in batches as needed,
  * which helps with performance when dealing with large numbers of rules.
  *
