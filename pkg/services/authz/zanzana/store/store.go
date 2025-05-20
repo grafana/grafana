@@ -72,16 +72,13 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 
 		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
-		m := migrator.NewMigrator(db.GetEngine(), cfg)
-		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg.ConnectionString+"&parseTime=true", assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		// For mysql we need to pass parseTime parameter in connection string
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
-		m := migrator.NewMigrator(db.GetEngine(), cfg)
-		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 

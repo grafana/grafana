@@ -10,22 +10,33 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, typ, connStr string, fs embed.FS, path string) error {
-	engine, err := xorm.NewEngine(typ, connStr)
+func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string) error {
+	// engine, err := xorm.NewEngine(typ, connStr)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create db engine: %w", err)
+	// }
+
+	err := migrate.RunMigrations(migrate.MigrationConfig{
+		URI:    connStr,
+		Engine: dbType,
+		// Config: cfg,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create db engine: %w", err)
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	m := migrator.NewMigrator(engine, cfg)
-	m.AddCreateMigration()
+	// m := migrator.NewMigrator(engine, cfg)
+	// m.AddCreateMigration()
 
-	if err := RunWithMigrator(m, cfg, fs, path); err != nil {
-		return err
-	}
+	// if err := RunWithMigrator(m, cfg, fs, path); err != nil {
+	// 	return err
+	// }
 
-	return engine.Close()
+	// return engine.Close()
+	return nil
 }
 
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, fs embed.FS, path string) error {
