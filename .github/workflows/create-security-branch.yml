@@ -10,6 +10,10 @@ on:
         type: string
         description: 'The security branch number (e.g., 01)'
         required: true
+      repository:
+        type: string
+        description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
+        required: true
     outputs:
       branch:
         description: The new security branch that was created
@@ -44,7 +48,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          repository: grafana/grafana-security-mirror
+          repository: ${{ inputs.repository }}
           fetch-depth: 0
 
       - name: Configure git
