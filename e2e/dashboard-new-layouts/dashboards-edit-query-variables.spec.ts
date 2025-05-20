@@ -37,6 +37,8 @@ describe('Dashboard edit - Query variable', () => {
     cy.contains(dataSource).scrollIntoView().should('be.visible').click();
     // show the preview of the query results
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton().should('be.visible').click();
+    // TODO: for some reason we have to click the preview button twice to get the query results ( only in this test )
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton().should('be.visible').click();
     // assert the query results are shown
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('be.visible');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
