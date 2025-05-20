@@ -59,6 +59,8 @@ export enum PrometheusAPIFilters {
   NamespaceVanilla = 'file[]',
   FolderUID = 'folder_uid',
   LimitAlerts = 'limit_alerts',
+  MaxGroups = 'max_groups',
+  ExcludeAlerts = 'exclude_alerts',
 }
 
 export interface Data {
@@ -200,24 +202,23 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
-            set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
+            queryParams[PrometheusAPIFilters.FolderUID] = namespace;
           } else {
-            set(queryParams, PrometheusAPIFilters.Namespace, namespace);
-            // do not use lodash "set" here, `[]` has special meaning for that function to insert at index 0 but we need it to be literal
+            queryParams[PrometheusAPIFilters.Namespace] = namespace;
             queryParams[PrometheusAPIFilters.NamespaceVanilla] = namespace;
           }
         }
 
         if (limitAlerts !== undefined) {
-          set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+          queryParams[PrometheusAPIFilters.LimitAlerts] = String(PrometheusAPIFilters.LimitAlerts);
         }
 
         if (maxGroups) {
-          set(queryParams, 'max_groups', maxGroups);
+          queryParams[PrometheusAPIFilters.MaxGroups] = String(maxGroups);
         }
 
         if (excludeAlerts) {
-          set(queryParams, 'exclude_alerts', 'true');
+          queryParams[PrometheusAPIFilters.ExcludeAlerts] = 'true';
         }
 
         return {
