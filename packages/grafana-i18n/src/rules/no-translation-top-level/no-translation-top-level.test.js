@@ -1,8 +1,10 @@
 import { RuleTester } from 'eslint';
 
-import noTranslationTopLevel from '../rules/no-translation-top-level.cjs';
+import noTranslationTopLevel from './no-translation-top-level.cjs';
 
-RuleTester.setDefaultConfig({
+const expectedErrorMessage = 'Do not use the t() function outside of a component or function';
+
+const ruleTester = new RuleTester({
   languageOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
@@ -14,10 +16,7 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const expectedErrorMessage = 'Do not use the t() function outside of a component or function';
-
-const ruleTester = new RuleTester();
-
+// @ts-ignore
 ruleTester.run('eslint no-translation-top-level', noTranslationTopLevel, {
   valid: [
     {
