@@ -18,7 +18,7 @@ import { useFolder } from '../hooks/useFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { createViewLinkFromIdentifier } from '../rule-list/DataSourceRuleListItem';
 import { useRulesAccess } from '../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
 import { fromRule, fromRulerRule } from '../utils/rule-id';
@@ -80,7 +80,7 @@ function GroupDetailsPage() {
   );
   const { t } = useTranslate();
 
-  const ruleSourceName = dsFeatures?.rulerConfig?.dataSourceName;
+  const ruleSourceName = getDataSourceByUid(dataSourceUid)?.name;
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleGroupLoading;
 
   const groupInterval = promGroup?.interval

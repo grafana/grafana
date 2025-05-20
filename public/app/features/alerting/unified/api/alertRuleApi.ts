@@ -52,6 +52,7 @@ export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 export enum PrometheusAPIFilters {
   RuleGroup = 'rule_group',
   Namespace = 'file',
+  NamespaceVanilla = 'file[]', // for some reason vanilla Prometheus uses this notation
   FolderUID = 'folder_uid',
   LimitAlerts = 'limit_alerts',
 }
@@ -146,6 +147,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
           searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
+          searchParams.set(PrometheusAPIFilters.NamespaceVanilla, identifier.namespace);
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
         }
 
@@ -196,6 +198,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
           } else {
             set(queryParams, PrometheusAPIFilters.Namespace, namespace);
+            // do not use lodash "set" here, `[]` has special meaning for that function to insert at index 0 but we need it to be literal
+            queryParams[PrometheusAPIFilters.NamespaceVanilla] = namespace;
           }
         }
 
