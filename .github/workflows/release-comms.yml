@@ -82,7 +82,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/create-security-branch.yml
     with:
-      version: ${{ needs.setup.outputs.version }}
+      release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
       repository: grafana/grafana-security-mirror
   create_security_branch_enterprise:
@@ -90,7 +90,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/create-security-branch.yml
     with:
-      version: ${{ needs.setup.outputs.version }}
+      release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
       repository: grafana/grafana-enterprise
   migrate_prs_grafana:

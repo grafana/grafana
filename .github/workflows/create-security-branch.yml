@@ -2,9 +2,9 @@ name: Create security branch
 on:
   workflow_call:
     inputs:
-      version:
+      release_branch:
         type: string
-        description: 'The version to create a security branch for (e.g., 12.0.1)'
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.3+security-01` being created)
         required: true
       security_branch_number:
         type: string
@@ -20,9 +20,9 @@ on:
         value: ${{ jobs.main.outputs.branch }}
   workflow_dispatch:
     inputs:
-      version:
+      release_branch:
         type: string
-        description: 'The version to create a security branch for (e.g., 12.0.1)'
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.3+security-01` being created)
         required: true
       security_branch_number:
         type: string
@@ -63,13 +63,13 @@ jobs:
         with:
           token: ${{ steps.generate_token.outputs.token }}
           repository: ${{ inputs.repository }}
-          ref: release-${{ inputs.version }}
+          ref: ${{ inputs.release_branch }}
 
       - name: Create security branch
         id: branch
         uses: grafana/grafana-github-actions-go/create-security-branch@main
         with:
-          version: ${{ inputs.version }}
+          release_branch: ${{ inputs.release_branch }}
           security_branch_number: ${{ inputs.security_branch_number }}
           repository: ${{ inputs.repository }}
           token: ${{ steps.generate_token.outputs.token }}
