@@ -1223,7 +1223,8 @@
       "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-05-10T13:37:04Z"
+        "creationTimestamp": "2023-05-10T13:37:04Z",
+        "deletionTimestamp": "2025-05-19T15:29:06Z"
       },
       "spec": {
         "description": "Enables extra themes",

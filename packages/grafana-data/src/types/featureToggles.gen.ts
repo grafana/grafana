@@ -162,10 +162,6 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
-  * Enables extra themes
-  */
-  extraThemes?: boolean;
-  /**
   * Adds predefined query operations to Loki query editor
   */
   lokiPredefinedOperations?: boolean;
