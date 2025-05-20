@@ -67,16 +67,17 @@ export type ContactPoint = MergeDeep<
   }
 >;
 
-export type ContactPointMetadataAnnotations = AlertingNotificationsEntityMetadataAnnotations &
+export type ContactPointMetadataAnnotations = AlertingEntityMetadataAnnotations &
   Partial<{
+    // reading secrets is unique to contact points / receivers
+    'grafana.com/access/canReadSecrets': 'true' | 'false';
     'grafana.com/inUse/routes': `${number}`;
     'grafana.com/inUse/rules': `${number}`;
   }>;
 
-export type AlertingNotificationsEntityMetadataAnnotations = Partial<{
+export type AlertingEntityMetadataAnnotations = Partial<{
   'grafana.com/access/canAdmin': 'true' | 'false';
   'grafana.com/access/canDelete': 'true' | 'false';
-  'grafana.com/access/canReadSecrets': 'true' | 'false';
   'grafana.com/access/canWrite': 'true' | 'false';
   // used for provisioning to identify what system created the entity
   'grafana.com/provenance': string;

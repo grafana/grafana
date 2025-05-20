@@ -3,7 +3,14 @@ import { Factory } from 'fishery';
 
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../mocks/util';
 import { GROUP, VERSION } from '../../const';
-import { ContactPoint, EnhancedListReceiverApiResponse, Integration } from '../../types';
+import {
+  ContactPoint,
+  ContactPointMetadataAnnotations,
+  EnhancedListReceiverApiResponse,
+  Integration,
+} from '../../types';
+
+import { AlertingEntityMetadataAnnotationsFactory } from './common';
 
 export const ListReceiverApiResponseFactory = Factory.define<EnhancedListReceiverApiResponse>(() => ({
   kind: 'ReceiverList',
@@ -59,12 +66,9 @@ export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
 const IntegrationUnion = [EmailIntegrationFactory, SlackIntegrationFactory];
 
 // by default the contact points will be in use by a route and a rule
-export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPoint['metadata']['annotations']>(() => ({
-  'grafana.com/access/canAdmin': 'true',
-  'grafana.com/access/canDelete': 'true',
+export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPointMetadataAnnotations>(() => ({
   'grafana.com/access/canReadSecrets': 'true',
-  'grafana.com/access/canWrite': 'true',
   'grafana.com/inUse/routes': '1',
   'grafana.com/inUse/rules': '1',
-  'grafana.com/provenance': 'none',
+  ...AlertingEntityMetadataAnnotationsFactory.build(),
 }));

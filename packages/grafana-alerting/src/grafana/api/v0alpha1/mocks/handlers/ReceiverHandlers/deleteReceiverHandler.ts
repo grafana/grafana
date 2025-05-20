@@ -5,7 +5,7 @@ import { DeleteReceiverApiResponse } from '../../../api.gen';
 import { GROUP, VERSION } from '../../../const';
 
 export function deleteReceiverHandler(
-  data?: DeleteReceiverApiResponse | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Response)
+  data: DeleteReceiverApiResponse | ((info: Parameters<Parameters<typeof http.delete>[1]>[0]) => Response)
 ) {
   return http.delete(getAPIBaseURLForMocks(GROUP, VERSION, '/receivers/:name'), function handler(info) {
     if (typeof data === 'function') {

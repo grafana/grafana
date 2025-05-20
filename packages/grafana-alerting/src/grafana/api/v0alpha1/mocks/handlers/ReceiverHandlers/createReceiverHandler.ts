@@ -5,7 +5,7 @@ import { CreateReceiverApiResponse } from '../../../api.gen';
 import { GROUP, VERSION } from '../../../const';
 
 export function createReceiverHandler(
-  data?: CreateReceiverApiResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Response)
+  data: CreateReceiverApiResponse | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Response)
 ) {
   return http.post(getAPIBaseURLForMocks(GROUP, VERSION, '/receivers'), function handler(info) {
     if (typeof data === 'function') {
