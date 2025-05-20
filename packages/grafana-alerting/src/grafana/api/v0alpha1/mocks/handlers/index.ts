@@ -1,4 +1,3 @@
-export { handlers as allHandlers } from './handlers';
 export { createReceiverHandler } from './ReceiverHandlers/createReceiverHandler';
 export { deletecollectionReceiverHandler } from './ReceiverHandlers/deletecollectionReceiverHandler';
 export { deleteReceiverHandler } from './ReceiverHandlers/deleteReceiverHandler';
