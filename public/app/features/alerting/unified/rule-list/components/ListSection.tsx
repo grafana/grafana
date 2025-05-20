@@ -30,7 +30,7 @@ export const ListSection = ({
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
       <div className={styles.sectionTitle}>
         <Stack alignItems="center">
-          <Stack alignItems="center" gap={0}>
+          <Stack alignItems="center" gap={0.5}>
             <IconButton
               name={isCollapsed ? 'angle-right' : 'angle-down'}
               onClick={toggleCollapsed}
@@ -61,23 +61,32 @@ export const ListSection = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
-    borderRadius: theme.shape.radius.default,
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderBottom: 'none',
 
-    marginLeft: theme.spacing(1.5),
+    // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
+    // unless we clone the React Elements and modify className
+    'li[role=treeitem]': {
+      paddingLeft: theme.spacing(6.5),
+
+      '&:before': {
+        content: "''",
+        position: 'absolute',
+        height: '100%',
+
+        marginLeft: theme.spacing(-1.5),
+        marginTop: theme.spacing(-1),
+        borderLeft: `solid 1px ${theme.colors.border.weak}`,
+      },
+    },
   }),
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-
-    gap: theme.spacing(1),
   }),
   sectionTitle: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+    padding: theme.spacing(1, 1.5),
 
-    background: theme.colors.background.secondary,
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
   }),
 });

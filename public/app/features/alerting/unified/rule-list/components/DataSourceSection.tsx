@@ -35,14 +35,14 @@ export const DataSourceSection = ({
   isLoading = false,
   description = null,
 }: DataSourceSectionProps) => {
-  const styles = useStyles2(getStyles);
+  const [isCollapsed, toggleCollapsed] = useToggle(false);
+  const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
   const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 
   const showImportLink =
     uid !== GrafanaRulesSourceSymbol &&
     rulesSourcesWithRuler.some(({ uid: dsUid, type }) => dsUid === uid && supportedImportTypes.includes(type));
 
-  const [isCollapsed, toggleCollapsed] = useToggle(false);
   const { t } = useTranslate();
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
@@ -56,7 +56,7 @@ export const DataSourceSection = ({
   })();
   return (
     <section aria-labelledby={`datasource-${String(uid)}-heading`} role="listitem">
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         <Stack direction="column" gap={0}>
           {isLoading && <LoadingIndicator datasourceUid={String(uid)} />}
           <div className={styles.dataSourceSectionTitle}>
@@ -82,9 +82,9 @@ export const DataSourceSection = ({
                 {showImportLink && (
                   <LinkButton
                     variant="secondary"
+                    fill="text"
                     size="sm"
                     href={`/alerting/import-datasource-managed-rules?datasourceUid=${String(uid)}`}
-                    icon="arrow-up"
                   >
                     <Trans i18nKey="alerting.data-source-section.import-to-grafana">Import to Grafana rules</Trans>
                   </LinkButton>
@@ -93,7 +93,7 @@ export const DataSourceSection = ({
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
                     component={
-                      <LinkButton variant="secondary" size="sm" href={configureLink}>
+                      <LinkButton variant="secondary" fill="text" size="sm" href={configureLink}>
                         <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
                       </LinkButton>
                     }
@@ -109,25 +109,12 @@ export const DataSourceSection = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
   itemsWrapper: css({
     position: 'relative',
-    marginLeft: theme.spacing(1.5),
-
-    '&:before': {
-      content: "''",
-      position: 'absolute',
-      height: '100%',
-
-      marginLeft: `-${theme.spacing(1.5)}`,
-      borderLeft: `solid 1px ${theme.colors.border.weak}`,
-    },
   }),
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(1, 1.5),
   }),
 });

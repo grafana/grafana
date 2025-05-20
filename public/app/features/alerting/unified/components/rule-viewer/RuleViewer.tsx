@@ -117,6 +117,7 @@ const RuleViewer = () => {
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
+          returnToHref="/alerting/list"
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
