@@ -14,7 +14,7 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const filename = 'public/app/features/some-feature/SomeFile.tsx';
+const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
 
 const packageName = '@grafana/i18n';
 
@@ -136,12 +136,19 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       filename,
     },
     {
-      name: 'Object property using dynamic keys',
+      name: 'Object property using dynamic/other keys',
       code: `
       const getThing = () => {
         const foo = 'label';
+        const label = 'not-a-label';
         const thing = {
+          1: 'a',
+          // We can't easily check for computed keys, so for now don't worry about this case
           [foo]: 'test',
+
+          // This is dumb, but we need to check that we don't confuse
+          // the name of the variable for the key name
+          [label]: 'test',
           ['title']: 'test',
         }
       }`,
@@ -158,13 +165,18 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       filename,
     },
     {
-      name: 'Object property that is a boolean or number',
+      name: 'Object property value that is a boolean or number',
       code: `const getThing = () => {
         const thing = {
           label: true,
           title: 1
         };
       }`,
+      filename,
+    },
+    {
+      name: 'Object property at top level',
+      code: `const thing = { label: 'test' }`,
       filename,
     },
   ],
@@ -1018,6 +1030,19 @@ const Foo = () => {
       code: `const Foo = () => <div title={isAThing ? 'Foo' : 'Bar'} />`,
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
+    },
+
+    {
+      name: 'Cannot fix if `t` already exists from somewhere else',
+      code: `
+const Foo = () => {
+  const t = () => 'something else';
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStringsProp' }],
     },
 
     // TODO: Enable test once all top-level issues have been fixed
