@@ -1,4 +1,3 @@
-// Temporary comment to fix parsing error
 import { config } from '@grafana/runtime';
 import {
   AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
