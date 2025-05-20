@@ -244,7 +244,7 @@ async function getMetrics(
   let metrics: string[];
   if (query.labels.length > 0) {
     const expr = promQueryModeller.renderLabels(query.labels);
-    metrics = (await datasource.languageProvider.getSeries(timeRange, expr, true))['__name__'] ?? [];
+    metrics = (await datasource.languageProvider.getSeriesValues(timeRange, '__name__', expr)) ?? [];
   } else {
     metrics = (await datasource.languageProvider.getLabelValues(timeRange, '__name__')) ?? [];
   }
