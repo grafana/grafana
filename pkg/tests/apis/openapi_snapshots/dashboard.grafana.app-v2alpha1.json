@@ -1141,9 +1141,14 @@
           "filters",
           "defaultKeys",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
+          },
           "baseFilters": {
             "type": "array",
             "items": {
@@ -1705,11 +1710,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -1954,11 +1964,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -3022,11 +3037,16 @@
           "sort",
           "options",
           "multi",
-          "includeAll"
+          "includeAll",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
