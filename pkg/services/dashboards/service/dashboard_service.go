@@ -953,8 +953,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				// UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-				UserID: userID, Permission: dashboardaccess.PERMISSION_EDIT.String(), // JWT Auth
+				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
 		}
 	}
