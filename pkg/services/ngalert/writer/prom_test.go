@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"reflect"
 	"slices"
@@ -169,6 +170,27 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
 		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+	})
+
+	t.Run("handle connection failures", func(t *testing.T) {
+		dnsErr := &net.DNSError{
+			Err:        "no such host",
+			Name:       "host.example.com",
+			Server:     "10.0.0.1:53",
+			IsTimeout:  false,
+			IsNotFound: true,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, testClientWriteError{
+				statusCode: 0,
+				err:        dnsErr,
+			}
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrConnectionFailure)
+		require.Contains(t, err.Error(), dnsErr.Error())
 	})
 
 	t.Run("writes expected points", func(t *testing.T) {
@@ -539,6 +561,7 @@ func (c *testClient) WriteTimeSeries(
 type testClientWriteError struct {
 	statusCode int
 	msg        *string
+	err        error
 }
 
 func (e testClientWriteError) StatusCode() int {
@@ -546,8 +569,11 @@ func (e testClientWriteError) StatusCode() int {
 }
 
 func (e testClientWriteError) Error() string {
-	if e.msg == nil {
-		return "test error"
+	if e.err != nil {
+		return e.err.Error()
 	}
-	return *e.msg
+	if e.msg != nil {
+		return *e.msg
+	}
+	return "test client error"
 }
