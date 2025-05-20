@@ -213,6 +213,7 @@ require (
 	github.com/grafana/grafana/apps/folder v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250506052906-7a2fc797fb4a // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-operator-experience-squad
@@ -227,6 +228,8 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a // @grafana/grafana-search-and-storage
 )
+
+replace github.com/grafana/grafana/apps/preferences => ./apps/preferences
 
 require (
 	cel.dev/expr v0.23.1 // indirect
