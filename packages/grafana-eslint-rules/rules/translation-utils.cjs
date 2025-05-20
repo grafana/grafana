@@ -87,23 +87,26 @@ function canBeFixed(node, context) {
   }
 
   const parentMethod = getParentMethod(node, context);
+  const isAttribute = node.type === AST_NODE_TYPES.JSXAttribute;
+  const isProperty = node.type === AST_NODE_TYPES.Property;
+  const isPropertyOrAttribute = isAttribute || isProperty;
 
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
-  if (!parentMethod && (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property)) {
+  if (isPropertyOrAttribute && !parentMethod) {
     return false;
   }
 
   // If we're going to try and fix using `t`, and it already exists in the scope,
   // but not from `useTranslate`, then we can't fix/provide a suggestion
-  if (node.type === AST_NODE_TYPES.Property || node.type === AST_NODE_TYPES.JSXAttribute) {
+  if (isPropertyOrAttribute && parentMethod) {
     const hasTDeclaration = getTDeclaration(parentMethod, context);
     const hasUseTranslateDeclaration = methodHasUseTranslate(parentMethod, context);
     if (hasTDeclaration && !hasUseTranslateDeclaration) {
       return false;
     }
   }
-  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+  if (isAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
     return isStringLiteral(node.value.expression);
   }
 
@@ -231,17 +234,18 @@ function getComponentNames(node, context) {
 }
 
 /**
- * @param {Node|undefined} method The node
+ * For a given node, check the scope and find a variable declaration of `t`
+ * @param {Node} node
  * @param {RuleContextWithOptions} context
  */
-function getTDeclaration(method, context) {
-  return method ? context.sourceCode.getScope(method).variables.find((v) => v.name === 't') : null;
+function getTDeclaration(node, context) {
+  return context.sourceCode.getScope(node).variables.find((v) => v.name === 't');
 }
 
 /**
  * Checks if a node has a variable declaration of `t`
  * that came from a `useTranslate` call
- * @param {Node|undefined} node The node
+ * @param {Node} node The node
  * @param {RuleContextWithOptions} context
  */
 function methodHasUseTranslate(node, context) {
