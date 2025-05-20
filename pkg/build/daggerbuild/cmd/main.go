@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"dagger.io/dagger"
@@ -23,7 +24,11 @@ func PipelineActionWithPackageInput(pf pipelines.PipelineFuncWithPackageInput) c
 		if err != nil {
 			return err
 		}
-		defer client.Close()
+		defer func(c *dagger.Client) {
+			if err := c.Close(); err != nil {
+				fmt.Println("error closing dagger client:", err)
+			}
+		}(client)
 
 		args, err := pipelines.PipelineArgsFromContext(ctx, c)
 		if err != nil {

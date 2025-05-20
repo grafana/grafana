@@ -68,12 +68,7 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 	}
 
 	sort.Slice(flags, func(i, j int) bool {
-		r := strings.Compare(flags[i].Names()[0], flags[j].Names()[0])
-		if r <= 0 {
-			return true
-		}
-
-		return false
+		return strings.Compare(flags[i].Names()[0], flags[j].Names()[0]) <= 0
 	})
 
 	return flags

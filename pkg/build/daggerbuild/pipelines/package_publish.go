@@ -26,6 +26,9 @@ func PublishPackage(ctx context.Context, d *dagger.Client, args PipelineArgs) er
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(os.Stdout, dst)
+	if _, err := fmt.Fprintln(os.Stdout, dst); err != nil {
+		return fmt.Errorf("error writing to stdout: %w", err)
+	}
+
 	return nil
 }

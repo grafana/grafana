@@ -61,7 +61,9 @@ func PublishNPMFunc(ctx context.Context, sm *semaphore.Weighted, d *dagger.Clien
 		}
 		log.Printf("[%s] Done publishing package", path)
 
-		fmt.Fprintln(Stdout, out)
+		if _, err := fmt.Fprintln(Stdout, out); err != nil {
+			return fmt.Errorf("error writing to stdout: %w", err)
+		}
 		return nil
 	}
 }

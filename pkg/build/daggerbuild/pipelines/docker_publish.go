@@ -108,7 +108,10 @@ func PublishPackageImageFunc(ctx context.Context, sm *semaphore.Weighted, d *dag
 		}
 		log.Printf("[%s] Done publishing image", tag)
 
-		fmt.Fprintln(Stdout, out)
+		if _, err := fmt.Fprintln(Stdout, out); err != nil {
+			return fmt.Errorf("error writing to stdout: %w", err)
+		}
+
 		return nil
 	}
 }
@@ -130,7 +133,9 @@ func PublishDockerManifestFunc(ctx context.Context, sm *semaphore.Weighted, d *d
 		}
 		log.Printf("[%s] Done publishing manifest", manifest)
 
-		fmt.Fprintln(Stdout, out)
+		if _, err := fmt.Fprintln(Stdout, out); err != nil {
+			return fmt.Errorf("error writing to stdout: %w", err)
+		}
 		return nil
 	}
 }

@@ -115,10 +115,6 @@ func (d *Docker) BuildDir(ctx context.Context, builder *dagger.Container, opts *
 	panic("This artifact does not produce directories")
 }
 
-func (d *Docker) publishPro(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	panic("not implemented")
-}
-
 func (d *Docker) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	socket := opts.Client.Host().UnixSocket("/var/run/docker.sock")
 	return opts.Client.Container().From("docker").WithUnixSocket("/var/run/docker.sock", socket), nil

@@ -109,7 +109,9 @@ func PublishGCOM(ctx context.Context, d *dagger.Client, args PipelineArgs) error
 			return err
 		}
 		log.Printf("[%s] Done publishing version", p.Version)
-		fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", ""))
+		if _, err := fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", "")); err != nil {
+			return fmt.Errorf("error writing to stdout: %w", err)
+		}
 	}
 
 	// Publish the package(s)
@@ -144,7 +146,9 @@ func PublishGCOMPackageFunc(ctx context.Context, sm *semaphore.Weighted, d *dagg
 		}
 		log.Printf("[%s] Done publishing package", name)
 
-		fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", ""))
+		if _, err := fmt.Fprintln(Stdout, strings.ReplaceAll(out, "\n", "")); err != nil {
+			return fmt.Errorf("error writing to stdout: %w", err)
+		}
 		return nil
 	}
 }
