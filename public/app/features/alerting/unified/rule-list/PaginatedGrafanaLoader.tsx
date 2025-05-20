@@ -22,7 +22,7 @@ import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGrou
 const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
 
   const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
 

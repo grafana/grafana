@@ -1,3 +1,5 @@
+import { sum } from 'lodash';
+
 import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
@@ -123,13 +125,14 @@ export function GrafanaRuleListItem({
 
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
+    const instancesCount = sum(Object.values(promAlertingRule?.totals ?? {}));
 
     return (
       <AlertRuleListItem
         {...commonProps}
         summary={annotations.summary}
         state={promAlertingRule?.state}
-        instancesCount={promAlertingRule?.alerts?.length}
+        instancesCount={instancesCount}
         operation={operation}
       />
     );
