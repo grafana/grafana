@@ -102,6 +102,9 @@ const (
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
+
+	// returned in some cases when multiple org IDs are present in the request
+	MimirErrTooManyOrgIDs = "multiple org IDs present"
 )
 
 var (
@@ -401,8 +404,13 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		return nil, false
 	}
 
-	// All 500-range statuses are automatically unexpected and not the fault of the data.
+	// Most 500-range statuses are automatically unexpected and not the fault of the data.
 	if writeErr.StatusCode()/100 == 5 {
+		// mimir does return some errors as 500s that should maybe not be considered as such?
+		// e.g. `multiple org IDs present`. Handle those separately though to make sure they're treated as exceptions
+		if strings.Contains(writeErr.Error(), MimirErrTooManyOrgIDs) {
+			return errors.Join(ErrRejectedWrite, writeErr), true
+		}
 		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
 	}
 
