@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -41,11 +42,23 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             {dropProvided.placeholder}
             {isEditing && (
               <div className="dashboard-canvas-add-button">
-                <Button icon="plus" variant="primary" fill="text" onClick={() => model.addNewRow()}>
+                <Button
+                  icon="plus"
+                  variant="primary"
+                  fill="text"
+                  onClick={() => model.addNewRow()}
+                  data-testid={selectors.components.CanvasGridAddActions.addRow}
+                >
                   <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
                 </Button>
                 {hasCopiedRow && (
-                  <Button icon="clipboard-alt" variant="primary" fill="text" onClick={() => model.pasteRow()}>
+                  <Button
+                    icon="clipboard-alt"
+                    variant="primary"
+                    fill="text"
+                    onClick={() => model.pasteRow()}
+                    data-testid={selectors.components.CanvasGridAddActions.pasteRow}
+                  >
                     <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
                   </Button>
                 )}

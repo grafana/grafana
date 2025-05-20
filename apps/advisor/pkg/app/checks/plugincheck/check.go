@@ -57,7 +57,7 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 func (c *check) Item(ctx context.Context, id string) (any, error) {
 	p, exists := c.PluginStore.Plugin(ctx, id)
 	if !exists {
-		return nil, fmt.Errorf("plugin %s not found", id)
+		return nil, nil
 	}
 	return p, nil
 }

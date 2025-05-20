@@ -128,6 +128,18 @@ module.exports = [
           selector: 'MemberExpression[object.name=localStorage]',
           message: 'Direct usage of localStorage is not allowed. Use `Store` from @grafana/data instead.',
         },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
+        {
+          selector:
+            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+          message:
+            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+        },
       ],
     },
   },

@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -70,7 +69,7 @@ type Service struct {
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
-	tracer   tracing.Tracer
+	tracer   trace.Tracer
 }
 
 func ProvideService(
@@ -86,7 +85,7 @@ func ProvideService(
 	publicDashboardService publicdashboards.ServiceWrapper,
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
@@ -125,7 +124,7 @@ func ProvideService(
 			sorter,
 		)
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler

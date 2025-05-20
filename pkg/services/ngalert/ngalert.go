@@ -317,10 +317,6 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	if !ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagGrafanaManagedRecordingRules) {
-		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
-		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
-	}
 	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
@@ -660,6 +656,7 @@ func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings s
 		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
 			cfg := writer.DatasourceWriterConfig{
 				Timeout:              settings.Timeout,
+				CustomHeaders:        settings.CustomHeaders,
 				DefaultDatasourceUID: settings.DefaultDatasourceUID,
 			}
 

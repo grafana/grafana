@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -69,9 +70,10 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		db, cfg := db.InitTestDBWithCfg(t)
 		store := ProvideStore(db)
+		tracer := noop.NewTracerProvider().Tracer("TestIntegrationProvideFolderService")
 		ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracer, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 			apiserver.WithoutRestConfig)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
@@ -90,6 +92,7 @@ func TestIntegrationFolderService(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 		publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		features := featuremgmt.WithFeatures()
+		tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderService")
 
 		alertingStore := ngstore.DBstore{
 			SQLStore:      db,
@@ -110,7 +113,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 			metrics:                newFoldersMetrics(nil),
 			registry:               make(map[string]folder.RegistryService),
-			tracer:                 tracing.InitializeTracerForTest(),
+			tracer:                 tracer,
 		}
 
 		require.NoError(t, service.RegisterService(alertingStore))
@@ -369,6 +372,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	tracer := noop.NewTracerProvider().Tracer("TestIntegrationNestedFolderService")
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -384,7 +388,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		accessControl:          ac,
 		registry:               make(map[string]folder.RegistryService),
 		metrics:                newFoldersMetrics(nil),
-		tracer:                 tracing.InitializeTracerForTest(),
+		tracer:                 tracer,
 		publicDashboardService: publicDashboardFakeService,
 	}
 
@@ -497,7 +501,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				db:                     db,
 				registry:               make(map[string]folder.RegistryService),
 				metrics:                newFoldersMetrics(nil),
-				tracer:                 tracing.InitializeTracerForTest(),
+				tracer:                 tracer,
 				publicDashboardService: publicDashboardFakeService,
 			}
 
@@ -572,7 +576,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			db:                     db,
 			registry:               make(map[string]folder.RegistryService),
 			metrics:                newFoldersMetrics(nil),
-			tracer:                 tracing.InitializeTracerForTest(),
+			tracer:                 tracer,
 			publicDashboardService: publicDashboardFakeService,
 			accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		}
@@ -730,6 +734,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 
 	dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+	tracer := noop.NewTracerProvider().Tracer("TestNestedFolderServiceFeatureToggle")
 
 	db, _ := sqlstore.InitTestDB(t)
 	folderService := &Service{
@@ -741,7 +746,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        actest.FakeAccessControl{ExpectedEvaluate: true},
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               tracer,
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -762,6 +767,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 	require.NoError(t, err)
 
 	dashboardFolderStore := ProvideDashboardFolderStore(db)
+	tracer := noop.NewTracerProvider().Tracer("TestFolderServiceDualWrite")
 
 	folderService := &Service{
 		store:                nestedFolderStore,
@@ -772,7 +778,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        actest.FakeAccessControl{ExpectedEvaluate: true},
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               tracer,
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 
@@ -1296,6 +1302,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
+	tracer := noop.NewTracerProvider().Tracer("TestIntegrationNestedFolderSharedWithMe")
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOn)
@@ -1311,7 +1318,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               tracer,
 	}
 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -1703,6 +1710,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 		require.NoError(t, err)
 		nestedFolderStore := ProvideStore(db)
+		tracer := noop.NewTracerProvider().Tracer("TestFolderServiceGetFolder")
 
 		b := bus.ProvideBus(tracing.InitializeTracerForTest())
 		ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -1718,7 +1726,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			accessControl:        ac,
 			registry:             make(map[string]folder.RegistryService),
 			metrics:              newFoldersMetrics(nil),
-			tracer:               tracing.NewNoopTracerService(),
+			tracer:               tracer,
 		}
 	}
 
@@ -1801,6 +1809,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
+	tracer := noop.NewTracerProvider().Tracer("TestFolderServiceGetFolders")
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -1816,7 +1825,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               tracer,
 	}
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -1880,6 +1889,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
+	tracer := noop.NewTracerProvider().Tracer("TestGetChildrenFilterByPermission")
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -1897,7 +1907,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               tracer,
 	}
 
 	viewer := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -2343,7 +2353,7 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 		accessControl:        ac,
 		db:                   db,
 		metrics:              newFoldersMetrics(nil),
-		tracer:               tracing.InitializeTracerForTest(),
+		tracer:               noop.NewTracerProvider().Tracer("setup"),
 	}
 }
 

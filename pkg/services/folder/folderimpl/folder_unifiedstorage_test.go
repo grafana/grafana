@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
@@ -196,9 +197,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		featuremgmt.FlagKubernetesClientDashboardsFolders}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
+	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
 	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
-	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
+	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -231,7 +233,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		accessControl:          acimpl.ProvideAccessControl(features),
 		registry:               make(map[string]folder.RegistryService),
 		metrics:                newFoldersMetrics(nil),
-		tracer:                 tracing.InitializeTracerForTest(),
+		tracer:                 tracer,
 		k8sclient:              k8sCli,
 		dashboardK8sClient:     fakeK8sClient,
 		publicDashboardService: publicDashboardService,
@@ -516,11 +518,12 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 		ID:    2,
 		Title: "parent title",
 	}
+	tracer := noop.NewTracerProvider().Tracer("TestSearchFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
 		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore:  folderStore,
-		tracer:        tracing.NewNoopTracerService(),
+		tracer:        tracer,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	user := &user.SignedInUser{OrgID: 1}
@@ -758,12 +761,13 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		ID:    2,
 		Title: "parent title",
 	}
+	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
 		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore:  folderStore,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
-		tracer:        tracing.NewNoopTracerService(),
+		tracer:        tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -845,6 +849,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 	fakeFolderStore := folder.NewFakeStore()
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	tracer := noop.NewTracerProvider().Tracer("TestDeleteFoldersFromApiServer")
 	service := Service{
 		k8sclient:              fakeK8sClient,
 		dashboardK8sClient:     dashboardK8sclient,
@@ -854,7 +859,7 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
-		tracer:                 tracing.NewNoopTracerService(),
+		tracer:                 tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)

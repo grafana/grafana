@@ -19,7 +19,7 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
   const url = getProviderUrl({ configPath, id: providerId });
   const [iconName, displayName] = UIMap[providerId] || ['lock', providerId.toUpperCase()];
   return (
-    <Card href={url} onClick={onClick}>
+    <Card href={url} onClick={onClick} noMargin>
       <Card.Heading>{displayName}</Card.Heading>
       <Card.Meta>{authType}</Card.Meta>
       {isIconName(iconName) && (

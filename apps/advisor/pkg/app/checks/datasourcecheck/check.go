@@ -69,10 +69,18 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+	ds, err := c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		UID:   id,
 		OrgID: requester.GetOrgID(),
 	})
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			// The data source does not exist, skip the check
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ds, nil
 }
 
 func (c *check) ID() string {

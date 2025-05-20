@@ -257,3 +257,18 @@ export interface K8sAPIGroupList {
   kind: 'APIGroupList';
   groups: K8sAPIGroup[];
 }
+
+/**
+ * Generic types to match the generated k8s API types in the RTK query clients
+ */
+export interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
+export interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
+  metadata?: GeneratedObjectMeta;
+  spec?: T;
+  status?: S;
+}
+
+export interface GeneratedResourceList<Spec, Status, K = string> {
+  metadata?: Partial<ListMeta>;
+  items?: Array<GeneratedResource<Spec, Status, K>>;
+}

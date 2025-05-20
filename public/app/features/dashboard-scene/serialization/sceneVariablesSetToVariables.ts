@@ -1,5 +1,12 @@
+// Temporary comment to fix parsing error
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
+import {
+  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  MultiValueVariable,
+  SceneVariables,
+  sceneUtils,
+  SceneVariable,
+} from '@grafana/scenes';
 import {
   VariableModel,
   VariableRefresh as OldVariableRefresh,
@@ -18,6 +25,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -41,6 +49,7 @@ import {
 
 export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
   const variables: VariableModel[] = [];
+
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
@@ -185,6 +194,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         filters: variable.state.filters,
         defaultKeys: variable.state.defaultKeys,
       });
+    } else if (variable.state.type === 'system') {
+      // Not persisted
     } else {
       throw new Error('Unsupported variable type');
     }
@@ -429,10 +440,33 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(adhocVariable);
+    } else if (variable.state.type === 'system') {
+      // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
   return variables;
+}
+
+function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  return (
+    filters?.map((filter) => {
+      const { origin: initialOrigin, ...restOfFilter } = filter;
+
+      if (initialOrigin === 'dashboard' || initialOrigin === 'scope') {
+        return {
+          ...restOfFilter,
+          origin: initialOrigin,
+        };
+      }
+
+      return restOfFilter;
+    }) || []
+  );
+}
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system';
 }

@@ -63,9 +63,7 @@ To configure Grafana-managed recording rules, complete the following steps.
 
 This section only applies to Grafana OSS and Grafana Enterprise.
 
-First, enable the `grafanaManagedRecordingRules` [feature flag](ref:configure-feature-toggles).
-
-Then, enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana config .ini. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers.
+Enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana configuration file. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers.
 
 ```
 [recording_rules]
