@@ -119,21 +119,23 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['react-i18next', 'i18next'],
+              importNames: ['t'],
+              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+            },
+            {
+              group: ['react-i18next'],
+              importNames: ['Trans'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
               importNames: ['useDispatch', 'useSelector'],
               message: 'Please import from app/types instead.',
-            },
-            {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from app/core/internationalization instead',
-            },
-            {
-              name: 'i18next',
-              importNames: ['t'],
-              message: 'Please import from app/core/internationalization instead',
             },
           ],
         },
