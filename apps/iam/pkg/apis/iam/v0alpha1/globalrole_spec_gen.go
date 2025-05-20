@@ -17,7 +17,6 @@ func NewGlobalRolespecPermission() *GlobalRolespecPermission {
 
 // +k8s:openapi-gen=true
 type GlobalRoleSpec struct {
-	Name string `json:"name"`
 	// Display name of the role
 	Title   string `json:"title"`
 	Version int64  `json:"version"`
