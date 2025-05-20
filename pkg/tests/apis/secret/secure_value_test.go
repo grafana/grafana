@@ -679,7 +679,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
-			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"actor_app1", "actor_app2"}
+			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"app1", "app2"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
