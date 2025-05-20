@@ -296,7 +296,6 @@ module.exports = [
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
-      'public/app/plugins/**',
       '**/*.story.tsx',
       '**/*.{test,spec}.{ts,tsx}',
       '**/{tests,__mocks__,__tests__,fixtures}/**',
