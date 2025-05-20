@@ -317,7 +317,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm || this.managerAllowsEdits()) {
+    if (!this.state.isDirty || skipConfirm || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
       return;
     }
@@ -810,7 +810,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
-  managerAllowsEdits() {
+  managedResourceCannotBeEdited() {
     return (
       this.isManaged() &&
       (!this.isManagedRepository() || !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits])
