@@ -80,7 +80,7 @@ export const getActions = (
   return actionModels.filter((action): action is ActionModel => !!action);
 };
 
-const interpolateActionVariables = (action: Action, actionVars: ActionVariableInput): Action => {
+export const interpolateActionVariables = (action: Action, actionVars: ActionVariableInput): Action => {
   if (!action.variables || !actionVars || !action.fetch) {
     return action;
   }
@@ -92,12 +92,11 @@ const interpolateActionVariables = (action: Action, actionVars: ActionVariableIn
       continue;
     }
 
-    const variableKey = '$' + variable.key;
+    const varRegex = new RegExp('\\$' + variable.key + '(?![a-zA-Z0-9_])', 'g');
 
     if (actionCopy.fetch) {
       // URL
-      const urlRegex = new RegExp('\\${{' + variable.key + '}}', 'g');
-      actionCopy.fetch.url = actionCopy.fetch.url.replace(urlRegex, value);
+      actionCopy.fetch.url = actionCopy.fetch.url.replace(varRegex, value);
 
       if (actionCopy.fetch.body) {
         try {
@@ -112,9 +111,8 @@ const interpolateActionVariables = (action: Action, actionVars: ActionVariableIn
             const result = { ...actionBody };
             for (const [key, val] of Object.entries(result)) {
               if (typeof val === 'string') {
-                if (val === variableKey) {
-                  result[key] = value;
-                }
+                // Replace both ${{var}} and $var patterns, even when part of a larger string
+                result[key] = val.replace(varRegex, value).replace(varRegex, value);
               } else if (typeof val === 'object' && val !== null) {
                 result[key] = replaceValues(val);
               }
@@ -130,19 +128,17 @@ const interpolateActionVariables = (action: Action, actionVars: ActionVariableIn
 
       if (Array.isArray(actionCopy.fetch.queryParams)) {
         actionCopy.fetch.queryParams = actionCopy.fetch.queryParams.map(([key, val]: [string, string]) => {
-          if (val === variableKey) {
-            return [key, value];
-          }
-          return [key, val];
+          // Replace both ${{var}} and $var patterns, even when part of a larger string
+          const newVal = val.replace(varRegex, value).replace(varRegex, value);
+          return [key, newVal];
         });
       }
 
       if (Array.isArray(actionCopy.fetch.headers)) {
         actionCopy.fetch.headers = actionCopy.fetch.headers.map(([key, val]: [string, string]) => {
-          if (val === variableKey) {
-            return [key, value];
-          }
-          return [key, val];
+          // Replace both ${{var}} and $var patterns, even when part of a larger string
+          const newVal = val.replace(varRegex, value).replace(varRegex, value);
+          return [key, newVal];
         });
       }
     }
