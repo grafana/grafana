@@ -103,11 +103,11 @@ const getTooltips = () => {
     },
     {
       path: 'object.value1',
-      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value', '=> extract value1'),
+      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value1', '=> extract value1'),
     },
     {
       path: 'object.value2',
-      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value', '=> extract value2'),
+      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value2', '=> extract value2'),
     },
     {
       path: 'object.value2[0]',
