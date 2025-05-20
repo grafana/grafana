@@ -319,6 +319,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.private-data-source-connections.subtitle',
         'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.'
       );
+    case 'plugin-page-grafana-ml-app':
+      return t('nav.machine-learning.subtitle', 'Explore AI and machine learning features');
     default:
       return undefined;
   }
