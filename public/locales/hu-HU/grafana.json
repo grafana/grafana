@@ -7373,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana-függőség",
       "installed-version": "{{versionNumber}} (telepített verzió)",
-      "last-updated": "Legutóbbi frissítés",
       "latest-compatible-version": "{{versionNumber}} (legújabb kompatibilis verzió)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Nem található verzióelőzmény.",
       "version": "Verzió"
     }
