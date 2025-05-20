@@ -20,7 +20,7 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 	k8s.io/apimachinery v0.32.3
 	k8s.io/apiserver v0.32.3
 	k8s.io/client-go v0.32.3
@@ -120,7 +120,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // indirect
+	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
@@ -142,6 +142,7 @@ require (
 	github.com/hashicorp/go-plugin v1.6.3 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect

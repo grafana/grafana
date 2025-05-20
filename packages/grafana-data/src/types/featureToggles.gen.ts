@@ -162,10 +162,6 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
-  * Enables extra themes
-  */
-  extraThemes?: boolean;
-  /**
   * Adds predefined query operations to Loki query editor
   */
   lokiPredefinedOperations?: boolean;
@@ -520,6 +516,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregator?: boolean;
   /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enable new expression parser
   */
   expressionParser?: boolean;
@@ -553,10 +553,6 @@ export interface FeatureToggles {
   * In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
   */
   disableNumericMetricsSortingInExpressions?: boolean;
-  /**
-  * Enables Grafana-managed recording rules.
-  */
-  grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Query Library feature in Explore
   */
@@ -931,7 +927,8 @@ export interface FeatureToggles {
   */
   inviteUserExperimental?: boolean;
   /**
-  * Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+  * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
+  * @default true
   */
   alertingMigrationUI?: boolean;
   /**

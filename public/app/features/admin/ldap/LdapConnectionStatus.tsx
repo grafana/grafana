@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
@@ -15,6 +15,8 @@ interface ServerInfo {
 }
 
 export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
+  const { t } = useTranslate();
+
   const columns = useMemo<Array<Column<ServerInfo>>>(
     () => [
       {
@@ -56,7 +58,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
         },
       },
     ],
-    []
+    [t]
   );
 
   const data = useMemo<ServerInfo[]>(() => ldapConnectionInfo, [ldapConnectionInfo]);
@@ -79,6 +81,8 @@ interface LdapConnectionErrorProps {
 }
 
 export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
+  const { t } = useTranslate();
+
   const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;
