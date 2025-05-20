@@ -73,8 +73,3 @@ jobs:
           security_branch_number: ${{ inputs.security_branch_number }}
           repository: ${{ inputs.repository }}
           token: ${{ steps.generate_token.outputs.token }}
-
-      - name: Push security branch
-        run: |
-          git checkout -b "${{ steps.branch.outputs.branch }}"
-          git push origin "${{ steps.branch.outputs.branch }}"
