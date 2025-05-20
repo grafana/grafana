@@ -38,6 +38,7 @@ func (t tokenStore) GetImage(ctx context.Context, token string) (*alertingImages
 	}
 
 	return &alertingImages.Image{
+		ID:  token,
 		URL: image.URL,
 		RawData: func(_ context.Context) (alertingImages.ImageContent, error) {
 			if image.Path == "" {

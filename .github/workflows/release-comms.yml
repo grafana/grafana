@@ -21,13 +21,13 @@ on:
     - 'main'
     - 'release-*.*.*'
 
-permissions: {}
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   setup:
-    permissions:
-      contents: read
-      id-token: write
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
@@ -35,6 +35,8 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
+      private_key: ${{ steps.output.outputs.delivery_bot_pem }}
+      app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -42,6 +44,13 @@ jobs:
       VERSION: ${{ inputs.version }}
     runs-on: ubuntu-latest
     steps:
+    - name: "Get vault secrets"
+      id: vault-secrets
+      uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      with:
+        # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+        repo_secrets: |
+          GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
         {

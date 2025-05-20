@@ -1,6 +1,7 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
+import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -50,6 +51,7 @@ import {
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
+import { initializeI18n } from '../../packages/grafana-i18n/src/i18n';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
@@ -61,7 +63,8 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initializeI18n } from './core/internationalization';
+import { NAMESPACES } from './core/internationalization/constants';
+import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
@@ -123,8 +126,22 @@ export class GrafanaApp {
       await preInitTasks();
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+      const regionalFormat = config.featureToggles.localeFormatPreference
+        ? config.locale
+        : config.bootData.user.language;
 
-      const initI18nPromise = initializeI18n(config.bootData.user.language);
+      const initI18nPromise = initializeI18n(
+        {
+          language: config.bootData.user.language,
+          ns: NAMESPACES,
+          module: loadTranslations,
+        },
+        regionalFormat
+      );
+
+      // This is a placeholder so we can put a 'comment' in the message json files.
+      // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+      // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
