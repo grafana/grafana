@@ -296,13 +296,10 @@ module.exports = [
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
-      '**/*.story.tsx',
-      '**/*.{test,spec}.{ts,tsx}',
-      '**/{tests,__mocks__,__tests__,fixtures}/**',
-      '**/{test-utils,testHelpers}.{ts,tsx}',
-      '**/mocks.{ts,tsx}',
       'public/test/**',
-      '**/{spec,mocks}/**/*.{ts,tsx}',
+      '**/*.{test,spec,story}.{ts,tsx}',
+      '**/{tests,__mocks__,__tests__,fixtures,spec,mocks}/**',
+      '**/{test-utils,testHelpers,mocks}.{ts,tsx}',
       '**/mock*.{ts,tsx}',
     ],
     rules: {
