@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -37,6 +38,10 @@ type DatasourceWriterConfig struct {
 	// This exists to cater for upgrading from old versions of Grafana, where rule
 	// definitions may not have a target data source specified.
 	DefaultDatasourceUID string
+
+	// CustomHeaders is a map of optional custom HTTP headers
+	// to include in recording rule write requests.
+	CustomHeaders map[string]string
 }
 
 type DatasourceWriter struct {
@@ -172,12 +177,18 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
+	headers := make(http.Header)
+	for k, v := range w.cfg.CustomHeaders {
+		headers.Add(k, v)
+	}
+
 	cfg := PrometheusWriterConfig{
 		URL: u.String(),
 		HTTPOptions: httpclient.Options{
 			Timeouts:  ho.Timeouts,
 			TLS:       ho.TLS,
 			BasicAuth: ho.BasicAuth,
+			Header:    headers,
 		},
 		Timeout: w.cfg.Timeout,
 	}

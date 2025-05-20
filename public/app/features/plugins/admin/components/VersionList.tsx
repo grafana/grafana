@@ -48,7 +48,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
           </th>
           <th></th>
           <th>
-            <Trans i18nKey="plugins.version-list.last-updated">Last updated</Trans>
+            <Trans i18nKey="plugins.version-list.latest-release-date">Latest release date</Trans>
           </th>
           <th>
             <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana dependency</Trans>
@@ -113,7 +113,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                 />
               </td>
 
-              {/* Last updated */}
+              {/* Latest release date */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
