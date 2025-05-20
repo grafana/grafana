@@ -29,6 +29,7 @@ export function PartitionByValuesEditor({
   options,
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
+  const { t } = useTranslate();
   const names = useFieldDisplayNames(input);
   const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
@@ -96,7 +97,6 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
-  const { t } = useTranslate();
 
   if (input.length > 1) {
     return (

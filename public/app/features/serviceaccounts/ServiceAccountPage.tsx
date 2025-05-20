@@ -63,6 +63,7 @@ export const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   updateServiceAccount,
 }: Props): JSX.Element => {
+  const { t } = useTranslate();
   const [newToken, setNewToken] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -96,8 +97,6 @@ export const ServiceAccountPageUnconnected = ({
       fetchACOptions();
     }
   }, [loadServiceAccount, loadServiceAccountTokens, id]);
-
-  const { t } = useTranslate();
 
   const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
     updateServiceAccount(serviceAccount);

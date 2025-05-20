@@ -219,6 +219,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
+  const { t } = useTranslate();
   const { timeZone } = props;
   let overviewItems = [
     {
@@ -248,7 +249,6 @@ export default function SpanDetail(props: SpanDetailProps) {
   ];
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
   if (span.kind) {
     overviewItems.push({
       key: KIND,

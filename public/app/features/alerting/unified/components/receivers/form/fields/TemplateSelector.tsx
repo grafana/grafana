@@ -123,6 +123,7 @@ interface TemplateSelectorProps {
 }
 
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -159,7 +160,6 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       setCustomTemplateValue(getUseTemplateText(template.value.name));
     }
   }, [template]);
-  const { t } = useTranslate();
 
   function onCustomTemplateChange(customInput: string) {
     setCustomTemplateValue(customInput);

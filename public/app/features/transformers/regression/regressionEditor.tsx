@@ -32,6 +32,7 @@ export const RegressionTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
+  const { t } = useTranslate();
   const modelTypeOptions = [
     {
       label: t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear'),
@@ -78,8 +79,6 @@ export const RegressionTransformerEditor = ({
       onChange({ ...options, xFieldName: x.name, yFieldName: y.name });
     }
   });
-
-  const { t } = useTranslate();
 
   return (
     <>
