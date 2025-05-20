@@ -179,6 +179,11 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `const thing = { label: 'test' }`,
       filename,
     },
+    {
+      name: 'Object property in default props',
+      code: `const Foo = ({ foobar = {label: 'test'} }) => <div>{foobar.label}</div>`,
+      filename,
+    },
   ],
   invalid: [
     /**

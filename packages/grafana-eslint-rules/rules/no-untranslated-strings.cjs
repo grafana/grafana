@@ -65,7 +65,15 @@ const noUntranslatedStrings = createRule({
           return null;
         })();
 
-        if (!keyName || !propertiesToCheck.includes(keyName)) {
+        // Catch cases of default props setting object properties, which would be at the top level
+        const isAssignmentPattern = parent.parent.type === AST_NODE_TYPES.AssignmentPattern;
+
+        if (
+          !keyName ||
+          !propertiesToCheck.includes(keyName) ||
+          parent.type === AST_NODE_TYPES.ObjectPattern ||
+          isAssignmentPattern
+        ) {
           return;
         }
 
