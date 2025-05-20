@@ -9,6 +9,7 @@ import { defaultValue } from './__mocks__/LogListContext';
 const log = createLogLine({ rowId: 'yep' });
 const value = {
   ...defaultValue,
+  pinnedLogs: ['yep'],
 };
 const wrapper = ({ children }: { children: ReactNode }) => (
   <LogListContext.Provider value={value}>{children}</LogListContext.Provider>
