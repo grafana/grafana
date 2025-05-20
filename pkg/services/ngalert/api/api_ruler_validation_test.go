@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"path"
 	"strconv"
 	"testing"
@@ -11,6 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	//nolint:staticcheck
+	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -37,10 +39,10 @@ var allExecError = []apimodels.ExecutionErrorState{
 
 func config(t *testing.T) *setting.UnifiedAlertingSettings {
 	t.Helper()
-	baseInterval := time.Duration(rand.IntN(99)+1) * time.Second
+	baseInterval := time.Duration(rand.Intn(99)+1) * time.Second
 	result := &setting.UnifiedAlertingSettings{
 		BaseInterval:                  baseInterval,
-		DefaultRuleEvaluationInterval: baseInterval * time.Duration(rand.IntN(9)+1),
+		DefaultRuleEvaluationInterval: baseInterval * time.Duration(rand.Intn(9)+1),
 	}
 	t.Logf("Config Base interval is [%v]", result.BaseInterval)
 	return result
@@ -52,8 +54,8 @@ func makeLimits(cfg *setting.UnifiedAlertingSettings) RuleLimits {
 }
 
 func validRule() apimodels.PostableExtendedRuleNode {
-	forDuration := model.Duration(rand.Int64N(1000))
-	keepFiringForDuration := model.Duration(rand.Int64N(1000))
+	forDuration := model.Duration(rand.Int63n(1000))
+	keepFiringForDuration := model.Duration(rand.Int63n(1000))
 	uid := util.GenerateShortUID()
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
@@ -82,8 +84,8 @@ func validRule() apimodels.PostableExtendedRuleNode {
 				},
 			},
 			UID:          uid,
-			NoDataState:  allNoData[rand.IntN(len(allNoData))],
-			ExecErrState: allExecError[rand.IntN(len(allExecError))],
+			NoDataState:  allNoData[rand.Intn(len(allNoData))],
+			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
 	}
 }
@@ -91,7 +93,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 func validGroup(cfg *setting.UnifiedAlertingSettings, rules ...apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
 	return apimodels.PostableRuleGroupConfig{
 		Name:     "TEST-ALERTS-" + util.GenerateShortUID(),
-		Interval: model.Duration(cfg.BaseInterval * time.Duration(rand.Int64N(10))),
+		Interval: model.Duration(cfg.BaseInterval * time.Duration(rand.Int63n(10))),
 		Rules:    rules,
 	}
 }
@@ -198,10 +200,10 @@ func TestValidateCondition(t *testing.T) {
 }
 
 func TestValidateRuleGroup(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 
-	rules := make([]apimodels.PostableExtendedRuleNode, 0, rand.IntN(4)+1)
+	rules := make([]apimodels.PostableExtendedRuleNode, 0, rand.Intn(4)+1)
 	for i := 0; i < cap(rules); i++ {
 		rules = append(rules, validRule())
 	}
@@ -242,7 +244,7 @@ func TestValidateRuleGroup(t *testing.T) {
 }
 
 func TestValidateRuleGroupFailures(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 	cfg := config(t)
 	limits := makeLimits(cfg)
@@ -274,7 +276,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 			name: "fail if interval is negative",
 			group: func() *apimodels.PostableRuleGroupConfig {
 				g := validGroup(cfg)
-				g.Interval = model.Duration(-(rand.Int64N(1000) + 1))
+				g.Interval = model.Duration(-(rand.Int63n(1000) + 1))
 				return &g
 			},
 		},
@@ -282,7 +284,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 			name: "fail if interval is not aligned with base interval",
 			group: func() *apimodels.PostableRuleGroupConfig {
 				g := validGroup(cfg)
-				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.IntN(10)+1)*time.Second)
+				g.Interval = model.Duration(cfg.BaseInterval + time.Duration(rand.Intn(10)+1)*time.Second)
 				return &g
 			},
 		},
@@ -346,12 +348,12 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 }
 
 func TestValidateRuleNode_NoUID(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 	name := util.GenerateShortUID()
 	var cfg = config(t)
 	limits := makeLimits(cfg)
-	interval := cfg.BaseInterval * time.Duration(rand.Int64N(10)+1)
+	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
 	testCases := []struct {
 		name   string
@@ -530,7 +532,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 }
 
 func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 	cfg := config(t)
 	limits := makeLimits(cfg)
@@ -748,12 +750,12 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 }
 
 func TestValidateRuleNode_UID(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 	name := util.GenerateShortUID()
 	var cfg = config(t)
 	limits := makeLimits(cfg)
-	interval := cfg.BaseInterval * time.Duration(rand.Int64N(10)+1)
+	interval := cfg.BaseInterval * time.Duration(rand.Int63n(10)+1)
 
 	testCases := []struct {
 		name   string
@@ -799,7 +801,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 				r := validRule()
 				r.GrafanaManagedAlert.Condition = ""
 				r.GrafanaManagedAlert.Data = nil
-				if rand.Int64()%2 == 0 {
+				if rand.Int63()%2 == 0 {
 					r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0)
 				}
 				return &r
@@ -846,7 +848,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 }
 
 func TestValidateRuleNodeFailures_UID(t *testing.T) {
-	orgId := rand.Int64()
+	orgId := rand.Int63()
 	folder := randFolder()
 	cfg := config(t)
 	limits := makeLimits(cfg)
@@ -954,7 +956,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 	}{
 		{
 			name:     "fail if interval is negative",
-			interval: -time.Duration(rand.Int64N(10)+1) * time.Second,
+			interval: -time.Duration(rand.Int63n(10)+1) * time.Second,
 		},
 		{
 			name:     "fail if interval is 0",
@@ -962,14 +964,14 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 		},
 		{
 			name:     "fail if interval is not multiple of base interval",
-			interval: cfg.BaseInterval + time.Duration(rand.Int64N(int64(cfg.BaseInterval.Seconds())-2)+1)*time.Second,
+			interval: cfg.BaseInterval + time.Duration(rand.Int63n(int64(cfg.BaseInterval.Seconds())-2)+1)*time.Second,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := validRule()
-			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int64(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), testCase.interval, rand.Int63(), randFolder().UID, limits)
 			require.Error(t, err)
 		})
 	}
@@ -1060,7 +1062,7 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
 			r.GrafanaManagedAlert.NotificationSettings = AlertRuleNotificationSettingsFromNotificationSettings([]models.NotificationSettings{tt.notificationSettings})
-			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int64N(10)+1), rand.Int64(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 
 			if tt.expErrorContains != "" {
 				require.Error(t, err)
@@ -1095,7 +1097,7 @@ func TestValidateRuleNodeEditorSettings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRule()
 			r.GrafanaManagedAlert.Metadata = AlertRuleMetadataFromModelMetadata(models.AlertRuleMetadata{EditorSettings: tt.editorSettings})
-			newRule, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int64N(10)+1), rand.Int64(), randFolder().UID, limits)
+			newRule, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 			require.NoError(t, err)
 			require.Equal(t, tt.editorSettings, newRule.Metadata.EditorSettings)
 		})
@@ -1112,7 +1114,7 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 			r.Labels = map[string]string{
 				label: "true",
 			}
-			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int64N(10)+1), rand.Int64(), randFolder().UID, limits)
+			_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
 			require.Error(t, err)
 			require.ErrorContains(t, err, label)
 		})
