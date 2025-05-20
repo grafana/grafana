@@ -8,9 +8,9 @@ import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
-import { LoadMoreButton } from './components/LoadMoreButton';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 

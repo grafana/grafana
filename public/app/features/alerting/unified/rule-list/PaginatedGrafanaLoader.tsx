@@ -14,9 +14,9 @@ import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
-import { LoadMoreButton } from './components/LoadMoreButton';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { LoadMoreButton } from './components/LoadMoreButton';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
