@@ -277,9 +277,7 @@ Load tests and instructions can be found [here](https://github.com/grafana/grafa
 
 ## Running with a distributor
 
-In this mode, the storage-api server joins a ring which allows us to use a distributor to proxy the requests and assign
-a storage-api server to handle the request based on the tenant. In case you need to test a feature under these
-circumstances, here are the steps to do it.
+For this deployment model, the storage-api server establishes a consistent hashing ring to distribute tenant requests. The distributor serves as the primary request router, mapping incoming traffic to the appropriate storage-api server based on tenant ID. When testing functionalities reliant on this sharded persistence layer, the following steps are mandatory.
 
 ### 0. Update your network interface to allow processes to bind to localhost addresses
 
