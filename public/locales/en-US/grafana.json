@@ -6148,6 +6148,7 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
+      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -6167,15 +6168,20 @@
       "log-line": "log line"
     },
     "log-line": {
+      "has-error": "Has errors",
+      "is-sampled": "Is sampled",
       "show-less": "show less",
-      "show-more": "show more"
+      "show-more": "show more",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",
+      "hide-details": "Show log details",
       "icon-label": "Log menu",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
+      "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
     "log-row-context-modal": {
