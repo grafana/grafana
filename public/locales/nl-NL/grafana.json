@@ -7373,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Afhankelijkheid van Grafana",
       "installed-version": "{{versionNumber}} (geïnstalleerde versie)",
-      "last-updated": "Laatst bijgewerkt",
       "latest-compatible-version": "{{versionNumber}} (nieuwste compatibele versie)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Er is geen versiegeschiedenis gevonden.",
       "version": "Versie"
     }

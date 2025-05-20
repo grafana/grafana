@@ -7347,8 +7347,8 @@
     "version-list": {
       "grafana-dependency": "Grafana 依赖关系",
       "installed-version": "{{versionNumber}}（已安装版本）",
-      "last-updated": "上次更新",
       "latest-compatible-version": "{{versionNumber}}（最新兼容版本）",
+      "latest-release-date": "",
       "no-version-history-was-found": "未找到版本历史记录。",
       "version": "版本"
     }
