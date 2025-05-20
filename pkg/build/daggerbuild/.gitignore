@@ -1,0 +1,8 @@
+.grafana/
+bin/
+*.tar.gz
+*.txt
+.idea/
+dist/
+grafana/
+.DS_Store
