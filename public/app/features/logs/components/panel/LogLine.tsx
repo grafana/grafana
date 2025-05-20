@@ -64,12 +64,14 @@ export const LogLine = ({
   });
 
   useEffect(() => {
-    if (collapsed === undefined && log.collapsed !== undefined) {
+    if (!wrapLogMessage) {
+      setCollapsed(undefined);
+    } else if (collapsed === undefined && log.collapsed !== undefined) {
       setCollapsed(log.collapsed);
     } else if (collapsed !== undefined && log.collapsed === undefined) {
       setCollapsed(log.collapsed);
     }
-  }, [collapsed, log.collapsed]);
+  }, [collapsed, log.collapsed, wrapLogMessage]);
 
   const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
