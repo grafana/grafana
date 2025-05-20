@@ -1177,7 +1177,12 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLinkServiceMap('View traces', tempoDatasourceUid, !!namespaceFields?.targetNamespace),
+      makeTempoLinkServiceMap(
+        'View traces',
+        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
+        `\${${targetField}}`,
+        tempoDatasourceUid
+      ),
     ],
   };
 }
@@ -1234,8 +1239,9 @@ export function makeTempoLink(
 
 function makeTempoLinkServiceMap(
   title: string,
-  datasourceUid: string,
-  includeNamespace: boolean
+  serviceNamespaceVar: string | undefined,
+  serviceNameVar: string,
+  datasourceUid: string
 ): DataLink<TempoQuery> {
   return {
     url: '',
@@ -1244,11 +1250,8 @@ function makeTempoLinkServiceMap(
       datasourceUid,
       datasourceName: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
       query: ({ replaceVariables, scopedVars }) => {
-        const serviceName = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`, scopedVars);
-        const serviceNamespace = replaceVariables?.(
-          `\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`,
-          scopedVars
-        );
+        const serviceName = replaceVariables?.(serviceNameVar, scopedVars);
+        const serviceNamespace = serviceNamespaceVar ? replaceVariables?.(serviceNamespaceVar, scopedVars) : undefined;
         const isInstrumented =
           replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`, scopedVars) !==
           'false';
@@ -1262,7 +1265,7 @@ function makeTempoLinkServiceMap(
           query.queryType = 'traceql';
           query.query = `{${filters}}`;
         } else {
-          if (includeNamespace && serviceNamespace) {
+          if (serviceNamespace) {
             query.filters.push({
               id: 'service-namespace',
               scope: TraceqlSearchScope.Resource,
