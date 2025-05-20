@@ -1050,7 +1050,7 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": "Delete rules"
+          "label": "Delete all rules"
         }
       },
       "delete-modal-confirmation-text": "Delete",
@@ -1060,18 +1060,21 @@
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
       "more-button": {
-        "title": "Folder bulk Actions",
-        "tooltip": "Folder bulk Actions"
+        "title": "Folder actions",
+        "tooltip": "Folder actions"
       },
       "pause": {
         "button": {
-          "label": "Pause all rule evaluation"
+          "label": "Pause all rules"
         }
       },
       "unpause": {
         "button": {
-          "label": "Resume all rule evaluation"
+          "label": "Resume all rules"
         }
+      },
+      "view": {
+        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Loading...."
-    },
-    "group-actions": {
-      "actions-trigger": "Rule group actions",
-      "details": "Details",
-      "edit": "Edit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Failed to load group details",
-      "unknown-error": "Unknown error"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Group",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
-        "next-page": "next page",
-        "previous-page": "previous page"
+        "next-page": "Show more…"
       },
       "recording-rules": "Recording rules",
       "return-button": {

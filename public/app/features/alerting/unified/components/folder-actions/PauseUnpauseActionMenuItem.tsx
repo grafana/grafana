@@ -20,8 +20,8 @@ export function PauseUnpauseActionMenuItem({ folderUID, executeAction, isLoading
   const { t } = useTranslate();
   const label =
     action === 'pause'
-      ? t('alerting.folder-bulk-actions.pause.button.label', 'Pause all rule evaluation')
-      : t('alerting.folder-bulk-actions.unpause.button.label', 'Resume all rule evaluation');
+      ? t('alerting.folder-bulk-actions.pause.button.label', 'Pause all rules')
+      : t('alerting.folder-bulk-actions.unpause.button.label', 'Resume all rules');
   const icon = action === 'pause' ? 'pause' : 'play';
   const trackActionSuccess =
     action === 'pause' ? trackFolderBulkActionsPauseSuccess : trackFolderBulkActionsUnpauseSuccess;
