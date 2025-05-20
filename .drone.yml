@@ -488,7 +488,7 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
@@ -1774,7 +1774,7 @@ steps:
   image: node:22.11.0-alpine
   name: build-frontend-packages
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
@@ -3630,7 +3630,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
@@ -3706,7 +3706,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
@@ -3824,7 +3824,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
@@ -4062,7 +4062,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
@@ -4205,7 +4205,7 @@ steps:
   image: google/cloud-sdk:alpine
   name: rgm-copy
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
@@ -4333,7 +4333,7 @@ steps:
   - name: github-app
     path: /github-app
 - commands:
-  - curl -s -L https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - dagger run --silent ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
@@ -5199,6 +5199,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7e33f03a8dae8009b990d66f1d5b7b76312bb31a8ad4746adf5516b9d2014a53
+hmac: bff151c979b27ed4110233c5a1eab6fd6c4624c210c50a0d1cd30f09d0f554cd
 
 ...
