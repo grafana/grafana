@@ -38,15 +38,14 @@ export function PluginDetailsPage({
   navId = 'plugins',
   notFoundComponent = <NotFoundPlugin />,
   notFoundNavModel = {
-    text: t('plugins.plugin-details-page.text.unknown-plugin', 'Unknown plugin'),
-    subTitle: t(
-      'plugins.plugin-details-page.subTitle.requested-belong-plugin',
-      'The requested ID does not belong to any plugin'
-    ),
+    // TODO: don't autofix "untranslated" default prop values
+    /* eslint-disable @grafana/no-untranslated-strings */
+    text: 'Unknown plugin',
+    subTitle: 'The requested ID does not belong to any plugin',
+    /* eslint-enable @grafana/no-untranslated-strings */
     active: true,
   },
 }: Props) {
-  const { t } = useTranslate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
