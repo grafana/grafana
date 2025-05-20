@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -58,6 +58,7 @@ export function GrafanaGroupLoader({
 
     return matchRules(promRules, rulerRules);
   }, [promResponse, rulerResponse]);
+  const { t } = useTranslate();
 
   const isLoading = isPromResponseLoading || isRulerGroupLoading;
   if (isLoading) {

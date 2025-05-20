@@ -4,12 +4,12 @@ import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -19,6 +19,7 @@ import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
 
@@ -141,7 +142,7 @@ export function RichHistoryCard(props: Props) {
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const cardRootDatasource = datasourceInstances
     ? datasourceInstances.find((di) => di.uid === queryHistoryItem.datasourceUid)
     : undefined;
@@ -387,7 +388,7 @@ interface QueryProps {
 
 const Query = ({ query, showDsInfo = false }: QueryProps) => {
   const styles = useStyles2(getQueryStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.queryRow}>
       {showDsInfo && (
@@ -415,11 +416,12 @@ const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   return (
     <div className={styles}>
       <img
-        src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
+        src={dsApi?.meta.info.logos.small || icnDatasourceSvg}
         alt={dsApi?.type || t('explore.rich-history-card.datasource-not-exist', 'Data source does not exist anymore')}
         aria-label={t('explore.rich-history-card.datasource-icon-label', 'Data source icon')}
       />

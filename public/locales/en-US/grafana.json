@@ -1050,7 +1050,7 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": "Delete rules"
+          "label": "Delete all rules"
         }
       },
       "delete-modal-confirmation-text": "Delete",
@@ -1060,18 +1060,21 @@
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
       "more-button": {
-        "title": "Folder bulk Actions",
-        "tooltip": "Folder bulk Actions"
+        "title": "Folder actions",
+        "tooltip": "Folder actions"
       },
       "pause": {
         "button": {
-          "label": "Pause all rule evaluation"
+          "label": "Pause all rules"
         }
       },
       "unpause": {
         "button": {
-          "label": "Resume all rule evaluation"
+          "label": "Resume all rules"
         }
+      },
+      "view": {
+        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Loading...."
-    },
-    "group-actions": {
-      "actions-trigger": "Rule group actions",
-      "details": "Details",
-      "edit": "Edit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Failed to load group details",
-      "unknown-error": "Unknown error"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Group",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
-        "next-page": "next page",
-        "previous-page": "previous page"
+        "next-page": "Show more…"
       },
       "recording-rules": "Recording rules",
       "return-button": {
@@ -2799,6 +2792,10 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "Folder not found",
+      "title-ruler-namespace-error": "Cannot load rules"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -3415,6 +3412,11 @@
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "modal-title": "Query Variable",
+          "preview": "Preview"
+        },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -4011,6 +4013,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
+      "alert-not-supported": "This data source does not support ad hoc filters",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -4235,6 +4238,7 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-target-data-source": "Target data source",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
@@ -4512,12 +4516,6 @@
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
-    },
-    "time-regions": {
-      "advanced-description-cron": "Cron syntax",
-      "advanced-description-rest": " to define a recurrence schedule and duration",
-      "advanced-description-use": "Use ",
-      "advanced-label": "Advanced"
     },
     "variables": {
       "title": "Variables"
@@ -5363,9 +5361,6 @@
     "discard-button": "Discard unsaved changes",
     "title": "Leave page?"
   },
-  "frontendtests": {
-    "test-key": "test-key not found"
-  },
   "gen-ai": {
     "apply-suggestion": "Apply",
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
@@ -6153,6 +6148,7 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
+      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -6172,15 +6168,20 @@
       "log-line": "log line"
     },
     "log-line": {
+      "has-error": "Has errors",
+      "is-sampled": "Is sampled",
       "show-less": "show less",
-      "show-more": "show more"
+      "show-more": "show more",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",
+      "hide-details": "Show log details",
       "icon-label": "Log menu",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
+      "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
     "log-row-context-modal": {
@@ -6231,8 +6232,8 @@
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
-      "newest-first": "Newest logs first",
-      "oldest-first": "Oldest logs first",
+      "newest-first": "Sorted by newest logs first - Click to show oldest first",
+      "oldest-first": "Sorted by oldest logs first - Click to show newest first",
       "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
@@ -6774,7 +6775,8 @@
       "title": "Library panels"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "Explore AI and machine learning features",
+      "title": "AI & machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -7371,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
-      "last-updated": "Last updated",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
+      "latest-release-date": "Latest release date",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }
@@ -9013,7 +9015,8 @@
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Value or variable"
+      "placeholder-value-or-variable": "Value or variable",
+      "variable-regex-documentation": "Formats multi-value variable into a regex string"
     },
     "regression-transformer-editor": {
       "label-degree": "Degree",

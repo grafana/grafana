@@ -399,7 +399,7 @@ jobs:
             echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
 
-          exit ${LV_EXIT_CODE}
+          exit "${LV_EXIT_CODE}"
         shell: bash
         env:
           LV_EXIT_CODE: ${{ steps.levitate-run.outputs.exit_code }}

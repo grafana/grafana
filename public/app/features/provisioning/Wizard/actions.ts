@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
   RepositoryViewList,
 } from 'app/api/clients/provisioning';
-import { t } from 'app/core/internationalization';
 
 import { ModeOption } from './types';
 
@@ -37,6 +37,8 @@ function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings
  * This needs to be a hook, so we can add translations
  */
 export function useModeOptions(repoName: string, settings?: RepositoryViewList) {
+  const { t } = useTranslate();
+
   return useMemo(() => {
     const modeOptions: ModeOption[] = [
       {
@@ -66,7 +68,7 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
     ];
 
     return filterModeOptions(modeOptions, repoName, settings);
-  }, [repoName, settings]);
+  }, [repoName, settings, t]);
 }
 
 export function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
