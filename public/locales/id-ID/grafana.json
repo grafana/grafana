@@ -7347,8 +7347,8 @@
     "version-list": {
       "grafana-dependency": "Dependensi Grafana",
       "installed-version": "{{versionNumber}} (versi terinstal)",
-      "last-updated": "Terakhir diperbarui",
       "latest-compatible-version": "{{versionNumber}} (versi kompatibel terbaru)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Tidak ada riwayat versi yang ditemukan.",
       "version": "Versi"
     }
