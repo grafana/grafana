@@ -1059,11 +1059,6 @@
       "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
-      "export": {
-        "button": {
-          "label": "Export rules"
-        }
-      },
       "more-button": {
         "title": "Folder actions",
         "tooltip": "Folder actions"
