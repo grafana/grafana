@@ -325,7 +325,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       whiteSpace: 'nowrap',
-      columnGap: '4px',
+      columnGap: theme.spacing(0.4),
     }),
     utc: css({
       color: theme.v1.palette.orange,
