@@ -38,7 +38,7 @@ import {
   storeLogLineSize,
 } from './virtualization';
 
-interface Props {
+export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
