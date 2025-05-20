@@ -2,7 +2,9 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "alwaysStrict": true,
-    "declarationDir": "./compiled",
+    "declaration": true,
+    "declarationMap": false,
+    "outDir": "./dist/esm",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
