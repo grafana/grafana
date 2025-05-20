@@ -17,6 +17,10 @@ type QueryTemplate struct {
 	// Toggle for visible/hidden queries
 	IsVisible bool `json:"isVisible,omitempty"`
 
+	// The tags that can be used to filter the template
+	// +listType=set
+	Tags []string `json:"tags,omitempty"`
+
 	// The variables that can be used to render
 	// +listType=map
 	// +listMapKey=key
