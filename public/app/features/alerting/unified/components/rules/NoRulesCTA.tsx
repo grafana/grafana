@@ -12,10 +12,7 @@ import { createRelativeUrl } from '../../utils/url';
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
 
-  const grafanaRecordingRulesEnabled =
-    config.unifiedAlerting.recordingRulesEnabled &&
-    config.featureToggles.grafanaManagedRecordingRules &&
-    canCreateGrafanaRules;
+  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
   const { t } = useTranslate();
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
@@ -107,10 +104,7 @@ export function GrafanaNoRulesCTA() {
   const { canCreateGrafanaRules } = useRulesAccess();
   const { t } = useTranslate();
 
-  const grafanaRecordingRulesEnabled =
-    config.unifiedAlerting.recordingRulesEnabled &&
-    config.featureToggles.grafanaManagedRecordingRules &&
-    canCreateGrafanaRules;
+  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
   return (
     <EmptyState

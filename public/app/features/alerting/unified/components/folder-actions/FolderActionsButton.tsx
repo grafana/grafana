@@ -87,7 +87,8 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
           disabled={deleteState.isLoading}
         />
       )}
-      {listView2Enabled && (
+      {/* @TODO re-implement */}
+      {/* {listView2Enabled && (
         <>
           <Menu.Divider />
           <Menu.Item
@@ -96,7 +97,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             onClick={() => {}}
           />
         </>
-      )}
+      )} */}
     </>
   );
 

@@ -257,13 +257,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "extraThemes",
-			Description:  "Enables extra themes",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "lokiPredefinedOperations",
 			Description:  "Adds predefined query operations to Loki query editor",
 			FrontendOnly: true,
@@ -950,15 +943,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaOSSBigTent,
 			RequiresRestart: true,
-		},
-		{
-			Name:              "grafanaManagedRecordingRules",
-			Description:       "Enables Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
 		},
 		{
 			Name:           "queryLibrary",

@@ -1060,11 +1060,6 @@
       "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
-      "export": {
-        "button": {
-          "label": "Export rules"
-        }
-      },
       "more-button": {
         "title": "Folder actions",
         "tooltip": "Folder actions"
@@ -6780,7 +6775,8 @@
       "title": "Library panels"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "Explore AI and machine learning features",
+      "title": "AI & machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -7377,8 +7373,8 @@
     "version-list": {
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
-      "last-updated": "Last updated",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
+      "latest-release-date": "Latest release date",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }
