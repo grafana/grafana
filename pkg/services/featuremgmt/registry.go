@@ -1422,6 +1422,14 @@ var (
 			Owner:          identityAccessTeam,
 		},
 		{
+			Name:           "teamHttpHeadersTempo",
+			Description:    "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+			Stage:          FeatureStagePublicPreview,
+			FrontendOnly:   false,
+			AllowSelfServe: true,
+			Owner:          identityAccessTeam,
+		},
+		{
 			Name:         "ABTestFeatureToggleA",
 			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
 			Stage:        FeatureStageExperimental,

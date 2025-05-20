@@ -3096,6 +3096,19 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersTempo",
+        "resourceVersion": "1747752632887",
+        "creationTimestamp": "2025-05-20T14:50:32Z"
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
         "name": "templateVariablesUsesCombobox",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-01-31T09:53:13Z"
