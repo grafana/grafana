@@ -54,26 +54,29 @@ const noUntranslatedStrings = createRule({
 
     return {
       Property(node) {
-        const { key, value, parent } = node;
-        const keyName =
-          key.type === AST_NODE_TYPES.Identifier && typeof key.name === 'string' ? String(key.name) : null;
+        const { key, value, parent, computed } = node;
+        const keyName = (() => {
+          if (computed) {
+            return null;
+          }
+          if (key.type === AST_NODE_TYPES.Identifier && typeof key.name === 'string') {
+            return key.name;
+          }
+          return null;
+        })();
 
-        if (!propertiesToCheck.includes(String(keyName))) {
+        if (!keyName || !propertiesToCheck.includes(keyName)) {
           return;
         }
 
+        const callExpression = parent.parent.type === AST_NODE_TYPES.CallExpression ? parent.parent.callee : null;
         // Check if we're being called by something that we want to ignore
         // e.g. css({ label: 'test' }) should be ignored (based on the rule configuration)
         if (
-          parent.parent.type === AST_NODE_TYPES.CallExpression &&
-          parent.parent.callee.type === AST_NODE_TYPES.Identifier
+          callExpression?.type === AST_NODE_TYPES.Identifier &&
+          propertiesRegexes.some((regex) => regex.test(callExpression.name))
         ) {
-          // Nest `if`s to make type narrowing work
-          const callExpression = parent.parent.callee;
-
-          if (propertiesRegexes.some((regex) => regex.test(callExpression.name))) {
-            return;
-          }
+          return;
         }
 
         const nodeValue = getNodeValue(node);
