@@ -15,7 +15,7 @@ weight: 300
 
 # Work with provisioned dashboards
 
-{{< admonition type="note" >}}
+{{< admonition type="caution" >}}
 Git Sync and File path provisioning an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana. These features aren't available publicly in Grafana Cloud yet.
 
 Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
