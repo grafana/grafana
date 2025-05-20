@@ -1,6 +1,6 @@
 import { RuleTester } from 'eslint';
 
-import noUntranslatedStrings from '../rules/no-untranslated-strings.cjs';
+import noUntranslatedStrings from './no-untranslated-strings.cjs';
 
 RuleTester.setDefaultConfig({
   languageOptions: {
