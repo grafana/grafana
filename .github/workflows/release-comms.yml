@@ -92,7 +92,7 @@ jobs:
     with:
       version: ${{ needs.setup.outputs.version }}
       security_branch_number: "01"
-      repository: grafana/grafana-enterprise-security-mirror
+      repository: grafana/grafana-enterprise
   migrate_prs_grafana:
     needs:
       - setup
