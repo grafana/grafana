@@ -163,17 +163,6 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	s.addPluginToSection(c, treeRoot, plugin, appLink)
 
-	if alertsSection := treeRoot.FindById(navtree.NavIDAlerting); alertsSection != nil {
-		println("asdf")
-		reportsLink := &navtree.NavLink{
-			Text:       "Reports",
-			Id:         "plugin-page-slo-services",
-			Url:        alertsSection.Url + "/reports",
-			SortWeight: 3,
-			IsNew:      true,
-		}
-		alertsSection.Children = append(alertsSection.Children, reportsLink)
-	}
 	if plugin.ID == "grafana-slo-app" {
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
@@ -185,16 +174,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				IsNew:      true,
 			}
 			alertsSection.Children = append(alertsSection.Children, serviceLink)
-		}
-		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
-			reportsLink := &navtree.NavLink{
-				Text:       "Reports",
-				Id:         "plugin-page-slo-services",
-				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/reports",
-				SortWeight: 3,
-				IsNew:      true,
+
+			reportsNavLink := navtree.FindByURL(alertsSection.Children, "/a/grafana-slo-app/reports")
+			if reportsNavLink != nil {
+				reportsNavLink.IsNew = true
 			}
-			alertsSection.Children = append(alertsSection.Children, reportsLink)
 		}
 	}
 
