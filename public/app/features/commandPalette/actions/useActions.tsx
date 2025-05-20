@@ -3,9 +3,9 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
-import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { NodesMap, Node, TreeScope, ToggleNode } from '../../scopes/selector/types';

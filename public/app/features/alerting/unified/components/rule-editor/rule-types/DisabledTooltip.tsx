@@ -1,13 +1,15 @@
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 type Props = {
   visible: boolean;
 };
 
 const DisabledTooltip = ({ children, visible = false }: React.PropsWithChildren<Props>) => {
+  const { t } = useTranslate();
+
   if (!visible) {
     return <>{children}</>;
   }
