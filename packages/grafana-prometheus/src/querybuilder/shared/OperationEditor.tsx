@@ -1,12 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
+import { useEffect, useId, useState } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { PrometheusDatasource } from '../../datasource';
 import { getOperationParamId } from '../operationUtils';
 
 import { OperationHeader } from './OperationHeader';
@@ -23,7 +24,7 @@ export interface Props {
   operation: QueryBuilderOperation;
   index: number;
   query: any;
-  datasource: DataSourceApi;
+  datasource: PrometheusDatasource;
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;

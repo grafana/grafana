@@ -349,7 +349,7 @@ abstract class DataSourceApi<
   /**
    * Used in explore
    */
-  languageProvider?: any;
+  languageProvider?: LanguageProvider;
 
   getVersion?(optionalOptions?: any): Promise<string>;
 

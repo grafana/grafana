@@ -4,15 +4,17 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useState } from 'react';
 import { useMountedState, usePrevious } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Button, Cascader, CascaderOption, Stack, useStyles2 } from '@grafana/ui';
+
+import { PrometheusDatasource } from '../../datasource';
 
 import { OperationEditor } from './OperationEditor';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
 export interface Props<T extends QueryWithOperations> {
   query: T;
-  datasource: DataSourceApi;
+  datasource: PrometheusDatasource;
   onChange: (query: T) => void;
   onRunQuery: () => void;
   queryModeller: VisualQueryModeller;

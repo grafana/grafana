@@ -1,9 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx
 import { useState } from 'react';
 
-import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
+import { SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
+import { PrometheusDatasource } from '../../datasource';
 import { promQueryModeller } from '../PromQueryModeller';
 import { getOperationParamId } from '../operationUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
@@ -47,7 +48,7 @@ export function LabelParamEditor({
 async function loadGroupByLabels(
   timeRange: TimeRange,
   query: PromVisualQuery,
-  datasource: DataSourceApi
+  datasource: PrometheusDatasource
 ): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 

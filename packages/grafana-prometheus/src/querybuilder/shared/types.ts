@@ -4,7 +4,9 @@
  */
 import { ComponentType } from 'react';
 
-import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
+import { RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
+
+import { PrometheusDatasource } from '../../datasource';
 
 export interface QueryBuilderLabelFilter {
   label: string;
@@ -77,7 +79,7 @@ export interface QueryBuilderOperationEditorProps {
   operation: QueryBuilderOperation;
   index: number;
   query: any;
-  datasource: DataSourceApi;
+  datasource: PrometheusDatasource;
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
@@ -91,7 +93,7 @@ export interface QueryBuilderOperationParamEditorProps {
   operation: QueryBuilderOperation;
   operationId: string;
   query: any;
-  datasource: DataSourceApi;
+  datasource: PrometheusDatasource;
   timeRange: TimeRange;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
