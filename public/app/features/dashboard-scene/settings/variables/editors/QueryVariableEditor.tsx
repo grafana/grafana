@@ -134,7 +134,7 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
       >
-        <Editor variable={variable} data-testid />
+        <Editor variable={variable} />
         <Modal.ButtonRow>
           <Button
             variant="primary"
