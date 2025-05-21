@@ -61,11 +61,23 @@ export const getActions = (
       title,
       confirmation,
       onClick: (evt: MouseEvent, origin: Field, actionVars: ActionVariableInput | undefined) => {
-        let interpolatedAction = action;
-        if (action.variables && actionVars) {
-          interpolatedAction = interpolateActionVariables(action, actionVars);
-        }
-        buildActionOnClick(interpolatedAction, boundReplaceVariables);
+        const replaceVars: InterpolateFunction = (value, scopedVars, format) => {
+          if (action.variables && actionVars) {
+            value = value.replace(/\$\w+/g, (matched) => {
+              const name = matched.slice(1);
+
+              if (action.variables!.some((action) => action.key === name)) {
+                return actionVars[name];
+              }
+
+              return matched;
+            });
+          }
+
+          return boundReplaceVariables(value, scopedVars, format);
+        };
+
+        buildActionOnClick(action, replaceVars);
       },
       oneClick: action.oneClick ?? false,
       style: {
@@ -78,73 +90,6 @@ export const getActions = (
   });
 
   return actionModels.filter((action): action is ActionModel => !!action);
-};
-
-export const interpolateActionVariables = (action: Action, actionVars: ActionVariableInput): Action => {
-  if (!action.variables || !actionVars || !action.fetch) {
-    return action;
-  }
-
-  const actionCopy = JSON.parse(JSON.stringify(action));
-  for (const variable of action.variables) {
-    const value = actionVars[variable.key];
-    if (!value) {
-      continue;
-    }
-
-    const varRegex = new RegExp('\\$' + variable.key + '(?![a-zA-Z0-9_])', 'g');
-
-    if (actionCopy.fetch) {
-      // URL
-      actionCopy.fetch.url = actionCopy.fetch.url.replace(varRegex, value);
-
-      if (actionCopy.fetch.body) {
-        try {
-          const parsedBody: object = JSON.parse(actionCopy.fetch.body);
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const replaceValues = (actionBody: any): Action => {
-            if (typeof actionBody !== 'object' || actionBody === null) {
-              return actionBody;
-            }
-
-            const result = { ...actionBody };
-            for (const [key, val] of Object.entries(result)) {
-              if (typeof val === 'string') {
-                // Replace both ${{var}} and $var patterns, even when part of a larger string
-                result[key] = val.replace(varRegex, value).replace(varRegex, value);
-              } else if (typeof val === 'object' && val !== null) {
-                result[key] = replaceValues(val);
-              }
-            }
-            return result;
-          };
-
-          actionCopy.fetch.body = JSON.stringify(replaceValues(parsedBody), null, 2);
-        } catch (e) {
-          console.error('Error interpolating action body:', e);
-        }
-      }
-
-      if (Array.isArray(actionCopy.fetch.queryParams)) {
-        actionCopy.fetch.queryParams = actionCopy.fetch.queryParams.map(([key, val]: [string, string]) => {
-          // Replace both ${{var}} and $var patterns, even when part of a larger string
-          const newVal = val.replace(varRegex, value).replace(varRegex, value);
-          return [key, newVal];
-        });
-      }
-
-      if (Array.isArray(actionCopy.fetch.headers)) {
-        actionCopy.fetch.headers = actionCopy.fetch.headers.map(([key, val]: [string, string]) => {
-          // Replace both ${{var}} and $var patterns, even when part of a larger string
-          const newVal = val.replace(varRegex, value).replace(varRegex, value);
-          return [key, newVal];
-        });
-      }
-    }
-  }
-
-  return actionCopy;
 };
 
 /** @internal */
