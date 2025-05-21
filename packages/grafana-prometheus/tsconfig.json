@@ -5,6 +5,7 @@
     "declaration": true,
     "declarationMap": false,
     "outDir": "./dist/esm",
+    "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
