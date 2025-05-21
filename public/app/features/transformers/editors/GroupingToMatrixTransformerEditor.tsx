@@ -10,9 +10,9 @@ import {
   SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -22,6 +22,8 @@ export const GroupingToMatrixTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupingToMatrixTransformerOptions>) => {
+  const { t } = useTranslate();
+
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
   const variables = getTemplateSrv()
     .getVariables()

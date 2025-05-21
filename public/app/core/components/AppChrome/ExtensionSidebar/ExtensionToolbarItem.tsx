@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -17,6 +17,7 @@ export function ExtensionToolbarItem() {
   const styles = getStyles(useTheme2());
   const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
     useExtensionSidebarContext();
+  const { t } = useTranslate();
 
   let dockedComponentTitle = '';
   if (dockedComponentId) {
@@ -72,7 +73,7 @@ export function ExtensionToolbarItem() {
         />
       );
     },
-    [setDockedComponentId, styles.button, styles.buttonActive]
+    [setDockedComponentId, styles.button, styles.buttonActive, t]
   );
 
   if (components.length === 1) {

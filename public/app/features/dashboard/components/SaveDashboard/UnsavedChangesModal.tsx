@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -15,6 +15,7 @@ interface UnsavedChangesModalProps {
 }
 
 export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDismiss }: UnsavedChangesModalProps) => {
+  const { t } = useTranslate();
   return (
     <Modal
       isOpen={true}

@@ -1,11 +1,12 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { GrafanaRulesSource } from '../utils/datasource';
+import { totalFromStats } from '../utils/ruleStats';
 import { rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
@@ -45,6 +46,7 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
+  const { t } = useTranslate();
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
   const promRule = promRuleGroup?.data.groups
@@ -122,13 +124,14 @@ export function GrafanaRuleListItem({
 
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
+    const instancesCount = totalFromStats(promAlertingRule?.totals ?? {});
 
     return (
       <AlertRuleListItem
         {...commonProps}
         summary={annotations.summary}
         state={promAlertingRule?.state}
-        instancesCount={promAlertingRule?.alerts?.length}
+        instancesCount={instancesCount}
         operation={operation}
       />
     );
