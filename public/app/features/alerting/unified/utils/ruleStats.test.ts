@@ -1,6 +1,6 @@
-import { totalFromStats } from './RuleStats';
+import { totalFromStats } from './ruleStats';
 
-describe('RuleStats', () => {
+describe('totalFromStats', () => {
   it('should count 0', () => {
     expect(
       totalFromStats({
