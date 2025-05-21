@@ -52,7 +52,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 
 type mapper map[string]map[string]translation
 
-func newMapper() mapper {
+func NewMapper() mapper {
 	return map[string]map[string]translation{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
