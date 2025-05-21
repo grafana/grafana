@@ -1,9 +1,10 @@
 name: Grafana Nightly
 
 on:
+  # it's here for testing
+  pull_request:
   schedule:
     - cron: "0 2 * * *"
-  pull_request:
 jobs:
   test_backend:
     runs-on: ubuntu-latest-8-cores
@@ -28,8 +29,8 @@ jobs:
       - name: Test Backend Integration
         run: |
           go test -count=1 -coveremode=atomic -timeout=5m -run '^TestIntegration' \
-          $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | \
-          grep -o '\(.*\)/' | sort -u)
+          "$(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | \
+          grep -o '\(.*\)/' | sort -u)"
   test_frontend:
     runs-on: ubuntu-latest-8-cores
     steps:
@@ -38,7 +39,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Yarn install
-        run: yarn install --immutable || yarn install || --immutable
+        run: yarn install --immutable || yarn install --immutable
       - name: Betterer
         run: yarn betterer:ci
       - name: Test Frontend
