@@ -5,7 +5,10 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 
-import { getAPINamespace } from '../../../api/utils';
+import { getAPIBaseURL, getAPINamespace } from '../../../api/utils';
+import { ScopedResourceClient } from '../../apiserver/client';
+import { isResourceList } from '../../apiserver/guards';
+import { AnnoKeyFolder } from '../../apiserver/types';
 
 import {
   DashboardQueryResult,
@@ -22,6 +25,11 @@ import { replaceCurrentFolderQuery } from './utils';
 const loadingFrameName = 'Loading';
 
 const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
+const client = new ScopedResourceClient({
+  group: 'dashboard.grafana.app',
+  version: 'v0alpha1',
+  resource: 'dashboards',
+});
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -108,6 +116,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
+    console.log('q', query);
     const uri = await this.newRequest(query);
     const rsp = await this.fetchResponse(uri);
 
@@ -190,6 +199,44 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async fetchResponse(uri: string) {
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    console.log('r', rsp);
+    if (isResourceList(rsp)) {
+      const hits = rsp.items.map((item) => {
+        const hit = {
+          resource: 'dashboards',
+          name: item.metadata.name,
+          title: item.spec.title,
+          location: 'general',
+          folder: item?.metadata?.annotations?.[AnnoKeyFolder],
+          tags: item.spec.tags || [],
+          field: null,
+        };
+        if (!hit.folder) {
+          return { ...hit, location: 'general', folder: 'general' };
+        }
+
+        // this means user has permission to see this dashboard, but not the folder contents
+        if (locationInfo[hit.folder] === undefined) {
+          return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+        }
+
+        return hit;
+      });
+      const totalHits = rsp.items.length;
+      return { ...rsp, hits, totalHits };
+    }
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { location: 'general', folder: 'general' };
+      }
+
+      // this means user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
+    });
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;
@@ -203,18 +250,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const locationInfo = await this.locationInfo;
-    const hits = rsp.hits.map((hit) => {
-      if (hit.folder === undefined) {
-        return { ...hit, location: 'general', folder: 'general' };
-      }
 
-      // this means user has permission to see this dashboard, but not the folder contents
-      if (locationInfo[hit.folder] === undefined) {
-        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
-      }
-
-      return hit;
-    });
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
   }
@@ -261,6 +297,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.uid?.length) {
       // legacy support for filtering by dashboard uid
       uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
+
+    if (query.deleted) {
+      uri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
     return uri;
   }
