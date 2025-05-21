@@ -13,7 +13,7 @@ describe('interpolateActionVariables', () => {
       { key: 'thermostat2', name: 'Second Floor Thermostat', type: ActionVariableType.String },
     ],
     fetch: {
-      url: 'http://test.com/api/thermostats/${{thermostat1}}/sync/${{thermostat2}}',
+      url: 'http://test.com/api/thermostats/$thermostat1/sync/$thermostat2',
       method: HttpRequestMethod.POST,
       body: JSON.stringify({
         primary: 'Device-$thermostat1',
@@ -120,7 +120,7 @@ describe('interpolateActionVariables', () => {
     };
 
     const result = interpolateActionVariables(action, actionVars);
-    expect(result.fetch?.url).toBe('http://test.com/api/thermostats/T-001/sync/${{thermostat2}}');
+    expect(result.fetch?.url).toBe('http://test.com/api/thermostats/T-001/sync/$thermostat2');
 
     const parsedBody = JSON.parse(result.fetch?.body || '{}');
     expect(parsedBody.data.secondary).toBe('Room-$thermostat2');
