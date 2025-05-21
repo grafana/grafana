@@ -3,9 +3,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { DataSourceVariable, SceneVariable } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
