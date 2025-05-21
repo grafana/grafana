@@ -18,6 +18,7 @@ type QueryTemplate struct {
 	IsVisible bool `json:"isVisible,omitempty"`
 
 	// Whether the query is locked and cannot be edited
+	// Note: This is purely for UI display purposes and not for security
 	IsLocked bool `json:"isLocked,omitempty"`
 
 	// The variables that can be used to render

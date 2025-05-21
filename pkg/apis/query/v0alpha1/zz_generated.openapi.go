@@ -411,7 +411,7 @@ func schema_apis_query_v0alpha1_template_QueryTemplate(ref common.ReferenceCallb
 					},
 					"isLocked": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether the query is locked and cannot be edited",
+							Description: "Whether the query is locked and cannot be edited Note: This is purely for UI display purposes and not for security",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
