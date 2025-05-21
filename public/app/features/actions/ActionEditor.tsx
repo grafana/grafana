@@ -220,7 +220,11 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         </InlineField>
       </InlineFieldRow>
 
-      <Field label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')} noMargin>
+      <Field
+        label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
+        className={styles.fieldGap}
+        noMargin
+      >
         <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
       </Field>
 
