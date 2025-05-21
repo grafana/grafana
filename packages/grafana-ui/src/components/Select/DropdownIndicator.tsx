@@ -20,7 +20,7 @@ export function DropdownIndicator({ selectProps }: DropdownIndicatorProps) {
   return <Icon name={icon} size={size} />;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   spinner: css({
     marginTop: -4, // Because the spinner is misaligned for some reason
   }),
