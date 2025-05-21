@@ -1066,6 +1066,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1202,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "読み込み中..."
-    },
-    "group-actions": {
-      "actions-trigger": "ルールグループの操作",
-      "details": "詳細",
-      "edit": "編集"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "グループの詳細の読み込みに失敗しました",
-      "unknown-error": "不明なエラー"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "グループ",
@@ -2060,8 +2054,7 @@
       "new-datasource-recording-rule": "新しいデータソース記録ルール",
       "new-grafana-recording-rule": "新しいGrafana記録ルール",
       "pagination": {
-        "next-page": "次のページ",
-        "previous-page": "前のページ"
+        "next-page": ""
       },
       "recording-rules": "記録ルール",
       "return-button": {
@@ -6129,6 +6122,7 @@
       "label-wrap-lines": "行を折り返す"
     },
     "log-details": {
+      "close": "",
       "fields": "フィールド",
       "links": "リンク",
       "log-line": "ログ行",
@@ -6148,15 +6142,20 @@
       "log-line": "ログ行"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
       "copy-log": "ログ行をコピー",
+      "hide-details": "",
       "icon-label": "ログメニュー",
       "pin-to-outline": "ログをピン留めする",
       "show-context": "コンテキストを表示",
+      "show-details": "",
       "unpin-from-outline": "ログのピン留めを解除する"
     },
     "log-row-context-modal": {
@@ -6750,7 +6749,8 @@
       "title": "ライブラリパネル"
     },
     "machine-learning": {
-      "title": "機械学習"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "フォルダのダッシュボードと権限を管理する"
