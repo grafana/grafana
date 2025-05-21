@@ -26,7 +26,8 @@ const { tasksApi } = new crowdin(credentials);
 const tasks = await listTasks(PROJECT_ID);
 for (const task of tasks) {
   const { id, status, progress } = task.data;
-  if (status === 'todo' && progress.done === progress.total) {
+  console.log(`Processing task ${id} with status ${status} and progress ${progress.done}/${progress.total}`);
+  if (status === 'in_progress' && progress.done === progress.total) {
     console.log(`Marking task ${id} as done`);
     await markTaskAsDone(PROJECT_ID, id);
   } else {
