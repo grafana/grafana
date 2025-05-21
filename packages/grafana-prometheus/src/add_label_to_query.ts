@@ -2,7 +2,7 @@
 import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
 
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { renderQuery } from './querybuilder/shared/renderer';
+import { renderQuery } from './querybuilder/shared/rendering/query';
 import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
 import { PromVisualQuery } from './querybuilder/types';
 

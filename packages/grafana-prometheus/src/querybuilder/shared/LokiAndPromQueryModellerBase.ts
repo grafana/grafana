@@ -1,7 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/LokiAndPromQueryModellerBase.ts
 import { Registry } from '@grafana/data';
 
-import * as renderer from './renderer';
+import { renderLabels } from './rendering/labels';
+import { hasBinaryOp, renderOperations } from './rendering/operations';
+import { renderQuery, renderBinaryQueries } from './rendering/query';
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
 
 export interface VisualQueryBinary<T> {
@@ -58,22 +60,22 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
   }
 
   renderOperations(queryString: string, operations: QueryBuilderOperation[]) {
-    return renderer.renderOperations(queryString, operations, this.getOperationsMap());
+    return renderOperations(queryString, operations, this.getOperationsMap());
   }
 
   renderBinaryQueries(queryString: string, binaryQueries?: Array<VisualQueryBinary<PromLokiVisualQuery>>) {
-    return renderer.renderBinaryQueries(queryString, binaryQueries);
+    return renderBinaryQueries(queryString, binaryQueries);
   }
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
-    return renderer.renderLabels(labels);
+    return renderLabels(labels);
   }
 
   renderQuery(query: PromLokiVisualQuery, nested?: boolean) {
-    return renderer.renderQuery(query, nested, this.getOperationsMap());
+    return renderQuery(query, nested, this.getOperationsMap());
   }
 
   hasBinaryOp(query: PromLokiVisualQuery): boolean {
-    return renderer.hasBinaryOp(query, this.getOperationsMap());
+    return hasBinaryOp(query, this.getOperationsMap());
   }
 }

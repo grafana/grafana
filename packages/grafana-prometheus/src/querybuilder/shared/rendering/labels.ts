@@ -1,0 +1,37 @@
+import { config } from '@grafana/runtime';
+
+import { prometheusRegularEscape } from '../../../escaping';
+import { utf8Support } from '../../../utf8_support';
+import { QueryBuilderLabelFilter } from '../types';
+
+/**
+ * Centralized query rendering functions to avoid circular dependencies.
+ * These functions are extracted from LokiAndPromQueryModellerBase to allow
+ * them to be used by add_label_to_query without creating circular dependencies.
+ */
+
+/**
+ * Renders label filters in the format: {label1="value1", label2="value2"}
+ */
+export function renderLabels(labels: QueryBuilderLabelFilter[]): string {
+  if (labels.length === 0) {
+    return '';
+  }
+
+  let expr = '{';
+  for (const filter of labels) {
+    if (expr !== '{') {
+      expr += ', ';
+    }
+
+    let labelValue = filter.value;
+    const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+
+    if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
+      labelValue = prometheusRegularEscape(labelValue);
+    }
+    expr += `${utf8Support(filter.label)}${filter.op}"${labelValue}"`;
+  }
+
+  return expr + `}`;
+}

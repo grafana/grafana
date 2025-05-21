@@ -1,43 +1,9 @@
-import { config } from '@grafana/runtime';
+import { isValidLegacyName } from '../../../utf8_support';
+import { PromLokiVisualQuery, VisualQueryBinary } from '../LokiAndPromQueryModellerBase';
+import { QueryBuilderOperationDef } from '../types';
 
-import { prometheusRegularEscape } from '../../language_utils';
-import { isValidLegacyName, utf8Support } from '../../utf8_support';
-import { PromVisualQueryOperationCategory } from '../types';
-
-import { PromLokiVisualQuery, VisualQueryBinary } from './LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef } from './types';
-
-/**
- * Centralized query rendering functions to avoid circular dependencies.
- * These functions are extracted from LokiAndPromQueryModellerBase to allow
- * them to be used by add_label_to_query without creating circular dependencies.
- */
-
-/**
- * Renders label filters in the format: {label1="value1", label2="value2"}
- */
-export function renderLabels(labels: QueryBuilderLabelFilter[]): string {
-  if (labels.length === 0) {
-    return '';
-  }
-
-  let expr = '{';
-  for (const filter of labels) {
-    if (expr !== '{') {
-      expr += ', ';
-    }
-
-    let labelValue = filter.value;
-    const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
-
-    if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
-      labelValue = prometheusRegularEscape(labelValue);
-    }
-    expr += `${utf8Support(filter.label)}${filter.op}"${labelValue}"`;
-  }
-
-  return expr + `}`;
-}
+import { renderLabels } from './labels';
+import { hasBinaryOp, renderOperations } from './operations';
 
 /**
  * Renders binary queries
@@ -65,40 +31,6 @@ export function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryB
   }
 
   return result + renderQuery(binaryQuery.query, true);
-}
-
-/**
- * Renders operations
- */
-export function renderOperations(
-  queryString: string,
-  operations: QueryBuilderOperation[],
-  operationsRegistry: Map<string, QueryBuilderOperationDef>
-): string {
-  for (const operation of operations) {
-    const def = operationsRegistry.get(operation.id);
-    if (!def) {
-      throw new Error(`Could not find operation ${operation.id} in the registry`);
-    }
-    queryString = def.renderer(operation, def, queryString);
-  }
-
-  return queryString;
-}
-
-/**
- * Checks if query has binary operation
- */
-export function hasBinaryOp(
-  query: PromLokiVisualQuery,
-  operationsRegistry: Map<string, QueryBuilderOperationDef>
-): boolean {
-  return (
-    query.operations.find((op) => {
-      const def = operationsRegistry.get(op.id);
-      return def?.category === PromVisualQueryOperationCategory.BinaryOps;
-    }) !== undefined
-  );
 }
 
 /**

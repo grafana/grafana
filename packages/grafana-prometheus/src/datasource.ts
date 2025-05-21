@@ -43,14 +43,13 @@ import {
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
 import { SUGGESTIONS_LIMIT } from './constants';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
 import PrometheusLanguageProvider from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
   getPrometheusTime,
   getRangeSnapInterval,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
 } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
