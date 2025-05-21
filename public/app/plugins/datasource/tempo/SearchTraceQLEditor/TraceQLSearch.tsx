@@ -283,6 +283,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
           query={query}
           searchStreaming={datasource.isStreamingSearchEnabled() ?? false}
           metricsStreaming={datasource.isStreamingMetricsEnabled() ?? false}
+          app={app}
         />
       </div>
       {error ? (
