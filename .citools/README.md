@@ -39,9 +39,3 @@ If you want to use a tool outside of the Makefile, you can locate the tool binar
 ```bash
 GOWORK=off go tool -n -modfile=<path_to_modfile> <toolname>
 ```
-
-You can also check the cache file containing the latest path to the binary:
-
-```
-.tool-cache/<name>.path
-```

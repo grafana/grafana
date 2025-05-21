@@ -12,7 +12,7 @@ cat <<'EOL' >> "$TOOLS_MK"
 tools_dir := $(shell cd $(dir $(lastword $(MAKEFILE_LIST))) && pwd)
 src_dir := $(tools_dir)/src
 
-# Due to the race condition, right after the compilation golang may report a wrong binary location pointing to the `/tmp/go-buildXXX` directory
+# Due to a race condition, after initial call to `go tool` golang may report a wrong binary location pointing to the invalid `/tmp/go-buildXXX` directory
 define compile_tool
 $(shell \
   (cd $(src_dir)/$(1) \
