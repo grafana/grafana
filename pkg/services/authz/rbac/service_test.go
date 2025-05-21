@@ -1516,17 +1516,18 @@ func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
 	fStore := &fakeStore{}
+	tracer := tracing.NewNoopTracerService()
 	return &Service{
 		logger:          logger,
 		mapper:          newMapper(),
-		tracer:          tracing.NewNoopTracerService(),
+		tracer:          tracer,
 		metrics:         newMetrics(nil),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, shortCacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, tracer, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
 		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
