@@ -1066,6 +1066,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1202,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "正在加载..."
-    },
-    "group-actions": {
-      "actions-trigger": "规则组操作",
-      "details": "详情",
-      "edit": "编辑"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "加载组详情失败",
-      "unknown-error": "未知错误"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "组",
@@ -2060,8 +2054,7 @@
       "new-datasource-recording-rule": "新的数据源录制规则",
       "new-grafana-recording-rule": "新的 Grafana 录制规则",
       "pagination": {
-        "next-page": "下一页",
-        "previous-page": "上一页"
+        "next-page": ""
       },
       "recording-rules": "录制规则",
       "return-button": {
@@ -6129,6 +6122,7 @@
       "label-wrap-lines": "多行显示"
     },
     "log-details": {
+      "close": "",
       "fields": "字段",
       "links": "链接",
       "log-line": "日志行",
@@ -6148,15 +6142,20 @@
       "log-line": "日志行"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "将链接复制到日志行",
       "copy-log": "复制日志行",
+      "hide-details": "",
       "icon-label": "日志菜单",
       "pin-to-outline": "固定日志",
       "show-context": "显示上下文",
+      "show-details": "",
       "unpin-from-outline": "取消固定日志"
     },
     "log-row-context-modal": {
@@ -6750,7 +6749,8 @@
       "title": "库面板"
     },
     "machine-learning": {
-      "title": "机器学习"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"

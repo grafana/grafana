@@ -16,6 +16,7 @@ const (
 )
 
 var dependencyMap = map[string][]string{
+	MemberlistKV:     {InstrumentationServer},
 	StorageRing:      {InstrumentationServer, MemberlistKV},
 	GrafanaAPIServer: {InstrumentationServer},
 	StorageServer:    {InstrumentationServer, StorageRing},

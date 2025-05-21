@@ -1084,6 +1084,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1217,15 +1220,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Načítání…"
-    },
-    "group-actions": {
-      "actions-trigger": "Akce skupiny pravidel",
-      "details": "Podrobnosti",
-      "edit": "Upravit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Podrobnosti o skupině se nepodařilo načíst",
-      "unknown-error": "Neznámá chyba"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Skupina",
@@ -2090,8 +2084,7 @@
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
       "new-grafana-recording-rule": "Nové pravidlo nahrávání Grafany",
       "pagination": {
-        "next-page": "další strana",
-        "previous-page": "předchozí strana"
+        "next-page": ""
       },
       "recording-rules": "Pravidla nahrávání",
       "return-button": {
@@ -6207,6 +6200,7 @@
       "label-wrap-lines": "Zalomit řádky"
     },
     "log-details": {
+      "close": "",
       "fields": "Pole",
       "links": "Odkazy",
       "log-line": "Řádek protokolu",
@@ -6226,15 +6220,20 @@
       "log-line": "řádek protokolu"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
       "copy-log": "Kopírovat řádek protokolu",
+      "hide-details": "",
       "icon-label": "Nabídka protokolu",
       "pin-to-outline": "Připnout protokol",
       "show-context": "Zobrazit kontext",
+      "show-details": "",
       "unpin-from-outline": "Odepnout protokol"
     },
     "log-row-context-modal": {
@@ -6828,7 +6827,8 @@
       "title": "Panely knihovny"
     },
     "machine-learning": {
-      "title": "Strojové učení"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Spravujte nástěnky složek a oprávnění"
