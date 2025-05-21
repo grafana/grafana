@@ -5,12 +5,6 @@ import { utf8Support } from '../../../utf8_support';
 import { QueryBuilderLabelFilter } from '../types';
 
 /**
- * Centralized query rendering functions to avoid circular dependencies.
- * These functions are extracted from LokiAndPromQueryModellerBase to allow
- * them to be used by add_label_to_query without creating circular dependencies.
- */
-
-/**
  * Renders label filters in the format: {label1="value1", label2="value2"}
  */
 export function renderLabels(labels: QueryBuilderLabelFilter[]): string {
