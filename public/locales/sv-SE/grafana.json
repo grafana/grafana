@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Laddar …"
-    },
-    "group-actions": {
-      "actions-trigger": "Gruppåtgärder för regel",
-      "details": "Detaljer",
-      "edit": "Redigera"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Det gick inte att ladda gruppinformation",
-      "unknown-error": "Okänt fel"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupp",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Ny registreringsregel för datakälla",
       "new-grafana-recording-rule": "Ny registreringsregel för Grafana",
       "pagination": {
-        "next-page": "nästa sida",
-        "previous-page": "föregående sida"
+        "next-page": ""
       },
       "recording-rules": "Inspelningsregler",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Radbryt linjer"
     },
     "log-details": {
+      "close": "",
       "fields": "Fält",
       "links": "Länkar",
       "log-line": "Loggrad",
@@ -6174,15 +6168,20 @@
       "log-line": "loggrad"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
       "copy-log": "Kopiera loggrad",
+      "hide-details": "",
       "icon-label": "Loggmeny",
       "pin-to-outline": "Fäst logg",
       "show-context": "Visa sammanhang",
+      "show-details": "",
       "unpin-from-outline": "Frigör logg"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Bibliotekspaneler"
     },
     "machine-learning": {
-      "title": "Maskininlärning"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Hantera instrumentpaneler och behörigheter för mappar"
