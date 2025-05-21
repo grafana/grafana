@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Betöltés…"
-    },
-    "group-actions": {
-      "actions-trigger": "Szabálycsoport-műveletek",
-      "details": "Részletek",
-      "edit": "Szerkesztés"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "A csoport részleteinek betöltése sikertelen volt",
-      "unknown-error": "Ismeretlen hiba"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Csoport",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Új adatforrás-felvételkészítési szabály",
       "new-grafana-recording-rule": "Új Grafana-felvételkészítési szabály",
       "pagination": {
-        "next-page": "következő oldal",
-        "previous-page": "előző oldal"
+        "next-page": ""
       },
       "recording-rules": "Felvételkészítési szabályok",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Sortörés"
     },
     "log-details": {
+      "close": "",
       "fields": "Mezők",
       "links": "Hivatkozások",
       "log-line": "Naplósor",
@@ -6174,15 +6168,20 @@
       "log-line": "naplósor"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Hivatkozás másolása a naplósorba",
       "copy-log": "Naplósor másolása",
+      "hide-details": "",
       "icon-label": "Naplómenü",
       "pin-to-outline": "Napló rögzítése",
       "show-context": "Kontextus megjelenítése",
+      "show-details": "",
       "unpin-from-outline": "Naplórögzítés feloldása"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Könyvtárpanelek"
     },
     "machine-learning": {
-      "title": "Gépi tanulás"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Mappa-irányítópultok és engedélyek kezelése"

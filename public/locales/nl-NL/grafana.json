@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Laden...."
-    },
-    "group-actions": {
-      "actions-trigger": "Groepacties voor regels",
-      "details": "Details",
-      "edit": "Bewerken"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Kan groepsgegevens niet laden",
-      "unknown-error": "Onbekende fout"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Groep",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",
       "new-grafana-recording-rule": "Nieuwe Grafana-opnameregel",
       "pagination": {
-        "next-page": "volgende pagina",
-        "previous-page": "vorige pagina"
+        "next-page": ""
       },
       "recording-rules": "Opnameregels",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Lijnen omsluiten"
     },
     "log-details": {
+      "close": "",
       "fields": "Velden",
       "links": "Links",
       "log-line": "Logregel",
@@ -6174,15 +6168,20 @@
       "log-line": "loglijn"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Link naar logboekregel kopiëren",
       "copy-log": "Logboekregel kopiëren",
+      "hide-details": "",
       "icon-label": "Logboekmenu",
       "pin-to-outline": "Logboek vastzetten",
       "show-context": "Context tonen",
+      "show-details": "",
       "unpin-from-outline": "Logboek vastzetten ongedaan maken"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Bibliotheekpanelen"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Mapdashboards en toestemmingen beheren"

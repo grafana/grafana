@@ -1066,6 +1066,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1202,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Memuat...."
-    },
-    "group-actions": {
-      "actions-trigger": "Tindakan grup aturan",
-      "details": "Detail",
-      "edit": "Edit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Gagal memuat detail grup",
-      "unknown-error": "Kesalahan tidak diketahui"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grup",
@@ -2060,8 +2054,7 @@
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",
       "new-grafana-recording-rule": "Aturan Perekaman Grafana baru",
       "pagination": {
-        "next-page": "halaman berikutnya",
-        "previous-page": "halaman sebelumnya"
+        "next-page": ""
       },
       "recording-rules": "Aturan perekaman",
       "return-button": {
@@ -6129,6 +6122,7 @@
       "label-wrap-lines": "Terapkan wrap pada baris"
     },
     "log-details": {
+      "close": "",
       "fields": "Bidang",
       "links": "Tautan",
       "log-line": "Baris log",
@@ -6148,15 +6142,20 @@
       "log-line": "baris log"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
       "copy-log": "Salin baris log",
+      "hide-details": "",
       "icon-label": "Menu log",
       "pin-to-outline": "Sematkan log",
       "show-context": "Tampilkan konteks",
+      "show-details": "",
       "unpin-from-outline": "Buka sematan log"
     },
     "log-row-context-modal": {
@@ -6750,7 +6749,8 @@
       "title": "Panel pustaka"
     },
     "machine-learning": {
-      "title": "Pembelajaran mesin"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Kelola dasbor dan izin folder"

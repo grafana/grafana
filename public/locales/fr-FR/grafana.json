@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Chargement…"
-    },
-    "group-actions": {
-      "actions-trigger": "Actions du groupe de règles",
-      "details": "Détails",
-      "edit": "Modifier"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Vous n’avez pas réussi à charger les informations concernant le groupe",
-      "unknown-error": "Erreur inconnue"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Groupe",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Nouvelle règle d’enregistrement de source de données",
       "new-grafana-recording-rule": "Nouvelle règle d’enregistrement Grafana",
       "pagination": {
-        "next-page": "page suivante",
-        "previous-page": "page précédente"
+        "next-page": ""
       },
       "recording-rules": "Règles d’enregistrement",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Enrouler les lignes"
     },
     "log-details": {
+      "close": "",
       "fields": "Champs",
       "links": "Liens",
       "log-line": "Ligne du journal",
@@ -6174,15 +6168,20 @@
       "log-line": "ligne de journal"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
       "copy-log": "Copier la ligne de journal",
+      "hide-details": "",
       "icon-label": "Menu du journal",
       "pin-to-outline": "Épingler le journal",
       "show-context": "Afficher le contexte",
+      "show-details": "",
       "unpin-from-outline": "Désépingler le journal"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Panneaux de bibliothèque"
     },
     "machine-learning": {
-      "title": "Apprentissage automatique"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"

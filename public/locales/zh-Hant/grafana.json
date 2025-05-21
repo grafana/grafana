@@ -1066,6 +1066,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1202,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "正在載入..."
-    },
-    "group-actions": {
-      "actions-trigger": "規則群組動作",
-      "details": "詳細資訊",
-      "edit": "編輯"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "無法載入群組詳細資料",
-      "unknown-error": "未知錯誤"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "群組",
@@ -2060,8 +2054,7 @@
       "new-datasource-recording-rule": "新的資料來源錄製規則",
       "new-grafana-recording-rule": "新的 Grafana 錄製規則",
       "pagination": {
-        "next-page": "下一頁",
-        "previous-page": "上一頁"
+        "next-page": ""
       },
       "recording-rules": "錄製規則",
       "return-button": {
@@ -6129,6 +6122,7 @@
       "label-wrap-lines": "換行"
     },
     "log-details": {
+      "close": "",
       "fields": "欄位",
       "links": "連結",
       "log-line": "日誌行",
@@ -6148,15 +6142,20 @@
       "log-line": "紀錄行"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "將連結複製到日誌行",
       "copy-log": "複製日誌行",
+      "hide-details": "",
       "icon-label": "日誌功能表",
       "pin-to-outline": "釘選日誌",
       "show-context": "顯示內容",
+      "show-details": "",
       "unpin-from-outline": "取消釘選日誌"
     },
     "log-row-context-modal": {
@@ -6750,7 +6749,8 @@
       "title": "資料庫面板"
     },
     "machine-learning": {
-      "title": "機器學習"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理資料夾儀表板及權限"

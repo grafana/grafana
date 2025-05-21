@@ -1084,6 +1084,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1217,15 +1220,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Ładowanie…"
-    },
-    "group-actions": {
-      "actions-trigger": "Akcje grupowe reguły",
-      "details": "Szczegóły",
-      "edit": "Edytuj"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Nie udało się wczytać szczegółów grupy",
-      "unknown-error": "Nieznany błąd"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupa",
@@ -2090,8 +2084,7 @@
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
       "new-grafana-recording-rule": "Nowa reguła rejestracji w usłudze Grafana",
       "pagination": {
-        "next-page": "następna strona",
-        "previous-page": "poprzednia strona"
+        "next-page": ""
       },
       "recording-rules": "Reguły rejestracji",
       "return-button": {
@@ -6207,6 +6200,7 @@
       "label-wrap-lines": "Zawijaj wiersze"
     },
     "log-details": {
+      "close": "",
       "fields": "Pola",
       "links": "Linki",
       "log-line": "Wiersz logu",
@@ -6226,15 +6220,20 @@
       "log-line": "wiersz logu"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiuj link do wiersza logu",
       "copy-log": "Kopiuj wiersz logu",
+      "hide-details": "",
       "icon-label": "Menu logu",
       "pin-to-outline": "Przypnij log",
       "show-context": "Pokaż kontekst",
+      "show-details": "",
       "unpin-from-outline": "Odepnij log"
     },
     "log-row-context-modal": {
@@ -6828,7 +6827,8 @@
       "title": "Panele biblioteki"
     },
     "machine-learning": {
-      "title": "Uczenie maszynowe"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Zarządzaj pulpitami folderów i uprawnieniami"
