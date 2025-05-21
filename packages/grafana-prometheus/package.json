@@ -42,7 +42,7 @@
     "@floating-ui/react": "0.27.8",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
-    "@grafana/plugin-ui": "0.10.5",
+    "@grafana/plugin-ui": "0.10.6",
     "@grafana/runtime": "12.1.0-pre",
     "@grafana/schema": "12.1.0-pre",
     "@grafana/ui": "12.1.0-pre",

@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -393,6 +395,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		Value:  value,
 		Key:    key,
 		Object: obj,
+		GUID:   uuid.New().String(),
 	}
 
 	if oldValue == nil {
@@ -670,6 +673,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
+		GUID:       uuid.New().String(),
 	}
 	requester, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
