@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 
 import { UserIcon } from './UserIcon';
 import { UserView } from './types';
@@ -18,6 +18,7 @@ export interface UsersIndicatorProps {
 }
 export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   if (!users.length) {
     return null;
   }

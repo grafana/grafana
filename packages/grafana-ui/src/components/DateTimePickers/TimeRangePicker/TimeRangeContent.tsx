@@ -14,9 +14,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
@@ -42,13 +42,18 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
-  errorMessage: string;
+  errorMessage: JSX.Element;
 }
 
-const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
-  range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
-};
+const DEFAULT_ERROR_MESSAGE = () => (
+  <Trans i18nKey="time-picker.range-content.default-error" values={{ now: 'now' }}>
+    Please enter a past date or {'"{{now}}"'}
+  </Trans>
+);
+
+const RANGE_ERROR_MESSAGE = () => (
+  <Trans i18nKey="time-picker.range-content.range-error">"From" can't be after "To"</Trans>
+);
 
 export const TimeRangeContent = (props: Props) => {
   const {
@@ -105,6 +110,7 @@ export const TimeRangeContent = (props: Props) => {
     },
     [timeZone]
   );
+  const { t } = useTranslate();
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -259,9 +265,9 @@ function valueToState(
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.default(),
+      errorMessage: rangeInvalid && !fromInvalid ? <RANGE_ERROR_MESSAGE /> : <DEFAULT_ERROR_MESSAGE />,
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default() },
+    { value: toValue, invalid: toInvalid, errorMessage: <DEFAULT_ERROR_MESSAGE /> },
   ];
 }
 

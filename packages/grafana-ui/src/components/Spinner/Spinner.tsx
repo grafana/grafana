@@ -3,10 +3,10 @@ import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
 import { IconSize, isIconSize } from '../../types';
-import { t } from '../../utils/i18n';
 import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
@@ -40,6 +40,7 @@ export const Spinner = ({
   const styles = useStyles2(getStyles);
 
   const deprecatedStyles = useStyles2(getDeprecatedStyles, size);
+  const { t } = useTranslate();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const iconName = prefersReducedMotion ? 'hourglass' : 'spinner';
 

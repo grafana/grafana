@@ -3,11 +3,11 @@ import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSPr
 import * as React from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -123,6 +123,7 @@ export const MenuItem = React.memo(
 
     const localRef = useRef<MenuItemElement>(null);
     useImperativeHandle(ref, () => localRef.current!);
+    const { t } = useTranslate();
 
     const handleKeys = (event: React.KeyboardEvent) => {
       switch (event.key) {

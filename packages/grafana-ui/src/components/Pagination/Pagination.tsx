@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -93,6 +94,7 @@ export const Pagination = ({
       return pagesToRender;
     }, []);
   }, [currentPage, numberOfPages, onNavigate, pageLengthToCondense, showSmallVersion, styles.ellipsis, styles.item]);
+  const { t } = useTranslate();
 
   if (hideWhenSinglePage && numberOfPages <= 1) {
     return null;

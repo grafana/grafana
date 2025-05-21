@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
@@ -18,6 +18,7 @@ export const HttpProxySettings = ({
   showForwardOAuthIdentityOption = true,
 }: HttpSettingsBaseProps) => {
   const gridLayout = useStyles2(getGridLayout);
+  const { t } = useTranslate();
   return (
     <div className={gridLayout}>
       <Stack direction="row" gap={0.5}>

@@ -3,11 +3,11 @@ import { memo, Children, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
@@ -54,6 +54,7 @@ export const PageToolbar = memo(
     forceShowLeftItems = false,
   }: Props) => {
     const styles = useStyles2(getStyles);
+    const { t } = useTranslate();
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and

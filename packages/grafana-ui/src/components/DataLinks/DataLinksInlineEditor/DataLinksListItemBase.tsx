@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
@@ -29,6 +29,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
   const styles = useStyles2(getDataLinkListItemStyles);
+  const { t } = useTranslate();
   const { title = '', oneClick = false } = item;
 
   // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808

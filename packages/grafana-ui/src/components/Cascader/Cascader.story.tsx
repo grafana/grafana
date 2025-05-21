@@ -97,4 +97,9 @@ export const WithOptionsStateUpdate = () => {
   return <Cascader options={updatedOptions} onSelect={onSelect} />;
 };
 
+export const SimpleAndClearable = Template.bind({});
+SimpleAndClearable.args = {
+  isClearable: true,
+};
+
 export default meta;

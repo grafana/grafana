@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useMemo, PropsWithChildren } from 'react';
 
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
 import { Tooltip } from '../Tooltip';
 
 import { UserView } from './types';
@@ -62,6 +62,7 @@ export const UserIcon = ({
   const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
+  const { t } = useTranslate();
   const content = (
     <button
       type={'button'}

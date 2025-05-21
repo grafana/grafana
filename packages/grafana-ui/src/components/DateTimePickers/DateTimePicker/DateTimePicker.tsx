@@ -19,9 +19,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -252,6 +252,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       setInternalDate({ value: '', invalid: false });
       onChange();
     }, [onChange]);
+    const { t } = useTranslate();
 
     const icon = (
       <Button
@@ -329,6 +330,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     const onChangeTime = useCallback((date: DateTime) => {
       setTimeOfDayDateTime(date);
     }, []);
+    const { t } = useTranslate();
 
     // here we need to stitch the 2 date objects back together
     const handleApply = () => {

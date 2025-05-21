@@ -4,10 +4,10 @@ import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 // import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
@@ -198,6 +198,7 @@ export function TableCellNG(props: TableCellNGProps) {
       });
     }
   }, [displayName, onCellFilterAdded, value]);
+  const { t } = useTranslate();
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>

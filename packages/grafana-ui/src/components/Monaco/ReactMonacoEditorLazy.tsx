@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack } from '../ErrorBoundary/ErrorWithStack';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
@@ -21,6 +21,7 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
+  const { t } = useTranslate();
 
   if (loading) {
     return (

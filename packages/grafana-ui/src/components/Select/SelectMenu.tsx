@@ -6,9 +6,9 @@ import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -40,6 +40,7 @@ export const SelectMenu = ({
   selectProps,
 }: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
+  const { t } = useTranslate();
   const styles = getSelectStyles(theme);
 
   const { toggleAllOptions, components } = selectProps;
@@ -128,6 +129,7 @@ export const VirtualizedSelectMenu = ({
   useLayoutEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
+  const { t } = useTranslate();
 
   if (!Array.isArray(children)) {
     return null;

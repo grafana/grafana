@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 
 interface ValuePillProps {
@@ -16,6 +16,7 @@ interface ValuePillProps {
 export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
   ({ children, onRemove, disabled, ...rest }, ref) => {
     const styles = useStyles2(getValuePillStyles, disabled);
+    const { t } = useTranslate();
     const removeButtonLabel = t('grafana-ui.value-pill.remove-button', 'Remove {{children}}', { children });
     return (
       <span className={styles.wrapper} {...rest} ref={ref}>

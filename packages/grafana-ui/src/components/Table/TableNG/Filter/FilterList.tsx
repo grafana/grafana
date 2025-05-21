@@ -4,10 +4,10 @@ import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { Checkbox, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
-import { Trans } from '../../../../utils/i18n';
 
 import { operatorSelectableValues } from './FilterPopup';
 

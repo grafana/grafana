@@ -5,12 +5,12 @@ import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
-import { t } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -239,6 +239,7 @@ export function PanelChrome({
     },
     [onSelect]
   );
+  const { t } = useTranslate();
 
   const headerContent = (
     <>

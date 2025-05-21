@@ -4,10 +4,10 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
-import { stylesFactory, withTheme2 } from '../../themes';
+import { stylesFactory, useTheme2, withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types/theme';
-import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -72,13 +72,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     return (
       <div className={styles.tableInputCsv}>
-        <TextArea
-          style={{ width, height }}
-          placeholder={t('grafana-ui.table.csv-placeholder', 'Enter CSV here...')}
-          value={this.state.text}
-          onChange={this.onTextChange}
-          className={styles.textarea}
-        />
+        <InternalTextArea width={width} height={height} value={this.state.text} onChange={this.onTextChange} />
         {data && (
           <footer className={styles.footer}>
             {data.map((frame, index) => {
@@ -99,6 +93,31 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
     );
   }
 }
+
+const InternalTextArea = ({
+  width,
+  height,
+  value,
+  onChange,
+}: {
+  width: string | number;
+  height: string | number;
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}) => {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const { t } = useTranslate();
+  return (
+    <TextArea
+      style={{ width, height }}
+      placeholder={t('grafana-ui.table.csv-placeholder', 'Enter CSV here...')}
+      value={value}
+      onChange={onChange}
+      className={styles.textarea}
+    />
+  );
+};
 
 export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';

@@ -2,9 +2,9 @@ import { css, cx, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -22,6 +22,7 @@ export type LoadingIndicatorProps = {
 export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   if (!loading) {
     return null;

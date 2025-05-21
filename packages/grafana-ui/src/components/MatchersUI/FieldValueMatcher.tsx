@@ -11,10 +11,10 @@ import {
   SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -61,6 +61,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
     },
     [options, onChange]
   );
+  const { t } = useTranslate();
 
   const opts = options ?? {};
   const isBool = isBooleanReducer(opts.reducer);

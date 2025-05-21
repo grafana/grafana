@@ -4,10 +4,10 @@ import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
@@ -169,6 +169,7 @@ export const FilterList = ({
       onChange(newValues);
     }
   }, [onChange, values, items, selectedItems]);
+  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={0.25}>

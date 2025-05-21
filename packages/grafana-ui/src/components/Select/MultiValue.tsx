@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';
@@ -27,6 +28,7 @@ export type MultiValueRemoveProps = {
 
 export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
+  const { t } = useTranslate();
   const styles = getSelectStyles(theme);
   return (
     <IconButton

@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import { IconSize } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
@@ -52,7 +53,7 @@ export function CellActions({
     },
     [cell, field, onCellFilterAdded]
   );
-
+  const { t } = useTranslate();
   return (
     <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
       <Stack gap={0.5}>

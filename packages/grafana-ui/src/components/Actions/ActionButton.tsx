@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { ActionModel, Field } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Button, ButtonProps } from '../Button';
 import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 
@@ -20,6 +20,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
   const textColor = theme.colors.getContrastText(backgroundColor);
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const { t } = useTranslate();
 
   return (
     <>

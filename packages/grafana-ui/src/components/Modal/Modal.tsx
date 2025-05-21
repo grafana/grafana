@@ -5,9 +5,10 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { PropsWithChildren, useRef } from 'react';
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -60,6 +61,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   // Get props for the dialog and its title
   const { dialogProps, titleProps } = useDialog({}, ref);
+  const { t } = useTranslate();
 
   if (!isOpen) {
     return null;

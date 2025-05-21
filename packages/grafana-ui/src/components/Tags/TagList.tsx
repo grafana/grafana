@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { OnTagClick, Tag } from './Tag';
@@ -31,6 +31,7 @@ const TagListComponent = memo(
   forwardRef<HTMLUListElement, Props>(
     ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
       const theme = useTheme2();
+      const { t } = useTranslate();
       const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
       const numTags = tags.length;
       const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;

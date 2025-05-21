@@ -8,9 +8,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -91,6 +91,7 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
+  const { t } = useTranslate();
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;

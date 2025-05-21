@@ -5,9 +5,9 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -91,6 +91,7 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
+  const { t } = useTranslate();
   const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });

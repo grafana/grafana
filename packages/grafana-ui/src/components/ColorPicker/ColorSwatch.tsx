@@ -5,9 +5,9 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 
 /** @internal */
 export enum ColorSwatchVariant {
@@ -28,6 +28,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
   ({ color, label, variant = ColorSwatchVariant.Small, isSelected, 'aria-label': ariaLabel, ...otherProps }, ref) => {
     const theme = useTheme2();
     const { isFocusVisible, focusProps } = useFocusRing();
+    const { t } = useTranslate();
     const styles = getStyles(theme, variant, color, isFocusVisible, isSelected);
     const hasLabel = !!label;
     const colorLabel = ariaLabel || label;

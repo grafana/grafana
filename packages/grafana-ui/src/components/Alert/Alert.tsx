@@ -4,10 +4,10 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
@@ -43,6 +43,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
+    const { t } = useTranslate();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {

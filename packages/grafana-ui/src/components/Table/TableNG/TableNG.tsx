@@ -16,10 +16,10 @@ import {
   GrafanaTheme2,
   ReducerID,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -503,6 +503,7 @@ export function TableNG(props: TableNGProps) {
   }, [columns]);
 
   const renderMenuItems = () => {
+    const { t } = useTranslate();
     return (
       <>
         <MenuItem

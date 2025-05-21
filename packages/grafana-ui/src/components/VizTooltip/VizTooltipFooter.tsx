@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { Button, DataLinkButton, Icon, Stack } from '..';
 import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
 

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
-import { Trans } from '../../utils/i18n';
+import { Trans } from '@grafana/i18n';
+
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';

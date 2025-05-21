@@ -3,8 +3,8 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
-import { t } from '../../../src/utils/i18n';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -59,6 +59,7 @@ export function ClipboardButton({
       onClipboardError?.(textToCopy, e);
     }
   }, [getText, onClipboardCopy, onClipboardError]);
+  const { t } = useTranslate();
 
   const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (

@@ -4,9 +4,9 @@ import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -43,6 +43,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   }, [items]);
 
   const styles = useStyles2(getDataLinksInlineEditorStyles);
+  const { t } = useTranslate();
   const isEditing = editIndex !== null;
 
   const _onChange = (index: number, item: T) => {

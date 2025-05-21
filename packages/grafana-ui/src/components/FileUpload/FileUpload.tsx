@@ -5,12 +5,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
-import { t } from '../../utils/i18n';
 import { getButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -49,6 +49,7 @@ export const FileUpload = ({
     },
     [onFileUpload]
   );
+  const { t } = useTranslate();
 
   return (
     <>

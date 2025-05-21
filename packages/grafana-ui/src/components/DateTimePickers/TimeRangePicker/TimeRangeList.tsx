@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useRef, ReactNode } from 'react';
 
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
 
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';
@@ -47,6 +47,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
 
   const localRef = useRef<HTMLUListElement>(null);
   const [handleKeys] = useListFocus({ localRef, options });
+  const { t } = useTranslate();
 
   return (
     <>

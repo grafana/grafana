@@ -5,9 +5,9 @@ import { useOverlay } from '@react-aria/overlays';
 import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -72,6 +72,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       }
       return () => intersectionObserver.disconnect();
     }, [children]);
+    const { t } = useTranslate();
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>

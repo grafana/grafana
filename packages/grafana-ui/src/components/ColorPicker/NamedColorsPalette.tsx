@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 
 import { ColorSwatch } from './ColorSwatch';
 import NamedColorsGroup from './NamedColorsGroup';
@@ -16,6 +16,7 @@ export interface NamedColorsPaletteProps {
 export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const swatches: JSX.Element[] = [];
   for (const hue of theme.visualization.hues) {

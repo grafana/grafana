@@ -4,7 +4,7 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
@@ -60,6 +60,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   // This hook keeps its own inputValue state (rather than accepting it as an arg) because it needs to be
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
+  const { t } = useTranslate();
 
   const addCustomValue = useCallback(
     (opts: Array<ComboboxOption<T>>) => {
@@ -80,7 +81,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
       }
       return currentOptions;
     },
-    [createCustomValue, userTypedSearch]
+    [createCustomValue, userTypedSearch, t]
   );
 
   const updateOptions = useCallback(

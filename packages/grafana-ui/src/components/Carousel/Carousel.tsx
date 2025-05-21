@@ -5,9 +5,9 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { useState, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { clearButtonStyles } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
@@ -86,7 +86,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen: selectedIndex !== null, onClose: closePreview }, ref);
   const { dialogProps } = useDialog({}, ref);
-
+  const { t } = useTranslate();
   if (validImages.length === 0) {
     return (
       <Alert

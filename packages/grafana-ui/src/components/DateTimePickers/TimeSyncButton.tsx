@@ -1,4 +1,5 @@
-import { t } from '../../utils/i18n';
+import { useTranslate } from '@grafana/i18n';
+
 import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip';
 
@@ -8,6 +9,7 @@ interface TimeSyncButtonProps {
 }
 
 export function TimeSyncButton(props: TimeSyncButtonProps) {
+  const { t } = useTranslate();
   const { onClick, isSynced } = props;
 
   const syncTimesTooltip = () => {

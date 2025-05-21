@@ -6,9 +6,9 @@ import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';
@@ -44,13 +44,15 @@ export function SegmentAsync<T>({
   inputPlaceholder,
   autofocus = false,
   onExpandedChange,
-  noOptionMessageHandler = mapStateToNoOptionsMessage,
+  noOptionMessageHandler,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles2(getSegmentStyles);
+  const { t } = useTranslate();
+  noOptionMessageHandler = noOptionMessageHandler || mapStateToNoOptionsMessage(t);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
@@ -102,14 +104,16 @@ export function SegmentAsync<T>({
   );
 }
 
-function mapStateToNoOptionsMessage<T>(state: AsyncState<Array<SelectableValue<T>>>): string {
-  if (state.loading) {
-    return t('grafana-ui.segment-async.loading', 'Loading options...');
-  }
+function mapStateToNoOptionsMessage<T>(t: Function) {
+  return function (state: AsyncState<Array<SelectableValue<T>>>): string {
+    if (state.loading) {
+      return t('grafana-ui.segment-async.loading', 'Loading options...');
+    }
 
-  if (state.error) {
-    return t('grafana-ui.segment-async.error', 'Failed to load options');
-  }
+    if (state.error) {
+      return t('grafana-ui.segment-async.error', 'Failed to load options');
+    }
 
-  return t('grafana-ui.segment-async.no-options', 'No options found');
+    return t('grafana-ui.segment-async.no-options', 'No options found');
+  };
 }

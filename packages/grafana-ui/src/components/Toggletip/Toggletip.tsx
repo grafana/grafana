@@ -16,9 +16,9 @@ import { Placement } from '@popperjs/core';
 import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -109,7 +109,7 @@ export const Toggletip = memo(
     const dismiss = useDismiss(context);
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
-
+    const { t } = useTranslate();
     return (
       <>
         {cloneElement(children, {
