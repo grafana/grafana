@@ -70,6 +70,7 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  permalinkedRowId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   showControls: boolean;
@@ -89,6 +90,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'permalinkedRowId'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -127,6 +129,7 @@ export const LogList = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
+  permalinkedRowId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   showControls,
@@ -163,6 +166,7 @@ export const LogList = ({
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}
+      permalinkedRowId={permalinkedRowId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
       showControls={showControls}
@@ -209,6 +213,7 @@ const LogListComponent = ({
     dedupStrategy,
     filterLevels,
     forceEscape,
+    permalinkedRowId,
     showDetails,
     showTime,
     sortOrder,
@@ -296,8 +301,15 @@ const LogListComponent = ({
   );
 
   const handleScrollPosition = useCallback(() => {
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : logs.length - 1);
-  }, [initialScrollPosition, logs.length]);
+    if (permalinkedRowId) {
+      const index = processedLogs.findIndex((log) => log.uid === permalinkedRowId);
+      if (index >= 0) {
+        listRef.current?.scrollToItem(index, 'start');
+        return;
+      }
+    }
+    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+  }, [initialScrollPosition, permalinkedRowId, processedLogs]);
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
