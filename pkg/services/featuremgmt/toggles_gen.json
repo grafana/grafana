@@ -157,6 +157,20 @@
     },
     {
       "metadata": {
+        "name": "alertingImportYAMLUI",
+        "resourceVersion": "1747836716080",
+        "creationTimestamp": "2025-05-21T14:11:56Z"
+      },
+      "spec": {
+        "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingInsights",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2023-09-14T12:58:04Z",
