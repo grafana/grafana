@@ -662,7 +662,7 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
