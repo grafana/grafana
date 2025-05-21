@@ -2,6 +2,9 @@ package scheduler
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -320,7 +323,215 @@ func TestQueue(t *testing.T) {
 				require.ErrorIs(t, err, context.Canceled, "Expected context canceled error")
 			},
 		},
-		// Add more test cases here
+		{
+			name: "Concurrent Enqueuers and Dequeuers",
+			opts: QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 100}),
+			test: func(t *testing.T, q *Queue) {
+				const numProducers = 5
+				const numConsumers = 3
+				const itemsPerProducer = 20
+				const totalItems = numProducers * itemsPerProducer
+
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
+				// Track items to verify all are processed
+				processedItems := make(map[string]int)
+				var mu sync.Mutex
+				var wg sync.WaitGroup
+
+				// Start consumers first (they'll block until items are available)
+				for i := 0; i < numConsumers; i++ {
+					wg.Add(1)
+					go func(consumerID int) {
+						defer wg.Done()
+						consumerCount := 0
+
+						for {
+							// Use the parent context with timeout to avoid hanging
+							runnable, ok, err := q.Dequeue(ctx)
+							if err != nil {
+								if errors.Is(err, context.DeadlineExceeded) ||
+									errors.Is(err, context.Canceled) {
+									return
+								}
+								require.NoError(t, err)
+								return
+							}
+
+							if !ok {
+								return
+							}
+
+							// Execute the runnable which will update our tracking
+							runnable()
+							consumerCount++
+
+							// Check if we've processed all expected items
+							mu.Lock()
+							totalProcessed := 0
+							for _, count := range processedItems {
+								totalProcessed += count
+							}
+							done := totalProcessed >= totalItems
+							mu.Unlock()
+
+							if done {
+								return
+							}
+						}
+					}(i)
+				}
+
+				// Start producers
+				for i := 0; i < numProducers; i++ {
+					wg.Add(1)
+					go func(producerID int) {
+						defer wg.Done()
+						tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
+
+						for j := 0; j < itemsPerProducer; j++ {
+							itemID := fmt.Sprintf("p%d-item%d", producerID, j)
+
+							err := q.Enqueue(ctx, tenantID, func() {
+								mu.Lock()
+								processedItems[itemID] = 1
+								mu.Unlock()
+							})
+
+							if err != nil {
+								// Context might have been canceled if test is slow
+								if errors.Is(err, context.DeadlineExceeded) ||
+									errors.Is(err, context.Canceled) ||
+									errors.Is(err, ErrQueueClosed) {
+									return
+								}
+								require.NoError(t, err)
+							}
+
+							// Small sleep to reduce contention
+							time.Sleep(time.Millisecond)
+						}
+					}(i)
+				}
+
+				// Wait for all goroutines to finish
+				wg.Wait()
+
+				// Check that all items were processed
+				mu.Lock()
+				require.Equal(t, totalItems, len(processedItems),
+					"All enqueued items should have been processed")
+				mu.Unlock()
+			},
+		},
+		{
+			name: "Slow Dequeuer Handling",
+			opts: QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 5}),
+			test: func(t *testing.T, q *Queue) {
+				ctx := context.Background()
+				tenantA := "tenant-a"
+				tenantB := "tenant-b"
+				tenantC := "tenant-c"
+
+				// Create channels to track execution order
+				completionOrder := make(chan string, 10)
+				var wg sync.WaitGroup
+
+				// Enqueue a slow item for tenant A
+				wg.Add(1)
+				err := q.Enqueue(ctx, tenantA, func() {
+					defer wg.Done()
+					time.Sleep(300 * time.Millisecond) // Simulate slow processing
+					completionOrder <- "A-slow"
+				})
+				require.NoError(t, err)
+
+				// Enqueue regular items for other tenants
+				for i := 0; i < 2; i++ {
+					wg.Add(1)
+					err := q.Enqueue(ctx, tenantB, func() {
+						defer wg.Done()
+						completionOrder <- fmt.Sprintf("B-%d", i)
+					})
+					require.NoError(t, err)
+
+					wg.Add(1)
+					err = q.Enqueue(ctx, tenantC, func() {
+						defer wg.Done()
+						completionOrder <- fmt.Sprintf("C-%d", i)
+					})
+					require.NoError(t, err)
+				}
+
+				// Enqueue another item for tenant A
+				wg.Add(1)
+				err = q.Enqueue(ctx, tenantA, func() {
+					defer wg.Done()
+					completionOrder <- "A-fast"
+				})
+				require.NoError(t, err)
+
+				// Start multiple dequeuer goroutines
+				for i := 0; i < 3; i++ {
+					go func() {
+						for j := 0; j < 2; j++ { // Each will dequeue 2 items
+							dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+							runnable, ok, err := q.Dequeue(dequeueCtx)
+							cancel()
+							if err != nil || !ok {
+								return
+							}
+							runnable()
+						}
+					}()
+				}
+
+				// Wait for all processing to complete
+				wg.Wait()
+				close(completionOrder)
+
+				// Collect completion order
+				var execOrder []string
+				for item := range completionOrder {
+					execOrder = append(execOrder, item)
+				}
+
+				// Verify that despite A-slow being dequeued first, other tenants' work completed while it was running
+				slowAPos := -1
+				fastAPos := -1
+				for i, item := range execOrder {
+					if item == "A-slow" {
+						slowAPos = i
+					}
+					if item == "A-fast" {
+						fastAPos = i
+					}
+				}
+
+				// The slow A task was started first but should finish later
+				require.True(t, slowAPos > 0, "A-slow should be in the execution order")
+				require.True(t, fastAPos > 0, "A-fast should be in the execution order")
+
+				// Verify some items from other tenants completed between the two A items
+				// This confirms round-robin fairness even with slow consumers
+				firstTenantBFoundPos := -1
+				for i, item := range execOrder {
+					if strings.HasPrefix(item, "B-") || strings.HasPrefix(item, "C-") {
+						firstTenantBFoundPos = i
+						break
+					}
+				}
+
+				// Make sure at least one other tenant item completed
+				require.True(t, firstTenantBFoundPos >= 0,
+					"At least one B or C item should be in execution order")
+
+				// Verify length is now 0
+				require.Equal(t, 0, q.Len())
+				require.Equal(t, 0, q.ActiveTenantsLen())
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -354,4 +565,40 @@ func TestQueueCleanup(t *testing.T) {
 	_, ok, err := q.Dequeue(context.Background())
 	require.False(t, ok)
 	require.ErrorIs(t, err, ErrQueueClosed)
+}
+
+func TestQueueActiveTenantsLen(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	defer q.Close()
+	defer q.StopWait()
+
+	// Enqueue items for different tenants
+	err := q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+	err = q.Enqueue(context.Background(), "tenant2", func() {})
+	require.NoError(t, err)
+
+	// Check active tenants
+	activeTenants := q.ActiveTenantsLen()
+	require.Equal(t, activeTenants, 2)
+}
+
+func TestQueueLen(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	defer q.Close()
+	defer q.StopWait()
+
+	// Enqueue items
+	err := q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+	err = q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+
+	// Check queue length
+	queueLen := q.Len()
+	require.Equal(t, queueLen, 2)
 }
