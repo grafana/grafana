@@ -34,7 +34,7 @@ func QueueOptionsWithDefaults(opts *QueueOptions) *QueueOptions {
 }
 
 func TestQueue(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 
 	tests := []struct {
 		name string
@@ -321,6 +321,32 @@ func TestQueue(t *testing.T) {
 				require.Nil(t, runnable, "Runnable should be nil on context cancellation")
 				require.False(t, ok, "ok should be false on context cancellation")
 				require.ErrorIs(t, err, context.Canceled, "Expected context canceled error")
+			},
+		},
+		{
+			name: "Enqueue after Close",
+			opts: QueueOptionsWithDefaults(nil),
+			test: func(t *testing.T, q *Queue) {
+				// Close the queue first
+				q.Close()
+
+				// Now try to enqueue - should return ErrQueueClosed
+				err := q.Enqueue(context.Background(), "tenant-id", func() {})
+				require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Close should return ErrQueueClosed")
+			},
+		},
+		{
+			name: "Dequeue with Timeout",
+			opts: QueueOptionsWithDefaults(nil),
+			test: func(t *testing.T, q *Queue) {
+				ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+				defer cancel()
+
+				// This should timeout since nothing is in the queue
+				runnable, ok, err := q.Dequeue(ctx)
+				require.Nil(t, runnable, "Runnable should be nil on timeout")
+				require.False(t, ok, "ok should be false on timeout")
+				require.ErrorIs(t, err, context.DeadlineExceeded, "Expected context deadline exceeded error")
 			},
 		},
 	}
