@@ -45,6 +45,7 @@ var (
 
 func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, installPluginsForce string, preinstallPluginsSync map[string]InstallPlugin) {
 	if strings.ToLower(installPluginsForce) == "true" || rawInstallPlugins == "" {
+		cfg.Logger.Debug("GF_INSTALL_PLUGINS_FORCE is set to true, skipping migration of GF_INSTALL_PLUGINS to GF_PLUGINS_PREINSTALL_SYNC")
 		return
 	}
 	installPluginsEntries := strings.Split(rawInstallPlugins, ",")
