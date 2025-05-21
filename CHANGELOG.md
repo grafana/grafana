@@ -1,3 +1,19 @@
+<!-- 11.2.9+security-01 START -->
+
+# 11.2.9+security-01 (2025-05-21)
+
+### Features and enhancements
+
+- **Chore:** Update libs with CVE in dependencies [#102712](https://github.com/grafana/grafana/pull/102712), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Bump to 1.24.2 [#103529](https://github.com/grafana/grafana/pull/103529), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103102](https://github.com/grafana/grafana/pull/103102), [@volcanonoodle](https://github.com/volcanonoodle)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102982](https://github.com/grafana/grafana/pull/102982), [@kalleep](https://github.com/kalleep)
+
+<!-- 11.2.9+security-01 END -->
 <!-- 12.0.0 START -->
 
 # 12.0.0 (2025-05-05)
