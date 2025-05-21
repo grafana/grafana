@@ -41,6 +41,7 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
   appInsightsAppId?: string;
 
   enableSecureSocksProxy?: boolean;
+  timeout?: number;
 }
 
 export interface AzureMonitorDataSourceSecureJsonData extends AzureDataSourceSecureJsonData {

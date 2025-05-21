@@ -78,8 +78,8 @@ require (
 	github.com/googleapis/go-sql-spanner v1.11.1 // @grafana/grafana-search-and-storage
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250430134519-13c42d09f9f5 // @grafana/identity-access-team
+	github.com/grafana/alerting v0.0.0-20250521131632-6e476b0b04c3 // @grafana/alerting-backend
+	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -225,6 +225,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a // @grafana/grafana-search-and-storage
 )
 
 require (
@@ -551,8 +552,8 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250519155744-55703ea1f237 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect

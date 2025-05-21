@@ -69,6 +69,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -89,7 +91,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     return {
       uid: v.metadata.name,
-      version: v.spec.version ?? 0,
+      version: v.metadata.generation ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
       url,

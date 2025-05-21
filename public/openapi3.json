@@ -12440,6 +12440,11 @@
             "type": "integer"
           }
         },
+        "required": [
+          "displayName",
+          "description",
+          "group"
+        ],
         "type": "object"
       },
       "UpdateRuleGroupResponse": {
@@ -20214,7 +20219,7 @@
         ]
       },
       "post": {
-        "description": "You need to have a permission with action `licensing:update`.",
+        "description": "You need to have a permission with action `licensing:write`.",
         "operationId": "postLicenseToken",
         "requestBody": {
           "content": {
@@ -20244,7 +20249,7 @@
     },
     "/licensing/token/renew": {
       "post": {
-        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:write`.",
         "operationId": "postRenewLicenseToken",
         "requestBody": {
           "content": {

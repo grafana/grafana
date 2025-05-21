@@ -77,6 +77,7 @@ export function QueryEditor(props: Props) {
           onChange={props.onChange}
           searchStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
           metricsStreaming={props.datasource.isStreamingMetricsEnabled() ?? false}
+          app={props.app}
         />
       </div>
     </>
