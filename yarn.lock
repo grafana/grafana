@@ -2291,14 +2291,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0":
-  version: 9.2.0
-  resolution: "@faker-js/faker@npm:9.2.0"
-  checksum: 10/c233aaa41ebc4f4bed36c1304c399c424b9e5abca9cb8fe54ce73d4162ec7acd66f294b90c85ed7a5df774400e44f0a10364bdd41f49e72cb519a48b5948939f
-  languageName: node
-  linkType: hard
-
-"@faker-js/faker@npm:^9.7.0":
+"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.7.0":
   version: 9.7.0
   resolution: "@faker-js/faker@npm:9.7.0"
   checksum: 10/5167cc179bbf5f140b957f600af24772ca8c6e7e42405c312c25a6b4278b851b84bd8e3065f80e667dd4c35dd5aeb0ed490b0b1872f908d58ffae1cef9a5ef72
@@ -2527,7 +2520,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
@@ -2637,7 +2630,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
@@ -2678,7 +2671,7 @@ __metadata:
     logfmt: "npm:^1.3.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-window: "npm:1.8.11"
     rxjs: "npm:7.8.1"
     stream-browserify: "npm:3.0.0"
@@ -2821,7 +2814,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
@@ -2876,7 +2869,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
@@ -2916,7 +2909,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
@@ -3278,7 +3271,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.1"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.2.5"
@@ -3587,7 +3580,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.25"
     rxjs: "npm:7.8.1"
@@ -3735,7 +3728,7 @@ __metadata:
     react-loading-skeleton: "npm:3.5.0"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
@@ -17974,7 +17967,7 @@ __metadata:
     react-router: "npm:5.3.4"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.10.0"
+    react-select: "npm:5.10.1"
     react-select-event: "npm:5.5.1"
     react-split-pane: "npm:0.1.92"
     react-table: "npm:7.8.0"
@@ -26472,9 +26465,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.10.0":
-  version: 5.10.0
-  resolution: "react-select@npm:5.10.0"
+"react-select@npm:5.10.1":
+  version: 5.10.1
+  resolution: "react-select@npm:5.10.1"
   dependencies:
     "@babel/runtime": "npm:^7.12.0"
     "@emotion/cache": "npm:^11.4.0"
@@ -26488,7 +26481,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/70ccb74ef31a1fe24c3f7cb94459dd33289999ceda104b1b75256758b7f25ead5dcb4a1877d513f9e22d9ac62d2656414c51dd57b9436d49bd6834a7c8b1c727
+  checksum: 10/c0c4d798e9b1f654b56c26bffb149ab811d24ca0950c1e8c3675438065628561eb132c6a5982cea893a288a0e9af6f9d9db290f4e53da71570dada0c1147f146
   languageName: node
   linkType: hard
 
