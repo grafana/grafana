@@ -33,7 +33,7 @@ func main() {
 	log.Println("license path:", *licensePath)
 
 	grafana := d.Host().Directory(".", dagger.HostDirectoryOpts{
-		Exclude: []string{".git", "node_modules", "*.tar.gz"},
+		Exclude: []string{"node_modules", "*.tar.gz"},
 	})
 
 	targz := d.Host().File("grafana.tar.gz")
