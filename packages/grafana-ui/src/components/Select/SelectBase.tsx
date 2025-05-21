@@ -155,8 +155,8 @@ export function SelectBase<T, Rest = {}>({
   selectRef,
   ...rest
 }: SelectBaseProps<T> & Rest) {
-  const theme = useTheme2();
   const { t } = useTranslate();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   noOptionsMessage = noOptionsMessage || t('grafana-ui.select.no-options-label', 'No options found');
   placeholder = placeholder || t('grafana-ui.select.placeholder', 'Choose');

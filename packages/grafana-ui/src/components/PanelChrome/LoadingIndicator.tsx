@@ -20,9 +20,9 @@ export type LoadingIndicatorProps = {
  * @internal
  */
 export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
+  const { t } = useTranslate();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   if (!loading) {
     return null;

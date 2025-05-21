@@ -17,8 +17,8 @@ export interface UsersIndicatorProps {
   onClick?: () => void;
 }
 export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProps) => {
-  const styles = useStyles2(getStyles);
   const { t } = useTranslate();
+  const styles = useStyles2(getStyles);
   if (!users.length) {
     return null;
   }

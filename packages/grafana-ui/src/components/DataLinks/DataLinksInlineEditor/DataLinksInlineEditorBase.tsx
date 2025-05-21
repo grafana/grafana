@@ -33,6 +33,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   data,
   children,
 }: DataLinksInlineEditorBaseProps<T>) {
+  const { t } = useTranslate();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
@@ -43,7 +44,6 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   }, [items]);
 
   const styles = useStyles2(getDataLinksInlineEditorStyles);
-  const { t } = useTranslate();
   const isEditing = editIndex !== null;
 
   const _onChange = (index: number, item: T) => {

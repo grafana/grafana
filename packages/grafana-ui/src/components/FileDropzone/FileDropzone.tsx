@@ -59,6 +59,7 @@ export interface DropzoneFile {
 }
 
 export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
+  const { t } = useTranslate();
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
 
@@ -160,7 +161,6 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     accept: transformAcceptToNewFormat(options?.accept),
   });
   const theme = useTheme2();
-  const { t } = useTranslate();
   const styles = getStyles(theme, isDragActive);
   const fileList = files.map((file) => {
     if (fileListRenderer) {

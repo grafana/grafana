@@ -37,6 +37,7 @@ function isBooleanReducer(r: ReducerID) {
 }
 
 export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 
@@ -61,7 +62,6 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
     },
     [options, onChange]
   );
-  const { t } = useTranslate();
 
   const opts = options ?? {};
   const isBool = isBooleanReducer(opts.reducer);

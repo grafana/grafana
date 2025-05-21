@@ -14,9 +14,9 @@ export interface NamedColorsPaletteProps {
 }
 
 export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const swatches: JSX.Element[] = [];
   for (const hue of theme.visualization.hues) {

@@ -52,6 +52,7 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -97,7 +98,6 @@ export const FilterPopup = ({
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}

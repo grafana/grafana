@@ -43,11 +43,11 @@ export const TimeRangeList = (props: Props) => {
 };
 
 const Options = ({ options, value, onChange, title }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
   const [handleKeys] = useListFocus({ localRef, options });
-  const { t } = useTranslate();
 
   return (
     <>

@@ -30,6 +30,7 @@ import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
 export function TableCellNG(props: TableCellNGProps) {
+  const { t } = useTranslate();
   const {
     field,
     frame,
@@ -198,7 +199,6 @@ export function TableCellNG(props: TableCellNGProps) {
       });
     }
   }, [displayName, onCellFilterAdded, value]);
-  const { t } = useTranslate();
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>

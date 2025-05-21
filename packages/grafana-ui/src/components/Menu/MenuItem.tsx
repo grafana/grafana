@@ -60,6 +60,7 @@ export interface MenuItemProps<T = unknown> {
 /** @internal */
 export const MenuItem = React.memo(
   React.forwardRef<MenuItemElement, MenuItemProps>((props, ref) => {
+    const { t } = useTranslate();
     const {
       url,
       icon,
@@ -123,7 +124,6 @@ export const MenuItem = React.memo(
 
     const localRef = useRef<MenuItemElement>(null);
     useImperativeHandle(ref, () => localRef.current!);
-    const { t } = useTranslate();
 
     const handleKeys = (event: React.KeyboardEvent) => {
       switch (event.key) {

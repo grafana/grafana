@@ -17,8 +17,8 @@ export const HttpProxySettings = ({
   onChange,
   showForwardOAuthIdentityOption = true,
 }: HttpSettingsBaseProps) => {
-  const gridLayout = useStyles2(getGridLayout);
   const { t } = useTranslate();
+  const gridLayout = useStyles2(getGridLayout);
   return (
     <div className={gridLayout}>
       <Stack direction="row" gap={0.5}>

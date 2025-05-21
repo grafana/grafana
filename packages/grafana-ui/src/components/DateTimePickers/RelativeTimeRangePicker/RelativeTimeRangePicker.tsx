@@ -45,6 +45,7 @@ const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
+  const { t } = useTranslate();
   const { timeRange, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
@@ -104,7 +105,6 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     },
     [isOpen]
   );
-  const { t } = useTranslate();
 
   const onApply = (event: FormEvent<HTMLButtonElement>) => {
     event.preventDefault();

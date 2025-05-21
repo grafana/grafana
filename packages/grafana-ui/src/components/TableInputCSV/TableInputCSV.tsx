@@ -105,9 +105,9 @@ const InternalTextArea = ({
   value: string;
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { t } = useTranslate();
   return (
     <TextArea
       style={{ width, height }}

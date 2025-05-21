@@ -46,6 +46,7 @@ interface FormProps extends Omit<Props, 'history'> {
 }
 
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
+  const { t } = useTranslate();
   const {
     quickOptions = [],
     isReversed,
@@ -69,7 +70,6 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const historyOptions = mapToHistoryOptions(history, timeZone);
   const timeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
-  const { t } = useTranslate();
   const filteredQuickOptions = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
@@ -123,12 +123,12 @@ export const TimePickerContent = (props: Props) => {
 };
 
 const NarrowScreenForm = (props: FormProps) => {
+  const { t } = useTranslate();
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
   const collapsed = hideQuickRanges ? false : collapsedFlag;
-  const { t } = useTranslate();
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
@@ -181,9 +181,9 @@ const NarrowScreenForm = (props: FormProps) => {
 };
 
 const FullScreenForm = (props: FormProps) => {
+  const { t } = useTranslate();
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
-  const { t } = useTranslate();
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
@@ -222,8 +222,8 @@ const FullScreenForm = (props: FormProps) => {
 };
 
 const EmptyRecentList = memo(() => {
-  const styles = useStyles2(getEmptyListStyles);
   const { t } = useTranslate();
+  const styles = useStyles2(getEmptyListStyles);
   const emptyRecentListText = t(
     'time-picker.content.empty-recent-list-info',
     "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."

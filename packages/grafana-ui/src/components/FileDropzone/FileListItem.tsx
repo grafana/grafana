@@ -18,8 +18,8 @@ export interface FileListItemProps {
 }
 
 export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
-  const styles = useStyles2(getStyles);
   const { t } = useTranslate();
+  const styles = useStyles2(getStyles);
   const { file, progress, error, abortUpload, retryUpload } = customFile;
 
   const renderRightSide = () => {

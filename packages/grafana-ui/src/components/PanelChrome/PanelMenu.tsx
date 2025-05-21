@@ -27,6 +27,7 @@ export function PanelMenu({
   menuButtonClass,
   onOpenMenu,
 }: PanelMenuProps) {
+  const { t } = useTranslate();
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
 
   const handleVisibility = useCallback(
@@ -37,7 +38,6 @@ export function PanelMenu({
     },
     [onOpenMenu]
   );
-  const { t } = useTranslate();
 
   return (
     <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>

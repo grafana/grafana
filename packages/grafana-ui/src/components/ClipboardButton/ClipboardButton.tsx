@@ -30,6 +30,7 @@ export function ClipboardButton({
   variant,
   ...buttonProps
 }: Props) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
@@ -59,7 +60,6 @@ export function ClipboardButton({
       onClipboardError?.(textToCopy, e);
     }
   }, [getText, onClipboardCopy, onClipboardError]);
-  const { t } = useTranslate();
 
   const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (

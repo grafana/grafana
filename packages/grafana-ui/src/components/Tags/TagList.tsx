@@ -30,8 +30,8 @@ export interface Props {
 const TagListComponent = memo(
   forwardRef<HTMLUListElement, Props>(
     ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
-      const theme = useTheme2();
       const { t } = useTranslate();
+      const theme = useTheme2();
       const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
       const numTags = tags.length;
       const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;

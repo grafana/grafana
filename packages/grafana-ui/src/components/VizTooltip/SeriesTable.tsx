@@ -82,8 +82,8 @@ export interface SeriesTableProps {
  * @public
  */
 export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
-  const styles = useStyles2(getSeriesTableRowStyles);
   const { t } = useTranslate();
+  const styles = useStyles2(getSeriesTableRowStyles);
   return (
     <>
       {timestamp && (

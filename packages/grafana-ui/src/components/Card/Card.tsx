@@ -99,9 +99,9 @@ interface ChildProps {
 
 /** Main heading for the card */
 const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & { 'aria-label'?: string }) => {
+  const { t } = useTranslate();
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
-  const { t } = useTranslate();
   const { href, onClick, isSelected } = context ?? {
     href: undefined,
     onClick: undefined,

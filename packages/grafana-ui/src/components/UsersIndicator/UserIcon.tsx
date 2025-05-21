@@ -58,11 +58,11 @@ export const UserIcon = ({
   onClick,
   showTooltip = true,
 }: PropsWithChildren<UserIconProps>) => {
+  const { t } = useTranslate();
   const { user, lastActiveAt } = userView;
   const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
-  const { t } = useTranslate();
   const content = (
     <button
       type={'button'}

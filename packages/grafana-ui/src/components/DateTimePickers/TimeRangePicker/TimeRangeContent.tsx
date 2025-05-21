@@ -56,6 +56,7 @@ const RANGE_ERROR_MESSAGE = () => (
 );
 
 export const TimeRangeContent = (props: Props) => {
+  const { t } = useTranslate();
   const {
     value,
     isFullscreen = false,
@@ -110,7 +111,6 @@ export const TimeRangeContent = (props: Props) => {
     },
     [timeZone]
   );
-  const { t } = useTranslate();
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {

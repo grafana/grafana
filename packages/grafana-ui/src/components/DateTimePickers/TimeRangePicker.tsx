@@ -70,8 +70,8 @@ export interface State {
 }
 
 export function TimeRangePicker(props: TimeRangePickerProps) {
-  const [isOpen, setOpen] = useState(false);
   const { t } = useTranslate();
+  const [isOpen, setOpen] = useState(false);
   const {
     value,
     onMoveBackward,

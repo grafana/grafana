@@ -148,6 +148,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
@@ -239,7 +240,6 @@ export function PanelChrome({
     },
     [onSelect]
   );
-  const { t } = useTranslate();
 
   const headerContent = (
     <>

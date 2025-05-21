@@ -19,6 +19,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
+    const { t } = useTranslate();
     // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
     const childrenWithoutNull = Children.toArray(children).filter((child) => child != null);
     const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));
@@ -72,7 +73,6 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       }
       return () => intersectionObserver.disconnect();
     }, [children]);
-    const { t } = useTranslate();
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>

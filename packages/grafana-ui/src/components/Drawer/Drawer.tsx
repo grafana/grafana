@@ -72,6 +72,7 @@ export function Drawer({
   size = 'md',
   tabs,
 }: Props) {
+  const { t } = useTranslate();
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
@@ -91,7 +92,6 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
-  const { t } = useTranslate();
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;

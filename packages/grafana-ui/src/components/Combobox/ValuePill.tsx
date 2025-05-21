@@ -15,8 +15,8 @@ interface ValuePillProps {
 
 export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
   ({ children, onRemove, disabled, ...rest }, ref) => {
-    const styles = useStyles2(getValuePillStyles, disabled);
     const { t } = useTranslate();
+    const styles = useStyles2(getValuePillStyles, disabled);
     const removeButtonLabel = t('grafana-ui.value-pill.remove-button', 'Remove {{children}}', { children });
     return (
       <span className={styles.wrapper} {...rest} ref={ref}>

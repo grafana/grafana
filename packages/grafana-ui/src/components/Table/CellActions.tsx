@@ -30,6 +30,7 @@ export function CellActions({
   onCellFilterAdded,
   setInspectCell,
 }: CellActionProps) {
+  const { t } = useTranslate();
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const commonButtonProps: CommonButtonProps = {
@@ -53,7 +54,6 @@ export function CellActions({
     },
     [cell, field, onCellFilterAdded]
   );
-  const { t } = useTranslate();
   return (
     <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
       <Stack gap={0.5}>

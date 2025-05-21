@@ -8,8 +8,8 @@ import { Icon } from '../../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
 export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGProps) {
-  const styles = useStyles2(getStyles, height);
   const { t } = useTranslate();
+  const styles = useStyles2(getStyles, height);
   function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();

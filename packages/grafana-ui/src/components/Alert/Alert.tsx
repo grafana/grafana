@@ -42,8 +42,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
-    const theme = useTheme2();
     const { t } = useTranslate();
+    const theme = useTheme2();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {

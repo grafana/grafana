@@ -17,11 +17,11 @@ import type { ReactMonacoEditorProps } from './types';
  * Experimental export
  **/
 export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
-  const { t } = useTranslate();
 
   if (loading) {
     return (

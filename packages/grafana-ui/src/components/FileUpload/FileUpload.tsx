@@ -35,6 +35,7 @@ export const FileUpload = ({
   size = 'md',
   showFileName,
 }: React.PropsWithChildren<Props>) => {
+  const { t } = useTranslate();
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
   const id = uuidv4();
@@ -49,7 +50,6 @@ export const FileUpload = ({
     },
     [onFileUpload]
   );
-  const { t } = useTranslate();
 
   return (
     <>

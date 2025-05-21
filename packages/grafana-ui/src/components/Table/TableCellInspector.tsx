@@ -22,9 +22,9 @@ interface TableCellInspectorProps {
 }
 
 export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
+  const { t } = useTranslate();
   let displayValue = value;
   const [currentMode, setMode] = useState(mode);
-  const { t } = useTranslate();
   if (isString(value)) {
     const trimmedValue = value.trim();
     // Exclude numeric strings like '123' from being displayed in code/JSON mode

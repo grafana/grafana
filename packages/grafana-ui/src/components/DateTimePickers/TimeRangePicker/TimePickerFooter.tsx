@@ -27,6 +27,7 @@ interface Props {
 }
 
 export const TimePickerFooter = (props: Props) => {
+  const { t } = useTranslate();
   const {
     timeZone,
     fiscalYearStartMonth,
@@ -52,7 +53,6 @@ export const TimePickerFooter = (props: Props) => {
   );
 
   const style = useStyles2(getStyle);
-  const { t } = useTranslate();
   if (!isString(timeZone)) {
     return null;
   }

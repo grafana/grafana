@@ -63,6 +63,7 @@ export const Toggletip = memo(
     onOpen,
     show,
   }: ToggletipProps) => {
+    const { t } = useTranslate();
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
     const styles = useStyles2(getStyles);
@@ -109,7 +110,6 @@ export const Toggletip = memo(
     const dismiss = useDismiss(context);
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
-    const { t } = useTranslate();
     return (
       <>
         {cloneElement(children, {

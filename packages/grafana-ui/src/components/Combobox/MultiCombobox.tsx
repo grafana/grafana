@@ -35,6 +35,7 @@ interface MultiComboboxBaseProps<T extends string | number>
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
+  const { t } = useTranslate();
   const {
     placeholder,
     onChange,
@@ -51,7 +52,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
-  const { t } = useTranslate();
 
   const allOptionItem = useMemo(() => {
     return {

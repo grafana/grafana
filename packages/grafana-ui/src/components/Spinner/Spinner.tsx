@@ -37,10 +37,10 @@ export const Spinner = ({
   style,
   size = 'md',
 }: Props | PropsWithDeprecatedSize) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const deprecatedStyles = useStyles2(getDeprecatedStyles, size);
-  const { t } = useTranslate();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const iconName = prefersReducedMotion ? 'hourglass' : 'spinner';
 

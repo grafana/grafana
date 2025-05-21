@@ -15,12 +15,12 @@ type ActionButtonProps = ButtonProps & {
  * @internal
  */
 export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const backgroundColor = action.style.backgroundColor || theme.colors.secondary.main;
   const textColor = theme.colors.getContrastText(backgroundColor);
 
   const [showConfirm, setShowConfirm] = useState(false);
-  const { t } = useTranslate();
 
   return (
     <>

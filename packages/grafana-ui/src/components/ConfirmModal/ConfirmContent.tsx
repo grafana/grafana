@@ -61,6 +61,7 @@ export const ConfirmContent = ({
   justifyButtons = 'flex-end',
   disabled,
 }: ConfirmContentProps) => {
+  const { t } = useTranslate();
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -91,7 +92,6 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const { t } = useTranslate();
   const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });

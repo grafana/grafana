@@ -19,10 +19,10 @@ const weekStartMap: Record<WeekStart, CalendarType> = {
 };
 
 export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCalendarProps) {
+  const { t } = useTranslate();
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
-  const { t } = useTranslate();
   const weekStartValue = getWeekStart(weekStart);
 
   return (

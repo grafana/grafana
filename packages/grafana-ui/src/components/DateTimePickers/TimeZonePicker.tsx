@@ -32,6 +32,7 @@ export interface Props {
 }
 
 export const TimeZonePicker = (props: Props) => {
+  const { t } = useTranslate();
   const {
     onChange,
     width,
@@ -58,7 +59,6 @@ export const TimeZonePicker = (props: Props) => {
     },
     [onChange, value]
   );
-  const { t } = useTranslate();
 
   return (
     <Select

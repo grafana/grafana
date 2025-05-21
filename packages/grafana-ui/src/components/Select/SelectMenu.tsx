@@ -39,8 +39,8 @@ export const SelectMenu = ({
   innerProps,
   selectProps,
 }: React.PropsWithChildren<SelectMenuProps>) => {
-  const theme = useTheme2();
   const { t } = useTranslate();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   const { toggleAllOptions, components } = selectProps;
@@ -107,6 +107,7 @@ export const VirtualizedSelectMenu = ({
   selectProps,
   focusedOption,
 }: VirtualSelectMenuProps<SelectableValue>) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
@@ -129,7 +130,6 @@ export const VirtualizedSelectMenu = ({
   useLayoutEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
-  const { t } = useTranslate();
 
   if (!Array.isArray(children)) {
     return null;

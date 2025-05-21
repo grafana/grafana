@@ -47,11 +47,11 @@ export function SegmentAsync<T>({
   noOptionMessageHandler,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
+  const { t } = useTranslate();
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles2(getSegmentStyles);
-  const { t } = useTranslate();
   noOptionMessageHandler = noOptionMessageHandler || mapStateToNoOptionsMessage(t);
 
   if (!expanded) {

@@ -114,6 +114,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  * @alpha
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+  const { t } = useTranslate();
   const {
     options: allOptions,
     onChange,
@@ -326,7 +327,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
-  const { t } = useTranslate();
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;

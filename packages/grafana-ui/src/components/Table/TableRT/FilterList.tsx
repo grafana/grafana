@@ -78,6 +78,7 @@ export const FilterList = ({
   operator,
   setOperator,
 }: Props) => {
+  const { t } = useTranslate();
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
@@ -169,7 +170,6 @@ export const FilterList = ({
       onChange(newValues);
     }
   }, [onChange, values, items, selectedItems]);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={0.25}>

@@ -22,8 +22,8 @@ interface Props {
  * Only used internally by TagsInput
  * */
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
-  const styles = useStyles2(getStyles);
   const { t } = useTranslate();
+  const styles = useStyles2(getStyles);
 
   // If configured, use random colors based on name.
   // Otherwise, a default class name will be applied to the tag.

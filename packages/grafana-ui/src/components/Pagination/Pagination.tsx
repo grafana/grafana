@@ -29,6 +29,7 @@ export const Pagination = ({
   showSmallVersion,
   className,
 }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
 
@@ -94,7 +95,6 @@ export const Pagination = ({
       return pagesToRender;
     }, []);
   }, [currentPage, numberOfPages, onNavigate, pageLengthToCondense, showSmallVersion, styles.ellipsis, styles.item]);
-  const { t } = useTranslate();
 
   if (hideWhenSinglePage && numberOfPages <= 1) {
     return null;

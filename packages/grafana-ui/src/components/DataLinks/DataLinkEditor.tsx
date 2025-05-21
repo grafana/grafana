@@ -33,8 +33,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export const DataLinkEditor = memo(
   ({ index, value, onChange, suggestions, isLast, showOneClick = false }: DataLinkEditorProps) => {
-    const styles = useStyles2(getStyles);
     const { t } = useTranslate();
+    const styles = useStyles2(getStyles);
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);

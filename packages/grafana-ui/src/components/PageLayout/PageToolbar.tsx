@@ -53,8 +53,8 @@ export const PageToolbar = memo(
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
   }: Props) => {
-    const styles = useStyles2(getStyles);
     const { t } = useTranslate();
+    const styles = useStyles2(getStyles);
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and

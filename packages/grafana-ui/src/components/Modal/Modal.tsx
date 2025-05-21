@@ -36,6 +36,7 @@ export interface Props {
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
+  const { t } = useTranslate();
   const {
     title,
     children,
@@ -61,7 +62,6 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   // Get props for the dialog and its title
   const { dialogProps, titleProps } = useDialog({}, ref);
-  const { t } = useTranslate();
 
   if (!isOpen) {
     return null;

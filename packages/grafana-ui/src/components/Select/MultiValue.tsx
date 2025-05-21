@@ -27,8 +27,8 @@ export type MultiValueRemoveProps = {
 };
 
 export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
-  const theme = useTheme2();
   const { t } = useTranslate();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return (
     <IconButton

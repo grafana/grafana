@@ -214,6 +214,7 @@ type InputState = {
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, timeZone, showSeconds = true, clearable = false }, ref) => {
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
@@ -252,7 +253,6 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       setInternalDate({ value: '', invalid: false });
       onChange();
     }, [onChange]);
-    const { t } = useTranslate();
 
     const icon = (
       <Button
@@ -302,6 +302,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     },
     ref
   ) => {
+    const { t } = useTranslate();
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
 
@@ -330,7 +331,6 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     const onChangeTime = useCallback((date: DateTime) => {
       setTimeOfDayDateTime(date);
     }, []);
-    const { t } = useTranslate();
 
     // here we need to stitch the 2 date objects back together
     const handleApply = () => {

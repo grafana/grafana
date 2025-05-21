@@ -26,9 +26,9 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
 /** @internal */
 export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
   ({ color, label, variant = ColorSwatchVariant.Small, isSelected, 'aria-label': ariaLabel, ...otherProps }, ref) => {
+    const { t } = useTranslate();
     const theme = useTheme2();
     const { isFocusVisible, focusProps } = useFocusRing();
-    const { t } = useTranslate();
     const styles = getStyles(theme, variant, color, isFocusVisible, isSelected);
     const hasLabel = !!label;
     const colorLabel = ariaLabel || label;

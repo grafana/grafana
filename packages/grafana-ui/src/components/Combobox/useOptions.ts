@@ -26,6 +26,7 @@ const asyncNoop = () => Promise.resolve([]);
  *  - loading and error states
  */
 export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
+  const { t } = useTranslate();
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -60,7 +61,6 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   // This hook keeps its own inputValue state (rather than accepting it as an arg) because it needs to be
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
-  const { t } = useTranslate();
 
   const addCustomValue = useCallback(
     (opts: Array<ComboboxOption<T>>) => {

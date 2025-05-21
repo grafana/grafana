@@ -23,6 +23,7 @@ export interface CarouselProps {
 }
 
 export const Carousel: React.FC<CarouselProps> = ({ images }) => {
+  const { t } = useTranslate();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [validImages, setValidImages] = useState<CarouselImage[]>(images);
@@ -86,7 +87,6 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen: selectedIndex !== null, onClose: closePreview }, ref);
   const { dialogProps } = useDialog({}, ref);
-  const { t } = useTranslate();
   if (validImages.length === 0) {
     return (
       <Alert

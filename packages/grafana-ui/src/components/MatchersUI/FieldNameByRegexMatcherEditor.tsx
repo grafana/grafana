@@ -9,6 +9,7 @@ import { Input } from '../Input/Input';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+  const { t } = useTranslate();
   const { options, onChange } = props;
 
   const onBlur = useCallback(
@@ -17,7 +18,6 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
     },
     [onChange]
   );
-  const { t } = useTranslate();
 
   return (
     <Input
