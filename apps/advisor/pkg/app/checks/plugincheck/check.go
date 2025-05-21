@@ -57,14 +57,22 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 func (c *check) Item(ctx context.Context, id string) (any, error) {
 	p, exists := c.PluginStore.Plugin(ctx, id)
 	if !exists {
-		return nil, fmt.Errorf("plugin %s not found", id)
+		return nil, nil
 	}
 	return p, nil
 }
 
 func (c *check) Init(ctx context.Context) error {
 	compatOpts := repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, compatOpts)
+	ps := c.PluginStore.Plugins(ctx)
+	pluginIDs := make([]string, len(ps))
+	for i, p := range ps {
+		pluginIDs[i] = p.ID
+	}
+	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+		IncludeDeprecated: true,
+		Plugins:           pluginIDs,
+	}, compatOpts)
 	if err != nil {
 		return err
 	}

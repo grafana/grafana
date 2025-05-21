@@ -2,7 +2,7 @@ import { e2e } from '../..';
 
 export const addPanel = () => {
   e2e.components.DashboardEditPaneSplitter.primaryBody().scrollTo('bottom', { ensureScrollable: false });
-  e2e.components.CanvasGridAddActions.addPanel().should('be.visible').click();
+  e2e.components.CanvasGridAddActions.addPanel().last().should('be.visible').click();
 };
 
 export const addFirstPanel = () => {

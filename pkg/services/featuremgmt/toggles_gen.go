@@ -139,10 +139,6 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
-	// FlagExtraThemes
-	// Enables extra themes
-	FlagExtraThemes = "extraThemes"
-
 	// FlagLokiPredefinedOperations
 	// Adds predefined query operations to Loki query editor
 	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
@@ -467,6 +463,10 @@ const (
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
+
 	// FlagExpressionParser
 	// Enable new expression parser
 	FlagExpressionParser = "expressionParser"
@@ -498,10 +498,6 @@ const (
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
-
-	// FlagGrafanaManagedRecordingRules
-	// Enables Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
