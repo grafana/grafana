@@ -24,7 +24,7 @@ function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> 
 }
 
 describe('fieldReducer.ts', () => {
-  describe.skip('Stats Calculators', () => {
+  describe('Stats Calculators', () => {
     const basicTable = createDataFrame({
       fields: [
         { name: 'a', values: [10, 20] },
