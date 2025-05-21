@@ -1,8 +1,8 @@
 import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
@@ -41,7 +41,7 @@ const useAddPolicyModal = (
   }, []);
 
   const [error, setError] = useState<Error | undefined>(undefined);
-
+  const { t } = useTranslate();
   const modalElement = useMemo(
     () =>
       loading ? (
@@ -52,7 +52,10 @@ const useAddPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Add notification policy"
+          title={t(
+            'alerting.use-add-policy-modal.modal-element.title-add-notification-policy',
+            'Add notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <AmRoutesExpandedForm
@@ -77,7 +80,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError]
+    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError, t]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -105,6 +108,7 @@ const useEditPolicyModal = (
     setRoute(route);
     setShowModal(true);
   }, []);
+  const { t } = useTranslate();
 
   const modalElement = useMemo(
     () =>
@@ -116,7 +120,10 @@ const useEditPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Edit notification policy"
+          title={t(
+            'alerting.use-edit-policy-modal.modal-element.title-edit-notification-policy',
+            'Edit notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
@@ -156,7 +163,18 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [loading, showModal, handleDismiss, error, isDefaultPolicy, route, alertManagerSourceName, handleUpdate, setError]
+    [
+      loading,
+      showModal,
+      handleDismiss,
+      error,
+      isDefaultPolicy,
+      route,
+      alertManagerSourceName,
+      handleUpdate,
+      setError,
+      t,
+    ]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -180,6 +198,7 @@ const useDeletePolicyModal = (
     setRoute(route);
     setShowModal(true);
   }, []);
+  const { t } = useTranslate();
 
   const modalElement = useMemo(
     () =>
@@ -191,7 +210,10 @@ const useDeletePolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Delete notification policy"
+          title={t(
+            'alerting.use-delete-policy-modal.modal-element.title-delete-notification-policy',
+            'Delete notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <Trans i18nKey="alerting.policies.delete.warning-1">
@@ -208,7 +230,7 @@ const useDeletePolicyModal = (
           </Modal.ButtonRow>
         </Modal>
       ),
-    [handleDismiss, loading, showModal, error, route, handleDelete]
+    [handleDismiss, loading, showModal, error, route, handleDelete, t]
   );
 
   return [modalElement, handleShow, handleDismiss];

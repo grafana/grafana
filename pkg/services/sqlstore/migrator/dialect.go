@@ -9,7 +9,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var (
@@ -27,7 +27,8 @@ type Dialect interface {
 	ShowCreateNull() bool
 	SQLType(col *Column) string
 	SupportEngine() bool
-	LikeStr() string
+	// LikeOperator returns SQL snippet and query parameter for case-insensitive LIKE operation, with optional wildcards (%) before/after the pattern.
+	LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string)
 	Default(col *Column) string
 	// BooleanValue can be used as an argument in SELECT or INSERT statements. For constructing
 	// raw SQL queries, please use BooleanStr instead.
@@ -74,7 +75,6 @@ type Dialect interface {
 
 	CleanDB(engine *xorm.Engine) error
 	TruncateDBTables(engine *xorm.Engine) error
-	NoOpSQL() string
 	// CreateDatabaseFromSnapshot is called when migration log table is not found.
 	// Dialect can recreate all tables from existing snapshot. After successful (nil error) return,
 	// migrator will list migrations from the log, and apply all missing migrations.
@@ -150,8 +150,15 @@ func (b *BaseDialect) AndStr() string {
 	return "AND"
 }
 
-func (b *BaseDialect) LikeStr() string {
-	return "LIKE"
+func (b *BaseDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := pattern
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("%s LIKE ?", column), param
 }
 
 func (b *BaseDialect) OrStr() string {
@@ -351,10 +358,6 @@ func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 
 func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, tableName string) error {
 	return nil
-}
-
-func (b *BaseDialect) NoOpSQL() string {
-	return "SELECT 0;"
 }
 
 func (b *BaseDialect) TruncateDBTables(engine *xorm.Engine) error {

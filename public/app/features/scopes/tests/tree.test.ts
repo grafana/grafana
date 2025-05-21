@@ -1,5 +1,6 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
+import { ScopesService } from '../ScopesService';
 import { ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import {
@@ -56,6 +57,8 @@ jest.mock('@grafana/runtime', () => ({
 describe('Tree', () => {
   let fetchNodesSpy: jest.SpyInstance;
   let fetchScopeSpy: jest.SpyInstance;
+  let scopesService: ScopesService;
+  let scopesSelectorService: ScopesSelectorService;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -63,12 +66,15 @@ describe('Tree', () => {
   });
 
   beforeEach(async () => {
-    await renderDashboard();
-    fetchNodesSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchNodeApi');
-    fetchScopeSpy = jest.spyOn(ScopesSelectorService.instance!, 'fetchScopeApi');
+    const result = await renderDashboard();
+    scopesService = result.scopesService;
+    scopesSelectorService = result.scopesSelectorService;
+    fetchNodesSpy = jest.spyOn(result.client, 'fetchNode');
+    fetchScopeSpy = jest.spyOn(result.client, 'fetchScope');
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
@@ -80,7 +86,7 @@ describe('Tree', () => {
   });
 
   it('Selects the proper scopes', async () => {
-    await updateScopes(['grafana', 'mimir']);
+    await updateScopes(scopesService, ['grafana', 'mimir']);
     await openSelector();
     await expandResultApplications();
     expectResultApplicationsGrafanaSelected();
@@ -243,7 +249,6 @@ describe('Tree', () => {
 
   it('Shows the proper headline', async () => {
     await openSelector();
-    expectScopesHeadline('Recommended');
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
@@ -254,27 +259,34 @@ describe('Tree', () => {
     expectScopesHeadline('No results found for your query');
   });
 
+  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    expectScopesHeadline('Recommended');
+  });
+
   it('Updates the paths for scopes without paths on nodes fetching', async () => {
     const selectedScopeName = 'grafana';
     const unselectedScopeName = 'mimir';
     const selectedScopeNameFromOtherGroup = 'dev';
 
-    await updateScopes([selectedScopeName, selectedScopeNameFromOtherGroup]);
-    expectSelectedScopePath(selectedScopeName, []);
-    expectTreeScopePath(selectedScopeName, []);
-    expectSelectedScopePath(unselectedScopeName, undefined);
-    expectTreeScopePath(unselectedScopeName, undefined);
-    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
+    await updateScopes(scopesService, [selectedScopeName, selectedScopeNameFromOtherGroup]);
+    expectSelectedScopePath(scopesSelectorService, selectedScopeName, []);
+    expectTreeScopePath(scopesSelectorService, selectedScopeName, []);
+    expectSelectedScopePath(scopesSelectorService, unselectedScopeName, undefined);
+    expectTreeScopePath(scopesSelectorService, unselectedScopeName, undefined);
+    expectSelectedScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
+    expectTreeScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
 
     await openSelector();
     await expandResultApplications();
     const expectedPath = ['', 'applications', 'applications-grafana'];
-    expectSelectedScopePath(selectedScopeName, expectedPath);
-    expectTreeScopePath(selectedScopeName, expectedPath);
-    expectSelectedScopePath(unselectedScopeName, undefined);
-    expectTreeScopePath(unselectedScopeName, undefined);
-    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
+    expectSelectedScopePath(scopesSelectorService, selectedScopeName, expectedPath);
+    expectTreeScopePath(scopesSelectorService, selectedScopeName, expectedPath);
+    expectSelectedScopePath(scopesSelectorService, unselectedScopeName, undefined);
+    expectTreeScopePath(scopesSelectorService, unselectedScopeName, undefined);
+    expectSelectedScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
+    expectTreeScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
   });
 });

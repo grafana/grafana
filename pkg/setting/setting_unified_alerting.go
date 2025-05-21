@@ -47,6 +47,7 @@ const (
 `
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
+	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
@@ -112,6 +113,7 @@ type UnifiedAlertingSettings struct {
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
+	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency    int
@@ -147,11 +149,11 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable       bool
 	URL          string
 	TenantID     string
 	Password     string
 	SyncInterval time.Duration
+	Timeout      time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -163,6 +165,12 @@ type UnifiedAlertingScreenshotSettings struct {
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+// UnifiedAlertingPrometheusConversionSettings contains configuration for converting Prometheus rules to Grafana format
+type UnifiedAlertingPrometheusConversionSettings struct {
+	// RuleQueryOffset defines a time offset to apply to rule queries during conversion from Prometheus to Grafana format
+	RuleQueryOffset time.Duration
 }
 
 type UnifiedAlertingStateHistorySettings struct {
@@ -382,12 +390,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
-		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
 	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
+	if err != nil {
+		return err
+	}
+	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {
 		return err
 	}
@@ -436,6 +447,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
+	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
+		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+	}
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{

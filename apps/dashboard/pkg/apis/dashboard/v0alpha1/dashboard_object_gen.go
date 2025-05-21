@@ -222,6 +222,20 @@ func (o *Dashboard) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *Dashboard) DeepCopy() *Dashboard {
+	cpy := &Dashboard{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *Dashboard) DeepCopyInto(dst *Dashboard) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Dashboard{}
 
@@ -265,5 +279,31 @@ func (o *DashboardList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *DashboardList) DeepCopy() *DashboardList {
+	cpy := &DashboardList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *DashboardList) DeepCopyInto(dst *DashboardList) {
+	resource.CopyObjectInto(dst, o)
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &DashboardList{}
+
+// Copy methods for all subresource types
+
+
+
+// DeepCopy creates a full deep copy of DashboardStatus
+func (s *DashboardStatus) DeepCopy() *DashboardStatus {
+	cpy := &DashboardStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies DashboardStatus into another DashboardStatus object
+func (s *DashboardStatus) DeepCopyInto(dst *DashboardStatus) {
+	resource.CopyObjectInto(dst, s)
+}

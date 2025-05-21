@@ -60,7 +60,7 @@ func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	for _, attr := range attrs {
 		out = append(out, attr.Key, attr.Value)
 	}
-	return New(h.Logger.New(out...))
+	return New(h.New(out...))
 }
 
 // WithGroup implements slog.Handler.WithGroup.
@@ -68,5 +68,5 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 	if name == "" {
 		return h
 	}
-	return New(h.Logger.New("group", name))
+	return New(h.New("group", name))
 }

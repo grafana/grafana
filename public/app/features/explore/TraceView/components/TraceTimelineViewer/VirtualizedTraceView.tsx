@@ -19,6 +19,7 @@ import * as React from 'react';
 import { RefObject } from 'react';
 
 import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -655,7 +656,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           <ToolbarButton
             className={styles.scrollToTopButton}
             onClick={this.scrollToTop}
-            title="Scroll to top"
+            title={t('explore.unthemed-virtualized-trace-view.title-scroll-to-top', 'Scroll to top')}
             icon="arrow-up"
           ></ToolbarButton>
         )}

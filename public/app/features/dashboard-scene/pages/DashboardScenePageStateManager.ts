@@ -3,17 +3,25 @@ import { isEqual } from 'lodash';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+} from 'app/features/apiserver/types';
+import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { ProvisioningPreview } from 'app/features/provisioning/types';
 import {
   DashboardDataDTO,
   DashboardDTO,
@@ -61,8 +69,8 @@ interface DashboardCacheEntry<T> {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
-  type?: string;
   slug?: string;
+  type?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -112,6 +120,43 @@ abstract class DashboardScenePageStateManagerBase<T>
     return this.cache;
   }
 
+  protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
+    const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+
+    if (isRedirectResponse(rsp)) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
+    }
+
+    // If dashboard is on v2 schema convert to v1 schema, there's curently no v2 API for home dashboard
+    if (isDashboardV2Spec(rsp.dashboard)) {
+      rsp.dashboard = transformDashboardV2SpecToV1(rsp.dashboard, {
+        name: '',
+        generation: 0,
+        resourceVersion: '0',
+        creationTimestamp: '',
+      });
+    }
+
+    if (rsp?.meta) {
+      rsp.meta.canSave = false;
+      rsp.meta.canShare = false;
+      rsp.meta.canStar = false;
+    }
+
+    return rsp;
+  }
+
+  private async loadHomeDashboard(): Promise<DashboardScene | null> {
+    const rsp = await this.fetchHomeDashboard();
+    if (rsp) {
+      return transformSaveModelToScene(rsp);
+    }
+
+    return null;
+  }
+
   public async loadSnapshot(slug: string) {
     try {
       const dashboard = await this.loadSnapshotScene(slug);
@@ -130,7 +175,90 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
+  }
+
+  protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') ?? undefined; // commit hash or branch
+
+    const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
+    return getBackendSrv()
+      .get(url, ref ? { ref } : undefined)
+      .then((v) => {
+        // Load the results from dryRun
+        const dryRun = v.resource.dryRun;
+        if (!dryRun) {
+          return Promise.reject('failed to read provisioned dashboard');
+        }
+
+        if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+          return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+        }
+
+        return this.processDashboardFromProvisioning(repo, path, dryRun, {
+          file: url,
+          ref: ref,
+          repo: repo,
+        });
+      });
+  }
+
+  private processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: any,
+    provisioningPreview: ProvisioningPreview
+  ) {
+    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+      return {
+        ...dryRun,
+        kind: 'DashboardWithAccessInfo',
+        access: {
+          canStar: false,
+          isSnapshot: false,
+          canShare: false,
+
+          // Should come from the repo settings
+          canDelete: true,
+          canSave: true,
+          canEdit: true,
+        },
+      };
+    }
+
+    let anno = dryRun.metadata.annotations;
+    if (!anno) {
+      dryRun.metadata.annotations = {};
+    }
+    anno[AnnoKeyManagerKind] = 'repo';
+    anno[AnnoKeyManagerIdentity] = repo;
+    anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
+
+    return {
+      meta: {
+        canStar: false,
+        isSnapshot: false,
+        canShare: false,
+
+        // Should come from the repo settings
+        canDelete: true,
+        canSave: true,
+        canEdit: true,
+
+        // Includes additional k8s metadata
+        k8s: dryRun.metadata,
+
+        // lookup info
+        provisioning: provisioningPreview,
+      },
+      dashboard: dryRun.spec,
+    };
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -172,11 +300,23 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+      // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
+      // This enables us to switch to the correct version of the dashboard
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
+
+    // Home dashboard is not handled through legacy API and is not versioned.
+    // Handling home dashboard flow separately from regular dashboard flow.
+    if (options.route === DashboardRoutes.Home) {
+      return await this.loadHomeDashboard();
+    }
+
     const rsp = await this.fetchDashboard(options);
 
     if (!rsp) {
@@ -283,37 +423,26 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
     }
 
-    let rsp: DashboardDTO | HomeDashboardRedirectDTO;
+    let rsp: DashboardDTO;
 
     try {
       switch (route) {
-        case DashboardRoutes.New:
-          rsp = await buildNewDashboardSaveModel(urlFolderUid);
-
-          break;
         case DashboardRoutes.Home:
-          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
-          rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+          // For legacy dashboarding we keep this logic here, as dashboard can be loaded through state manager's fetchDashboard method directly
+          // See DashboardPageProxy.
+          const homeDashboard = await this.fetchHomeDashboard();
 
-          if (isRedirectResponse(rsp)) {
-            const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-            locationService.replace(newUrl);
+          if (!homeDashboard) {
             return null;
           }
 
-          if (isDashboardV2Spec(rsp.dashboard)) {
-            throw new Error(
-              'You are trying to load a v2 dashboard spec as v1. Use DashboardScenePageStateManagerV2 instead.'
-            );
-          }
-
-          if (rsp?.meta) {
-            rsp.meta.canSave = false;
-            rsp.meta.canShare = false;
-            rsp.meta.canStar = false;
-          }
-
+          rsp = homeDashboard;
           break;
+        case DashboardRoutes.New:
+          rsp = await buildNewDashboardSaveModel(urlFolderUid);
+          break;
+        case DashboardRoutes.Provisioning:
+          return this.loadProvisioningDashboard(slug || '', uid);
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
@@ -380,10 +509,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       params,
     };
 
-    // We shouldn't check all params since:
-    // - version doesn't impact the new dashboard, and it's there for increased compatibility
-    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
-    // - other params don't affect the dashboard content
     if (
       isEqual(options.params?.variables, stateOptions.params?.variables) &&
       isEqual(options.params?.scopes, stateOptions.params?.scopes)
@@ -397,7 +522,20 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      // check if cached db version is same as both
+      // response and current db state. There are scenarios where they can differ
+      // e.g: when reloadOnParamsChange ff is on the first loaded dashboard could be version 0
+      // then on this reload call the rsp increments the version. When the cache is not set
+      // it creates a new scene based on the new rsp. But if we navigate to another dashboard
+      // and then back to the initial one, the cache is still set, but the dashboard will be loaded
+      // again with version 0. Because the cache is set with the incremented version and the rsp on
+      // reload will match the cached version we return and do nothing, but the set scene is still
+      // the one for the version 0 dashboard, thus we verify dashboard state version as well
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.dashboard.version &&
+        fromCache.state.version === this.state.dashboard?.state.version
+      ) {
         this.setState({ isLoading: false });
         return;
       }
@@ -415,6 +553,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
       const scene = transformSaveModelToScene(rsp);
 
+      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(scene);
+      }
+
       this.setSceneCache(options.uid, scene);
 
       this.setState({ dashboard: scene, isLoading: false, options });
@@ -428,6 +571,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           status,
         },
       });
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
     }
   }
 }
@@ -454,12 +600,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   ): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    // TODO[schema v2]: Dashboard scene state is incorrectly save, it must use the resourceVersion
-    if (
-      fromCache &&
-      rsp?.metadata.resourceVersion &&
-      fromCache.state.version === parseInt(rsp?.metadata.resourceVersion, 10)
-    ) {
+    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
       return fromCache;
     }
 
@@ -475,10 +616,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
-  }
-
-  reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
-    throw new Error('Method not implemented.');
   }
 
   public async fetchDashboard({
@@ -502,27 +639,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
-        case DashboardRoutes.Home:
-          // TODO: Move this fetching to APIClient.getHomeDashboard() to be able to redirect to the correct api depending on the format for the saved dashboard
-          const dto = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
-
-          if (isRedirectResponse(dto)) {
-            const newUrl = locationUtil.stripBaseFromUrl(dto.redirectUri);
-            locationService.replace(newUrl);
-            return null;
-          }
-
-          // if custom home dashboard is v2 spec already, ignore the spec transformation
-          if (!isDashboardV2Resource(dto)) {
-            throw new Error('Custom home dashboard is not a v2 spec');
-          }
-
-          rsp = dto;
-          dto.access.canSave = false;
-          dto.access.canShare = false;
-          dto.access.canStar = false;
-
-          break;
+        case DashboardRoutes.Provisioning: {
+          return await this.loadProvisioningDashboard(slug || '', uid);
+        }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
@@ -569,6 +688,77 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
     return rsp;
   }
+
+  public async reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
+    const stateOptions = this.state.options;
+
+    if (!stateOptions) {
+      return;
+    }
+
+    const options = {
+      ...stateOptions,
+      params,
+    };
+
+    if (
+      isEqual(options.params?.variables, stateOptions.params?.variables) &&
+      isEqual(options.params?.scopes, stateOptions.params?.scopes)
+    ) {
+      return;
+    }
+
+    try {
+      this.setState({ isLoading: true });
+
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.metadata.generation &&
+        fromCache.state.version === this.state.dashboard?.state.version
+      ) {
+        this.setState({ isLoading: false });
+        return;
+      }
+
+      if (!rsp?.spec) {
+        this.setState({
+          isLoading: false,
+          loadError: {
+            status: 404,
+            message: 'Dashboard not found',
+          },
+        });
+        return;
+      }
+
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+
+      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(scene);
+      }
+
+      this.setSceneCache(options.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false, options });
+    } catch (err) {
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      this.setState({
+        isLoading: false,
+        loadError: {
+          message,
+          status,
+        },
+      });
+      if (err instanceof DashboardVersionError) {
+        throw err;
+      }
+    }
+  }
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
@@ -583,7 +773,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    // Start with v2 if newDashboardLayout is enabled, otherwise v1
     this.activeManager = this.v1Manager;
   }
 
@@ -591,11 +780,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
   ): Promise<T> {
     try {
-      const result = await operation(this.activeManager);
-      // need to sync the state of the active manager with the unified manager
-      // in cases when components are subscribed to unified manager's state
-      this.setState(this.activeManager.state);
-      return result;
+      return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
         const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
@@ -604,6 +789,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       } else {
         throw error;
       }
+    } finally {
+      // need to sync the state of the active manager with the unified manager
+      // in cases when components are subscribed to unified manager's state
+      this.setState(this.activeManager.state);
     }
   }
 
@@ -614,7 +803,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async reloadDashboard(params: LoadDashboardOptions['params']) {
-    return this.withVersionHandling((manager) => manager.reloadDashboard(params));
+    return this.withVersionHandling((manager) => manager.reloadDashboard.call(this, params));
   }
 
   public getDashboardFromCache(uid: string) {
@@ -628,7 +817,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (!rsp) {
       return null;
     }
-
     if (isDashboardV2Resource(rsp)) {
       this.activeManager = this.v2Manager;
       return this.v2Manager.transformResponseToScene(rsp, options);
@@ -672,6 +860,22 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.v2Manager.setDashboardCache(cacheKey, dashboard);
     } else {
       this.v1Manager.setDashboardCache(cacheKey, dashboard);
+    }
+  }
+
+  public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
+    if (options.route === DashboardRoutes.New) {
+      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      this.setActiveManager(newDashboardVersion);
+    }
+    return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
+  }
+
+  public setActiveManager(manager: 'v1' | 'v2') {
+    if (manager === 'v1') {
+      this.activeManager = this.v1Manager;
+    } else {
+      this.activeManager = this.v2Manager;
     }
   }
 }

@@ -26,24 +26,26 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 				Labels: map[string]string{
 					"label-1": "value-1",
 				},
+				QueryOffset: util.Pointer(prommodel.Duration(time.Duration(1) * time.Second)),
 				Rules: []PrometheusRule{
 					{
-						Alert: "test_alert",
-						Expr:  "up == 0",
+						Alert:         "test_alert",
+						Expr:          "up == 0",
+						KeepFiringFor: util.Pointer(prommodel.Duration(10)),
 					},
 				},
 			},
 			expectError: false,
 		},
 		{
-			name: "invalid group with query_offset",
+			name: "invalid group with negative query_offset",
 			group: PrometheusRuleGroup{
 				Name:        "test_group",
 				Interval:    prommodel.Duration(60),
-				QueryOffset: util.Pointer(prommodel.Duration(10)),
+				QueryOffset: util.Pointer(prommodel.Duration(-1)),
 			},
 			expectError: true,
-			errorMsg:    "query_offset is not supported",
+			errorMsg:    "query_offset must be >= 0",
 		},
 		{
 			name: "invalid group with limit",
@@ -55,75 +57,11 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 			expectError: true,
 			errorMsg:    "limit is not supported",
 		},
-		{
-			name: "invalid group with invalid rule",
-			group: PrometheusRuleGroup{
-				Name:     "test_group",
-				Interval: prommodel.Duration(60),
-				Rules: []PrometheusRule{
-					{
-						Alert:         "test_alert",
-						Expr:          "up == 0",
-						KeepFiringFor: util.Pointer(prommodel.Duration(10)),
-					},
-				},
-			},
-			expectError: true,
-			errorMsg:    "keep_firing_for is not supported",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.group.Validate()
-			if tt.expectError {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errorMsg)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestPrometheusRule_Validate(t *testing.T) {
-	tests := []struct {
-		name        string
-		rule        PrometheusRule
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name: "valid alert rule",
-			rule: PrometheusRule{
-				Alert: "test_alert",
-				Expr:  "up == 0",
-			},
-			expectError: false,
-		},
-		{
-			name: "valid recording rule",
-			rule: PrometheusRule{
-				Record: "test_recording",
-				Expr:   "sum(up)",
-			},
-			expectError: false,
-		},
-		{
-			name: "invalid rule with keep_firing_for",
-			rule: PrometheusRule{
-				Alert:         "test_alert",
-				Expr:          "up == 0",
-				KeepFiringFor: util.Pointer(prommodel.Duration(10)),
-			},
-			expectError: true,
-			errorMsg:    "keep_firing_for is not supported",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.rule.Validate()
 			if tt.expectError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.errorMsg)

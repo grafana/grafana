@@ -2,18 +2,18 @@ package cloudwatch
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 
-func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput, groupingFieldNames []string) (*data.Frame, error) {
 	if response == nil {
 		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
 	}
@@ -59,6 +59,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				// which can be in a millisecond format as well as cloudWatchTSFormat string format
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil || isTimestampField(*resultField.Field) {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
+				} else if slices.Contains[[]string, string](groupingFieldNames, *resultField.Field) {
+					fieldValues[*resultField.Field] = make([]*string, rowCount)
 				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
 					fieldValues[*resultField.Field] = make([]*float64, rowCount)
 				} else {
@@ -98,9 +100,10 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	for _, fieldName := range fieldNames {
 		newFields = append(newFields, data.NewField(fieldName, nil, fieldValues[fieldName]))
 
-		if fieldName == "@timestamp" {
+		switch fieldName {
+		case "@timestamp":
 			newFields[len(newFields)-1].SetConfig(&data.FieldConfig{DisplayName: "Time"})
-		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
+		case logStreamIdentifierInternal, logIdentifierInternal:
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
 					Custom: map[string]any{
@@ -176,15 +179,6 @@ func groupResults(results *data.Frame, groupingFieldNames []string, fromSyncQuer
 	for i, field := range results.Fields {
 		for _, groupingField := range groupingFieldNames {
 			if field.Name == groupingField {
-				// convert numeric grouping field to string field
-				if field.Type().Numeric() {
-					newField, err := numericFieldToStringField(field)
-					if err != nil {
-						return nil, err
-					}
-					results.Fields[i] = newField
-					field = newField
-				}
 				// For expressions and alerts to work properly we need to remove non-time grouping fields
 				if fromSyncQuery && !field.Type().Time() {
 					removeFieldIndices = append(removeFieldIndices, i)
@@ -296,28 +290,6 @@ func generateLabels(fields []*data.Field, row int) data.Labels {
 		}
 	}
 	return labels
-}
-
-func numericFieldToStringField(field *data.Field) (*data.Field, error) {
-	if !field.Type().Numeric() {
-		return nil, fmt.Errorf("field is not numeric")
-	}
-
-	strings := make([]*string, field.Len())
-	for i := 0; i < field.Len(); i++ {
-		floatVal, err := field.FloatAt(i)
-		if err != nil {
-			return nil, err
-		}
-
-		strVal := fmt.Sprintf("%g", floatVal)
-		strings[i] = aws.String(strVal)
-	}
-
-	newField := data.NewField(field.Name, field.Labels, strings)
-	newField.Config = field.Config
-
-	return newField, nil
 }
 
 func isTimestampField(fieldName string) bool {

@@ -73,7 +73,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 	for _, r := range c {
 		switch r.Type() {
 		case definitions.GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				if encryptExisting {
 					for k, v := range gr.SecureSettings {
 						encryptedData, err := encrypt(context.Background(), []byte(v))
@@ -183,7 +183,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 
 	// Copy the previously known secure settings.
 	for i, r := range receivers {
-		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for j, gr := range r.GrafanaManagedReceivers {
 			if gr.UID == "" { // new receiver
 				continue
 			}

@@ -264,7 +264,12 @@ function useColumns(
 
           return (
             nextEvalInfo && (
-              <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
+              <Tooltip
+                placement="top"
+                // eslint-disable-next-line @grafana/no-untranslated-strings
+                content={`${nextEvalInfo?.fullDate}`}
+                theme="info"
+              >
                 <span>{nextEvalInfo?.humanized}</span>
               </Tooltip>
             )
@@ -353,7 +358,7 @@ function useRuleStatus(rule: CombinedRule) {
 
   const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
   const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
-  const isPaused = rulerRuleType.grafana.alertingRule(rulerRule) && isPausedRule(rulerRule);
+  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
 
   return { isDeleting, isCreating, isPaused };
 }

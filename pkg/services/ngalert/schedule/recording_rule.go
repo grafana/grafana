@@ -144,6 +144,10 @@ func (r *recordingRule) Run() error {
 			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
+			// Call afterEval callback if it exists
+			if eval.afterEval != nil {
+				eval.afterEval()
+			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
 			return nil

@@ -3,33 +3,34 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesDashboardsService } from './ScopesDashboardsService';
+import { useScopesServices } from '../ScopesContextProvider';
+
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
+  const scopeServices = useScopesServices();
 
-  const scopesDashboardsService = ScopesDashboardsService.instance;
+  useObservable(
+    scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(),
+    scopeServices?.scopesDashboardsService.state
+  );
 
-  useObservable(scopesDashboardsService?.stateObservable ?? new Observable(), scopesDashboardsService?.state);
+  const { t } = useTranslate();
 
-  if (
-    !scopes ||
-    !scopesDashboardsService ||
-    !scopes.state.enabled ||
-    !scopes.state.drawerOpened ||
-    scopes.state.readOnly
-  ) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
     return null;
   }
 
-  const { loading, forScopeNames, dashboards, searchQuery, filteredFolders } = scopesDashboardsService.state;
+  const { scopesDashboardsService } = scopeServices;
+  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
+    scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading) {
@@ -42,13 +43,15 @@ export function ScopesDashboards() {
           <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
-    } else if (dashboards.length === 0) {
+    } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundForScope"
         >
-          <Trans i18nKey="scopes.dashboards.noResultsForScopes">No dashboards found for the selected scopes</Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsForScopes">
+            No dashboards or links found for the selected scopes
+          </Trans>
         </div>
       );
     }

@@ -6,6 +6,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
     false,
   ],
+  "delete-alert-rule-permanently": [
+    false,
+    false,
+  ],
   "duplicate-alert-rule": [
     false,
     false,
@@ -44,6 +48,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
 exports[`AlertRule abilities should report that all actions are supported for a Grafana Managed alert rule 1`] = `
 {
   "delete-alert-rule": [
+    true,
+    false,
+  ],
+  "delete-alert-rule-permanently": [
     true,
     false,
   ],
@@ -88,10 +96,6 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
-  "create-mute-timing": [
-    false,
-    false,
-  ],
   "create-notification-policy": [
     false,
     false,
@@ -104,6 +108,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     true,
     false,
   ],
+  "create-time-interval": [
+    false,
+    false,
+  ],
   "decrypt-secrets": [
     false,
     false,
@@ -112,15 +120,15 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
-  "delete-mute-timing": [
-    false,
-    false,
-  ],
   "delete-notification-policy": [
     false,
     false,
   ],
   "delete-notification-template": [
+    false,
+    false,
+  ],
+  "delete-time-interval": [
     false,
     false,
   ],
@@ -136,11 +144,11 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
-  "export-mute-timings": [
+  "export-notification-policies": [
     false,
     false,
   ],
-  "export-notification-policies": [
+  "export-time-intervals": [
     false,
     false,
   ],
@@ -152,16 +160,16 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
-  "update-mute-timing": [
-    false,
-    false,
-  ],
   "update-notification-policy-tree": [
     false,
     false,
   ],
   "update-silence": [
     true,
+    false,
+  ],
+  "update-time-interval": [
+    false,
     false,
   ],
   "view-alert-groups": [
@@ -180,10 +188,6 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     true,
     false,
   ],
-  "view-mute-timing": [
-    true,
-    false,
-  ],
   "view-notification-policy-tree": [
     true,
     false,
@@ -193,6 +197,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "view-silence": [
+    true,
+    false,
+  ],
+  "view-time-interval": [
     true,
     false,
   ],
@@ -205,10 +213,6 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
-  "create-mute-timing": [
-    true,
-    true,
-  ],
   "create-notification-policy": [
     true,
     true,
@@ -221,6 +225,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
+  "create-time-interval": [
+    true,
+    true,
+  ],
   "decrypt-secrets": [
     false,
     false,
@@ -229,15 +237,15 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
-  "delete-mute-timing": [
-    true,
-    true,
-  ],
   "delete-notification-policy": [
     true,
     true,
   ],
   "delete-notification-template": [
+    true,
+    true,
+  ],
+  "delete-time-interval": [
     true,
     true,
   ],
@@ -253,11 +261,11 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     false,
     false,
   ],
-  "export-mute-timings": [
+  "export-notification-policies": [
     false,
     true,
   ],
-  "export-notification-policies": [
+  "export-time-intervals": [
     false,
     true,
   ],
@@ -269,15 +277,15 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
-  "update-mute-timing": [
-    true,
-    true,
-  ],
   "update-notification-policy-tree": [
     true,
     true,
   ],
   "update-silence": [
+    true,
+    true,
+  ],
+  "update-time-interval": [
     true,
     true,
   ],
@@ -297,10 +305,6 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
-  "view-mute-timing": [
-    true,
-    true,
-  ],
   "view-notification-policy-tree": [
     true,
     true,
@@ -310,6 +314,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
   ],
   "view-silence": [
+    true,
+    true,
+  ],
+  "view-time-interval": [
     true,
     true,
   ],
@@ -322,10 +330,6 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
-  "create-mute-timing": [
-    true,
-    false,
-  ],
   "create-notification-policy": [
     true,
     false,
@@ -338,6 +342,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
+  "create-time-interval": [
+    true,
+    false,
+  ],
   "decrypt-secrets": [
     true,
     false,
@@ -346,15 +354,15 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
-  "delete-mute-timing": [
-    true,
-    false,
-  ],
   "delete-notification-policy": [
     true,
     false,
   ],
   "delete-notification-template": [
+    true,
+    false,
+  ],
+  "delete-time-interval": [
     true,
     false,
   ],
@@ -370,11 +378,11 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     true,
   ],
-  "export-mute-timings": [
+  "export-notification-policies": [
     true,
     true,
   ],
-  "export-notification-policies": [
+  "export-time-intervals": [
     true,
     true,
   ],
@@ -386,15 +394,15 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
-  "update-mute-timing": [
-    true,
-    false,
-  ],
   "update-notification-policy-tree": [
     true,
     false,
   ],
   "update-silence": [
+    true,
+    false,
+  ],
+  "update-time-interval": [
     true,
     false,
   ],
@@ -414,10 +422,6 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
-  "view-mute-timing": [
-    true,
-    true,
-  ],
   "view-notification-policy-tree": [
     true,
     true,
@@ -427,6 +431,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
   ],
   "view-silence": [
+    true,
+    true,
+  ],
+  "view-time-interval": [
     true,
     true,
   ],

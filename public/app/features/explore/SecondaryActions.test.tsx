@@ -8,15 +8,14 @@ import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { SecondaryActions } from './SecondaryActions';
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({}),
-      getList: () => [],
-      getInstanceSettings: () => {},
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
+}));
 
 describe('SecondaryActions', () => {
   it('should render component with two buttons', () => {
@@ -36,7 +35,7 @@ describe('SecondaryActions', () => {
 
   it('should not render hidden elements', () => {
     render(
-      <QueriesDrawerContextProviderMock queryLibraryAvailable={false}>
+      <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
           addQueryRowButtonHidden={true}
           richHistoryRowButtonHidden={true}

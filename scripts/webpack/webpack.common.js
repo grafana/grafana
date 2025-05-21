@@ -1,3 +1,4 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -68,6 +69,14 @@ module.exports = {
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'public/img',
+          to: 'img',
+        },
+      ],
+    }),
   ],
   module: {
     rules: [
@@ -77,25 +86,6 @@ module.exports = {
         options: {
           exposes: ['$', 'jQuery'],
         },
-      },
-      {
-        test: /\.html$/,
-        exclude: /(index|error)\-template\.html/,
-        use: [
-          {
-            loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',
-          },
-          {
-            loader: 'html-loader',
-            options: {
-              sources: false,
-              minimize: {
-                removeComments: false,
-                collapseWhitespace: false,
-              },
-            },
-          },
-        ],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

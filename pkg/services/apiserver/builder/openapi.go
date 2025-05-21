@@ -86,7 +86,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 
 						// Delete has all parameters in the query string already
 						if v.Delete != nil {
-							action, ok := v.Delete.VendorExtensible.Extensions.GetString("x-kubernetes-action")
+							action, ok := v.Delete.Extensions.GetString("x-kubernetes-action")
 							if ok && (action == "deletecollection" || action == "delete") {
 								v.Delete.RequestBody = nil // duplicates all the parameters
 							}
@@ -125,7 +125,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					// Optionally include raw http handlers
 					provider, ok := b.(APIGroupRouteProvider)
 					if ok && provider != nil {
-						routes := provider.GetAPIRoutes()
+						routes := provider.GetAPIRoutes(gv)
 						if routes != nil {
 							for _, route := range routes.Root {
 								copy.Paths.Paths[prefix+route.Path] = &spec3.Path{

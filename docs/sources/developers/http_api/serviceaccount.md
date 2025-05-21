@@ -135,6 +135,8 @@ Content-Type: application/json
 }
 ```
 
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
+
 ## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
@@ -221,6 +223,8 @@ Content-Type: application/json
 	"teams": []
 }
 ```
+
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
 
 ## Delete service account
 

@@ -30,7 +30,7 @@ import { TransactionStatus, VariableModel } from './types';
  * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
  * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
  */
-export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+export const variableRegex = /\$(\w+)=true|\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 // Helper function since lastIndex is not reset
 export const variableRegexExec = (variableString: string) => {
@@ -279,12 +279,9 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
   return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
-export function toVariablePayload<T extends any = undefined>(
-  identifier: VariableIdentifier,
-  data?: T
-): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(
+export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T
 ): VariablePayload<T> {

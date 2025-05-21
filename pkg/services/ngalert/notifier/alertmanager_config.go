@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -122,7 +121,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		return definitions.GettableUserConfig{}, err
 	}
 
-	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting) && withAutogen {
+	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
@@ -235,8 +234,8 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	for _, recv := range cfg.AlertmanagerConfig.Receivers {
-		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.GrafanaManagedReceivers))
+		for _, pr := range recv.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
 				decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
@@ -347,7 +346,7 @@ func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
 	for _, r := range c {
 		switch r.Type() {
 		case definitions.GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				if gr.UID == "" {
 					retries := 5
 					for i := 0; i < retries; i++ {

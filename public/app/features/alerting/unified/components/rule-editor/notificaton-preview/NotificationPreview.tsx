@@ -1,8 +1,8 @@
 import { compact } from 'lodash';
 import { Suspense, lazy } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -35,6 +35,7 @@ export const NotificationPreview = ({
   const previewEndpoint = alertRuleApi.endpoints.preview;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = previewEndpoint.useMutation();
+  const { t } = useTranslate();
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
@@ -94,7 +95,11 @@ export const NotificationPreview = ({
         </Button>
       </Stack>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
-        <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
+        <Suspense
+          fallback={
+            <LoadingPlaceholder text={t('alerting.notification-preview.text-loading-preview', 'Loading preview...')} />
+          }
+        >
           {alertManagerDataSources.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}

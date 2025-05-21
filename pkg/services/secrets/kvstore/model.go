@@ -5,9 +5,7 @@ import (
 )
 
 const (
-	QuitOnPluginStartupFailureKey = "quit_on_secrets_plugin_startup_failure"
-	PluginNamespace               = "secretsmanagerplugin"
-	DataSourceSecretType          = "datasource"
+	DataSourceSecretType = "datasource"
 )
 
 // Item stored in k/v store.

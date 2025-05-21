@@ -1,6 +1,7 @@
 import { PropsWithChildren, useMemo } from 'react';
 
 import { VariableType, VariableHide } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 interface Props {
@@ -10,20 +11,21 @@ interface Props {
 }
 
 const HIDE_OPTIONS = [
-  { label: 'Label and value', value: VariableHide.dontHide },
-  { label: 'Value', value: VariableHide.hideLabel },
-  { label: 'Nothing', value: VariableHide.hideVariable },
+  { label: 'Nothing', value: VariableHide.dontHide },
+  { label: 'Variable', value: VariableHide.hideVariable },
+  { label: 'Label', value: VariableHide.hideLabel },
 ];
 
 export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<Props>) {
   const value = useMemo(() => HIDE_OPTIONS.find((o) => o.value === hide)?.value ?? HIDE_OPTIONS[0].value, [hide]);
+  const { t } = useTranslate();
 
   if (type === 'constant') {
     return null;
   }
 
   return (
-    <Field label="Show on dashboard">
+    <Field label={t('dashboard-scene.variable-hide-select.label', 'Hide')}>
       <RadioButtonGroup options={HIDE_OPTIONS} onChange={onChange} value={value} />
     </Field>
   );

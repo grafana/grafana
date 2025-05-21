@@ -184,9 +184,10 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 		params.Set("rp", retentionPolicy)
 	}
 
-	if httpMode == "GET" {
+	switch httpMode {
+	case "GET":
 		params.Set("q", queryStr)
-	} else if httpMode == "POST" {
+	case "POST":
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 	}
 

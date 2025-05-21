@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.7-alpine
+ARG GO_IMAGE=golang:1.24.3-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -60,15 +60,18 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+COPY .citools .citools
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
@@ -76,6 +79,8 @@ COPY apps/playlist apps/playlist
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
+COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications

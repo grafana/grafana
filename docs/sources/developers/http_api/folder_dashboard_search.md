@@ -58,6 +58,7 @@ Content-Type: application/json
   {
     "id": 163,
     "uid": "000000163",
+    "orgId": 1,
     "title": "Folder",
     "url": "/dashboards/f/000000163/folder",
     "type": "dash-folder",
@@ -68,6 +69,7 @@ Content-Type: application/json
   {
     "id":1,
     "uid": "cIBgcSjkk",
+    "orgId": 1,
     "title":"Production Overview",
     "url": "/d/cIBgcSjkk/production-overview",
     "type":"dash-db",
@@ -97,6 +99,7 @@ Content-Type: application/json
   {
     "id":1,
     "uid": "cIBgcSjkk",
+    "orgId": 1,
     "title":"Production Overview",
     "url": "/d/cIBgcSjkk/production-overview",
     "type":"dash-db",

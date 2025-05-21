@@ -1,23 +1,153 @@
-import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import Prism, { Grammar } from 'prismjs';
 
-import { escapeUnescapedString, sortLogRows } from '../../utils';
+import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+
+import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
 
-import { getDisplayedFieldValue } from './LogLine';
-import { GetFieldLinksFn } from './LogList';
-import { measureTextWidth } from './virtualization';
+import { generateLogGrammar } from './grammar';
+import { getTruncationLength } from './virtualization';
 
-export interface LogListModel extends LogRowModel {
-  body: string;
+export class LogListModel implements LogRowModel {
+  collapsed: boolean | undefined = undefined;
+  datasourceType: string | undefined;
+  dataFrame: DataFrame;
   displayLevel: string;
-  fields: FieldDef[];
+  duplicates: number | undefined;
+  entry: string;
+  entryFieldIndex: number;
+  hasAnsi: boolean;
+  hasError: boolean;
+  hasUnescapedContent: boolean;
+  isSampled: boolean;
+  labels: Labels;
+  logLevel: LogLevel;
+  raw: string;
+  rowIndex: number;
+  rowId?: string | undefined;
+  searchWords: string[] | undefined;
   timestamp: string;
-}
+  timeFromNow: string;
+  timeEpochMs: number;
+  timeEpochNs: string;
+  timeLocal: string;
+  timeUtc: string;
+  uid: string;
+  uniqueLabels: Labels | undefined;
 
-export interface LogFieldDimension {
-  field: string;
-  width: number;
+  private _body: string | undefined = undefined;
+  private _grammar?: Grammar;
+  private _highlightedBody: string | undefined = undefined;
+  private _fields: FieldDef[] | undefined = undefined;
+  private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
+
+  constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone }: PreProcessLogOptions) {
+    // LogRowModel
+    this.datasourceType = log.datasourceType;
+    this.dataFrame = log.dataFrame;
+    this.duplicates = log.duplicates;
+    this.entry = log.entry;
+    this.entryFieldIndex = log.entryFieldIndex;
+    this.hasAnsi = log.hasAnsi;
+    this.hasError = !!checkLogsError(log);
+    this.hasUnescapedContent = log.hasUnescapedContent;
+    this.isSampled = !!checkLogsSampled(log);
+    this.labels = log.labels;
+    this.logLevel = log.logLevel;
+    this.rowIndex = log.rowIndex;
+    this.rowId = log.rowId;
+    this.searchWords = log.searchWords;
+    this.timeFromNow = log.timeFromNow;
+    this.timeEpochMs = log.timeEpochMs;
+    this.timeEpochNs = log.timeEpochNs;
+    this.timeLocal = log.timeLocal;
+    this.timeUtc = log.timeUtc;
+    this.uid = log.uid;
+    this.uniqueLabels = log.uniqueLabels;
+
+    // LogListModel
+    this.displayLevel = logLevelToDisplayLevel(log.logLevel);
+    this._getFieldLinks = getFieldLinks;
+    this._grammar = grammar;
+    this.timestamp = dateTimeFormat(log.timeEpochMs, {
+      timeZone,
+      defaultWithMS: true,
+    });
+
+    let raw = log.raw;
+    if (escape && log.hasUnescapedContent) {
+      raw = escapeUnescapedString(raw);
+    }
+    this.raw = raw;
+  }
+
+  get body(): string {
+    if (this._body === undefined) {
+      let body = this.collapsed ? this.raw.substring(0, getTruncationLength(null)) : this.raw;
+      // Turn it into a single-line log entry for the list
+      this._body = body.replace(/(\r\n|\n|\r)/g, '');
+    }
+    return this._body;
+  }
+
+  get errorMessage(): string | undefined {
+    return checkLogsError(this);
+  }
+
+  get fields(): FieldDef[] {
+    if (this._fields === undefined) {
+      this._fields = getAllFields(this, this._getFieldLinks);
+    }
+    return this._fields;
+  }
+
+  get highlightedBody() {
+    if (this._highlightedBody === undefined) {
+      this._grammar = this._grammar ?? generateLogGrammar(this);
+      this._highlightedBody = Prism.highlight(this.body, this._grammar, 'lokiql');
+    }
+    return this._highlightedBody;
+  }
+
+  get sampledMessage(): string | undefined {
+    return checkLogsSampled(this);
+  }
+
+  getDisplayedFieldValue(fieldName: string): string {
+    if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
+      return this.body;
+    }
+    if (this.labels[fieldName] != null) {
+      return this.labels[fieldName];
+    }
+    const field = this.fields.find((field) => {
+      return field.keys[0] === fieldName;
+    });
+
+    return field ? field.values.toString() : '';
+  }
+
+  updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
+    const lineLength =
+      displayedFields.length > 0
+        ? displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length
+        : this.raw.length;
+    const collapsed = lineLength >= getTruncationLength(container) ? true : undefined;
+    if (this.collapsed === undefined || collapsed === undefined) {
+      this.collapsed = collapsed;
+    }
+    return this.collapsed;
+  }
+
+  setCollapsedState(collapsed: boolean) {
+    if (this.collapsed !== collapsed) {
+      this._body = undefined;
+      this._highlightedBody = undefined;
+    }
+    this.collapsed = collapsed;
+  }
 }
 
 export interface PreProcessOptions {
@@ -25,49 +155,25 @@ export interface PreProcessOptions {
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
   timeZone: string;
-  wrap: boolean;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone, wrap }: PreProcessOptions
+  { escape, getFieldLinks, order, timeZone }: PreProcessOptions,
+  grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, expanded: false, getFieldLinks, timeZone, wrap }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone }));
 };
 
 interface PreProcessLogOptions {
   escape: boolean;
-  expanded: boolean; // Not yet implemented
   getFieldLinks?: GetFieldLinksFn;
+  grammar?: Grammar;
   timeZone: string;
-  wrap: boolean;
 }
-const preProcessLog = (
-  log: LogRowModel,
-  { escape, expanded, getFieldLinks, timeZone, wrap }: PreProcessLogOptions
-): LogListModel => {
-  let body = log.entry;
-  const timestamp = dateTimeFormat(log.timeEpochMs, {
-    timeZone,
-    defaultWithMS: true,
-  });
-
-  if (escape && log.hasUnescapedContent) {
-    body = escapeUnescapedString(body);
-  }
-  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
-  if (!wrap && !expanded) {
-    body = body.replace(/(\r\n|\n|\r)/g, '');
-  }
-
-  return {
-    ...log,
-    body,
-    displayLevel: logLevelToDisplayLevel(log.logLevel),
-    fields: getAllFields(log, getFieldLinks),
-    timestamp,
-  };
+const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
+  return new LogListModel(log, options);
 };
 
 function logLevelToDisplayLevel(level = '') {
@@ -82,47 +188,3 @@ function logLevelToDisplayLevel(level = '') {
       return level;
   }
 }
-
-export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
-  if (!logs.length) {
-    return [];
-  }
-  let timestampWidth = 0;
-  let levelWidth = 0;
-  const fieldWidths: Record<string, number> = {};
-  for (let i = 0; i < logs.length; i++) {
-    let width = measureTextWidth(logs[i].timestamp);
-    if (width > timestampWidth) {
-      timestampWidth = Math.round(width);
-    }
-    width = measureTextWidth(logs[i].displayLevel);
-    if (width > levelWidth) {
-      levelWidth = Math.round(width);
-    }
-    for (const field of displayedFields) {
-      width = measureTextWidth(getDisplayedFieldValue(field, logs[i]));
-      fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
-    }
-  }
-  const dimensions: LogFieldDimension[] = [
-    {
-      field: 'timestamp',
-      width: timestampWidth,
-    },
-    {
-      field: 'level',
-      width: levelWidth,
-    },
-  ];
-  for (const field in fieldWidths) {
-    // Skip the log line when it's a displayed field
-    if (field === LOG_LINE_BODY_FIELD_NAME) {
-      continue;
-    }
-    dimensions.push({
-      field,
-      width: fieldWidths[field],
-    });
-  }
-  return dimensions;
-};

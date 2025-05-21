@@ -191,6 +191,38 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 }`, string(r.Body()))
 	})
 
+	t.Run("with a recovering alert", func(t *testing.T) {
+		_, fakeAIM, api := setupAPI(t)
+		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 1, withRecoveringState())
+		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
+		require.NoError(t, err)
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
+
+		r := api.RouteGetAlertStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, `
+			{
+				"status": "success",
+				"data": {
+					"alerts": [{
+						"labels": {
+							"alertname": "test_title_0",
+							"instance_label": "test",
+							"label": "test"
+						},
+						"annotations": {
+							"annotation": "test"
+						},
+						"state": "Recovering",
+						"activeAt": "0001-01-01T00:00:00Z",
+						"value": "1.1e+00"
+					}]
+				}
+			}`,
+			string(r.Body()),
+		)
+	})
+
 	t.Run("with the inclusion of internal labels", func(t *testing.T) {
 		_, fakeAIM, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
@@ -241,6 +273,19 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 func withAlertingState() forEachState {
 	return func(s *state.State) *state.State {
 		s.State = eval.Alerting
+		s.LatestResult = &state.Evaluation{
+			EvaluationState: eval.Alerting,
+			EvaluationTime:  timeNow(),
+			Values:          map[string]float64{"B": float64(1.1)},
+			Condition:       "B",
+		}
+		return s
+	}
+}
+
+func withRecoveringState() forEachState {
+	return func(s *state.State) *state.State {
+		s.State = eval.Recovering
 		s.LatestResult = &state.Evaluation{
 			EvaluationState: eval.Alerting,
 			EvaluationTime:  timeNow(),
@@ -304,7 +349,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that only has one query", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -323,6 +368,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -344,9 +390,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -364,9 +412,91 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Fullpath), string(r.Body()))
 	})
 
+	t.Run("with a rule that is paused", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(true))
+		folder := fakeStore.Folders[orgID][0]
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, fmt.Sprintf(`
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "rule-group",
+			"file": "%s",
+			"folderUid": "namespaceUID",
+			"rules": [{
+				"state": "inactive",
+				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
+				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
+				"alerts": [{
+					"labels": {
+						"job": "prometheus"
+					},
+					"annotations": {
+						"severity": "critical"
+					},
+					"state": "Normal",
+					"activeAt": "0001-01-01T00:00:00Z",
+					"value": ""
+				}],
+				"totals": {
+					"normal": 1
+				},
+				"totalsFiltered": {
+					"normal": 1
+				},
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value"
+				},
+				"health": "ok",
+				"isPaused": true,
+				"type": "alerting",
+				"lastEvaluation": "2022-03-10T14:01:00Z",
+				"duration": 180,
+				"keepFiringFor": 10,
+				"evaluationTime": 60
+			}],
+			"totals": {
+				"inactive": 1
+			},
+			"interval": 60,
+			"lastEvaluation": "2022-03-10T14:01:00Z",
+			"evaluationTime": 60
+		}],
+		"totals": {
+			"inactive": 1
+		}
+	}
+}
+`, folder.Fullpath), string(r.Body()))
+	})
+
+	t.Run("with a rule that has notification settings", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		notificationSettings := ngmodels.NotificationSettings{
+			Receiver: "test-receiver",
+			GroupBy:  []string{"job"},
+		}
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(notificationSettings), gen.WithIsPaused(false))
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
+	})
+
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
@@ -387,6 +517,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{
@@ -413,9 +544,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__alert_rule_uid__": "RuleUID"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -435,7 +568,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -452,6 +585,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"queriedDatasourceUIDs": ["AUID", "BUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{
@@ -475,9 +609,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -493,6 +629,103 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	}
 }
 `, folder.Fullpath), string(r.Body()))
+	})
+
+	t.Run("with a recovering alert", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+
+		t.Run("when it is the only alert", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+			rule := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
+			fakeAIM.GenerateAlertInstances(1, rule.UID, 1, withRecoveringState())
+			fakeStore.PutRule(context.Background(), rule)
+
+			r := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, r.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(r.Body(), &res))
+
+			// There should be 1 recovering rule
+			require.Equal(t, map[string]int64{"recovering": 1}, res.Data.Totals)
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "recovering", rg.Rules[0].State)
+
+			// The rule should have one recovering alert
+			require.Equal(t, map[string]int64{"recovering": 1}, rg.Rules[0].Totals)
+			require.Equal(t, map[string]int64{"recovering": 1}, rg.Rules[0].TotalsFiltered)
+			require.Len(t, rg.Rules[0].Alerts, 1)
+			require.Equal(t, "Recovering", rg.Rules[0].Alerts[0].State)
+		})
+
+		t.Run("when the rule has also a firing alert", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+			rule := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, withRecoveringState())
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, withAlertingState())
+			fakeStore.PutRule(context.Background(), rule)
+
+			r := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, r.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(r.Body(), &res))
+
+			// There should be 1 firing rule
+			require.Equal(t, map[string]int64{"firing": 1}, res.Data.Totals)
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "firing", rg.Rules[0].State)
+
+			// The rule should have one firing and one recovering alert
+			require.Equal(t, map[string]int64{"alerting": 1, "recovering": 1}, rg.Rules[0].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "recovering": 1}, rg.Rules[0].TotalsFiltered)
+			require.Len(t, rg.Rules[0].Alerts, 2)
+			alertStates := []string{rg.Rules[0].Alerts[0].State, rg.Rules[0].Alerts[1].State}
+			require.ElementsMatch(t, alertStates, []string{"Alerting", "Recovering"})
+		})
+
+		t.Run("filtered by recovering state", func(t *testing.T) {
+			fakeStore, fakeAIM, api := setupAPI(t)
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			recoveringRule := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), withClassicConditionSingleQuery()).GenerateRef()
+			alertingRule := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), withClassicConditionSingleQuery()).GenerateRef()
+			fakeAIM.GenerateAlertInstances(orgID, recoveringRule.UID, 1, withRecoveringState())
+			fakeAIM.GenerateAlertInstances(orgID, alertingRule.UID, 1, withAlertingState())
+			fakeStore.PutRule(context.Background(), recoveringRule)
+			fakeStore.PutRule(context.Background(), alertingRule)
+
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=recovering", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			r := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, r.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(r.Body(), &res))
+
+			// global totals aren't filtered
+			require.Equal(t, map[string]int64{"recovering": 1, "firing": 1}, res.Data.Totals)
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "recovering", rg.Rules[0].State)
+
+			// The rule should have one recovering alert
+			require.Equal(t, map[string]int64{"recovering": 1}, rg.Rules[0].Totals)
+			require.Equal(t, map[string]int64{"recovering": 1}, rg.Rules[0].TotalsFiltered)
+			require.Len(t, rg.Rules[0].Alerts, 1)
+			require.Equal(t, "Recovering", rg.Rules[0].Alerts[0].State)
+		})
 	})
 
 	t.Run("with many rules in a group", func(t *testing.T) {
@@ -1536,11 +1769,11 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 	return fakeStore, fakeAIM, api
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator, additionalMutators ...ngmodels.AlertRuleMutator) {
 	t.Helper()
 
 	gen := ngmodels.RuleGen
-	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
+	r := gen.With(append([]ngmodels.AlertRuleMutator{gen.WithOrgID(orgID), asFixture(), query}, additionalMutators...)...).GenerateRef()
 
 	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{
@@ -1570,6 +1803,7 @@ func asFixture() ngmodels.AlertRuleMutator {
 		r.Annotations = nil
 		r.IntervalSeconds = 60
 		r.For = 180 * time.Second
+		r.KeepFiringFor = 10 * time.Second
 	}
 }
 

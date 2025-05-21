@@ -235,6 +235,19 @@ func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (
 	return s.store.GetByUID(ctx, query.UID)
 }
 
+func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	if len(uids) == 0 && len(ids) == 0 {
+		return []*user.User{}, nil
+	}
+	ctx, span := s.tracer.Start(ctx, "user.ListByIdOrUID", trace.WithAttributes(
+		attribute.StringSlice("userUIDs", uids),
+		attribute.Int64Slice("userIDs", ids),
+	))
+	defer span.End()
+
+	return s.store.ListByIdOrUID(ctx, uids, ids)
+}
+
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
 	defer span.End()

@@ -1,6 +1,7 @@
 import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
@@ -58,6 +59,7 @@ export const SaveDashboardDiff = ({
       jsonView: <DiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
+  const { t } = useTranslate();
 
   const { value } = loader;
 
@@ -66,9 +68,10 @@ export const SaveDashboardDiff = ({
       {hasMigratedToV2 && (
         <Box paddingTop={1}>
           <Alert
-            title={
+            title={t(
+              'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
               'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
-            }
+            )}
             severity="info"
           />
         </Box>
@@ -86,7 +89,7 @@ export const SaveDashboardDiff = ({
             },
           ]}
           key={'folder'}
-          title={'folder'}
+          title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
         />
       )}
       {(!value || !oldValue) && <Spinner />}
@@ -95,12 +98,18 @@ export const SaveDashboardDiff = ({
           {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
           {value && value.showDiffs && value.diffs}
           <Box paddingTop={1}>
-            <h4>Full JSON diff</h4>
+            <h4>
+              <Trans i18nKey="dashboard.save-dashboard-diff.full-json-diff">Full JSON diff</Trans>
+            </h4>
             {value.jsonView}
           </Box>
         </>
       ) : (
-        <Box paddingTop={1}>No changes in the dashboard JSON</Box>
+        <Box paddingTop={1}>
+          <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
+            No changes in the dashboard JSON
+          </Trans>
+        </Box>
       )}
     </Stack>
   );

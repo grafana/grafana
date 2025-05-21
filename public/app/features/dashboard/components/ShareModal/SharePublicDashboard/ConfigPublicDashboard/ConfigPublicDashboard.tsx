@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Button,
   ClipboardButton,
@@ -15,7 +16,6 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   usePauseOrResumePublicDashboardMutation,
@@ -90,6 +90,8 @@ export function ConfigPublicDashboardBase({
       isPaused: !publicDashboard?.isEnabled,
     },
   });
+
+  const { t } = useTranslate();
 
   const onPublicDashboardUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;

@@ -9,8 +9,9 @@ import {
   getFieldDisplayName,
   PluginState,
 } from '@grafana/data';
-import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
-import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
+import { FormatTimeTransformerOptions } from '@grafana/data/internal';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
@@ -20,6 +21,7 @@ export function FormatTimeTransfomerEditor({
   options,
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
+  const { t } = useTranslate();
   const timeFields: Array<SelectableValue<string>> = [];
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
@@ -69,33 +71,46 @@ export function FormatTimeTransfomerEditor({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Time Field" labelWidth={15} grow>
+        <InlineField
+          label={t('transformers.format-time-transfomer-editor.label-time-field', 'Time field')}
+          labelWidth={15}
+          grow
+        >
           <Select
             options={timeFields}
             value={options.timeField}
             onChange={onSelectField}
+            /* don't translate here as this references a field name */
+            /* eslint-disable-next-line @grafana/no-untranslated-strings */
             placeholder="time"
             isClearable
           />
         </InlineField>
 
         <InlineField
-          label="Format"
+          label={t('transformers.format-time-transfomer-editor.label-format', 'Format')}
           labelWidth={10}
           tooltip={
-            <>
+            <Trans i18nKey="transformers.format-time-transfomer-editor.tooltip-format">
               The output format for the field specified as a{' '}
-              <a href="https://momentjs.com/docs/#/displaying/" target="_blank" rel="noopener noreferrer">
+              <TextLink href="https://momentjs.com/docs/#/displaying/" external>
                 Moment.js format string
-              </a>
+              </TextLink>
               .
-            </>
+            </Trans>
           }
           interactive={true}
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
-        <InlineField label="Set Timezone" tooltip="Set the timezone of the date manually" labelWidth={20}>
+        <InlineField
+          label={t('transformers.format-time-transfomer-editor.label-set-timezone', 'Set timezone')}
+          tooltip={t(
+            'transformers.format-time-transfomer-editor.tooltip-timezone-manually',
+            'Set the timezone of the date manually'
+          )}
+          labelWidth={20}
+        >
           <Select options={timeZoneOptions} value={options.timezone} onChange={onTzChange} isClearable />
         </InlineField>
       </InlineFieldRow>

@@ -10,7 +10,7 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
@@ -596,6 +596,10 @@ describe('DashboardDatasourceBehaviour', () => {
   });
 
   it('Should re-run query after transformations reprocess', async () => {
+    // sometimes this tests fails with a console error `AggregateError` with an XMLHttpRequest component
+    // this is not related to the test, but a side effect of the interaction with scenes, mixed ds or even js dom
+    // considering it a flaky test, we are explicitly ignoring it by mocking console.error
+    jest.spyOn(console, 'error').mockImplementation();
     const sourcePanel = new VizPanel({
       title: 'Panel A',
       pluginId: 'table',

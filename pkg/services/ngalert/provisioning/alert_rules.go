@@ -450,6 +450,20 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 	return service.persistDelta(ctx, user, delta, provenance)
 }
 
+func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance) error {
+	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		for _, group := range groups {
+			err := service.ReplaceRuleGroup(ctx, user, *group, provenance)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return err
+}
+
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, provenance models.Provenance) error {
 	return service.DeleteRuleGroups(ctx, user, provenance, &FilterOptions{
 		NamespaceUIDs: []string{namespaceUID},
@@ -782,7 +796,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, user identity.
 			uids = append(uids, tgt.UID)
 		}
 	}
-	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), uids...); err != nil {
+	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
 		return err
 	}
 	for _, uid := range uids {

@@ -642,6 +642,8 @@
   "add index in alert_rule_version table on rule_org_id, rule_uid, rule_guid and version columns",
   "add index in alert_rule_version table on rule_guid and version columns",
   "add index in alert_rule table on guid columns",
+  "add missing_series_evals_to_resolve column to alert_rule",
+  "add missing_series_evals_to_resolve column to alert_rule_version",
   "create data_source_usage_by_day table",
   "create data_source_usage_by_day(data_source_id) index",
   "create data_source_usage_by_day(data_source_id, day) unique index",

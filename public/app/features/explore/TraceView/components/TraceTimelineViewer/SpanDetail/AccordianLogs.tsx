@@ -17,6 +17,7 @@ import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -139,7 +140,9 @@ export default function AccordianLogs({
             );
           })}
           <small className={styles.AccordianLogsFooter}>
-            Event timestamps are relative to the start time of the full trace.
+            <Trans i18nKey="explore.accordian-logs.footer">
+              Event timestamps are relative to the start time of the full trace.
+            </Trans>
           </small>
         </div>
       )}

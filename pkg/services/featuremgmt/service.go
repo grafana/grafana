@@ -42,17 +42,11 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 	for key, val := range flags {
 		_, ok := mgmt.flags[key]
 		if !ok {
-			switch key {
-			// renamed the flag so it supports more panels
-			case "autoMigrateGraphPanels":
-				key = FlagAutoMigrateOldPanels
-			default:
-				mgmt.flags[key] = &FeatureFlag{
-					Name:  key,
-					Stage: FeatureStageUnknown,
-				}
-				mgmt.warnings[key] = "unknown flag in config"
+			mgmt.flags[key] = &FeatureFlag{
+				Name:  key,
+				Stage: FeatureStageUnknown,
 			}
+			mgmt.warnings[key] = "unknown flag in config"
 		}
 		mgmt.startup[key] = val
 	}

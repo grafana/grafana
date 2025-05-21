@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -39,6 +40,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   const annotations = formMethods.watch('annotations');
   const labels = formMethods.watch('labels');
   const [status, setStatus] = useState<'firing' | 'resolved'>('firing');
+  const { t } = useTranslate();
 
   const onAdd = () => {
     const alert: TestTemplateAlert = {
@@ -87,7 +89,11 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   ];
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add custom alerts'}>
+    <Modal
+      onDismiss={onDismiss}
+      isOpen={isOpen}
+      title={t('alerting.generate-alert-data-modal.title-add-custom-alerts', 'Add custom alerts')}
+    >
       <FormProvider {...formMethods}>
         <form
           onSubmit={(e) => {
@@ -115,7 +121,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
                   variant="secondary"
                   disabled={!labelsOrAnnotationsAdded()}
                 >
-                  Add alert data
+                  <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data">Add alert data</Trans>
                 </Button>
               </div>
             </Stack>
@@ -123,7 +129,12 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper} />
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>
-              <h5> Review alert data to add to the payload:</h5>
+              <h5>
+                <Trans i18nKey="alerting.generate-alert-data-modal.review-alert-payload">
+                  {' '}
+                  Review alert data to add to the payload:
+                </Trans>
+              </h5>
               <pre className={styles.result} data-testid="payloadJSON">
                 {JSON.stringify(alerts, null, 2)}
               </pre>
@@ -132,7 +143,9 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper}>
             <Modal.ButtonRow>
               <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                Add alert data to payload
+                <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data-to-payload">
+                  Add alert data to payload
+                </Trans>
               </Button>
             </Modal.ButtonRow>
           </div>

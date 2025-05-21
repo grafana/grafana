@@ -1,10 +1,10 @@
 import { lazy, Suspense } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { Trans } from '../../../../core/internationalization';
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
 import { ExtensionDropdownProps } from './types';
@@ -14,6 +14,7 @@ const AddToDashboard = lazy(() =>
 );
 
 export function BasicExtensions(props: ExtensionDropdownProps) {
+  const { t } = useTranslate();
   const { exploreId, links, setSelectedExtension, setIsModalOpen, isModalOpen, noQueriesInPane } = props;
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
@@ -38,7 +39,12 @@ export function BasicExtensions(props: ExtensionDropdownProps) {
   return (
     <>
       <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isModalOpen}>
+        <ToolbarButton
+          aria-label={t('explore.basic-extensions.aria-label-add', 'Add')}
+          disabled={!Boolean(noQueriesInPane)}
+          variant="canvas"
+          isOpen={isModalOpen}
+        >
           <Trans i18nKey="explore.toolbar.add-to-extensions">Add</Trans>
         </ToolbarButton>
       </Dropdown>

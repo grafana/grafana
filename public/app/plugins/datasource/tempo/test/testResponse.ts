@@ -12,7 +12,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       name: 'traceID',
       type: FieldType.string,
       config: {},
-      values: ['60ba2abb44f13eae'],
+      values: ['000000000000000060ba2abb44f13eae'],
     },
     {
       name: 'spanID',
@@ -188,7 +188,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
       name: 'traceID',
       type: FieldType.string,
       config: {},
-      values: ['60ba2abb44f13eae'],
+      values: ['000000000000000060ba2abb44f13eae'],
       state: {
         displayName: 'traceID',
       },

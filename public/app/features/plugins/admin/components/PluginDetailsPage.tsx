@@ -4,12 +4,12 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
-import { AngularDeprecationPluginNotice } from '../../angularDeprecation/AngularDeprecationPluginNotice';
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
@@ -86,16 +86,6 @@ export function PluginDetailsPage({
       <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <Page.Contents>
           <TabContent className={styles.tabContent}>
-            {plugin.angularDetected && (
-              <AngularDeprecationPluginNotice
-                className={styles.alert}
-                angularSupportEnabled={config?.angularSupportEnabled}
-                pluginId={plugin.id}
-                pluginType={plugin.type}
-                showPluginDetailsLink={false}
-                interactionElementId="plugin-details-page"
-              />
-            )}
             <PluginDetailsSignature plugin={plugin} className={styles.alert} />
             <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
             <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
@@ -135,12 +125,19 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function NotFoundPlugin() {
+  const { t } = useTranslate();
+
   return (
     <Stack justifyContent="center" alignItems="center" height="100%">
       <Box>
-        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
-          That plugin cannot be found. Please check the url is correct or <br />
-          go to the <a href="/plugins">plugin catalog</a>.
+        <Alert
+          severity={AppNotificationSeverity.Warning}
+          title={t('plugins.not-found-plugin.title-plugin-not-found', 'Plugin not found')}
+        >
+          <Trans i18nKey="plugins.not-found-plugin.body-plugin-not-found">
+            That plugin cannot be found. Please check the url is correct or <br />
+            go to the <TextLink href="/plugins">plugin catalog</TextLink>.
+          </Trans>
         </Alert>
       </Box>
     </Stack>

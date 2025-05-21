@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { DataFrame, SplitOpen, TimeRange } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { PanelChrome } from '@grafana/ui';
 import { StoreState, useSelector } from 'app/types';
 
@@ -23,13 +24,14 @@ export function TraceViewContainer(props: Props) {
   const datasource = useSelector(
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
+  const { t } = useTranslate();
 
   if (!traceProp) {
     return null;
   }
 
   return (
-    <PanelChrome padding="none" title="Trace">
+    <PanelChrome padding="none" title={t('explore.trace-view-container.title-trace', 'Trace')}>
       <TraceView
         exploreId={exploreId}
         dataFrames={dataFrames}

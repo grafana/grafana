@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
-  PluginAngularBadge,
   PluginDeprecatedBadge,
   PluginDisabledBadge,
   PluginInstalledBadge,
@@ -53,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 function PluginEnterpriseBadgeWithoutSignature() {
   const customBadgeStyles = useStyles2(getBadgeColor);
-
+  const { t } = useTranslate();
   if (featureEnabled('enterprise.plugins')) {
     return <Badge text={t('get-enterprise.title', 'Enterprise')} color="blue" />;
   }
@@ -108,7 +107,6 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
               {item.isInstalled && <PluginInstalledBadge />}
               {item.isDisabled && <PluginDisabledBadge error={item.error} />}
               {isPluginUpdatable(item) && <PluginUpdateAvailableBadge plugin={item} />}
-              {item.angularDetected && <PluginAngularBadge />}
             </Stack>
           </Card.Meta>
         </Card>

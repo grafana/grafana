@@ -1,52 +1,6 @@
 {
   "components": {
     "responses": {
-      "GetAllIntervalsResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableTimeIntervals"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetIntervalsByNameResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableTimeIntervals"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiverResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GettableApiReceiver"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "GetReceiversResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/GettableApiReceiver"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -1849,6 +1803,16 @@
         },
         "description": "(empty)"
       },
+      "resourceDependenciesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResourceDependenciesResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "resourcePermissionsDescription": {
         "content": {
           "application/json": {
@@ -2715,11 +2679,18 @@
           "isPaused": {
             "type": "boolean"
           },
+          "keepFiringFor": {
+            "$ref": "#/components/schemas/Duration"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -2814,6 +2785,16 @@
       },
       "AlertRuleNotificationSettings": {
         "properties": {
+          "active_time_intervals": {
+            "description": "Override the times when notifications should not be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent\nat the time that matches any interval.",
+            "example": [
+              "maintenance"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "group_by": {
             "default": [
               "alertname",
@@ -2841,7 +2822,7 @@
             "type": "string"
           },
           "mute_time_intervals": {
-            "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+            "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
             "example": [
               "maintenance"
             ],
@@ -2868,6 +2849,12 @@
       },
       "AlertRuleNotificationSettingsExport": {
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "group_by": {
             "items": {
               "type": "string"
@@ -2902,6 +2889,9 @@
             "type": "string"
           },
           "metric": {
+            "type": "string"
+          },
+          "targetDatasourceUid": {
             "type": "string"
           }
         },
@@ -2972,6 +2962,13 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
+          "keepFiringFor": {
+            "format": "double",
+            "type": "number"
+          },
           "labels": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -2984,6 +2981,15 @@
           },
           "name": {
             "type": "string"
+          },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
+          "queriedDatasourceUIDs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "query": {
             "type": "string"
@@ -3014,9 +3020,7 @@
           }
         },
         "required": [
-          "uid",
           "name",
-          "folderUid",
           "query",
           "health",
           "type",
@@ -4445,6 +4449,30 @@
             ],
             "example": "Admin",
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateSnapshotRequestDTO": {
+        "properties": {
+          "resourceTypes": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -5984,6 +6012,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -6151,6 +6185,9 @@
             ],
             "type": "string"
           },
+          "guid": {
+            "type": "string"
+          },
           "intervalSeconds": {
             "format": "int64",
             "type": "integer"
@@ -6160,6 +6197,10 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
           },
           "namespace_uid": {
             "type": "string"
@@ -6312,26 +6353,6 @@
         ],
         "type": "object"
       },
-      "GettableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "GettableUserConfig": {
         "properties": {
           "alertmanager_config": {
@@ -6357,6 +6378,9 @@
         "properties": {
           "http_config": {
             "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "jira_api_url": {
+            "$ref": "#/components/schemas/URL"
           },
           "opsgenie_api_key": {
             "$ref": "#/components/schemas/Secret"
@@ -6405,6 +6429,9 @@
           },
           "smtp_smarthost": {
             "$ref": "#/components/schemas/HostPort"
+          },
+          "smtp_tls_config": {
+            "$ref": "#/components/schemas/TLSConfig"
           },
           "telegram_api_url": {
             "$ref": "#/components/schemas/URL"
@@ -6861,6 +6888,57 @@
           },
           "Use": {
             "description": "Key use, parsed from `use` header.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JiraConfig": {
+        "properties": {
+          "api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "custom_fields": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "issue_type": {
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "reopen_duration": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "reopen_transition": {
+            "type": "string"
+          },
+          "resolve_transition": {
+            "type": "string"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "wont_fix_resolution": {
             "type": "string"
           }
         },
@@ -7504,6 +7582,12 @@
       },
       "NotificationPolicyExport": {
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -7809,6 +7893,9 @@
           "isExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -8025,6 +8112,9 @@
             "type": "string"
           },
           "language": {
+            "type": "string"
+          },
+          "locale": {
             "type": "string"
           },
           "navbar": {
@@ -8347,6 +8437,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -8540,6 +8636,12 @@
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
+          "missing_series_evals_to_resolve": {
+            "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+            "example": 3,
+            "format": "int64",
+            "type": "integer"
+          },
           "no_data_state": {
             "enum": [
               "Alerting",
@@ -8612,23 +8714,6 @@
         },
         "type": "object"
       },
-      "PostableTimeIntervals": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "time_intervals": {
-            "items": {
-              "$ref": "#/components/schemas/TimeIntervalItem"
-            },
-            "type": "array"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "PostableUserConfig": {
         "properties": {
           "alertmanager_config": {
@@ -8655,6 +8740,10 @@
           },
           "language": {
             "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "locale": {
+            "description": "Selected locale (beta)",
             "type": "string"
           },
           "navbar": {
@@ -8744,7 +8833,20 @@
           "Interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "Limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Name": {
+            "type": "string"
+          },
+          "QueryOffset": {
             "type": "string"
           },
           "Rules": {
@@ -8849,6 +8951,10 @@
             "example": false,
             "type": "boolean"
           },
+          "keep_firing_for": {
+            "format": "duration",
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -8857,6 +8963,11 @@
               "team": "sre-team-1"
             },
             "type": "object"
+          },
+          "missingSeriesEvalsToResolve": {
+            "example": 2,
+            "format": "int64",
+            "type": "integer"
           },
           "noDataState": {
             "enum": [
@@ -9372,6 +9483,12 @@
             },
             "type": "array"
           },
+          "jira_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JiraConfig"
+            },
+            "type": "array"
+          },
           "msteams_configs": {
             "items": {
               "$ref": "#/components/schemas/MSTeamsConfig"
@@ -9474,6 +9591,11 @@
           "metric": {
             "description": "Name of the recorded metric.",
             "example": "grafana_alerts_ratio",
+            "type": "string"
+          },
+          "target_datasource_uid": {
+            "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+            "example": "my-prom",
             "type": "string"
           }
         },
@@ -9783,6 +9905,57 @@
         },
         "type": "object"
       },
+      "ResourceDependenciesResponseDTO": {
+        "properties": {
+          "resourceDependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceDependencyDTO": {
+        "properties": {
+          "dependencies": {
+            "items": {
+              "enum": [
+                "DASHBOARD",
+                "DATASOURCE",
+                "FOLDER",
+                "LIBRARY_ELEMENT",
+                "ALERT_RULE",
+                "ALERT_RULE_GROUP",
+                "CONTACT_POINT",
+                "NOTIFICATION_POLICY",
+                "NOTIFICATION_TEMPLATE",
+                "MUTE_TIMING",
+                "PLUGIN"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resourceType": {
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ResponseDetails": {
         "properties": {
           "msg": {
@@ -9997,6 +10170,12 @@
       "RouteExport": {
         "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -10062,6 +10241,9 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
           "labels": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -10075,6 +10257,9 @@
           "name": {
             "type": "string"
           },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
           "query": {
             "type": "string"
           },
@@ -10086,9 +10271,7 @@
           }
         },
         "required": [
-          "uid",
           "name",
-          "folderUid",
           "query",
           "health",
           "type"
@@ -11154,9 +11337,15 @@
           "email": {
             "type": "string"
           },
+          "externalUID": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "isProvisioned": {
+            "type": "boolean"
           },
           "memberCount": {
             "format": "int64",
@@ -11270,6 +11459,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -11510,6 +11702,15 @@
         "properties": {
           "name": {
             "description": "Name of the associated template definition for this result.",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+            "enum": [
+              ".",
+              ".Alerts",
+              ".Alert"
+            ],
             "type": "string"
           },
           "text": {
@@ -12032,6 +12233,22 @@
         },
         "type": "object"
       },
+      "UpdateNamespaceRulesRequest": {
+        "properties": {
+          "is_paused": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateNamespaceRulesResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateOrgAddressForm": {
         "properties": {
           "address1": {
@@ -12117,6 +12334,9 @@
           "language": {
             "type": "string"
           },
+          "locale": {
+            "type": "string"
+          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
@@ -12187,6 +12407,11 @@
             "type": "integer"
           }
         },
+        "required": [
+          "displayName",
+          "description",
+          "group"
+        ],
         "type": "object"
       },
       "UpdateRuleGroupResponse": {
@@ -12384,6 +12609,9 @@
           "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "login": {
             "type": "string"
           },
@@ -12429,6 +12657,9 @@
             "type": "boolean"
           },
           "isDisabled": {
+            "type": "boolean"
+          },
+          "isProvisioned": {
             "type": "boolean"
           },
           "lastSeenAt": {
@@ -12615,6 +12846,9 @@
           },
           "send_resolved": {
             "type": "boolean"
+          },
+          "timeout": {
+            "$ref": "#/components/schemas/Duration"
           },
           "url": {
             "$ref": "#/components/schemas/SecretURL"
@@ -16019,6 +16253,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSnapshotRequestDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/createSnapshotResponse"
@@ -16064,6 +16309,33 @@
               "default": 100,
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "ResultSortColumn can be used to override the default system sort. Valid values are \"name\", \"resource_type\", and \"status\".",
+            "in": "query",
+            "name": "resultSortColumn",
+            "schema": {
+              "default": "default",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.",
+            "in": "query",
+            "name": "resultSortOrder",
+            "schema": {
+              "default": "ASC",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ErrorsOnly is used to only return resources with error statuses",
+            "in": "query",
+            "name": "errorsOnly",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           },
           {
@@ -16261,6 +16533,20 @@
           }
         },
         "summary": "Get a list of snapshots for a session.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/resources/dependencies": {
+      "get": {
+        "operationId": "getResourceDependencies",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resourceDependenciesResponse"
+          }
+        },
+        "summary": "Get the resource dependencies graph for the current set of migratable resources.",
         "tags": [
           "migrations"
         ]
@@ -17199,91 +17485,6 @@
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "tags": [
           "dashboard_versions"
-        ]
-      }
-    },
-    "/dashboards/uid/{uid}/trash": {
-      "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).",
-        "operationId": "hardDeleteDashboardByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/deleteDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Hard delete dashboard by uid.",
-        "tags": [
-          "dashboards"
-        ]
-      },
-      "patch": {
-        "operationId": "restoreDeletedDashboardByUID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestoreDeletedDashboardCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/postDashboardResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Restore a dashboard to a given dashboard version using UID.",
-        "tags": [
-          "dashboards"
         ]
       }
     },
@@ -19985,7 +20186,7 @@
         ]
       },
       "post": {
-        "description": "You need to have a permission with action `licensing:update`.",
+        "description": "You need to have a permission with action `licensing:write`.",
         "operationId": "postLicenseToken",
         "requestBody": {
           "content": {
@@ -20015,7 +20216,7 @@
     },
     "/licensing/token/renew": {
       "post": {
-        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:write`.",
         "operationId": "postRenewLicenseToken",
         "requestBody": {
           "content": {
@@ -22170,6 +22371,41 @@
           }
         },
         "summary": "Create a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/dashboards/{uid}": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "operationId": "getReportsByDashboardUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getReportsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List reports by dashboard uid.",
         "tags": [
           "reports",
           "enterprise"

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -205,8 +206,8 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cmdNode := node.(*CMDNode)
 			sqlCmd := cmdNode.Command.(*SQLCommand)
 
-			// Verify the SQL command has the correct limit
-			require.Equal(t, tt.expectedLimit, sqlCmd.limit, "SQL command has incorrect cell limit")
+			// Verify the SQL command has the correct inputLimit
+			require.Equal(t, tt.expectedLimit, sqlCmd.inputLimit, "SQL command has incorrect cell limit")
 		})
 	}
 }
@@ -249,7 +250,7 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 		pCtxProvider: pCtxProvider,
 		features:     featuremgmt.WithFeatures(),
 		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
+		metrics:      metrics.NewSSEMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),

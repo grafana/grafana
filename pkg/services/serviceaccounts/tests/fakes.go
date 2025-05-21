@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -58,7 +57,6 @@ func (f *FakeServiceAccountService) MigrateApiKey(ctx context.Context, orgID, ke
 }
 
 func (f *FakeServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
-	fmt.Printf("fake migration result: %v", f.ExpectedMigrationResult)
 	return f.ExpectedMigrationResult, f.ExpectedErr
 }
 
