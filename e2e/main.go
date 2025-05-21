@@ -195,14 +195,10 @@ func runAction(ctx context.Context, c *cli.Command) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	wg := &sync.WaitGroup{}
 	if c.Bool("start-grafana") {
 		startServerPath := path.Join(repoRoot, "scripts", "grafana-server", "start-server")
 		waitForGrafanaPath := path.Join(repoRoot, "scripts", "grafana-server", "wait-for-grafana")
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
-
 			var args []string
 			if c.String("license-path") != "" {
 				args = append(args, c.String("license-path"))
@@ -244,10 +240,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 	cmd.Stdout = prefixCypress(os.Stdout)
 	cmd.Stderr = prefixCypress(os.Stderr)
 	cmd.Stdin = os.Stdin
-	err = cmd.Run()
-	cancel()
-	wg.Wait()
-	return err
+	return cmd.Run()
 }
 
 func gitRepoRoot(ctx context.Context, dir string) (string, error) {
