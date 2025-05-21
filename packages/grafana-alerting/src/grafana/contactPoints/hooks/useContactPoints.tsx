@@ -1,4 +1,4 @@
-import { TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { type TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { type ListReceiverApiArg, alertingAPI } from '../../api/v0alpha1/api.gen';
 import type { EnhancedListReceiverApiResponse } from '../../api/v0alpha1/types';
