@@ -558,6 +558,10 @@ export interface FeatureToggles {
   */
   disableNumericMetricsSortingInExpressions?: boolean;
   /**
+  * Enables Grafana-managed recording rules.
+  */
+  grafanaManagedRecordingRules?: boolean;
+  /**
   * Enables Query Library feature in Explore
   */
   queryLibrary?: boolean;
@@ -935,6 +939,11 @@ export interface FeatureToggles {
   * @default true
   */
   alertingMigrationUI?: boolean;
+  /**
+  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+  * @default true
+  */
+  alertingImportYAMLUI?: boolean;
   /**
   * Enables the unified storage history pruner
   * @default true
