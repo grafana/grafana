@@ -202,7 +202,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={t('transformers.organize-fields-transformer-editor.fieldOrder', 'Field Order')}>
+        <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field Order')}>
           <RadioButtonGroup
             options={[
               { label: 'Manual', value: FieldOrdering.Manual },

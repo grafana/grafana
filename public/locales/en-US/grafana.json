@@ -8987,6 +8987,7 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "Field Order",
       "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
     },
     "partion-by-values-editor": {
