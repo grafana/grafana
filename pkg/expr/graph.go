@@ -225,14 +225,14 @@ func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
 	for _, v := range sortedNodes {
 		n := v.(Node)
 		switch n.NodeType() {
-		case TypeDatasourceNode:
+		case TypeDatasourceNode, TypeMLNode:
 			dsNodes = append(dsNodes, n)
 		default:
 			otherNodes = append(otherNodes, n)
 		}
 	}
 
-	// Datasource nodes come first, followed by all others, in original topo order
+	// Datasource/ML nodes come first, followed by all others, in original topo order
 	return append(dsNodes, otherNodes...), nil
 }
 
