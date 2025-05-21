@@ -1610,6 +1610,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "alertingImportYAMLUI",
+			Description:  "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
+			FrontendOnly: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true",
+		},
+		{
 			Name:              "unifiedStorageHistoryPruner",
 			Description:       "Enables the unified storage history pruner",
 			Stage:             FeatureStageGeneralAvailability,

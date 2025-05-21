@@ -45,6 +45,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Name() string {
+	return "Plugin"
+}
+
 func (c *check) Items(ctx context.Context) ([]any, error) {
 	ps := c.PluginStore.Plugins(ctx)
 	res := make([]any, len(ps))
@@ -57,7 +61,7 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 func (c *check) Item(ctx context.Context, id string) (any, error) {
 	p, exists := c.PluginStore.Plugin(ctx, id)
 	if !exists {
-		return nil, fmt.Errorf("plugin %s not found", id)
+		return nil, nil
 	}
 	return p, nil
 }

@@ -855,6 +855,10 @@ const (
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
 
+	// FlagAlertingImportYAMLUI
+	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
+
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
