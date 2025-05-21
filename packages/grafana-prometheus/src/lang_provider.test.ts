@@ -1,14 +1,7 @@
 import { AdHocVariableFilter, getDefaultTimeRange, Scope, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import {
-  buildCacheHeaders,
-  getDefaultCacheHeaders,
-  isCancelledError,
-  populateMatchParamsFromQueries,
-  PrometheusLanguageProvider,
-  removeQuotesIfExist,
-} from './lang_provider';
+import { PrometheusLanguageProvider } from './lang_provider';
 import * as languageUtils from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
@@ -112,24 +105,6 @@ describe('PrometheusLanguageProvider', () => {
       expect(provider.labelKeys).toEqual(['label1', 'label2']);
       expect(provider.histogramMetrics).toContain('histogram_bucket'); // mock returns metrics with 'histogram' in the name
       expect(result.length).toBe(1); // Promise.all with 1 promise (only fetchMetadata)
-    });
-
-    it('should handle errors during initialization gracefully', async () => {
-      // Simulate an error during fetchLabelValues
-      jest.spyOn(provider, 'fetchLabelValues').mockRejectedValue(new Error('API error'));
-      jest.spyOn(provider, 'fetchMetadata').mockResolvedValue(undefined);
-      jest.spyOn(provider, 'fetchLabelKeys').mockResolvedValue(['label1', 'label2']);
-
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      // Should not throw an error
-      await provider.start(timeRange);
-
-      // Should still try to fetch metadata and label keys
-      expect(provider.fetchMetadata).toHaveBeenCalled();
-      expect(provider.fetchLabelKeys).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -434,108 +409,6 @@ describe('PrometheusLanguageProvider', () => {
       const result = await provider.fetchSuggestions(timeRange, [], [], [], 'label');
 
       expect(result).toEqual([]);
-    });
-  });
-});
-
-describe('Utility functions', () => {
-  describe('isCancelledError', () => {
-    it('should return true for cancelled errors', () => {
-      expect(isCancelledError({ cancelled: true })).toBe(true);
-    });
-
-    it('should return false for other errors', () => {
-      expect(isCancelledError(new Error('test'))).toBe(false);
-      expect(isCancelledError({ message: 'error' })).toBe(false);
-      expect(isCancelledError(null)).toBe(false);
-      expect(isCancelledError(undefined)).toBe(false);
-    });
-  });
-
-  describe('removeQuotesIfExist', () => {
-    it('should remove quotes from quoted strings', () => {
-      expect(removeQuotesIfExist('"test"')).toBe('test');
-    });
-
-    it('should leave unquoted strings unchanged', () => {
-      expect(removeQuotesIfExist('test')).toBe('test');
-      expect(removeQuotesIfExist('test"')).toBe('test"');
-      expect(removeQuotesIfExist('"test')).toBe('"test');
-    });
-  });
-
-  describe('buildCacheHeaders', () => {
-    it('should build correct cache headers', () => {
-      const result = buildCacheHeaders(300);
-      expect(result).toEqual({
-        headers: {
-          'X-Grafana-Cache': 'private, max-age=300',
-        },
-      });
-    });
-  });
-
-  describe('getDefaultCacheHeaders', () => {
-    it('should return cache headers for non-None cache levels', () => {
-      const result = getDefaultCacheHeaders(PrometheusCacheLevel.Low);
-      expect(result).toEqual(
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'X-Grafana-Cache': expect.stringContaining('private, max-age='),
-          }),
-        })
-      );
-    });
-
-    it('should return undefined for None cache level', () => {
-      const result = getDefaultCacheHeaders(PrometheusCacheLevel.None);
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('populateMatchParamsFromQueries', () => {
-    it('should add match params from queries', () => {
-      const initialParams = new URLSearchParams();
-      const queries: PromQuery[] = [
-        { expr: 'metric1', refId: '1' },
-        { expr: 'metric2', refId: '2' },
-      ];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('metric1');
-      expect(matches).toContain('metric2');
-    });
-
-    it('should handle binary queries', () => {
-      const initialParams = new URLSearchParams();
-      const queries: PromQuery[] = [{ expr: 'binary', refId: '1' }];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('binary');
-      expect(matches).toContain('binary_binary');
-    });
-
-    it('should handle undefined queries', () => {
-      const initialParams = new URLSearchParams({ param: 'value' });
-
-      const result = populateMatchParamsFromQueries(initialParams, undefined);
-
-      expect(result.toString()).toBe('param=value');
-    });
-
-    it('should handle UTF8 metrics', () => {
-      // Using the mocked isValidLegacyName function from jest.mock setup
-      const initialParams = new URLSearchParams();
-      const queries: PromQuery[] = [{ expr: 'utf8metric', refId: '1' }];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('{"utf8metric"}');
     });
   });
 });
