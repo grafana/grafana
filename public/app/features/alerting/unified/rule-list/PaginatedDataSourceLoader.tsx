@@ -1,7 +1,10 @@
-import { groupBy } from 'lodash';
+import { css } from '@emotion/css';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Icon, Stack, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
 import { groups } from '../utils/navigation';
@@ -21,6 +24,8 @@ interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSection
 }
 
 export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
+  const styles = useStyles2(getStyles);
+
   const { uid, name } = rulesSourceIdentifier;
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
 
@@ -40,6 +45,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     DATA_SOURCE_GROUP_PAGE_SIZE
   );
 
+  const hasNoRules = isEmpty(groups) && !isLoading;
   const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
 
   return (
@@ -71,6 +77,13 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
           // this div will make the button not stretch
           <div>
             <LoadMoreButton onClick={fetchMoreGroups} />
+          </div>
+        )}
+        {hasNoRules && (
+          <div className={styles.noRules}>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.rule-list.empty-data-source">No rules found</Trans>
+            </Text>
           </div>
         )}
       </Stack>
@@ -106,3 +119,9 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
     </ListGroup>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  noRules: css({
+    margin: theme.spacing(1.5, 0, 0.5, 4),
+  }),
+});

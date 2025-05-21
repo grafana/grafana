@@ -54,6 +54,7 @@ export const DataSourceSection = ({
     }
     return `/connections/datasources/edit/${String(uid)}`;
   })();
+
   return (
     <section aria-labelledby={`datasource-${String(uid)}-heading`} role="listitem">
       <Stack direction="column" gap={0}>
@@ -73,10 +74,9 @@ export const DataSourceSection = ({
                   {name}
                 </Text>
                 {description && (
-                  <>
-                    {'·'}
-                    {description}
-                  </>
+                  <Text color="secondary">
+                    {'·'} {description}
+                  </Text>
                 )}
                 <Spacer />
                 {showImportLink && (
