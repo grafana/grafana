@@ -222,7 +222,9 @@ const LogListComponent = ({
   } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
+    app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight
   );
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
@@ -271,7 +273,11 @@ const LogListComponent = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight);
+      setListHeight(
+        app === CoreApp.Explore
+          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+          : containerElement.clientHeight
+      );
     }, 50);
     window.addEventListener('resize', handleResize);
     handleResize();
