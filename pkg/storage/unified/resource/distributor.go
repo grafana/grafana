@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -240,6 +241,11 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	}
 
 	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
+
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", rs.Instances[0].Id))
+	if err != nil {
+		return ctx, nil, err
+	}
 
 	return userutils.InjectOrgID(ctx, namespace), client.(*RingClient).Client, nil
 }
