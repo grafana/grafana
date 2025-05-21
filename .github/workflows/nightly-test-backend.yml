@@ -1,4 +1,4 @@
-name: Nightly Tests BE
+name: Nightly Tests
 
 on:
   schedule:
@@ -32,3 +32,19 @@ jobs:
           go test -count=1 -coveremode=atomic -timeout=5m -run '^TestIntegration' \
           $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | \
           grep -o '\(.*\)/' | sort -u)
+  frontend:
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Yarn install
+        run: yarn install --immutable || yarn install || --immutable
+      - name: Betterer
+        run: yarn betterer:ci
+      - name: Test Frontend
+        env:
+          TEST_MAX_WORKETS: 50%
+        run: yarn run ci:test-frontend
+
