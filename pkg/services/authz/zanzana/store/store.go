@@ -31,7 +31,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		connStr := sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, connStr, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, connStr, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -39,14 +39,14 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
-		if err := migration.Run(cfg, migrator.MySQL, connStr, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, connStr, assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(connStr, zanzanaDBCfg)
 	case migrator.Postgres:
 		connStr := grafanaDBCfg.ConnectionString
-		if err := migration.Run(cfg, migrator.Postgres, connStr, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, connStr, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -66,19 +66,19 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		grafanaDBCfg.ConnectionString = sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
-		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg.ConnectionString+"&parseTime=true", assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg.ConnectionString+"&parseTime=true", assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
-		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 

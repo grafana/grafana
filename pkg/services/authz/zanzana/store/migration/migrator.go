@@ -4,8 +4,11 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -13,29 +16,116 @@ import (
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string) error {
-	// engine, err := xorm.NewEngine(typ, connStr)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to create db engine: %w", err)
-	// }
+// parsePostgresConnStr parses a PostgreSQL connection string into a map of key-value pairs
+func parsePostgresConnStr(connStr string) map[string]string {
+	// Extract key parameters from the connection string, handling quoted values
+	re := regexp.MustCompile(`(\w+)=(?:'([^']*)'|([^ ]*))`)
+	matches := re.FindAllStringSubmatch(connStr, -1)
 
-	err := migrate.RunMigrations(migrate.MigrationConfig{
-		URI:    connStr,
-		Engine: dbType,
-		// Config: cfg,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
+	// Build a map of connection parameters
+	params := make(map[string]string)
+	for _, match := range matches {
+		if len(match) >= 3 {
+			// If the value was quoted, use the quoted value (index 2), otherwise use the unquoted value (index 3)
+			value := match[2]
+			if value == "" && len(match) > 3 {
+				value = match[3]
+			}
+			params[match[1]] = value
+		}
 	}
 
-	// m := migrator.NewMigrator(engine, cfg)
-	// m.AddCreateMigration()
+	// Set defaults for required parameters
+	if _, ok := params["host"]; !ok {
+		params["host"] = "localhost"
+	}
+	if _, ok := params["port"]; !ok {
+		params["port"] = "5432"
+	}
 
-	// if err := RunWithMigrator(m, cfg, fs, path); err != nil {
-	// 	return err
-	// }
+	return params
+}
 
-	// return engine.Close()
+func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string, logger log.Logger) error {
+	logger.Debug("Original connection string", "dbType", dbType, "connStr", connStr)
+
+	// For PostgreSQL, convert to URL format expected by OpenFGA
+	if dbType == migrator.Postgres {
+		// Create a temporary xorm engine to extract connection details
+		engine, err := xorm.NewEngine(dbType, connStr)
+		if err != nil {
+			return fmt.Errorf("failed to initialize xorm engine: %w", err)
+		}
+		defer engine.Close()
+
+		// Get parsed dataSourceName to build the URL
+		dialect := engine.Dialect()
+		if dialect == nil {
+			return fmt.Errorf("unable to get dialect from engine")
+		}
+
+		// Extract database connection info from the engine
+		dbName := dialect.URI().DbName
+		if dbName == "" {
+			return fmt.Errorf("unable to extract database name from connection string")
+		}
+
+		// Create connection URL based on engine dialect information
+		pgURL := &url.URL{
+			Scheme: "postgresql",
+			Path:   "/" + dbName,
+		}
+
+		// Extract all connection parameters from the connection string
+		params := parsePostgresConnStr(connStr)
+
+		// Set user and password
+		userStr := params["user"]
+		if userStr == "" {
+			userStr = "grafana"
+		}
+		pgURL.User = url.UserPassword(
+			url.QueryEscape(userStr),
+			url.QueryEscape(params["password"]),
+		)
+
+		// Set host and port
+		host := params["host"]
+		if host == "" {
+			host = "127.0.0.1"
+		}
+		port := params["port"]
+		if port == "" {
+			port = "5432"
+		}
+		pgURL.Host = fmt.Sprintf("%s:%s", host, port)
+
+		// Add SSL mode and other SSL parameters if present
+		query := url.Values{}
+		for _, param := range []string{"sslmode", "sslcert", "sslkey", "sslrootcert"} {
+			if value, ok := params[param]; ok && value != "" {
+				query.Set(param, value)
+			}
+		}
+		if len(query) > 0 {
+			pgURL.RawQuery = query.Encode()
+		}
+
+		// Use the constructed URL
+		logger.Debug("Converted postgres connection string", "original", connStr, "pgURL", pgURL.String())
+		connStr = pgURL.String()
+	}
+
+	logger.Debug("Running migrations", "dbType", dbType, "connStr", connStr)
+	migrationErr := migrate.RunMigrations(migrate.MigrationConfig{
+		URI:    connStr,
+		Engine: dbType,
+	})
+	if migrationErr != nil {
+		logger.Error("failed to run migrations", "error", migrationErr)
+		return fmt.Errorf("failed to run migrations: %w", migrationErr)
+	}
+
 	return nil
 }
 
