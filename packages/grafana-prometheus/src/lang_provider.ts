@@ -70,6 +70,12 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   // TODO check if we need defaultValue and return it
   request = async (url: string, defaultValue: unknown, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
+      // For GET requests, append params to URL and clear params object
+      if (this.datasource.httpMethod === 'GET' && Object.keys(params).length > 0) {
+        url += `?${new URLSearchParams(params).toString()}`;
+        params = {};
+      }
+
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
     } catch (error) {
@@ -102,17 +108,12 @@ export class PrometheusLanguageProvider extends LanguageProvider {
 
   fetchLabelKeys = async (
     timeRange: TimeRange,
-    queries?: PromQuery[],
+    match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     let url = API_V1.LABELS;
     const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
-
-    const searchParams = populateMatchParamsFromQueries(new URLSearchParams({ ...timeParams, limit }), queries);
-
-    if (this.datasource.httpMethod === 'GET') {
-      url += `?${searchParams.toString()}`;
-    }
+    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
 
     const res = await this.request(url, [], searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
@@ -126,13 +127,15 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (
     timeRange: TimeRange,
     labelKey: string,
+    match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const params = { ...this.datasource.getAdjustedInterval(timeRange), limit };
+    const timeParams = this.datasource.getAdjustedInterval(timeRange);
+    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
     const interpolatedName = this.datasource.interpolateString(labelKey);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = API_V1.LABELS_VALUES(interpolatedAndEscapedName);
-    const value = await this.request(url, [], params, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const value = await this.request(url, [], searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     return value ?? [];
   };
 
@@ -145,21 +148,9 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     match: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<Array<Record<string, string>>> => {
-    const range = this.datasource.getTimeRangeParams(timeRange);
-    const params = { ...range, 'match[]': match, limit };
-    return await this.request(API_V1.SERIES, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
-  };
-
-  getMetricsFromSeries = (series: Array<Record<string, string>>): string[] => {
-    return series.map((s) => s.__name__);
-  };
-
-  getLabelKeysFromSeries = (series: Array<Record<string, string>>): string[] => {
-    return series.map((s) => s.__name__);
-  };
-
-  getLabelValuesFromSeries = (series: Array<Record<string, string>>, labelKey: string): string[] => {
-    return series.map((s) => s[labelKey]);
+    const timeParams = this.datasource.getTimeRangeParams(timeRange);
+    const searchParams = { ...timeParams, 'match[]': match, limit };
+    return await this.request(API_V1.SERIES, {}, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   // ===================================
@@ -212,7 +203,6 @@ export class PrometheusLanguageProvider extends LanguageProvider {
       {
         ...(requestId && { requestId }),
         headers: {
-          ...getDefaultCacheHeaders(this.datasource.cacheLevel)?.headers,
           'Content-Type': 'application/json',
         },
         method: 'POST',

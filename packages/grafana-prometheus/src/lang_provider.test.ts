@@ -28,7 +28,7 @@ jest.mock('./language_utils', () => ({
   getRangeSnapInterval: jest.fn(() => ({ start: 'start', end: 'end' })),
   getClientCacheDurationInMinutes: jest.fn(() => 1),
   fixSummariesMetadata: jest.fn((data) => data),
-  processSeries: jest.fn(() => ({ metrics: ['metric1', 'metric2'], labelKeys: ['label1', 'label2'] })),
+  processSeries: jest.fn(() => ({ metrics: ['metric1', 'histogram_bucket'], labelKeys: ['label1', 'label2'] })),
 }));
 
 // Mock utf8_support
@@ -118,10 +118,38 @@ describe('PrometheusLanguageProvider', () => {
       const expectedData = { metric: 'value' };
       datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
 
-      const result = await provider.request('/api/test', [], {});
+      const result = await provider.request('/api/test', [], {}, undefined);
 
       expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', {}, undefined);
       expect(result).toEqual(expectedData);
+    });
+
+    it('should append params to URL for GET requests', async () => {
+      datasource.httpMethod = 'GET';
+      const params = { param1: 'value1', param2: 'value2' };
+      const expectedData = { metric: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should add query params to URL and clear params object
+      expect(datasource.metadataRequest).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/test\?.*param1=value1.*param2=value2/),
+        {},
+        undefined
+      );
+    });
+
+    it('should not append params to URL for non-GET requests', async () => {
+      datasource.httpMethod = 'POST';
+      const params = { param1: 'value1', param2: 'value2' };
+      const expectedData = { metric: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should NOT modify URL or params for POST
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', params, undefined);
     });
 
     it('should return default value on error', async () => {
@@ -148,24 +176,36 @@ describe('PrometheusLanguageProvider', () => {
   });
 
   describe('fetchLabelKeys', () => {
-    it('should append search params to URL for GET requests', async () => {
-      datasource.httpMethod = 'GET';
+    it('should call API with correct parameters', async () => {
       jest.spyOn(provider, 'request').mockResolvedValue(['label1', 'label2']);
 
       await provider.fetchLabelKeys(timeRange);
 
-      const requestArgs = (provider.request as jest.Mock).mock.calls[0];
-      expect(requestArgs[0]).toMatch(/^\/api\/v1\/labels\?/);
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        [],
+        expect.objectContaining({
+          limit: '40000',
+          start: 'start',
+          end: 'end',
+        }),
+        expect.any(Object)
+      );
     });
 
-    it('should not append params to URL for non-GET requests', async () => {
-      datasource.httpMethod = 'POST';
+    it('should include match parameter when provided', async () => {
       jest.spyOn(provider, 'request').mockResolvedValue(['label1', 'label2']);
 
-      await provider.fetchLabelKeys(timeRange);
+      await provider.fetchLabelKeys(timeRange, '{job="prometheus"}');
 
-      const requestArgs = (provider.request as jest.Mock).mock.calls[0];
-      expect(requestArgs[0]).toBe('/api/v1/labels');
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        [],
+        expect.objectContaining({
+          'match[]': '{job="prometheus"}',
+        }),
+        expect.any(Object)
+      );
     });
 
     it('should sort and return label keys', async () => {
@@ -197,6 +237,23 @@ describe('PrometheusLanguageProvider', () => {
         [],
         expect.objectContaining({
           limit: '40000',
+          start: '1',
+          end: '2',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should include match parameter when provided', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['value1', 'value2']);
+
+      await provider.fetchLabelValues(timeRange, 'labelKey', '{job="prometheus"}');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels/labelKey/values',
+        [],
+        expect.objectContaining({
+          'match[]': '{job="prometheus"}',
         }),
         expect.any(Object)
       );
