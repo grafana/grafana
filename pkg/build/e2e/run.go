@@ -6,7 +6,7 @@ import (
 	"dagger.io/dagger"
 )
 
-func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cache *dagger.CacheVolume, runMode, suite, runnerFlags string) *dagger.Container {
+func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cache *dagger.CacheVolume, suite, runnerFlags string) *dagger.Container {
 	command := fmt.Sprintf(
 		"./e2e-runner --start-grafana=false --cypress-video"+
 			" --suite %s %s", suite, runnerFlags)

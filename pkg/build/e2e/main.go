@@ -16,7 +16,6 @@ func main() {
 		grafanaPath = flag.String("grafana-dir", ".", "Path to cloned grafana repo")
 		targzPath   = flag.String("package", "grafana.tar.gz", "Path to grafana tar.gz package")
 		suite       = flag.String("suite", "", "E2E test suite path (e.g. e2e/various-suite)")
-		runMode     = flag.String("run-mode", "", "run mode (used in arg to run-suite script; OSS is blank)")
 		licensePath = flag.String("license", "", "the path to the Grafana Enterprise license file (optional)")
 		runnerFlags = flag.String("runner-flags", "", "flags to pass through to the e2e runner")
 	)
@@ -55,7 +54,7 @@ func main() {
 
 	videosDir := path.Join("/src", *suite, "videos")
 	// *spec.ts.mp4
-	c := RunSuite(d, svc, grafana, yarnCache, *runMode, *suite, *runnerFlags)
+	c := RunSuite(d, svc, grafana, yarnCache, *suite, *runnerFlags)
 	c, err = c.Sync(ctx)
 	if err != nil {
 		log.Fatalf("error running dagger: %s", err)
