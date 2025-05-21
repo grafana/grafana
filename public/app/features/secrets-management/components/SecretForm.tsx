@@ -10,6 +10,7 @@ import { DECRYPT_ALLOW_LIST_OPTIONS, SECRETS_MAX_LABELS } from '../constants';
 import { SecretFormValues } from '../types';
 import {
   checkLabelNameAvailability,
+  isFieldInvalid,
   onChangeTransformation,
   transformSecretLabel,
   transformSecretName,
@@ -87,7 +88,7 @@ export function SecretForm({
         disabled={disableNameField}
         description={t('secrets-management.form.name.description', 'The name will be used to reference the secret')}
         label={t('secrets-management.form.name.label', 'Name')}
-        invalid={Boolean(errors?.name?.message)}
+        invalid={isFieldInvalid('name', errors)}
         error={errors?.name?.message as string}
         required
       >
@@ -104,7 +105,7 @@ export function SecretForm({
           'Short description of the purpose of this secret'
         )}
         label={t('secrets-management.form.description.label', 'Description')}
-        invalid={Boolean(errors?.description?.message)}
+        invalid={isFieldInvalid('description', errors)}
         error={errors?.description?.message as string}
         required
       >
@@ -117,7 +118,7 @@ export function SecretForm({
       <Field
         description={t('secrets-management.form.value.description', 'Secret value')}
         label={t('secrets-management.form.value.label', 'Value')}
-        invalid={Boolean(errors?.value?.message)}
+        invalid={isFieldInvalid('value', errors)}
         error={errors?.value?.message as string}
         required
       >
@@ -149,7 +150,7 @@ export function SecretForm({
       <Field
         description={t('secrets-management.form.labels.description', 'Labels to categorize the secret')}
         label={t('secrets-management.form.labels.label', 'Labels')}
-        invalid={Boolean(errors?.labels?.message)}
+        invalid={isFieldInvalid('labels', errors)}
         error={errors?.labels?.message as string}
       >
         <div>
@@ -159,7 +160,7 @@ export function SecretForm({
                 <Field
                   htmlFor={`secret-labels.${index}.name`}
                   className={styles.labelField}
-                  invalid={Boolean(errors?.labels?.[index]?.name?.message)}
+                  invalid={!!errors?.labels?.[index]?.name}
                   error={errors?.labels?.[index]?.name?.message as string}
                 >
                   <Input
@@ -180,7 +181,7 @@ export function SecretForm({
                 <Field
                   htmlFor={`secret-labels.${index}.value`}
                   className={styles.labelField}
-                  invalid={Boolean(errors?.labels?.[index]?.value?.message)}
+                  invalid={!!errors?.labels?.[index]?.value}
                   error={errors?.labels?.[index]?.value?.message as string}
                 >
                   <Input

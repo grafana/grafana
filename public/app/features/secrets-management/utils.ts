@@ -226,3 +226,7 @@ export function transformSecretName(value: string): string {
 export function transformSecretLabel(nameOrValue: string): string {
   return nameOrValue.toLowerCase().replaceAll(' ', '-');
 }
+
+export function isFieldInvalid(fieldName: string, errors: Record<string, { message?: string } | undefined>) {
+  return fieldName in errors;
+}
