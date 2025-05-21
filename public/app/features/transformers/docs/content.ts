@@ -1151,6 +1151,7 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
+- **Set field order mode** - If manual, you can change the field order by dragging as described below. If auto, there will be the option to order by any labels present on the fields, or by the field name. The labels and the field name can be dragged to set the priority of the sorting.
 - **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
 - **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
 - **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.
