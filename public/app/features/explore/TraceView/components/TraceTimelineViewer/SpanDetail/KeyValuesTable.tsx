@@ -57,6 +57,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
         visibility: 'hidden',
       },
       'a span': {
+        color: `${theme.colors.text.link} !important`,
+      },
+      'a:hover span': {
         textDecoration: 'underline',
       },
     }),
