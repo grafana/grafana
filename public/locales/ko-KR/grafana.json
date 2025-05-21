@@ -1066,6 +1066,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1202,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "로딩 중...."
-    },
-    "group-actions": {
-      "actions-trigger": "규칙 그룹 작업",
-      "details": "세부 정보",
-      "edit": "편집"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "그룹 세부 정보 로딩 실패",
-      "unknown-error": "알 수 없는 오류"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "그룹",
@@ -2060,8 +2054,7 @@
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
       "new-grafana-recording-rule": "새 Grafana 기록 규칙",
       "pagination": {
-        "next-page": "다음 페이지",
-        "previous-page": "이전 페이지"
+        "next-page": ""
       },
       "recording-rules": "기록 규칙",
       "return-button": {
@@ -6129,6 +6122,7 @@
       "label-wrap-lines": "줄 바꿈"
     },
     "log-details": {
+      "close": "",
       "fields": "필드",
       "links": "링크",
       "log-line": "로그 라인",
@@ -6148,15 +6142,20 @@
       "log-line": "로그 줄"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
       "copy-log": "로그 라인 복사",
+      "hide-details": "",
       "icon-label": "로그 메뉴",
       "pin-to-outline": "로그 고정",
       "show-context": "맥락 보기",
+      "show-details": "",
       "unpin-from-outline": "로그 고정 해제"
     },
     "log-row-context-modal": {
@@ -6750,7 +6749,8 @@
       "title": "라이브러리 패널"
     },
     "machine-learning": {
-      "title": "머신 러닝"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "폴더 대시보드 및 권한 관리"

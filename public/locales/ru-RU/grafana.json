@@ -1084,6 +1084,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1217,15 +1220,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Загрузка...."
-    },
-    "group-actions": {
-      "actions-trigger": "Действия группы правил",
-      "details": "Подробности",
-      "edit": "Редактировать"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Не удалось загрузить сведения о группе",
-      "unknown-error": "Неизвестная ошибка"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Группа",
@@ -2090,8 +2084,7 @@
       "new-datasource-recording-rule": "Новое правило записи источника данных",
       "new-grafana-recording-rule": "Новое правило записи Grafana",
       "pagination": {
-        "next-page": "следующая страница",
-        "previous-page": "предыдущая страница"
+        "next-page": ""
       },
       "recording-rules": "Правила записи",
       "return-button": {
@@ -6207,6 +6200,7 @@
       "label-wrap-lines": "Переносить строки"
     },
     "log-details": {
+      "close": "",
       "fields": "Поля",
       "links": "Ссылки",
       "log-line": "Строка журнала",
@@ -6226,15 +6220,20 @@
       "log-line": "строка журнала"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
       "copy-log": "Копировать строку журнала",
+      "hide-details": "",
       "icon-label": "Меню журнала",
       "pin-to-outline": "Закрепить журнал",
       "show-context": "Показать контекст",
+      "show-details": "",
       "unpin-from-outline": "Открепить журнал"
     },
     "log-row-context-modal": {
@@ -6828,7 +6827,8 @@
       "title": "Панели библиотеки"
     },
     "machine-learning": {
-      "title": "Машинное обучение"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Управление дашбордами папок и разрешениями"
