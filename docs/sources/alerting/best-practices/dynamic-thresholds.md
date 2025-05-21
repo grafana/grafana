@@ -38,15 +38,15 @@ refs:
 
 # Example of dynamic thresholds per dimension
 
-Most alerts use a fixed numeric threshold—`latency > 3s` or `error_rate > 5%`—to determine their state.
+In Grafana Alerting, each alert rule supports only one condition expression.
 
-Grafana Alerting supports only one alert condition per rule. But what if different services or resources need different threshold values?
+That's enough in many cases—most alerts use a fixed numeric threshold like `latency > 3s` or `error_rate > 5%` to determine their state.
 
-This is a common question when evolving your alerting setup.
+But as your alerting setup grows, you may find that different targets require different threshold values.
 
-When a single static threshold isn’t feasible, a dynamic threshold avoids duplicating alert rules and simplifies alert maintenance.
+Instead of duplicating alert rules, you can assign a **different threshold value to each target**—while keeping the same condition. This simplifies alert maintenance.
 
-This example shows how to use a distinct threshold value per dimension using [multi-dimensional alerts](ref:multi-dimensional-example) and a [Math expression](ref:math-expression).
+This example shows how to do that using [multi-dimensional alerts](ref:multi-dimensional-example) and a [Math expression](ref:math-expression).
 
 ## Example overview
 
