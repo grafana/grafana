@@ -160,15 +160,6 @@ Search for team groups with pagination support.
 | ---------------------- | -------- |
 | teams.permissions:read | teams:\* |
 
-**Query Parameters**:
-
-| Parameter | Type    | Required | Default | Description                            |
-| --------- | ------- | -------- | ------- | -------------------------------------- |
-| name      | string  | Yes      | -       | Exact team name to match               |
-| query     | string  | No       | -       | Search term to match against group IDs |
-| page      | integer | No       | 1       | Page number for pagination             |
-| perpage   | integer | No       | 1000    | Number of items per page               |
-
 **Example Request**:
 
 ```http
