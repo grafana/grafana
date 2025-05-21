@@ -129,8 +129,8 @@ func addUserMigrations(mg *Migrator) {
 		Cols: []string{"login", "email"},
 	}))
 
-	//Service accounts are lightweight users with restricted permissions.  They support API keys
-	//and provisioning and tasks like alarms and reports.
+	// Service accounts are lightweight users with restricted permissions.  They support API keys
+	// and provisioning and tasks like alarms and reports.
 	// Issues in this migration: is_service_account should be nullable
 	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
 		Name: "is_service_account", Type: DB_Bool, Nullable: false, Default: "0",
@@ -172,6 +172,10 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
 	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
+
+	mg.AddMigration("Add index on user.is_service_account and user.last_seen_at", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"is_service_account", "last_seen_at"}, Type: IndexType,
+	}))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
