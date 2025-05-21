@@ -34,6 +34,11 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    * Set of categories associated with the transformer
    */
   categories?: Set<TransformerCategory>;
+
+  /**
+   * Set of tags associated with the transformer for improved transformation search
+   */
+  tags?: Set<string>;
 }
 
 export enum TransformerCategory {
