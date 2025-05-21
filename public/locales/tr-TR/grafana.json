@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Yükleniyor..."
-    },
-    "group-actions": {
-      "actions-trigger": "Kural grubu işlemleri",
-      "details": "Ayrıntılar",
-      "edit": "Düzenle"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Grup bilgileri yüklenemedi",
-      "unknown-error": "Bilinmeyen hata"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grup",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Yeni veri kaynağı kayıt kuralı",
       "new-grafana-recording-rule": "Yeni Grafana kayıt kuralı",
       "pagination": {
-        "next-page": "sonraki sayfa",
-        "previous-page": "önceki sayfa"
+        "next-page": ""
       },
       "recording-rules": "Kayıt kuralları",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Satırları kaydır"
     },
     "log-details": {
+      "close": "",
       "fields": "Alanlar",
       "links": "Bağlantılar",
       "log-line": "Günlük satırı",
@@ -6174,15 +6168,20 @@
       "log-line": "günlük kaydı satırı"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Bağlantıyı günlük satırına kopyala",
       "copy-log": "Günlük satırını kopyala",
+      "hide-details": "",
       "icon-label": "Günlük menüsü",
       "pin-to-outline": "Günlüğü sabitle",
       "show-context": "İçeriği göster",
+      "show-details": "",
       "unpin-from-outline": "Günlüğü sabitlemeyi kaldır"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Kütüphane panelleri"
     },
     "machine-learning": {
-      "title": "Makine öğrenimi"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Klasör panolarını ve izinlerini yönetin"
