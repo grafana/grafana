@@ -15,13 +15,13 @@ interface Props {
   action: ActionModel;
   onDismiss: () => void;
   onShowConfirm: () => void;
-  getVariables: (vars: ActionVariableInput) => void;
+  setVariables: (vars: ActionVariableInput) => void;
 }
 
 /**
  * @internal
  */
-export function VariablesInputModal({ action, onDismiss, onShowConfirm, getVariables }: Props) {
+export function VariablesInputModal({ action, onDismiss, onShowConfirm, setVariables: parentSetVariables }: Props) {
   const styles = useStyles2(getStyles);
 
   const [variables, setVariables] = useState<ActionVariable[]>(action.variables || []);
@@ -33,7 +33,7 @@ export function VariablesInputModal({ action, onDismiss, onShowConfirm, getVaria
     setVariables(newVariables);
     setInputValues({ ...inputValues, [`${key}`]: value });
 
-    getVariables({ ...inputValues, [`${key}`]: value });
+    parentSetVariables({ ...inputValues, [`${key}`]: value });
   };
 
   const onModalContinue = () => {

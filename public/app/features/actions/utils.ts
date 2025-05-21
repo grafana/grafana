@@ -74,16 +74,15 @@ export const getActions = (
       dataContext.value.calculatedValue = config.calculatedValue;
     }
 
-    const title = replaceVariables(action.title, actionScopedVars);
-    const confirmation = replaceVariables(
-      action.confirmation || `Are you sure you want to ${action.title}?`,
-      actionScopedVars
-    );
-
     const actionModel: ActionModel<Field> = {
-      title,
-      confirmation,
-      onClick: (evt: MouseEvent, origin: Field, actionVars: ActionVariableInput | undefined) => {
+      title: replaceVariables(action.title, actionScopedVars),
+      confirmation: (actionVars?: ActionVariableInput) =>
+        genReplaceActionVars(
+          boundReplaceVariables,
+          action,
+          actionVars
+        )(action.confirmation || `Are you sure you want to ${action.title}?`),
+      onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
         let request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
 
         try {

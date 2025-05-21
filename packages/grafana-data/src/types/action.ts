@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 import { SelectableValue } from './select';
 
@@ -28,7 +28,7 @@ export interface Action {
 export interface ActionModel<T = any> {
   title: string;
   onClick: (event: any, origin?: any, actionVars?: ActionVariableInput) => void;
-  confirmation?: string;
+  confirmation: (actionVars?: ActionVariableInput) => ReactNode;
   oneClick?: boolean;
   style: ActionButtonCssProperties;
   variables?: ActionVariable[];
