@@ -2,9 +2,11 @@ name: Backend Unit Tests
 
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   push:
     branches:
       - main
