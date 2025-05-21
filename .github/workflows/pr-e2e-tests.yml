@@ -45,6 +45,7 @@ jobs:
           retention-days: 1
           name: ${{ steps.artifact.outputs.artifact }}
           path: grafana.tar.gz
+
   e2e-matrix:
     permissions:
       contents: read
@@ -63,6 +64,7 @@ jobs:
     with:
       package: ${{ needs.build-grafana.outputs.artifact }}
       suite: ${{ matrix.suite }}
+
   e2e-matrix-old-arch:
     permissions:
       contents: read

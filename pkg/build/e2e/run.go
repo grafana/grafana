@@ -7,6 +7,9 @@ import (
 )
 
 func RunSuite(d *dagger.Client, svc *dagger.Service, src *dagger.Directory, cache *dagger.CacheVolume, runMode, suite string) *dagger.Container {
+	command := fmt.Sprintf("./e2e/run-suite %s true", suite)
+	command := fmt.Sprintf("")
+
 	return WithYarnCache(WithGrafanaFrontend(d.Container().From("cypress/included:13.1.0"), src), cache).
 		WithWorkdir("/src").
 		WithEnvVariable("HOST", "grafana").

@@ -573,7 +573,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250519072927-b674c3157915
+require (
+	github.com/grafana/grafana/pkg/build v0.0.0-20250519072927-b674c3157915
+	github.com/urfave/cli/v3 v3.3.3
+)
 
 require (
 	github.com/moby/spdystream v0.5.0 // indirect
