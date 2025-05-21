@@ -80,7 +80,7 @@ function GroupDetailsPage() {
   );
   const { t } = useTranslate();
 
-  const ruleSourceName = getDataSourceByUid(dataSourceUid)?.name;
+  const ruleSourceName = isGrafanaRuleGroup ? GRAFANA_RULES_SOURCE_NAME : getDataSourceByUid(dataSourceUid)?.name;
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleGroupLoading;
 
   const groupInterval = promGroup?.interval
