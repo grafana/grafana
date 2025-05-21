@@ -112,6 +112,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-e2e-runner.outputs.artifact }}
+      - name: chmod +x
+        run: chmod +x ./e2e-runner
       - name: Run E2E tests
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:

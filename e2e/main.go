@@ -216,7 +216,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			cmd.Stdin = nil
 
 			if err := cmd.Run(); err != nil {
-				fmt.Println("Error running Grafana", err)
+				fmt.Println("Error running Grafana:", err)
 			}
 		}()
 
