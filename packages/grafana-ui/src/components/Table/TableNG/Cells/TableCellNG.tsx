@@ -109,13 +109,22 @@ export function TableCellNG(props: TableCellNGProps) {
       case TableCellDisplayMode.BasicGauge:
       case TableCellDisplayMode.GradientGauge:
       case TableCellDisplayMode.LcdGauge:
-        cell = <BarGaugeCell {...commonProps} theme={theme} timeRange={timeRange} height={height} width={divWidth} />;
+        cell = (
+          <BarGaugeCell
+            {...commonProps}
+            theme={theme}
+            timeRange={timeRange}
+            height={height}
+            width={divWidth}
+            actions={actions}
+          />
+        );
         break;
       case TableCellDisplayMode.Image:
-        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} />;
+        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
         break;
       case TableCellDisplayMode.JSONView:
-        cell = <JSONCell {...commonProps} />;
+        cell = <JSONCell {...commonProps} actions={actions} />;
         break;
       case TableCellDisplayMode.DataLinks:
         cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
@@ -137,12 +146,12 @@ export function TableCellNG(props: TableCellNGProps) {
           if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
             cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
           } else {
-            cell = <JSONCell {...commonProps} />;
+            cell = <JSONCell {...commonProps} actions={actions} />;
           }
         } else if (field.type === FieldType.other) {
-          cell = <JSONCell {...commonProps} />;
+          cell = <JSONCell {...commonProps} actions={actions} />;
         } else {
-          cell = <AutoCell {...commonProps} cellOptions={cellOptions} />;
+          cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
         }
         break;
     }
