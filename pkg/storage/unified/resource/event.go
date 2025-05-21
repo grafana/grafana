@@ -12,6 +12,10 @@ type WriteEvent struct {
 	Key        *resourcepb.ResourceKey    // the request key
 	PreviousRV int64                      // only for Update+Delete
 
+	// GUID is optional and might be used when persisting an event.
+	// It is always set by the resource server.
+	GUID string
+
 	// The json payload (without resourceVersion)
 	Value []byte
 

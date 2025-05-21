@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
@@ -329,7 +328,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 
-	guid := uuid.New().String()
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -341,12 +339,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
 			if IsRowAlreadyExistsError(err) {
-				return guid, resource.ErrResourceAlreadyExists
+				return event.GUID, resource.ErrResourceAlreadyExists
 			}
-			return guid, fmt.Errorf("insert into resource: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -355,9 +353,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			Generation:  event.Object.GetGeneration(),
-			GUID:        guid,
+			GUID:        event.GUID,
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -368,7 +366,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if b.simulatedNetworkLatency > 0 {
 			time.Sleep(b.simulatedNetworkLatency)
 		}
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -418,7 +416,7 @@ func IsRowAlreadyExistsError(err error) bool {
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -431,10 +429,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("resource update: %w", err)
+			return event.GUID, fmt.Errorf("resource update: %w", err)
 		}
 
 		// 2. Insert into resource history
@@ -442,10 +440,10 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -453,7 +451,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			resource:  event.Key.Resource,
 			name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
@@ -475,7 +473,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
-	guid := uuid.New().String()
+
 	folder := ""
 	if event.Object != nil {
 		folder = event.Object.GetFolder()
@@ -485,10 +483,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			GUID:        guid,
+			GUID:        event.GUID,
 		})
 		if err != nil {
-			return guid, fmt.Errorf("delete resource: %w", err)
+			return event.GUID, fmt.Errorf("delete resource: %w", err)
 		}
 
 		// 2. Add event to resource history
@@ -496,10 +494,10 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
-			GUID:        guid,
+			GUID:        event.GUID,
 			Generation:  0, // object does not exist
 		}); err != nil {
-			return guid, fmt.Errorf("insert into resource history: %w", err)
+			return event.GUID, fmt.Errorf("insert into resource history: %w", err)
 		}
 		_ = b.historyPruner.Add(pruningKey{
 			namespace: event.Key.Namespace,
@@ -507,7 +505,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			resource:  event.Key.Resource,
 			name:      event.Key.Name,
 		})
-		return guid, nil
+		return event.GUID, nil
 	})
 
 	if err != nil {
