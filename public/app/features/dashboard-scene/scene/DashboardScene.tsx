@@ -304,7 +304,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         slug: result.slug,
         folderUid: folderUid,
         version: result.version,
-        k8s: this.serializer.getK8SMetadata(),
       },
       overlay: undefined,
     });
