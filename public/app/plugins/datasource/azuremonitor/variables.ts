@@ -11,6 +11,7 @@ import {
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from './azure_monitor/url_builder';
+import { parseResourceURI } from './components/ResourcePicker/utils';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
@@ -29,7 +30,7 @@ export function parseResourceNamesAsTemplateVariable(resources: RawAzureResource
 
     return {
       text: r.name,
-      value: r.name,
+      value: parseResourceURI(r.id).resourceName,
     };
   });
 }
