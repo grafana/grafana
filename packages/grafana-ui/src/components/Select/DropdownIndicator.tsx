@@ -1,8 +1,6 @@
 import { css } from '@emotion/css';
 import { DropdownIndicatorProps } from 'react-select';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
