@@ -11,6 +11,8 @@ import (
 type Check interface {
 	// ID returns the unique identifier of the check
 	ID() string
+	// Name returns the human-readable name of the check
+	Name() string
 	// Item returns the item that will be checked
 	Item(ctx context.Context, id string) (any, error)
 	// Items returns the list of items that will be checked
