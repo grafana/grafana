@@ -1,0 +1,48 @@
+name: Backport PR Creator (workflow)
+
+# This workflow actually runs the backporter after being triggered by the
+# backport-trigger workflow.
+
+on:
+  workflow_call:
+
+jobs:
+  backport:
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-latest
+    steps:
+      # Github has timeout issues with pushing up old branches with the automatic GITHUB_TOKEN,
+      # so we need a credential with both commit and workflow permissions to successfully push
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+          fetch-tags: false
+          token: ${{ steps.generate_token.outputs.token }}
+          persist-credentials: true # Explicitly persist credentials to allow git push later on
+
+      - name: Configure git user
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+
+      - name: Run backport
+        uses: grafana/grafana-github-actions-go/backport@main
+        with:
+          token: ${{ steps.generate_token.outputs.token }}

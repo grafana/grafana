@@ -1,0 +1,19 @@
+name: Backport PR Creator (trigger)
+
+# This workflow runs on the pull request and then triggers the actual backport
+# workflow using workflow_call. This is necessary because:
+# - Github has issues pushing commits from older branches with the GITHUB_TOKEN (see support ticket #3398520)
+#   so we need to use the grafana-delivery-bot token to push the commits
+# - But secrets are not available in pull_request / pull_request_target, hence the workflow_call
+
+on:
+  pull_request:
+    types:
+      - closed
+      - labeled
+
+jobs:
+  trigger:
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-latest
+    uses: .github/workflows/backport-workflow.yml
