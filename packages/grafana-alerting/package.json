@@ -37,27 +37,33 @@
   },
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
+    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.7.0",
+    "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-redux": "^9.2.0",
     "type-fest": "^4.40.0",
     "typescript": "5.7.3"
   },
   "peerDependencies": {
     "@grafana/runtime": "^12.0.0-pre",
     "@grafana/ui": "^12.0.0-pre",
+    "@reduxjs/toolkit": "^2.8.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.7.0",
     "lodash": "^4.17.21"
   }
 }

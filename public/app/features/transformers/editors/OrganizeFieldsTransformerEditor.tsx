@@ -18,6 +18,8 @@ import {
   FieldOrdering,
   OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Input,
   IconButton,
@@ -32,7 +34,6 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -201,7 +202,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'Field Order'}>
+        <InlineField label={t('transformers.organize-fields-transformer-editor.fieldOrder', 'Field Order')}>
           <RadioButtonGroup
             options={[
               { label: 'Manual', value: FieldOrdering.Manual },
@@ -297,7 +298,7 @@ const DraggableFieldName = ({
   isDragDisabled,
 }: DraggableFieldProps) => {
   const styles = useStyles2(getFieldNameStyles);
-
+  const { t } = useTranslate();
   return (
     <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
@@ -366,7 +367,15 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
           <InlineLabel width={60} as="div">
             <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
               <span {...provided.dragHandleProps}>
-                <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+                <Icon
+                  name="draggabledots"
+                  title={t(
+                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                    'Drag and drop to reorder'
+                  )}
+                  size="lg"
+                  className={styles.draggable}
+                />
               </span>
 
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">

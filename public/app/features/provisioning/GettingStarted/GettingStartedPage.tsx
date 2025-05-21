@@ -1,7 +1,7 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Text, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted';
 
@@ -10,6 +10,8 @@ interface Props {
 }
 
 export default function GettingStartedPage({ items }: Props) {
+  const { t } = useTranslate();
+
   return (
     <Page
       navId="provisioning"

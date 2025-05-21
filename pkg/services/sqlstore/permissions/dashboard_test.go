@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -445,12 +444,9 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	var orgID int64 = 1
 
@@ -558,12 +554,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	var orgID int64 = 1
 
@@ -672,11 +665,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 	}
 
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	var orgID int64 = 1
 

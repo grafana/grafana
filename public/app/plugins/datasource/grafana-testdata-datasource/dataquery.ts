@@ -27,6 +27,7 @@ export enum TestDataQueryType {
   RawFrame = 'raw_frame',
   ServerError500 = 'server_error_500',
   Simulation = 'simulation',
+  Steps = 'steps',
   SlowQuery = 'slow_query',
   StreamingClient = 'streaming_client',
   TableStatic = 'table_static',

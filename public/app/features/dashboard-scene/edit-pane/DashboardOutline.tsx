@@ -3,9 +3,10 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -46,6 +47,7 @@ function DashboardOutlineNode({
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
+  const { t } = useTranslate();
 
   const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
   const elementInfo = editableElement.getEditableElementInfo();
@@ -88,14 +90,21 @@ function DashboardOutlineNode({
         onPointerDown={onNodeClicked}
       >
         {elementInfo.isContainer && (
-          <button role="treeitem" className={styles.angleButton} onPointerDown={onToggleCollapse}>
+          <button
+            // TODO fix keyboard a11y here
+            // eslint-disable-next-line jsx-a11y/role-has-required-aria-props
+            role="treeitem"
+            className={styles.angleButton}
+            onPointerDown={onToggleCollapse}
+            data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
+          >
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
           </button>
         )}
         <button
-          role="button"
           className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
           onDoubleClick={outlineRename.onNameDoubleClicked}
+          data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
           <Icon size="sm" name={elementInfo.icon} />
           {outlineRename.isRenaming ? (
