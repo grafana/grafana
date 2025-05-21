@@ -17,11 +17,7 @@ export const TimeZoneDescription = ({ info }: Props) => {
     return null;
   }
 
-  return (
-    <div className={styles.description}>
-      {description}
-    </div>
-  );
+  return <div className={styles.description}>{description}</div>;
 };
 
 const useDescription = (info?: TimeZoneInfo): string => {
