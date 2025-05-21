@@ -29,7 +29,7 @@ import (
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
-	const disableOrgID int64 = 3
+	const disableOrgID int64 = 2
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
 		EnableUnifiedAlerting:          true,

@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -45,14 +44,7 @@ func testUpdateFolder(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 	resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
@@ -93,14 +85,7 @@ func testCreateFolder(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 
@@ -142,14 +127,7 @@ func testNestedFoldersOn(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -59,18 +58,12 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 	}
 
 	setup := func(t *testing.T, env *server.TestEnv, grafanaListenAddr string) {
-		userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "admin",
-			Login:          "admin",
-		})
-
 		dsCmd := &datasources.AddDataSourceCommand{
 			Name:            "TestDatasource",
 			Type:            "testdata",
 			Access:          datasources.DS_ACCESS_DIRECT,
 			UID:             "testuid",
-			UserID:          userId,
+			UserID:          1,
 			OrgID:           1,
 			WithCredentials: true,
 			SecureJsonData: map[string]string{
@@ -82,7 +75,7 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		// Trigger creation of signing key
-		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: fmt.Sprintf("%d", userId), Type: claims.TypeUser})
+		_, _, err = env.IDService.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 
 		// Add alerting config with secure settings.

@@ -48,12 +48,6 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
@@ -63,7 +57,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		Type:   "testdata",
 		Access: datasources.DS_ACCESS_PROXY,
 		UID:    TESTDATA_UID,
-		UserID: userId,
+		UserID: 1,
 		OrgID:  1,
 	}
 	_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
