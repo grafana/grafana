@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import { FormEventHandler, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
-import { Trans, t } from 'app/core/internationalization';
 import { highlightTrial } from 'app/features/admin/utils';
 
 import { StoreState, TeamGroup } from '../../types';

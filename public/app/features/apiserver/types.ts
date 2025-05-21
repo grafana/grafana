@@ -48,6 +48,7 @@ export enum ManagerKind {
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
+export const AnnoKeyManagerAllowsEdits = 'grafana.app/managerAllowsEdits';
 export const AnnoKeySourcePath = 'grafana.app/sourcePath';
 export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
 export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
@@ -70,8 +71,6 @@ export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
-export const AnnoKeyFolderId = 'grafana.app/folderId';
-/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
 // labels
@@ -86,6 +85,7 @@ type GrafanaAnnotations = {
 
   [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
+  [AnnoKeyManagerAllowsEdits]?: string;
   [AnnoKeySourcePath]?: string;
   [AnnoKeySourceChecksum]?: string;
   [AnnoKeySourceTimestamp]?: string;
@@ -98,10 +98,8 @@ type GrafanaClientAnnotations = {
   [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
-  [AnnoKeyFolderId]?: number;
-  [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: string;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
   [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
@@ -258,4 +256,19 @@ export interface K8sAPIGroup {
 export interface K8sAPIGroupList {
   kind: 'APIGroupList';
   groups: K8sAPIGroup[];
+}
+
+/**
+ * Generic types to match the generated k8s API types in the RTK query clients
+ */
+export interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
+export interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
+  metadata?: GeneratedObjectMeta;
+  spec?: T;
+  status?: S;
+}
+
+export interface GeneratedResourceList<Spec, Status, K = string> {
+  metadata?: Partial<ListMeta>;
+  items?: Array<GeneratedResource<Spec, Status, K>>;
 }

@@ -37,7 +37,6 @@ jobs:
         with:
           # Secrets placed in the ci/repo/grafana/grafana/community_release path in Vault
           repo_secrets: |
-            GRAFANA_MISC_STATS_API_KEY=community_release:GRAFANA_MISC_STATS_API_KEY
             GRAFANABOT_FORUM_KEY=community_release:GRAFANABOT_FORUM_KEY
 
       - name: Run community-release (manually invoked)
@@ -45,7 +44,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          metrics_api_key: ${{ env.GRAFANA_MISC_STATS_API_KEY }}
           community_api_key: ${{ env.GRAFANABOT_FORUM_KEY }}
           community_api_username: grafanabot
           dry_run: ${{ inputs.dry_run }}
