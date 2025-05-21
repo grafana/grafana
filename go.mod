@@ -157,6 +157,7 @@ require (
 	github.com/ua-parser/uap-go v0.0.0-20250213224047-9c035f085b90 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // indirect; @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.6 // @grafana/grafana-backend-group
+	github.com/urfave/cli/v3 v3.3.3 // @grafana/grafana-backend-group
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // @grafana/grafana-operator-experience-squad
@@ -193,7 +194,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.32.3 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.32.3 // indirect; @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.32.3 // @grafana/grafana-app-platform-squad
@@ -569,19 +570,8 @@ require (
 	modernc.org/sqlite v1.37.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
-	sigs.k8s.io/randfill v1.0.0
+	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
-)
-
-require (
-	github.com/grafana/grafana/pkg/build v0.0.0-20250519072927-b674c3157915
-	github.com/urfave/cli-altsrc/v3 v3.0.1
-	github.com/urfave/cli/v3 v3.3.3
-)
-
-require (
-	github.com/moby/spdystream v0.5.0 // indirect
-	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
