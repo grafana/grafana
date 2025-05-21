@@ -144,7 +144,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Id:         navtree.NavIDDrilldown,
 			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
 			Icon:       "drilldown",
-			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
 		})
