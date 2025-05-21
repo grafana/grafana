@@ -36,12 +36,6 @@ jobs:
 
       - run: yarn install --immutable --check-cache
 
-      - name: Clean up completed tasks
-        env:
-          CROWDIN_PROJECT_ID: '5'
-          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_TOKEN }}
-        run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/cleanup-tasks.ts
-
       - name: Create tasks
         env:
           CROWDIN_PROJECT_ID: '5'

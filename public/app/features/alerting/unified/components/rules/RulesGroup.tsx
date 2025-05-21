@@ -19,7 +19,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
-import { FolderBulkActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../folder-actions/FolderActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
