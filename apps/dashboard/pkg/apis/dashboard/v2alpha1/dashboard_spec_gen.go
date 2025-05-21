@@ -33,7 +33,7 @@ type DashboardAnnotationQuerySpec struct {
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
 	// Catch-all field for datasource-specific properties
-	Options map[string]interface{} `json:"options,omitempty"`
+	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.

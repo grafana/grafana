@@ -647,7 +647,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationQuerySpec(ref common.
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationPanelFilter"),
 						},
 					},
-					"options": {
+					"legacyOptions": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Catch-all field for datasource-specific properties",
 							Type:        []string{"object"},
