@@ -114,20 +114,12 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
   );
 
   const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
-  const editLink = groups.editPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
   return (
     <ListGroup
       key={group.name}
       name={group.name}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
-      actions={
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <LinkButton fill="text" variant="secondary" size="sm" href={editLink}>
-            <Trans i18nKey="alerting.group-actions.edit.group">Edit</Trans>
-          </LinkButton>
-        </Stack>
-      }
       href={detailsLink}
       isOpen={false}
     >
