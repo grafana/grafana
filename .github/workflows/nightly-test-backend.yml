@@ -2,7 +2,7 @@ name: Nightly Tests
 
 on:
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 2 * * *"
   pull_request:
 jobs:
   backend:
@@ -18,11 +18,9 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Verify Gen-Cue
-        run: |
-          CODEGEN_VERIFY=1 make gen-cue
+        run: CODEGEN_VERIFY=1 make gen-cue
       - name: Verify Gen Jsonnet
-        run: |
-          CODEGEN_VERIFY=1 make gen-jsonnet
+        run: CODEGEN_VERIFY=1 make gen-jsonnet
       - name: Wire install
         run: make gen-go
       - name: Test Backend
@@ -45,5 +43,5 @@ jobs:
         run: yarn betterer:ci
       - name: Test Frontend
         env:
-          TEST_MAX_WORKETS: 50%
+          TEST_MAX_WORKERS: 50%
         run: yarn run ci:test-frontend
