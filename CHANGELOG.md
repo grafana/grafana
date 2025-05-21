@@ -1,3 +1,19 @@
+<!-- 11.4.4+security-01 START -->
+
+# 11.4.4+security-01 (2025-05-21)
+
+### Features and enhancements
+
+- **Chore:** Update CVE-affected golang-gwt dependencies [#102704](https://github.com/grafana/grafana/pull/102704), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Bump to 1.24.2 [#103527](https://github.com/grafana/grafana/pull/103527), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103098](https://github.com/grafana/grafana/pull/103098), [@volcanonoodle](https://github.com/volcanonoodle)
+- **InfluxDB:** Fix nested variable interpolation [#104094](https://github.com/grafana/grafana/pull/104094), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.4.4+security-01 END -->
 <!-- 12.0.0 START -->
 
 # 12.0.0 (2025-05-05)
