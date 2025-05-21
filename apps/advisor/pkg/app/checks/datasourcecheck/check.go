@@ -87,6 +87,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Name() string {
+	return "Data Source"
+}
+
 func (c *check) Init(ctx context.Context) error {
 	return nil
 }
@@ -154,7 +158,7 @@ func (s *healthCheckStep) Title() string {
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Checks if a data sources is healthy."
+	return "Checks if a data source is healthy."
 }
 
 func (s *healthCheckStep) Resolution() string {
@@ -228,7 +232,7 @@ func (s *missingPluginStep) Title() string {
 }
 
 func (s *missingPluginStep) Description() string {
-	return "Checks if the plugin associated with the data source is installed."
+	return "Checks if the plugin associated with the data source is installed and available."
 }
 
 func (s *missingPluginStep) Resolution() string {
