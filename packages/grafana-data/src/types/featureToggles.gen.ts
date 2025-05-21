@@ -162,10 +162,6 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
-  * Enables extra themes
-  */
-  extraThemes?: boolean;
-  /**
   * Adds predefined query operations to Loki query editor
   */
   lokiPredefinedOperations?: boolean;
@@ -557,10 +553,6 @@ export interface FeatureToggles {
   * In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
   */
   disableNumericMetricsSortingInExpressions?: boolean;
-  /**
-  * Enables Grafana-managed recording rules.
-  */
-  grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Query Library feature in Explore
   */

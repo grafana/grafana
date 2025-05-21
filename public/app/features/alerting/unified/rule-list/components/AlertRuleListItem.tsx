@@ -181,7 +181,7 @@ export function RecordingRuleListItem({
     <ListItem
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink color="primary" href={href} inline={false}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
