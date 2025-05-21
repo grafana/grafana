@@ -20,6 +20,7 @@ permissions: {}
 jobs:
   dispatch-job:
     permissions:
+      id-token: write
       contents: read
       actions: write
     env:
