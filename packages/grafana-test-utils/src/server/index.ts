@@ -31,6 +31,8 @@ export function setupMockServer(
   afterAll(() => {
     server.close();
   });
+
+  return server;
 }
 
 export default server;
