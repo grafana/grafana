@@ -42,8 +42,8 @@ func addPlaylistMigrations(mg *Migrator) {
 		Name: "updated_at", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
 
-	mg.AddMigration("Add index on playlist_item.type and playlist_item.value", NewAddIndexMigration(playlistItemV2, &Index{
-		Cols: []string{"type", "value"}, Type: IndexType,
+	mg.AddMigration("Add index on playlist_item.type", NewAddIndexMigration(playlistItemV2, &Index{
+		Cols: []string{"type"}, Type: IndexType,
 	}))
 }
 
