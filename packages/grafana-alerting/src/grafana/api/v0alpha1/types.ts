@@ -3,7 +3,7 @@
  */
 import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 
-import type { Receiver, Integration as ReceiverIntegration, ListReceiverApiResponse } from './api.gen';
+import type { ListReceiverApiResponse, Receiver, Integration as ReceiverIntegration } from './api.gen';
 
 type GenericIntegration = OverrideProperties<
   ReceiverIntegration,

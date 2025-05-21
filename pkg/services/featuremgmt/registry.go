@@ -257,13 +257,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "extraThemes",
-			Description:  "Enables extra themes",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "lokiPredefinedOperations",
 			Description:  "Adds predefined query operations to Loki query editor",
 			FrontendOnly: true,
@@ -616,12 +609,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "alertmanagerRemoteOnly",
-			Description: "Disable the internal Alertmanager and only use the external one defined.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:            "annotationPermissionUpdate",
 			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
 			Stage:           FeatureStageGeneralAvailability,
@@ -882,6 +869,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesAggregatorCapTokenAuth",
+			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "expressionParser",
 			Description:     "Enable new expression parser",
 			Stage:           FeatureStageExperimental,
@@ -949,15 +943,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaOSSBigTent,
 			RequiresRestart: true,
-		},
-		{
-			Name:              "grafanaManagedRecordingRules",
-			Description:       "Enables Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
 		},
 		{
 			Name:           "queryLibrary",
@@ -1122,10 +1107,11 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:        "tableNextGen",
-			Description: "Allows access to the new react-data-grid based table component.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatavizSquad,
+			Name:         "tableNextGen",
+			Description:  "Allows access to the new react-data-grid based table component.",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
@@ -1576,13 +1562,12 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:              "grafanaManagedRecordingRulesDatasources",
-			Description:       "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
+			Name:           "grafanaManagedRecordingRulesDatasources",
+			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaAlertingSquad,
+			AllowSelfServe: false,
+			Expression:     "false",
 		},
 		{
 			Name:         "infinityRunQueriesInParallel",
@@ -1601,13 +1586,12 @@ var (
 			FrontendOnly:      true,
 		},
 		{
-			Name:              "alertingMigrationUI",
-			Description:       "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
-			FrontendOnly:      true,
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
+			Name:         "alertingMigrationUI",
+			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+			FrontendOnly: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true",
 		},
 		{
 			Name:              "unifiedStorageHistoryPruner",

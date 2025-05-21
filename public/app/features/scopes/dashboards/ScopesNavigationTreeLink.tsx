@@ -11,19 +11,29 @@ export interface ScopesNavigationTreeLinkProps {
   id: string;
 }
 
+// Helper function to get the base path for a dashboard URL for comparison purposes.
+// e.g., /d/dashboardId/slug -> /d/dashboardId
+//       /d/dashboardId      -> /d/dashboardId
+function getDashboardPathForComparison(pathname: string): string {
+  return pathname.split('/').slice(0, 3).join('/');
+}
+
 export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const isDashboard = to.startsWith('/d/');
+  const locPathname = useLocation().pathname;
 
-  // For dashboards, the title is appended to the path. We need to diregard this
-  const currentPath = isDashboard ? useLocation().pathname.split('/').slice(0, 3).join('/') : useLocation().pathname;
+  // For dashboards, the title is appended to the path when we navigate to just the dashboard id, hence we need to disregard this
+  const currentPath = isDashboard ? getDashboardPathForComparison(locPathname) : locPathname;
 
-  const isCurrent = to.startsWith(currentPath);
+  // Ignore query params
+  const isCurrent = to.split('?')[0] === currentPath;
 
   return (
     <Link
       to={to}
+      aria-current={isCurrent ? 'page' : undefined}
       className={cx(styles.container, isCurrent && styles.current)}
       data-testid={`scopes-dashboards-${id}`}
       role="treeitem"

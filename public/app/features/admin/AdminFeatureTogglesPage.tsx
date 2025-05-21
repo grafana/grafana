@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
@@ -15,7 +15,7 @@ export default function AdminFeatureTogglesPage() {
   const togglesApi = getTogglesAPI();
   const featureState = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const handleUpdateSuccess = () => {
     setReload(reload + 1);
   };

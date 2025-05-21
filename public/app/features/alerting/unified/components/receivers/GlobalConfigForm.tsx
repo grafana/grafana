@@ -1,8 +1,8 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Button, LinkButton, Stack } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -44,7 +44,7 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
       })
     ),
   });
-
+  const { t } = useTranslate();
   const {
     handleSubmit,
     formState: { errors },

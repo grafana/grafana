@@ -139,10 +139,6 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
-	// FlagExtraThemes
-	// Enables extra themes
-	FlagExtraThemes = "extraThemes"
-
 	// FlagLokiPredefinedOperations
 	// Adds predefined query operations to Loki query editor
 	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
@@ -335,10 +331,6 @@ const (
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
-	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and only use the external one defined.
-	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
-
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
@@ -471,6 +463,10 @@ const (
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
+
 	// FlagExpressionParser
 	// Enable new expression parser
 	FlagExpressionParser = "expressionParser"
@@ -502,10 +498,6 @@ const (
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
-
-	// FlagGrafanaManagedRecordingRules
-	// Enables Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
@@ -852,7 +844,7 @@ const (
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
 	// FlagAlertingMigrationUI
-	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
 
 	// FlagUnifiedStorageHistoryPruner

@@ -23,12 +23,12 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
-import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
+import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
-import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
+import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
@@ -69,6 +69,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Interval',
     description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
+    getOptions: getIntervalVariableOptions,
   },
   datasource: {
     name: 'Data source',
@@ -80,6 +81,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
+    getOptions: getAdHocFilterOptions,
   },
   groupby: {
     name: 'Group by',
