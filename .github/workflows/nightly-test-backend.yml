@@ -47,4 +47,3 @@ jobs:
         env:
           TEST_MAX_WORKETS: 50%
         run: yarn run ci:test-frontend
-
