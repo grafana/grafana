@@ -4,11 +4,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t } from 'app/core/internationalization';
 
 import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
@@ -25,7 +26,7 @@ import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
 
-const getSteps = (): Array<Step<WizardStep>> => {
+const getSteps = (t: TFunction): Array<Step<WizardStep>> => {
   return [
     {
       id: 'connection',
@@ -65,7 +66,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
-  const steps = getSteps();
+  const { t } = useTranslate();
+  const steps = getSteps(t);
   const styles = useStyles2(getStyles);
 
   const values = getDefaultValues();
@@ -108,7 +110,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, settingsQuery.data?.items]);
+  }, [navigate, repoName, settingsQuery.data?.items, t]);
 
   const handleRepositoryDeletion = async (name: string) => {
     try {
@@ -144,7 +146,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       return steps[stepIndex + 1].name;
     },
-    [steps]
+    [steps, t]
   );
 
   const handleNext = async () => {

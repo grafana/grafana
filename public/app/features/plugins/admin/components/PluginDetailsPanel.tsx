@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
@@ -17,7 +18,6 @@ import {
   Button,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { CatalogPlugin } from '../types';
@@ -40,13 +40,18 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
       plugin.details?.licenseUrl,
       plugin.details?.documentationUrl,
       plugin.details?.raiseAnIssueUrl,
+      plugin.details?.sponsorshipUrl,
     ]
       .map(normalizeURL)
       .includes(normalizeURL(link.url));
     return customLinksFiltered;
   });
   const shouldRenderLinks =
-    plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl || plugin.details?.raiseAnIssueUrl;
+    plugin.url ||
+    plugin.details?.licenseUrl ||
+    plugin.details?.documentationUrl ||
+    plugin.details?.raiseAnIssueUrl ||
+    plugin.details?.sponsorshipUrl;
 
   const styles = useStyles2(getStyles);
 
@@ -146,6 +151,18 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     data-testid="plugin-details-documentation-link"
                   >
                     <Trans i18nKey="plugins.details.labels.documentation">Documentation</Trans>
+                  </LinkButton>
+                )}
+                {plugin.details?.sponsorshipUrl && (
+                  <LinkButton
+                    href={plugin.details?.sponsorshipUrl}
+                    variant="secondary"
+                    fill="solid"
+                    icon={'heart'}
+                    target="_blank"
+                    data-testid="plugin-details-sponsorship-link"
+                  >
+                    <Trans i18nKey="plugins.details.labels.sponsorDeveloper">Sponsor this developer</Trans>
                   </LinkButton>
                 )}
               </Stack>

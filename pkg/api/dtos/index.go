@@ -15,7 +15,7 @@ type IndexViewData struct {
 	GoogleAnalytics4Id                  string               `json:"-"`
 	GoogleAnalytics4SendManualPageViews bool                 `json:"-"`
 	GoogleTagManagerId                  string               `json:"-"`
-	NavTree                             *navtree.NavTreeRoot `json:"navtree"`
+	NavTree                             *navtree.NavTreeRoot `json:"navTree"`
 	BuildVersion                        string               `json:"-"`
 	BuildCommit                         string               `json:"-"`
 	ThemeType                           string               `json:"-"`
@@ -42,6 +42,8 @@ type EntryPointAssets struct {
 	CSSFiles           []EntryPointAsset `json:"cssFiles"`
 	Dark               string            `json:"dark"`
 	Light              string            `json:"light"`
+	Swagger            []EntryPointAsset `json:"swagger"`
+	SwaggerCSSFiles    []EntryPointAsset `json:"swaggerCssFiles"`
 }
 
 type EntryPointAsset struct {
@@ -61,5 +63,11 @@ func (a *EntryPointAssets) SetContentDeliveryURL(prefix string) {
 	}
 	for i, p := range a.CSSFiles {
 		a.CSSFiles[i].FilePath = prefix + p.FilePath
+	}
+	for i, p := range a.Swagger {
+		a.Swagger[i].FilePath = prefix + p.FilePath
+	}
+	for i, p := range a.SwaggerCSSFiles {
+		a.SwaggerCSSFiles[i].FilePath = prefix + p.FilePath
 	}
 }

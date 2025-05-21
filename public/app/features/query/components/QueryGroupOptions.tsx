@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Trans, t } from 'app/core/internationalization';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -148,6 +148,8 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const onCloseOptions = useCallback(() => {
     setIsOpen(false);
   }, []);
+
+  const { t } = useTranslate();
 
   const renderCacheTimeoutOption = () => {
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
@@ -310,12 +312,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
       <>
         {
           <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {mdDesc}</Trans>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {{ mdDesc }}</Trans>
           </span>
         }
         {
           <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {intervalDesc}</Trans>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {{ intervalDesc }}</Trans>
           </span>
         }
       </>

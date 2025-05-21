@@ -5,8 +5,8 @@ import * as React from 'react';
 import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
@@ -51,7 +51,7 @@ const defaultEvaluator: ClassicCondition = {
 
 export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
 
   // this queryState is the source of truth for the threshold component.
@@ -211,6 +211,8 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
   }
 
   function RecoveryForRange({ allowOnblur }: RecoveryProps) {
+    const { t } = useTranslate();
+
     switch (condition.evaluator.type) {
       case EvalFunction.IsWithinRange:
         if (condition.evaluator.type === EvalFunction.IsWithinRange) {
@@ -219,7 +221,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
               <InlineField
                 label={t(
                   'alerting.rule-form.threshold.recovery.stop-alerting-outside-range',
-                  'Stop alerting when outside range'
+                  'Stop alerting (or pending state) when outside range'
                 )}
                 labelWidth={'auto'}
               >
@@ -256,7 +258,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
             <InlineField
               label={t(
                 'alerting.rule-form.threshold.recovery.stop-alerting-inside-range',
-                'Stop alerting when inside range'
+                'Stop alerting (or pending state) when inside range'
               )}
               labelWidth={'auto'}
             >
@@ -293,7 +295,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
             <InlineField
               label={t(
                 'alerting.rule-form.threshold.recovery.stop-alerting-inside-range',
-                'Stop alerting when inside range'
+                'Stop alerting (or pending state) when inside range'
               )}
               labelWidth={'auto'}
             >
@@ -329,7 +331,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
             <InlineField
               label={t(
                 'alerting.rule-form.threshold.recovery.stop-alerting-outside-range',
-                'Stop alerting when outside range'
+                'Stop alerting (or pending state) when outside range'
               )}
               labelWidth={'auto'}
             >
@@ -365,12 +367,17 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
   }
 
   function RecoveryForSingleValue({ allowOnblur }: RecoveryProps) {
+    const { t } = useTranslate();
+
     switch (condition.evaluator.type) {
       case EvalFunction.IsAbove:
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
-              label={t('alerting.rule-form.threshold.recovery.stop-alerting-bellow', 'Stop alerting when below')}
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-bellow',
+                'Stop alerting (or pending state) when below'
+              )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
               error={invalidErrorMsg}
@@ -390,7 +397,10 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
-              label={t('alerting.rule-form.threshold.recovery.stop-alerting-above', 'Stop alerting when above')}
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-above',
+                'Stop alerting (or pending state) when above'
+              )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
               error={invalidErrorMsg}
@@ -410,7 +420,10 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
-              label={t('alerting.rule-form.threshold.recovery.stop-alerting-equal', 'Stop alerting when equal to')}
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-equal',
+                'Stop alerting (or pending state) when equal to'
+              )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
               error={invalidErrorMsg}
@@ -432,7 +445,7 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
             <InlineField
               label={t(
                 'alerting.rule-form.threshold.recovery.stop-alerting-not-equal',
-                'Stop alerting when not equal to'
+                'Stop alerting (or pending state) when not equal to'
               )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
@@ -453,7 +466,10 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
-              label={t('alerting.rule-form.threshold.recovery.stop-alerting-less', 'Stop alerting when less than')}
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-less',
+                'Stop alerting (or pending state) when less than'
+              )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
               error={invalidErrorMsg}
@@ -473,7 +489,10 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
-              label={t('alerting.rule-form.threshold.recovery.stop-alerting-more', 'Stop alerting when more than')}
+              label={t(
+                'alerting.rule-form.threshold.recovery.stop-alerting-more',
+                'Stop alerting (or pending state) when more than'
+              )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}
               error={invalidErrorMsg}

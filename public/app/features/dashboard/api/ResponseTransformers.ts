@@ -132,9 +132,15 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+    }
+    if (dto.meta.isSnapshot) {
+      // FIXME -- lets not put non-annotation data in annotations!
+      annotationsMeta[AnnoKeyDashboardIsSnapshot] = 'true';
+    }
+
     creationTimestamp = dto.meta.created;
     labelsMeta = {
       [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
@@ -519,6 +525,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               },
               spec: query,
             },
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(qv);
@@ -545,6 +552,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(dv);
@@ -563,6 +571,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
             includeAll: v.includeAll,
             ...(v.allValue && { allValue: v.allValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(cv);
@@ -576,6 +585,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             baseFilters: v.baseFilters || [],
             filters: v.filters || [],
             defaultKeys: v.defaultKeys || [],
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(av);

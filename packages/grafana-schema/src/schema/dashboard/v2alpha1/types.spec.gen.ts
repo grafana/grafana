@@ -19,7 +19,7 @@ export interface AnnotationQuerySpec {
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
 	// Catch-all field for datasource-specific properties
-	options?: Record<string, any>;
+	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -1025,6 +1025,7 @@ export interface QueryVariableSpec {
 	includeAll: boolean;
 	allValue?: string;
 	placeholder?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1039,6 +1040,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	options: [],
 	multi: false,
 	includeAll: false,
+	allowCustomValue: true,
 });
 
 // Variable option specification
@@ -1172,6 +1174,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1185,6 +1188,7 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Interval variable kind
@@ -1251,6 +1255,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1262,6 +1267,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Group variable kind
@@ -1331,6 +1337,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1340,6 +1347,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	defaultKeys: [],
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Define the AdHocFilterWithLabels type

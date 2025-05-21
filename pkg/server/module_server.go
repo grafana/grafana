@@ -9,6 +9,10 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/gorilla/mux"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/dskit/services"
@@ -32,10 +36,11 @@ func NewModule(opts Options,
 	cfg *setting.Cfg,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, promGatherer, license)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +52,7 @@ func NewModule(opts Options,
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, promGatherer prometheus.Gatherer, license licensing.Licensing) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, reg prometheus.Registerer, promGatherer prometheus.Gatherer, license licensing.Licensing) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -66,6 +71,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		storageMetrics:   storageMetrics,
 		indexMetrics:     indexMetrics,
 		promGatherer:     promGatherer,
+		registerer:       reg,
 		license:          license,
 	}
 
@@ -98,6 +104,12 @@ type ModuleServer struct {
 	buildBranch string
 
 	promGatherer prometheus.Gatherer
+	registerer   prometheus.Registerer
+
+	MemberlistKVConfig    kv.Config
+	httpServerRouter      *mux.Router
+	storageRing           *ring.Ring
+	storageRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -136,8 +148,12 @@ func (s *ModuleServer) Run() error {
 		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log, s.cfg, s.promGatherer)
+		return s.initInstrumentationServer()
 	})
+
+	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
+	m.RegisterModule(modules.StorageRing, s.initRing)
+	m.RegisterModule(modules.Distributor, s.initDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -157,7 +173,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

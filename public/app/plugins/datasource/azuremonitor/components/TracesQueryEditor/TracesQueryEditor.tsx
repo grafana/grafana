@@ -3,6 +3,7 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
@@ -39,6 +40,7 @@ const TracesQueryEditor = ({
   setError,
   range,
 }: TracesQueryEditorProps) => {
+  const { t } = useTranslate();
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -127,7 +129,7 @@ const TracesQueryEditor = ({
               variableOptionGroup={variableOptionGroup}
               range={range}
             />
-            <Field label="Operation ID">
+            <Field label={t('components.traces-query-editor.label-operation-id', 'Operation ID')}>
               <Input
                 id="azure-monitor-traces-operation-id-field"
                 value={operationId}

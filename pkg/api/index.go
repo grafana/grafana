@@ -114,7 +114,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
 			return theme
 		}
 	}

@@ -142,7 +142,7 @@ export function getDashDiffStyles(theme: GrafanaTheme2) {
 
     '.diff-label': {
       backgroundColor: theme.colors.action.hover,
-      borderRadius: '3px',
+      borderRadius: theme.shape.radius.default,
       color: theme.colors.text.primary,
       display: 'inline',
       fontSize: `${theme.typography.fontSize}px`,

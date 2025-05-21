@@ -552,6 +552,132 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
+  describe('should adapt AdHocFiltersVariable filters', () => {
+    it('should remove origin from filter if its not dashboard or scope', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        allowCustomValue: true,
+        label: 'test-label',
+        description: 'test-desc',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+            origin: 'asserts',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+            origin: 'asserts',
+          },
+        ],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToVariables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+      {
+        "allowCustomValue": true,
+        "baseFilters": [
+          {
+            "key": "baseFilterTest",
+            "operator": "=",
+            "value": "test",
+          },
+        ],
+        "datasource": {
+          "type": "fake-std",
+          "uid": "fake-std",
+        },
+        "defaultKeys": undefined,
+        "description": "test-desc",
+        "filters": [
+          {
+            "key": "filterTest",
+            "operator": "=",
+            "value": "test",
+          },
+        ],
+        "label": "test-label",
+        "name": "test",
+        "type": "adhoc",
+      }
+      `);
+    });
+
+    it('should maintain dashboard or scope origin', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        allowCustomValue: true,
+        label: 'test-label',
+        description: 'test-desc',
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+            origin: 'dashboard',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+            origin: 'scope',
+          },
+        ],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToVariables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchInlineSnapshot(`
+      {
+        "allowCustomValue": true,
+        "baseFilters": [
+          {
+            "key": "baseFilterTest",
+            "operator": "=",
+            "origin": "scope",
+            "value": "test",
+          },
+        ],
+        "datasource": {
+          "type": "fake-std",
+          "uid": "fake-std",
+        },
+        "defaultKeys": undefined,
+        "description": "test-desc",
+        "filters": [
+          {
+            "key": "filterTest",
+            "operator": "=",
+            "origin": "dashboard",
+            "value": "test",
+          },
+        ],
+        "label": "test-label",
+        "name": "test",
+        "type": "adhoc",
+      }
+      `);
+    });
+  });
+
   it('should handle AdHocFiltersVariable with defaultKeys', () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
@@ -755,6 +881,7 @@ describe('sceneVariablesSetToVariables', () => {
           "kind": "QueryVariable",
           "spec": {
             "allValue": "test-all",
+            "allowCustomValue": true,
             "current": {
               "text": [
                 "selected-value-text",
@@ -820,6 +947,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "CustomVariable",
       "spec": {
         "allValue": "test-all",
+        "allowCustomValue": true,
         "current": {
           "text": [
             "test",
@@ -884,6 +1012,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "DatasourceVariable",
       "spec": {
         "allValue": "test-all",
+        "allowCustomValue": true,
         "current": {
           "text": [
             "selected-ds-1-text",
@@ -1072,6 +1201,7 @@ describe('sceneVariablesSetToVariables', () => {
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "key": "baseFilterTest",
@@ -1147,6 +1277,7 @@ describe('sceneVariablesSetToVariables', () => {
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "key": "baseFilterTest",

@@ -71,6 +71,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
+        enableLogDetails={false}
         hasUnescapedContent={hasUnescapedContent}
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
@@ -86,9 +87,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         {rest.visualisationType === 'logs' && (
           <LogRowsComponent ref={ref} {...rest} deduplicatedRows={deduplicatedRows} />
         )}
-        {rest.visualisationType === 'table' && rest.panelState && rest.updatePanelState && (
-          <ControlledLogsTable {...rest} />
-        )}
+        {rest.visualisationType === 'table' && rest.updatePanelState && <ControlledLogsTable {...rest} />}
       </LogListContextProvider>
     );
   }
@@ -184,7 +183,7 @@ const styles = {
   scrollableLogRows: css({
     overflowY: 'auto',
     width: '100%',
-    maxHeight: '75vh',
+    maxHeight: '80vh',
   }),
   forwardedScrollableLogRows: css({
     overflowY: 'auto',

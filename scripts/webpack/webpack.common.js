@@ -1,3 +1,4 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -7,6 +8,7 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    swagger: './public/swagger/index.tsx',
   },
   experiments: {
     // Required to load WASM modules.
@@ -66,6 +68,14 @@ module.exports = {
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'public/img',
+          to: 'img',
+        },
+      ],
     }),
   ],
   module: {

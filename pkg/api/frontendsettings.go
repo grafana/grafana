@@ -73,7 +73,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))
@@ -298,7 +298,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
 		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogPreinstalledPlugins: hs.Cfg.PreinstallPlugins,
+		PluginCatalogPreinstalledPlugins: append(hs.Cfg.PreinstallPluginsAsync, hs.Cfg.PreinstallPluginsSync...),
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,

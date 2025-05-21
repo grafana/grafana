@@ -373,6 +373,7 @@ export const handyTestingSchema: Spec = {
         regex: 'regex1',
         skipUrlSync: false,
         sort: 'disabled',
+        allowCustomValue: true,
       },
     },
     {
@@ -403,6 +404,7 @@ export const handyTestingSchema: Spec = {
         ],
         query: 'option1, option2',
         skipUrlSync: false,
+        allowCustomValue: true,
       },
     },
     {
@@ -423,6 +425,7 @@ export const handyTestingSchema: Spec = {
         refresh: 'onDashboardLoad',
         regex: 'regex1',
         skipUrlSync: false,
+        allowCustomValue: true,
       },
     },
     {
@@ -562,6 +565,7 @@ export const handyTestingSchema: Spec = {
         label: 'Adhoc Variable',
         name: 'adhocVar',
         skipUrlSync: false,
+        allowCustomValue: true,
       },
     },
   ],
