@@ -555,11 +555,7 @@ func TestMain(m *testing.M) {
 			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
 		}
 
-		cfgDBSec, err := testCfg.Raw.GetSection("database")
-		if err != nil {
-			return nil, err
-		}
-
+		cfgDBSec := testCfg.Raw.Section("database")
 		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
