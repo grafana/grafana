@@ -937,7 +937,10 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		// items.
 		listReq := &resourcepb.ListRequest{
 			Options: req.Options,
-			Limit:   1,
+			// This has right now no effect, as the list request only uses the limit if it lists from history or trash.
+			// It might be worth adding it in a subsequent PR. We only list once during setup of the watch, so it's
+			// fine for now.
+			Limit: 1,
 		}
 
 		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
