@@ -4,10 +4,6 @@ import { config } from '@grafana/runtime';
 export function getSelectableThemes() {
   const allowedExtraThemes = [];
 
-  if (config.featureToggles.extraThemes) {
-    allowedExtraThemes.push('debug');
-  }
-
   if (config.featureToggles.grafanaconThemes) {
     allowedExtraThemes.push('desertbloom');
     allowedExtraThemes.push('gildedgrove');

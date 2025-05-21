@@ -70,7 +70,13 @@ func getSettingSecrets(t *testing.T, store db.DB) map[int]secret {
 	}
 
 	err := store.WithDbSession(t.Context(), func(sess *db.Session) error {
-		return sess.Table("setting").Select("section, key, encrypted_value").OrderBy("section, key").Find(&rows)
+		cols := []string{
+			store.GetDialect().Quote("section"),
+			store.GetDialect().Quote("key"),
+			store.GetDialect().Quote("encrypted_value"),
+		}
+		// Quote all column names. In practice, only `key` needs to be quoted in MySQL, but we quote all to be safe.
+		return sess.Table("setting").Select(strings.Join(cols, ", ")).Find(&rows)
 	})
 	require.NoError(t, err)
 

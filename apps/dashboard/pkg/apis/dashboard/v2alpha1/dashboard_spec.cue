@@ -397,7 +397,7 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	options?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -751,6 +751,7 @@ QueryVariableSpec: {
 	includeAll:   bool | *false
 	allValue?:    string
 	placeholder?: string
+	allowCustomValue: bool | *true
 }
 
 // Query variable kind
@@ -817,6 +818,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Datasource variable kind
@@ -863,6 +865,7 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Custom variable kind
@@ -905,6 +908,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Define the MetricFindValue type
