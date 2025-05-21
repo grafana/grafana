@@ -71,7 +71,7 @@
     "react-highlight-words": "0.21.0",
     "react-use": "17.6.0",
     "react-window": "1.8.11",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "semver": "7.7.0",
     "uuid": "11.0.5"
   },
