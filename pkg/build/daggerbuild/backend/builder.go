@@ -189,6 +189,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
+		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
