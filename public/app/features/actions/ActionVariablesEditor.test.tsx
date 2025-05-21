@@ -70,15 +70,11 @@ describe('ActionVariablesEditor', () => {
     const deleteButtons = screen.getAllByRole('button', { name: 'Delete' });
     await userEvent.click(deleteButtons[0]);
 
-    expect(mockOnChange).toHaveBeenCalledWith([
-      { key: 'key2', name: 'name2', type: ActionVariableType.String },
-    ]);
+    expect(mockOnChange).toHaveBeenCalledWith([{ key: 'key2', name: 'name2', type: ActionVariableType.String }]);
   });
 
   it('sorts variables by key when adding new ones', async () => {
-    const existingVariables = [
-      { key: 'key2', name: 'name2', type: ActionVariableType.String },
-    ];
+    const existingVariables = [{ key: 'key2', name: 'name2', type: ActionVariableType.String }];
 
     render(<ActionVariablesEditor value={existingVariables} onChange={mockOnChange} />);
 
@@ -97,9 +93,7 @@ describe('ActionVariablesEditor', () => {
   });
 
   it('updates existing variable when adding with same key', async () => {
-    const existingVariables = [
-      { key: 'key1', name: 'oldName', type: ActionVariableType.String },
-    ];
+    const existingVariables = [{ key: 'key1', name: 'oldName', type: ActionVariableType.String }];
 
     render(<ActionVariablesEditor value={existingVariables} onChange={mockOnChange} />);
 
@@ -111,8 +105,6 @@ describe('ActionVariablesEditor', () => {
     await userEvent.type(nameInput, 'newName');
     await userEvent.click(addButton);
 
-    expect(mockOnChange).toHaveBeenCalledWith([
-      { key: 'key1', name: 'newName', type: ActionVariableType.String },
-    ]);
+    expect(mockOnChange).toHaveBeenCalledWith([{ key: 'key1', name: 'newName', type: ActionVariableType.String }]);
   });
 });
