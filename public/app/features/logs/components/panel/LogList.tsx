@@ -18,11 +18,11 @@ import {
   store,
   TimeRange,
 } from '@grafana/data';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
-import { getGridTemplateColumns } from './LogLine';
+import { getGridTemplateColumns, LogLine, getStyles as getLogLineStyles } from './LogLine';
 import { LogLineDetails } from './LogLineDetails';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
@@ -57,6 +57,7 @@ export interface Props {
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noScroll?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -113,6 +114,7 @@ export const LogList = ({
   logs,
   logsMeta,
   logSupportsContext,
+  noScroll,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -178,6 +180,7 @@ export const LogList = ({
         loading={loading}
         loadMore={loadMore}
         logs={logs}
+        noScroll={noScroll}
         showControls={showControls}
         timeRange={timeRange}
         timeZone={timeZone}
@@ -195,6 +198,7 @@ const LogListComponent = ({
   loading,
   loadMore,
   logs,
+  noScroll,
   showControls,
   timeRange,
   timeZone,
@@ -320,42 +324,46 @@ const LogListComponent = ({
   return (
     <div className={styles.logListContainer}>
       <div className={styles.logListWrapper} ref={wrapperRef}>
-        <InfiniteScroll
-          displayedFields={displayedFields}
-          handleOverflow={handleOverflow}
-          logs={filteredLogs}
-          loadMore={loadMore}
-          onClick={handleLogLineClick}
-          scrollElement={scrollRef.current}
-          showTime={showTime}
-          sortOrder={sortOrder}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          setInitialScrollPosition={handleScrollPosition}
-          wrapLogMessage={wrapLogMessage}
-        >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-            <VariableSizeList
-              className={styles.logList}
-              height={listHeight}
-              itemCount={itemCount}
-              itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
-                showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
-                showTime,
-                wrap: wrapLogMessage,
-              })}
-              itemKey={getItemKey}
-              layout="vertical"
-              onItemsRendered={onItemsRendered}
-              outerRef={scrollRef}
-              ref={listRef}
-              style={{ overflowY: 'scroll' }}
-              width="100%"
-            >
-              {Renderer}
-            </VariableSizeList>
-          )}
-        </InfiniteScroll>
+        {!noScroll ? (
+          <InfiniteScroll
+            displayedFields={displayedFields}
+            handleOverflow={handleOverflow}
+            logs={filteredLogs}
+            loadMore={loadMore}
+            onClick={handleLogLineClick}
+            scrollElement={scrollRef.current}
+            showTime={showTime}
+            sortOrder={sortOrder}
+            timeRange={timeRange}
+            timeZone={timeZone}
+            setInitialScrollPosition={handleScrollPosition}
+            wrapLogMessage={wrapLogMessage}
+          >
+            {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+              <VariableSizeList
+                className={styles.logList}
+                height={listHeight}
+                itemCount={itemCount}
+                itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                  showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
+                  showTime,
+                  wrap: wrapLogMessage,
+                })}
+                itemKey={getItemKey}
+                layout="vertical"
+                onItemsRendered={onItemsRendered}
+                outerRef={scrollRef}
+                ref={listRef}
+                style={{ overflowY: 'scroll' }}
+                width="100%"
+              >
+                {Renderer}
+              </VariableSizeList>
+            )}
+          </InfiniteScroll>
+        ) : (
+          <LogListNoScroll logs={filteredLogs} onClick={handleLogLineClick} />
+        )}
       </div>
       {showDetails.length > 0 && (
         <LogLineDetails
@@ -367,6 +375,33 @@ const LogListComponent = ({
       )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
+  );
+};
+
+interface LogListNoScrollProps {
+  logs: LogListModel[];
+  onClick: (log: LogListModel) => void;
+}
+
+const LogListNoScroll = ({ logs, onClick }: LogListNoScrollProps) => {
+  const { displayedFields, showTime, wrapLogMessage } = useLogListContext();
+  const styles = useStyles2(getLogLineStyles);
+  return (
+    <>
+      {logs.map((log, index) => (
+        <LogLine
+          displayedFields={displayedFields}
+          index={index}
+          key={log.uid}
+          log={log}
+          showTime={showTime}
+          style={{}}
+          styles={styles}
+          onClick={onClick}
+          wrapLogMessage={wrapLogMessage}
+        />
+      ))}
+    </>
   );
 };
 
