@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { getQueryModeller } from '../shared/modeller-types';
+import { getModeller } from '../shared/interfaces';
 import { getOperationParamId } from '../shared/param-utils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery, PromQueryModellerInterface } from '../types';
@@ -51,7 +51,7 @@ function LabelParamEditorInternal({
 
 // Public component that injects queryModeller
 export const LabelParamEditor = (props: QueryBuilderOperationParamEditorProps) => {
-  return <LabelParamEditorInternal {...props} queryModeller={getQueryModeller()} />;
+  return <LabelParamEditorInternal {...props} queryModeller={getModeller()} />;
 };
 
 async function loadGroupByLabels(

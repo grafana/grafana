@@ -4,7 +4,6 @@ import { FUNCTIONS } from '../promql';
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { setQueryModeller } from './shared/modeller-types';
 import {
   PromQueryPattern,
   PromQueryPatternType,
@@ -33,7 +32,6 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase implements P
       PromVisualQueryOperationCategory.Trigonometric,
       PromVisualQueryOperationCategory.Time,
     ]);
-    setQueryModeller(this);
   }
 
   getQueryPatterns(): PromQueryPattern[] {
