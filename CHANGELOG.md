@@ -1,31 +1,57 @@
-<!-- 11.2.9+security-01 START -->
+<!-- 11.6.1+security-01 START -->
 
-# 11.2.9+security-01 (2025-05-21)
-
-### Features and enhancements
-
-- **Chore:** Update libs with CVE in dependencies [#102712](https://github.com/grafana/grafana/pull/102712), [@grambbledook](https://github.com/grambbledook)
-- **Go:** Bump to 1.24.2 [#103529](https://github.com/grafana/grafana/pull/103529), [@Proximyst](https://github.com/Proximyst)
-- **Go:** Bump to 1.24.2 (Enterprise)
+# 11.6.1+security-01 (2025-05-21)
 
 ### Bug fixes
 
-- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103102](https://github.com/grafana/grafana/pull/103102), [@volcanonoodle](https://github.com/volcanonoodle)
-- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102982](https://github.com/grafana/grafana/pull/102982), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-4123
 
-<!-- 11.2.9+security-01 END -->
+<!-- 11.6.1+security-01 END -->
+<!-- 11.5.4+security-01 START -->
+
+# 11.5.4+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.5.4+security-01 END -->
+<!-- 11.4.4+security-01 START -->
+
+# 11.4.4+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.4.4+security-01 END -->
 <!-- 11.3.6+security-01 START -->
 
 # 11.3.6+security-01 (2025-05-21)
 
-### Features and enhancements
+### Bug fixes
 
-- **Chore:** Update libs with CVE in dependencies [#102710](https://github.com/grafana/grafana/pull/102710), [@grambbledook](https://github.com/grambbledook)
-- **Go:** Bump to 1.24.2 [#103528](https://github.com/grafana/grafana/pull/103528), [@Proximyst](https://github.com/Proximyst)
-- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103101](https://github.com/grafana/grafana/pull/103101), [@volcanonoodle](https://github.com/volcanonoodle)
-- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102983](https://github.com/grafana/grafana/pull/102983), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-4123
 
 <!-- 11.3.6+security-01 END -->
+<!-- 11.2.9+security-01 START -->
+
+# 11.2.9+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.2.9+security-01 END -->
+<!-- 10.4.18+security-01 START -->
+
+# 10.4.18+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 10.4.18+security-01 END -->
 <!-- 12.0.0 START -->
 
 # 12.0.0 (2025-05-05)
