@@ -1210,6 +1210,11 @@
     "grafana-rules-export-preview": {
       "text-loading": "Loading...."
     },
+    "group-actions": {
+      "edit": {
+        "group": "Edit"
+      }
+    },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Group",
       "namespace-picker-label-namespace": "Namespace"
