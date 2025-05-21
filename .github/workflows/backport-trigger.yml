@@ -15,5 +15,4 @@ on:
 jobs:
   trigger:
     if: github.repository == 'grafana/grafana'
-    runs-on: ubuntu-latest
     uses: .github/workflows/backport-workflow.yml
