@@ -812,8 +812,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   managedResourceCannotBeEdited() {
     return (
-      this.isManaged() &&
-      (!this.isManagedRepository() || !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits])
+      this.isManaged() && !this.isManagedRepository() && !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits]
     );
   }
 
