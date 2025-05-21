@@ -78,33 +78,33 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**
-1. Type `MSSQL` in the search bar.
-1. Select the **MSSQL data source**.
+1. Type `Microsoft SQL Server` in the search bar.
+1. Select **Microsoft SQL Server** under data source.
 1. Click **Add new data source** in the upper right.
 
-Grafana takes you to the **Settings** tab where you will set up your configuration.
+Grafana takes you to the **Settings** tab, where you will set up your Microsoft SQL Server configuration.
 
 
+TLS/SSL Auth
+Encrypt
+Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
+disable - Data sent between client and server is not encrypted.
+false - Data sent between client and server is not encrypted beyond the login packet. (default)
+true - Data sent between client and server is encrypted.
+If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
 
+The default is `false`. The options are `disable`, `false` and `true`.
 
+Authentication
+Authentication Type
+SQL Server Authentication This is the default mechanism to connect to MS SQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
+Windows Authentication Windows Integrated Security - single sign on for users who are already logged onto Windows and have enabled this option for MS SQL Server.
+Windows AD: Username + password Windows Active Directory - Sign on for domain user via username/password.
+Windows AD: Keytab Windows Active Directory - Sign on for domain user via keytab file.
+Windows AD: Credential cache Windows Active Directory - Sign on for domain user via credential cache.
+Windows AD: Credential cache file Windows Active Directory - Sign on for domain user via credential cache file.
 
-
-
-
-
-
-<!-- To configure basic settings for the data source, complete the following steps:
-
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `Microsoft SQL Server` in the search bar.
-1. Select **Microsoft SQL Server**.
-
-The **Settings** tab of the data source is displayed. -->
-
-
-
-
+The default is `SQL server authentication`. 
 
 
 
