@@ -504,6 +504,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if !opts.EnableInitialAdminCreation {
+		securitySection, err := getOrCreateSection("security")
+		require.NoError(t, err)
+		_, err = securitySection.NewKey("disable_initial_admin_creation", "true")
+		require.NoError(t, err)
+	}
+
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -568,6 +575,7 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	EnableInitialAdminCreation            bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

@@ -158,8 +158,9 @@ apps:
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableLog:         true,
-		AnonymousUserRole: org.RoleAdmin,
+		EnableLog:                  true,
+		AnonymousUserRole:          org.RoleAdmin,
+		EnableInitialAdminCreation: true,
 	})
 
 	err = fs.CopyRecursive(provisioningFile, filepath.Join(dir, "conf", "provisioning", "plugins", "apps.yaml"))
@@ -190,8 +191,7 @@ apps:
 		})
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		endpoint := fmt.Sprintf("http://%s/api/plugins/test-app/dashboards", grafanaListedAddr)
-		resp, err = http.Get(endpoint)
+		resp, err = http.Get(fmt.Sprintf("http://%s/api/plugins/test-app/dashboards", grafanaListedAddr))
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		t.Cleanup(func() {
@@ -199,7 +199,16 @@ apps:
 			require.NoError(t, err)
 		})
 
-		resp, err = http.Get(fmt.Sprintf("http://%s/api/dashboards/uid/1MHHlVjzz", grafanaListedAddr))
+		resp, err = http.Post(fmt.Sprintf("http://admin:admin@%s/api/admin/provisioning/plugins/reload", grafanaListedAddr), "", nil)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		resp, err = http.Get(fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/1MHHlVjzz", grafanaListedAddr))
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		t.Cleanup(func() {

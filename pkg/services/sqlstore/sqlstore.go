@@ -555,59 +555,30 @@ func TestMain(m *testing.M) {
 			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
 		}
 
-		// set test db config
-		cfg := setting.NewCfg()
-		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
-
-		sec, err := cfg.Raw.NewSection("database")
+		cfgDBSec, err := testCfg.Raw.GetSection("database")
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err := sec.NewKey("type", dbType); err != nil {
-			return nil, err
-		}
+		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
-			return nil, err
-		}
-		if _, err := sec.NewKey("path", testDB.Path); err != nil {
-			return nil, err
-		}
+		cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+		cfgDBSec.Key("path").SetValue(testDB.Path)
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
+			cfgDBSec.Key("skip_migrations").SetValue("true")
 		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-
 		// need to get engine to clean db before we init
-		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		engine, err := xorm.NewEngine(dbType, testDB.ConnStr)
 		if err != nil {
 			return nil, err
 		}
@@ -624,7 +595,7 @@ func TestMain(m *testing.M) {
 		}
 
 		tracer := tracing.InitializeTracerForTest()
-		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
+		testSQLStore, err = newStore(testCfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}
