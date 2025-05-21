@@ -2,7 +2,7 @@ import { Action, ActionType, ActionVariableInput, ActionVariableType } from '@gr
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 
-import { interpolateActionVariables } from './utils';
+import { buildActionRequest, genReplaceActionVars } from './utils';
 
 describe('interpolateActionVariables', () => {
   const actionMock = (): Action => ({
@@ -47,8 +47,17 @@ describe('interpolateActionVariables', () => {
     };
     const actionVars: ActionVariableInput = {};
 
-    const result = interpolateActionVariables(action, actionVars);
-    expect(result).toEqual(action);
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(request).toEqual({
+      headers: {
+        'X-Grafana-Action': '1',
+      },
+      method: 'GET',
+      url: 'http://test.com/api/',
+    });
   });
 
   it('should interpolate variables in URL', () => {
@@ -58,8 +67,13 @@ describe('interpolateActionVariables', () => {
       thermostat2: 'T-002',
     };
 
-    const result = interpolateActionVariables(action, actionVars);
-    expect(result.fetch?.url).toBe('http://test.com/api/thermostats/T-001/sync/T-002');
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(request.url).toBe(
+      'http://test.com/api/thermostats/T-001/sync/T-002?primary=Device-T-001&secondary=Room-T-002&mode=sync'
+    );
   });
 
   it('should interpolate variables in request body', () => {
@@ -69,10 +83,11 @@ describe('interpolateActionVariables', () => {
       thermostat2: 'T-002',
     };
 
-    const result = interpolateActionVariables(action, actionVars);
-    const parsedBody = JSON.parse(result.fetch?.body || '{}');
-
-    expect(parsedBody).toEqual({
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(JSON.parse(request.data)).toEqual({
       primary: 'Device-T-001',
       data: {
         secondary: 'Room-T-002',
@@ -90,11 +105,15 @@ describe('interpolateActionVariables', () => {
       thermostat2: 'T-002',
     };
 
-    const result = interpolateActionVariables(action, actionVars);
-    expect(result.fetch?.headers).toEqual([
-      ['Device-ID', 'Thermostat-T-001'],
-      ['Content-Type', 'application/json'],
-    ]);
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(request.headers).toEqual({
+      'Content-Type': 'application/json',
+      'Device-ID': 'Thermostat-T-001',
+      'X-Grafana-Action': '1',
+    });
   });
 
   it('should interpolate variables in query params', () => {
@@ -104,12 +123,13 @@ describe('interpolateActionVariables', () => {
       thermostat2: 'T-002',
     };
 
-    const result = interpolateActionVariables(action, actionVars);
-    expect(result.fetch?.queryParams).toEqual([
-      ['primary', 'Device-T-001'],
-      ['secondary', 'Room-T-002'],
-      ['mode', 'sync'],
-    ]);
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(request.url).toEqual(
+      'http://test.com/api/thermostats/T-001/sync/T-002?primary=Device-T-001&secondary=Room-T-002&mode=sync'
+    );
   });
 
   it('should only interpolate provided variables', () => {
@@ -119,10 +139,13 @@ describe('interpolateActionVariables', () => {
       // thermostat2 is not provided
     };
 
-    const result = interpolateActionVariables(action, actionVars);
-    expect(result.fetch?.url).toBe('http://test.com/api/thermostats/T-001/sync/$thermostat2');
-
-    const parsedBody = JSON.parse(result.fetch?.body || '{}');
-    expect(parsedBody.data.secondary).toBe('Room-$thermostat2');
+    const request = buildActionRequest(
+      action,
+      genReplaceActionVars((str) => str, action, actionVars)
+    );
+    expect(request.url).toBe(
+      'http://test.com/api/thermostats/T-001/sync/$thermostat2?primary=Device-T-001&secondary=Room-%24thermostat2&mode=sync'
+    );
+    expect(JSON.parse(request.data).data.secondary).toBe('Room-$thermostat2');
   });
 });
