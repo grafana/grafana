@@ -176,7 +176,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       // just changing the title here, in real case scenario changes are reflected through migrations
-      // eg. panel version
+      // eg. panel version - same for other manager tests below
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
@@ -188,8 +188,6 @@ describe('SaveDashboardDrawer', () => {
         meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Kubectl } } },
       });
 
-      // just changing the title here, in real case scenario changes are reflected through migrations
-      // eg. panel version - same for other manager tests below
       dashboard.setState({ title: 'updated title' });
       openAndRender();
 
