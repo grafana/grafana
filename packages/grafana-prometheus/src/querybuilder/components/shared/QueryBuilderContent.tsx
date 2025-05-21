@@ -66,7 +66,7 @@ export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
       <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
-          // eslint-ignore
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           datasource={datasource as DataSourceApi}
           query={query}
           onChange={onChange}
