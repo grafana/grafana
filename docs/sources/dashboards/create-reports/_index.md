@@ -127,12 +127,12 @@ To create a report, follow these steps:
 1. Click the **Share** drop-down list in the top-right corner of the dashboard.
 1. Click **Schedule report**.
 
-    The **Schedule report** drawer opens. Any other reports using this dashboard are listed in the drawer. You can also click **See all reports** to navigate to **Reporting** for a full list of reports generated from all dashboards.
+   The **Schedule report** drawer opens. Any other reports using this dashboard are listed in the drawer. You can also click **See all reports** to navigate to **Reporting** for a full list of reports generated from all dashboards.
 
 1. Click **+ Create a new report**.
 1. Update the name of the report, if needed.
 
-    By default, the report name is the name of the dashboard.
+   By default, the report name is the name of the dashboard.
 
 1. Expand and complete each section of the report, as needed:
    - [Dashboards](#1-dashboards)
@@ -141,10 +141,11 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+
    - The menu icon to access the following options:
-       - **Download CSV**
-       - **Preview PDF**
-       - **Report settings** - Takes you to **Reporting** and opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **Download CSV**
+     - **Preview PDF**
+     - **Report settings** - Takes you to **Reporting** and opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -162,7 +163,7 @@ To create a report, follow these steps:
 1. In the main menu, click **Dashboards > Reporting**.
 1. Click **+ Create a new report**.
 
-    The **Schedule report** drawer opens.
+   The **Schedule report** drawer opens.
 
 1. Enter a name for the report.
 1. Expand and complete each section of the report, as needed:
@@ -172,10 +173,11 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+
    - The menu icon to access the following options:
-       - **Download CSV**
-       - **Preview PDF**
-       - **Report settings** - Opens the **Report template settings** drawer where you can configure organization-level report settings.
+     - **Download CSV**
+     - **Preview PDF**
+     - **Report settings** - Opens the **Report template settings** drawer where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
