@@ -30,6 +30,8 @@ func main() {
 }
 
 func Run() *cli.Command {
+	var suitePath string
+
 	return &cli.Command{
 		Name:  "e2e",
 		Usage: "Run the test suite",
@@ -112,7 +114,7 @@ func Run() *cli.Command {
 				Value: "Pacific/Honolulu",
 			},
 
-			&cli.BoolWithInverseFlag{
+			&cli.BoolFlag{
 				Name:     "start-grafana",
 				Usage:    "Start and wait for Grafana before running the tests",
 				Value:    true,
@@ -127,10 +129,11 @@ func Run() *cli.Command {
 			},
 
 			&cli.StringFlag{
-				Name:      "suite",
-				Usage:     "Path to the suite to run (e.g. './e2e/dashboards-suite')",
-				TakesFile: true,
-				Required:  true,
+				Name:        "suite",
+				Usage:       "Path to the suite to run (e.g. './e2e/dashboards-suite')",
+				TakesFile:   true,
+				Required:    true,
+				Destination: &suitePath,
 			},
 		},
 		Action: runAction,
@@ -138,15 +141,15 @@ func Run() *cli.Command {
 }
 
 func runAction(ctx context.Context, c *cli.Command) error {
-	repoRoot, err := gitRepoRoot(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get git repo root: %w", err)
-	}
-
 	suitePath := c.String("suite")
-	suitePath, err = normalisePath(suitePath)
+	suitePath, err := normalisePath(suitePath)
 	if err != nil {
 		return fmt.Errorf("failed to normalise suite path: %w", err)
+	}
+
+	repoRoot, err := gitRepoRoot(ctx, suitePath)
+	if err != nil {
+		return fmt.Errorf("failed to get git repo root: %w", err)
 	}
 
 	screenshotsFolder := path.Join(suitePath, "screenshots")
@@ -247,8 +250,9 @@ func runAction(ctx context.Context, c *cli.Command) error {
 	return err
 }
 
-func gitRepoRoot(ctx context.Context) (string, error) {
+func gitRepoRoot(ctx context.Context, dir string) (string, error) {
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")
+	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get git repo root: %w", err)
