@@ -1,11 +1,11 @@
-name: Nightly Tests
+name: Grafana Nightly
 
 on:
   schedule:
     - cron: "0 2 * * *"
   pull_request:
 jobs:
-  backend:
+  test_backend:
     runs-on: ubuntu-latest-8-cores
     steps:
       - name: Checkout code
@@ -30,7 +30,7 @@ jobs:
           go test -count=1 -coveremode=atomic -timeout=5m -run '^TestIntegration' \
           $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | \
           grep -o '\(.*\)/' | sort -u)
-  frontend:
+  test_frontend:
     runs-on: ubuntu-latest-8-cores
     steps:
       - name: Checkout code
