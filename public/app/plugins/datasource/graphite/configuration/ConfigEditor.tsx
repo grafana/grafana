@@ -10,6 +10,7 @@ import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '
 import { config } from 'app/core/config';
 import store from 'app/core/store';
 
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { GraphiteOptions, GraphiteType } from '../types';
 import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 
@@ -52,8 +53,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       <>
         {options.access === 'direct' && (
           <Alert title="Deprecation Notice" severity="warning">
-            This data source uses browser access mode. This mode is deprecated and will be removed in the future. Please
-            use server access mode instead.
+            {BROWSER_MODE_DISABLED_MESSAGE}
           </Alert>
         )}
         <DataSourceHttpSettings
