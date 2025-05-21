@@ -42,7 +42,7 @@ jobs:
 
   build-e2e-runner:
     name: Build E2E test runner
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
