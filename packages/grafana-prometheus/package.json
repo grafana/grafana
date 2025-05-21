@@ -15,32 +15,8 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-prometheus"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/cjs/index.d.cts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "import": "./dist/esm/index.mjs",
-      "types": "./dist/esm/index.d.ts"
-    },
-    "./language_provider": {
-      "import": "./dist/esm/language_provider.mjs",
-      "types": "./dist/esm/language_provider.d.ts"
-    },
-    "./language_utils": {
-      "import": "./dist/esm/language_utils.mjs",
-      "types": "./dist/esm/language_utils.d.ts"
-    },
-    "./querybuilder/*": {
-      "import": "./dist/esm/querybuilder/*.mjs",
-      "types": "./dist/esm/querybuilder/*.d.ts"
-    },
-    "./utf8_support": {
-      "import": "./dist/esm/utf8_support.mjs",
-      "types": "./dist/esm/utf8_support.d.ts"
-    }
-  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "files": [
     "./dist",
     "./README.md",
@@ -48,10 +24,52 @@
     "./LICENSE_AGPL"
   ],
   "publishConfig": {
+    "access": "public",
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
     "types": "./dist/cjs/index.d.cts",
-    "access": "public"
+    "exports": {
+      "./language_provider": {
+        "import": {
+          "types": "./dist/esm/language_provider.d.mts",
+          "default": "./dist/esm/language_provider.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/language_provider.d.cts",
+          "default": "./dist/cjs/language_provider.cjs"
+        }
+      },
+      "./language_utils": {
+        "import": {
+          "types": "./dist/esm/language_utils.d.mts",
+          "default": "./dist/esm/language_utils.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/language_utils.d.cts",
+          "default": "./dist/cjs/language_utils.cjs"
+        }
+      },
+      "./querybuilder/*": {
+        "import": {
+          "types": "./dist/esm/querybuilder/*.d.mts",
+          "default": "./dist/esm/querybuilder/*.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/querybuilder/*.d.cts",
+          "default": "./dist/cjs/querybuilder/*.cjs"
+        }
+      },
+      "./utf8_support": {
+        "import": {
+          "types": "./dist/esm/utf8_support.d.mts",
+          "default": "./dist/esm/utf8_support.mjs"
+        },
+        "require": {
+          "types": "./dist/cjs/utf8_support.d.cts",
+          "default": "./dist/cjs/utf8_support.cjs"
+        }
+      }
+    }
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
