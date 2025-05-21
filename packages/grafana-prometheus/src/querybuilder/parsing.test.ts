@@ -199,47 +199,77 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  describe('nested binary operation errors in visual query editor', () => {
+  describe('nested binary operation in visual query editor', () => {
     // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
-    it('throws error when visual query parse is ambiguous', () => {
+    it('does not throw error when visual query parse is unambiguous (no brackets)', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
-      ).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 68,
-          },
-        ],
+      ).toEqual({
+        errors: [],
+        query: {
+          metric: 'node_arp_entries',
+          labels: [],
+          operations: [{ id: 'topk', params: [5] }],
+          binaryQueries: [
+            {
+              operator: '/',
+              query: {
+                metric: 'node_arp_entries',
+                labels: [{ label: 'cluster', op: '=', value: 'dev-eu-west-2' }],
+                operations: [],
+              },
+            },
+          ],
+        },
       });
     });
 
-    it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
-      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 13,
-          },
-        ],
+    it('does not throw error when visual query parse with aggregation (scalar) is unambiguous', () => {
+      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toEqual({
+        errors: [],
+        query: {
+          metric: '',
+          labels: [],
+          operations: [
+            { id: '__divide_by', params: [2] },
+            { id: 'topk', params: [5] },
+          ],
+        },
       });
     });
 
-    it('throws error when visual query parse with functionCall is ambiguous', () => {
+    it('does not throw error when visual query parse with with functionCall is unambiguous', () => {
       expect(
         buildVisualQueryFromString(
           'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
         )
-      ).toMatchObject({
-        errors: [
-          {
-            from: 10,
-            text: 'Query parsing is ambiguous.',
-            to: 87,
-          },
-        ],
+      ).toEqual({
+        errors: [],
+        query: {
+          metric: 'X',
+          labels: [{ label: 'le', op: '=', value: '2.5' }],
+          operations: [
+            { id: 'rate', params: ['5m'] },
+            {
+              id: '__sum_by',
+              params: ['cluster'],
+            },
+            { id: 'clamp_min', params: [0.001] },
+          ],
+          binaryQueries: [
+            {
+              operator: '+',
+              query: {
+                metric: 'X',
+                labels: [{ label: 'le', op: '=', value: '5' }],
+                operations: [
+                  { id: 'rate', params: ['5m'] },
+                  { id: '__sum_by', params: ['cluster'] },
+                ],
+              },
+            },
+          ],
+        },
       });
     });
 
@@ -710,30 +740,18 @@ describe('buildVisualQueryFromString', () => {
         metric: 'cluster_namespace_slug_dialer_name',
         labels: [],
         operations: [
-          {
-            id: '__addition',
-            params: [1],
-          },
-          {
-            id: '__subtraction',
-            params: [1],
-          },
+          { id: '__exponent', params: [1] },
           {
             id: '__divide_by',
             params: [1],
           },
+          { id: '__multiply_by', params: [1] },
+          { id: '__modulo', params: [1] },
           {
-            id: '__multiply_by',
+            id: '__addition',
             params: [1],
           },
-          {
-            id: '__modulo',
-            params: [1],
-          },
-          {
-            id: '__exponent',
-            params: [1],
-          },
+          { id: '__subtraction', params: [1] },
         ],
       },
     });
@@ -962,6 +980,33 @@ describe('buildVisualQueryFromString', () => {
           {
             id: 'topk',
             params: ['$custom'],
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses aggregation binary expression', () => {
+    expect(buildVisualQueryFromString('count_values("countGroups", count_values by(group) ("countReplicated", Foo{} == 0) == 8)')).toEqual(
+      noErrors({
+        metric: 'Foo',
+        labels: [],
+        operations: [
+          {
+            id: '__equal_to',
+            params: [0, false],
+          },
+          {
+            id: '__count_values_by',
+            params: ['countReplicated', 'group'],
+          },
+          {
+            id: '__equal_to',
+            params: [8, false],
+          },
+          {
+            id: 'count_values',
+            params: ['countGroups'],
           },
         ],
       })

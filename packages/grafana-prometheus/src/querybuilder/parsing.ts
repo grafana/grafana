@@ -250,7 +250,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   //   the query model.
   // - it is easier to handle template variables this way as template variable is an error for the parser
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
-    let match = getString(expr, node).match(/\[(.+)\]/);
+    let match = getString(expr, node).match(/\[(.+)]/);
     if (match?.[1]) {
       interval = match[1];
       // We were replaced the builtin variables to prevent errors
@@ -330,24 +330,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       let child = node.firstChild;
 
       while (child) {
-        let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
-        if (child.type.id === BinaryExpr) {
-          binaryExpressionWithinFunctionArgs = child;
-        } else {
-          binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
-        }
-
-        if (binaryExpressionWithinFunctionArgs) {
-          context.errors.push({
-            text: t(
-              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
-              'Query parsing is ambiguous.'
-            ),
-            from: binaryExpressionWithinFunctionArgs.from,
-            to: binaryExpressionWithinFunctionArgs.to,
-          });
-        }
-
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
@@ -407,6 +389,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const rightBinary = right.type.id === BinaryExpr;
 
+  let oldLen = visQuery.operations.length;
+
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
     //  if query starts with a number that isn't handled now.
@@ -416,14 +400,16 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, left, context);
   }
 
+  let newLen = visQuery.operations.length;
+
   if (rightNumber) {
-    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    visQuery.operations.splice(newLen - oldLen, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.type.id === NumberDurationLiteral) {
-      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+      visQuery.operations.splice(newLen - oldLen, 0, makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
     // If we added the first number literal as operation here we still can continue and handle the rest as the first
@@ -482,8 +468,5 @@ function getBinaryModifier(
 }
 
 function isEmptyQuery(query: PromVisualQuery) {
-  if (query.labels.length === 0 && query.operations.length === 0 && !query.metric) {
-    return true;
-  }
-  return false;
+  return query.labels.length === 0 && query.operations.length === 0 && !query.metric;
 }
