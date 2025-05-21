@@ -7,10 +7,9 @@ import { useStyles2 } from '../../../themes';
 
 interface Props {
   info?: TimeZoneInfo;
-  testId?: string;
 }
 
-export const TimeZoneDescription = ({ info, testId }: Props) => {
+export const TimeZoneDescription = ({ info }: Props) => {
   const styles = useStyles2(getStyles);
   const description = useDescription(info);
 
@@ -19,7 +18,7 @@ export const TimeZoneDescription = ({ info, testId }: Props) => {
   }
 
   return (
-    <div data-testid={testId} className={styles.description}>
+    <div data-testid="time-picker-tooltip-timezone" className={styles.description}>
       {description}
     </div>
   );

@@ -256,7 +256,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
       </div>
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneFormatUserFriendly(timeZone)}</span>
-        <TimeZoneDescription testId="time-picker-tooltip-timezone" info={timeZoneInfo} />
+        <TimeZoneDescription info={timeZoneInfo} />
       </div>
     </>
   );
