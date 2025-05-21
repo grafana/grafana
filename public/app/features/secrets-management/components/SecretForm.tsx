@@ -1,23 +1,25 @@
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { css } from '@emotion/css';
+import { FormEvent, useState } from 'react';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
-import { Button, Field, Input, MultiSelect, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/';
+import { Button, Field, IconButton, Input, MultiSelect, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { DECRYPT_ALLOW_LIST_OPTIONS } from '../constants';
-import { validateSecretDescription, validateSecretName, validateSecretValue } from '../utils';
+import { DECRYPT_ALLOW_LIST_OPTIONS, SECRETS_MAX_LABELS } from '../constants';
+import { SecretFormValues } from '../types';
+import {
+  checkLabelNameAvailability,
+  onChangeTransformation,
+  transformSecretLabel,
+  transformSecretName,
+  validateSecretDescription,
+  validateSecretLabel,
+  validateSecretName,
+  validateSecretValue,
+} from '../utils';
 
 import { SecretValueInput } from './SecretValueInput';
-
-export interface SecretFormValues {
-  name: string;
-  description: string;
-  value?: string;
-  uid?: string;
-  enabled?: boolean;
-  audiences: Array<{ label: string; value: string }>;
-  keeper?: string;
-}
 
 interface BaseSecretFormProps {
   onCancel: () => void;
@@ -38,30 +40,47 @@ export function SecretForm({
   const audiences = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.audiences ?? [])];
   const isNew = initialValues?.uid === undefined;
   const [isConfigured, setIsConfigured] = useState(!isNew);
+  const styles = useStyles2(getStyles);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     control,
+    setValue,
+    getValues,
+    trigger,
   } = useForm<SecretFormValues>({
     defaultValues: initialValues,
+  });
+
+  const {
+    fields: labelFields,
+    append,
+    remove,
+  } = useFieldArray<SecretFormValues>({
+    control,
+    name: 'labels',
   });
 
   const handleResetValue = () => {
     setIsConfigured(false);
   };
 
+  const handleNameOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onChangeTransformation(event, transformSecretName, (value) => {
+      setValue('name', value);
+      trigger('name');
+    });
+  };
+
+  const maxLabelsReached = getValues('labels')?.length >= SECRETS_MAX_LABELS;
+
   return (
     <form
-      onSubmit={handleSubmit(
-        (data) => {
-          onSubmit(data);
-        },
-        (errors) => {
-          console.log(errors);
-        }
-      )}
+      onSubmit={handleSubmit((data) => {
+        onSubmit(data);
+      })}
     >
       <input type="hidden" {...register('uid')} />
       <Field
@@ -76,6 +95,7 @@ export function SecretForm({
           {...register('name', {
             validate: validateSecretName,
           })}
+          onChange={handleNameOnChange}
         />
       </Field>
       <Field
@@ -125,6 +145,93 @@ export function SecretForm({
           )}
         />
       </Field>
+
+      <Field
+        description={t('secrets-management.form.labels.description', 'Labels to categorize the secret')}
+        label={t('secrets-management.form.labels.label', 'Labels')}
+        invalid={Boolean(errors?.labels?.message)}
+        error={errors?.labels?.message as string}
+      >
+        <div>
+          {labelFields.map((field, index) => {
+            return (
+              <div key={field.id} className={styles.labelRow}>
+                <Field
+                  htmlFor={`secret-labels.${index}.name`}
+                  className={styles.labelField}
+                  invalid={Boolean(errors?.labels?.[index]?.name?.message)}
+                  error={errors?.labels?.[index]?.name?.message as string}
+                >
+                  <Input
+                    id={`secret-labels.${index}.name`}
+                    placeholder={t('secrets-management.form.label-name.placeholder', 'name')}
+                    {...register(`labels.${index}.name` as const, {
+                      validate: {
+                        checkAvailability: (label, formValues) => checkLabelNameAvailability(label, index, formValues),
+                      },
+                    })}
+                    onChange={(event: FormEvent<HTMLInputElement>) => {
+                      const fieldName = `labels.${index}.name` as const;
+                      onChangeTransformation(event, transformSecretLabel, (value) => setValue(fieldName, value));
+                      trigger(fieldName);
+                    }}
+                  />
+                </Field>
+                <Field
+                  htmlFor={`secret-labels.${index}.value`}
+                  className={styles.labelField}
+                  invalid={Boolean(errors?.labels?.[index]?.value?.message)}
+                  error={errors?.labels?.[index]?.value?.message as string}
+                >
+                  <Input
+                    id={`secret-labels.${index}.value`}
+                    placeholder={t('secrets-management.form.label-value.placeholder', 'value')}
+                    {...register(`labels.${index}.value` as const, {
+                      validate: (value) => validateSecretLabel('value', value),
+                    })}
+                    onChange={(event: FormEvent<HTMLInputElement>) => {
+                      const fieldName = `labels.${index}.value` as const;
+                      onChangeTransformation(event, transformSecretLabel, (value) => setValue(fieldName, value));
+                      trigger(fieldName);
+                    }}
+                  />
+                </Field>
+                <IconButton
+                  aria-label={t('secrets-management.form.labels.actions.aria-label-remove', 'Remove label')}
+                  name="minus-circle"
+                  onClick={() => remove(index)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </Field>
+
+      <div>
+        <Button
+          size="sm"
+          onClick={() => {
+            append({ name: '', value: '' });
+          }}
+          icon="plus"
+          variant="secondary"
+          disabled={maxLabelsReached}
+          tooltip={
+            maxLabelsReached
+              ? t(
+                  'secrets-management.form.labels.error.too-many',
+                  'Maximum number of labels reached (Max: {{maxLabels}})',
+                  {
+                    maxLabels: SECRETS_MAX_LABELS,
+                  }
+                )
+              : undefined
+          }
+        >
+          {t('secrets-management.form.labels.actions.add', 'Add label')}
+        </Button>
+      </div>
+
       <Stack gap={1} justifyContent="flex-end">
         <Button variant="secondary" onClick={onCancel}>
           {t('secrets-management.form.btn-cancel', 'Cancel')}
@@ -135,4 +242,29 @@ export function SecretForm({
       </Stack>
     </form>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    labelRow: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'flex-start',
+      '& > button': {
+        marginTop: theme.spacing(1),
+      },
+      '& > div': {
+        flex: '1 1 100%',
+      },
+    }),
+    buttons: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      marginTop: theme.spacing(1),
+      gap: theme.spacing(1),
+    }),
+    labelField: css({
+      marginBottom: theme.spacing(1), // same as labelRow gap
+    }),
+  };
 }

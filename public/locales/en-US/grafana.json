@@ -9335,6 +9335,34 @@
         "description": "Services able to decrypt secret value",
         "placeholder": "Choose decrypter(s)"
       },
+      "labels": {
+        "label": "Labels",
+        "description": "Allows you to specify a set of additional labels to be attached to the secret",
+        "error": {
+          "too-many": "Maximum number of labels reached (Max: {{maxLabels}})"
+        },
+        "actions": {
+          "add": "Add label",
+          "aria-label-remove": "Remove label"
+        }
+      },
+      "label-name": {
+        "placeholder": "name",
+        "error": {
+          "required": "Label name is required",
+          "unique-name": "Label name must be unique",
+          "too-long": "Label name must be less than {{maxLength}} characters",
+          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods"
+        }
+      },
+      "label-value": {
+        "placeholder": "value",
+        "error": {
+          "required": "Label value is required",
+          "too-long": "Label value must be less than {{maxLength}} characters",
+          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods"
+        }
+      },
       "btn-cancel": "Cancel",
       "btn-create": "Create",
       "btn-update": "Update"

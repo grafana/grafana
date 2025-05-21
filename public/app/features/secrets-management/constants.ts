@@ -17,3 +17,5 @@ export const DECRYPT_ALLOW_LIST_OPTIONS = (
 
 export const SUBDOMAIN_MAX_LENGTH = 253;
 export const LABEL_MAX_LENGTH = 63;
+
+export const SECRETS_MAX_LABELS = 10;

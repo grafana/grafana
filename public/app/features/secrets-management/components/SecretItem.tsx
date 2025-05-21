@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { debounce } from 'lodash';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
@@ -20,6 +21,27 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
   const styles = useStyles2(getStyles);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const isPending = isSecretPending(secret);
+  const [isHeadingWrapped, setIsHeadingWrapped] = useState(false);
+  const itemRef = useRef<HTMLDivElement>(null);
+  const debouncedResizeHandler = useMemo(() => {
+    return debounce(
+      () => {
+        const { height } = itemRef?.current?.getBoundingClientRect() ?? { height: 0 };
+        setIsHeadingWrapped(height > 26);
+      },
+      150,
+      { maxWait: 500 }
+    );
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      debouncedResizeHandler();
+    };
+    handler();
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, [debouncedResizeHandler]);
 
   const handleEdit = () => {
     onEditSecret(secret.name);
@@ -46,10 +68,15 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
             <LoadingBar width={400} />
           </div>
         )}
-        <div className={styles.headerContainer}>
+        <div ref={itemRef} className={cx([styles.headerContainer, isHeadingWrapped && 'wrapped'])}>
           <Text element="h2" variant="h4">
             {secret.name}
           </Text>
+          <div className={styles.tagsContainer}>
+            {secret.labels?.map((label) => (
+              <Tag key={label.name} colorIndex={3} name={`${label.name}: ${label.value}`} />
+            ))}
+          </div>
           <div className={styles.headerActions}>
             <Button
               fill="outline"
@@ -151,6 +178,8 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
   );
 }
 
+const ACTIONS_MARGIN = '108px'; // actions width + gap
+
 const getStyles = (theme: GrafanaTheme2) => ({
   // Copy/paste from access-policies
   audienceBadge: css({
@@ -160,22 +189,34 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   headerContainer: css({
     display: 'flex',
+    gap: theme.spacing(2),
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    position: 'relative',
     marginBottom: theme.spacing(2),
+    '&.wrapped > h2': {
+      wordBreak: 'break-word',
+      marginRight: ACTIONS_MARGIN,
+    },
+    overflow: 'hidden',
   }),
   headerActions: css({
     display: 'flex',
     gap: theme.spacing(1),
+    backgroundColor: theme.colors.background.secondary, // for when toggling .wrapped
+    position: 'absolute',
+    right: 0,
+    top: 0,
   }),
   li: css({
     position: 'relative',
     listStyle: 'none',
     backgroundColor: theme.colors.background.secondary,
-    // color: theme.colors.text.secondary,
     fontSize: theme.typography.body.fontSize,
     padding: theme.spacing(2),
     marginBottom: theme.spacing(2),
+    overflow: 'auto',
   }),
 
   heading: css({
@@ -241,6 +282,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '& > strong': {
       color: theme.colors.text.primary,
+    },
+  }),
+  tagsContainer: css({
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    flex: '1 1 auto',
+    marginRight: ACTIONS_MARGIN,
+    flexWrap: 'wrap',
+    '& > *': {
+      wordBreak: 'break-word',
+    },
+    '.wrapped &': {
+      marginRight: 0,
     },
   }),
 });

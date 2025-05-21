@@ -24,6 +24,7 @@ interface Metadata {
   resourceVersion: string;
   uid: string;
   annotations?: MetaDataAnnotations;
+  labels?: Record<string, string>;
 }
 
 export interface SecretsListResponseItem {
@@ -53,8 +54,6 @@ export interface CreateSecretPayload {
   };
 }
 
-export type SecretRequestIdentifier = Secret['name'];
-
 export interface SecretsListResponse {
   kind: 'SecureValueList';
   apiVersion: string;
@@ -74,11 +73,23 @@ export interface Secret {
   createdBy?: MetaDataAnnotations['grafana.app/createdBy'];
   modified?: MetaDataAnnotations['grafana.app/updatedTimestamp'];
   modifiedBy?: MetaDataAnnotations['grafana.app/updatedBy'];
+  labels: Array<{ name: string; value: string }>;
 }
 
 export interface NewSecret extends Omit<Secret, 'uid'> {
   uid: never;
   value: string;
+}
+
+export interface SecretFormValues {
+  name: string;
+  description: string;
+  value?: string;
+  uid?: string;
+  enabled?: boolean;
+  audiences: Array<{ label: string; value: string }>;
+  keeper?: string;
+  labels: Array<{ name: string; value: string }>;
 }
 
 // TypeScript doesn't like `import { Props as InputProps } from '@grafana/ui/src/components/Input/Input'`, this is a copy-paste of the InputProps interface

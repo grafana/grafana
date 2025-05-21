@@ -1,12 +1,14 @@
+import { FormEvent } from 'react';
+
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 
-import { SecretFormValues } from './components/SecretForm';
-import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, SUBDOMAIN_MAX_LENGTH } from './constants';
+import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
 import {
   CreateSecretPayload,
   NewSecret,
   Secret,
+  SecretFormValues,
   SecretsListResponse,
   SecretsListResponseItem,
   SecretStatusPhase,
@@ -32,19 +34,26 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
     createdBy: subject.metadata.annotations?.['grafana.app/createdBy'],
     modified: dateTimeFormat(subject.metadata.creationTimestamp),
     modifiedBy: subject.metadata.annotations?.['grafana.app/updatedBy'],
+    labels: Object.entries(subject.metadata.labels ?? {}).map(([name, value]) => ({
+      name,
+      value,
+    })),
   };
 }
 
 export function transformFromSecret(
   secret: (Partial<Secret> & { value?: string }) | SecretFormValues
 ): CreateSecretPayload | Omit<CreateSecretPayload, CreateSecretPayload['spec']['value']> {
+  const labels = (secret?.labels ?? []).reduce<SecretsListResponseItem['metadata']['labels']>((acc, label) => {
+    acc![label.name] = label.value;
+    return acc;
+  }, {});
+
   return {
     metadata: {
       name: secret.name,
       ...(!!secret.uid ? { uid: secret.uid } : undefined),
-      labels: {
-        prod: 'true',
-      },
+      ...(!!secret?.labels?.length ? { labels } : undefined),
     },
     spec: {
       description: secret.description,
@@ -70,6 +79,7 @@ export function secretToSecretFormValues(secret?: Secret): SecretFormValues | un
 
           return { label: `Unsupported (${audience})`, value: audience };
         }) ?? [],
+      labels: secret.labels,
     };
   }
 }
@@ -115,11 +125,15 @@ export function validateSecretName(value: string): true | string {
 
 export function validateSecretDescription(value: string): true | string {
   if (value.length < 1) {
-    return 'Description is required';
+    return t('secrets-management.form.description.error.required', 'Description is required');
   }
 
   if (value.length > 253) {
-    return 'Description must be less than 253 characters';
+    return t(
+      'secrets-management.form.description.error.too-long',
+      'Description must be less than {{maxLength}} characters',
+      { maxLength: SUBDOMAIN_MAX_LENGTH }
+    );
   }
 
   return true;
@@ -132,8 +146,83 @@ export function validateSecretValue(value: string | undefined): true | string {
   }
 
   if (value.length < 1) {
-    return 'Value is required';
+    return t('secrets-management.form.value.error.required', 'Value is required');
   }
 
   return true;
+}
+
+export function validateSecretLabel(key: 'name' | 'value', nameOrValue: string): true | string {
+  if (nameOrValue.length < 1) {
+    return t(`secrets-management.form.label-${key}.error.required`, `Label ${key} is required`, {
+      maxLabels: LABEL_MAX_LENGTH,
+    });
+  }
+
+  if (nameOrValue.length > LABEL_MAX_LENGTH) {
+    return t(
+      `secrets-management.form.label-${key}.error.too-long`,
+      `Label ${key} must be less than {{maxLength}} characters`,
+      {
+        maxLength: LABEL_MAX_LENGTH,
+      }
+    );
+  }
+
+  return true;
+}
+
+export function checkLabelNameAvailability(
+  name: Secret['labels'][number]['name'],
+  index: number,
+  { labels }: SecretFormValues
+) {
+  const validation = validateSecretLabel('name', name);
+  if (validation !== true) {
+    return validation;
+  }
+
+  // Only check against label names before the current label
+  if (labels.slice(0, index).some((subject) => subject.name === name)) {
+    return t('secrets-management.form.label-name.unique-name', 'Label name must be unique');
+  }
+
+  return true;
+}
+
+/**
+ * Persists the cursor position in the input field when the value is transformed.
+ * This is useful when the value is transformed (e.g., to lowercase) and the cursor position is lost (moved to end).
+ *
+ * @param {FormEvent<HTMLInputElement | HTMLTextAreaElement>} event Input/Textarea event
+ * @param {(value: string) => string} transformationFunction Function to transform the value
+ * @param {(value: string) => void} onTransformedHandler Function to handle the transformed value
+ */
+export function onChangeTransformation(
+  event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+  transformationFunction: (value: string) => string,
+  onTransformedHandler: (value: string) => void
+): void {
+  const selectionStart = event?.currentTarget?.selectionStart ?? null;
+  const value = event.currentTarget.value;
+  const transformedValue = transformationFunction(value);
+
+  onTransformedHandler(transformedValue);
+  event?.currentTarget?.setSelectionRange?.(selectionStart, selectionStart);
+}
+
+/**
+ * Transforms the secret name to lowercase and replaces spaces with dashes, to make it a bit more user-friendly.
+ * @param {string} value
+ */
+export function transformSecretName(value: string): string {
+  return value.toLowerCase().replaceAll(' ', '-');
+}
+
+/**
+ * Transforms the secret label (name|value) by replacing spaces with dashes, to make it a bit more user-friendly.
+ * @param nameOrValue
+ */
+export function transformSecretLabel(nameOrValue: string): string {
+  return nameOrValue.toLowerCase().replaceAll(' ', '-');
 }
