@@ -324,6 +324,10 @@ const LogListComponent = ({
 
   const handleLogLineClick = useCallback(
     (log: LogListModel) => {
+      // Let people select text
+      if (document.getSelection()?.toString()) {
+        return;
+      }
       toggleDetails(log);
     },
     [toggleDetails]
