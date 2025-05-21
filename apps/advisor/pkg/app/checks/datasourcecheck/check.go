@@ -267,7 +267,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
-				Message: "Install plugin",
+				Message: "View plugin",
 				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
 			})
 		}
