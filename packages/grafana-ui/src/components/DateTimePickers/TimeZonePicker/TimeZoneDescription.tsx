@@ -18,7 +18,7 @@ export const TimeZoneDescription = ({ info }: Props) => {
   }
 
   return (
-    <div data-testid="time-picker-tooltip-timezone" className={styles.description}>
+    <div className={styles.description}>
       {description}
     </div>
   );

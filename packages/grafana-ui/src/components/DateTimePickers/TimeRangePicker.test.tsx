@@ -182,20 +182,19 @@ describe('TimePickerTooltip', () => {
     expect(screen.getByText(/2024-01-01 00:00:00/)).toBeInTheDocument();
     expect(screen.getByText('to')).toBeInTheDocument();
     expect(screen.getByText(/2024-01-02 00:00:00/)).toBeInTheDocument();
-    expect(screen.getByTestId('time-picker-tooltip-timezone')).toHaveTextContent('UTC, GMT');
+    expect(screen.getByText('UTC, GMT')).toBeInTheDocument();
   });
 
   it('renders time range without timezone if timezone is not passed in', () => {
     render(<TimePickerTooltip timeRange={timeRange} />);
-
-    expect(screen.queryByTestId('time-picker-tooltip-timezone')).not.toBeInTheDocument();
+    expect(screen.queryByText('United States, EDT')).not.toBeInTheDocument();
   });
 
   it('renders time range with browser timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
 
     expect(screen.getByText('Local browser time')).toBeInTheDocument();
-    expect(screen.getByTestId('time-picker-tooltip-timezone')).toHaveTextContent('United States, EDT'); // this was mocked at the beginning, in beforeAll block
+    expect(screen.getByText('United States, EDT')).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block
   });
 
   it('renders time range with specific timezone', () => {
