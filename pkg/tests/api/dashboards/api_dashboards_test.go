@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,20 +17,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -116,26 +107,6 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		require.JSONEq(t, `{"message":"Quota reached"}`, string(b))
 	})
-}
-
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
 }
 
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
