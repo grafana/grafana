@@ -775,6 +775,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
 /.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/grafana-nightly.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-pr.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-comms.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-developer-enablement-squad
