@@ -308,7 +308,7 @@
     "@react-aria/focus": "3.20.1",
     "@react-aria/overlays": "3.26.1",
     "@react-aria/utils": "3.28.1",
-    "@react-awesome-query-builder/ui": "6.6.14",
+    "@react-awesome-query-builder/ui": "6.6.15",
     "@reduxjs/toolkit": "2.5.1",
     "@visx/event": "3.12.0",
     "@visx/gradient": "3.12.0",
