@@ -7,7 +7,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-
 docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 
 # Build all of the grafana.tar.gz packages.
-dagger run --silent go run ./cmd \
+dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a frontend:enterprise \
   -a targz:pro:linux/amd64 \

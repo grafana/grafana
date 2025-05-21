@@ -13,7 +13,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   # -a docker:enterprise:linux/arm/v7 \
   # -a docker:enterprise:linux/arm/v7:ubuntu \
   
-dagger run --silent go run ./cmd \
+dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
