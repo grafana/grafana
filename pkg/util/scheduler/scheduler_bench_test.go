@@ -14,9 +14,9 @@ import (
 // benchScheduler runs a benchmark with the specified number of workers and tenants
 func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 	// Create a queue with reasonable settings for benchmark
-	q := NewQueue(&QueueOptions{
+	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{
 		MaxSizePerTenant: 10000, // Increased from 100 to avoid bottlenecks
-	})
+	}))
 	defer func() {
 		q.Close()
 		q.StopWait()
@@ -155,9 +155,9 @@ func BenchmarkScheduler_4Workers_10Tenants_10000ItemsPerTenant(b *testing.B) {
 // Benchmark comparing round-robin fairness among tenants
 func BenchmarkSchedulerFairness(b *testing.B) {
 	// Create a queue with much larger capacity to avoid queue full issues
-	q := NewQueue(&QueueOptions{
-		MaxSizePerTenant: 10000, // Increased from 100 to avoid queue full errors
-	})
+	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{
+		MaxSizePerTenant: 10000, // Increased from 100 to avoid bottlenecks
+	}))
 	defer func() {
 		q.Close()
 		q.StopWait()
@@ -285,9 +285,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 // Add a new benchmark with alternating tenant enqueuing pattern
 func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	// Create a queue with much larger capacity
-	q := NewQueue(&QueueOptions{
-		MaxSizePerTenant: 10,
-	})
+	q := NewQueue(QueueOptionsWithDefaults(nil))
 	defer func() {
 		q.Close()
 		q.StopWait()
