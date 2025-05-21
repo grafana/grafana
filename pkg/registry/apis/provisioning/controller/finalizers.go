@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"context"
 	"sort"
 	"strings"
 
-	"golang.org/x/net/context"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
