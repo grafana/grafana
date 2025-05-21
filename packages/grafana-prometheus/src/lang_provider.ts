@@ -21,6 +21,9 @@ import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { DEFAULT_SERIES_LIMIT, METRICS_LABEL_KEY, PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
+/**
+ * Prometheus API endpoints for fetching resoruces
+ */
 const API_V1 = {
   METADATA: '/api/v1/metadata',
   SERIES: '/api/v1/series',
@@ -28,6 +31,11 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/labels/${labelKey}/values`,
 };
 
+/**
+ * Language provider for Prometheus.
+ * Responsible for fetching metrics, labels, and metadata from Prometheus
+ * and providing this information to the query editor.
+ */
 export class PrometheusLanguageProvider extends LanguageProvider {
   datasource: PrometheusDatasource;
   histogramMetrics: string[];
@@ -46,6 +54,13 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
+  /**
+   * Initializes the language provider by fetching metrics, metadata, and label keys.
+   * Uses different strategies based on whether the Prometheus instance supports the labels match API.
+   *
+   * @param {TimeRange} timeRange - Time range to use for queries
+   * @returns {Promise<any[]>} Promise that resolves when all data has been fetched
+   */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
@@ -67,7 +82,18 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     return Promise.all([this.fetchMetadata()]);
   };
 
-  // TODO check if we need defaultValue and return it
+  /**
+   * Makes a request to the Prometheus API.
+   * Handles GET vs POST requests differently:
+   * - For GET requests, appends params to the URL and clears the params object
+   * - For POST requests, sends params in the request body
+   *
+   * @param {string} url - API endpoint URL
+   * @param {unknown} defaultValue - Default value to return if the request fails
+   * @param {object} params - Request parameters
+   * @param {Partial<BackendSrvRequest>} options - Additional request options
+   * @returns {Promise<any>} Response data or defaultValue if the request fails
+   */
   request = async (url: string, defaultValue: unknown, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
       // For GET requests, append params to URL and clear params object
@@ -87,6 +113,12 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     return defaultValue;
   };
 
+  /**
+   * Fetches metadata for metrics from Prometheus.
+   * Sets cache headers based on the configured metadata cache duration.
+   *
+   * @returns {Promise<void>} Promise that resolves when metadata has been fetched
+   */
   fetchMetadata = async () => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
@@ -106,6 +138,15 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   // Labels API
   // ===================================
 
+  /**
+   * Fetches all available label keys from Prometheus using labels endpoint.
+   * Uses the labels endpoint with optional match parameter for filtering.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} match - Optional label matcher to filter results
+   * @param {string} limit - Maximum number of results to return
+   * @returns {Promise<string[]>} Array of label keys sorted alphabetically
+   */
   fetchLabelKeys = async (
     timeRange: TimeRange,
     match?: string,
@@ -118,12 +159,21 @@ export class PrometheusLanguageProvider extends LanguageProvider {
     const res = await this.request(url, [], searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
-      return [...this.labelKeys];
+      return this.labelKeys.slice();
     }
 
     return [];
   };
 
+  /**
+   * Fetches all values for a specific label key from Prometheus using labels values endpoint.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} labelKey - The label key to fetch values for
+   * @param {string} match - Optional label matcher to filter results
+   * @param {string} limit - Maximum number of results to return
+   * @returns {Promise<string[]>} Array of label values
+   */
   fetchLabelValues = async (
     timeRange: TimeRange,
     labelKey: string,
@@ -143,6 +193,14 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   // Series API
   // ===================================
 
+  /**
+   * Fetches time series that match a specific label matcher using series endpoint.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} match - Label matcher to filter time series
+   * @param {string} limit - Maximum number of series to return
+   * @returns {Promise<Array<Record<string, string>>>} Array of series where each series is an object of label-value pairs
+   */
   fetchSeries = async (
     timeRange: TimeRange,
     match: string,
@@ -158,7 +216,17 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   // ===================================
 
   /**
-   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   * Fetches label or value suggestions based on queries, scopes, and filters.
+   
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {PromQuery[]} queries - Array of Prometheus queries
+   * @param {Scope[]} scopes - Array of filter scopes
+   * @param {AdHocVariableFilter[]} adhocFilters - Array of ad-hoc filters
+   * @param {string} labelName - Label name to fetch values for
+   * @param {number} limit - Maximum number of suggestions to return
+   * @param {string} requestId - Optional request ID for tracking
+   * @returns {Promise<string[]>} Array of suggestions
    */
   fetchSuggestions = async (
     timeRange?: TimeRange,
@@ -213,18 +281,35 @@ export class PrometheusLanguageProvider extends LanguageProvider {
   };
 }
 
-// Exporting utility functions for testing
+/**
+ * Checks if an error is a cancelled request error.
+ * Used to avoid logging cancelled request errors.
+ *
+ * @param {unknown} error - Error to check
+ * @returns {boolean} True if the error is a cancelled request error
+ */
 export const isCancelledError = (error: unknown): error is { cancelled: boolean } => {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
 };
 
-// For utf8 labels we use quotes around the label
-// While requesting the label values we must remove the quotes
+/**
+ * Removes quotes from a string if they exist.
+ * Used to handle utf8 label keys in Prometheus queries.
+ *
+ * @param {string} input - Input string that may have surrounding quotes
+ * @returns {string} String with surrounding quotes removed if they existed
+ */
 export const removeQuotesIfExist = (input: string): string => {
   const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
   return match?.[1] ?? input;
 };
 
+/**
+ * Builds cache headers for Prometheus API requests.
+ *
+ * @param {number} durationInSeconds - Cache duration in seconds
+ * @returns {object} Object with headers property containing cache headers
+ */
 export const buildCacheHeaders = (durationInSeconds: number) => {
   return {
     headers: {
@@ -233,6 +318,13 @@ export const buildCacheHeaders = (durationInSeconds: number) => {
   };
 };
 
+/**
+ * Gets appropriate cache headers based on the configured cache level.
+ * Returns undefined if caching is disabled.
+ *
+ * @param {PrometheusCacheLevel} cacheLevel - Cache level (None, Low, Medium, High)
+ * @returns {object|undefined} Cache headers object or undefined if caching is disabled
+ */
 export const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
   if (cacheLevel !== PrometheusCacheLevel.None) {
     return buildCacheHeaders(getClientCacheDurationInMinutes(cacheLevel) * 60);
@@ -240,6 +332,15 @@ export const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
   return;
 };
 
+/**
+ * Extracts metrics from queries and populates match parameters.
+ * This is used to filter time series data based on existing queries.
+ * Handles UTF8 metrics by properly escaping them.
+ *
+ * @param {URLSearchParams} initialParams - Initial URL parameters
+ * @param {PromQuery[]} queries - Array of Prometheus queries
+ * @returns {URLSearchParams} URL parameters with match[] parameters added
+ */
 export const populateMatchParamsFromQueries = (
   initialParams: URLSearchParams,
   queries?: PromQuery[]

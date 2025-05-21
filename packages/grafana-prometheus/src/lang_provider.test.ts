@@ -1,4 +1,4 @@
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { AdHocVariableFilter, getDefaultTimeRange, Scope, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
 import {
@@ -53,6 +53,8 @@ describe('PrometheusLanguageProvider', () => {
       interpolateString: jest.fn((s) => s),
       httpMethod: 'GET',
       getTimeRangeParams: jest.fn().mockReturnValue({ start: 'start', end: 'end' }),
+      getIntervalVars: jest.fn().mockReturnValue({}),
+      getRangeScopedVars: jest.fn().mockReturnValue({}),
     } as unknown as PrometheusDatasource;
 
     provider = new PrometheusLanguageProvider(datasource);
@@ -110,6 +112,24 @@ describe('PrometheusLanguageProvider', () => {
       expect(provider.labelKeys).toEqual(['label1', 'label2']);
       expect(provider.histogramMetrics).toContain('histogram_bucket'); // mock returns metrics with 'histogram' in the name
       expect(result.length).toBe(1); // Promise.all with 1 promise (only fetchMetadata)
+    });
+
+    it('should handle errors during initialization gracefully', async () => {
+      // Simulate an error during fetchLabelValues
+      jest.spyOn(provider, 'fetchLabelValues').mockRejectedValue(new Error('API error'));
+      jest.spyOn(provider, 'fetchMetadata').mockResolvedValue(undefined);
+      jest.spyOn(provider, 'fetchLabelKeys').mockResolvedValue(['label1', 'label2']);
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      // Should not throw an error
+      await provider.start(timeRange);
+
+      // Should still try to fetch metadata and label keys
+      expect(provider.fetchMetadata).toHaveBeenCalled();
+      expect(provider.fetchLabelKeys).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -172,6 +192,17 @@ describe('PrometheusLanguageProvider', () => {
 
       expect(consoleSpy).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
+    });
+
+    it('should handle empty URL parameters correctly', async () => {
+      datasource.httpMethod = 'GET';
+      const params = {};
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: [] } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should not modify the URL when params is an empty object
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', {}, undefined);
     });
   });
 
@@ -322,6 +353,87 @@ describe('PrometheusLanguageProvider', () => {
         }),
         expect.any(Object)
       );
+    });
+  });
+
+  describe('fetchSuggestions', () => {
+    it('should call API with correct parameters', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['suggestion1', 'suggestion2']);
+
+      const queries: PromQuery[] = [{ expr: 'metric1', refId: '1' }];
+      const scopes: Scope[] = [
+        {
+          metadata: { name: 'test_scope' },
+          spec: {
+            filters: [{ key: 'label', operator: 'equals', value: 'value' }],
+            title: 'test',
+            type: 'test',
+            description: 'test',
+            category: 'test',
+          },
+        },
+      ];
+      const adhocFilters: AdHocVariableFilter[] = [{ key: 'adhoc', operator: '=', value: 'filter' }];
+
+      const result = await provider.fetchSuggestions(
+        timeRange,
+        queries,
+        scopes,
+        adhocFilters,
+        'labelName',
+        100,
+        'req1'
+      );
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/suggestions',
+        [],
+        expect.objectContaining({
+          labelName: 'labelName',
+          limit: 100,
+          queries: ['metric1'],
+          scopes: [{ key: 'label', operator: 'equals', value: 'value' }],
+          adhocFilters: expect.arrayContaining([
+            expect.objectContaining({
+              key: 'adhoc',
+              operator: 'equals',
+              value: 'filter',
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          requestId: 'req1',
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+        })
+      );
+
+      expect(result).toEqual(['suggestion1', 'suggestion2']);
+    });
+
+    it('should use default timeRange if not provided', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['suggestion']);
+
+      await provider.fetchSuggestions(undefined, [], [], [], 'label');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/suggestions',
+        [],
+        expect.objectContaining({
+          labelName: 'label',
+          start: '1',
+          end: '2',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle empty response', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+
+      const result = await provider.fetchSuggestions(timeRange, [], [], [], 'label');
+
+      expect(result).toEqual([]);
     });
   });
 });
