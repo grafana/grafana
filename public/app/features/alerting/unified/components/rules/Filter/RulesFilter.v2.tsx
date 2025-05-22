@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
-  Badge,
   Button,
+  FilterInput,
   Grid,
-  IconButton,
   Input,
-  InteractiveTable,
   Label,
   RadioButtonGroup,
   Select,
@@ -18,69 +17,102 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { PopupCard } from '../../HoverCard';
-import MoreButton from '../../MoreButton';
 
-type RulesFilterProps = {
-  onClear?: () => void;
-};
+import { useListViewMode } from './RulesViewModeSelector';
 
 type ActiveTab = 'custom' | 'saved';
+type FilterForm = {
+  searchQuery: string;
+  ruleState: PromAlertingRuleState | '*'; // "*" means any state
+};
 
-export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
+export default function RulesFilter() {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
 
-  const filterOptions = useMemo(() => {
-    return (
-      <PopupCard
-        showOn="click"
-        placement="bottom-start"
-        content={
-          <div className={styles.content}>
-            {activeTab === 'custom' && <FilterOptions />}
-            {activeTab === 'saved' && <SavedSearches />}
-          </div>
-        }
-        header={
-          <TabsBar hideBorder className={styles.fixTabsMargin}>
-            <Tab
-              active={activeTab === 'custom'}
-              icon="filter"
-              label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
-              onChangeTab={() => setActiveTab('custom')}
-            />
-            <Tab
-              active={activeTab === 'saved'}
-              icon="bookmark"
-              label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
-              onChangeTab={() => setActiveTab('saved')}
-            />
-          </TabsBar>
-        }
-      >
-        <IconButton
-          name="filter"
-          aria-label={t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Show filters')}
-        />
-      </PopupCard>
-    );
-  }, [activeTab, styles.content, styles.fixTabsMargin]);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
+  const { searchQuery, clearAll } = useRulesFilter();
+
+  const formContext = useForm<FilterForm>({
+    defaultValues: {
+      searchQuery,
+      ruleState: '*',
+    },
+  });
+  const { watch, setValue, handleSubmit, reset } = formContext;
+
+  const onSubmit: SubmitHandler<FilterForm> = (values) => {
+    console.log('submit', values);
+  };
+
+  const totalQuery = watch('searchQuery');
+  useEffect(() => {
+    if (totalQuery === '') {
+      clearAll();
+    }
+  }, [clearAll, totalQuery]);
+
+  const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
 
   return (
-    <Stack direction="column" gap={0}>
-      <Label>
-        <Trans i18nKey="common.search">Search</Trans>
-      </Label>
-      <Stack direction="row">
-        <Input prefix={filterOptions} />
-      </Stack>
-    </Stack>
+    <FormProvider {...formContext}>
+      <form onSubmit={handleSubmit(onSubmit)} onReset={() => reset()}>
+        <Stack direction="row">
+          <FilterInput
+            data-testid="search-query-input"
+            placeholder={t(
+              'alerting.rules-filter.filter-options.placeholder-search-input',
+              'Search by name or enter filter query...'
+            )}
+            name="searchQuery"
+            onChange={(string) => setValue('searchQuery', string)}
+            value={watch('searchQuery')}
+          />
+          <PopupCard
+            showOn="click"
+            placement="auto-end"
+            content={
+              <div className={styles.content}>
+                {activeTab === 'custom' && <FilterOptions />}
+                {/* {activeTab === 'saved' && <SavedSearches />} */}
+              </div>
+            }
+            header={
+              <TabsBar hideBorder className={styles.fixTabsMargin}>
+                <Tab
+                  active={activeTab === 'custom'}
+                  icon="filter"
+                  label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
+                  onChangeTab={() => setActiveTab('custom')}
+                />
+                {/* <Tab
+                active={activeTab === 'saved'}
+                icon="bookmark"
+                label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
+                onChangeTab={() => setActiveTab('saved')}
+              /> */}
+              </TabsBar>
+            }
+          >
+            <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
+              {filterButtonLabel}
+            </Button>
+          </PopupCard>
+          {/* show list view / group view */}
+          <useListViewMode />
+        </Stack>
+      </form>
+    </FormProvider>
   );
 }
 
 const FilterOptions = () => {
+  const { setValue, watch } = useFormContext<FilterForm>();
+
   return (
     <Stack direction="column" alignItems="end" gap={2}>
       <Grid columns={2} gap={2} alignItems="center">
@@ -107,15 +139,17 @@ const FilterOptions = () => {
         <Label>
           <Trans i18nKey="alerting.search.property.state">State</Trans>
         </Label>
-        <RadioButtonGroup
-          value={'*'}
+        <RadioButtonGroup<PromAlertingRuleState | '*'>
           options={[
-            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
-            { label: t('alerting.filter-options.label.normal', 'Normal'), value: 'normal' },
-            { label: t('alerting.filter-options.label.pending', 'Pending'), value: 'pending' },
-            { label: t('alerting.filter-options.label.recovering', 'Recovering'), value: 'recovering' },
-            { label: t('alerting.filter-options.label.firing', 'Firing'), value: 'firing' },
+            { label: 'All', value: '*' },
+            { label: 'Firing', value: PromAlertingRuleState.Firing },
+            { label: 'Normal', value: PromAlertingRuleState.Inactive },
+            { label: 'Pending', value: PromAlertingRuleState.Pending },
+            { label: 'Recovering', value: PromAlertingRuleState.Recovering },
+            { label: 'Unknown', value: PromAlertingRuleState.Unknown },
           ]}
+          value={watch('ruleState')}
+          onChange={(value) => setValue('ruleState', value)}
         />
         <Label>
           <Trans i18nKey="alerting.search.property.rule-type">Type</Trans>
@@ -142,73 +176,13 @@ const FilterOptions = () => {
         />
       </Grid>
       <Stack direction="row" alignItems="center">
-        <Button variant="secondary">
+        <Button type="reset" variant="secondary">
           <Trans i18nKey="common.clear">Clear</Trans>
         </Button>
-        <Button>
+        <Button type="submit">
           <Trans i18nKey="common.apply">Apply</Trans>
         </Button>
       </Stack>
-    </Stack>
-  );
-};
-
-type TableColumns = {
-  name: string;
-  default?: boolean;
-};
-
-const SavedSearches = () => {
-  const applySearch = useCallback((name: string) => {}, []);
-
-  return (
-    <Stack direction="column" gap={2} alignItems="flex-end">
-      <Button variant="secondary" size="sm">
-        <Trans i18nKey="alerting.search.save-query">Save current search</Trans>
-      </Button>
-      <InteractiveTable<TableColumns>
-        columns={[
-          {
-            id: 'name',
-            header: 'Saved search name',
-            cell: ({ row }) => (
-              <Stack alignItems="center">
-                {row.original.name}
-                {row.original.default ? (
-                  <Badge text={t('alerting.saved-searches.text-default', 'Default')} color="blue" />
-                ) : null}
-              </Stack>
-            ),
-          },
-          {
-            id: 'actions',
-            cell: ({ row }) => (
-              <Stack direction="row" alignItems="center">
-                <Button variant="secondary" fill="outline" size="sm" onClick={() => applySearch(row.original.name)}>
-                  <Trans i18nKey="common.apply">Apply</Trans>
-                </Button>
-                <MoreButton size="sm" fill="outline" />
-              </Stack>
-            ),
-          },
-        ]}
-        data={[
-          {
-            name: 'My saved search',
-            default: true,
-          },
-          {
-            name: 'Another saved search',
-          },
-          {
-            name: 'This one has a really long name and some emojis too 🥒',
-          },
-        ]}
-        getRowId={(row) => row.name}
-      />
-      <Button variant="secondary">
-        <Trans i18nKey="common.close">Close</Trans>
-      </Button>
     </Stack>
   );
 };
@@ -217,7 +191,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     content: css({
       padding: theme.spacing(1),
-      maxWidth: 500,
     }),
     fixTabsMargin: css({
       marginTop: theme.spacing(-1),
