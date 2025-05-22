@@ -11,12 +11,11 @@ import (
 )
 
 const (
-	TableNameSecureValue               = "secret_secure_value"
-	TableNameSecureValueOutbox         = "secret_secure_value_outbox"
-	TableNameSecureValueOutboxMetadata = "secret_secure_value_outbox_metadata"
-	TableNameKeeper                    = "secret_keeper"
-	TableNameDataKey                   = "secret_data_key"
-	TableNameEncryptedValue            = "secret_encrypted_value"
+	TableNameSecureValue       = "secret_secure_value"
+	TableNameSecureValueOutbox = "secret_secure_value_outbox"
+	TableNameKeeper            = "secret_keeper"
+	TableNameDataKey           = "secret_data_key"
+	TableNameEncryptedValue    = "secret_encrypted_value"
 )
 
 type SecretDB struct {
@@ -150,15 +149,6 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
 			// Used for sorting
 			{Cols: []string{"created"}, Type: migrator.IndexType},
-		},
-	})
-
-	tables = append(tables, migrator.Table{
-		Name: TableNameSecureValueOutboxMetadata,
-		Columns: []*migrator.Column{
-			// Reference to TableNameSecureValueOutbox.uid
-			{Name: "message_id", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
-			{Name: "receive_count", Type: migrator.DB_SmallInt, Nullable: false},
 		},
 	})
 
