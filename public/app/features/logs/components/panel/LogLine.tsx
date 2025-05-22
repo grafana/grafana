@@ -10,7 +10,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
@@ -51,6 +51,7 @@ export const LogLine = ({
   );
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
+  const permalinked = useLogIsPermalinked(log);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -92,7 +93,7 @@ export const LogLine = ({
   return (
     <div style={style}>
       <div
-        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
@@ -262,7 +263,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        background: `hsla(0, 0%, 0%, 0.2)`,
+        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -311,9 +312,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     detailsDisplayed: css({
-      background: `hsla(0, 0%, 0%, 0.2)`,
+      background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
     }),
     pinnedLogLine: css({
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+    }),
+    permalinkedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({

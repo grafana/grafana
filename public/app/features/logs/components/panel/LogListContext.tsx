@@ -91,9 +91,14 @@ export const useLogListContext = (): LogListContextData => {
   return useContext(LogListContext);
 };
 
-export const useLogIsPinned = (log: LogRowModel) => {
+export const useLogIsPinned = (log: LogListModel) => {
   const { pinnedLogs } = useContext(LogListContext);
   return pinnedLogs?.some((logId) => logId === log.rowId);
+};
+
+export const useLogIsPermalinked = (log: LogListModel) => {
+  const { permalinkedLogId } = useContext(LogListContext);
+  return permalinkedLogId && permalinkedLogId === log.uid;
 };
 
 export type LogListState = Pick<
@@ -139,6 +144,7 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
@@ -178,6 +184,7 @@ export const LogListContextProvider = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
+  permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
@@ -217,9 +224,6 @@ export const LogListContextProvider = ({
       syntaxHighlighting,
       wrapLogMessage,
     };
-    if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
-      newState.pinnedLogs = pinnedLogs;
-    }
     if (!shallowCompare(logListState, newState)) {
       setLogListState(newState);
     }
@@ -249,6 +253,12 @@ export const LogListContextProvider = ({
       setLogListState({ ...logListState, hasUnescapedContent });
     }
   }, [hasUnescapedContent, logListState]);
+
+  useEffect(() => {
+    if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
+      setLogListState({ ...logListState, pinnedLogs });
+    }
+  }, [logListState, pinnedLogs]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -426,6 +436,7 @@ export const LogListContextProvider = ({
         onPinLine,
         onOpenContext,
         onUnpinLine,
+        permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,

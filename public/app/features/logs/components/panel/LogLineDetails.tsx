@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
-import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogDetails } from '../LogDetails';
@@ -40,6 +40,7 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   const getRows = useCallback(() => logs, [logs]);
   const logRowsStyles = getLogRowStyles(useTheme2());
   const styles = useStyles2(getStyles);
+  const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslate();
 
@@ -51,7 +52,13 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   }, [onResize, setDetailsWidth]);
 
   return (
-    <Resizable onResize={handleResize} defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}>
+    <Resizable
+      onResize={handleResize}
+      handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+      defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
+      enable={{ left: true }}
+      minWidth={40}
+    >
       <div className={styles.container} ref={containerRef}>
         <IconButton
           name="times"
