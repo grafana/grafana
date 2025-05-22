@@ -140,7 +140,6 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	defer func() { _ = rows.Close() }()
 
 	messages := make([]contracts.OutboxMessage, 0)
-	messageIDs := make([]string, 0, len(messages))
 
 	for rows.Next() {
 		var row outboxMessageDB
@@ -158,7 +157,6 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		); err != nil {
 			return nil, fmt.Errorf("scanning row from secure value outbox table: %w", err)
 		}
-		messageIDs = append(messageIDs, row.MessageID)
 
 		var keeperName *string
 		if row.KeeperName.Valid {
