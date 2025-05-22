@@ -1246,9 +1246,27 @@
       "review-alert-payload": " Review alert data to add to the payload:",
       "title-add-custom-alerts": "Add custom alerts"
     },
+    "get-alert-suggestions": {
+      "documentation": {
+        "annotations-attached-alert": "A set of annotations attached to the alert.",
+        "fingerprint-identify-alert": "Fingerprint that can be used to identify the alert.",
+        "grafana-external-alertmanager": "Back link to Grafana or external Alertmanager.",
+        "organization-alert": "The ID of the organization that owns the alert.",
+        "time-the-alert-started-firing": "Time the alert started firing."
+      },
+      "value": {
+        "labels-attached-alert": "A set of labels attached to the alert.",
+        "status-alert-firing-resolved": "Status of the alert. It can be `firing` or `resolved`"
+      }
+    },
     "get-cloud-scenes": {
       "title": {
         "mimir-alertmanager": "Mimir Alertmanager"
+      }
+    },
+    "get-global-suggestions": {
+      "value": {
+        "an-array-containing-all-alerts": "An Array containing all alerts"
       }
     },
     "get-grafana-alertmanager-scenes": {
