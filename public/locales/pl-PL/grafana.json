@@ -739,6 +739,7 @@
       "edit": "Edytuj",
       "export": "Eksport",
       "export-all": "Eksportuj wszystkie",
+      "learn-more": "Dowiedz się więcej",
       "loading": "Ładowanie…",
       "search-by-matchers": "Wyszukaj według dopasowań",
       "titles": {
@@ -1414,11 +1415,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nowa reguła alertu",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nowa reguła rejestracji zarządzana przez źródło danych",
-        "new-grafana-recording-rule": "Nowa reguła rejestracji zarządzana przez usługę Grafana",
+        "new-grafana-alerting-rule": "Nowa reguła alertu",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nowa reguła rejestracji",
-        "provisioning": "Reguły można również definiować za pomocą konfiguracji plików lub przez Terraform. <2>Więcej informacji</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Brak skonfigurowanych źródeł danych Prometheus lub Loki",
       "no-rules": "Nie znaleziono reguł.",
@@ -2068,6 +2073,7 @@
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",

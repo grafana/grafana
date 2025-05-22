@@ -727,6 +727,7 @@
       "edit": "编辑",
       "export": "导出",
       "export-all": "导出全部",
+      "learn-more": "了解更多",
       "loading": "加载中...",
       "search-by-matchers": "通过匹配器搜索",
       "titles": {
@@ -1396,11 +1397,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新建警报规则",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新的数据源管理录制规则",
-        "new-grafana-recording-rule": "新的 Grafana 管理录制规则",
+        "new-grafana-alerting-rule": "新建警报规则",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新的录制规则",
-        "provisioning": "您还可以通过文件配置或 Terraform 定义规则。<2>了解更多</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "未配置 Prometheus 或 Loki 数据源",
       "no-rules": "未找到规则。",
@@ -2038,6 +2043,7 @@
         "description": "检查数据源配置。数据源是否支持 Prometheus API？",
         "title": "无法从此数据源加载规则"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -6814,7 +6820,7 @@
       "title": "已记录查询"
     },
     "reporting": {
-      "title": "正在报告"
+      "title": "报告"
     },
     "scenes": {
       "title": "场景"

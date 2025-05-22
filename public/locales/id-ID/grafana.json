@@ -727,6 +727,7 @@
       "edit": "Edit",
       "export": "Ekspor",
       "export-all": "Ekspor semua",
+      "learn-more": "Pelajari lebih lanjut",
       "loading": "Memuat...",
       "search-by-matchers": "Cari berdasarkan pencocok",
       "titles": {
@@ -1396,11 +1397,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Aturan peringatan baru",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Aturan pencatatan baru yang dikelola sumber data",
-        "new-grafana-recording-rule": "Aturan pencatatan baru yang dikelola Grafana",
+        "new-grafana-alerting-rule": "Aturan peringatan baru",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Aturan pencatatan baru",
-        "provisioning": "Anda juga dapat menentukan aturan melalui penyediaan file atau Terraform. <2>Pelajari selengkapnya</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Tidak ada sumber data Prometheus atau Loki yang dikonfigurasi",
       "no-rules": "Tidak ada aturan yang ditemukan.",
@@ -2038,6 +2043,7 @@
         "description": "Periksa konfigurasi sumber data. Apakah sumber data mendukung API Prometheus?",
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",

@@ -120,7 +120,7 @@
     "feature-toggles": {
       "restart-pending": "Ein Neustart für Ihre Grafana-Instanz steht bevor, damit die neuesten Änderungen am Funktionsschalter angewendet werden",
       "restart-required": "Das Speichern von Änderungen am Funktionsschalter führt zu einem Neustart der Instanz, der einige Minuten dauern kann",
-      "sub-title": "Zeigen Sie die Funktionsschalter an und bearbeiten Sie sie. Unter <2>grafana.com</2> erfahren Sie mehr über Funktionsschalter."
+      "sub-title": "Zeige die Funktionsschalter an und bearbeite sie. Unter <2>grafana.com</2> erfährst du mehr über Funktionsschalter."
     },
     "get-enterprise": {
       "contact-us": "Kontaktieren Sie uns, um eine kostenlose Testversion zu erhalten.",
@@ -731,6 +731,7 @@
       "edit": "Bearbeiten",
       "export": "Exportieren",
       "export-all": "Alles exportieren",
+      "learn-more": "Mehr erfahren",
       "loading": "Wird geladen ...",
       "search-by-matchers": "Suche nach Matchern",
       "titles": {
@@ -1402,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Neue Warnregel",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Neue von der Datenquellen verwaltete Aufnahmeregel",
-        "new-grafana-recording-rule": "Neue von Grafana verwaltete Aufnahmeregel",
+        "new-grafana-alerting-rule": "Neue Warnregel",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Neue Aufnahmeregel",
-        "provisioning": "Sie können Regeln auch über die Dateibereitstellung oder Terraform definieren. <2>Mehr erfahren</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Es sind keine Prometheus- oder Loki-Datenquellen konfiguriert",
       "no-rules": "Keine Regeln gefunden.",
@@ -2048,6 +2053,7 @@
         "description": "Überprüfen Sie die Konfiguration der Datenquelle. Unterstützt die Datenquelle die Prometheus-API?",
         "title": "Regeln aus dieser Datenquelle können nicht geladen werden"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Suche abbrechen",
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
@@ -2882,7 +2888,7 @@
     },
     "no-results": {
       "clear": "Suche und Filter löschen",
-      "text": "Keine Ergebnisse für Ihre Abfrage gefunden"
+      "text": "Keine Ergebnisse für deine Abfrage gefunden"
     },
     "text-this-repository-is-read-only": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein."
   },
@@ -3029,11 +3035,11 @@
     "basic-info-form": {
       "description-description": "Optionale Beschreibung mit weiteren Informationen über den Link",
       "description-label": "Beschreibung",
-      "label-description": "Dieser Name wird als Bezeichnung für die Korrelation verwendet. Dies wird als Button-Text, Menüpunkt oder schwebender Text auf einem Link angezeigt.",
+      "label-description": "Dieser Name wird als Bezeichnung für die Korrelation verwendet. Er wird als Button-Text, Menüpunkt oder schwebender Text auf einem Link angezeigt.",
       "label-label": "Label",
       "label-placeholder": "z.B. Tempospuren",
       "label-required": "Dieses Feld ist erforderlich.",
-      "sub-text": "<0>Text definieren, der die Korrelation beschreibt.</0>",
+      "sub-text": "<0>Definiere Text, der die Korrelation beschreibt.</0>",
       "title": "Korrelationsbezeichnung definieren (Schritt 1 von 3)"
     },
     "configure-correlation-target-form": {
@@ -3045,8 +3051,8 @@
     },
     "empty-state": {
       "button-title": "Korrelation hinzufügen",
-      "pro-tip": "Sie können Korrelationen auch über die Datenquellenbereitstellung definieren",
-      "title": "Sie haben noch keine Korrelationen definiert"
+      "pro-tip": "Du kannst Korrelationen auch über die Datenquellenbereitstellung definieren.",
+      "title": "Du hast noch keine Korrelationen definiert."
     },
     "list": {
       "delete": "Korrelation löschen",
@@ -3071,7 +3077,7 @@
       "error-text": "Die ausgewählte Datenquelle konnte nicht geladen werden.",
       "error-title": "Fehler beim Laden der Datenquelle",
       "loading": "Abfrageeditor wird geladen...",
-      "query-description": "Definieren Sie die Abfrage, die ausgeführt wird, wenn der Link angeklickt wird. Sie können <2>Variablen</2> verwenden, um auf bestimmte Feldwerte zuzugreifen.",
+      "query-description": "Definiere die Abfrage, die ausgeführt wird, wenn der Link angeklickt wird. Du kannst <2>Variablen</2> verwenden, um auf bestimmte Feldwerte zuzugreifen.",
       "query-editor-title": "Datenquelle exportiert keinen Abfrageeditor.",
       "query-label": "Abfrage"
     },
@@ -3094,11 +3100,11 @@
     "sub-title": "Definieren, wie sich Daten in verschiedenen Datenquellen miteinander verbinden. Lesen Sie mehr in der <2>Dokumentation<1></1></2>",
     "target-form": {
       "control-rules": "Dieses Feld ist erforderlich.",
-      "sub-text": "<0>Definieren Sie, wohin die Korrelation verlinken soll. Mit dem Typ „Abfrage“ wird eine Abfrage ausgeführt, wenn auf die Korrelation geklickt wird. Beim Typ „Extern“ wird durch Klicken auf die Korrelation eine URL geöffnet.</0>",
+      "sub-text": "<0>Definiere, wohin die Korrelation verlinken soll. Mit dem Typ „Abfrage“ wird eine Abfrage ausgeführt, wenn auf die Korrelation geklickt wird. Beim Typ „Extern“ wird durch Klicken auf die Korrelation eine URL geöffnet.</0>",
       "target-description-external": "Geben Sie die URL an, die geöffnet werden soll, wenn auf den Link geklickt wird",
       "target-description-query": "Geben Sie an, welche Datenquelle beim Anklicken des Links abgefragt wird",
       "target-label": "Ziel",
-      "target-type-description": "Geben Sie die Art der Korrelation an",
+      "target-type-description": "Gib die Art der Korrelation an.",
       "title": "Ziel für die Korrelation einrichten (Schritt 2 von 3)",
       "type-label": "Typ"
     },
@@ -3437,13 +3443,13 @@
       }
     },
     "empty": {
-      "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
+      "add-library-panel-body": "Füge Visualisierungen hinzu, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
       "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Importiere Dashboards aus Dateien oder von <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
     },
@@ -6382,7 +6388,7 @@
       "unable-to-load-folder": "Ordner kann nicht geladen werden"
     },
     "get-started": {
-      "body": "Der Migrationsprozess muss von Ihrer selbstverwalteten Grafana-Instanz aus gestartet werden.",
+      "body": "Der Migrationsprozess muss von deiner selbstverwalteten Grafana-Instanz aus gestartet werden.",
       "configure-pdc-link": "PDC für diesen Stack konfigurieren",
       "link-title": "Erfahren Sie mehr über Private Data Source Connect",
       "step-1": "Melden Sie sich bei Ihrer selbst verwalteten Instanz an und navigieren Sie zu Administration > Allgemein > In Grafana Cloud migrieren.",
@@ -6401,7 +6407,7 @@
     "migrate-to-this-stack": {
       "body": "Sie können von Ihrer selbst verwalteten Grafana-Installation sicher einige Ressourcen zu diesem Cloud-Stack migrieren. Zunächst müssen Sie einen Migrationstoken generieren. Ihre selbst verwaltete Instanz nutzt den Token für die Authentifizierung mit diesem Cloud-Stack.",
       "link-title": "Gesamte Migrationsanleitung anzeigen",
-      "title": "Wir helfen Ihnen bei der Migration zu diesem Stack"
+      "title": "Wir helfen dir bei der Migration zu diesem Stack"
     },
     "migration-token": {
       "delete-button": "Token löschen",
@@ -6650,7 +6656,7 @@
       "title": "Verwaltung"
     },
     "config-access": {
-      "subtitle": "Konfigurieren Sie den Zugriff für einzelne Benutzer, Teams und Service-Konten",
+      "subtitle": "Zugriff für einzelne Benutzer, Teams und Service-Konten konfigurieren",
       "title": "Benutzer und Zugriff"
     },
     "config-general": {
@@ -6669,7 +6675,7 @@
       "title": "Verbindungen"
     },
     "correlations": {
-      "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
+      "subtitle": "Korrelationen hinzufügen und konfigurieren",
       "title": "Korrelationen"
     },
     "create": {
@@ -6802,7 +6808,7 @@
       "title": "OnCall"
     },
     "org-settings": {
-      "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
+      "subtitle": "Einstellungen in der gesamten Organisation verwalten",
       "title": "Standardeinstellungen"
     },
     "playlists": {
@@ -6810,7 +6816,7 @@
       "title": "Playlisten"
     },
     "plugins": {
-      "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
+      "subtitle": "Grafana-Oberfläche mit Plug-ins erweitern",
       "title": "Plug-ins"
     },
     "private-data-source-connections": {
@@ -6856,7 +6862,7 @@
       "title": "Einstellungen"
     },
     "service-accounts": {
-      "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
+      "subtitle": "Servicekonten verwenden, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
     "setup-guide": {
@@ -8042,7 +8048,7 @@
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
       "no-deleted-dashboards-text": "Wenn Sie ein Dashboard löschen, wird es hier 30 Tage lang angezeigt, bevor es endgültig gelöscht wird. Der Administrator Ihrer Organisation kann kürzlich gelöschte Dashboards wiederherstellen.",
-      "no-search-result": "Keine Ergebnisse für Ihre Abfrage gefunden"
+      "no-search-result": "Keine Ergebnisse für deine Abfrage gefunden"
     },
     "permanently-delete-modal": {
       "confirm-text": "Löschen",
@@ -8161,7 +8167,7 @@
       "collapse": "Einklappen",
       "expand": "Ausklappen",
       "loading": "Dashboards werden geladen",
-      "noResultsForFilter": "Keine Ergebnisse für Ihre Abfrage gefunden",
+      "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
       "noResultsForScopes": "Es wurden keine Dashboards oder Links für die ausgewählten Bereiche gefunden",
       "noResultsNoScopes": "Keine Bereiche ausgewählt",
@@ -8185,7 +8191,7 @@
       "collapse": "Einklappen",
       "expand": "Ausklappen",
       "headline": {
-        "noResults": "Keine Ergebnisse für Ihre Abfrage gefunden",
+        "noResults": "Keine Ergebnisse für deine Abfrage gefunden",
         "recommended": "Empfohlen",
         "results": "Ergebnisse"
       },
@@ -8533,7 +8539,7 @@
       "locale-preference-description": "Wählen Sie Ihre Region aus, um das entsprechende Datums-, Zeit- und Zahlenformat anzuzeigen",
       "locale-preference-label": "Regionsformat",
       "locale-preference-placeholder": "Wählen Sie eine Region",
-      "theme-description": "Gefallen Ihnen die experimentellen Designs? Teilen Sie uns <2>hier<2> mit, was Sie gerne sehen möchten.</2>",
+      "theme-description": "Gefallen dir die experimentellen Designs? Teile uns hier mit, was du gerne sehen möchtest.</2>",
       "theme-label": "UI-Design",
       "week-start-label": "Wochenbeginn"
     },
@@ -8669,8 +8675,8 @@
     "empty-state": {
       "button-title": "Neues Team",
       "message": "Keine Teams gefunden",
-      "pro-tip": "Weisen Sie Ordner- und Dashboard-Berechtigungen an Teams anstelle von Benutzern zu, um die Verwaltung zu vereinfachen. <2>Mehr erfahren</2>",
-      "title": "Sie haben noch keine Teams erstellt"
+      "pro-tip": "Weise Ordner- und Dashboard-Berechtigungen an Teams anstelle von Benutzern zu, um die Verwaltung zu vereinfachen. <2>Mehr erfahren</2>",
+      "title": "Du hast noch keine Teams erstellt"
     },
     "team-group-sync": {
       "add-group": "Gruppe hinzufügen",
@@ -8730,8 +8736,8 @@
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list-docs": "<0><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></0>",
-      "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
+      "empty-recent-list-docs": "<0><0>Sieh dir die Dokumentation an</0><1>, um mehr darüber zu erfahren, wie du benutzerdefinierte Zeitbereiche eingeben kannst.</1></0>",
+      "empty-recent-list-info": "Es sieht so aus, als hättest du diesen Zeit-Auswähler noch nie benutzt. Sobald du Zeitintervalle eingegeben hast, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "copy-paste": {

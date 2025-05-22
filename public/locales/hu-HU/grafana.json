@@ -731,6 +731,7 @@
       "edit": "Szerkesztés",
       "export": "Exportálás",
       "export-all": "Összes exportálása",
+      "learn-more": "További információk",
       "loading": "Betöltés...",
       "search-by-matchers": "Keresés egyezések alapján",
       "titles": {
@@ -1402,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Új riasztási szabály",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Új, adatforrás által kezelt felvételkészítési szabály",
-        "new-grafana-recording-rule": "Új, Grafana által kezelt felvételkészítési szabály",
+        "new-grafana-alerting-rule": "Új riasztási szabály",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Új felvételi szabály",
-        "provisioning": "Szabályokat fájlkiépítésen vagy Terraformon keresztül is meghatározhat. <2>További információ</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Nincsenek konfigurálva Prometheus- vagy Loki-adatforrások",
       "no-rules": "Nem található szabály.",
@@ -2048,6 +2053,7 @@
         "description": "Ellenőrizze az adatforrás konfigurációját. Támogatja az adatforrás a Prometheus API-t?",
         "title": "Nem lehet betölteni a szabályokat ebből az adatforrásból"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -5201,7 +5207,7 @@
       "copy-shortened-link-label": "Megosztás",
       "copy-shortened-link-menu": "Hivatkozás másolási beállításainak megnyitása",
       "refresh-picker-cancel": "Mégse",
-      "refresh-picker-run": "Lekérdezés futtatása",
+      "refresh-picker-run": "Lekérdezés",
       "split-close": " Bezárás ",
       "split-close-tooltip": "Osztott ablaktábla bezárása",
       "split-narrow": "Keskeny ablaktábla",

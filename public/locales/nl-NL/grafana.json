@@ -731,6 +731,7 @@
       "edit": "Bewerken",
       "export": "Exporteren",
       "export-all": "Alles exporteren",
+      "learn-more": "Meer informatie",
       "loading": "Bezig met laden ...",
       "search-by-matchers": "Op matchers zoeken",
       "titles": {
@@ -1402,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nieuwe waarschuwingsregel",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nieuwe regel voor door gegevensbron beheerde opnamen",
-        "new-grafana-recording-rule": "Nieuwe door Grafana beheerde opnameregel",
+        "new-grafana-alerting-rule": "Nieuwe waarschuwingsregel",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nieuwe opnameregel",
-        "provisioning": "Je kunt ook regels definiëren via file provisioning of Terraform. <2>Meer informatie</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Er zijn geen Prometheus- of Loki-gegevensbronnen geconfigureerd",
       "no-rules": "Geen regels gevonden.",
@@ -2048,6 +2053,7 @@
         "description": "Controleer de configuratie van de gegevensbron. Ondersteunt de gegevensbron Prometheus API?",
         "title": "Kan regels uit deze gegevensbron niet laden"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -4547,7 +4553,7 @@
   "data-source-picker": {
     "add-new-data-source": "Een nieuwe gegevensbron configureren",
     "built-in-list": {
-      "description-dashboard": "Gebruik queryresultaten van andere visualisaties opnieuw",
+      "description-dashboard": "Hergebruik queryresultaten van andere visualisaties",
       "description-grafana": "Ontdek visualisaties met behulp van proefgegevens",
       "description-mixed": "Gebruik meerdere gegevensbronnen"
     },
@@ -4555,7 +4561,7 @@
       "no-data-source-message": "Geen gegevensbronnen gevonden"
     },
     "modal": {
-      "configure-new-data-source": "Een nieuw tabblad openen en een gegevensbron configureren",
+      "configure-new-data-source": "Nieuw tabblad openen en een gegevensbron configureren",
       "input-placeholder": "Gegevensbron selecteren",
       "title": "Gegevensbron selecteren"
     },
@@ -8201,7 +8207,7 @@
       "remove-datasource-filter": "Gegevensbron: {{datasource}}",
       "sort-placeholder": "Sorteren",
       "starred": "Favorieten",
-      "view-as-folders": "Weergeven op mappen",
+      "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
     },
     "dashboard-actions": {
