@@ -140,6 +140,8 @@ endif
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	@echo "Extracting i18n strings for packages"
+	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
 	yarn run plugin:i18n-extract
 
