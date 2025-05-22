@@ -67,7 +67,7 @@ You want to avoid creating one alert rule per service—this is harder to mainta
 
 In Grafana Alerting, you can define one alert rule that monitors multiple similar components like this scenario. This is called [multi-dimensional alerts](ref:multi-dimensional-example): one alert rule, many alert instances—**one per unique label set**.
 
-But here's the catch: Grafana supports only **one alert condition per rule**.
+But there's an issue: Grafana supports only **one alert condition per rule**.
 
 ```
 One alert rule
