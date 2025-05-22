@@ -100,7 +100,7 @@ export const Examples: StoryFn<typeof Button> = () => {
           <Button variant="secondary" icon="angle-down" />
         </ButtonGroup>
       </Stack>
-      <Card>
+      <Card noMargin>
         <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
           {allButtonVariants.map((variant) => (
