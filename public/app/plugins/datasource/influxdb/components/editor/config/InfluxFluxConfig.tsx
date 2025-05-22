@@ -6,6 +6,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
@@ -29,6 +30,7 @@ export const InfluxFluxConfig = (props: Props) => {
             className="width-20"
             value={jsonData.organization || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
+            onBlur={() => reportInteraction('influxdb-configv1-flux-dbdetails-organization-input-field')}
           />
         </InlineField>
       </InlineFieldRow>
@@ -42,6 +44,7 @@ export const InfluxFluxConfig = (props: Props) => {
             className="width-20"
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
+            onBlur={() => reportInteraction('influxdb-configv1-flux-dbdetails-token-input-field')}
           />
         </InlineField>
       </InlineFieldRow>
@@ -52,6 +55,7 @@ export const InfluxFluxConfig = (props: Props) => {
             placeholder="default bucket"
             value={jsonData.defaultBucket || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
+            onBlur={() => reportInteraction('influxdb-configv1-flux-dbdetails-default-bucket-input-field')}
           />
         </InlineField>
       </InlineFieldRow>

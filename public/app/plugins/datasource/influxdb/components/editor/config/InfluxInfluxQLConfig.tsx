@@ -11,6 +11,7 @@ import {
   SelectableValue,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
@@ -66,6 +67,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
               },
             });
           }}
+          onBlur={() => reportInteraction('influxdb-configv1-influxql-dbdetails-database-input-field')}
         />
       </Field>
       <Field
@@ -80,6 +82,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           value={options.user || ''}
           onChange={onUpdateDatasourceOption(props, 'user')}
+          onBlur={() => reportInteraction('influxdb-configv1-influxql-dbdetails-user-input-field')}
         />
       </Field>
       <Field
@@ -96,6 +99,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           onReset={() => updateDatasourcePluginResetOption(props, 'password')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+          onBlur={() => reportInteraction('influxdb-configv1-influxql-dbdetails-password-input-field')}
         />
       </Field>
       <Field

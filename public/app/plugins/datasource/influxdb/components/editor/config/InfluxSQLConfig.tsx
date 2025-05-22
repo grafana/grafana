@@ -7,6 +7,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Field, InlineLabel, InlineSwitch, Input, SecretInput, useStyles2 } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
@@ -43,6 +44,7 @@ export const InfluxSqlConfig = (props: Props) => {
               },
             });
           }}
+          onBlur={() => reportInteraction('influxdb-configv1-sql-dbdetails-database-input-field')}
         />
       </Field>
       <Field horizontal label={<InlineLabel width={WIDTH_SHORT}>Token</InlineLabel>} className={styles.horizontalField}>
@@ -54,6 +56,7 @@ export const InfluxSqlConfig = (props: Props) => {
           onReset={() => updateDatasourcePluginResetOption(props, 'token')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
           isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
+          onBlur={() => reportInteraction('influxdb-configv1-sql-dbdetails-token-input-field')}
         />
       </Field>
       <Field

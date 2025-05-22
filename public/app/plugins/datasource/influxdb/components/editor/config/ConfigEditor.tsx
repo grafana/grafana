@@ -7,7 +7,7 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
@@ -117,6 +117,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
               options={versions}
               defaultValue={versionMap[InfluxVersion.InfluxQL]}
               onChange={this.onVersionChanged}
+              onBlur={() => {
+                reportInteraction('influxdb-configv1-query-language-dropdown', {
+                  version: this.props.options.jsonData.version,
+                });
+              }}
             />
           </Field>
         </FieldSet>
