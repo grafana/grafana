@@ -9,6 +9,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
+import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
+
 import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';
 
@@ -122,16 +124,17 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
 export function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-    switch (settings?.type) {
-      case 'loki':
-      case 'prometheus':
-        return {
-          mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
-          mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
-        };
-      default:
-        throw new Error(`${dataSourceName} is not supported as an expression editor`);
+    if (!settings) {
+      throw new Error(`Datasource ${dataSourceName} not found`);
     }
+
+    if (!isSupportedExternalRulesSourceType(settings.type)) {
+      throw new Error(`${settings.type} is not supported as an expression editor`);
+    }
+
+    return {
+      mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
+      mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
+    };
   }, [dataSourceName]);
 }
