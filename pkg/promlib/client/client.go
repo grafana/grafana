@@ -119,14 +119,15 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
 
-	// Determine if this endpoint only supports GET
-	shouldUseGet := false
-
-	// Check if the endpoint is in the list of endpoints that only support GET
-	for _, endpoint := range endpointsSupportOnlyGet {
-		if strings.HasPrefix(req.Path, endpoint) {
-			shouldUseGet = true
-			break
+	// Determine if the data source configured to use GET only
+	shouldUseGet := c.method == http.MethodGet
+	// if the datasource is configured to use POST, determine if the endpoint is in the list of endpoints that **only** support GET
+	if !shouldUseGet {
+		for _, endpoint := range endpointsSupportOnlyGet {
+			if strings.HasPrefix(req.Path, endpoint) {
+				shouldUseGet = true
+				break
+			}
 		}
 	}
 
