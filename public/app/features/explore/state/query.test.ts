@@ -28,7 +28,6 @@ import { makeLogs } from '../__mocks__/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { saveCorrelationsAction } from './explorePane';
-import { createDefaultInitialState } from './testHelpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -50,6 +49,7 @@ import {
   changeQueries,
 } from './query';
 import * as actions from './query';
+import { createDefaultInitialState } from './testHelpers';
 import { makeExplorePaneState } from './utils';
 
 jest.mock('app/features/logs/logsModel');
