@@ -1,3 +1,31 @@
+<!-- 12.0.1 START -->
+
+# 12.0.1 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105101](https://github.com/grafana/grafana/pull/105101), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.6 to v1.8.12 [#105368](https://github.com/grafana/grafana/pull/105368), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105249](https://github.com/grafana/grafana/pull/105249), [@macabu](https://github.com/macabu)
+- **K8s:** Dashboards: Add fine grained access control checks to /apis [#104419](https://github.com/grafana/grafana/pull/104419), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+
+### Bug fixes
+
+- **Dashboard:** Fix Panel Explore link subpath duplication (#104952) [#105056](https://github.com/grafana/grafana/pull/105056), [@axelavargas](https://github.com/axelavargas)
+- **Dashboard:** Fixes issue with row repeats and first row [#104469](https://github.com/grafana/grafana/pull/104469), [@torkelo](https://github.com/torkelo)
+- **Graphite:** Ensure template variables are interpolated correctly [#105389](https://github.com/grafana/grafana/pull/105389), [@aangelisc](https://github.com/aangelisc)
+- **Graphite:** Fix Graphite series interpolation [#104516](https://github.com/grafana/grafana/pull/104516), [@aangelisc](https://github.com/aangelisc)
+- **InfluxDB:** Fix nested variable interpolation [#104176](https://github.com/grafana/grafana/pull/104176), [@aangelisc](https://github.com/aangelisc)
+- **MetricsDrilldown:** Restore link to Metrics Drilldown from Explore [#104073](https://github.com/grafana/grafana/pull/104073), [@NWRichmond](https://github.com/NWRichmond)
+- **NestedFolderPicker:** Fix scroll jumps back to top [#105769](https://github.com/grafana/grafana/pull/105769), [@samsch](https://github.com/samsch)
+- **Preferences:** Disable the save button whilst saving preferences [#105612](https://github.com/grafana/grafana/pull/105612), [@ashharrison90](https://github.com/ashharrison90)
+- **Prometheus:** Fix semver import path [#104945](https://github.com/grafana/grafana/pull/104945), [@jackw](https://github.com/jackw)
+- **Themes:** Prevent duplicated API call in drawer [#105611](https://github.com/grafana/grafana/pull/105611), [@ashharrison90](https://github.com/ashharrison90)
+- **XYChart:** Coerce threshold steps to numbers [#104492](https://github.com/grafana/grafana/pull/104492), [@leeoniya](https://github.com/leeoniya)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 12.0.1 END -->
 <!-- 11.6.2 START -->
 
 # 11.6.2 (2025-05-22)
