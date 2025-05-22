@@ -1,6 +1,7 @@
 import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';
+import { PreferencesService } from './core/services/PreferencesService';
 import { AppNotificationSeverity } from './types';
 
 export const STORAGE_MOCK_API_KEY = 'grafana.dev.mockApi';
@@ -40,4 +41,23 @@ export const notifyIfMockApiEnabled = () => {
       AppNotificationSeverity.Info
     );
   }
+};
+
+export const togglePseudoLocale = async () => {
+  const prefsService = new PreferencesService('user');
+  const prefs = await prefsService.load();
+
+  const isPseudoEnabled = prefs.language === 'pseudo';
+
+  const action = isPseudoEnabled ? 'Disabling' : 'Enabling';
+  sendAppNotification(`${action} pseudo locale`, 'Reloading...', AppNotificationSeverity.Info);
+
+  await prefsService.update({
+    ...prefs,
+    language: isPseudoEnabled ? 'default' : 'pseudo',
+  });
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 200);
 };
