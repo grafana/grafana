@@ -167,7 +167,7 @@ In the previous severity template, you can set the alert condition to `$B > 70` 
 For example, configure a [notification policy](ref:notification-policies) that matches `alertname="ServerHighCPU"` with the following children policies:
 
 - `severity=critical` → escalate to an incident response and management solution (IRM).
-- `severity=warning` → send to the team's Slack channel
+- `severity=warning` → send to the team's Slack channel.
 - `severity=minor` → send to a non-urgent queue or log-only dashboard
 
 The resulting alerting flow might look like this:
