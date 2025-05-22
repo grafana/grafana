@@ -3476,7 +3476,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.13.0":
+"@grafana/scenes-react@npm:^6.12.0":
   version: 6.13.0
   resolution: "@grafana/scenes-react@npm:6.13.0"
   dependencies:
@@ -3496,7 +3496,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.13.0":
+"@grafana/scenes@npm:6.13.0, @grafana/scenes@npm:^6.12.0":
   version: 6.13.0
   resolution: "@grafana/scenes@npm:6.13.0"
   dependencies:
@@ -17719,8 +17719,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.5"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.13.0"
-    "@grafana/scenes-react": "npm:6.13.0"
+    "@grafana/scenes": "npm:^6.12.0"
+    "@grafana/scenes-react": "npm:^6.12.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
