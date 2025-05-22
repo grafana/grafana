@@ -42,7 +42,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --grafana-ref=${DRONE_TAG} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --version=${DRONE_TAG} \
