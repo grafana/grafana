@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { useTranslate } from '@grafana/i18n';
 import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
@@ -42,6 +42,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
     setValue('namespace', '');
     setValue('ruleGroup', '');
   }, [rulesSourceName, setValue]);
+  const { t } = useTranslate();
 
   return (
     <Stack direction="row" gap={2}>

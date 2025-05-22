@@ -3,6 +3,7 @@ import { SyntheticEvent, useState } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
@@ -58,14 +59,19 @@ type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | '
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
 export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
 
-export const PromSettings = (props: Props) => {
-  const { options, onOptionsChange } = props;
+const getOptionsWithDefaults = (options: DataSourceSettings<PromOptions>) => {
+  if (options.jsonData.httpMethod) {
+    return options;
+  }
 
   // We are explicitly adding httpMethod so, it is correctly displayed in dropdown.
   // This way, it is more predictable for users.
-  if (!options.jsonData.httpMethod) {
-    options.jsonData.httpMethod = 'POST';
-  }
+  return { ...options, jsonData: { ...options.jsonData, httpMethod: 'POST' } };
+};
+
+export const PromSettings = (props: Props) => {
+  const { onOptionsChange } = props;
+  const optionsWithDefaults = getOptionsWithDefaults(props.options);
 
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
@@ -109,15 +115,15 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <>
                   <Input
                     className="width-20"
-                    value={options.jsonData.timeInterval}
+                    value={optionsWithDefaults.jsonData.timeInterval}
                     spellCheck={false}
                     placeholder="15s"
-                    onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
+                    onChange={onChangeHandler('timeInterval', optionsWithDefaults, onOptionsChange)}
                     onBlur={(e) =>
                       updateValidDuration({
                         ...validDuration,
@@ -139,13 +145,13 @@ export const PromSettings = (props: Props) => {
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <>
                   <Input
                     className="width-20"
-                    value={options.jsonData.queryTimeout}
-                    onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
+                    value={optionsWithDefaults.jsonData.queryTimeout}
+                    onChange={onChangeHandler('queryTimeout', optionsWithDefaults, onOptionsChange)}
                     spellCheck={false}
                     placeholder="60s"
                     onBlur={(e) =>
@@ -172,16 +178,16 @@ export const PromSettings = (props: Props) => {
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
               interactive={true}
-              disabled={options.readOnly}
+              disabled={optionsWithDefaults.readOnly}
             >
               <Select
                 aria-label={`Default Editor (Code or Builder)`}
                 options={editorOptions}
                 value={
-                  editorOptions.find((o) => o.value === options.jsonData.defaultEditor) ??
+                  editorOptions.find((o) => o.value === optionsWithDefaults.jsonData.defaultEditor) ??
                   editorOptions.find((o) => o.value === QueryEditorMode.Builder)
                 }
-                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
+                onChange={onChangeHandler('defaultEditor', optionsWithDefaults, onOptionsChange)}
                 width={40}
                 data-testid={selectors.components.DataSource.Prometheus.configPage.defaultEditor}
               />
@@ -199,11 +205,11 @@ export const PromSettings = (props: Props) => {
                 </>
               }
               interactive={true}
-              disabled={options.readOnly}
+              disabled={optionsWithDefaults.readOnly}
               className={styles.switchField}
             >
               <Switch
-                value={options.jsonData.disableMetricsLookup ?? false}
+                value={optionsWithDefaults.jsonData.disableMetricsLookup ?? false}
                 onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
                 id={selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}
               />
@@ -213,18 +219,20 @@ export const PromSettings = (props: Props) => {
       </ConfigSubSection>
 
       <ConfigSubSection title="Performance" className={styles.container}>
-        {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
-          <div className={styles.versionMargin}>
-            For more information on configuring prometheus type and version in data sources, see the{' '}
-            <a
-              className={styles.textUnderline}
-              href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
-            >
-              provisioning documentation
-            </a>
-            .
-          </div>
-        )}
+        {!optionsWithDefaults.jsonData.prometheusType &&
+          !optionsWithDefaults.jsonData.prometheusVersion &&
+          optionsWithDefaults.readOnly && (
+            <div className={styles.versionMargin}>
+              For more information on configuring prometheus type and version in data sources, see the{' '}
+              <a
+                className={styles.textUnderline}
+                href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
+              >
+                provisioning documentation
+              </a>
+              .
+            </div>
+          )}
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -243,13 +251,15 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Select
                   aria-label="Prometheus type"
                   options={prometheusFlavorSelectItems}
-                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
-                  onChange={onChangeHandler('prometheusType', options, onOptionsChange)}
+                  value={prometheusFlavorSelectItems.find(
+                    (o) => o.value === optionsWithDefaults.jsonData.prometheusType
+                  )}
+                  onChange={onChangeHandler('prometheusType', optionsWithDefaults, onOptionsChange)}
                   width={40}
                   data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusType}
                 />
@@ -257,27 +267,27 @@ export const PromSettings = (props: Props) => {
             </div>
           </div>
           <div className="gf-form-inline">
-            {options.jsonData.prometheusType && (
+            {optionsWithDefaults.jsonData.prometheusType && (
               <div className="gf-form">
                 <InlineField
-                  label={`${options.jsonData.prometheusType} version`}
+                  label={`${optionsWithDefaults.jsonData.prometheusType} version`}
                   labelWidth={PROM_CONFIG_LABEL_WIDTH}
                   tooltip={
                     <>
-                      Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
-                      automatically configured. {docsTip()}
+                      Use this to set the version of your {optionsWithDefaults.jsonData.prometheusType} instance if it
+                      is not automatically configured. {docsTip()}
                     </>
                   }
                   interactive={true}
-                  disabled={options.readOnly}
+                  disabled={optionsWithDefaults.readOnly}
                 >
                   <Select
-                    aria-label={`${options.jsonData.prometheusType} type`}
-                    options={PromFlavorVersions[options.jsonData.prometheusType]}
-                    value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
-                      (o) => o.value === options.jsonData.prometheusVersion
+                    aria-label={`${optionsWithDefaults.jsonData.prometheusType} type`}
+                    options={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]}
+                    value={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]?.find(
+                      (o) => o.value === optionsWithDefaults.jsonData.prometheusVersion
                     )}
-                    onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
+                    onChange={onChangeHandler('prometheusVersion', optionsWithDefaults, onOptionsChange)}
                     width={40}
                     data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusVersion}
                   />
@@ -298,14 +308,15 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Select
                   width={40}
-                  onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                  onChange={onChangeHandler('cacheLevel', optionsWithDefaults, onOptionsChange)}
                   options={cacheValueOptions}
                   value={
-                    cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
+                    cacheValueOptions.find((o) => o.value === optionsWithDefaults.jsonData.cacheLevel) ??
+                    PrometheusCacheLevel.Low
                   }
                   data-testid={selectors.components.DataSource.Prometheus.configPage.cacheLevel}
                 />
@@ -326,13 +337,17 @@ export const PromSettings = (props: Props) => {
                     </>
                   }
                   interactive={true}
-                  disabled={options.readOnly}
+                  disabled={optionsWithDefaults.readOnly}
                 >
                   <>
                     <Input
                       className="width-20"
-                      value={options.jsonData.codeModeMetricNamesSuggestionLimit}
-                      onChange={onChangeHandler('codeModeMetricNamesSuggestionLimit', options, onOptionsChange)}
+                      value={optionsWithDefaults.jsonData.codeModeMetricNamesSuggestionLimit}
+                      onChange={onChangeHandler(
+                        'codeModeMetricNamesSuggestionLimit',
+                        optionsWithDefaults,
+                        onOptionsChange
+                      )}
                       spellCheck={false}
                       placeholder={SUGGESTIONS_LIMIT.toString()}
                       onBlur={(e) =>
@@ -370,10 +385,10 @@ export const PromSettings = (props: Props) => {
                 }
                 interactive={true}
                 className={styles.switchField}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Switch
-                  value={options.jsonData.incrementalQuerying ?? false}
+                  value={optionsWithDefaults.jsonData.incrementalQuerying ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
                   id={selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}
                 />
@@ -382,7 +397,7 @@ export const PromSettings = (props: Props) => {
           </div>
 
           <div className="gf-form-inline">
-            {options.jsonData.incrementalQuerying && (
+            {optionsWithDefaults.jsonData.incrementalQuerying && (
               <InlineField
                 label="Query overlap window"
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
@@ -393,7 +408,7 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <>
                   <Input
@@ -404,8 +419,10 @@ export const PromSettings = (props: Props) => {
                       })
                     }
                     className="width-20"
-                    value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
-                    onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                    value={
+                      optionsWithDefaults.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
+                    }
+                    onChange={onChangeHandler('incrementalQueryOverlapWindow', optionsWithDefaults, onOptionsChange)}
                     spellCheck={false}
                     data-testid={selectors.components.DataSource.Prometheus.configPage.queryOverlapWindow}
                   />
@@ -423,10 +440,10 @@ export const PromSettings = (props: Props) => {
                 tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
                 interactive={true}
                 className={styles.switchField}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Switch
-                  value={options.jsonData.disableRecordingRules ?? false}
+                  value={optionsWithDefaults.jsonData.disableRecordingRules ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
                   id={selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}
                 />
@@ -450,12 +467,12 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Input
                   className="width-20"
-                  value={options.jsonData.customQueryParameters}
-                  onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
+                  value={optionsWithDefaults.jsonData.customQueryParameters}
+                  onChange={onChangeHandler('customQueryParameters', optionsWithDefaults, onOptionsChange)}
                   spellCheck={false}
                   placeholder="Example: max_source_resolution=5m&timeout=10"
                   data-testid={selectors.components.DataSource.Prometheus.configPage.customQueryParameters}
@@ -477,14 +494,14 @@ export const PromSettings = (props: Props) => {
                 }
                 interactive={true}
                 label="HTTP method"
-                disabled={options.readOnly}
+                disabled={optionsWithDefaults.readOnly}
               >
                 <Select
                   width={40}
                   aria-label="Select HTTP method"
                   options={httpOptions}
-                  value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
-                  onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+                  value={httpOptions.find((o) => o.value === optionsWithDefaults.jsonData.httpMethod)}
+                  onChange={onChangeHandler('httpMethod', optionsWithDefaults, onOptionsChange)}
                   data-testid={selectors.components.DataSource.Prometheus.configPage.httpMethod}
                 />
               </InlineField>
@@ -502,11 +519,11 @@ export const PromSettings = (props: Props) => {
               </>
             }
             interactive={true}
-            disabled={options.readOnly}
+            disabled={optionsWithDefaults.readOnly}
             className={styles.switchField}
           >
             <Switch
-              value={options.jsonData.seriesEndpoint ?? false}
+              value={optionsWithDefaults.jsonData.seriesEndpoint ?? false}
               onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'seriesEndpoint')}
             />
           </InlineField>
@@ -514,15 +531,15 @@ export const PromSettings = (props: Props) => {
       </ConfigSubSection>
 
       <ExemplarsSettings
-        options={options.jsonData.exemplarTraceIdDestinations}
+        options={optionsWithDefaults.jsonData.exemplarTraceIdDestinations}
         onChange={(exemplarOptions) =>
           updateDatasourcePluginJsonDataOption(
-            { onOptionsChange, options },
+            { onOptionsChange, options: optionsWithDefaults },
             'exemplarTraceIdDestinations',
             exemplarOptions
           )
         }
-        disabled={options.readOnly}
+        disabled={optionsWithDefaults.readOnly}
       />
     </>
   );

@@ -200,11 +200,13 @@ type Cfg struct {
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
-	PreinstallPlugins                []InstallPlugin
-	PreinstallPluginsAsync           bool
+	PreinstallPluginsAsync           []InstallPlugin
+	PreinstallPluginsSync            []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
+
+	PluginUpdateStrategy string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -425,6 +427,12 @@ type Cfg struct {
 
 	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
 	SQLExpressionCellLimit int64
+
+	// SQLExpressionOutputCellLimit is the maximum number of cells (rows × columns) that can be outputted by a SQL expression.
+	SQLExpressionOutputCellLimit int64
+
+	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
+	SQLExpressionTimeout time.Duration
 
 	ImageUploadProvider string
 
@@ -798,6 +806,8 @@ func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
 	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
 }
 
 type AnnotationCleanupSettings struct {
