@@ -103,24 +103,51 @@ const getTooltips = () => {
     },
     {
       path: 'object.value1',
-      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value1', '=> extract value1'),
-    },
-    {
-      path: 'object.value2',
-      description: t('transformers.get-tooltips.map-valid-paths.description.extract-value2', '=> extract value2'),
-    },
-    {
-      path: 'object.value2[0]',
-      description: t(
-        'transformers.get-tooltips.map-valid-paths.description.extract-value-first-element',
-        '=> extract value2 first element'
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
+          values={{ value: 'value1' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code>
+        </Trans>
       ),
     },
     {
+      path: 'object.value2',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code>
+        </Trans>
+      ),
+    },
+    {
+      path: 'object.value2[0]',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-first-element"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code> first element
+        </Trans>
+      ),
+
+      // t(
+      //   'transformers.get-tooltips.map-valid-paths.description.extract-value-first-element',
+      //   '=> extract value2 first element'
+      // ),
+    },
+    {
       path: 'object.value2[1]',
-      description: t(
-        'transformers.get-tooltips.map-valid-paths.description.extract-value-second-element',
-        '=> extract value2 second element'
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-second-element"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code> second element
+        </Trans>
       ),
     },
   ];
