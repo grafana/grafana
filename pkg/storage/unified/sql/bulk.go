@@ -226,7 +226,7 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 					PreviousRV: -1, // Used for WATCH, but we want to skip watch events
 				},
 				Folder:          req.Folder,
-				GUID:            uuid.NewString(),
+				GUID:            uuid.New().String(),
 				ResourceVersion: rv.next(obj),
 			}); err != nil {
 				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
