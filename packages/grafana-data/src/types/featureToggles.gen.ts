@@ -841,6 +841,10 @@ export interface FeatureToggles {
   */
   teamHttpHeadersMimir?: boolean;
   /**
+  * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
+  */
+  teamHttpHeadersTempo?: boolean;
+  /**
   * Test feature toggle to see how cohorts could be set up AB testing
   * @default false
   */
