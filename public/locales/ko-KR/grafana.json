@@ -727,6 +727,7 @@
       "edit": "편집",
       "export": "내보내기",
       "export-all": "모두 내보내기",
+      "learn-more": "자세히 알아보기",
       "loading": "로딩 중...",
       "search-by-matchers": "일치 조건으로 검색",
       "titles": {
@@ -1396,11 +1397,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "새 경고 규칙",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "새 데이터 소스 관리 기록 규칙",
-        "new-grafana-recording-rule": "새 Grafana 관리 기록 규칙",
+        "new-grafana-alerting-rule": "새 경고 규칙",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "새 기록 규칙",
-        "provisioning": "파일 프로비저닝 또는 Terraform을 통해 규칙을 정의할 수도 있습니다. <2>자세히 알아보기</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "구성된 Prometheus 또는 Loki 데이터 소스가 없습니다",
       "no-rules": "규칙을 찾을 수 없습니다.",
@@ -2038,6 +2043,7 @@
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",

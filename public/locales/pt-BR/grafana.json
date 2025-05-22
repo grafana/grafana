@@ -731,6 +731,7 @@
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
+      "learn-more": "Saiba mais",
       "loading": "Carregando...",
       "search-by-matchers": "Pesquisar por correspondências",
       "titles": {
@@ -1402,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nova regra de alerta",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nova regra de registro gerenciada pela fonte de dados",
-        "new-grafana-recording-rule": "Nova regra de registro gerenciada pela Grafana",
+        "new-grafana-alerting-rule": "Nova regra de alerta",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nova regra de registro",
-        "provisioning": "Você também pode definir regras por meio do provisionamento de arquivos ou do Terraform. <2>Saiba mais</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Não há fontes de dados Prometheus ou Loki configuradas",
       "no-rules": "Nenhuma regra foi encontrada.",
@@ -2048,6 +2053,7 @@
         "description": "Verifique a configuração da fonte de dados. A fonte de dados é compatível com a API do Prometheus?",
         "title": "Não é possível carregar regras desta fonte de dados"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não há mais resultados. Foram encontradas {{numberOfRules}} regras",
