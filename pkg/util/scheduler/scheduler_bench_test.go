@@ -32,7 +32,7 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		})
 		require.NoError(b, err)
 
-		scheduler.StartAsync(context.Background())
+		require.NoError(b, scheduler.StartAsync(context.Background()))
 		require.NoError(b, scheduler.AwaitRunning(context.Background()))
 
 		var wg sync.WaitGroup
@@ -124,11 +124,6 @@ func BenchmarkScheduler_4Workers_10000Tenant_100ItemsPerTenant(b *testing.B) {
 // Benchmark comparing round-robin fairness among tenants
 func BenchmarkSchedulerFairness(b *testing.B) {
 	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 10000}))
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		q.AwaitTerminated(ctx)
-	}()
 
 	scheduler, err := NewScheduler(q, &Config{
 		NumWorkers: 4,
@@ -137,7 +132,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 	})
 	require.NoError(b, err)
 
-	scheduler.StartAsync(context.Background())
+	require.NoError(b, scheduler.StartAsync(context.Background()))
 	require.NoError(b, scheduler.AwaitRunning(context.Background()))
 	defer func() {
 		scheduler.StopAsync()
@@ -201,16 +196,15 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 		b.ReportMetric(fairnessRatio, "fairness")
 		b.ReportMetric(float64(total)/b.Elapsed().Seconds(), "items/sec")
 	}
+
+	// Stop the scheduler and verify it's terminated
+	scheduler.StopAsync()
+	require.NoError(b, scheduler.AwaitTerminated(context.Background()))
 }
 
 // Add a new benchmark with alternating tenant enqueuing pattern
 func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		q.AwaitTerminated(ctx)
-	}()
 
 	scheduler, err := NewScheduler(q, &Config{
 		NumWorkers: 4,
@@ -219,7 +213,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	})
 	require.NoError(b, err)
 
-	scheduler.StartAsync(context.Background())
+	require.NoError(b, scheduler.StartAsync(context.Background()))
 	require.NoError(b, scheduler.AwaitRunning(context.Background()))
 	defer func() {
 		scheduler.StopAsync()
@@ -284,4 +278,8 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 		b.ReportMetric(fairnessRatio, "fairness")
 		b.ReportMetric(float64(total)/b.Elapsed().Seconds(), "items/sec")
 	}
+
+	// Stop the scheduler and verify it's terminated
+	scheduler.StopAsync()
+	require.NoError(b, scheduler.AwaitTerminated(context.Background()))
 }

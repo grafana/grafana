@@ -129,35 +129,24 @@ func TestNewScheduler(t *testing.T) {
 				return
 			}
 
-			scheduler.StartAsync(context.Background())
-			scheduler.AwaitRunning(context.Background())
-
-			if tc.queue != nil {
-				defer func() {
-					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-					defer cancel()
-					tc.queue.StopAsync()
-					tc.queue.AwaitTerminated(ctx)
-				}()
-			}
-
+			require.NoError(t, scheduler.StartAsync(context.Background()))
+			require.NoError(t, scheduler.AwaitRunning(context.Background()))
 			require.NoError(t, err)
 			require.NotNil(t, scheduler)
 			require.Equal(t, tc.queue, scheduler.queue)
 			require.Equal(t, tc.config.NumWorkers, scheduler.numWorkers)
 			require.True(t, scheduler.State() == services.Running)
+
+			if tc.queue != nil {
+				tc.queue.StopAsync()
+				require.NoError(t, tc.queue.AwaitTerminated(context.Background()))
+			}
 		})
 	}
 }
 
 func TestSchedulerLifecycle(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		q.StopAsync()
-		q.AwaitTerminated(ctx)
-	}()
 
 	scheduler, err := NewScheduler(q, &Config{
 		NumWorkers: 3,
@@ -170,9 +159,8 @@ func TestSchedulerLifecycle(t *testing.T) {
 	require.True(t, scheduler.State() == services.New)
 
 	// Test starting the scheduler
-	scheduler.StartAsync(context.Background())
-	err = scheduler.AwaitRunning(context.Background())
-	require.NoError(t, err)
+	require.NoError(t, scheduler.StartAsync(context.Background()))
+	require.NoError(t, scheduler.AwaitRunning(context.Background()))
 	require.True(t, scheduler.State() == services.Running)
 	// Test stopping the scheduler
 	scheduler.StopAsync()
@@ -197,7 +185,7 @@ func TestSchedulerProcessItems(t *testing.T) {
 	require.NoError(t, err)
 
 	// Start the scheduler and wait until it's running
-	scheduler.StartAsync(context.Background())
+	require.NoError(t, scheduler.StartAsync(context.Background()))
 	require.NoError(t, scheduler.AwaitRunning(context.Background()))
 
 	// Enqueue items
@@ -238,11 +226,6 @@ func TestSchedulerProcessItems(t *testing.T) {
 
 func TestSchedulerGracefulShutdown(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		q.AwaitTerminated(ctx)
-	}()
 
 	var processed atomic.Int32
 	taskStarted := make(chan struct{})
@@ -255,7 +238,7 @@ func TestSchedulerGracefulShutdown(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	scheduler.StartAsync(context.Background())
+	require.NoError(t, scheduler.StartAsync(context.Background()))
 	require.NoError(t, scheduler.AwaitRunning(context.Background()))
 
 	// Enqueue quick items
@@ -296,12 +279,6 @@ func TestSchedulerGracefulShutdown(t *testing.T) {
 
 func TestSchedulerWithErrorInQueue(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		q.StopAsync()
-		q.AwaitTerminated(ctx)
-	}()
 
 	var processedCount atomic.Int32
 	const totalItems = 5
@@ -315,7 +292,7 @@ func TestSchedulerWithErrorInQueue(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	scheduler.StartAsync(context.Background())
+	require.NoError(t, scheduler.StartAsync(context.Background()))
 	require.NoError(t, scheduler.AwaitRunning(context.Background()))
 
 	// Enqueue items
@@ -350,7 +327,6 @@ func TestSchedulerWithErrorInQueue(t *testing.T) {
 	// Stop the scheduler and verify it's terminated
 	scheduler.StopAsync()
 	require.NoError(t, scheduler.AwaitTerminated(context.Background()))
-	require.Equal(t, services.Terminated, scheduler.State())
 
 	// Processed count should be at most totalItems
 	require.LessOrEqual(t, processedCount.Load(), int32(totalItems))
