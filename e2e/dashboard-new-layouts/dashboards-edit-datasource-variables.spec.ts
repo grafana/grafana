@@ -28,16 +28,16 @@ describe('Dashboard edit - datasource variables', () => {
     // Common steps to add a new variable
     flows.newEditPaneVariableClick();
     flows.newEditPanelCommonVariableInputs(variable);
-    
+
     e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect().should('be.visible').click();
     cy.get(`#combobox-option-${dsType}`).click();
 
     const regexFilter = 'cloud';
     e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter().should('be.visible').type(regexFilter);
-    
+
     // Assert the variable dropdown is visible with correct label
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
-    
+
     // Assert the variable values are correctly displayed in the panel
     e2e.components.Panels.Panel.content()
       .should('be.visible')
@@ -46,4 +46,4 @@ describe('Dashboard edit - datasource variables', () => {
         cy.get('.markdown-html').should('include.text', `${variable.name}: ${variable.value}`);
       });
   });
-}); 
+});
