@@ -40,11 +40,6 @@ type outboxMessageDB struct {
 	Created         int64
 }
 
-type outboxMessageMetadataDB struct {
-	MessageID    string
-	ReceiveCount int
-}
-
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
