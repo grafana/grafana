@@ -26,7 +26,7 @@ import (
 )
 
 func TestIntegrationSecureValueCreateManyWithK8s(t *testing.T) {
-	//t.Skip("Comment this line to run the test manually. It will spawn a Grafana server with an in-memory SQLite.")
+	t.Skip("Comment this line to run the test manually. It will spawn a Grafana server with an in-memory SQLite.")
 
 	mustCreateAndProcessSecureValues(context.Background(), t, newK8sRequester(t), 300, 300)
 }
