@@ -116,8 +116,8 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
         */}
         <div tabIndex={-1} className={styles.colorPickerPopover}>
           <TabsBar>
-            <PaletteTab activePicker={activePicker} onTabChange={this.onTabChange} />
-            <SpectrumTab activePicker={activePicker} onTabChange={this.onTabChange} />
+            <PaletteTab isActive={activePicker === 'palette'} onTabChange={this.onTabChange} />
+            <SpectrumTab isActive={activePicker === 'spectrum'} onTabChange={this.onTabChange} />
             {this.renderCustomPickerTabs()}
           </TabsBar>
           <div className={styles.colorPickerPopoverContent}>{this.renderPicker()}</div>
@@ -128,28 +128,28 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
 }
 
 interface ColorTabProps<T extends CustomPickersDescriptor> {
-  activePicker: PickerType | keyof T;
+  isActive: boolean;
   onTabChange: (tab: PickerType) => () => void;
 }
 
-const PaletteTab = <T extends CustomPickersDescriptor>({ activePicker, onTabChange }: ColorTabProps<T>) => {
+const PaletteTab = <T extends CustomPickersDescriptor>({ isActive, onTabChange }: ColorTabProps<T>) => {
   const { t } = useTranslate();
   return (
     <Tab
       label={t('grafana-ui.color-picker-popover.palette-tab', 'Colors')}
       onChangeTab={onTabChange('palette')}
-      active={activePicker === 'palette'}
+      active={isActive}
     />
   );
 };
 
-const SpectrumTab = <T extends CustomPickersDescriptor>({ activePicker, onTabChange }: ColorTabProps<T>) => {
+const SpectrumTab = <T extends CustomPickersDescriptor>({ isActive, onTabChange }: ColorTabProps<T>) => {
   const { t } = useTranslate();
   return (
     <Tab
       label={t('grafana-ui.color-picker-popover.spectrum-tab', 'Custom')}
       onChangeTab={onTabChange('spectrum')}
-      active={activePicker === 'spectrum'}
+      active={isActive}
     />
   );
 };

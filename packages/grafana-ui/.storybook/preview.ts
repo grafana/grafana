@@ -1,7 +1,6 @@
 import { Preview } from '@storybook/react';
 import 'jquery';
 import { getBuiltInThemes, getTimeZone, getTimeZones, GrafanaTheme2 } from '@grafana/data';
-import { initPluginTranslations } from '@grafana/i18n';
 
 import '../../../public/vendor/flot/jquery.flot.js';
 import '../../../public/vendor/flot/jquery.flot.selection';
@@ -21,8 +20,6 @@ import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer'
 import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
-
-initPluginTranslations('grafana-ui');
 
 const handleThemeChange = (theme: GrafanaTheme2) => {
   if (theme.colors.mode !== 'light') {

@@ -52,7 +52,7 @@ export function SegmentAsync<T>({
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles2(getSegmentStyles);
-  noOptionMessageHandler = noOptionMessageHandler || mapStateToNoOptionsMessage(t);
+  noOptionMessageHandler = noOptionMessageHandler ?? mapStateToNoOptionsMessage(t);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;

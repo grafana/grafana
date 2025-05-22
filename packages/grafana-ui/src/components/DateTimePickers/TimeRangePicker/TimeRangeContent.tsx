@@ -42,7 +42,7 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
-  errorMessage: JSX.Element;
+  errorMessage: React.ReactNode;
 }
 
 const DEFAULT_ERROR_MESSAGE = () => (

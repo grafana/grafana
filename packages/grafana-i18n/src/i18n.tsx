@@ -1,5 +1,6 @@
 import i18n, { InitOptions, ReactOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
+import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
@@ -11,22 +12,33 @@ import { TransProps, TransType } from './types';
 let tFunc: TFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
-export async function initPluginTranslations(id: string) {
+async function initDefaultI18nInstance() {
+  if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
+    return;
+  }
+
   // If the resources are not an object, we need to initialize the plugin translations
-  if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
-    await getI18nInstance().use(initReactI18next).init({
-      resources: {},
-      returnEmptyString: false,
-      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
-    });
+  await getI18nInstance().use(initReactI18next).init({
+    resources: {},
+    returnEmptyString: false,
+    lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+  });
+}
+
+function initDefaultReactI18nInstance() {
+  if (getI18n()?.options?.react) {
+    return;
   }
 
   // If the initReactI18next is not set, we need to set them
-  if (!getI18n()?.options?.react) {
-    const options: ReactOptions = {};
-    setDefaults(options);
-    setI18n(getI18nInstance());
-  }
+  const options: ReactOptions = {};
+  setDefaults(options);
+  setI18n(getI18nInstance());
+}
+
+export async function initPluginTranslations(id: string) {
+  await initDefaultI18nInstance();
+  initDefaultReactI18nInstance();
 
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
@@ -140,13 +152,17 @@ export function addResourceBundle(language: string, namespace: string, resource:
   getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
 }
 
+function logWarning(entity: string) {
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn(
+      `${entity} was called before i18n was initialized. This is probably caused by calling ${entity} outside of Grafana context or by calling ${entity} in the root module scope, instead of lazily on render. Initializing default instances.`
+    );
+  }
+}
+
 export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {
   if (!tFunc) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.warn(
-        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
-      );
-    }
+    logWarning('t()');
 
     if (process.env.NODE_ENV === 'development') {
       throw new Error('t() was called before i18n was initialized');
@@ -158,11 +174,40 @@ export function t(id: string, defaultMessage: string, values?: Record<string, un
   return tFunc(id, defaultMessage, values);
 }
 
+function useInit(entity: string) {
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      if (!tFunc || !transComponent) {
+        logWarning(entity);
+        await initPluginTranslations(entity);
+      }
+      setIsInitialized(true);
+    }
+    init();
+  });
+
+  return isInitialized;
+}
+
 export function useTranslate() {
+  const isInitialized = useInit('useTranslate()');
+
+  if (!isInitialized) {
+    return { t: () => '' };
+  }
+
   return { t };
 }
 
 export function Trans(props: TransProps) {
+  const isInitialized = useInit('<Trans>');
+
+  if (!isInitialized) {
+    return null;
+  }
+
   const Component = transComponent ?? I18NextTrans;
   return <Component shouldUnescape {...props} />;
 }

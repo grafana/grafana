@@ -158,8 +158,8 @@ export function SelectBase<T, Rest = {}>({
   const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
-  noOptionsMessage = noOptionsMessage || t('grafana-ui.select.no-options-label', 'No options found');
-  placeholder = placeholder || t('grafana-ui.select.placeholder', 'Choose');
+  noOptionsMessage = noOptionsMessage ?? t('grafana-ui.select.no-options-label', 'No options found');
+  placeholder = placeholder ?? t('grafana-ui.select.placeholder', 'Choose');
 
   const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
