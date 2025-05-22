@@ -121,7 +121,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 1. Add the **TestData** data source through the **Connections** menu.
 1. Create an alert rule.
 
-   Navigate to **Alerting** → **Alert rules** and click **New alert rule**
+   Navigate to **Alerting** → **Alert rules** and click **New alert rule**.
 
 1. Simulate a query (`$A`) that returns latencies for each service.
 
