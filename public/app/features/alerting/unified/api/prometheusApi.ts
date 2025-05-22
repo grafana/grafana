@@ -28,10 +28,11 @@ type PromRulesOptions = WithNotificationOptions<{
   groupNextToken?: string;
 }>;
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
   panelId?: number;
+  limitAlerts?: number;
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -71,13 +72,13 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ folderUid, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
+      query: ({ folderUid, groupName, ruleName, groupLimit, limitAlerts, groupNextToken }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
           folder_uid: folderUid,
           rule_group: groupName,
           rule_name: ruleName,
-          exclude_alerts: excludeAlerts?.toString(),
+          limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
         },

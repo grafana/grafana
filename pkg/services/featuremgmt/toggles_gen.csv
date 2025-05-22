@@ -32,6 +32,7 @@ renderAuthJWT,preview,@grafana/sharing-squad,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
+extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
@@ -122,6 +123,7 @@ oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,fals
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
+grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
@@ -209,6 +211,7 @@ grafanaManagedRecordingRulesDatasources,GA,@grafana/alerting-squad,false,false,f
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
+alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,GA,@grafana/search-and-storage,false,false,false
 azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
 localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false

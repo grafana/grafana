@@ -19,7 +19,7 @@ weight: 320
 # Configure SCIM with Okta
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 This guide explains how to configure SCIM provisioning with Okta to automate user and team management in Grafana.

@@ -22,5 +22,5 @@ export {
   getI18nInstance,
   getLanguage,
   getResolvedLanguage,
-  initTranslations,
+  initializeI18n,
 } from '../i18n';

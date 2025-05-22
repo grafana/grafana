@@ -731,6 +731,7 @@
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
+      "learn-more": "Saiba mais",
       "loading": "A carregar...",
       "search-by-matchers": "Pesquisar por correspondências",
       "titles": {
@@ -1072,6 +1073,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1209,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "A carregar..."
-    },
-    "group-actions": {
-      "actions-trigger": "Ações de grupo de regras",
-      "details": "Detalhes",
-      "edit": "Editar"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Falha ao carregar detalhes do grupo",
-      "unknown-error": "Erro desconhecido"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupo",
@@ -1408,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nova regra de alerta",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nova regra de gravação gerida por origem de dados",
-        "new-grafana-recording-rule": "Nova regra de gravação gerida pela Grafana",
+        "new-grafana-alerting-rule": "Nova regra de alerta",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nova regra de gravação",
-        "provisioning": "Também pode definir regras através do provisionamento de ficheiros ou do Terraform. <2>Saiba mais</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Não existem origens de dados Prometheus ou Loki configuradas",
       "no-rules": "Nenhuma regra encontrada.",
@@ -2054,6 +2053,7 @@
         "description": "Verifique a configuração da origem de dados. A origem de dados suporta a API do Prometheus?",
         "title": "Não foi possível carregar as regras desta origem de dados"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não existem mais resultados – {{numberOfRules}} regras encontradas",
@@ -2070,8 +2070,7 @@
       "new-datasource-recording-rule": "Nova regra de gravação da origem de dados",
       "new-grafana-recording-rule": "Nova regra de gravação da Grafana",
       "pagination": {
-        "next-page": "página seguinte",
-        "previous-page": "página anterior"
+        "next-page": ""
       },
       "recording-rules": "Regras de gravação",
       "return-button": {
@@ -6155,6 +6154,7 @@
       "label-wrap-lines": "Quebra de linhas"
     },
     "log-details": {
+      "close": "",
       "fields": "Campos",
       "links": "Links",
       "log-line": "Linha de registo",
@@ -6174,15 +6174,20 @@
       "log-line": "linha de registo"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha de registo",
       "copy-log": "Copiar linha de registo",
+      "hide-details": "",
       "icon-label": "Menu de registo",
       "pin-to-outline": "Afixar registo",
       "show-context": "Mostrar contexto",
+      "show-details": "",
       "unpin-from-outline": "Retirar registo"
     },
     "log-row-context-modal": {
@@ -6776,7 +6781,8 @@
       "title": "Painéis de biblioteca"
     },
     "machine-learning": {
-      "title": "Aprendizagem Automática"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerir painéis de controlo e permissões de pastas"
