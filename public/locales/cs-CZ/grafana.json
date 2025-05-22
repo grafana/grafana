@@ -739,6 +739,7 @@
       "edit": "Upravit",
       "export": "Exportovat",
       "export-all": "Exportovat vše",
+      "learn-more": "Zjistěte víc",
       "loading": "Načítání…",
       "search-by-matchers": "Hledat podle shody",
       "titles": {
@@ -1414,11 +1415,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nové pravidlo výstrahy",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nové pravidlo nahrávání spravované zdrojem dat",
-        "new-grafana-recording-rule": "Nové pravidlo nahrávání spravované společností Grafana",
+        "new-grafana-alerting-rule": "Nové pravidlo výstrahy",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nové pravidlo nahrávání",
-        "provisioning": "Pravidla můžete definovat také prostřednictvím zajištění souboru nebo Terraformu. <2>Zjistěte víc</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Nejsou nakonfigurovány žádné zdroje dat Prometheus nebo Loki",
       "no-rules": "Nebyla nalezena žádná pravidla.",
@@ -2068,6 +2073,7 @@
         "description": "Zkontrolujte konfiguraci zdroje dat. Podporuje zdroj dat Prometheus API?",
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
