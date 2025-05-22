@@ -1424,9 +1424,8 @@ var (
 		{
 			Name:           "teamHttpHeadersTempo",
 			Description:    "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageExperimental,
 			FrontendOnly:   false,
-			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
 		},
 		{
