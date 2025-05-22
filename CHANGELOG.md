@@ -6,6 +6,9 @@
 
 - **Chore:** Bump Go version to 1.24.3 [#105115](https://github.com/grafana/grafana/pull/105115), [@macabu](https://github.com/macabu)
 - **Dependencies:** Bump golang.org/x/net from v0.37.0 to v0.40.0 [#105449](https://github.com/grafana/grafana/pull/105449), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
 - **Security:** Fix CVE-2025-4123
 - **Security:** Fix CVE-2025-3580
 
