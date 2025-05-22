@@ -9,9 +9,11 @@ import {
   Collapse,
   Divider,
   Field,
+  FileUpload,
   InlineField,
   InlineSwitch,
   LinkButton,
+  RadioButtonList,
   Spinner,
   Stack,
   Text,
@@ -32,6 +34,9 @@ import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 
 export interface ImportFormValues {
+  importSource: 'datasource' | 'yaml';
+  yamlFile: File | null;
+  yamlImportTargetDatasourceUID: string | null;
   selectedDatasourceUID: string;
   selectedDatasourceName: string | null;
   pauseAlertingRules: boolean;
@@ -56,6 +61,9 @@ const ImportFromDSRules = () => {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
+      importSource: 'datasource',
+      yamlFile: null,
+      yamlImportTargetDatasourceUID: null,
       selectedDatasourceUID: defaultDataSource?.uid,
       selectedDatasourceName: defaultDataSource?.name,
       pauseAlertingRules: true,
@@ -74,7 +82,11 @@ const ImportFromDSRules = () => {
   } = formAPI;
 
   const [optionsShowing, toggleOptions] = useToggle(true);
-  const [targetFolder, selectedDatasourceName] = watch(['targetFolder', 'selectedDatasourceName']);
+  const [targetFolder, selectedDatasourceName, importSource] = watch([
+    'targetFolder',
+    'selectedDatasourceName',
+    'importSource',
+  ]);
   const [showConfirmModal, setShowConfirmModal] = useToggle(false);
   const { t } = useTranslate();
   const onSubmit = async () => {
@@ -85,7 +97,7 @@ const ImportFromDSRules = () => {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: t('alerting.import-to-gma.pageTitle', 'Import alert rules from a data source to Grafana-managed rules'),
+        text: t('alerting.import-to-gma.pageTitle', 'Import alert rules'),
       }}
     >
       <Stack gap={2} direction={'column'}>
@@ -93,36 +105,128 @@ const ImportFromDSRules = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack direction="column" gap={1}>
               <Field
-                label={t('alerting.import-to-gma.datasource.label', 'Data source')}
-                invalid={!!errors.selectedDatasourceName}
-                error={errors.selectedDatasourceName?.message}
-                htmlFor="datasource-picker"
+                label={t('alerting.import-to-gma.import-source', 'Import source')}
+                invalid={!!errors.importSource}
+                error={errors.importSource?.message}
+                htmlFor="import-source"
               >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
-                    <CloudRulesSourcePicker
+                    <RadioButtonList
                       {...field}
-                      width={50}
-                      inputId="datasource-picker"
-                      onChange={(ds: DataSourceInstanceSettings) => {
-                        setValue('selectedDatasourceUID', ds.uid);
-                        setValue('selectedDatasourceName', ds.name);
-                        // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
-                        const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
-                        setValue('targetDatasourceUID', targetDataSourceUID);
-                      }}
+                      onChange={(value) => setValue('importSource', value)}
+                      options={[
+                        {
+                          label: t('alerting.import-to-gma.source.datasource', 'Existing data source-managed rules'),
+                          description: t(
+                            'alerting.import-to-gma.source.datasource-description',
+                            'Import rules from existing data sources'
+                          ),
+                          value: 'datasource',
+                        },
+                        {
+                          label: t('alerting.import-to-gma.source.yaml', 'Prometheus YAML file'),
+                          description: t(
+                            'alerting.import-to-gma.source.yaml-description',
+                            'Import rules from a Prometheus YAML file.'
+                          ),
+                          value: 'yaml',
+                        },
+                      ]}
                     />
                   )}
-                  name="selectedDatasourceName"
-                  rules={{
-                    required: {
-                      value: true,
-                      message: t('alerting.import-to-gma.datasource.required-message', 'Please select a data source'),
-                    },
-                  }}
                   control={control}
+                  name="importSource"
                 />
               </Field>
+
+              {importSource === 'datasource' && (
+                <Field
+                  label={t('alerting.import-to-gma.datasource.label', 'Data source')}
+                  invalid={!!errors.selectedDatasourceName}
+                  error={errors.selectedDatasourceName?.message}
+                  htmlFor="datasource-picker"
+                >
+                  <Controller
+                    render={({ field: { onChange, ref, ...field } }) => (
+                      <CloudRulesSourcePicker
+                        {...field}
+                        width={50}
+                        inputId="datasource-picker"
+                        onChange={(ds: DataSourceInstanceSettings) => {
+                          setValue('selectedDatasourceUID', ds.uid);
+                          setValue('selectedDatasourceName', ds.name);
+                          // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
+                          const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                          setValue('targetDatasourceUID', targetDataSourceUID);
+                        }}
+                      />
+                    )}
+                    name="selectedDatasourceName"
+                    rules={{
+                      required: {
+                        value: true,
+                        message: t('alerting.import-to-gma.datasource.required-message', 'Please select a data source'),
+                      },
+                    }}
+                    control={control}
+                  />
+                </Field>
+              )}
+
+              {importSource === 'yaml' && (
+                <>
+                  <Field
+                    label={t('alerting.import-to-gma.yaml.label', 'Prometheus YAML file')}
+                    invalid={!!errors.yamlFile}
+                    error={errors.yamlFile?.message}
+                    htmlFor="yamlFile"
+                  >
+                    <Controller
+                      name="yamlFile"
+                      render={({ field: { onChange, ref, ...field } }) => (
+                        <FileUpload
+                          {...field}
+                          onFileUpload={(event) => {
+                            const yamlFile = event.currentTarget.files?.item(0);
+                            onChange(yamlFile);
+                          }}
+                          size="sm"
+                          showFileName
+                          accept=".yaml,.yml,.json"
+                        />
+                      )}
+                      rules={{ required: true }}
+                    />
+                  </Field>
+                  <Field
+                    label={t('alerting.import-to-gma.yaml.target-datasource', 'Target data source')}
+                    description={t(
+                      'alerting.import-to-gma.yaml.target-datasource-description',
+                      'Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.'
+                    )}
+                    invalid={!!errors.yamlImportTargetDatasourceUID}
+                    error={errors.yamlImportTargetDatasourceUID?.message}
+                    htmlFor="yamlImportTargetDatasourceUID"
+                  >
+                    <Controller
+                      name="yamlImportTargetDatasourceUID"
+                      render={({ field: { onChange, ref, value, ...field } }) => (
+                        <DataSourcePicker
+                          {...field}
+                          current={value}
+                          noDefault
+                          alerting
+                          filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+                          onChange={(ds: DataSourceInstanceSettings) => {
+                            setValue('yamlImportTargetDatasourceUID', ds.uid);
+                          }}
+                        />
+                      )}
+                    />
+                  </Field>
+                </>
+              )}
 
               <Collapse
                 label={t('alerting.import-to-gma.additional-settings', 'Additional settings')}

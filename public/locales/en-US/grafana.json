@@ -1303,11 +1303,12 @@
         "label": "Group"
       },
       "import-location-and-filters": "Import location and filters",
+      "import-source": "Import source",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
+      "pageTitle": "Import alert rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
@@ -1315,9 +1316,20 @@
         "label": "Pause imported recording rules"
       },
       "recording-rules": "Recording rules",
+      "source": {
+        "datasource": "Existing data source-managed rules",
+        "datasource-description": "Import rules from existing data sources",
+        "yaml": "Prometheus YAML file",
+        "yaml-description": "Import rules from a Prometheus YAML file."
+      },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
         "label": "Target folder"
+      },
+      "yaml": {
+        "label": "Prometheus YAML file",
+        "target-datasource": "Target data source",
+        "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source."
       }
     },
     "insights": {
