@@ -96,7 +96,17 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
 ControlledLogRows.displayName = 'ControlledLogRows';
 
 const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps>(
-  ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps, ref) => {
+  (
+    {
+      loading,
+      loadMoreLogs,
+      deduplicatedRows = [],
+      range,
+      scrollIntoView: scrollIntoViewProp,
+      ...rest
+    }: LogRowsComponentProps,
+    ref
+  ) => {
     const {
       app,
       dedupStrategy,
@@ -137,8 +147,8 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
 
     const scrollIntoView = useCallback(
       (element: HTMLElement) => {
-        if (rest.scrollIntoView) {
-          rest.scrollIntoView(element);
+        if (scrollIntoViewProp) {
+          scrollIntoViewProp(element);
           return;
         }
         if (scrollElementRef.current) {
@@ -148,7 +158,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
           });
         }
       },
-      [rest]
+      [scrollIntoViewProp]
     );
 
     return (
