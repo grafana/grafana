@@ -69,19 +69,32 @@ jobs:
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_changelog_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          # Permissions:
+          # * contents: write
+          # * pull-requests: write
+          # * workflows: write // Allows the token to create new branches with runnable GitHub workflows
+          repositories: "[\"grafana\", \"grafana-enterprise\"]"
+          permissions: "{\"contents:\" \"write\", \"pull-requests:\" \"write\", \"workflows\": \"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.generate_changelog_token.outputs.token }}
           ref: km/use-main-in-release-pr
           fetch-depth: '0'
           path: .grafana-main
@@ -95,19 +108,12 @@ jobs:
           go-version-file: go.mod
       - name: Configure git user
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "grafana-delivery-bot[bot]"
+          git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
         run: git checkout -b "release/${{ github.run_number }}/$VERSION"
-      - name: Generate changelog token
-        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        id: generate_changelog_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
