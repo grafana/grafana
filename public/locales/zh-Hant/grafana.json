@@ -727,6 +727,7 @@
       "edit": "編輯",
       "export": "匯出",
       "export-all": "匯出全部",
+      "learn-more": "了解詳情",
       "loading": "正在載入…",
       "search-by-matchers": "依匹配搜尋",
       "titles": {
@@ -1396,11 +1397,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新的警報規則",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新的資料來源管理錄製規則",
-        "new-grafana-recording-rule": "新的 Grafana 管理錄製規則",
+        "new-grafana-alerting-rule": "新的警報規則",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新的錄製規則",
-        "provisioning": "您也可以透過檔案佈建或 Terraform 來定義規則。<2>了解更多</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "尚未設定 Prometheus 或 Loki 資料來源",
       "no-rules": "沒有找到規則。",
@@ -2038,6 +2043,7 @@
         "description": "檢查資料來源設定。資料來源是否支援 Prometheus API？",
         "title": "無法從此資料來源載入規則"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -6621,7 +6627,7 @@
       "title": "收集器"
     },
     "config": {
-      "title": "管理部"
+      "title": "管理"
     },
     "config-access": {
       "subtitle": "設定個人使用者、團隊和服務帳戶的存取權限",

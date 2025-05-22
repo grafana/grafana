@@ -21,7 +21,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --grafana-repo="https://github.com/grafana/grafana.git" \
   --enterprise-ref=${DRONE_COMMIT} \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base=${UBUNTU_BASE} \
   --alpine-base=${ALPINE_BASE} \
   --patches-repo=${PATCHES_REPO} \

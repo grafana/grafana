@@ -727,6 +727,7 @@
       "edit": "編集",
       "export": "エクスポート",
       "export-all": "すべてをエクスポート",
+      "learn-more": "詳細を見る",
       "loading": "読み込み中...",
       "search-by-matchers": "マッチャーで検索",
       "titles": {
@@ -1396,11 +1397,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新しいアラートルール",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新しいデータソース管理の記録ルール",
-        "new-grafana-recording-rule": "新しいGrafana管理の記録ルール",
+        "new-grafana-alerting-rule": "新しいアラートルール",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新しい記録ルール",
-        "provisioning": "ファイルプロビジョニングまたはTerraformを通じてルールを定義することもできます。<2>詳細はこちら</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "PrometheusまたはLokiデータソースが設定されていません",
       "no-rules": "ルールが見つかりません。",
@@ -2038,6 +2043,7 @@
         "description": "データソースの設定を確認してください。データソースはPrometheus APIをサポートしていますか？",
         "title": "このデータソースからルールを読み込めません"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -6632,7 +6638,7 @@
       "title": "一般"
     },
     "config-plugins": {
-      "subtitle": "プラグインをインストールし、データ間の関係を定義します",
+      "subtitle": "プラグインをインストールし、データ間の関係を定義する",
       "title": "プラグインとデータ"
     },
     "connect-data": {
