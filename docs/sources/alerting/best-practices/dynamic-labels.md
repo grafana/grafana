@@ -183,7 +183,7 @@ This alerting setup allows you to:
 
 - Use a single rule for multiple severity levels.
 - Route alerts dynamically using the label value.
-- Simplify alert rule maintenance and avoid duplication
+- Simplify alert rule maintenance and avoid duplication.
 
 However, dynamic labels can introduce unexpected behavior when label values change. The next section explains this.
 
