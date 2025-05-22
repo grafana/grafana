@@ -833,7 +833,7 @@ services:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
     -alertmanager.utf8-strict-mode-enabled
   environment: {}
-  image: grafana/mimir-alpine:r316-55f47f8
+  image: grafana/mimir:r343-5b63106
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1270,7 +1270,7 @@ services:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
     -alertmanager.utf8-strict-mode-enabled
   environment: {}
-  image: grafana/mimir-alpine:r316-55f47f8
+  image: grafana/mimir:r343-5b63106
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2233,7 +2233,7 @@ services:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
     -alertmanager.utf8-strict-mode-enabled
   environment: {}
-  image: grafana/mimir-alpine:r316-55f47f8
+  image: grafana/mimir:r343-5b63106
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2790,7 +2790,7 @@ services:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
     -alertmanager.utf8-strict-mode-enabled
   environment: {}
-  image: grafana/mimir-alpine:r316-55f47f8
+  image: grafana/mimir:r343-5b63106
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4475,7 +4475,7 @@ services:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
     -alertmanager.utf8-strict-mode-enabled
   environment: {}
-  image: grafana/mimir-alpine:r316-55f47f8
+  image: grafana/mimir:r343-5b63106
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -4922,7 +4922,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r316-55f47f8
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir:r343-5b63106
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
@@ -4960,7 +4960,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r316-55f47f8
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir:r343-5b63106
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
@@ -5206,6 +5206,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e430c51190ba46dbd426d13f47c13c275f4d05b6b1a26d1d9f67b5a8f09ecb41
+hmac: 45aee2cf40f3162ff053aeddd93b8db8e0779dc7457a441296fde6ffa21d0aec
 
 ...
