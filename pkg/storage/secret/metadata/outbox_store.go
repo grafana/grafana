@@ -185,6 +185,10 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		messages = append(messages, msg)
 	}
 
+	if err := rows.Err(); err != nil {
+		return messages, fmt.Errorf("reading rows: %w", err)
+	}
+
 	return messages, nil
 }
 
