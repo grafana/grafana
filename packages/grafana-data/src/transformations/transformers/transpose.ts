@@ -38,8 +38,12 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
       ? [firstName, ...fieldValuesAsStrings(firstField, firstField.values)]
       : [firstName, ...firstField.values.map((_, i) => restName)];
     const rows = useFirstFieldAsHeaders
-      ? frame.fields.map((field) => field.name).slice(1)
-      : frame.fields.map((field) => field.name);
+      ? frame.fields
+          .map((field) => {
+            return field.state?.displayName ?? field.name;
+          })
+          .slice(1)
+      : frame.fields.map((field) => field.state?.displayName ?? field.name);
     const fieldType = determineFieldType(
       useFirstFieldAsHeaders
         ? frame.fields.map((field) => field.type).slice(1)
