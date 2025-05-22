@@ -9047,6 +9047,7 @@
       "label-reverse": "Reverse",
       "placeholder-select-field": "Select field"
     },
+    "tag": "{{ tag }}",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Time field",
