@@ -4,19 +4,11 @@ import { ReactNode } from 'react';
 import { createLogLine } from '../__mocks__/logRow';
 
 import { useLogListContextData, useLogListContext, useLogIsPinned, LogListContext } from './LogListContext';
-import { defaultProps } from './__mocks__/LogListContext';
+import { defaultValue } from './__mocks__/LogListContext';
 
 const log = createLogLine({ rowId: 'yep' });
 const value = {
-  ...defaultProps,
-  downloadLogs: jest.fn(),
-  getRowContextQuery: jest.fn(),
-  logSupportsContext: jest.fn(),
-  onPermalinkClick: jest.fn(),
-  onPinLine: jest.fn(),
-  onOpenContext: jest.fn(),
-  onUnpinLine: jest.fn(),
-  pinLineButtonTooltipTitle: 'test',
+  ...defaultValue,
   pinnedLogs: ['yep'],
 };
 const wrapper = ({ children }: { children: ReactNode }) => (
