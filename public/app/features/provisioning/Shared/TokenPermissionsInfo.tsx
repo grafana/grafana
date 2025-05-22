@@ -10,7 +10,7 @@ export function TokenPermissionsInfo() {
   return (
     <div className={styles.container}>
       {/* GitHub UI is English only, so these strings are not translated */}
-      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
         <TextLink external href="https://github.com/settings/personal-access-tokens/new">
@@ -22,19 +22,19 @@ export function TokenPermissionsInfo() {
       </Stack>
 
       <ul className={styles.permissionsList}>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <li>
           Content: <span className={styles.accessLevel}>Read and write</span>
         </li>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <li>
           Metadata: <span className={styles.accessLevel}>Read only</span>
         </li>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <li>
           Pull requests: <span className={styles.accessLevel}>Read and write</span>
         </li>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <li>
           Webhooks: <span className={styles.accessLevel}>Read and write</span>
         </li>

@@ -169,7 +169,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="cache-timeout-id"
           type="text"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="60"
           spellCheck={false}
           onBlur={onCacheTimeoutBlur}
@@ -193,7 +193,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         </InlineLabel>
         <Input
           type="number"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${dataSource.cachingConfig.TTLMs}`}
           spellCheck={false}
           onBlur={onQueryCachingTTLBlur}
@@ -226,7 +226,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="max-data-points-input"
           type="number"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${realMd}`}
           spellCheck={false}
           onBlur={onMaxDataPointsBlur}
@@ -267,7 +267,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="min-interval-input"
           type="text"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${minIntervalOnDs}`}
           spellCheck={false}
           onBlur={onMinIntervalBlur}
@@ -359,7 +359,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="relative-time-input"
           type="text"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="1h"
           onChange={onRelativeTimeChange}
           onBlur={onOverrideTime}
@@ -385,7 +385,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <Input
           id="time-shift-input"
           type="text"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="1h"
           onChange={onTimeShiftChange}
           onBlur={onTimeShift}

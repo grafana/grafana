@@ -200,7 +200,7 @@ const FeatureListing = () => {
       </Item>
       <Item title={t('admin.feature-listing.title-enterprise-plugins', 'Enterprise plugins')}>
         <List nested={true}>
-          {/* eslint-disable @grafana/no-untranslated-strings */}
+          {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
           <Item title="Oracle" />
           <Item title="Splunk" />
           <Item title="Service Now" />
@@ -216,7 +216,7 @@ const FeatureListing = () => {
           <Item title="Salesforce" />
           <Item title="Snowflake" />
           <Item title="Wavefront" />
-          {/* eslint-enable @grafana/no-untranslated-strings */}
+          {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
         </List>
       </Item>
     </List>

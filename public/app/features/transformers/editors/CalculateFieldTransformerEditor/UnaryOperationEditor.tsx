@@ -60,7 +60,7 @@ export const UnaryOperationEditor = (props: {
           <Select options={ops} value={unary?.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
         </InlineField>
         <InlineField
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           label="("
           labelWidth={2}
         >
@@ -72,7 +72,7 @@ export const UnaryOperationEditor = (props: {
             onChange={onUnaryValueChanged}
           />
         </InlineField>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <InlineLabel width={2}>)</InlineLabel>
       </InlineFieldRow>
     </>

@@ -216,7 +216,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                   ariaLabel="Select min span duration"
                   onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
                   isInvalidError="Invalid duration"
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="e.g. 100ms, 1.2s"
                   width={18}
                   value={search.from || ''}
@@ -233,7 +233,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 ariaLabel="Select max span duration"
                 onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
                 isInvalidError="Invalid duration"
-                // eslint-disable-next-line @grafana/no-untranslated-strings
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="e.g. 100ms, 1.2s"
                 width={18}
                 value={search.to || ''}

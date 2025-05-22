@@ -157,7 +157,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
           {method && method.length > 0 && (
             <Tooltip
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               content="http.method"
               interactive={true}
             >
@@ -168,7 +168,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
           {status && status.length > 0 && (
             <Tooltip
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               content="http.status_code"
               interactive={true}
             >

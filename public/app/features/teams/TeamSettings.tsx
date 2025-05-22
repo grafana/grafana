@@ -78,7 +78,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
             )}
             disabled={!canWriteTeamSettings}
           >
-            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
           </Field>
           <Button type="submit" disabled={!canWriteTeamSettings}>
