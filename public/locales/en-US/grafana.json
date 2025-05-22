@@ -5781,6 +5781,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "Events",
       "footer": "Event timestamps are relative to the start time of the full trace."
     },
     "accordian-references": {
