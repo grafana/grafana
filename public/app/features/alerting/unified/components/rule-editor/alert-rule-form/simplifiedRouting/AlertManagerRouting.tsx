@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
@@ -19,6 +19,7 @@ interface AlertManagerManualRoutingProps {
 }
 
 export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRoutingProps) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;

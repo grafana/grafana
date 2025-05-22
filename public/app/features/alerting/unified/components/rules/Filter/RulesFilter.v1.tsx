@@ -4,11 +4,10 @@ import { useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -39,9 +38,7 @@ const RuleHealthOptions: SelectableValue[] = [
 ];
 
 // Contact point selector is not supported in Alerting ListView V2 yet
-const canRenderContactPointSelector =
-  contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-  config.featureToggles.alertingSimplifiedRouting;
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 interface RulesFilerProps {
   onClear?: () => void;
@@ -71,6 +68,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   useEffect(() => {
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
+  const { t } = useTranslate();
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
     const dataSourceNames =
@@ -351,7 +349,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function SearchQueryHelp() {
   const styles = useStyles2(helpStyles);
-
+  const { t } = useTranslate();
   return (
     <div>
       <div>

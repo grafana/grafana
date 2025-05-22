@@ -176,7 +176,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	var port int
 	if strings.HasPrefix(dsInfo.URL, "/") {
 		host = dsInfo.URL
-		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+		logger.Debug("Generating connection string with Unix socket specifier", "address", dsInfo.URL)
 	} else {
 		index := strings.LastIndex(dsInfo.URL, ":")
 		v6Index := strings.Index(dsInfo.URL, "]")
@@ -187,12 +187,12 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(sp[1])
 				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
+					logger.Debug("Error parsing the IPv4 address", "address", dsInfo.URL)
+					return "", sqleng.ErrParsingPostgresURL
 				}
-
-				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+				logger.Debug("Generating IPv4 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
 			} else {
-				logger.Debug("Generating connection string with network host", "host", host)
+				logger.Debug("Generating IPv4 connection string with network host", "host", host, "address", dsInfo.URL)
 			}
 		} else {
 			if index == v6Index+1 {
@@ -200,13 +200,13 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(dsInfo.URL[index+1:])
 				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
+					logger.Debug("Error parsing the IPv6 address", "address", dsInfo.URL)
+					return "", sqleng.ErrParsingPostgresURL
 				}
-
-				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
+				logger.Debug("Generating IPv6 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
 			} else {
 				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-				logger.Debug("Generating ipv6 connection string with network host", "host", host)
+				logger.Debug("Generating IPv6 connection string with network host", "host", host, "address", dsInfo.URL)
 			}
 		}
 	}
@@ -260,7 +260,7 @@ func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err e
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+		return sqleng.ErrToHealthCheckResult(err)
 	}
 	return dsHandler.CheckHealth(ctx, req)
 }

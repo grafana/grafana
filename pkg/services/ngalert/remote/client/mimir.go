@@ -19,6 +19,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
@@ -47,6 +48,7 @@ type Mimir struct {
 	metrics       *metrics.RemoteAlertmanager
 	promoteConfig bool
 	externalURL   string
+	smtpFrom      string
 	staticHeaders map[string]string
 }
 
@@ -58,6 +60,7 @@ type Config struct {
 	Logger        log.Logger
 	PromoteConfig bool
 	ExternalURL   string
+	SmtpFrom      string
 	StaticHeaders map[string]string
 }
 
@@ -86,7 +89,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
-		Next:     http.DefaultTransport,
+		Next:     httpclient.NewHTTPTransport(),
 	}
 
 	c := &http.Client{
@@ -102,6 +105,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		metrics:       metrics,
 		promoteConfig: cfg.PromoteConfig,
 		externalURL:   cfg.ExternalURL,
+		smtpFrom:      cfg.SmtpFrom,
 		staticHeaders: cfg.StaticHeaders,
 	}, nil
 }

@@ -1,7 +1,7 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -183,7 +183,7 @@ export function getPanelMenu(
     }
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
 
     locationService.push(ruleFormUrl);

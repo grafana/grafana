@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Alert, Select, SelectCommonProps, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
@@ -50,6 +50,7 @@ export const ContactPointSelector = ({
       onError(new Error(`Contact point "${selectedContactPointName}" could not be found`));
     }
   }, [isLoading, matchedContactPoint, onError, selectedContactPointName]);
+  const { t } = useTranslate();
 
   // TODO error handling
   if (error) {
