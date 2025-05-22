@@ -9,6 +9,11 @@
 - **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105376](https://github.com/grafana/grafana/pull/105376), [@macabu](https://github.com/macabu)
 - **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.125.0 to v0.132.0 [#105254](https://github.com/grafana/grafana/pull/105254), [@macabu](https://github.com/macabu)
 
+### Bug fixes
+
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
 <!-- 11.3.7 END -->
 <!-- 11.3.6 START -->
 
