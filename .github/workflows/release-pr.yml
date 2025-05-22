@@ -81,7 +81,7 @@ jobs:
           # * contents: write
           # * pull-requests: write
           repositories: "[\"grafana\", \"grafana-enterprise\"]"
-          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\"}"
+          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
         uses: actions/checkout@v4
