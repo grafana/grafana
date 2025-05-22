@@ -42,7 +42,7 @@ In Grafana Alerting, each alert rule supports only one condition expression.
 
 That's enough in many cases—most alerts use a fixed numeric threshold like `latency > 3s` or `error_rate > 5%` to determine their state.
 
-But as your alerting setup grows, you may find that different targets require different threshold values.
+As your alerting setup grows, you may find that different targets require different threshold values.
 
 Instead of duplicating alert rules, you can assign a **different threshold value to each target**—while keeping the same condition. This simplifies alert maintenance.
 
