@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n/internal';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { changeTheme } from 'app/core/services/theme';
-import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/mock-api-utils';
+import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 
 import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
