@@ -21,20 +21,20 @@ type doer interface {
 }
 
 var endpointsSupportOnlyGet = []string{
-	"api/v1/label/", // label values /api/v1/label/<label-key>/values
+	"api/v1/label/", // label values endpoint api/v1/label/<label-key>/values
 	"api/v1/metadata",
-	"/api/v1/targets",
-	"/api/v1/rules",
-	"/api/v1/alerts",
-	"/api/v1/targets/metadata",
-	"/api/v1/alertmanagers",
-	"/api/v1/status/config",
-	"/api/v1/status/flags",
-	"/api/v1/status/runtimeinfo",
-	"/api/v1/status/buildinfo",
-	"/api/v1/status/tsdb",
-	"/api/v1/status/walreplay",
-	"/api/v1/notifications",
+	"api/v1/targets",
+	"api/v1/rules",
+	"api/v1/alerts",
+	"api/v1/targets/metadata",
+	"api/v1/alertmanagers",
+	"api/v1/status/config",
+	"api/v1/status/flags",
+	"api/v1/status/runtimeinfo",
+	"api/v1/status/buildinfo",
+	"api/v1/status/tsdb",
+	"api/v1/status/walreplay",
+	"api/v1/notifications",
 }
 
 // Client is a custom Prometheus client. Reason for this is that Prom Go client serializes response into its own
