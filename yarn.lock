@@ -2291,14 +2291,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0":
-  version: 9.2.0
-  resolution: "@faker-js/faker@npm:9.2.0"
-  checksum: 10/c233aaa41ebc4f4bed36c1304c399c424b9e5abca9cb8fe54ce73d4162ec7acd66f294b90c85ed7a5df774400e44f0a10364bdd41f49e72cb519a48b5948939f
-  languageName: node
-  linkType: hard
-
-"@faker-js/faker@npm:^9.7.0":
+"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.7.0":
   version: 9.7.0
   resolution: "@faker-js/faker@npm:9.7.0"
   checksum: 10/5167cc179bbf5f140b957f600af24772ca8c6e7e42405c312c25a6b4278b851b84bd8e3065f80e667dd4c35dd5aeb0ed490b0b1872f908d58ffae1cef9a5ef72
@@ -2530,7 +2523,7 @@ __metadata:
     react-select: "npm:5.10.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2561,7 +2554,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2600,7 +2593,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     style-loader: "npm:4.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
@@ -2639,7 +2632,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2680,7 +2673,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
     react-window: "npm:1.8.11"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     stream-browserify: "npm:3.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
@@ -2715,7 +2708,7 @@ __metadata:
     i18next-parser: "npm:9.3.0"
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2746,7 +2739,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2778,7 +2771,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2824,7 +2817,7 @@ __metadata:
     react-select: "npm:5.10.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2879,7 +2872,7 @@ __metadata:
     react-select: "npm:5.10.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     semver: "npm:7.7.0"
     stream-browserify: "npm:3.0.0"
     string_decoder: "npm:1.3.0"
@@ -2918,7 +2911,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.0"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
@@ -2998,7 +2991,7 @@ __metadata:
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.15"
     "@types/node": "npm:22.12.0"
-    "@types/papaparse": "npm:5.3.15"
+    "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/string-hash": "npm:1.1.3"
@@ -3006,18 +2999,18 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
     date-fns: "npm:4.1.0"
-    dompurify: "npm:3.2.5"
+    dompurify: "npm:3.2.6"
     esbuild: "npm:0.25.0"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
-    marked: "npm:15.0.11"
+    marked: "npm:15.0.12"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     ol: "npm:7.4.0"
-    papaparse: "npm:5.5.2"
+    papaparse: "npm:5.5.3"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.0"
@@ -3026,7 +3019,7 @@ __metadata:
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     string-hash: "npm:^1.1.3"
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.8.1"
@@ -3280,7 +3273,7 @@ __metadata:
     react: "npm:18.3.1"
     react-select: "npm:5.10.0"
     react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
@@ -3442,7 +3435,7 @@ __metadata:
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     semver: "npm:7.7.0"
     testing-library-selector: "npm:0.3.1"
     typescript: "npm:5.7.3"
@@ -3487,7 +3480,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
   peerDependencies:
@@ -3590,7 +3583,7 @@ __metadata:
     react-select: "npm:5.10.0"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.25"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     sql-formatter-plus: "npm:^1.3.6"
     ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
@@ -3748,7 +3741,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-svg-import: "npm:3.0.0"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     sass-loader: "npm:16.0.4"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
@@ -9652,12 +9645,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/papaparse@npm:5.3.15":
-  version: 5.3.15
-  resolution: "@types/papaparse@npm:5.3.15"
+"@types/papaparse@npm:5.3.16":
+  version: 5.3.16
+  resolution: "@types/papaparse@npm:5.3.16"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 10/1321b54c80e59b7ac24b15297af8b2b9dc9d83c2d293c8f8acfd7e25d89e9f1efbac2a69940ffb3ff13d387f0e5fbd50c8a4a362849ff789dbeab7931a9e3290
+  checksum: 10/5428bbd403cc870d50cdafc46162bbc02ae174aebdcc35738364e91f7eeea6d0197b3735d6ff0332404e05421e15f789461c1a60a8eee6269c3ce0b5d73fe6ab
   languageName: node
   linkType: hard
 
@@ -14954,15 +14947,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.2.5":
-  version: 3.2.5
-  resolution: "dompurify@npm:3.2.5"
+"dompurify@npm:3.2.6":
+  version: 3.2.6
+  resolution: "dompurify@npm:3.2.6"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/03974f18851fb4e447d26adc0ebf7a64b6c5b4a11caebebec3e04de8fcaa19cdb67bf3575a2335727123d0fc1c2febc1bc992a84f327a8ce65a0bfd11e3afc50
+  checksum: 10/b91631ed0e4d17fae950ef53613cc009ed7e73adc43ac94a41dd52f35483f7538d13caebdafa7626e0da145fc8184e7ac7935f14f25b7e841b32fda777e40447
   languageName: node
   linkType: hard
 
@@ -17924,7 +17917,7 @@ __metadata:
     lru-cache: "npm:11.0.2"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
-    marked: "npm:15.0.11"
+    marked: "npm:15.0.12"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
@@ -17993,7 +17986,7 @@ __metadata:
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
     rudder-sdk-js: "npm:2.48.44"
-    rxjs: "npm:7.8.1"
+    rxjs: "npm:7.8.2"
     sass: "npm:1.83.4"
     sass-loader: "npm:16.0.4"
     selecto: "npm:1.26.3"
@@ -21940,12 +21933,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:15.0.11":
-  version: 15.0.11
-  resolution: "marked@npm:15.0.11"
+"marked@npm:15.0.12":
+  version: 15.0.12
+  resolution: "marked@npm:15.0.12"
   bin:
     marked: bin/marked.js
-  checksum: 10/939e75f3e989ef4d72d6da9c7e80e43d49ffdc7af8ae2a38cc8c73f20a629d9659a0acda1d0cb5a5f90876cbfb1520d029f98790a934b46592dfa178fbd2838c
+  checksum: 10/deeb619405c0c46af00c99b18b3365450abeb309104b24e3658f46142344f6b7c4117608c3b5834084d8738e92f81240c19f596e6ee369260f96e52b3457eaee
   languageName: node
   linkType: hard
 
@@ -23986,10 +23979,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"papaparse@npm:5.5.2":
-  version: 5.5.2
-  resolution: "papaparse@npm:5.5.2"
-  checksum: 10/f5d25ccb10b1b9e87a0fe2d2965c7f8a83223cd79ec8963dd7e8766e8e97a6228dc6c20738a78148dfc74f32b2372003de732a7d50593f38b6a2bb5092710bc7
+"papaparse@npm:5.5.3":
+  version: 5.5.3
+  resolution: "papaparse@npm:5.5.3"
+  checksum: 10/383e38f8ff910be48b684e7f47b84dbe5e67708669c13bb21f316a0591ef183ff670dfc7eb9f6d0a8b67e21a5b0e8934712cda96ff8fb678d6591e597d108bd1
   languageName: node
   linkType: hard
 
@@ -27694,7 +27687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.2.0, rxjs@npm:^7.5.1, rxjs@npm:^7.5.5, rxjs@npm:^7.8.1":
+"rxjs@npm:7.8.2, rxjs@npm:^7.2.0, rxjs@npm:^7.5.1, rxjs@npm:^7.5.5, rxjs@npm:^7.8.1":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
   dependencies:
@@ -27956,11 +27949,11 @@ __metadata:
   linkType: hard
 
 "semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1":
-  version: 7.7.1
-  resolution: "semver@npm:7.7.1"
+  version: 7.7.2
+  resolution: "semver@npm:7.7.2"
   bin:
     semver: bin/semver.js
-  checksum: 10/4cfa1eb91ef3751e20fc52e47a935a0118d56d6f15a837ab814da0c150778ba2ca4f1a4d9068b33070ea4273629e615066664c2cfcd7c272caf7a8a0f6518b2c
+  checksum: 10/7a24cffcaa13f53c09ce55e05efe25cd41328730b2308678624f8b9f5fc3093fc4d189f47950f0b811ff8f3c3039c24a2c36717ba7961615c682045bf03e1dda
   languageName: node
   linkType: hard
 

@@ -257,6 +257,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "extraThemes",
+			Description:  "Enables extra themes",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:         "lokiPredefinedOperations",
 			Description:  "Adds predefined query operations to Loki query editor",
 			FrontendOnly: true,
@@ -945,6 +952,15 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:              "grafanaManagedRecordingRules",
+			Description:       "Enables Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
 			Stage:          FeatureStageExperimental,
@@ -1588,6 +1604,14 @@ var (
 		{
 			Name:         "alertingMigrationUI",
 			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+			FrontendOnly: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true",
+		},
+		{
+			Name:         "alertingImportYAMLUI",
+			Description:  "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
 			FrontendOnly: true,
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
