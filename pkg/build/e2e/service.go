@@ -22,10 +22,11 @@ func NodeImage(version string) string {
 }
 
 type GrafanaServiceOpts struct {
-	GrafanaDir   *dagger.Directory
-	GrafanaTarGz *dagger.File
-	YarnCache    *dagger.CacheVolume
-	License      *dagger.File
+	GrafanaDir           *dagger.Directory
+	GrafanaTarGz         *dagger.File
+	YarnCache            *dagger.CacheVolume
+	License              *dagger.File
+	InstallImageRenderer bool
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -91,6 +92,10 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	if opts.License != nil {
 		container = container.WithMountedFile("/src/license.jwt", opts.License)
 		licenseArg = "/src/license.jwt"
+	}
+
+	if opts.InstallImageRenderer {
+		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true")
 	}
 
 	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
