@@ -251,6 +251,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       // @ts-expect-error
       defaultOptions: variable.options,
+      defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
     });
   } else {
