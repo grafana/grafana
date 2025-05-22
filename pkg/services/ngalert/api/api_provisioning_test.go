@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -1971,6 +1972,11 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			},
 		*/
 	}
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
 
 	parent, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        1,
