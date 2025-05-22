@@ -10,7 +10,6 @@ import {
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
