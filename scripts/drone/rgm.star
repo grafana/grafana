@@ -351,6 +351,7 @@ def rgm_promotion_pipeline():
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
             "--grafana-repo=$${GRAFANA_REPO} " +
+            "--build-id=$${DRONE_BUILD_NUMBER} " +
             "--version=$${VERSION}",
         ], dagger_version),
         "environment": rgm_env_secrets(env),
