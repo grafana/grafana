@@ -20,12 +20,7 @@ runs:
         VERSION: ${{ inputs.version }}
       with:
         verb: run
-        args: |
-          if [ -z "GO_MOD_DIR" ]; then
-            go run ./pkg/build/actions/bump-version -version=${VERSION}
-          else
-            go run -C "$GO_MOD_DIR" ./pkg/build/actions/bump-version -version=${VERSION}
-          fi
+        args: if [ -z "GO_MOD_DIR" ]; then go run ./pkg/build/actions/bump-version -version=${VERSION}; else go run -C "$GO_MOD_DIR" ./pkg/build/actions/bump-version -version=${VERSION}; fi
     - name: make gen-cue
       shell: bash
       run: make gen-cue
