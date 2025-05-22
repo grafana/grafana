@@ -62,7 +62,6 @@ const verifyRequestParams = (
   expect(requestSpy).toHaveBeenCalled();
   expect(requestSpy).toHaveBeenCalledWith(
     expectedUrl,
-    expect.anything(),
     expect.objectContaining(expectedParams),
     expectedOptions
   );
@@ -208,7 +207,6 @@ describe('Prometheus Language Provider', () => {
         expect(requestSpy).toHaveBeenCalled();
         expect(requestSpy).toHaveBeenCalledWith(
           '/api/v1/labels',
-          [],
           {
             end: (
               dateTime(fromPrometheusTime * 1000)
@@ -339,7 +337,7 @@ describe('Prometheus Language Provider', () => {
     const tr = getMockTimeRange();
 
     const getParams = (requestSpy: ReturnType<typeof jest.spyOn>) => {
-      return requestSpy.mock.calls[0][2]?.toString() ?? 'undefined';
+      return requestSpy.mock.calls[0][1]?.toString() ?? 'undefined';
     };
 
     describe('with POST method', () => {
@@ -588,7 +586,7 @@ describe('Prometheus Language Provider', () => {
       fetchLabelValues(getMockTimeRange(), 'job');
 
       expect(requestSpy).toHaveBeenCalled();
-      expect(requestSpy.mock.calls[0][3]).toEqual({
+      expect(requestSpy.mock.calls[0][2]).toEqual({
         headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` },
       });
     });
@@ -600,10 +598,10 @@ describe('Prometheus Language Provider', () => {
         .spyOn(defaultDatasource, 'metadataRequest')
         .mockRejectedValue(new Error('Network error'));
 
-      const result = await languageProvider.request('/api/v1/labels', [], {});
+      const result = await languageProvider.request('/api/v1/labels', {});
 
       expect(datasourceRequestMock).toHaveBeenCalled();
-      expect(result).toEqual([]);
+      expect(result).toEqual(undefined);
     });
 
     it('should ignore cancelled request errors', async () => {
@@ -612,10 +610,10 @@ describe('Prometheus Language Provider', () => {
       const error = { cancelled: true };
       const datasourceRequestMock = jest.spyOn(defaultDatasource, 'metadataRequest').mockRejectedValue(error);
 
-      const result = await languageProvider.request('/api/v1/labels', [], {});
+      const result = await languageProvider.request('/api/v1/labels', {});
 
       expect(datasourceRequestMock).toHaveBeenCalled();
-      expect(result).toEqual([]);
+      expect(result).toEqual(undefined);
       expect(console.error).not.toHaveBeenCalled();
     });
   });
@@ -722,13 +720,13 @@ describe('Prometheus Language Provider', () => {
       expect(requestSpy.mock.calls[0][0]).toBe('/suggestions');
 
       // Check method and content type
-      expect(requestSpy.mock.calls[0][3]).toMatchObject({
+      expect(requestSpy.mock.calls[0][2]).toMatchObject({
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       });
 
       // Check query parameters
-      expect(requestSpy.mock.calls[0][2]).toMatchObject({
+      expect(requestSpy.mock.calls[0][1]).toMatchObject({
         labelName: 'metric',
         limit: 100,
         queries: ['interpolated_metric1'],
@@ -745,8 +743,8 @@ describe('Prometheus Language Provider', () => {
 
       expect(requestSpy).toHaveBeenCalled();
       // Default time range should be used
-      expect(requestSpy.mock.calls[0][2]).toHaveProperty('start');
-      expect(requestSpy.mock.calls[0][2]).toHaveProperty('end');
+      expect(requestSpy.mock.calls[0][1]).toHaveProperty('start');
+      expect(requestSpy.mock.calls[0][1]).toHaveProperty('end');
     });
 
     it('should handle empty response gracefully', async () => {
@@ -770,8 +768,8 @@ describe('Prometheus Language Provider', () => {
       await languageProvider.fetchSuggestions(getMockTimeRange(), [], [], [], 'test');
 
       expect(requestSpy).toHaveBeenCalled();
-      expect(requestSpy.mock.calls[0][3]?.headers).toHaveProperty('X-Grafana-Cache');
-      expect(requestSpy.mock.calls[0][3]?.headers?.['X-Grafana-Cache']).toContain(
+      expect(requestSpy.mock.calls[0][2]?.headers).toHaveProperty('X-Grafana-Cache');
+      expect(requestSpy.mock.calls[0][2]?.headers?.['X-Grafana-Cache']).toContain(
         `private, max-age=${timeSnapMinutes * 60}`
       );
     });
