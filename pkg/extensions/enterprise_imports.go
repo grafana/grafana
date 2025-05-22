@@ -30,6 +30,11 @@ import (
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/stretchr/testify/require"
 	_ "golang.org/x/time/rate"
+	_ "k8s.io/api"
+	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
+	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
+	_ "sigs.k8s.io/randfill"
 	_ "xorm.io/builder"
 
 	_ "github.com/grafana/authlib/authn"
@@ -42,8 +47,4 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-
-	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
-	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
 )
