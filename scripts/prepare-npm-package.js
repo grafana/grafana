@@ -15,7 +15,7 @@ try {
   const exportsConfig = pkgJson.content.publishConfig?.exports ?? pkgJson.content.exports ?? {};
   const exportsReservedKeys = new Set(['.', './package.json']);
   const subpathExports = Object.fromEntries(
-    Object.entries(exportsConfig).filter(([key]) => key.startsWith('./') && !exportsReservedKeys.has(key))
+    Object.entries(exportsConfig).filter(([key]) => !exportsReservedKeys.has(key) && key.startsWith('./'))
   );
 
   const exports = {
