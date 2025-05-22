@@ -77,9 +77,6 @@ jobs:
         with:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          # Permissions:
-          # * contents: write
-          # * pull-requests: write
           repositories: "[\"grafana\", \"grafana-enterprise\"]"
           permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
