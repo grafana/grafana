@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -91,16 +92,24 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-
+		traceId := span.SpanContext().TraceID()
+		connectLogger := b.log.New("traceId", traceId.String())
+		b.log = connectLogger
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
+				if statusCode >= 500 {
+					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
+				} else {
+					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "good"}).Inc()
+				}
 				if statusCode >= 400 {
-					r.logger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
+					b.log.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
 			},
 			func(err error) {
-				r.logger.Debug("error caught in handler", "err", err)
+				b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
+				b.log.Debug("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
