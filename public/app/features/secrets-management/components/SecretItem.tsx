@@ -23,11 +23,13 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
   const isPending = isSecretPending(secret);
   const [isHeadingWrapped, setIsHeadingWrapped] = useState(false);
   const itemRef = useRef<HTMLDivElement>(null);
+
   const debouncedResizeHandler = useMemo(() => {
     return debounce(
       () => {
         const { height } = itemRef?.current?.getBoundingClientRect() ?? { height: 0 };
-        setIsHeadingWrapped(height > 26);
+        // inline is 26px and wrapped is 62px+ (39px is in the middle of the two states).
+        setIsHeadingWrapped(height > 39);
       },
       150,
       { maxWait: 500 }
