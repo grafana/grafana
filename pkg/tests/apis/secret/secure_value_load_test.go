@@ -11,22 +11,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
+	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v3"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationSecureValueCreateManyWithK8s(t *testing.T) {
-	t.Skip("Comment this line to run the test manually. It will spawn a Grafana server with an in-memory SQLite.")
+	//t.Skip("Comment this line to run the test manually. It will spawn a Grafana server with an in-memory SQLite.")
 
-	mustCreateAndProcessSecureValues(context.Background(), t, newK8sRequester(t), 300)
+	mustCreateAndProcessSecureValues(context.Background(), t, newK8sRequester(t), 300, 300)
 }
 
 func TestIntegrationSecureValueCreateManyWithExtHTTP(t *testing.T) {
@@ -35,15 +37,18 @@ func TestIntegrationSecureValueCreateManyWithExtHTTP(t *testing.T) {
 	requester, err := newExtHttpRequester("http://admin:admin@localhost:3000", 30*time.Second)
 	require.NoError(t, err)
 
-	// More than this causes problems in the apiserver.
-	// https://github.com/kubernetes/apiserver/blob/master/pkg/server/config.go#L443
-	mustCreateAndProcessSecureValues(context.Background(), t, requester, 190)
+	// More than this causes rate limiting or timeouts from the apiserver, so we need to keep it at ~100 req/s.
+	// - https://github.com/kubernetes/apiserver/blob/master/pkg/server/config.go#L443
+	// - https://github.com/kubernetes/apiserver/blob/master/pkg/endpoints/handlers/create.go#L77-L79
+	mustCreateAndProcessSecureValues(context.Background(), t, requester, 1000, 100)
 }
 
 // Generic helper function to create and process SecureValues.
-func mustCreateAndProcessSecureValues(ctx context.Context, t *testing.T, clientRequester loadRequester, createAmount int) {
+func mustCreateAndProcessSecureValues(ctx context.Context, t *testing.T, clientRequester loadRequester, createAmount int, rps float64) {
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(createAmount)
+
+	createLimiter := rate.NewLimiter(rate.Limit(rps), int(rps/10))
 
 	secureValues := make([]string, createAmount)
 
@@ -51,6 +56,10 @@ func mustCreateAndProcessSecureValues(ctx context.Context, t *testing.T, clientR
 
 	for i := range createAmount {
 		g.Go(func() error {
+			if err := createLimiter.Wait(gctx); err != nil {
+				return fmt.Errorf("rate limiter wait failed: %w", err)
+			}
+
 			sv, err := clientRequester.Create(gctx, fmt.Sprintf("%s-%d", t.Name(), i))
 			if err != nil {
 				return err
@@ -75,6 +84,8 @@ func mustCreateAndProcessSecureValues(ctx context.Context, t *testing.T, clientR
 	g, gctx = errgroup.WithContext(ctx)
 	g.SetLimit(createAmount / 10)
 
+	readLimiter := rate.NewLimiter(rate.Limit(rps), int(rps))
+
 	t2 := time.Now()
 
 	// Check that each SecureValue was processed by the worker.
@@ -85,6 +96,12 @@ func mustCreateAndProcessSecureValues(ctx context.Context, t *testing.T, clientR
 			require.Eventually(
 				t,
 				func() bool {
+					// Wait for rate limiter before proceeding with each check
+					if err := readLimiter.Wait(gctx); err != nil {
+						t.Logf("Rate limiter wait failed: %v", err)
+						return false
+					}
+
 					sv, err := clientRequester.Read(gctx, name)
 					require.NoError(t, err)
 					require.NotNil(t, sv)
