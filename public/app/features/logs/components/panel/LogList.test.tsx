@@ -87,4 +87,24 @@ describe('LogList', () => {
     expect(screen.queryByText('Fields')).not.toBeInTheDocument();
     expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
   });
+
+  test('Allows people to select text without opening log details', async () => {
+    const spy = jest.spyOn(document, 'getSelection');
+    spy.mockReturnValue({
+      toString: () => 'selected log line',
+      removeAllRanges: () => {},
+      addRange: (range: Range) => {},
+    } as Selection);
+
+    render(<LogList {...defaultProps} enableLogDetails={true} />);
+
+    await userEvent.click(screen.getByText('log message 1'));
+
+    expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
+    expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+
+    spy.mockRestore();
+  });
 });
