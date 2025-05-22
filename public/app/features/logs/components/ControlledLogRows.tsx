@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -135,6 +135,22 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
     }, [ref]);
 
+    const scrollIntoView = useCallback(
+      (element: HTMLElement) => {
+        if (rest.scrollIntoView) {
+          rest.scrollIntoView(element);
+          return;
+        }
+        if (scrollElementRef.current) {
+          scrollElementRef.current.scroll({
+            behavior: 'smooth',
+            top: scrollElementRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          });
+        }
+      },
+      [rest]
+    );
+
     return (
       <div className={styles.logRowsContainer}>
         <LogListControls eventBus={eventBus} />
@@ -158,6 +174,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
               logsSortOrder={sortOrder}
               scrollElement={scrollElementRef.current}
               prettifyLogMessage={Boolean(prettifyJSON)}
+              scrollIntoView={scrollIntoView}
               showLabels={Boolean(showUniqueLabels)}
               showTime={showTime}
               wrapLogMessage={wrapLogMessage}

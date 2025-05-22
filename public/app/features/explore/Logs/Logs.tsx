@@ -1063,7 +1063,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   permalinkedRowId={panelState?.logs?.id}
-                  scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
