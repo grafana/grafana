@@ -3,9 +3,9 @@ import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
-import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
-import { initReactI18next } from 'react-i18next';
+
+import { initPluginTranslations } from '@grafana/i18n';
 
 import getEnvConfig from '../../scripts/webpack/env-util';
 
@@ -23,11 +23,7 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
 
 expect.extend(matchers);
 
-i18next.use(initReactI18next).init({
-  resources: {},
-  returnEmptyString: false,
-  lng: 'en-US', // this should be the locale of the phrases in our source JSX
-});
+initPluginTranslations('tests');
 
 // mock out the worker that detects changes in the dashboard
 // The mock is needed because JSDOM does not support workers and
