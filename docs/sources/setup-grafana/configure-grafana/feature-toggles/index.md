@@ -110,7 +110,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
 | `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                           |
-| `teamHttpHeadersTempo`                | Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams                                            |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
 | `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                               |
 | `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                     |
