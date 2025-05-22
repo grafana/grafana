@@ -77,8 +77,9 @@ jobs:
         uses: grafana/grafana-github-actions-go/backport@main
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          pr_action: ${{ steps.pr-info.outputs.action }}
-          pr_label: ${{ steps.pr-info.outputs.label }}
+          # If triggered by being labelled, only backport that label.
+          # Otherwise, the action will backport all labels.
+          pr_label: ${{ steps.pr-info.outputs.action == 'labeled' && steps.pr-info.outputs.label || '' }}
           pr_number: ${{ steps.pr-info.outputs.pr_number }}
           repo_owner: ${{ github.repository_owner }}
           repo_name: ${{ github.repository }}
