@@ -109,6 +109,7 @@ func (s *store) SetUserResourcePermission(
 
 	return permission, err
 }
+
 func (s *store) setUserResourcePermission(
 	sess *db.Session, orgID int64, user accesscontrol.User,
 	cmd SetResourcePermissionCommand,
@@ -126,6 +127,144 @@ func (s *store) setUserResourcePermission(
 	}
 
 	return permission, nil
+}
+
+// SetUsersResourcePermission sets resource permissions for multiple users
+func (s *store) SetUsersResourcePermission(
+	ctx context.Context, orgID int64, users []accesscontrol.User,
+	cmd SetResourcePermissionCommand,
+	hook UserResourceHookFunc,
+) ([]*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUsersResourcePermission")
+	defer span.End()
+
+	if len(users) == 0 {
+		return nil, nil
+	}
+
+	// Validate all users exist
+	for _, usr := range users {
+		if usr.ID == 0 {
+			return nil, user.ErrUserNotFound
+		}
+	}
+
+	var permissions []*accesscontrol.ResourcePermission
+	var err error
+
+	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		permissions, err = s.setUsersResourcePermission(sess, orgID, users, cmd, hook)
+		return err
+	})
+
+	return permissions, err
+}
+
+func (s *store) setUsersResourcePermission(
+	sess *db.Session, orgID int64, users []accesscontrol.User,
+	cmd SetResourcePermissionCommand,
+	hook UserResourceHookFunc,
+) ([]*accesscontrol.ResourcePermission, error) {
+	// Create a map to store user IDs for quick lookup
+	userIDs := make(map[int64]struct{}, len(users))
+	for _, usr := range users {
+		userIDs[usr.ID] = struct{}{}
+	}
+
+	// Get or create managed roles for all users
+	roles, err := getOrCreateUserRoles(sess, orgID, users)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get current permissions for all roles
+	roleIDs := make([]int64, len(roles))
+	for i, role := range roles {
+		roleIDs[i] = role.ID
+	}
+
+	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
+	args := make([]any, 0, len(roleIDs)+1)
+	for _, id := range roleIDs {
+		args = append(args, id)
+	}
+	args = append(args, scope)
+
+	var current []accesscontrol.Permission
+	placeholders := strings.Repeat("?,", len(roleIDs)-1) + "?"
+	if err := sess.SQL("SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id IN ("+placeholders+") AND p.scope = ?", args...).Find(&current); err != nil {
+		return nil, err
+	}
+
+	// Group current permissions by role ID
+	currentByRole := make(map[int64][]accesscontrol.Permission)
+	for _, p := range current {
+		currentByRole[p.RoleID] = append(currentByRole[p.RoleID], p)
+	}
+
+	// Prepare missing actions map
+	missing := make(map[string]struct{}, len(cmd.Actions))
+	for _, a := range cmd.Actions {
+		missing[a] = struct{}{}
+	}
+
+	// Process each role's permissions
+	var remove []int64
+	for _, p := range current {
+		if _, ok := missing[p.Action]; ok {
+			delete(missing, p.Action)
+		} else {
+			remove = append(remove, p.ID)
+		}
+	}
+
+	// Delete permissions that are no longer needed
+	if err := deletePermissions(sess, remove); err != nil {
+		return nil, err
+	}
+
+	// Create new permissions for all roles
+	for _, role := range roles {
+		if err := s.createPermissions(sess, role.ID, cmd, missing); err != nil {
+			return nil, err
+		}
+	}
+
+	// Get all permissions for all roles
+	var allPermissions []flatResourcePermission
+	for _, role := range roles {
+		perms, err := s.getPermissions(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
+		if err != nil {
+			return nil, err
+		}
+		allPermissions = append(allPermissions, perms...)
+	}
+
+	// Convert to resource permissions
+	permissions := make([]*accesscontrol.ResourcePermission, 0, len(users))
+	permissionsByUser := make(map[int64][]flatResourcePermission)
+	for _, p := range allPermissions {
+		permissionsByUser[p.UserId] = append(permissionsByUser[p.UserId], p)
+	}
+
+	for _, usr := range users {
+		if userPerms, ok := permissionsByUser[usr.ID]; ok {
+			if perm := flatPermissionsToResourcePermission(scope, userPerms); perm != nil {
+				permissions = append(permissions, perm)
+			}
+		}
+	}
+
+	// Execute hooks if provided
+	if hook != nil {
+		for _, usr := range users {
+			if err := hook(sess, orgID, usr, cmd.ResourceID, cmd.Permission); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return permissions, nil
 }
 
 func (s *store) SetTeamResourcePermission(
@@ -641,6 +780,85 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 	}
 
 	return &role, nil
+}
+
+func getOrCreateUserRoles(sess *db.Session, orgID int64, users []accesscontrol.User) ([]*accesscontrol.Role, error) {
+	// Get all role names we need to check
+	roleNames := make([]string, len(users))
+	for i, usr := range users {
+		roleNames[i] = accesscontrol.ManagedUserRoleName(usr.ID)
+	}
+
+	// Get existing roles
+	var existingRoles []accesscontrol.Role
+	args := make([]any, 0, len(roleNames)+1)
+	args = append(args, orgID)
+	for _, name := range roleNames {
+		args = append(args, name)
+	}
+	if err := sess.Where("org_id = ? AND name IN (?"+strings.Repeat(",?", len(roleNames)-1)+")", args...).Find(&existingRoles); err != nil {
+		return nil, err
+	}
+
+	// Create a map of existing roles by name for quick lookup
+	existingRolesByName := make(map[string]*accesscontrol.Role, len(existingRoles))
+	for i := range existingRoles {
+		existingRolesByName[existingRoles[i].Name] = &existingRoles[i]
+	}
+
+	// Prepare roles slice and track which ones need to be created
+	roles := make([]*accesscontrol.Role, 0, len(users))
+	rolesToCreate := make([]accesscontrol.Role, 0)
+
+	for i := range users {
+		roleName := roleNames[i]
+		if existingRole, ok := existingRolesByName[roleName]; ok {
+			roles = append(roles, existingRole)
+		} else {
+			// Role needs to be created
+			uid, err := generateNewRoleUID(sess, orgID)
+			if err != nil {
+				return nil, err
+			}
+
+			newRole := accesscontrol.Role{
+				OrgID:   orgID,
+				Name:    roleName,
+				UID:     uid,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rolesToCreate = append(rolesToCreate, newRole)
+		}
+	}
+
+	// Create missing roles in a single batch insert if any exist
+	if len(rolesToCreate) > 0 {
+		if _, err := sess.InsertMulti(&rolesToCreate); err != nil {
+			return nil, err
+		}
+
+		// Add newly created roles to the roles slice
+		for i := range rolesToCreate {
+			roles = append(roles, &rolesToCreate[i])
+		}
+
+		// Add roles to users in a single batch
+		userRoles := make([]accesscontrol.UserRole, 0, len(rolesToCreate))
+		for i, role := range rolesToCreate {
+			userRoles = append(userRoles, accesscontrol.UserRole{
+				OrgID:   orgID,
+				UserID:  users[i].ID,
+				RoleID:  role.ID,
+				Created: time.Now(),
+			})
+		}
+		if _, err := sess.InsertMulti(&userRoles); err != nil {
+			return nil, err
+		}
+	}
+
+	return roles, nil
 }
 
 func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {
