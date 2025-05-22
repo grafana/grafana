@@ -18,7 +18,7 @@ interface TimePickerHistoryItem {
 }
 
 // We should only be storing TimePickerHistoryItem, but in the past we also stored TimeRange
-type LSTimePickerHistoryItem = TimePickerHistoryItem | TimeRange;
+export type LSTimePickerHistoryItem = TimePickerHistoryItem | TimeRange;
 
 export const TimePickerWithHistory = (props: Props) => {
   const { t } = useTranslate();
@@ -55,16 +55,23 @@ function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
   return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
 }
 
-function migrateHistory(values: LSTimePickerHistoryItem[]): TimePickerHistoryItem[] {
-  return values.map((item) => {
-    const fromValue = typeof item.from === 'string' ? item.from : item.from.toISOString();
-    const toValue = typeof item.to === 'string' ? item.to : item.to.toISOString();
+/**
+ * Migrates/reformat history items to the current format
+ * @param values - Array of history items to clean up
+ * @returns Array of formatted history items
+ */
+export function migrateHistory(values: LSTimePickerHistoryItem[]): TimePickerHistoryItem[] {
+  return values
+    .filter(isValidTimePickerValue) // Filter out invalid values
+    .map((item) => {
+      const fromValue = typeof item.from === 'string' ? item.from : item.from.toISOString();
+      const toValue = typeof item.to === 'string' ? item.to : item.to.toISOString();
 
-    return {
-      from: fromValue,
-      to: toValue,
-    };
-  });
+      return {
+        from: fromValue,
+        to: toValue,
+      };
+    });
 }
 
 function onAppendToHistory(
@@ -92,4 +99,21 @@ function isAbsolute(value: TimeRange): boolean {
 
 function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {
   return uniqBy(value, (v) => v.from + v.to).slice(0, 4);
+}
+
+/**
+ * Type guard to check if a value is a valid time picker history item
+ * @returns True if the value is a valid time picker history item
+ */
+export function isValidTimePickerValue(value: unknown): value is LSTimePickerHistoryItem {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  if ('from' in value && 'to' in value) {
+    // Check if value object has both from and to properties
+    return !!value.from && !!value.to; // Check if both from and to are not null or undefined
+  }
+
+  return false;
 }
