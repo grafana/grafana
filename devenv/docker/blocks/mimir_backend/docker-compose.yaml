@@ -1,5 +1,5 @@
   mimir_backend:
-    image: grafana/mimir-alpine:r316-55f47f8
+    image: grafana/mimir:r343-5b63106
     container_name: mimir_backend
     command:
       - -target=backend
