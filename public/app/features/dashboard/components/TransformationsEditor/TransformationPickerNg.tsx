@@ -224,7 +224,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
                       color="darkgrey"
                       icon="tag-alt"
                       key={tag}
-                      text={t(`transformers.concatenate-transformer-editor.tag-${tag}`, tag)}
+                      text={t('transformers.tag', '{{ tag }}', { tag })}
                     />
                   ))}
                 </div>
