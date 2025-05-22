@@ -82,7 +82,7 @@ jobs:
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: km/use-main-in-release-pr
           fetch-depth: '0'
           path: .grafana-main
 
