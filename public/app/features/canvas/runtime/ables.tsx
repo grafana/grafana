@@ -34,7 +34,6 @@ export const settingsViewable = (scene: Scene) => ({
 
     const rect = moveable.getRect();
     return (
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <div
         key={'settings-viewable'}
         className={'moveable-settings'}

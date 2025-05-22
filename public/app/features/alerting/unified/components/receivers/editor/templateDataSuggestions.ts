@@ -160,7 +160,7 @@ export function getAlertsSuggestions(monaco: Monaco): SuggestionDefinition[] {
     { label: 'Firing', kind, detail: 'Alert[]' },
     { label: 'Resolved', kind, detail: 'Alert[]' },
   ];
-  /* eslint-disable @grafana/i18n/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions for the KeyValue types

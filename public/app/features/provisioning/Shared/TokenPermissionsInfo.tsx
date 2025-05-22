@@ -10,7 +10,7 @@ export function TokenPermissionsInfo() {
   return (
     <div className={styles.container}>
       {/* GitHub UI is English only, so these strings are not translated */}
-      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      {}
       <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
         <TextLink external href="https://github.com/settings/personal-access-tokens/new">
@@ -20,6 +20,7 @@ export function TokenPermissionsInfo() {
         <strong>"Fine-grained token".</strong>
         <Trans i18nKey="provisioning.token-permissions-info.make-sure">Make sure to include these permissions</Trans>:
       </Stack>
+      {}
 
       <ul className={styles.permissionsList}>
         {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
