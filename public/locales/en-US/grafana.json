@@ -2604,9 +2604,8 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label-show-filters": "Show filters",
-        "label-custom-filter": "Custom filter",
-        "label-saved-searches": "Saved searches"
+        "aria-label-show-filters": "Filter",
+        "label-custom-filter": "Custom filter"
       },
       "health": "Health",
       "label": {
