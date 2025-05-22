@@ -8,6 +8,8 @@
 - **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.2 to v2.5.0 [#105447](https://github.com/grafana/grafana/pull/105447), [@macabu](https://github.com/macabu)
 - **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105376](https://github.com/grafana/grafana/pull/105376), [@macabu](https://github.com/macabu)
 - **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.125.0 to v0.132.0 [#105254](https://github.com/grafana/grafana/pull/105254), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
 
 <!-- 11.3.7 END -->
 <!-- 11.2.10 START -->
