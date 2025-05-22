@@ -41,6 +41,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setNewDataSourcePicker,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -59,6 +60,7 @@ import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
 import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolderPicker';
+import { LazyDataSourcePicker } from './features/datasources/components/picker/LazyDataSourcePicker';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
@@ -223,6 +225,7 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
+      setNewDataSourcePicker(LazyDataSourcePicker);
       initWindowRuntime();
 
       // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
