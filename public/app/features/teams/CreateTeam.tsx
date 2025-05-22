@@ -81,7 +81,7 @@ export const CreateTeam = (): JSX.Element => {
                 'This is optional and is primarily used for allowing custom team avatars'
               )}
             >
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
               <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
             </Field>
           </FieldSet>

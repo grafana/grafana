@@ -217,7 +217,7 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}

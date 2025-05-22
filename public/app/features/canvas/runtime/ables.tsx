@@ -34,7 +34,6 @@ export const settingsViewable = (scene: Scene) => ({
 
     const rect = moveable.getRect();
     return (
-      // eslint-disable-next-line @grafana/no-untranslated-strings
       <div
         key={'settings-viewable'}
         className={'moveable-settings'}
@@ -70,7 +69,7 @@ export const dimensionViewable = {
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <div
         key={'dimension-viewable'}
         className={'moveable-dimension'}

@@ -62,7 +62,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             error={'Keytab file path is required'}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/home/grot/grot.keytab"
               onChange={onKeytabFileChanged}
               width={LONG_WIDTH}
@@ -85,7 +85,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             )}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/tmp/krb5cc_1000"
               onChange={onCredentialCacheChanged}
               width={LONG_WIDTH}
@@ -124,7 +124,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
             )}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/home/grot/cache.json"
               onChange={onCredentialCacheFileChanged}
               width={LONG_WIDTH}
@@ -179,7 +179,7 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
             <Input
               type="text"
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="0"
               defaultValue={jsonData.UDPConnectionLimit}
               onChange={(e) => {
@@ -207,7 +207,7 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
             <Input
               type="text"
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="true"
               defaultValue={jsonData.enableDNSLookupKDC}
               onChange={onDNSLookupKDCChanged}

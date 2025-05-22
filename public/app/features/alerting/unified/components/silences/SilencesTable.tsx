@@ -332,7 +332,7 @@ function useColumns(alertManagerSourceName: string) {
             <span data-testid="alerts">
               {Array.isArray(silencedAlerts)
                 ? silencedAlerts.length
-                : // eslint-disable-next-line @grafana/no-untranslated-strings
+                : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   '-'}
             </span>
           );
