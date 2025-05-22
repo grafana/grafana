@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.5.5";
+export const pluginVersion = "11.5.6";
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 

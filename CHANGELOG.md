@@ -1,3 +1,20 @@
+<!-- 11.5.5 START -->
+
+# 11.5.5 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105109](https://github.com/grafana/grafana/pull/105109), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.3 to v2.5.0 [#105441](https://github.com/grafana/grafana/pull/105441), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105373](https://github.com/grafana/grafana/pull/105373), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105252](https://github.com/grafana/grafana/pull/105252), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.5.5 END -->
 <!-- 11.5.4 START -->
 
 # 11.5.4 (2025-04-23)
