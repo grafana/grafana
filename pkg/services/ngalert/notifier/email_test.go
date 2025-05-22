@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	alertingImages "github.com/grafana/alerting/images"
-	alertingLogging "github.com/grafana/alerting/logging"
 	"github.com/grafana/alerting/receivers"
 	alertingEmail "github.com/grafana/alerting/receivers/email"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -17,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -200,7 +200,7 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		},
 		Message: messageTmpl,
 		Subject: subjectTmpl,
-	}, receivers.Metadata{}, emailTmpl, ns, &alertingImages.UnavailableProvider{}, &alertingLogging.FakeLogger{})
+	}, receivers.Metadata{}, emailTmpl, ns, &alertingImages.UnavailableProvider{}, &logtest.Fake{})
 }
 
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {

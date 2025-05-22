@@ -615,10 +615,6 @@ const (
 	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
-	// FlagHomeSetupGuide
-	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-	FlagHomeSetupGuide = "homeSetupGuide"
-
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
@@ -854,6 +850,10 @@ const (
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagAlertingImportYAMLUI
+	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner

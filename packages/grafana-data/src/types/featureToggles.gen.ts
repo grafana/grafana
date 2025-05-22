@@ -679,10 +679,6 @@ export interface FeatureToggles {
   */
   exploreLogsLimitedTimeRange?: boolean;
   /**
-  * Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-  */
-  homeSetupGuide?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -939,6 +935,11 @@ export interface FeatureToggles {
   * @default true
   */
   alertingMigrationUI?: boolean;
+  /**
+  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+  * @default true
+  */
+  alertingImportYAMLUI?: boolean;
   /**
   * Enables the unified storage history pruner
   * @default true
