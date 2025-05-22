@@ -1,4 +1,4 @@
-import { ComboboxOption } from './Combobox';
+import { ComboboxOption } from './types';
 
 let fakeApiOptions: Array<ComboboxOption<string>>;
 export async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
@@ -35,5 +35,13 @@ export async function generateOptions(amount: number): Promise<ComboboxOption[]>
   return Array.from({ length: amount }, (_, index) => ({
     label: 'Option ' + index,
     value: index.toString(),
+  }));
+}
+
+export async function generateGroupingOptions(amount: number): Promise<ComboboxOption[]> {
+  return Array.from({ length: amount }, (_, index) => ({
+    label: 'Option ' + index,
+    value: index.toString(),
+    group: index % 19 !== 0 ? 'Group ' + Math.floor(index / 20) : undefined,
   }));
 }

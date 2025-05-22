@@ -13,6 +13,7 @@ import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
+import { t } from '../../utils/i18n';
 
 const category = ['Axis'];
 
@@ -162,7 +163,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         }}
       />
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
-        <Field label="Log base">
+        <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')}>
           <Select
             options={LOG_DISTRIBUTION_OPTIONS}
             value={log}
@@ -176,8 +177,9 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         </Field>
       )}
       {type === ScaleDistribution.Symlog && (
-        <Field label="Linear threshold" style={{ marginBottom: 0 }}>
+        <Field label={t('grafana-ui.axis-builder.linear-threshold', 'Linear threshold')} style={{ marginBottom: 0 }}>
           <Input
+            // eslint-disable-next-line @grafana/no-untranslated-strings
             placeholder="1"
             value={value?.linearThreshold}
             onChange={(v) => {

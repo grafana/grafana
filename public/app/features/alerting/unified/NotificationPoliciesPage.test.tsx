@@ -21,7 +21,6 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
@@ -140,13 +139,7 @@ const getRootRoute = async () => {
   return ui.rootRouteContainer.find();
 };
 
-describe.each([
-  // k8s API enabled
-  true,
-  // k8s API disabled
-  false,
-])('NotificationPolicies with alertingApiServer=%p', (apiServerEnabled) => {
-  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+describe('NotificationPolicies', () => {
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
@@ -296,14 +289,14 @@ describe.each([
   });
 
   it('allows user to reload and update policies if its been changed by another user', async () => {
-    jest.retryTimes(2);
     const { user } = renderNotificationPolicies();
+    const NEW_INTERVAL = '12h';
 
     await getRootRoute();
 
     const existingConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
     const modifiedConfig = produce(existingConfig, (draft) => {
-      draft.alertmanager_config.route!.group_interval = '12h';
+      draft.alertmanager_config.route!.group_interval = NEW_INTERVAL;
     });
     setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, modifiedConfig);
 
@@ -317,11 +310,8 @@ describe.each([
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     await user.click(screen.getByRole('button', { name: /reload policies/i }));
 
-    await openDefaultPolicyEditModal();
-    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
-    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
-    // TODO: Check if test flakiness/length can be improved
-  }, 60000);
+    expect((await screen.findAllByTestId('timing-options'))[0]).toHaveTextContent(NEW_INTERVAL);
+  });
 
   it('Should be able to delete an empty route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
@@ -372,22 +362,6 @@ describe.each([
   });
 });
 
-describe('Grafana alertmanager - config API', () => {
-  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
-    const { user } = renderNotificationPolicies();
-
-    const policyIndex = 0;
-    await openEditModal(policyIndex);
-
-    // Save policy to test that format is converted to object_matchers
-    await user.click(await ui.saveButton.find());
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
-
-    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
-  });
-});
 describe('Non-Grafana alertmanagers', () => {
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));

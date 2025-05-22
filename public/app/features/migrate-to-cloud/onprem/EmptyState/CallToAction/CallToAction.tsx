@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { Box, Button, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { useCreateSessionMutation } from '../../../api';
 
@@ -18,7 +18,11 @@ export const CallToAction = () => {
           <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
         </Text>
 
-        <Button disabled={createMigrationResponse.isLoading} onClick={() => setModalOpen(true)}>
+        <Button
+          data-testid="migrate-to-cloud-connect-session-modal-button"
+          disabled={createMigrationResponse.isLoading}
+          onClick={() => setModalOpen(true)}
+        >
           <Trans i18nKey="migrate-to-cloud.cta.button">Migrate this instance to Cloud</Trans>
         </Button>
       </Box>

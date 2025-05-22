@@ -106,9 +106,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'initial',
     borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
+    boxShadow: theme.shadows.z3,
     userSelect: 'text',
   }),
   header: css({

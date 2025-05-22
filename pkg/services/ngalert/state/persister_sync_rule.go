@@ -11,16 +11,14 @@ import (
 )
 
 type SyncRuleStatePersister struct {
-	log                  log.Logger
-	store                InstanceStore
-	doNotSaveNormalState bool
+	log   log.Logger
+	store InstanceStore
 }
 
 func NewSyncRuleStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 	return &SyncRuleStatePersister{
-		log:                  log,
-		store:                cfg.InstanceStore,
-		doNotSaveNormalState: cfg.DoNotSaveNormalState,
+		log:   log,
+		store: cfg.InstanceStore,
 	}
 }
 
@@ -38,10 +36,6 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 
 	for _, s := range states {
 		if s.IsStale() {
-			continue
-		}
-
-		if a.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
 			continue
 		}
 

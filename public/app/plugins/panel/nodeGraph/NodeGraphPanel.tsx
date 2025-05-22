@@ -6,7 +6,7 @@ import { PanelProps } from '@grafana/data';
 import { useLinks } from '../../../features/explore/utils/links';
 
 import { NodeGraph } from './NodeGraph';
-import { NodeGraphOptions } from './types';
+import { Options as NodeGraphOptions } from './panelcfg.gen';
 import { getNodeGraphDataFrames } from './utils';
 
 export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {
@@ -29,6 +29,7 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         getLinks={getLinks}
         panelId={panelId}
         zoomMode={options.zoomMode}
+        layoutAlgorithm={options.layoutAlgorithm}
       />
     </div>
   );

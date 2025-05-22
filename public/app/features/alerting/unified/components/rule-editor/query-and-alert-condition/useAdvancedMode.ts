@@ -5,7 +5,8 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { areQueriesTransformableToSimpleCondition } from './QueryAndExpressionsStep';
+import { areQueriesTransformableToSimpleCondition } from '../../../rule-editor/formProcessing';
+
 import { SimpleCondition, getSimpleConditionFromExpressions } from './SimpleCondition';
 
 function initializeSimpleCondition(
@@ -30,7 +31,7 @@ export function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined
 }
 
 /*
-  This hook is used mantain the state of the advanced mode, and the simple condition, 
+  This hook is used mantain the state of the advanced mode, and the simple condition,
   depending on the editor settings, the alert type, and the queries.
    */
 export const useAdvancedMode = (

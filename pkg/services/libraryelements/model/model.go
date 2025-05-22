@@ -26,7 +26,7 @@ type LibraryElement struct {
 	Kind        int64
 	Type        string
 	Description string
-	Model       json.RawMessage
+	Model       json.RawMessage `xorm:"TEXT"` // Column is defined as TEXT in `library_element`.
 	Version     int64
 
 	Created time.Time
@@ -214,6 +214,7 @@ type GetLibraryElementCommand struct {
 	// Deprecated: use FolderUID instead
 	FolderID int64
 	UID      string
+	Name     string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements

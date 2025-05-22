@@ -1,28 +1,48 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName, TransformerCategory, SelectableValue, getTimeZones } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  DataFrame,
+  getFieldDisplayName,
+  TransformerCategory,
+  SelectableValue,
+  getTimeZones,
+  VariableOrigin,
+  VariableSuggestion,
+} from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
-export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
-  return useMemo(() => {
-    if (!Array.isArray(input)) {
-      return [];
-    }
+export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
+  // get full names
+  let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
 
-    return Object.keys(
-      input.reduce<Record<string, boolean>>((names, frame) => {
-        if (!frame || !Array.isArray(frame.fields)) {
-          return names;
-        }
+  if (withBaseFieldNames) {
+    // only add base names of fields that have same field.name
+    let baseNameCounts = new Map<string, number>();
 
-        return frame.fields.reduce((names, field) => {
-          const t = getFieldDisplayName(field, frame, input);
-          names[t] = true;
-          return names;
-        }, names);
-      }, {})
+    frames.forEach((frame) =>
+      frame.fields.forEach((field) => {
+        let count = baseNameCounts.get(field.name) ?? 0;
+        baseNameCounts.set(field.name, count + 1);
+      })
     );
-  }, [input]);
+
+    let baseNames: string[] = [];
+
+    baseNameCounts.forEach((count, name) => {
+      if (count > 1) {
+        baseNames.push(name);
+      }
+    });
+
+    // prepend base names + uniquify
+    names = [...new Set(baseNames.concat(names))];
+  }
+
+  return names;
+};
+
+export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
+  return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
@@ -56,7 +76,7 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value) && config.featureToggles.transformationsVariableSupport) {
+  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
     return true;
   }
   return false;
@@ -80,4 +100,10 @@ export function getTimezoneOptions(includeInternal: boolean) {
   }
 
   return timeZoneOptions;
+}
+
+export function getVariableSuggestions(): VariableSuggestion[] {
+  return getTemplateSrv()
+    .getVariables()
+    .map((v) => ({ value: v.name, label: v.label || v.name, origin: VariableOrigin.Template }));
 }

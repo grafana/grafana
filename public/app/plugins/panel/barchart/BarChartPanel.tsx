@@ -12,7 +12,7 @@ import {
   // usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -157,8 +157,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
-              getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                vizSeries[0].fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+              getDataLinks={(seriesIdx, dataIdx) =>
+                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                 return (

@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.List")
+	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
@@ -27,7 +27,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, err
 	}
 
-	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +56,31 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		return &authzv1.ListResponse{}, nil
 	}
 
+	var (
+		subresourceRelation = common.SubresourceRelation(relation)
+		resourceCtx         = resource.Context()
+	)
+
+	var items []string
+	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
+		// List requested subresources
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 resource.Type(),
+			Relation:             subresourceRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
+	}
+
 	// List all resources user has access too
 	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
@@ -68,21 +93,22 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	if err != nil {
 		return nil, err
 	}
+	items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 
 	return &authzv1.ListResponse{
-		Items: typedObjects(resource.Type(), res.GetObjects()),
+		Items: items,
 	}, nil
 }
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
 	var (
-		folderRelation = common.FolderResourceRelation(relation)
+		folderRelation = common.SubresourceRelation(relation)
 		resourceCtx    = resource.Context()
 	)
 
 	// 1. List all folders subject has access to resource type in
 	var folders []string
-	if common.IsFolderResourceRelation(folderRelation) {
+	if common.IsSubresourceRelation(folderRelation) {
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
@@ -141,7 +167,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 
 func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObjectsRequest, fn listFn) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.listObjectCached")
+	ctx, span := s.tracer.Start(ctx, "server.listObjectCached")
 	defer span.End()
 
 	key, err := getRequestHash(req)
@@ -163,7 +189,7 @@ func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObject
 }
 
 func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "server.streamedListObjects")
+	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
 
 	r := &openfgav1.StreamedListObjectsRequest{

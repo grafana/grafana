@@ -1,8 +1,9 @@
-import { t } from 'app/core/internationalization';
-import { GrafanaRuleGroupIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { useTranslate } from '@grafana/i18n';
+import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { pauseRuleAction } from '../../reducers/ruler/ruleGroups';
+import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
 import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
@@ -14,18 +15,15 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 export function usePauseRuleInGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-
+  const { t } = useTranslate();
   const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
   const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
 
   return useAsync(async (ruleGroup: GrafanaRuleGroupIdentifier, uid: string, pause: boolean) => {
-    const groupIdentifierV1: RuleGroupIdentifier = {
-      dataSourceName: ruleGroup.rulesSource.name,
-      namespaceName: ruleGroup.namespace.uid,
-      groupName: ruleGroup.groupName,
-    };
+    const groupIdentifierV1 = ruleGroupIdentifierV2toV1(ruleGroup);
+
     const action = pauseRuleAction({ uid, pause });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(groupIdentifierV1, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(groupIdentifierV1, [action]);
 
     return upsertRuleGroup({
       rulerConfig,

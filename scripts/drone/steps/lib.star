@@ -611,7 +611,7 @@ def betterer_frontend_step():
         ],
         "commands": [
             "apk add --update git bash",
-            "yarn betterer ci",
+            "yarn betterer:ci",
         ],
     }
 
@@ -667,6 +667,28 @@ def verify_i18n_step():
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+        ],
+    }
+
+def verify_api_clients_step():
+    uncommited_error_message = "\nAPI client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
+    return {
+        "name": "verify-api-clients",
+        "image": images["node_deb"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn generate-apis",
+            # Verify that client generation has been run and committed
+            '''
+            file_diff=$(git diff ':!conf')
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "{}"
@@ -868,7 +890,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-14.3.2:1.0.0",
         "depends_on": [
             "grafana-server",
             github_app_generate_token_step()["name"],
@@ -954,8 +976,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         "GCP_KEY": from_secret(gcp_grafanauploads),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
-        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_ID": "329617",
+        "GITHUB_APP_INSTALLATION_ID": "37346161",
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
@@ -972,8 +994,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         environment = {
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
-            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_ID": "329617",
+            "GITHUB_APP_INSTALLATION_ID": "37346161",
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
         }
 

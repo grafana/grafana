@@ -57,6 +57,7 @@ func TestUserService(t *testing.T) {
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
 		require.Equal(t, "email", u.Email)
+		require.False(t, u.IsProvisioned)
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
@@ -273,6 +274,7 @@ type FakeUserStore struct {
 	ExpectedError                           error
 	ExpectedDeleteUserError                 error
 	ExpectedCountUserAccountsWithEmptyRoles int64
+	ExpectedListUsersByIdOrUid              []*user.User
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -293,6 +295,10 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 
 func (f *FakeUserStore) GetByUID(context.Context, string) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserStore) ListByIdOrUID(context.Context, []string, []int64) ([]*user.User, error) {
+	return f.ExpectedListUsersByIdOrUid, f.ExpectedError
 }
 
 func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {

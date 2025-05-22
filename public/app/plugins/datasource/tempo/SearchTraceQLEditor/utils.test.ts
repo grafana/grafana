@@ -3,12 +3,13 @@ import { uniq } from 'lodash';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { intrinsics } from '../traceql/traceql';
 
 import {
   filterToQuerySection,
-  generateQueryFromAdHocFilters,
   getAllTags,
   getFilteredTags,
+  getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
 } from './utils';
@@ -19,34 +20,6 @@ const datasource: TempoDatasource = {
   },
 } as unknown as TempoDatasource;
 const lp = new TempoLanguageProvider(datasource);
-
-describe('generateQueryFromAdHocFilters generates the correct query for', () => {
-  it('an empty array', () => {
-    expect(generateQueryFromAdHocFilters([], lp)).toBe('{}');
-  });
-
-  it('a filter with values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }], lp)).toBe(
-      '{footag="foovalue"}'
-    );
-  });
-
-  it('two filters with values', () => {
-    expect(
-      generateQueryFromAdHocFilters(
-        [
-          { key: 'footag', operator: '=', value: 'foovalue' },
-          { key: 'bartag', operator: '=', value: '0' },
-        ],
-        lp
-      )
-    ).toBe('{footag="foovalue" && bartag=0}');
-  });
-
-  it('a filter with intrinsic values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }], lp)).toBe('{kind=server}');
-  });
-});
 
 describe('gets correct tags', () => {
   const datasource: TempoDatasource = {
@@ -94,7 +67,7 @@ describe('gets correct tags', () => {
 
   it('for all tags', () => {
     const tags = getAllTags(v2Tags);
-    expect(tags).toEqual(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status']);
+    expect(tags).toEqual(uniq(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status'].concat(intrinsics)));
   });
 
   it('for tags by resource scope', () => {
@@ -105,6 +78,11 @@ describe('gets correct tags', () => {
   it('for tags by span scope', () => {
     const tags = getTagsByScope(v2Tags, TraceqlSearchScope.Span);
     expect(tags).toEqual(['db']);
+  });
+
+  it('for intrinsic tags', () => {
+    const tags = getIntrinsicTags(v2Tags);
+    expect(tags).toEqual(testIntrinsics);
   });
 });
 
@@ -179,7 +157,7 @@ describe('filterToQuerySection returns the correct query section for a filter', 
 });
 
 export const emptyTags = [];
-export const testIntrinsics = ['duration', 'kind', 'name', 'status'];
+export const testIntrinsics = uniq(['duration', 'kind', 'name', 'status'].concat(intrinsics));
 export const v1Tags = ['bar', 'foo'];
 export const v2Tags = [
   {

@@ -2,33 +2,18 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { PureComponent } from 'react';
 
-import { StatsPicker } from './StatsPicker';
+import { Props, StatsPicker } from './StatsPicker';
 
 interface State {
   stats: string[];
 }
 
-class WrapperWithState extends PureComponent<any, State> {
-  constructor(props: any) {
+class WrapperWithState extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
-      stats: this.toStatsArray(props.initialReducers),
+      stats: [],
     };
-  }
-
-  toStatsArray = (txt: string): string[] => {
-    if (!txt) {
-      return [];
-    }
-    return txt.split(',').map((v) => v.trim());
-  };
-
-  componentDidUpdate(prevProps: any) {
-    const { initialReducers } = this.props;
-    if (initialReducers !== prevProps.initialReducers) {
-      console.log('Changing initial reducers');
-      this.setState({ stats: this.toStatsArray(initialReducers) });
-    }
   }
 
   render() {

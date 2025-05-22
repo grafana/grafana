@@ -23,18 +23,21 @@ type RulerApi interface {
 	RouteDeleteGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteRuleFromTrashByGUID(*contextmodel.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRuleByUID(*contextmodel.ReqContext) response.Response
+	RouteGetRuleVersionsByUID(*contextmodel.ReqContext) response.Response
 	RouteGetRulegGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesForExport(*contextmodel.ReqContext) response.Response
 	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
+	RouteUpdateNamespaceRules(*contextmodel.ReqContext) response.Response
 }
 
 func (f *RulerApiHandler) RouteDeleteGrafanaRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
@@ -53,6 +56,11 @@ func (f *RulerApiHandler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqC
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteDeleteNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
+}
+func (f *RulerApiHandler) RouteDeleteRuleFromTrashByGUID(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	ruleGUIDParam := web.Params(ctx.Req)[":RuleGUID"]
+	return f.handleRouteDeleteRuleFromTrashByGUID(ctx, ruleGUIDParam)
 }
 func (f *RulerApiHandler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -85,6 +93,11 @@ func (f *RulerApiHandler) RouteGetRuleByUID(ctx *contextmodel.ReqContext) respon
 	// Parse Path Parameters
 	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
 	return f.handleRouteGetRuleByUID(ctx, ruleUIDParam)
+}
+func (f *RulerApiHandler) RouteGetRuleVersionsByUID(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
+	return f.handleRouteGetRuleVersionsByUID(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -132,6 +145,16 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 	}
 	return f.handleRoutePostRulesGroupForExport(ctx, conf, namespaceParam)
 }
+func (f *RulerApiHandler) RouteUpdateNamespaceRules(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	// Parse Request Body
+	conf := apimodels.UpdateNamespaceRulesRequest{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRouteUpdateNamespaceRules(ctx, conf, namespaceParam)
+}
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
@@ -168,6 +191,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodDelete,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RouteDeleteNamespaceRulesConfig),
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/grafana/api/v1/trash/rule/guid/{RuleGUID}",
+				api.Hooks.Wrap(srv.RouteDeleteRuleFromTrashByGUID),
 				m,
 			),
 		)
@@ -244,6 +279,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			),
 		)
 		group.Get(
+			toMacaronPath("/api/ruler/grafana/api/v1/rule/{RuleUID}/versions"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/api/v1/rule/{RuleUID}/versions",
+				api.Hooks.Wrap(srv.RouteGetRuleVersionsByUID),
+				m,
+			),
+		)
+		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
@@ -312,6 +359,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/export",
 				api.Hooks.Wrap(srv.RoutePostRulesGroupForExport),
+				m,
+			),
+		)
+		group.Patch(
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPatch, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPatch,
+				"/api/ruler/grafana/api/v1/rules/{Namespace}",
+				api.Hooks.Wrap(srv.RouteUpdateNamespaceRules),
 				m,
 			),
 		)

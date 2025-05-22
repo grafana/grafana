@@ -8,20 +8,20 @@ import {
   isValidGrafanaDuration,
   LogSortOrderChangeEvent,
   LogsSortOrder,
-  SelectableValue,
   store,
 } from '@grafana/data';
-import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
-import { config, getAppEvents, reportInteraction } from '@grafana/runtime';
-import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
+import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/plugin-ui';
+import { config, getAppEvents } from '@grafana/runtime';
+import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
 
 import {
   getQueryDirectionLabel,
   preprocessMaxLines,
   queryDirections,
   queryTypeOptions,
-  RESOLUTION_OPTIONS,
 } from '../../components/LokiOptionFields';
+import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from '../../datasource';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryDirection, LokiQueryType, QueryStats } from '../../types';
 
@@ -29,16 +29,20 @@ export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
-  maxLines: number;
   app?: CoreApp;
   queryStats: QueryStats | null;
+  datasource: LokiDatasource;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, queryStats }) => {
+  ({ app, query, onChange, onRunQuery, queryStats, datasource }) => {
     const [splitDurationValid, setSplitDurationValid] = useState(true);
+    const maxLines = datasource.maxLines;
 
     useEffect(() => {
+      if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
+        return;
+      }
       // Initialize the query direction according to the current environment.
       if (!query.direction) {
         onChange({ ...query, direction: getDefaultQueryDirection(app) });
@@ -66,15 +70,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       },
       [onChange, onRunQuery, query]
     );
-
-    const onResolutionChange = (option: SelectableValue<number>) => {
-      reportInteraction('grafana_loki_resolution_clicked', {
-        app,
-        resolution: option.value,
-      });
-      onChange({ ...query, resolution: option.value });
-      onRunQuery();
-    };
 
     const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
       const value = evt.currentTarget.value;
@@ -127,7 +122,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [app, onQueryDirectionChange, query.direction]);
 
     let queryType = getLokiQueryType(query);
-    const isLogQuery = isLogsQuery(query.expr);
+    const interpolatedQueries = datasource.interpolateVariablesInQueries([query], placeHolderScopedVars);
+    const isLogQuery = isLogsQuery(interpolatedQueries[0]?.expr ?? '');
     const filteredQueryTypeOptions = isLogQuery
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
@@ -182,7 +178,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 />
               </EditorField>
               <EditorField label="Direction" tooltip="Direction to search for logs.">
-                <RadioButtonGroup options={queryDirections} value={query.direction} onChange={onQueryDirectionChange} />
+                <RadioButtonGroup
+                  options={queryDirections}
+                  value={query.direction ?? getDefaultQueryDirection(app)}
+                  onChange={onQueryDirectionChange}
+                />
               </EditorField>
             </>
           )}
@@ -202,26 +202,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                   onCommitChange={onStepChange}
                 />
               </EditorField>
-              {query.resolution !== undefined && query.resolution > 1 && (
-                <>
-                  <EditorField
-                    label="Resolution"
-                    tooltip="Changes the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
-                  >
-                    <Select
-                      isSearchable={false}
-                      onChange={onResolutionChange}
-                      options={RESOLUTION_OPTIONS}
-                      value={query.resolution || 1}
-                      aria-label="Select resolution"
-                    />
-                  </EditorField>
-                  <Alert
-                    severity="warning"
-                    title="The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter."
-                  />
-                </>
-              )}
             </>
           )}
           {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
@@ -254,7 +234,6 @@ function getCollapsedInfo(
   direction: LokiQueryDirection | undefined
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
-  const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
   const items: string[] = [];
 
@@ -270,10 +249,6 @@ function getCollapsedInfo(
   } else {
     if (query.step) {
       items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
-    }
-
-    if (query.resolution) {
-      items.push(`Resolution: ${resolutionLabel?.label}`);
     }
   }
 

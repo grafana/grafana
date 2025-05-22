@@ -59,8 +59,6 @@ const selectContactPoint = async (user: UserEvent, contactPointName: string) => 
 
 setupMswServer();
 describe('Can create a new grafana managed alert using simplified routing', () => {
-  testWithFeatureToggles(['alertingSimplifiedRouting']);
-
   beforeEach(() => {
     window.localStorage.clear();
     setupDataSources(dataSources.default, dataSources.am);
@@ -97,7 +95,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     // do not select a contact point
     // save and check that call to backend was not made
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
     expect(await screen.findByText('Contact point is required.')).toBeInTheDocument();
     const capturedRequests = await capture;
 
@@ -106,8 +104,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
-    renderRuleEditor();
+    const { user } = renderRuleEditor();
 
+    // Just to make sure all dropdowns have been loaded
+    await selectFolderAndGroup(user);
     await waitFor(() => expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument());
   });
 
@@ -127,26 +127,23 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     await selectContactPoint(user, contactPointName);
 
     // save and check what was sent to backend
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
     const requests = await capture;
 
     const serializedRequests = await serializeRequests(requests);
     expect(serializedRequests).toMatchSnapshot();
   });
 
-  describe('alertingApiServer enabled', () => {
-    testWithFeatureToggles(['alertingApiServer']);
+  it('allows selecting a contact point', async () => {
+    const { user } = renderRuleEditor();
 
-    it('allows selecting a contact point when using alerting API server', async () => {
-      const { user } = renderRuleEditor();
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
-      await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+    await selectContactPoint(user, 'Email');
 
-      await selectContactPoint(user, 'Email');
-
-      expect(await screen.findByText('Email')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Email')).toBeInTheDocument();
   });
+
   describe('switch modes enabled', () => {
     testWithFeatureToggles(['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode']);
 
@@ -163,11 +160,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await selectContactPoint(user, contactPointName);
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with advanced modes', async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
@@ -180,11 +178,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await selectFolderAndGroup(user);
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with only notifications step advanced mode', async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
@@ -197,11 +196,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch notifications step to advanced mode
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('can create the new grafana-managed rule with only query step advanced mode', async () => {
       const contactPointName = 'lotsa-emails';
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
@@ -216,11 +216,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch query step to advanced mode
 
       // save and check what was sent to backend
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
       expect(serializedRequests).toMatchSnapshot();
     });
+
     it('switch modes are intiallized depending on the local storage - 1', async () => {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
       localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
@@ -231,6 +232,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       expect(ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Query).get()).toBeInTheDocument();
       expect(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()).toBeInTheDocument();
     });
+
     it('switch modes are intiallized depending on the local storage - 2', async () => {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
       localStorage.setItem(MANUAL_ROUTING_KEY, 'false');

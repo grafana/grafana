@@ -17,7 +17,7 @@ export interface TempoQuery extends common.DataQuery {
   exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
-   * Filters that are used to query the metrics summary
+   * deprecated Filters that are used to query the metrics summary
    */
   groupBy?: Array<TraceqlFilter>;
   /**
@@ -28,6 +28,10 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
+  /**
+   * For metric queries, whether to run instant or range queries
+   */
+  metricsQueryType?: MetricsQueryType;
   /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
@@ -76,6 +80,11 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 };
 
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+export enum MetricsQueryType {
+  Instant = 'instant',
+  Range = 'range',
+}
 
 /**
  * The state of the TraceQL streaming search query

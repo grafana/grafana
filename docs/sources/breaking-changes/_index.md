@@ -25,7 +25,7 @@ For our purposes, a breaking change is any change that requires users or operato
 
 {{% admonition type="note" %}}
 
-To learn what's available in a Grafana release, refer to the [What's new ]({{< relref "../whatsnew/" >}}) page for each version. For the steps we recommend when you upgrade, check out the [Upgrade guide]({{< relref "../upgrade-guide/" >}}) for each version.
+To learn what's available in a Grafana release, refer to the [What's new ](../whatsnew/) page for each version. For the steps we recommend when you upgrade, check out the [Upgrade guide](../upgrade-guide/) for each version.
 
 {{% /admonition %}}
 

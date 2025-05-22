@@ -1,16 +1,20 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { lastValueFrom } from 'rxjs';
+import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { t } from '@grafana/i18n/internal';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { folderAPI } from 'app/api/clients/folder';
+import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { dispatch } from 'app/store/store';
 import {
-  DashboardDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -20,16 +24,11 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
+import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
 import { PAGE_SIZE } from './services';
-
-interface RequestOptions extends BackendSrvRequest {
-  manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
-}
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -62,28 +61,6 @@ interface HardDeleteDashboardArgs {
   dashboardUID: string;
 }
 
-function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
-  async function backendSrvBaseQuery(requestOptions: RequestOptions) {
-    // Suppress error pop-up for root (aka 'general') folder
-    const isGeneralFolder = requestOptions.url === `/folders/general`;
-    requestOptions = isGeneralFolder ? { ...requestOptions, showErrorAlert: false } : requestOptions;
-
-    try {
-      const { data: responseData, ...meta } = await lastValueFrom(
-        getBackendSrv().fetch({
-          ...requestOptions,
-          url: baseURL + requestOptions.url,
-        })
-      );
-      return { data: responseData, meta };
-    } catch (error) {
-      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
-    }
-  }
-
-  return backendSrvBaseQuery;
-}
-
 export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
@@ -94,10 +71,13 @@ export interface ListFolderQueryArgs {
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      providesTags: (result) =>
+        result && result.length > 0
+          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
+          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -112,10 +92,11 @@ export const browseDashboardsAPI = createApi({
 
     // create a new folder
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
+      invalidatesTags: ['getFolder'],
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
-        data: {
+        body: {
           title,
           parentUid,
         },
@@ -142,7 +123,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ uid, title, version }) => ({
         method: 'PUT',
         url: `/folders/${uid}`,
-        data: {
+        body: {
           title,
           version,
         },
@@ -165,7 +146,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ folder, destinationUID }) => ({
         url: `/folders/${folder.uid}/move`,
         method: 'POST',
-        data: { parentUID: destinationUID },
+        body: { parentUID: destinationUID },
       }),
       onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
         const { parentUid } = folder;
@@ -251,26 +232,48 @@ export const browseDashboardsAPI = createApi({
         // Move all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned folder'],
+              });
+              continue;
+            }
+          }
+
           await baseQuery({
             url: `/folders/${folderUID}/move`,
             method: 'POST',
-            data: { parentUID: destinationUID },
+            body: { parentUID: destinationUID },
           });
         }
 
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
+          const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
+          if (config.featureToggles.provisioning) {
+            if (isProvisionedDashboard(fullDash)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned dashboard'],
+              });
+              continue;
+            }
+          }
           await getDashboardAPI().saveDashboard({
-            dashboard: fullDash.dashboard,
+            dashboard,
             folderUid: destinationUID,
             overwrite: false,
             message: '',
+            k8s,
           });
         }
-
         return { data: undefined };
       },
       onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
@@ -290,12 +293,25 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* items (folders and dashboards). used in the delete modal.
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
+      invalidatesTags: ['getFolder'],
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+              continue;
+            }
+          }
           await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
@@ -309,17 +325,28 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = getDashboardAPI().deleteDashboard(dashboardUID, false);
+          if (config.featureToggles.provisioning) {
+            const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+            if (isProvisionedDashboard(dto)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
 
-          // @ts-expect-error
-          const name = response?.data?.title;
+              continue;
+            }
+          }
 
-          if (name) {
+          await getDashboardAPI().deleteDashboard(dashboardUID, true);
+
+          // handling success alerts for these feature toggles
+          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
+          if (config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: [
-                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
-              ],
+              payload: ['Dashboard deleted'],
             });
           }
         }
@@ -335,13 +362,21 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing dashboard
-    saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
+    saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
       queryFn: async (cmd) => {
         try {
-          const rsp = await getDashboardAPI().saveDashboard(cmd);
-          return { data: rsp };
+          if (isV2DashboardCommand(cmd)) {
+            const response = await getDashboardAPI('v2').saveDashboard(cmd);
+            return { data: response };
+          }
+
+          if (isV1DashboardCommand(cmd)) {
+            const rsp = await getDashboardAPI().saveDashboard(cmd);
+            return { data: rsp };
+          }
+          throw new Error('Invalid dashboard version');
         } catch (error) {
-          return { error };
+          return handleRequestError(error);
         }
       },
 
@@ -363,7 +398,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ dashboard, overwrite, inputs, folderUid }) => ({
         method: 'POST',
         url: '/dashboards/import',
-        data: {
+        body: {
           dashboard,
           overwrite,
           inputs,
@@ -388,7 +423,7 @@ export const browseDashboardsAPI = createApi({
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
-        data: {
+        body: {
           folderUid: targetFolderUID,
         },
         method: 'PATCH',
@@ -431,6 +466,7 @@ export const {
   useDeleteItemsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
+  useLazyGetFolderQuery,
   useMoveFolderMutation,
   useMoveItemsMutation,
   useNewFolderMutation,
@@ -439,5 +475,3 @@ export const {
   useRestoreDashboardMutation,
   useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
-
-export { skipToken } from '@reduxjs/toolkit/query/react';

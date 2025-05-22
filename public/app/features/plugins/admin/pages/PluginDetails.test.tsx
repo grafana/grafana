@@ -274,7 +274,7 @@ describe('Plugin details page', () => {
 
       // Check the column headers
       expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
-      expect(getByRole('columnheader', { name: /last updated/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /latest release date/i })).toBeInTheDocument();
 
       // Check the data
       for (const version of versions) {
@@ -389,31 +389,6 @@ describe('Plugin details page', () => {
 
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
-    });
-
-    it('should display install link with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: false });
-
-      expect(await queryByRole('link', { name: /install via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display uninstall link for an installed plugin with `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true });
-
-      expect(await queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
-    });
-
-    it('should display update and uninstall links for a plugin with an available update and `config.pluginAdminExternalManageEnabled` set to true', async () => {
-      config.pluginAdminExternalManageEnabled = true;
-
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
-
-      expect(await queryByRole('link', { name: /update via grafana.com/i })).toBeInTheDocument();
-      expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument();
     });
 
     it('should display alert with information about why the plugin is disabled', async () => {
@@ -913,11 +888,11 @@ describe('Plugin details page', () => {
       config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
-    it('should display Last updated and report a concern information', async () => {
+    it('should display Latest release date and report a concern information', async () => {
       const id = 'right-panel-test-plugin';
       const updatedAt = '2023-10-26T16:54:55.000Z';
       const { queryByText } = renderPluginDetails({ id, updatedAt });
-      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('Latest release date:')).toBeVisible();
       expect(queryByText('Oct 26, 2023')).toBeVisible();
       expect(queryByText('Report a concern')).toBeVisible();
     });

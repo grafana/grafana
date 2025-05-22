@@ -17,7 +17,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
+
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+const maxBatchSize = 1000
 
 type NamespacedResource struct {
 	Namespace string
@@ -30,25 +36,38 @@ func (s *NamespacedResource) Valid() bool {
 	return s.Namespace != "" && s.Group != "" && s.Resource != ""
 }
 
+type IndexAction int
+
+const (
+	ActionIndex IndexAction = iota
+	ActionDelete
+)
+
+type BulkIndexItem struct {
+	Action IndexAction
+	Key    *resourcepb.ResourceKey // Only used for delete actions
+	Doc    *IndexableDocument      // Only used for index actions
+}
+
+type BulkIndexRequest struct {
+	Items           []*BulkIndexItem
+	ResourceVersion int64
+}
+
 type ResourceIndex interface {
-	// Add a document to the index.  Note it may not be searchable until after flush is called
-	Write(doc *IndexableDocument) error
-
-	// Mark a resource as deleted.  Note it may not be searchable until after flush is called
-	Delete(key *ResourceKey) error
-
-	// Make sure any changes to the index are flushed and available in the next search/origin calls
-	Flush() error
+	// BulkIndex allows for multiple index actions to be performed in a single call.
+	// The order of the items is guaranteed to be the same as the input
+	BulkIndex(req *BulkIndexRequest) error
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access types.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
+	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error)
 
 	// List within an response
-	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountRepositoryObjects(ctx context.Context) ([]*CountRepositoryObjectsResponse_ResourceCount, error)
+	CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -85,25 +104,37 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer      trace.Tracer
-	log         *slog.Logger
-	storage     StorageBackend
-	search      SearchBackend
-	access      types.AccessClient
-	builders    *builderCache
-	initWorkers int
-	initMinSize int
+	tracer       trace.Tracer
+	log          *slog.Logger
+	storage      StorageBackend
+	search       SearchBackend
+	indexMetrics *BleveIndexMetrics
+	access       types.AccessClient
+	builders     *builderCache
+	initWorkers  int
+	initMinSize  int
+
+	// Index queue processors
+	indexQueueProcessorsMutex sync.Mutex
+	indexQueueProcessors      map[string]*indexQueueProcessor
+	indexEventsChan           chan *IndexEvent
+
+	// testing
+	clientIndexEventsChan chan *IndexEvent
 }
 
 var (
-	_ ResourceIndexServer   = (*searchSupport)(nil)
-	_ RepositoryIndexServer = (*searchSupport)(nil)
+	_ resourcepb.ResourceIndexServer      = (*searchSupport)(nil)
+	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
+	}
+	if tracer == nil {
+		return nil, fmt.Errorf("missing tracer")
 	}
 
 	if opts.WorkerThreads < 1 {
@@ -111,13 +142,17 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:      access,
-		tracer:      tracer,
-		storage:     storage,
-		search:      opts.Backend,
-		log:         slog.Default().With("logger", "resource-search"),
-		initWorkers: opts.WorkerThreads,
-		initMinSize: opts.InitMinCount,
+		access:                access,
+		tracer:                tracer,
+		storage:               storage,
+		search:                opts.Backend,
+		log:                   slog.Default().With("logger", "resource-search"),
+		initWorkers:           opts.WorkerThreads,
+		initMinSize:           opts.InitMinCount,
+		indexMetrics:          indexMetrics,
+		clientIndexEventsChan: opts.IndexEventsChan,
+		indexEventsChan:       make(chan *IndexEvent),
+		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -133,14 +168,14 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	return support, err
 }
 
-func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
-		return &ListRepositoryObjectsResponse{
+		return &resourcepb.ListManagedObjectsResponse{
 			Error: NewBadRequestError("multiple pages not yet supported"),
 		}, nil
 	}
 
-	rsp := &ListRepositoryObjectsResponse{}
+	rsp := &resourcepb.ListManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -158,13 +193,13 @@ func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepo
 			return rsp, nil
 		}
 
-		kind, err := idx.ListRepositoryObjects(ctx, req)
+		kind, err := idx.ListManagedObjects(ctx, req)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
 		if kind.NextPageToken != "" {
-			rsp.Error = &ErrorResult{
+			rsp.Error = &resourcepb.ErrorResult{
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -173,15 +208,15 @@ func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepo
 	}
 
 	// Sort based on path
-	slices.SortFunc(rsp.Items, func(a, b *ListRepositoryObjectsResponse_Item) int {
+	slices.SortFunc(rsp.Items, func(a, b *resourcepb.ListManagedObjectsResponse_Item) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
 
 	return rsp, nil
 }
 
-func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	rsp := &CountRepositoryObjectsResponse{}
+func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	rsp := &resourcepb.CountManagedObjectsResponse{}
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -199,27 +234,27 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 			return rsp, nil
 		}
 
-		counts, err := idx.CountRepositoryObjects(ctx)
+		counts, err := idx.CountManagedObjects(ctx)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		if req.Name == "" {
+		if req.Id == "" {
 			rsp.Items = append(rsp.Items, counts...)
 		} else {
 			for _, k := range counts {
-				if k.Repository == req.Name {
-					k.Repository = "" // avoid duplicate response metadata
+				if k.Id == req.Id {
 					rsp.Items = append(rsp.Items, k)
 				}
 			}
 		}
 	}
 
-	// Sort based on repo/group/resource
-	slices.SortFunc(rsp.Items, func(a, b *CountRepositoryObjectsResponse_ResourceCount) int {
+	// Sort based on manager/group/resource
+	slices.SortFunc(rsp.Items, func(a, b *resourcepb.CountManagedObjectsResponse_ResourceCount) int {
 		return cmp.Or(
-			cmp.Compare(a.Repository, b.Repository),
+			cmp.Compare(a.Kind, b.Kind),
+			cmp.Compare(a.Id, b.Id),
 			cmp.Compare(a.Group, b.Group),
 			cmp.Compare(a.Resource, b.Resource),
 		)
@@ -229,7 +264,10 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 }
 
 // Search implements ResourceIndexServer.
-func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	defer span.End()
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
@@ -237,7 +275,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 	}
 	idx, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
-		return &ResourceSearchResponse{
+		return &resourcepb.ResourceSearchResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
@@ -249,7 +287,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 		nsr.Resource = f.Resource
 		federate[i], err = s.getOrCreateIndex(ctx, nsr)
 		if err != nil {
-			return &ResourceSearchResponse{
+			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
 			}, nil
 		}
@@ -259,17 +297,17 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 }
 
 // GetStats implements ResourceServer.
-func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if req.Namespace == "" {
-		return &ResourceStatsResponse{
+		return &resourcepb.ResourceStatsResponse{
 			Error: NewBadRequestError("missing namespace"),
 		}, nil
 	}
-	rsp := &ResourceStatsResponse{}
+	rsp := &resourcepb.ResourceStatsResponse{}
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
-		rsp.Stats = make([]*ResourceStatsResponse_Stats, len(req.Kinds))
+		rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(req.Kinds))
 		for i, k := range req.Kinds {
 			parts := strings.SplitN(k, "/", 2)
 			index, err := s.getOrCreateIndex(ctx, NamespacedResource{
@@ -286,7 +324,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    parts[0],
 				Resource: parts[1],
 				Count:    count,
@@ -297,16 +335,16 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 
 	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
 	if err != nil {
-		return &ResourceStatsResponse{
+		return &resourcepb.ResourceStatsResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
-	rsp.Stats = make([]*ResourceStatsResponse_Stats, len(stats))
+	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(stats))
 
 	// When not filtered by folder or repository, we can use the results directly
 	if req.Folder == "" {
 		for i, stat := range stats {
-			rsp.Stats[i] = &ResourceStatsResponse_Stats{
+			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
 				Resource: stat.Resource,
 				Count:    stat.Count,
@@ -330,7 +368,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		rsp.Stats[i] = &ResourceStatsResponse_Stats{
+		rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 			Group:    stat.Group,
 			Resource: stat.Resource,
 			Count:    count,
@@ -379,24 +417,45 @@ func (s *searchSupport) init(ctx context.Context) error {
 		for {
 			v := <-events
 
-			s.handleEvent(watchctx, v)
+			// Skip events during batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
+			s.dispatchEvent(watchctx, v)
 		}
 	}()
 
+	go s.monitorIndexEvents(ctx)
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-	if IndexMetrics != nil {
-		IndexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
 
 	return nil
 }
 
-// Async event
-func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
-	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
+// Async event dispatching
+// This is called from the watch event loop
+// It will dispatch the event to the appropriate index queue processor
+func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("event_type", evt.Type.String()),
+		attribute.String("namespace", evt.Key.Namespace),
+		attribute.String("group", evt.Key.Group),
+		attribute.String("resource", evt.Key.Resource),
+		attribute.String("name", evt.Key.Name),
+	)
+
+	switch evt.Type {
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED: // OK
+	default:
 		s.log.Info("ignoring watch event", "type", evt.Type)
-		return
+		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
 	}
 
 	nsr := NamespacedResource{
@@ -404,54 +463,48 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		Group:     evt.Key.Group,
 		Resource:  evt.Key.Resource,
 	}
-
 	index, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting index for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
-
-	builder, err := s.builders.get(ctx, nsr)
+	// Get or create index queue processor for this index
+	indexQueueProcessor, err := s.getOrCreateIndexQueueProcessor(index, nsr)
 	if err != nil {
-		s.log.Warn("error getting builder for watch event", "error", err)
+		s.log.Error("error getting index queue processor for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
+	indexQueueProcessor.Add(evt)
+}
 
-	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
-	if err != nil {
-		s.log.Warn("error building document watch event", "error", err)
-		return
-	}
-
-	switch evt.Type {
-	case WatchEvent_ADDED, WatchEvent_MODIFIED:
-		err = index.Write(doc)
-		if err != nil {
-			s.log.Warn("error writing document watch event", "error", err)
+func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
+	var evt *IndexEvent
+	for {
+		select {
+		case <-ctx.Done():
 			return
+		case evt = <-s.indexEventsChan:
 		}
-		if evt.Type == WatchEvent_ADDED {
-			IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+		if evt.Err != nil {
+			s.log.Error("error indexing watch event", "error", evt.Err)
+			continue
 		}
-	case WatchEvent_DELETED:
-		err = index.Delete(evt.Key)
-		if err != nil {
-			s.log.Warn("error deleting document watch event", "error", err)
-			return
+		_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"monitorIndexEvents")
+		defer span.End()
+		// record latency from when event was created to when it was indexed
+		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
+		s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+		if evt.Latency.Seconds() > 1 {
+			s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
 		}
-		IndexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
-	default:
-		// do nothing
-		s.log.Warn("unknown watch event", "type", evt.Type)
-	}
-
-	// record latency from when event was created to when it was indexed
-	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
-	if latencySeconds > 5 {
-		s.log.Warn("high index latency", "latency", latencySeconds)
-	}
-	if IndexMetrics != nil {
-		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+		if s.indexMetrics != nil {
+			s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
+		}
+		if s.clientIndexEventsChan != nil {
+			s.clientIndexEventsChan <- evt
+		}
 	}
 }
 
@@ -459,6 +512,9 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
+
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	defer span.End()
 
 	// TODO???
 	// We want to block while building the index and return the same index for the key
@@ -471,7 +527,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if idx == nil {
 		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error building search index, %w", err)
 		}
 		if idx == nil {
 			return nil, fmt.Errorf("nil index after build")
@@ -492,39 +548,56 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
-	key := &ResourceKey{
-		Group:     nsr.Group,
-		Resource:  nsr.Resource,
-		Namespace: nsr.Namespace,
-	}
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
-		rv, err = s.storage.ListIterator(ctx, &ListRequest{
+		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
-			Options: &ListOptions{
-				Key: key,
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     nsr.Group,
+					Resource:  nsr.Resource,
+					Namespace: nsr.Namespace,
+				},
 			},
 		}, func(iter ListIterator) error {
+			// Collect all documents in a single bulk request
+			items := make([]*BulkIndexItem, 0)
+
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
 					return err
 				}
 
 				// Update the key name
-				// Or should we read it from the body?
-				key.Name = iter.Name()
+				key := &resourcepb.ResourceKey{
+					Group:     nsr.Group,
+					Resource:  nsr.Resource,
+					Namespace: nsr.Namespace,
+					Name:      iter.Name(),
+				}
 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					return err
+					s.log.Error("error building search document", "key", SearchID(key), "err", err)
+					continue
 				}
 
-				// And finally write it to the index
-				if err = index.Write(doc); err != nil {
+				// Add to bulk items
+				items = append(items, &BulkIndexItem{
+					Action: ActionIndex,
+					Doc:    doc,
+				})
+			}
+
+			// Perform single bulk index operation
+			if len(items) > 0 {
+				if err = index.BulkIndex(&BulkIndexRequest{
+					Items: items,
+				}); err != nil {
 					return err
 				}
 			}
-			return err
+			return iter.Error()
 		})
 		return rv, err
 	})
@@ -538,12 +611,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	if err != nil {
 		s.log.Warn("error getting doc count", "error", err)
 	}
-	if IndexMetrics != nil {
-		IndexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
-	}
-
-	if err == nil {
-		err = index.Flush()
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
 	}
 
 	// rv is the last RV we read.  when watching, we must add all events since that time
@@ -633,4 +702,55 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 		}
 	}
 	return s.defaultBuilder, nil
+}
+
+// AsResourceKey converts the given namespace and type to a search key
+func AsResourceKey(ns string, t string) (*resourcepb.ResourceKey, error) {
+	if ns == "" {
+		return nil, fmt.Errorf("missing namespace")
+	}
+	switch t {
+	case "folders", "folder":
+		return &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
+		}, nil
+	case "dashboards", "dashboard":
+		return &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     dashboardv1.GROUP,
+			Resource:  dashboardv1.DASHBOARD_RESOURCE,
+		}, nil
+
+	// NOT really supported in the dashboard search UI, but useful for manual testing
+	case "playlist", "playlists":
+		return &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown resource type")
+}
+
+// getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
+func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*indexQueueProcessor, error) {
+	s.indexQueueProcessorsMutex.Lock()
+	defer s.indexQueueProcessorsMutex.Unlock()
+
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	if indexQueueProcessor, ok := s.indexQueueProcessors[key]; ok {
+		return indexQueueProcessor, nil
+	}
+
+	builder, err := s.builders.get(context.Background(), nsr)
+	if err != nil {
+		s.log.Error("error getting document builder", "error", err)
+		return nil, err
+	}
+	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
+	s.indexQueueProcessors[key] = indexQueueProcessor
+	return indexQueueProcessor, nil
 }

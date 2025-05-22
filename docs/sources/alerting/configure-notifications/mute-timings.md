@@ -39,13 +39,26 @@ refs:
 
 # Configure mute timings
 
-A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period or weekends.
+A mute timing is a recurring interval that stops notifications for one or multiple notification policies during a specified period. It suppresses notifications but does not interrupt alert evaluation.
+
+Use mute timings to temporarily pause notifications for a specific recurring period, such as a regular maintenance window or weekends.
 
 {{< admonition type="note" >}}
 Mute timings are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
 
-{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+## Mute timings vs silences
+
+[Mute timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
+
+The following table highlights the key differences between mute timings and silences.
+
+|            | Mute timing                                                 | Silence                                                          |
+| ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
+| **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
+
+[//]: <> ({{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Add mute timings
 

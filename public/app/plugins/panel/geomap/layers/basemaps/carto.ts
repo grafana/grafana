@@ -48,7 +48,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       const scale = window.devicePixelRatio > 1 ? '@2x' : '';
       return new TileLayer({
         source: new XYZ({
-          attributions: `<a href="https://carto.com/attribution/">© CARTO</a>`,
+          attributions: `<a href="https://carto.com/attribution/">©CARTO</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`,
           url: `https://{1-4}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}${scale}.png`,
         }),
       });

@@ -21,7 +21,8 @@ import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
-import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
@@ -76,6 +77,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
+
+    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      panel.changePluginType('timeseries');
+    }
+
     const deactivateParents = activateSceneObjectAndParentTree(panel);
 
     this.waitForPlugin();

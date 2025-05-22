@@ -1,0 +1,3 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1,DashboardMetadata,Finalizers
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1,LibraryPanelStatus,Warnings
+API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1,Unstructured,Object

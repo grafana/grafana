@@ -44,21 +44,20 @@ type sqlStatsService struct {
 func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	count := int64(0)
 	for _, org := range orgs {
-		ctx, _ = identity.WithServiceIdentitiy(ctx, org.ID)
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
 		dashsCount, err := ss.dashSvc.CountDashboardsInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
 		count += dashsCount
 	}
-
 	return count, nil
 }
 
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	total := 0
 	for _, org := range orgs {
-		ctx, _ = identity.WithServiceIdentitiy(ctx, org.ID)
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
 		tags, err := ss.dashSvc.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
 			OrgID: org.ID,
 		})
@@ -72,20 +71,16 @@ func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) 
 }
 
 func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := 0
+	total := int64(0)
 	for _, org := range orgs {
-		ctx, ident := identity.WithServiceIdentitiy(ctx, org.ID)
-		folders, err := ss.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
-			OrgID:        org.ID,
-			SignedInUser: ident,
-		})
+		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
+		folderCount, err := ss.folderSvc.CountFoldersInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
-
-		total += len(folders)
+		total += folderCount
 	}
-	return int64(total), nil
+	return total, nil
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -165,9 +160,9 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
 		}
 		// currently not supported when dashboards are in unified storage
-		if !ss.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
-			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
+		if !ss.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanValue(false))
+			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanValue(false))
 		}
 
 		sb.Write(ss.roleCounterSQL(ctx))

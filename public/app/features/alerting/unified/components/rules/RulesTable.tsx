@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -14,11 +14,12 @@ import { useAsync } from '../../hooks/useAsync';
 import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { usePagination } from '../../hooks/usePagination';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
-import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { getRulePluginOrigin, isPausedRule, rulerRuleType } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -218,7 +219,7 @@ function useColumns(
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }
 
-          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+          const isGrafanaManagedRule = rulerRuleType.grafana.rule(rulerRule);
           if (!isGrafanaManagedRule) {
             return null;
           }
@@ -263,7 +264,12 @@ function useColumns(
 
           return (
             nextEvalInfo && (
-              <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
+              <Tooltip
+                placement="top"
+                // eslint-disable-next-line @grafana/no-untranslated-strings
+                content={`${nextEvalInfo?.fullDate}`}
+                theme="info"
+              >
                 <span>{nextEvalInfo?.humanized}</span>
               </Tooltip>
             )
@@ -328,19 +334,31 @@ function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadi
   );
 }
 
+export function useIsRulesLoading(rulesSource: RulesSource) {
+  const rulerRules = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
+  const rulerRulesLoaded = Boolean(rulerRules[rulesSourceName]?.result);
+  return rulerRulesLoaded;
+}
+
 function useRuleStatus(rule: CombinedRule) {
-  const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
+  const rulesSource = rule.namespace.rulesSource;
+
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+  const { hasRuler } = useHasRuler(rulesSource);
+
   const { promRule, rulerRule } = rule;
 
   // If prometheusRulesPrimary is enabled, we don't fetch rules from the Ruler API (except for Grafana managed rules)
   // so there is no way to detect statuses
-  if (prometheusRulesPrimary && !isGrafanaRulerRule(rulerRule)) {
+  if (prometheusRulesPrimary && !rulerRuleType.grafana.rule(rulerRule)) {
     return { isDeleting: false, isCreating: false, isPaused: false };
   }
 
   const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
   const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
-  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
+  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
 
   return { isDeleting, isCreating, isPaused };
 }

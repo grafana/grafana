@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 
 import { CoreApp, GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Themeable2 } from '@grafana/ui';
 
@@ -31,6 +32,8 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
 export const LOG_LINE_BODY_FIELD_NAME = '___LOG_LINE_BODY___';
 
 export const LogDetailsBody = (props: Props) => {
+  const { t } = useTranslate();
+
   const showField = () => {
     const { onClickShowField, row } = props;
     if (onClickShowField) {
@@ -65,9 +68,18 @@ export const LogDetailsBody = (props: Props) => {
 
   const toggleFieldButton =
     displayedFields != null && displayedFields.includes(LOG_LINE_BODY_FIELD_NAME) ? (
-      <IconButton variant="primary" tooltip="Hide log line" name="eye" onClick={hideField} />
+      <IconButton
+        variant="primary"
+        tooltip={t('logs.log-details-body.toggle-field-button.tooltip-hide-log-line', 'Hide log line')}
+        name="eye"
+        onClick={hideField}
+      />
     ) : (
-      <IconButton tooltip="Show log line" name="eye" onClick={showField} />
+      <IconButton
+        tooltip={t('logs.log-details-body.toggle-field-button.tooltip-show-log-line', 'Show log line')}
+        name="eye"
+        onClick={showField}
+      />
     );
 
   return (

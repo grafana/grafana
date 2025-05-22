@@ -224,7 +224,7 @@ func NewFakeOrgStore(t *testing.T, orgs []int64) *FakeOrgStore {
 	}
 }
 
-func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
+func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 

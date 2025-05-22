@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -226,21 +226,15 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	dashboardID := queryResult.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		g, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
-		if err != nil {
-			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Err(err)
-			}
-		} else {
-			canEdit, err := g.CanEdit()
-			// check for permissions only if the dashboard is found
-			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
-			}
+		evaluator := ac.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardID, 10)))
+		canEdit, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+		// check for permissions only if the dashboard is found
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
+		}
 
-			if !canEdit && queryResult.UserID != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
-			}
+		if !canEdit && queryResult.UserID != c.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
 		}
 	}
 
@@ -279,7 +273,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	searchQuery := dashboardsnapshots.GetDashboardSnapshotsQuery{
 		Name:         query,
 		Limit:        limit,
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		SignedInUser: c.SignedInUser,
 	}
 

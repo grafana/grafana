@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 2 of 4
+title: Get started with Grafana Alerting - Part 2
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 2 of 4
+  title: Get started with Grafana Alerting - Part 2
   description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
   backend:
     imageid: ubuntu
@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 2 of 4
+# Get started with Grafana Alerting - Part 2
 
 The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://www.grafana.com/tutorials/alerting-get-started/).
 
@@ -188,7 +188,7 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
 
-1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations).
+1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#supported-contact-point-integrations).
 
 <!-- INTERACTIVE ignore END -->
 
@@ -206,7 +206,7 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
 
-1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations).
+1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#supported-contact-point-integrations).
 
 {{< /docs/ignore >}}
 

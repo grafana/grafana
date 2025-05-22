@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/dskit/kv"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -80,7 +81,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)
@@ -104,7 +105,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -295,6 +296,20 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
 
+	if opts.EnableRecordingRules {
+		recordingRulesSect, err := cfg.NewSection("recording_rules")
+		require.NoError(t, err)
+		_, err = recordingRulesSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+	}
+
+	if opts.LicensePath != "" {
+		section, err := cfg.NewSection("enterprise")
+		require.NoError(t, err)
+		_, err = section.NewKey("license_path", opts.LicensePath)
+		require.NoError(t, err)
+	}
+
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
@@ -476,14 +491,34 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.PermittedProvisioningPaths != "" {
+		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
+		require.NoError(t, err)
+	}
+	if opts.EnableSCIM {
+		scimSection, err := getOrCreateSection("auth.scim")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("user_sync_enabled", "true")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("group_sync_enabled", "true")
+		require.NoError(t, err)
+	}
 
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_open_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_open_conn", "2")
+	}
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	if db.IsTestDBSpanner() {
+		_, err = dbSection.NewKey("max_idle_conn", "20")
+	} else {
+		_, err = dbSection.NewKey("max_idle_conn", "2")
+	}
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -528,7 +563,11 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
+	LicensePath                           string
+	EnableRecordingRules                  bool
+	EnableSCIM                            bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

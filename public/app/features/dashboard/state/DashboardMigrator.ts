@@ -27,12 +27,11 @@ import {
   ValueMapping,
   VariableHide,
 } from '@grafana/data';
-import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
+import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -65,6 +64,7 @@ import {
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -81,7 +81,7 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * kinds/dashboard/dashboard_kind.cue
  * Example PR: #87712
  */
-export const DASHBOARD_SCHEMA_VERSION = 40;
+export const DASHBOARD_SCHEMA_VERSION = 41;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -626,6 +626,14 @@ export class DashboardMigrator {
           return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        // Hacky way to call the automigrate feature
+        if (panel.type === 'table-old') {
+          const newType = getPanelPluginToMigrateTo(panel);
+          if (newType) {
+            panel.autoMigrateFrom = panel.type;
+            panel.type = newType;
+          }
+        }
         return panel;
       });
     }
@@ -905,9 +913,17 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 40) {
-      // In old ashboards refresh property can be a boolean
+      // In old dashboards refresh property can be a boolean
       if (typeof this.dashboard.refresh !== 'string') {
         this.dashboard.refresh = '';
+      }
+    }
+
+    if (oldVersion < 41) {
+      // time_options is a legacy property that was not used since grafana version 5
+      //  therefore deprecating this property from the schema
+      if ('time_options' in this.dashboard.timepicker) {
+        delete this.dashboard.timepicker.time_options;
       }
     }
 

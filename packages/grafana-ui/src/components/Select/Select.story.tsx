@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { SelectableValue, toIconName } from '@grafana/data';
 
 import { getAvailableIcons } from '../../types';
+import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
 import { AsyncMultiSelect, AsyncSelect, MultiSelect, Select } from './Select';
@@ -92,6 +93,7 @@ const meta: Meta = {
       },
     },
   },
+  decorators: [DeprecatedDecorator],
 };
 
 const loadAsyncOptions = () => {
@@ -383,7 +385,7 @@ export const AutoMenuPlacement: StoryFn = (args) => {
 
   return (
     <>
-      <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+      <div style={{ width: '100%', height: 'calc(95vh - 118px)', display: 'flex', alignItems: 'flex-end' }}>
         <Select
           options={generateOptions()}
           value={value}
@@ -455,3 +457,18 @@ CustomValueCreation.args = {
 };
 
 export default meta;
+
+function DeprecatedDecorator(Story: React.ElementType) {
+  return (
+    <div>
+      <Alert title="Deprecated!" severity="warning">
+        The Select component is deprecated.
+        <br />
+        Use Combobox instead - it supports most use cases, is performant by default, and can handle hundreds of
+        thousands of options, and has a simpler API.
+      </Alert>
+
+      <Story />
+    </div>
+  );
+}

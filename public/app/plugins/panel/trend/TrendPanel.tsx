@@ -1,10 +1,17 @@
 import { useMemo } from 'react';
 
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
-import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import {
+  isLikelyAscendingVector,
+  DataFrame,
+  FieldMatcherID,
+  fieldMatchers,
+  FieldType,
+  PanelProps,
+  TimeRange,
+} from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -119,8 +126,8 @@ export const TrendPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                  alignedDataFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                getDataLinks={(seriesIdx, dataIdx) =>
+                  alignedDataFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
                   return (

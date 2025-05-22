@@ -24,6 +24,8 @@ import {
   DashboardDTO,
   DashboardInitPhase,
   DashboardRoutes,
+  HomeDashboardRedirectDTO,
+  isRedirectResponse,
   StoreState,
   ThunkDispatch,
   ThunkResult,
@@ -61,7 +63,7 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
-        const stateManager = getDashboardScenePageStateManager();
+        const stateManager = getDashboardScenePageStateManager('v1');
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
@@ -69,10 +71,10 @@ async function fetchDashboard(
         }
 
         // load home dash
-        const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
+        const dashDTO = await backendSrv.get<DashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
         // if user specified a custom home dashboard redirect to that
-        if (dashDTO.redirectUri) {
+        if (isRedirectResponse(dashDTO)) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
           locationService.replace(newUrl);
           return null;
@@ -271,7 +273,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set week start
-    if (dashboard.weekStart !== '') {
+    if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
       setWeekStart(config.bootData.user.weekStart);

@@ -17,5 +17,5 @@ export function DeletedSubForm({ pathPrefix }: Props): JSX.Element {
     register(`${pathPrefix}.__deleted`);
   }, [register, pathPrefix]);
 
-  return <></>;
+  return <>{null}</>;
 }

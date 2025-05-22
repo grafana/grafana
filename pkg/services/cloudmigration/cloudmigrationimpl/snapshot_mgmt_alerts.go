@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api"
+	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -179,4 +179,62 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 	}
 
 	return provisionedAlertRules, nil
+}
+
+type alertRuleGroup struct {
+	Title     string      `json:"title"`
+	FolderUID string      `json:"folderUid"`
+	Interval  int64       `json:"interval"`
+	Rules     []alertRule `json:"rules"`
+}
+
+func (s *Service) getAlertRuleGroups(ctx context.Context, signedInUser *user.SignedInUser) ([]alertRuleGroup, error) {
+	alertRuleGroupsWithFolder, err := s.ngAlert.Api.AlertRules.GetAlertGroupsWithFolderFullpath(ctx, signedInUser, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alert rule groups with folders: %w", err)
+	}
+
+	settingAlertRulesPaused := s.cfg.CloudMigration.AlertRulesState == setting.GMSAlertRulesPaused
+
+	alertRuleGroups := make([]alertRuleGroup, 0, len(alertRuleGroupsWithFolder))
+
+	for _, ruleGroup := range alertRuleGroupsWithFolder {
+		provisionedAlertRules := make([]alertRule, 0, len(ruleGroup.Rules))
+
+		for _, rule := range ruleGroup.Rules {
+			isPaused := rule.IsPaused
+			if settingAlertRulesPaused {
+				isPaused = true
+			}
+
+			provisionedAlertRules = append(provisionedAlertRules, alertRule{
+				ID:                   rule.ID,
+				UID:                  rule.UID,
+				OrgID:                rule.OrgID,
+				FolderUID:            rule.NamespaceUID,
+				RuleGroup:            rule.RuleGroup,
+				Title:                rule.Title,
+				For:                  model.Duration(rule.For),
+				Condition:            rule.Condition,
+				Data:                 ngalertapi.ApiAlertQueriesFromAlertQueries(rule.Data),
+				Updated:              rule.Updated,
+				NoDataState:          rule.NoDataState.String(),
+				ExecErrState:         rule.ExecErrState.String(),
+				Annotations:          rule.Annotations,
+				Labels:               rule.Labels,
+				IsPaused:             isPaused,
+				NotificationSettings: ngalertapi.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+				Record:               ngalertapi.ApiRecordFromModelRecord(rule.Record),
+			})
+		}
+
+		alertRuleGroups = append(alertRuleGroups, alertRuleGroup{
+			Title:     ruleGroup.Title,
+			FolderUID: ruleGroup.FolderUID,
+			Interval:  ruleGroup.Interval,
+			Rules:     provisionedAlertRules,
+		})
+	}
+
+	return alertRuleGroups, nil
 }

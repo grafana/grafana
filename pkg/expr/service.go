@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -64,9 +65,8 @@ type Service struct {
 
 	pluginsClient backend.CallResourceHandler
 
-	tracer          tracing.Tracer
-	metrics         *metrics
-	allowLongFrames bool
+	tracer  tracing.Tracer
+	metrics *metrics.ExprMetrics
 }
 
 type pluginContextProvider interface {
@@ -82,7 +82,7 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 		pCtxProvider:  pCtxProvider,
 		features:      features,
 		tracer:        tracer,
-		metrics:       newMetrics(registerer),
+		metrics:       metrics.NewSSEMetrics(registerer),
 		pluginsClient: pluginClient,
 		converter: &ResultConverter{
 			Features: features,

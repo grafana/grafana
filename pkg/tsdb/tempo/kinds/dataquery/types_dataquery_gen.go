@@ -48,25 +48,76 @@ type TempoQuery struct {
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss    *int64          `json:"spss,omitempty"`
 	Filters []TraceqlFilter `json:"filters"`
-	// Filters that are used to query the metrics summary
+	// deprecated Filters that are used to query the metrics summary
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`
 	// For metric queries, the step size to use
 	Step *string `json:"step,omitempty"`
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64 `json:"exemplars,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource any `json:"datasource,omitempty"`
-	// For metric queries, how many exemplars to request, 0 means no exemplars
-	Exemplars *int64 `json:"exemplars,omitempty"`
+	// For metric queries, whether to run instant or range queries
+	MetricsQueryType *MetricsQueryType `json:"metricsQueryType,omitempty"`
 }
 
 // NewTempoQuery creates a new TempoQuery object.
 func NewTempoQuery() *TempoQuery {
 	return &TempoQuery{}
 }
+
+type TraceqlFilter struct {
+	// Uniquely identify the filter, will not be used in the query generation
+	Id string `json:"id"`
+	// The tag for the search filter, for example: .http.status_code, .service.name, status
+	Tag *string `json:"tag,omitempty"`
+	// The operator that connects the tag to the value, for example: =, >, !=, =~
+	Operator *string `json:"operator,omitempty"`
+	// The value for the search filter
+	Value *StringOrArrayOfString `json:"value,omitempty"`
+	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+	ValueType *string `json:"valueType,omitempty"`
+	// The scope of the filter, can either be unscoped/all scopes, resource or span
+	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+}
+
+// NewTraceqlFilter creates a new TraceqlFilter object.
+func NewTraceqlFilter() *TraceqlFilter {
+	return &TraceqlFilter{}
+}
+
+// static fields are pre-set in the UI, dynamic fields are added by the user
+type TraceqlSearchScope string
+
+const (
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+)
+
+// The type of the table that is used to display the search results
+type SearchTableType string
+
+const (
+	SearchTableTypeTraces SearchTableType = "traces"
+	SearchTableTypeSpans  SearchTableType = "spans"
+	SearchTableTypeRaw    SearchTableType = "raw"
+)
+
+type MetricsQueryType string
+
+const (
+	MetricsQueryTypeRange   MetricsQueryType = "range"
+	MetricsQueryTypeInstant MetricsQueryType = "instant"
+)
 
 type TempoQueryType string
 
@@ -89,48 +140,6 @@ const (
 	SearchStreamingStateDone      SearchStreamingState = "done"
 	SearchStreamingStateError     SearchStreamingState = "error"
 )
-
-// The type of the table that is used to display the search results
-type SearchTableType string
-
-const (
-	SearchTableTypeTraces SearchTableType = "traces"
-	SearchTableTypeSpans  SearchTableType = "spans"
-	SearchTableTypeRaw    SearchTableType = "raw"
-)
-
-// static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchScope string
-
-const (
-	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
-	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
-	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
-	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
-	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
-)
-
-type TraceqlFilter struct {
-	// Uniquely identify the filter, will not be used in the query generation
-	Id string `json:"id"`
-	// The tag for the search filter, for example: .http.status_code, .service.name, status
-	Tag *string `json:"tag,omitempty"`
-	// The operator that connects the tag to the value, for example: =, >, !=, =~
-	Operator *string `json:"operator,omitempty"`
-	// The value for the search filter
-	Value *StringOrArrayOfString `json:"value,omitempty"`
-	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
-	ValueType *string `json:"valueType,omitempty"`
-	// The scope of the filter, can either be unscoped/all scopes, resource or span
-	Scope *TraceqlSearchScope `json:"scope,omitempty"`
-}
-
-// NewTraceqlFilter creates a new TraceqlFilter object.
-func NewTraceqlFilter() *TraceqlFilter {
-	return &TraceqlFilter{}
-}
 
 type StringOrArrayOfString struct {
 	String        *string  `json:"String,omitempty"`

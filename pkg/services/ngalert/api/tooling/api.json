@@ -208,11 +208,18 @@
     "isPaused": {
      "type": "boolean"
     },
+    "keepFiringFor": {
+     "$ref": "#/definitions/Duration"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
+    },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -307,6 +314,16 @@
   },
   "AlertRuleNotificationSettings": {
    "properties": {
+    "active_time_intervals": {
+     "description": "Override the times when notifications should not be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent\nat the time that matches any interval.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "default": [
       "alertname",
@@ -334,7 +351,7 @@
      "type": "string"
     },
     "mute_time_intervals": {
-     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
      "example": [
       "maintenance"
      ],
@@ -361,6 +378,12 @@
   },
   "AlertRuleNotificationSettingsExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "items": {
       "type": "string"
@@ -395,6 +418,9 @@
      "type": "string"
     },
     "metric": {
+     "type": "string"
+    },
+    "targetDatasourceUid": {
      "type": "string"
     }
    },
@@ -459,8 +485,18 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
+    },
+    "isPaused": {
+     "type": "boolean"
+    },
+    "keepFiringFor": {
+     "format": "double",
+     "type": "number"
     },
     "labels": {
      "$ref": "#/definitions/Labels"
@@ -474,6 +510,15 @@
     },
     "name": {
      "type": "string"
+    },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "queriedDatasourceUIDs": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "query": {
      "type": "string"
@@ -497,6 +542,9 @@
      "type": "object"
     },
     "type": {
+     "type": "string"
+    },
+    "uid": {
      "type": "string"
     }
    },
@@ -725,6 +773,20 @@
     "$ref": "#/definitions/EmbeddedContactPoint"
    },
    "type": "array"
+  },
+  "ConvertPrometheusResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
   "CounterResetHint": {
    "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -1166,6 +1228,14 @@
     "CounterResetHint": {
      "$ref": "#/definitions/CounterResetHint"
     },
+    "CustomValues": {
+     "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
     "PositiveBuckets": {
      "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
      "items": {
@@ -1182,7 +1252,7 @@
      "type": "array"
     },
     "Schema": {
-     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
      "format": "int32",
      "type": "integer"
     },
@@ -1410,6 +1480,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -1577,9 +1653,8 @@
      ],
      "type": "string"
     },
-    "id": {
-     "format": "int64",
-     "type": "integer"
+    "guid": {
+     "type": "string"
     },
     "intervalSeconds": {
      "format": "int64",
@@ -1590,6 +1665,10 @@
     },
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
+    },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
     },
     "namespace_uid": {
      "type": "string"
@@ -1604,10 +1683,6 @@
     },
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
@@ -1627,6 +1702,9 @@
     "updated": {
      "format": "date-time",
      "type": "string"
+    },
+    "updated_by": {
+     "$ref": "#/definitions/UserInfo"
     },
     "version": {
      "format": "int64",
@@ -1712,6 +1790,12 @@
    },
    "type": "object"
   },
+  "GettableRuleVersions": {
+   "items": {
+    "$ref": "#/definitions/GettableExtendedRuleNode"
+   },
+   "type": "array"
+  },
   "GettableStatus": {
    "properties": {
     "cluster": {
@@ -1735,26 +1819,6 @@
     "uptime",
     "versionInfo"
    ],
-   "type": "object"
-  },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
    "type": "object"
   },
   "GettableUserConfig": {
@@ -1782,6 +1846,9 @@
    "properties": {
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "jira_api_url": {
+     "$ref": "#/definitions/URL"
     },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
@@ -1830,6 +1897,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "smtp_tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "telegram_api_url": {
      "$ref": "#/definitions/URL"
@@ -2017,6 +2087,57 @@
       "$ref": "#/definitions/LinkTransformationConfig"
      },
      "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "JiraConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "description": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2220,6 +2341,12 @@
   },
   "NotificationPolicyExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -2627,6 +2754,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -2820,6 +2953,12 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+     "example": 3,
+     "format": "int64",
+     "type": "integer"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2892,23 +3031,6 @@
    },
    "type": "object"
   },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2919,6 +3041,83 @@
       "type": "string"
      },
      "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusNamespace": {
+   "properties": {
+    "Body": {
+     "additionalProperties": {
+      "items": {
+       "$ref": "#/definitions/PrometheusRuleGroup"
+      },
+      "type": "array"
+     },
+     "description": "in: body",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PrometheusRuleGroup": {
+   "properties": {
+    "Interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Limit": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "QueryOffset": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PrometheusRule"
+     },
+     "type": "array"
     }
    },
    "type": "object"
@@ -3016,6 +3215,10 @@
      "example": false,
      "type": "boolean"
     },
+    "keep_firing_for": {
+     "format": "duration",
+     "type": "string"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -3024,6 +3227,11 @@
       "team": "sre-team-1"
      },
      "type": "object"
+    },
+    "missingSeriesEvalsToResolve": {
+     "example": 2,
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -3294,6 +3502,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -3396,6 +3610,11 @@
     "metric": {
      "description": "Name of the recorded metric.",
      "example": "grafana_alerts_ratio",
+     "type": "string"
+    },
+    "target_datasource_uid": {
+     "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+     "example": "my-prom",
      "type": "string"
     }
    },
@@ -3513,6 +3732,12 @@
   "RouteExport": {
    "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -3572,8 +3797,14 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
+    },
+    "isPaused": {
+     "type": "boolean"
     },
     "labels": {
      "$ref": "#/definitions/Labels"
@@ -3588,10 +3819,16 @@
     "name": {
      "type": "string"
     },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "query": {
      "type": "string"
     },
     "type": {
+     "type": "string"
+    },
+    "uid": {
      "type": "string"
     }
    },
@@ -3636,6 +3873,9 @@
     "file": {
      "type": "string"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "interval": {
      "format": "double",
      "type": "number"
@@ -3665,6 +3905,7 @@
    "required": [
     "name",
     "file",
+    "folderUid",
     "rules",
     "interval"
    ],
@@ -3767,6 +4008,10 @@
   "Sample": {
    "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "DropName": {
+     "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+     "type": "boolean"
+    },
     "F": {
      "format": "double",
      "type": "number"
@@ -4244,6 +4489,15 @@
      "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
+    "scope": {
+     "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+     "enum": [
+      ".",
+      ".Alerts",
+      ".Alert"
+     ],
+     "type": "string"
+    },
     "text": {
      "description": "Interpolated value of the template.",
      "type": "string"
@@ -4382,7 +4636,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4418,7 +4671,23 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "type": "object"
+  },
+  "UpdateNamespaceRulesRequest": {
+   "properties": {
+    "is_paused": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "UpdateNamespaceRulesResponse": {
+   "properties": {
+    "message": {
+     "type": "string"
+    }
+   },
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4445,6 +4714,18 @@
      "type": "array"
     }
    },
+   "type": "object"
+  },
+  "UserInfo": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "UserInfo represents user-related information, including a unique identifier and a name.",
    "type": "object"
   },
   "Userinfo": {
@@ -4556,6 +4837,9 @@
     },
     "send_resolved": {
      "type": "boolean"
+    },
+    "timeout": {
+     "$ref": "#/definitions/Duration"
     },
     "url": {
      "$ref": "#/definitions/SecretURL"
@@ -6374,36 +6658,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

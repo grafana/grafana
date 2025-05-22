@@ -1,31 +1,21 @@
 import { useMemo } from 'react';
 
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
+import { DashboardEditPane } from './DashboardEditPane';
+import { ElementSelection } from './ElementSelection';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
-import { VizPanelEditableElement } from './VizPanelEditableElement';
-
-export function useEditableElement(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
+export function useEditableElement(
+  selection: ElementSelection | undefined,
+  editPane: DashboardEditPane
+): EditableDashboardElement | undefined {
   return useMemo(() => {
-    if (!sceneObj) {
-      return undefined;
+    if (!selection) {
+      const dashboard = getDashboardSceneFor(editPane);
+      return new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]).createSelectionElement();
     }
 
-    if (isEditableDashboardElement(sceneObj)) {
-      return sceneObj;
-    }
-
-    if (sceneObj instanceof VizPanel) {
-      return new VizPanelEditableElement(sceneObj);
-    }
-
-    if (sceneObj instanceof DashboardScene) {
-      return new DashboardEditableElement(sceneObj);
-    }
-
-    return undefined;
-  }, [sceneObj]);
+    return selection.createSelectionElement();
+  }, [selection, editPane]);
 }

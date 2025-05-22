@@ -1,15 +1,17 @@
 import { useAsync } from 'react-use';
 
 import { renderMarkdown } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface Props {
   pluginId: string;
 }
 
 export function PluginHelp({ pluginId }: Props) {
+  const { t } = useTranslate();
+
   const { value, loading, error } = useAsync(async () => {
     return getBackendSrv().get(`/api/plugins/${pluginId}/markdown/query_help`);
   }, []);
@@ -17,7 +19,7 @@ export function PluginHelp({ pluginId }: Props) {
   const renderedMarkdown = renderMarkdown(value);
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading help..." />;
+    return <LoadingPlaceholder text={t('plugins.plugin-help.loading', 'Loading help...')} />;
   }
 
   if (error) {

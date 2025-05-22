@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -16,7 +16,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
@@ -52,9 +52,10 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const { namespace, group, rulerRule } = rule;
   const { hasActiveFilters } = useRulesFilter();
 
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isProvisioned = rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
+  const { t } = useTranslate();
 
   const canEditRule = editRuleSupported && editRuleAllowed;
 
@@ -69,7 +70,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   if (showViewButton) {
     buttons.push(
       <LinkButton
-        title="View"
+        title={t('alerting.rule-actions-buttons.title-view', 'View')}
         size={buttonSize}
         key="view"
         variant="secondary"
@@ -87,13 +88,20 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
-      <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
+      <LinkButton
+        title={t('alerting.rule-actions-buttons.title-edit', 'Edit')}
+        size={buttonSize}
+        key="edit"
+        variant="secondary"
+        icon="pen"
+        href={editURL}
+      >
         <Trans i18nKey="common.edit">Edit</Trans>
       </LinkButton>
     );
   }
 
-  if (!rule.promRule) {
+  if (!rule.promRule && !rule.rulerRule) {
     return null;
   }
 
@@ -107,7 +115,8 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         groupIdentifier={groupId}
         handleDelete={() => {
           if (rule.rulerRule) {
-            showDeleteModal(rule.rulerRule, groupId);
+            const editableRuleIdentifier = ruleId.fromRulerRuleAndGroupIdentifierV2(groupId, rule.rulerRule);
+            showDeleteModal(editableRuleIdentifier, groupId);
           }
         }}
         handleSilence={() => setShowSilenceDrawer(true)}
@@ -124,7 +133,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
-      {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
+      {rulerRuleType.grafana.alertingRule(rule.rulerRule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (

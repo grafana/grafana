@@ -20,7 +20,13 @@ func NewFakeService() *FakeService {
 	return &FakeService{}
 }
 
-func (s *FakeService) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
+func NewFakeServiceWithTeamDTO(teamDTO *team.TeamDTO) *FakeService {
+	return &FakeService{
+		ExpectedTeamDTO: teamDTO,
+	}
+}
+
+func (s *FakeService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	return s.ExpectedTeam, s.ExpectedError
 }
 

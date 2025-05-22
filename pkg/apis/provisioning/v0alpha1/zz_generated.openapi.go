@@ -15,28 +15,40 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ErrorDetails":           schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions":       schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus":           schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":             schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryItem":            schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryList":            schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Job":                    schema_pkg_apis_provisioning_v0alpha1_Job(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobList":                schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary":     schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobSpec":                schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobStatus":              schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LintIssue":              schema_pkg_apis_provisioning_v0alpha1_LintIssue(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats":           schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":      schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":         schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":         schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryStatus":       schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryView":         schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryViewList":     schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount":          schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceList":           schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceListItem":       schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects":        schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo": schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats":          schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType":           schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs":           schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceWrapper":        schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions":         schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions":            schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus":             schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.TestResults":            schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
@@ -77,38 +89,66 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"create": {
+					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "End users can create new files in the remote file system",
-							Default:     false,
-							Type:        []string{"boolean"},
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"detail": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The source folder (or empty) to export",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"update": {
+					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "End users can update existing files in the remote file system",
-							Default:     false,
-							Type:        []string{"boolean"},
+							Description: "Target branch for export (only git)",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"delete": {
+					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "End users can delete existing files in the remote file system",
-							Default:     false,
-							Type:        []string{"boolean"},
+							Description: "Prefix in target file system",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"create", "update", "delete"},
 			},
 		},
 	}
@@ -185,10 +225,14 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"files": {
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -200,6 +244,7 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -213,56 +258,56 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"owner": {
+					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"repository": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The branch to use in the repository. By default, this is the main branch.",
+							Description: "The branch to use in the repository.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository.",
+							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"branchWorkflow": {
+					"encryptedToken": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch).",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
+							Type:        []string{"string"},
+							Format:      "byte",
 						},
 					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
-					"pullRequestLinter": {
+					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "PullRequestLinter enables the dashboard linter for this repository in Pull Requests",
-							Type:        []string{"boolean"},
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"branch"},
 			},
 		},
 	}
@@ -290,8 +335,13 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 						},
 					},
 					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Summary messages (will be shown to users)",
+							Description: "Summary messages (can be shown to users) Will only be populated when not healthy",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -306,38 +356,6 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 					},
 				},
 				Required: []string{"healthy"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"whom": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -364,6 +382,11 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref common.ReferenceCallb
 						},
 					},
 					"authors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -420,9 +443,13 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -434,6 +461,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -528,10 +556,94 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Job", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"create": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"update": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"delete": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"write": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Create or update (export)",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"noop": {
+						SchemaProps: spec.SchemaProps{
+							Description: "No action required (useful for sync)",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -543,44 +655,48 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
-							Default:     "",
+							Description: "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"export", "pr", "sync"},
+							Enum:        []interface{}{"migrate", "pr", "pull", "push"},
 						},
 					},
-					"ref": {
+					"repository": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The branch of commit hash",
+							Description: "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"pr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Pull request number (when appropriate)",
-							Type:        []string{"integer"},
-							Format:      "int32",
+							Description: "Pull request options",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions"),
 						},
 					},
-					"hash": {
+					"push": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Required when the action is `push`",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions"),
 						},
 					},
-					"url": {
+					"pull": {
 						SchemaProps: spec.SchemaProps{
-							Description: "URL to the originator (eg, PR URL)",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Required when the action is `pull`",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions"),
+						},
+					},
+					"migrate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required when the action is `migrate`",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions"),
 						},
 					},
 				},
-				Required: []string{"action"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions"},
 	}
 }
 
@@ -631,45 +747,31 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							},
 						},
 					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_LintIssue(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"severity": {
+					"progress": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"error\"`\n - `\"exclude\"`\n - `\"fixed\"`\n - `\"quiet\"`\n - `\"warning\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"error", "exclude", "fixed", "quiet", "warning"},
+							Description: "Optional value 0-100 that can be set while running",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
-					"rule": {
+					"summary": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Summary of processed actions",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"severity", "rule", "message"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"},
 	}
 }
 
@@ -683,6 +785,108 @@ func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.Refe
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager kind",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager identity",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"stats": {
+						SchemaProps: spec.SchemaProps{
+							Description: "stats",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"stats"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Preserve history (if possible)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch of commit hash",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request number (when appropriate)",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The specific commit hash that triggered this notice",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL to the originator (eg, PR URL)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -765,6 +969,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -778,6 +987,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -793,7 +1003,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Describe the feature toggle",
+							Description: "The repository display name (shown in the UI)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -801,72 +1011,61 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Describe the feature toggle",
+							Description: "Repository description",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"folder": {
+					"workflows": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"branch", "write"},
+									},
+								},
+							},
 						},
 					},
-					"preferYaml": {
+					"sync": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Should we prefer emitting YAML for this repository, e.g. upon export? Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this) If you delete and then recreate a dashboard, it will switch to the preferred format.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"editing": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Edit options within the repository",
+							Description: "Sync settings -- how values are pulled from the repository into grafana",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"),
 						},
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"github", "local", "s3"},
-						},
-					},
-					"linting": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Linting enables linting for this repository",
-							Type:        []string{"boolean"},
-							Format:      "",
+							Enum:        []interface{}{"github", "local"},
 						},
 					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository on the local file system. Mutually exclusive with s3 and github.",
+							Description: "The repository on the local file system. Mutually exclusive with local | github.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig"),
-						},
-					},
-					"s3": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The repository in an S3 bucket. Mutually exclusive with local and github.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository on GitHub. Mutually exclusive with local and s3.",
+							Description: "The repository on GitHub. Mutually exclusive with local | github.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig"),
 						},
 					},
 				},
-				Required: []string{"title", "editing", "type"},
+				Required: []string{"title", "workflows", "sync", "type"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"},
 	}
 }
 
@@ -899,6 +1098,25 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus"),
 						},
 					},
+					"stats": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The object count when sync last ran",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"),
+									},
+								},
+							},
+						},
+					},
 					"webhook": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Webhook Information (if applicable)",
@@ -910,7 +1128,287 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The k8s name for this repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Repository display",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"github", "local"},
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "instance"},
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"workflows": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The supported workflows",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"branch", "write"},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"name", "title", "type", "target", "workflows"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"legacyStorage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryView"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryView"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"group", "resource", "count"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Information we can get just from the file listing",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceListItem"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceListItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "the k8s identifier",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"time": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"path", "group", "resource", "name", "hash"},
+			},
+		},
 	}
 }
 
@@ -953,12 +1451,137 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref common.ReferenceC
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
+					"upsert": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For write events, this will return the value that was added or updated",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
 				},
 				Required: []string{"type"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"github", "local"},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display name for this repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The namespace this belongs to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name (identifier)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "title", "namespace", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Information we can get just from the file listing",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"instance": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount"),
+									},
+								},
+							},
+						},
+					},
+					"managed": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats for each manager",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceCount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1006,6 +1629,46 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref common.ReferenceCall
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ResourceURLs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"sourceURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the this file in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repositoryURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL pointing to the repository this lives in",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"newPullRequestURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A URL that will create a new pull requeset for this branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"compareURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Compare this version to the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1036,7 +1699,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The commit hash (if exists)",
+							Description: "The request ref (or branch if exists)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1046,6 +1709,19 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Description: "The repo hash value",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Basic repository info",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo"),
+						},
+					},
+					"urls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Typed links for this file (only supported by external systems, github etc)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs"),
 						},
 					},
 					"timestamp": {
@@ -1061,21 +1737,12 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects"),
 						},
 					},
-					"lint": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Lint results",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LintIssue"),
-									},
-								},
+					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
-					},
-					"errors": {
 						SchemaProps: spec.SchemaProps{
 							Description: "If errors exist, show them here",
 							Type:        []string{"array"},
@@ -1091,33 +1758,67 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"resource"},
+				Required: []string{"repository", "resource"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LintIssue", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceObjects", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRepositoryInfo", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceURLs", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"region": {
+					"incremental": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"bucket": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Incremental synchronization for versioned repositories",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
+				Required: []string{"incremental"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled must be saved as true before any sync job will run",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "instance"},
+						},
+					},
+					"intervalSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When non-zero, the sync will run periodically",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"enabled", "target"},
 			},
 		},
 	}
@@ -1167,6 +1868,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 						},
 					},
 					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary messages (will be shown to users)",
 							Type:        []string{"array"},
@@ -1181,15 +1887,22 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							},
 						},
 					},
-					"hash": {
+					"lastRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository hash when the last sync ran",
+							Description: "The repository ref when the last successful sync ran",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
+					"incremental": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Incremental synchronization for versioned repositories",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"state"},
+				Required: []string{"state", "message"},
 			},
 		},
 	}
@@ -1234,23 +1947,16 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Error descriptions",
+							Description: "Field related errors",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ErrorDetails"),
 									},
 								},
 							},
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Optional details",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
@@ -1258,7 +1964,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ErrorDetails"},
 	}
 }
 
@@ -1334,6 +2040,12 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 							Format: "",
 						},
 					},
+					"encryptedSecret": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
 					"subscribedEvents": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -1346,6 +2058,12 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"lastEvent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 				},

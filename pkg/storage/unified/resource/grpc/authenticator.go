@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -23,11 +24,13 @@ const (
 	mdOrgRole = "grafana-org-role"
 )
 
+var logger = slog.Default().With("logger", "legacy.grpc.Authenticator")
+
 // This is in a package we can no import
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
-	Tracer tracing.Tracer
+	Tracer trace.Tracer
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
@@ -141,6 +144,8 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 	id, _ := user.GetInternalID()
+
+	logger.Debug("encodeIdentityInMetadata", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
 
 	return metadata.Pairs(
 		// This should be everything needed to recreate the user

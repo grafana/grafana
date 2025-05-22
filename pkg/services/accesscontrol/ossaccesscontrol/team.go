@@ -73,8 +73,8 @@ func ProvideTeamPermissions(
 			"Member": TeamMemberActions,
 			"Admin":  TeamAdminActions,
 		},
-		ReaderRoleName: "Team permission reader",
-		WriterRoleName: "Team permission writer",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
 		RoleGroup:      "Teams",
 		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)

@@ -4,7 +4,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import RuleEditor from 'app/features/alerting/unified/RuleEditor';
+import RuleEditor from 'app/features/alerting/unified/rule-editor/RuleEditor';
+
 export enum GrafanaRuleFormStep {
   Query = 2,
   Notification = 5,
@@ -12,6 +13,7 @@ export enum GrafanaRuleFormStep {
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
+  manualRestoreBanner: byText(/restoring rule manually/i),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     metric: byRole('textbox', { name: 'metric' }),
@@ -31,18 +33,29 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
-    switchModeBasic: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-basic`),
-    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-advanced`),
+    switchModeBasic: (stepNo: GrafanaRuleFormStep) =>
+      byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
+    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) =>
+      byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
   },
   buttons: {
-    saveAndExit: byRole('button', { name: 'Save rule and exit' }),
-    save: byRole('button', { name: 'Save rule' }),
+    save: byTestId('save-rule'),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),
   },
 };
-export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
+export function renderRuleEditor(
+  identifier?: string,
+  recording?: 'recording' | 'grafana-recording',
+  restoreFrom?: string
+) {
+  const isManualRestore = Boolean(restoreFrom);
+  const restoreFromEncoded = restoreFrom ? encodeURIComponent(restoreFrom) : '';
+  const newAlertRuleRoute =
+    `/alerting/new/${recording ?? 'alerting'}` +
+    (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
+  const initialEntries = [identifier ? `/alerting/${identifier}/edit` : newAlertRuleRoute];
   return render(
     <>
       <AppNotificationList />
@@ -53,7 +66,7 @@ export function renderRuleEditor(identifier?: string, recording?: 'recording' | 
     </>,
     {
       historyOptions: {
-        initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ?? 'alerting'}`],
+        initialEntries: initialEntries,
       },
     }
   );

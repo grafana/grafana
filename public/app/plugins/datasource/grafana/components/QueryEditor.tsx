@@ -82,7 +82,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         description: 'Search for grafana resources',
       });
     }
-    if (config.featureToggles.unifiedStorageSearch) {
+    if (config.featureToggles.unifiedStorageSearchUI) {
       this.queryTypes.push({
         label: 'Search (experimental)',
         value: GrafanaQueryType.SearchNext,

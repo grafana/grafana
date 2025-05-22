@@ -78,6 +78,12 @@ func TestParseTagPairs(t *testing.T) {
 		assert.Equal(t, "key", tags[2].Key)
 		assert.Equal(t, "val2", tags[2].Value)
 	})
+
+	t.Run("Nil tag returns an allocated but empty pair", func(t *testing.T) {
+		tags := ParseTagPairs(nil)
+		require.NotNil(t, tags)
+		require.Empty(t, tags)
+	})
 }
 
 func TestJoinTagPairs(t *testing.T) {

@@ -1,20 +1,26 @@
 import { PromQuery } from '@grafana/prometheus';
-import { config } from '@grafana/runtime';
-import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  AlertDataQuery,
+  AlertQuery,
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  RulerAlertingRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
+import { mockDataSource } from '../mocks';
+import { getDefaultFormValues } from '../rule-editor/formDefaults';
+import { setupDataSources } from '../testSetup/datasources';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
-  MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
-  getDefaultFormValues,
-  getDefautManualRouting,
+  getInstantFromDataQuery,
   getNotificationSettingsForDTO,
 } from './rule-form';
 
@@ -109,6 +115,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -133,6 +140,7 @@ describe('getContactPointsFromDTO', () => {
   it('should return routingSettings with correct props if notification_settings is defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
+      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -150,6 +158,7 @@ describe('getContactPointsFromDTO', () => {
       notification_settings: {
         receiver: 'receiver',
         mute_time_intervals: ['mute_timing'],
+        active_time_intervals: ['active_timing'],
         group_by: ['group_by'],
         group_wait: 'group_wait',
         group_interval: 'group_interval',
@@ -162,6 +171,7 @@ describe('getContactPointsFromDTO', () => {
       [GRAFANA_RULES_SOURCE_NAME]: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -180,6 +190,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -206,6 +217,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -219,41 +231,12 @@ describe('getNotificationSettingsForDTO', () => {
     expect(result).toEqual({
       receiver: 'receiver',
       mute_time_intervals: ['mute_timing'],
+      active_time_intervals: ['active_timing'],
       group_by: ['group_by'],
       group_wait: 'group_wait',
       group_interval: 'group_interval',
       repeat_interval: 'repeat_interval',
     });
-  });
-});
-
-describe('getDefautManualRouting', () => {
-  afterEach(() => {
-    window.localStorage.clear();
-  });
-
-  it('returns false if the feature toggle is not enabled', () => {
-    config.featureToggles.alertingSimplifiedRouting = false;
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    expect(getDefautManualRouting()).toBe(true);
-  });
-
-  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
-    expect(getDefautManualRouting()).toBe(true);
-    localStorage.removeItem(MANUAL_ROUTING_KEY);
-    expect(getDefautManualRouting()).toBe(true);
   });
 });
 
@@ -283,5 +266,73 @@ describe('cleanLabels', () => {
   it('should leave empty values', () => {
     const output = cleanLabels([{ key: 'key', value: '' }]);
     expect(output).toStrictEqual([{ key: 'key', value: '' }]);
+  });
+});
+
+describe('getInstantFromDataQuery', () => {
+  const query: AlertQuery<AlertDataQuery> = {
+    refId: 'Q',
+    datasourceUid: 'abc123',
+    queryType: '',
+    relativeTimeRange: {
+      from: 600,
+      to: 0,
+    },
+    model: {
+      refId: 'Q',
+    },
+  };
+
+  it('should return undefined if datasource UID is undefined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'mimir-1' }));
+    const result = getInstantFromDataQuery({ ...query });
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined if datasource type is not Prometheus or Loki', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Alertmanager, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    expect(result).toBeUndefined();
+  });
+
+  it('should return true if datasource is Prometheus and instant is not defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+
+    expect(result).toBe(true);
+  });
+
+  it('should return the value of instant if datasource is Prometheus and instant is defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa', model: { refId: 'f', instant: false } });
+    expect(result).toBe(false);
+  });
+
+  it('should return true if datasource is Loki and queryType is not defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    expect(result).toBe(true);
+  });
+
+  it('should return true if datasource is Loki and queryType is instant', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', queryType: 'instant' },
+    });
+
+    expect(result).toBe(true);
+  });
+
+  it('should return false if datasource is Loki and queryType is not instant', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', queryType: 'range' },
+    });
+
+    expect(result).toBe(false);
   });
 });

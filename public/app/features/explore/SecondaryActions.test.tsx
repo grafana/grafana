@@ -1,13 +1,33 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
+import { render } from '../../../test/test-utils';
+
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { SecondaryActions } from './SecondaryActions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
+}));
 
 describe('SecondaryActions', () => {
   it('should render component with two buttons', () => {
-    render(<SecondaryActions onClickAddQueryRowButton={noop} onClickQueryInspectorButton={noop} />);
+    render(
+      <QueryLibraryContextProviderMock>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
 
     expect(screen.getByRole('button', { name: /Add query/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector/i })).toBeInTheDocument();
@@ -15,12 +35,13 @@ describe('SecondaryActions', () => {
 
   it('should not render hidden elements', () => {
     render(
-      <QueriesDrawerContextProviderMock queryLibraryAvailable={false}>
+      <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
           addQueryRowButtonHidden={true}
           richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -35,6 +56,7 @@ describe('SecondaryActions', () => {
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
         onClickQueryInspectorButton={noop}
+        onSelectQueryFromLibrary={noop}
       />
     );
 
@@ -54,6 +76,7 @@ describe('SecondaryActions', () => {
         <SecondaryActions
           onClickAddQueryRowButton={onClickAddRow}
           onClickQueryInspectorButton={onClickQueryInspector}
+          onSelectQueryFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );

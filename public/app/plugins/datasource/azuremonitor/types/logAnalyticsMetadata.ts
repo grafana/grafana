@@ -1,3 +1,5 @@
+import { TablePlan } from './types';
+
 export interface AzureLogAnalyticsMetadata {
   functions: AzureLogAnalyticsMetadataFunction[];
   resourceTypes: AzureLogAnalyticsMetadataResourceType[];
@@ -68,6 +70,8 @@ export interface AzureLogAnalyticsMetadataTable {
   related: AzureLogAnalyticsMetadataTableRelated;
   isTroubleshootingAllowed?: boolean;
   hasData?: boolean;
+  // TablePlan does not come directly from the API - we determine it
+  plan?: TablePlan;
 }
 
 export interface AzureLogAnalyticsMetadataColumn {

@@ -38,6 +38,8 @@ interface RuleBase {
   lastEvaluation?: string;
   evaluationTime?: number;
   lastError?: string;
+  uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {
@@ -135,12 +137,14 @@ export interface CombinedRule {
   namespace: CombinedRuleNamespace;
   instanceTotals: AlertInstanceTotals;
   filteredInstanceTotals: AlertInstanceTotals;
+  uid?: string;
 }
 
 // export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
 export enum AlertInstanceTotalState {
   Alerting = 'alerting',
   Pending = 'pending',
+  Recovering = 'recovering',
   Normal = 'inactive',
   NoData = 'nodata',
   Error = 'error',
@@ -209,7 +213,6 @@ export interface DataSourceNamespaceIdentifier {
 }
 
 export interface GrafanaRuleGroupIdentifier {
-  rulesSource: GrafanaRulesSourceIdentifier;
   groupName: string;
   namespace: GrafanaNamespaceIdentifier;
   groupOrigin: 'grafana';
@@ -310,6 +313,7 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
 }
 

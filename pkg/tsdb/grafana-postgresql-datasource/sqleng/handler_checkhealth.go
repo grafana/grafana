@@ -81,6 +81,12 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			details["verboseMessage"] = pqErr.Message
 		}
 	}
+	if errors.Is(err, ErrParsingPostgresURL) {
+		res.Message = fmt.Sprintf("Connection string error: %s", ErrParsingPostgresURL.Error())
+		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
+			details["verboseMessage"] = unwrappedErr.Error()
+		}
+	}
 	detailBytes, marshalErr := json.Marshal(details)
 	if marshalErr != nil {
 		return res, nil

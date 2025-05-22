@@ -245,7 +245,7 @@ describe('PublicDashboardPage', () => {
           ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [] },
             }),
         },
       });
@@ -260,7 +260,29 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 403,
+              statusText: 'Forbidden',
+              data: {
+                statusCode: 403,
+                messageId: 'publicdashboards.notEnabled',
+                message: 'Dashboard paused',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/4615c835a4e441f09c94fb1b073e6d2e',
+                retry: 0,
+                headers: {
+                  'X-Grafana-Org-Id': 1,
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+                hideFromInspector: true,
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false }),
         },
       });
 
@@ -277,7 +299,28 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 404,
+              statusText: 'Not Found',
+              data: {
+                statusCode: 404,
+                messageId: 'publicdashboards.notFound',
+                message: 'Dashboard not found',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/ce159fe139fc4d238a7d9c3ae33fb82b',
+                retry: 0,
+                hideFromInspector: true,
+                headers: {
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, {}),
         },
       });
 

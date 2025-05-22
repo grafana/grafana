@@ -11,14 +11,28 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 import { DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
-  context.app = CoreApp.Dashboard;
+  const dashboard = getDashboardSceneFor(vizPanel);
+  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
+
+  dashboard.subscribeToState((state) => {
+    if (state.editPanel) {
+      context.app = CoreApp.PanelEditor;
+    } else {
+      context.app = CoreApp.Dashboard;
+    }
+  });
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);
 
     // When there is no builtin annotations query we disable the ability to add annotations
-    if (!builtInLayer || !dashboard.canEditDashboard()) {
+    if (!builtInLayer) {
+      return false;
+    }
+
+    // If feature flag is enabled we pass the info of whether annotation can be added through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 
@@ -29,7 +43,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
+    // If feature flag is enabled we pass the info of whether annotation can be edited through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 
@@ -43,7 +58,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
+    // If feature flag is enabled we pass the info of whether annotation can be deleted through the dashboard permissions
+    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
       return false;
     }
 

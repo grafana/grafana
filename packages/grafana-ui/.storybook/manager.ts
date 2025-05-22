@@ -1,6 +1,8 @@
 import { addons } from '@storybook/manager-api';
-import { GrafanaDark } from './storybookTheme';
+import { getThemeById } from '@grafana/data';
+import { createStorybookTheme } from './storybookTheme';
 
+const systemTheme = getThemeById('system');
 addons.setConfig({
   isFullscreen: false,
   panelPosition: 'right',
@@ -10,5 +12,5 @@ addons.setConfig({
   sidebar: {
     showRoots: true,
   },
-  theme: GrafanaDark,
+  theme: createStorybookTheme(systemTheme),
 });

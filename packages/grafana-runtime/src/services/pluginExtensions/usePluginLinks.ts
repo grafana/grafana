@@ -1,4 +1,15 @@
-import { UsePluginLinksOptions, UsePluginLinksResult } from './getPluginExtensions';
+import { PluginExtensionLink } from '@grafana/data';
+
+export type UsePluginLinksOptions = {
+  extensionPointId: string;
+  context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginLinksResult = {
+  isLoading: boolean;
+  links: PluginExtensionLink[];
+};
 
 export type UsePluginLinks = (options: UsePluginLinksOptions) => UsePluginLinksResult;
 

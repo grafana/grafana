@@ -105,6 +105,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureList(ref common.ReferenceCall
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -296,6 +297,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureTogglesList(ref common.Refere
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

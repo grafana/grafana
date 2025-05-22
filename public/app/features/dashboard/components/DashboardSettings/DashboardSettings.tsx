@@ -4,11 +4,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { DashboardMetaChangedEvent } from 'app/types/events';
@@ -65,7 +65,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
       size={size}
       onClick={onClose}
     >
-      Close
+      <Trans i18nKey="dashboard.dashboard-settings.actions.close">Close</Trans>
     </Button>,
     canSaveAs && (
       <SaveDashboardAsButton
@@ -88,6 +88,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 }
 
 function getSettingsPages(dashboard: DashboardModel) {
+  const { t } = useTranslate();
   const pages: SettingsPage[] = [];
 
   const generalTitle = t('dashboard-settings.general.title', 'General');
@@ -134,7 +135,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  if (dashboard.id && dashboard.meta.canSave) {
+  if (dashboard.uid && dashboard.meta.canSave) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
       id: 'versions',
@@ -145,7 +146,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   const permissionsTitle = t('dashboard-settings.permissions.title', 'Permissions');
 
-  if (dashboard.id && dashboard.meta.canAdmin) {
+  if (dashboard.uid && dashboard.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
@@ -181,6 +182,7 @@ function getSectionNav(
   location: H.Location,
   dashboardUid: string
 ): NavModel {
+  const { t } = useTranslate();
   const main: NavModelItem = {
     text: t('dashboard-settings.settings.title', 'Settings'),
     children: [],
@@ -213,9 +215,11 @@ function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
   return (
     <Page navModel={sectionNav}>
       <Stack direction="column" gap={2} alignItems="flex-start">
-        <Text variant="h3">Dashboard not editable</Text>
+        <Text variant="h3">
+          <Trans i18nKey="dashboard.make-editable.dashboard-not-editable">Dashboard not editable</Trans>
+        </Text>
         <Button type="submit" onClick={() => dashboard.makeEditable()}>
-          Make editable
+          <Trans i18nKey="dashboard.make-editable.make-editable">Make editable</Trans>
         </Button>
       </Stack>
     </Page>

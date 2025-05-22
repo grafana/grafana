@@ -93,10 +93,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.userService = userSvc
 
 		createUserCmd := user.CreateUserCommand{
-			Email:   fmt.Sprint("user", "@test.com"),
-			Name:    "user",
-			Login:   "loginuser",
-			IsAdmin: true,
+			Email:      fmt.Sprint("user", "@test.com"),
+			Name:       "user",
+			Login:      "loginuser",
+			IsAdmin:    true,
+			IsDisabled: true,
 		}
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
@@ -133,6 +134,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:          "loginuser",
 			OrgID:          1,
 			IsGrafanaAdmin: true,
+			IsDisabled:     true,
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
 			UpdatedAt:      fakeNow,
@@ -463,7 +465,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 
 	nsMock := notifications.MockNotificationService()
-	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock, &idtest.MockService{})
+	verifier := userimpl.ProvideVerifier(cfg, userSvc, tempUserService, nsMock, &idtest.FakeService{})
 
 	hs := &HTTPServer{
 		Cfg:                 cfg,
@@ -688,7 +690,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 			hs.tempUserService = tempUserSvc
 			hs.NotificationService = nsMock
 			hs.SecretsService = fakes.NewFakeSecretsService()
-			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock, &idtest.MockService{})
+			hs.userVerifier = userimpl.ProvideVerifier(settings, userSvc, tempUserSvc, nsMock, &idtest.FakeService{})
 			// User is internal
 			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
 		})

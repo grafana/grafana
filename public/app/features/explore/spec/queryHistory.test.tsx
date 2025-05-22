@@ -7,6 +7,7 @@ import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
+import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import {
   assertDataSourceFilterVisibility,
@@ -127,6 +128,7 @@ describe('Explore: Query History', () => {
 
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
+      selectedTab: Tabs.RichHistory,
     });
   });
 

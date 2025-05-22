@@ -200,6 +200,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!target) {
       return false;
     }
+
+    // Scenes compatability
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      // We are just checking that this is a valid variable reference, and we are not looking up the variable
+      this.regex.lastIndex = 0;
+      const match = this.regex.exec(target);
+      return !!match;
+    }
+
     const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;
@@ -367,8 +376,8 @@ export class TemplateSrv implements BaseTemplateSrv {
   private _replaceWithVariableRegex(text: string, format: string | Function | undefined, replace: ReplaceFunction) {
     this.regex.lastIndex = 0;
 
-    return text.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3;
+    return text.replace(this.regex, (match, var1, var2, var3, fmt2, var4, fieldPath, fmt3) => {
+      const variableName = var1 || var2 || var3 || var4;
       const fmt = fmt2 || fmt3 || format;
       return replace(match, variableName, fieldPath, fmt);
     });

@@ -20,18 +20,24 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 
 ## Supported Data Sources
 
-LBAC for data sources is currently available for `Loki, Prometheus` with basic authentication. Support for additional data sources may be added in future updates.
+### Feature availability
+
+LBAC for data sources is currently generally available for `Loki` and in **experimental** for `Prometheus`. Support for additional data sources may be added in future updates.
+
+| Data source | Grafana Cloud | Grafana Enterprise                                        | Cross-tenant query support |
+| ----------- | ------------- | --------------------------------------------------------- | -------------------------- |
+| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)               | ❌                         |
+| Prometheus  | PublicPreview | PublicPreview (requires GEM - Grafana Enterprise Metrics) | ❌                         |
+
+{{% admonition type="note" %}}
+For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
+{{% /admonition %}}
 
 **LBAC for data sources offers:**
 
 - Team-based access control using `LogQL` rules.
 - Simplified data source management by consolidating multiple sources into one.
 - Dashboard reuse across teams with tailored access.
-
-{{< admonition type="note" >}}
-LBAC rules is available for **private preview** in Grafana Cloud.
-Report any unexpected behavior to the Grafana Support team.
-{{< /admonition >}}
 
 You can configure user access based upon team memberships using `LogQL`.
 LBAC for data sources controls access to logs or metrics depending on the rules set for each team.
@@ -44,7 +50,7 @@ This feature addresses two common challenges faced by Grafana users:
    LBAC for data sources lets Grafana Teams use the same dashboard with different access control rules.
 
 To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for Loki Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
-To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for Prometheus Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/).
+To set up LBAC for data sources for a Prometheus data source, refer to [Configure LBAC for Prometheus Data Source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/).
 
 ## Logs and Metrics Filtering with LBAC
 
@@ -57,7 +63,7 @@ This flexibility allows teams to use the same data source for multiple use cases
 
 ## Before you begin
 
-To be able to use LBAC for data sources, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance.
+To be able to use LBAC for data sources metrics, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance.
 
 ## Limitations
 
@@ -67,6 +73,8 @@ To be able to use LBAC for data sources, you need to enable the feature toggle `
 - If an administrator is part of a team with LBAC for data sources rules, those rules are applied to the administrator requests.
 - Cloud Access Policy (CAP) LBAC rules override LBAC for data sources rules.
   CAP are the access controls from Grafana Cloud.
+- Note that these data sources must be created manually - provisioning is not yet supported.
+- Cross-tenant querying is currently not supported
 
 You must remove any label selectors from your Cloud Access Policy that is configured for the data source, otherwise the CAP label selectors override the LBAC for data sources rules. For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 

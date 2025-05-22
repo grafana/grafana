@@ -22,7 +22,7 @@ func GetAuthorizer() authorizer.Authorizer {
 		}
 
 		// check if is admin
-		if u.GetIsGrafanaAdmin() {
+		if u.HasRole(identity.RoleAdmin) {
 			return authorizer.DecisionAllow, "", nil
 		}
 

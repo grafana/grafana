@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -361,6 +362,61 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
 			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)
+		})
+	}
+}
+
+func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
+	type testCase struct {
+		desc           string
+		identityType   claims.IdentityType
+		loginErr       error
+		expectedCalled bool
+	}
+
+	tests := []testCase{
+		{
+			desc:           "should clear the permission cache when the user logged in successfully",
+			identityType:   claims.TypeUser,
+			loginErr:       nil,
+			expectedCalled: true,
+		},
+		{
+			desc:           "should skip clearing the permission cache when the user failed to log in",
+			identityType:   claims.TypeUser,
+			loginErr:       errors.New("failed to log in"),
+			expectedCalled: false,
+		},
+		{
+			desc:           "should skip clearing the permission cache when the identity is not a user",
+			identityType:   claims.TypeServiceAccount,
+			loginErr:       nil,
+			expectedCalled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var called bool
+			s := &RBACSync{
+				ac: &acmock.Mock{
+					ClearUserPermissionCacheFunc: func(_ identity.Requester) {
+						called = true
+					},
+				},
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
+			}
+			identity := &authn.Identity{
+				ID:       "1",
+				Type:     tt.identityType,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			}
+			req := &authn.Request{}
+
+			s.ClearUserPermissionCacheHook(context.Background(), identity, req, tt.loginErr)
+			assert.Equal(t, tt.expectedCalled, called)
 		})
 	}
 }

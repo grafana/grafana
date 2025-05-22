@@ -48,7 +48,7 @@ func RegisterApp(
 	return provider
 }
 
-func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.LegacyStorage {
+func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    playlistv0alpha1.PlaylistKind().Group(),
 		Version:  playlistv0alpha1.PlaylistKind().Version(),

@@ -53,6 +53,18 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
+	s := newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg)
+
+	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
@@ -63,8 +75,8 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		loginAttributePath:   info.Extra[loginAttributePathKey],
 		idTokenAttributeName: info.Extra[idTokenAttributeNameKey],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
-		teamIds:              util.SplitString(info.Extra[teamIdsKey]),
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		teamIds:              teamIds,
+		allowedOrganizations: allowedOrganizations,
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -99,7 +111,8 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		return err
 	}
 
-	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
+	teamIds := util.SplitString(info.Extra[teamIdsKey])
+	if len(teamIds) > 0 && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 
@@ -118,7 +131,7 @@ func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Req
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GenericOAuthProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -128,6 +141,15 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
+	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", teamIdsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GenericOAuthProviderName, "error", err)
+	}
+
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
 	s.emailAttributePath = newInfo.EmailAttributePath
@@ -136,8 +158,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
 	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
-	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	s.teamIds = teamIds
+	s.allowedOrganizations = allowedOrganizations
 
 	return nil
 }
@@ -629,13 +651,13 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
-	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", s.loginAttributePath))
-	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", s.idTokenAttributeName))
-	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", s.teamIdsAttributePath))
-	bf.WriteString(fmt.Sprintf("team_ids = %v\n", s.teamIds))
-	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
+	fmt.Fprintf(bf, "name_attribute_path = %s\n", s.nameAttributePath)
+	fmt.Fprintf(bf, "login_attribute_path = %s\n", s.loginAttributePath)
+	fmt.Fprintf(bf, "id_token_attribute_name = %s\n", s.idTokenAttributeName)
+	fmt.Fprintf(bf, "team_ids_attribute_path = %s\n", s.teamIdsAttributePath)
+	fmt.Fprintf(bf, "team_ids = %v\n", s.teamIds)
+	fmt.Fprintf(bf, "allowed_organizations = %v\n", s.allowedOrganizations)
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.getBaseSupportBundleContent(bf)
+	return s.getBaseSupportBundleContent(bf)
 }

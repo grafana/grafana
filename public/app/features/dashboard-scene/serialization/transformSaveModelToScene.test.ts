@@ -1,11 +1,10 @@
 import { LoadingState } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   behaviors,
   ConstantVariable,
-  SceneDataLayerControls,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridRow,
@@ -30,9 +29,9 @@ import { DashboardDataDTO } from 'app/types';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -836,7 +835,6 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
-      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayers.state.annotationLayers).toHaveLength(4);
@@ -864,7 +862,6 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
-      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayers.state.alertStatesLayer).toBeDefined();
@@ -877,7 +874,6 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
-      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayers.state.alertStatesLayer).toBeDefined();
@@ -928,6 +924,36 @@ describe('transformSaveModelToScene', () => {
         { config: {}, name: 'Field 2', type: 'number' },
       ]);
     });
+  });
+});
+
+describe('When creating a snapshot dashboard scene', () => {
+  it('should initialize a dashboard scene with SnapshotVariables', () => {
+    const dashboard = {
+      ...defaultDashboard,
+      title: 'With custom quick ranges',
+      uid: 'test-uid',
+      timepicker: {
+        ...defaultTimePickerConfig,
+        quick_ranges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      },
+    };
+
+    const oldModel = new DashboardModel(dashboard);
+    const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+
+    expect(scene.state.controls?.state.timePicker.state.quickRanges).toBe(dashboard.timepicker.quick_ranges);
   });
 });
 

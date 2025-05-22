@@ -4,8 +4,8 @@ import { MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -42,7 +42,7 @@ export const QueryOperationRowHeader = ({
   expanderMessages,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   let tooltipMessage = isContentVisible
     ? t('query-operation.header.collapse-row', 'Collapse query row')
     : t('query-operation.header.expand-row', 'Expand query row');
@@ -71,7 +71,7 @@ export const QueryOperationRowHeader = ({
           // disabling the a11y rules here as the IconButton above handles keyboard interactions
           // this is just to provide a better experience for mouse users
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
+          <div className={styles.titleWrapper} onClick={onRowToggle}>
             <div className={cx(styles.title, disabled && styles.disabled)}>{title}</div>
           </div>
         )}

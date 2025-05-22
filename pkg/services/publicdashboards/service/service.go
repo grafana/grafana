@@ -13,11 +13,13 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -25,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -135,9 +138,13 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*Pu
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindDashboard")
 	defer span.End()
-	dash, err := pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+
+	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
+	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
+		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+	})
 	if err != nil {
-		var dashboardErr dashboards.DashboardErr
+		var dashboardErr dashboardaccess.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
 			if dashboardErr.StatusCode == 404 {
 				return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
@@ -375,7 +382,13 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		dashUIDs[i] = pubdash.DashboardUid
 	}
 
-	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User, Limit: int64(len(dashUIDs))})
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:         query.OrgID,
+		DashboardUIDs: dashUIDs,
+		SignedInUser:  query.User,
+		Limit:         int64(len(dashUIDs)),
+		Type:          searchstore.TypeDashboard,
+	})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
 	}
