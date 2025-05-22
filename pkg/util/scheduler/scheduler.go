@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -15,45 +16,52 @@ type Worker struct {
 	id             int
 	queue          *Queue
 	wg             *sync.WaitGroup
-	stopCh         <-chan struct{}
 	dequeueTimeout time.Duration
 	logger         log.Logger
 }
 
-func (w *Worker) run() {
+func (w *Worker) run(ctx context.Context) {
 	defer w.wg.Done()
 	w.logger.Debug("Worker started", "id", w.id)
 
 	for {
 		select {
-		case <-w.stopCh:
-			w.logger.Debug("Worker received stop signal", "id", w.id)
+		case <-ctx.Done():
+			w.logger.Debug("Worker context canceled", "id", w.id)
 			return
 		default:
 		}
 
-		dequeueCtx, cancelDequeue := context.WithTimeout(context.Background(), w.dequeueTimeout)
+		w.dequeueWithRetries(ctx)
+	}
+}
 
-		runnable, ok, err := w.queue.Dequeue(dequeueCtx)
-		cancelDequeue()
+func (w *Worker) dequeueWithRetries(ctx context.Context) {
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: 100 * time.Millisecond,
+		MaxBackoff: w.dequeueTimeout,
+		MaxRetries: 5,
+	})
 
+	for boff.Ongoing() {
+		runnable, ok, err := w.queue.Dequeue(ctx)
 		if err != nil {
 			if errors.Is(err, ErrQueueClosed) {
 				w.logger.Debug("Worker exiting due to queue closed", "id", w.id)
 				return
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
+				boff.Wait()
+				if ctx.Err() != nil {
+					w.logger.Debug("Worker backoff exhausted", "id", w.id)
+					return
+				}
 				continue
 			}
-			if errors.Is(err, context.Canceled) {
-				w.logger.Debug("Worker exiting due to context canceled", "id", w.id)
-				return
-			}
 			w.logger.Error("Error dequeuing item", "id", w.id, "error", err)
-			select {
-			case <-time.After(500 * time.Millisecond):
-			case <-w.stopCh:
-				w.logger.Debug("Worker received stop signal while in backoff", "id", w.id)
+			boff.Wait()
+			if ctx.Err() != nil {
+				w.logger.Debug("Worker backoff exhausted", "id", w.id)
 				return
 			}
 			continue
@@ -63,25 +71,24 @@ func (w *Worker) run() {
 			continue
 		}
 
+		boff.Reset()
+
 		runnable()
 	}
 }
 
 // Scheduler manages a pool of Workers consuming from a FairQueue.
 type Scheduler struct {
-	queue *Queue
-
-	numWorkers int
-	workers    []*Worker
-
-	wg          sync.WaitGroup
-	stopCh      chan struct{}
-	startStopMu sync.Mutex
-
+	queue          *Queue
+	wg             sync.WaitGroup
+	stopScheduler  context.CancelFunc
 	dequeueTimeout time.Duration
+	logger         log.Logger
 
-	running bool
-	logger  log.Logger
+	startStopMu sync.Mutex
+	workers     []*Worker
+	running     bool
+	numWorkers  int
 }
 
 // Config holds configuration for the Scheduler.
@@ -132,7 +139,8 @@ func (s *Scheduler) Start() error {
 		return errors.New("scheduler: already started")
 	}
 
-	s.stopCh = make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	s.stopScheduler = cancel
 	s.running = true
 	s.workers = make([]*Worker, 0, s.numWorkers)
 
@@ -144,12 +152,11 @@ func (s *Scheduler) Start() error {
 			id:             i,
 			queue:          s.queue,
 			wg:             &s.wg,
-			stopCh:         s.stopCh,
 			dequeueTimeout: s.dequeueTimeout,
 			logger:         s.logger,
 		}
 		s.workers = append(s.workers, worker)
-		go worker.run()
+		go worker.run(ctx)
 	}
 
 	s.logger.Info("Scheduler started")
@@ -167,7 +174,7 @@ func (s *Scheduler) Stop() {
 
 	s.logger.Info("Scheduler stopping")
 
-	close(s.stopCh)
+	s.stopScheduler()
 	s.running = false
 
 	s.startStopMu.Unlock()
