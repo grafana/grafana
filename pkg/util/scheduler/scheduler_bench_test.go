@@ -113,12 +113,12 @@ func BenchmarkScheduler_4Workers_1000Tenant_1000ItemsPerTenant(b *testing.B) {
 	benchScheduler(b, 4, 1000, 1000)
 }
 
-func BenchmarkScheduler_4Workers_10000Tenant_100ItemsPerTenant(b *testing.B) {
-	benchScheduler(b, 4, 10000, 100)
+func BenchmarkScheduler_4Workers_10000Tenant_10ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 10000, 10)
 }
 
-func BenchmarkScheduler_4Workers_10000Tenant_1000ItemsPerTenant(b *testing.B) {
-	benchScheduler(b, 4, 10000, 1000)
+func BenchmarkScheduler_4Workers_10000Tenant_100ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 10000, 100)
 }
 
 // Benchmark comparing round-robin fairness among tenants
