@@ -2706,7 +2706,7 @@
       "team-ids-github": "Integer list of Team IDs.",
       "team-ids-label": "Team IDs",
       "team-ids-numbers": "Team IDs must be numbers.",
-      "team-ids-other": "String list of Team IDs.",
+      "team-ids-other": "String list of Team Ids.",
       "team-ids-placeholder": "Enter Team IDs and press Enter to add",
       "teams-url-description": "The URL used to query for Team IDs. If not set, the default value is /teams.",
       "teams-url-description-oauth": "If you configure \"{{ teamsURLLabel }}\", you must also configure \"{{ teamIDsAttributePathLabel }}\".",
