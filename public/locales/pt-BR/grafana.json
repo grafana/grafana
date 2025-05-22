@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Carregando…."
-    },
-    "group-actions": {
-      "actions-trigger": "Ações do grupo de regras",
-      "details": "Detalhes",
-      "edit": "Editar"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Falha ao carregar detalhes do grupo",
-      "unknown-error": "Erro desconhecido"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupo",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Nova regra de registro de fonte de dados",
       "new-grafana-recording-rule": "Nova regra de registro da Grafana",
       "pagination": {
-        "next-page": "próxima página",
-        "previous-page": "página anterior"
+        "next-page": ""
       },
       "recording-rules": "Regras de registro",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Aplicar quebra de linha"
     },
     "log-details": {
+      "close": "",
       "fields": "Campos",
       "links": "Links",
       "log-line": "Linha de log",
@@ -6174,15 +6168,20 @@
       "log-line": "linha de log"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha do log",
       "copy-log": "Copiar linha do log",
+      "hide-details": "",
       "icon-label": "Menu do log",
       "pin-to-outline": "Fixar log",
       "show-context": "Exibir contexto",
+      "show-details": "",
       "unpin-from-outline": "Desafixar log"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Painéis de biblioteca"
     },
     "machine-learning": {
-      "title": "Aprendizado de máquina"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerencie painéis de controle de pastas e permissões"

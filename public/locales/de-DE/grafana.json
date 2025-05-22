@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Lädt ...."
-    },
-    "group-actions": {
-      "actions-trigger": "Aktionen für Regelgruppen",
-      "details": "Details",
-      "edit": "Bearbeiten"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Gruppendetails konnten nicht geladen werden",
-      "unknown-error": "Unbekannter Fehler"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Gruppe",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Neue Datenquelle-Aufnahmeregel",
       "new-grafana-recording-rule": "Neue Grafana-Aufnahmeregel",
       "pagination": {
-        "next-page": "nächste Seite",
-        "previous-page": "vorherige Seite"
+        "next-page": ""
       },
       "recording-rules": "Aufnahmeregeln",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Zeilen umbrechen"
     },
     "log-details": {
+      "close": "",
       "fields": "Felder",
       "links": "Links",
       "log-line": "Protokollzeile",
@@ -6174,15 +6168,20 @@
       "log-line": "Log-Zeile"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Link zur Protokollzeile kopieren",
       "copy-log": "Protokollzeile kopieren",
+      "hide-details": "",
       "icon-label": "Protokollmenü",
       "pin-to-outline": "Protokoll anheften",
       "show-context": "Kontext anzeigen",
+      "show-details": "",
       "unpin-from-outline": "Protokoll nicht mehr anheften"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Bibliotheks-Panels"
     },
     "machine-learning": {
-      "title": "Maschinelles Lernen"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
