@@ -51,8 +51,8 @@ export const useLogIsPinned = (log: LogListModel) => {
 };
 
 export const useLogIsPermalinked = (log: LogListModel) => {
-  const { permalinkedRowId } = useContext(LogListContext);
-  return permalinkedRowId && permalinkedRowId === log.uid;
+  const { permalinkedLogId } = useContext(LogListContext);
+  return permalinkedLogId && permalinkedLogId === log.uid;
 };
 
 export const defaultValue: LogListContextData = {
@@ -120,7 +120,7 @@ export const LogListContextProvider = ({
   onPinLine = jest.fn(),
   onOpenContext = jest.fn(),
   onUnpinLine = jest.fn(),
-  permalinkedRowId,
+  permalinkedLogId,
   pinnedLogs = [],
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
@@ -144,7 +144,7 @@ export const LogListContextProvider = ({
         onPinLine,
         onOpenContext,
         onUnpinLine,
-        permalinkedRowId,
+        permalinkedLogId,
         pinnedLogs,
         setDedupStrategy: jest.fn(),
         setFilterLevels: jest.fn(),
