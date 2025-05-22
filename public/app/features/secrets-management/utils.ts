@@ -154,19 +154,26 @@ export function validateSecretValue(value: string | undefined): true | string {
 
 export function validateSecretLabel(key: 'name' | 'value', nameOrValue: string): true | string {
   if (nameOrValue.length < 1) {
-    return t(`secrets-management.form.label-${key}.error.required`, `Label ${key} is required`, {
-      maxLabels: LABEL_MAX_LENGTH,
-    });
+    return key === 'name'
+      ? t('secrets.form.label-name.error.required', 'Label name is required')
+      : t('secrets.form.label-value.error.required', 'Label value is required');
   }
 
   if (nameOrValue.length > LABEL_MAX_LENGTH) {
-    return t(
-      `secrets-management.form.label-${key}.error.too-long`,
-      `Label ${key} must be less than {{maxLength}} characters`,
-      {
-        maxLength: LABEL_MAX_LENGTH,
-      }
-    );
+    const transValues = {
+      maxLength: LABEL_MAX_LENGTH,
+    };
+    return key === 'name'
+      ? t(
+          'secrets.form.label-name.error.too-long',
+          'Label name must be less than {{maxLength}} characters',
+          transValues
+        )
+      : t(
+          'secrets.form.label-value.error.too-long',
+          'Label value must be less than {{maxLength}} characters',
+          transValues
+        );
   }
 
   return true;

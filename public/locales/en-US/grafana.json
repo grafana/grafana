@@ -8237,6 +8237,117 @@
       "no-data": "No values"
     }
   },
+  "secrets": {
+    "actions": {
+      "create-secret": "Create secret"
+    },
+    "empty-state": {
+      "description": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
+      "title": "You don't have any secrets yet."
+    },
+    "form": {
+      "label-name": {
+        "error": {
+          "required": "Label name is required",
+          "too-long": "Label name must be less than {{maxLength}} characters"
+        }
+      },
+      "label-value": {
+        "error": {
+          "required": "Label value is required",
+          "too-long": "Label value must be less than {{maxLength}} characters"
+        }
+      }
+    },
+    "item": {
+      "copy-value-aria-label": "Copy \"{{value}}\"",
+      "delete-item-aria-label": "Delete {{name}}",
+      "delete-modal": {
+        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirm-text": "delete",
+        "delete-button": "Delete",
+        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "title": "Delete secret"
+      },
+      "edit-item": "Edit",
+      "edit-item-aria-label": "Edit {{name}}",
+      "label-created": "Created:",
+      "label-decrypters": "Decrypters:",
+      "label-description": "Description:",
+      "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
+      "label-uid": "ID:"
+    },
+    "search-placeholder": "Search secret by name",
+    "search-result": {
+      "clear-filters": "Clear active filter to see all secrets.",
+      "no-results": "No secrets found"
+    },
+    "secret-value-input": {
+      "configured-value": "configured",
+      "reset-button": "<0>Reset</0>"
+    },
+    "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
+  },
+  "secrets-management": {
+    "edit-modal": {
+      "title": {
+        "create": "Create secret",
+        "edit": "Edit secret {{name}}"
+      }
+    },
+    "form": {
+      "btn-cancel": "Cancel",
+      "btn-create": "Create",
+      "btn-update": "Update",
+      "decrypters": {
+        "description": "Services able to decrypt secret value",
+        "label": "Decrypters",
+        "placeholder": "Choose decrypter(s)"
+      },
+      "description": {
+        "description": "Short description of the purpose of this secret",
+        "error": {
+          "required": "Description is required",
+          "too-long": "Description must be less than {{maxLength}} characters"
+        },
+        "label": "Description"
+      },
+      "label-name": {
+        "placeholder": "name",
+        "unique-name": "Label name must be unique"
+      },
+      "label-value": {
+        "placeholder": "value"
+      },
+      "labels": {
+        "actions": {
+          "add": "Add label",
+          "aria-label-remove": "Remove label"
+        },
+        "description": "Labels to categorize the secret",
+        "error": {
+          "too-many": "Maximum number of labels reached (Max: {{maxLabels}})"
+        },
+        "label": "Labels"
+      },
+      "name": {
+        "description": "The name will be used to reference the secret",
+        "error": {
+          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods",
+          "required": "Name is required",
+          "too-long": "Name must be less than {{maxLength}} characters"
+        },
+        "label": "Name"
+      },
+      "value": {
+        "description": "Secret value",
+        "error": {
+          "required": "Value is required"
+        },
+        "label": "Value"
+      }
+    }
+  },
   "select": {
     "select-menu": {
       "selected-count": "Selected "
@@ -9259,117 +9370,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Link"
-    }
-  },
-  "secrets-management": {
-    "page": {
-      "title": "Secrets management",
-      "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>docs</2>",
-      "actions": {
-        "create-secret": "Create secret"
-      },
-      "search": {
-        "placeholder": "Search secret by name",
-        "clear": "Clear filter to see all secrets"
-      },
-      "search-result": {
-        "no-results": "No secrets found",
-        "clear-search": "Clear active filter to see all secrets."
-      }
-    },
-    "item": {
-      "edit-item": "Edit",
-      "edit-item-aria-label": "Edit {{name}}",
-      "delete-item-aria-label": "Delete {{name}}",
-      "copy-value-aria-label": "Copy \"{{value}}\"",
-      "labels": {
-        "name": "Name:",
-        "uid": "ID:",
-        "description": "Description:",
-        "created": "Created:",
-        "decrypters": "Decrypters:",
-        "keeper": "Keeper:"
-      },
-      "delete-modal": {
-        "title": "Delete secret",
-        "body": "Are you sure you want to delete \"{{name}}\"?",
-        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
-        "delete-button": "Delete",
-        "confirm-text": "delete"
-      }
-    },
-    "edit-modal": {
-      "title": {
-        "edit": "Edit secret {{name}}",
-        "create": "Create secret"
-      }
-    },
-    "form": {
-      "name": {
-        "label": "Name",
-        "description": "The name will be used to reference the secret",
-        "error": {
-          "required": "Name is required",
-          "too-long": "Name must be less than {{maxLength}} characters",
-          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods"
-        }
-      },
-      "description": {
-        "label": "Description",
-        "description": "Short description of the purpose of this secret",
-        "error": {
-          "required": "Description is required",
-          "too-long": "Description must be less than {{maxLength}} characters"
-        }
-      },
-      "value": {
-        "label": "Value",
-        "description": "Value returned when referencing this secret",
-        "error": {
-          "required": "Value is required",
-          "too-long": "Value must be less than {{maxLength}} characters"
-        }
-      },
-      "decrypters": {
-        "label": "Decrypters",
-        "description": "Services able to decrypt secret value",
-        "placeholder": "Choose decrypter(s)"
-      },
-      "labels": {
-        "label": "Labels",
-        "description": "Allows you to specify a set of additional labels to be attached to the secret",
-        "error": {
-          "too-many": "Maximum number of labels reached (Max: {{maxLabels}})"
-        },
-        "actions": {
-          "add": "Add label",
-          "aria-label-remove": "Remove label"
-        }
-      },
-      "label-name": {
-        "placeholder": "name",
-        "error": {
-          "required": "Label name is required",
-          "unique-name": "Label name must be unique",
-          "too-long": "Label name must be less than {{maxLength}} characters",
-          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods"
-        }
-      },
-      "label-value": {
-        "placeholder": "value",
-        "error": {
-          "required": "Label value is required",
-          "too-long": "Label value must be less than {{maxLength}} characters",
-          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods"
-        }
-      },
-      "btn-cancel": "Cancel",
-      "btn-create": "Create",
-      "btn-update": "Update"
-    },
-    "empty-state": {
-      "more-info": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
-      "title": "You don't have any secrets yet."
     }
   }
 }

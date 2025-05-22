@@ -9,7 +9,6 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteSecretMutation, useListSecretsQuery } from './api/secretsManagementApi';
 import { EditSecretModal } from './components/EditSecretModal';
-import { SecretsEmptyState } from './components/SecretsEmptyState';
 import { SecretsList } from './components/SecretsList';
 import { SecretStatusPhase } from './types';
 
@@ -56,7 +55,7 @@ export default function SecretsManagementPage() {
     <Page
       navId="secrets-management"
       subTitle={
-        <Trans i18nKey="secrets-management.page.sub-title">
+        <Trans i18nKey="secrets.sub-title">
           Manage secrets for use in Grafana. Find out more in our{' '}
           <TextLink href="https://grafana.com/docs/grafana/latest/administration/" external>
             documentation
@@ -66,7 +65,7 @@ export default function SecretsManagementPage() {
       actions={
         hasSecrets && (
           <Button disabled={isLoading} icon="plus" onClick={handleShowCreateModal}>
-            <Trans i18nKey="secrets-management.page.actions.create-secret">Create secret</Trans>
+            <Trans i18nKey="secrets.actions.create-secret">Create secret</Trans>
           </Button>
         )
       }
@@ -76,23 +75,20 @@ export default function SecretsManagementPage() {
           <InlineField grow disabled={!hasSecrets}>
             <FilterInput
               className={styles.filterInput}
-              placeholder={t('secrets-management.page.search.placeholder', 'Search secret by name')}
+              placeholder={t('secrets.search-placeholder', 'Search secret by name')}
               value={filter}
               onChange={(value) => setFilter(value)}
             />
           </InlineField>
         </div>
 
-        {!hasSecrets && <SecretsEmptyState onCreateSecret={handleShowCreateModal} />}
-
-        {hasSecrets && (
-          <SecretsList
-            onEditSecret={handleEditSecret}
-            onDeleteSecret={deleteSecret}
-            secrets={secrets}
-            filter={filter}
-          />
-        )}
+        <SecretsList
+          onEditSecret={handleEditSecret}
+          onDeleteSecret={deleteSecret}
+          secrets={secrets}
+          filter={filter}
+          onCreateSecret={handleShowCreateModal}
+        />
 
         {isEditModalOpen && <EditSecretModal isOpen onDismiss={handleDismissModal} name={editTarget} />}
       </PageContents>

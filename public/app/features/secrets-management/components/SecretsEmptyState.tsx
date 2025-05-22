@@ -11,12 +11,12 @@ export function SecretsEmptyState({ onCreateSecret }: SecretsEmptyStateProps) {
       variant="call-to-action"
       button={
         <Button onClick={onCreateSecret} icon="plus">
-          <Trans i18nKey="secrets-management.page.actions.create-secret">Create secret</Trans>
+          <Trans i18nKey="secrets.actions.create-secret">Create secret</Trans>
         </Button>
       }
-      message={t('secrets-management.empty-state.title', "You don't have any secrets yet.")}
+      message={t('secrets.empty-state.title', "You don't have any secrets yet.")}
     >
-      <Trans i18nKey="secrets-management.empty-state.more-info">
+      <Trans i18nKey="secrets.empty-state.description">
         You can use secrets to store private information such as passwords, API keys and other sensitive data.
       </Trans>
     </EmptyState>

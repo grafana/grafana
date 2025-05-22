@@ -14,27 +14,29 @@ interface SecretItemProps {
   secret: Secret;
   onEditSecret: (name: string) => void;
   onDeleteSecret: (name: string) => void;
-  key: React.Attributes['key']; // Needed for TypeScript (at least for me).
+  key?: React.Attributes['key']; // Needed for TypeScript (at least for me).
 }
 
 export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemProps) {
   const styles = useStyles2(getStyles);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const isPending = isSecretPending(secret);
-  const [isHeadingWrapped, setIsHeadingWrapped] = useState(false);
+  const hasLabels = secret.labels.length > 0;
+  const hasKeeper = !!secret.keeper;
+  const [isHeadingWrapped, setIsHeadingWrapped] = useState(!hasLabels);
   const itemRef = useRef<HTMLDivElement>(null);
-
   const debouncedResizeHandler = useMemo(() => {
     return debounce(
       () => {
         const { height } = itemRef?.current?.getBoundingClientRect() ?? { height: 0 };
         // inline is 26px and wrapped is 62px+ (39px is in the middle of the two states).
-        setIsHeadingWrapped(height > 39);
+        // if there are no labels, we need to pretend that we are in a wrapped state to push the margin onto the name
+        setIsHeadingWrapped(height > 39 || !hasLabels);
       },
       150,
       { maxWait: 500 }
     );
-  }, []);
+  }, [hasLabels]);
 
   useEffect(() => {
     const handler = () => {
@@ -86,16 +88,16 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
               size="sm"
               onClick={handleEdit}
               variant="secondary"
-              aria-label={t('secrets-management.item.edit-item-aria-label', `Edit {{name}}`, {
+              aria-label={t('secrets.item.edit-item-aria-label', `Edit {{name}}`, {
                 name: secret.name,
               })}
             >
-              <Trans i18nKey="secrets-management.item.edit-item">Edit</Trans>
+              <Trans i18nKey="secrets.item.edit-item">Edit</Trans>
             </Button>
 
             <Button
               icon="trash-alt"
-              aria-label={t('secrets-management.item.delete-item-aria-label', `Delete {{name}}`, { name: secret.name })}
+              aria-label={t('secrets.item.delete-item-aria-label', `Delete {{name}}`, { name: secret.name })}
               size="sm"
               variant="secondary"
               onClick={handleShowDeleteModal}
@@ -105,7 +107,7 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
 
         <div className={styles.keyValue}>
           <strong>
-            <Trans i18nKey="secrets-management.item.labels.uid">ID:</Trans>
+            <Trans i18nKey="secrets.item.label-uid">ID:</Trans>
           </strong>
           <span>{secret.uid}</span>
           <ClipboardButton
@@ -115,7 +117,7 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
             icon="copy"
             fill="text"
             variant="secondary"
-            aria-label={t('secrets-management.item.copy-value-aria-label', 'Copy "{{value)}}"', {
+            aria-label={t('secrets.item.copy-value-aria-label', 'Copy "{{value}}"', {
               value: secret.uid,
             })}
           />
@@ -123,21 +125,21 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
 
         <div className={styles.keyValue}>
           <strong>
-            <Trans i18nKey="secrets-management.item.labels.description">Description:</Trans>
+            <Trans i18nKey="secrets.item.label-description">Description:</Trans>
           </strong>
           <span>{secret.description}</span>
         </div>
 
         <div className={styles.keyValue}>
           <strong>
-            <Trans i18nKey="secrets-management.item.labels.created">Created:</Trans>
+            <Trans i18nKey="secrets.item.label-created">Created:</Trans>
           </strong>
           <span>{secret.created}</span>
         </div>
 
         <div className={styles.keyValue}>
           <strong>
-            <Trans i18nKey="secrets-management.item.labels.decrypters">Decrypters:</Trans>
+            <Trans i18nKey="secrets.item.label-decrypters">Decrypters:</Trans>
           </strong>
           <div className={styles.row}>
             {secret.audiences?.map((item) => (
@@ -151,28 +153,30 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
           </div>
         </div>
 
-        <div className={styles.keyValue}>
-          <strong>
-            <Trans i18nKey="secrets-management.item.labels.keeper">Keeper:</Trans>
-          </strong>
-          <span>{secret.keeper}</span>
-        </div>
+        {hasKeeper && (
+          <div className={styles.keyValue}>
+            <Trans i18nKey="secrets.item.label-keeper" values={{ keeper: secret.keeper }}>
+              <strong>Keeper:</strong>
+              <span>{'{{keeper}}'}</span>
+            </Trans>
+          </div>
+        )}
       </li>
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}
         onDismiss={handleHideDeleteModal}
         onConfirm={handleDelete}
-        confirmText={t('secrets-management.item.delete-modal.delete-button', 'Delete')}
-        confirmationText={t('secrets-management.item.delete-modal.confirm-text', 'Delete')}
-        title={t('secrets-management.item.delete-modal.title', 'Delete secret')}
+        confirmText={t('secrets.item.delete-modal.delete-button', 'Delete')}
+        confirmationText={t('secrets.item.delete-modal.confirm-text', 'delete')}
+        title={t('secrets.item.delete-modal.title', 'Delete secret')}
         body={t(
-          'secrets-management.item.delete-modal.body',
+          'secrets.item.delete-modal.body',
           'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
           { name: secret.name }
         )}
         description={t(
-          'secrets-management.item.delete-modal.description',
+          'secrets.item.delete-modal.description',
           "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it."
         )}
       />
@@ -197,6 +201,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     position: 'relative',
     marginBottom: theme.spacing(2),
+    minHeight: '24px', // height of actions (else they may be cut-off)s
     '&.wrapped > h2': {
       wordBreak: 'break-word',
       marginRight: ACTIONS_MARGIN,

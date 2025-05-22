@@ -1,30 +1,35 @@
 import React from 'react';
 
 import { Button, Input, Stack, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 export type SecretValueInputProps = React.ComponentProps<typeof TextArea> & {
   isConfigured: boolean;
   onReset: () => void;
 };
 
-const CONFIGURED_TEXT = 'configured';
-const RESET_BUTTON_TEXT = 'Reset';
-
 export const SecretValueInput = React.forwardRef<HTMLTextAreaElement, SecretValueInputProps>(
-  ({ isConfigured, onReset, ...props }, ref) => {
+  ({ isConfigured, onReset, rows = 5, ...props }, ref) => {
     return (
       <Stack>
         {!isConfigured && (
           <>
-            <TextArea ref={ref} rows={5} id="secret-value" disabled={isConfigured} {...props} />
+            <TextArea ref={ref} rows={rows} id={props.id} disabled={isConfigured} {...props} />
           </>
         )}
         {isConfigured && (
           <>
-            <Input type="text" disabled value={CONFIGURED_TEXT} id={props.id} />
-            <Button onClick={onReset} variant="secondary">
-              {RESET_BUTTON_TEXT}
-            </Button>
+            <Input
+              type="text"
+              disabled
+              value={t('secrets.secret-value-input.configured-value', 'configured')}
+              id={props.id}
+            />
+            <Trans i18nKey="secrets.secret-value-input.reset-button">
+              <Button onClick={onReset} variant="secondary">
+                Reset
+              </Button>
+            </Trans>
           </>
         )}
       </Stack>
