@@ -6,11 +6,14 @@ import { Label } from './components/monaco-query-field/monaco-completion-provide
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider, {
   exportToAbstractQuery,
+  getMetadataHelp,
+  getMetadataString,
+  getMetadataType,
   importFromAbstractQuery,
   removeQuotesIfExist,
 } from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
-import { PrometheusCacheLevel, PromQuery } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();
 const timeRangeDurationSeconds = 1;
@@ -54,14 +57,14 @@ const verifyRequestParams = (
   requestSpy: jest.SpyInstance,
   expectedUrl: string,
   expectedParams: any,
-  expectedOptions?: any,
+  expectedOptions?: any
 ) => {
   expect(requestSpy).toHaveBeenCalled();
   expect(requestSpy).toHaveBeenCalledWith(
     expectedUrl,
     expect.anything(),
     expect.objectContaining(expectedParams),
-    expectedOptions,
+    expectedOptions
   );
 };
 
@@ -74,10 +77,58 @@ describe('Prometheus Language Provider', () => {
     getDaysToCacheMetadata: () => 1,
     getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
     cacheLevel: PrometheusCacheLevel.None,
+    getIntervalVars: () => ({}),
+    getRangeScopedVars: () => ({}),
   } as unknown as PrometheusDatasource;
 
   describe('Series and label fetching', () => {
     const timeRange = getMockTimeRange();
+
+    describe('getSeries', () => {
+      it('should use fetchDefaultSeries for empty selector', async () => {
+        const languageProvider = new LanguageProvider(defaultDatasource);
+        const fetchDefaultSeriesSpy = jest.spyOn(languageProvider, 'fetchDefaultSeries');
+        fetchDefaultSeriesSpy.mockResolvedValue({ job: ['job1', 'job2'], instance: ['instance1', 'instance2'] });
+
+        const result = await languageProvider.getSeries(timeRange, '{}');
+
+        expect(fetchDefaultSeriesSpy).toHaveBeenCalledWith(timeRange);
+        expect(result).toEqual({ job: ['job1', 'job2'], instance: ['instance1', 'instance2'] });
+      });
+
+      it('should use fetchSeriesLabels for non-empty selector', async () => {
+        const languageProvider = new LanguageProvider(defaultDatasource);
+        const fetchSeriesLabelsSpy = jest.spyOn(languageProvider, 'fetchSeriesLabels');
+        fetchSeriesLabelsSpy.mockResolvedValue({ job: ['job1', 'job2'], instance: ['instance1', 'instance2'] });
+
+        const result = await languageProvider.getSeries(timeRange, '{job="grafana"}');
+
+        expect(fetchSeriesLabelsSpy).toHaveBeenCalledWith(timeRange, '{job="grafana"}', undefined, 'none');
+        expect(result).toEqual({ job: ['job1', 'job2'], instance: ['instance1', 'instance2'] });
+      });
+
+      it('should include name label when withName is true', async () => {
+        const languageProvider = new LanguageProvider(defaultDatasource);
+        const fetchSeriesLabelsSpy = jest.spyOn(languageProvider, 'fetchSeriesLabels');
+        fetchSeriesLabelsSpy.mockResolvedValue({ __name__: ['metric1', 'metric2'], job: ['job1'] });
+
+        const result = await languageProvider.getSeries(timeRange, '{job="grafana"}', true);
+
+        expect(fetchSeriesLabelsSpy).toHaveBeenCalledWith(timeRange, '{job="grafana"}', true, 'none');
+        expect(result).toHaveProperty('__name__');
+        expect(result.__name__).toEqual(['metric1', 'metric2']);
+      });
+
+      it('should handle errors gracefully', async () => {
+        jest.spyOn(console, 'error').mockImplementation();
+        const languageProvider = new LanguageProvider(defaultDatasource);
+        jest.spyOn(languageProvider, 'fetchSeriesLabels').mockRejectedValue(new Error('Network error'));
+
+        const result = await languageProvider.getSeries(timeRange, '{job="grafana"}');
+
+        expect(result).toEqual({});
+      });
+    });
 
     describe('getSeriesLabels', () => {
       it('should call labels endpoint when API support is available', () => {
@@ -541,6 +592,32 @@ describe('Prometheus Language Provider', () => {
         headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` },
       });
     });
+
+    it('should handle request errors gracefully', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const languageProvider = new LanguageProvider(defaultDatasource);
+      const datasourceRequestMock = jest
+        .spyOn(defaultDatasource, 'metadataRequest')
+        .mockRejectedValue(new Error('Network error'));
+
+      const result = await languageProvider.request('/api/v1/labels', [], {});
+
+      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should ignore cancelled request errors', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const languageProvider = new LanguageProvider(defaultDatasource);
+      const error = { cancelled: true };
+      const datasourceRequestMock = jest.spyOn(defaultDatasource, 'metadataRequest').mockRejectedValue(error);
+
+      const result = await languageProvider.request('/api/v1/labels', [], {});
+
+      expect(datasourceRequestMock).toHaveBeenCalled();
+      expect(result).toEqual([]);
+      expect(console.error).not.toHaveBeenCalled();
+    });
   });
 
   describe('Query transformation', () => {
@@ -571,6 +648,132 @@ describe('Prometheus Language Provider', () => {
           ],
         });
       });
+    });
+  });
+
+  describe('Metadata utility functions', () => {
+    const testMetadata: PromMetricsMetadata = {
+      metric1: { type: 'counter', help: 'Test counter help text' },
+      metric2: { type: 'gauge', help: 'Test gauge help text' },
+    };
+
+    describe('getMetadataString', () => {
+      it('should return formatted string with type and help text', () => {
+        const result = getMetadataString('metric1', testMetadata);
+        expect(result).toBe('COUNTER: Test counter help text');
+      });
+
+      it('should return undefined for unknown metrics', () => {
+        const result = getMetadataString('unknown_metric', testMetadata);
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('getMetadataHelp', () => {
+      it('should return help text for known metric', () => {
+        const result = getMetadataHelp('metric2', testMetadata);
+        expect(result).toBe('Test gauge help text');
+      });
+
+      it('should return undefined for unknown metrics', () => {
+        const result = getMetadataHelp('unknown_metric', testMetadata);
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('getMetadataType', () => {
+      it('should return type for known metric', () => {
+        const result = getMetadataType('metric1', testMetadata);
+        expect(result).toBe('counter');
+      });
+
+      it('should return undefined for unknown metrics', () => {
+        const result = getMetadataType('unknown_metric', testMetadata);
+        expect(result).toBeUndefined();
+      });
+    });
+  });
+
+  describe('fetchSuggestions', () => {
+    it('should send POST request with correct parameters', async () => {
+      const timeRange = getMockTimeRange();
+      const mockQueries: PromQuery[] = [{ refId: 'A', expr: 'metric1' }];
+
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => `interpolated_${string}`,
+        getIntervalVars: () => ({ __interval: '1m' }),
+        getRangeScopedVars: () => ({ __range: { text: '1h', value: '1h' } }),
+      } as unknown as PrometheusDatasource);
+
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue(['suggestion1', 'suggestion2']);
+
+      // Simplifying the test by not passing complex scope objects that require more type definitions
+      const result = await languageProvider.fetchSuggestions(
+        timeRange,
+        mockQueries,
+        undefined, // omitting scopes parameter
+        [{ key: 'instance', operator: '=', value: 'localhost' }],
+        'metric',
+        100
+      );
+
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy.mock.calls[0][0]).toBe('/suggestions');
+
+      // Check method and content type
+      expect(requestSpy.mock.calls[0][3]).toMatchObject({
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      });
+
+      // Check query parameters
+      expect(requestSpy.mock.calls[0][2]).toMatchObject({
+        labelName: 'metric',
+        limit: 100,
+        queries: ['interpolated_metric1'],
+      });
+
+      expect(result).toEqual(['suggestion1', 'suggestion2']);
+    });
+
+    it('should use default time range if not provided', async () => {
+      const languageProvider = new LanguageProvider(defaultDatasource);
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue(['result']);
+
+      await languageProvider.fetchSuggestions(undefined, [], [], [], 'test');
+
+      expect(requestSpy).toHaveBeenCalled();
+      // Default time range should be used
+      expect(requestSpy.mock.calls[0][2]).toHaveProperty('start');
+      expect(requestSpy.mock.calls[0][2]).toHaveProperty('end');
+    });
+
+    it('should handle empty response gracefully', async () => {
+      const languageProvider = new LanguageProvider(defaultDatasource);
+      jest.spyOn(languageProvider, 'request').mockResolvedValue(null);
+
+      const result = await languageProvider.fetchSuggestions(getMockTimeRange(), [], [], [], 'test');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should include cache headers when cacheLevel is set', async () => {
+      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.Medium);
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        cacheLevel: PrometheusCacheLevel.Medium,
+      } as PrometheusDatasource);
+
+      const requestSpy = jest.spyOn(languageProvider, 'request').mockResolvedValue(['result']);
+
+      await languageProvider.fetchSuggestions(getMockTimeRange(), [], [], [], 'test');
+
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy.mock.calls[0][3]?.headers).toHaveProperty('X-Grafana-Cache');
+      expect(requestSpy.mock.calls[0][3]?.headers?.['X-Grafana-Cache']).toContain(
+        `private, max-age=${timeSnapMinutes * 60}`
+      );
     });
   });
 });
