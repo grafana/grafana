@@ -4,6 +4,9 @@ inputs:
   version:
     description: The new version (ex. 1.2.3)
     required: true
+  go-mod-dir:
+    description: Path to module containing the bump-version command
+    required: false
 runs:
   using: "composite"
   steps:
@@ -11,10 +14,19 @@ runs:
       with:
         go-version-file: go.mod
     - name: Bump versions
+      if: ${{ inputs.go-mod-dir == "" }}
       uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
       with:
         verb: run
         args: go run ./pkg/build/actions/bump-version -version=${{ inputs.version }}
+    - name: Bump versions
+      if: ${{ inputs.go-mod-dir != "" }}
+      uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+      env:
+        GO_MOD_DIR: ${{ inputs.go-mod-dir }}
+      with:
+        verb: run
+        args: go run -C ${GO_MOD_DIR} ./pkg/build/actions/bump-version -version=${{ inputs.version }}
     - name: make gen-cue
       shell: bash
       run: make gen-cue

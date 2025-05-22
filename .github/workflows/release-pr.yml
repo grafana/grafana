@@ -162,6 +162,7 @@ jobs:
         uses: ./.grafana-main/pkg/build/actions/bump-version
         with:
           version: 'patch'
+          go-mod-dir: 'grafana-main'
 
       - name: Add package.json changes
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
