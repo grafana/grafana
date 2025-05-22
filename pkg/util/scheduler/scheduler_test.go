@@ -268,7 +268,8 @@ func TestSchedulerGracefulShutdown(t *testing.T) {
 	// Enqueue a long-running item
 	require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
 		close(taskStarted)
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1 * time.Second) // Simulate long-running task
+		processed.Add(1)
 		close(taskFinished)
 	}))
 
@@ -289,7 +290,8 @@ func TestSchedulerGracefulShutdown(t *testing.T) {
 		t.Fatal("Timed out waiting for long-running task to finish")
 	}
 
-	require.Equal(t, int32(5), processed.Load(), "Not all quick items were processed")
+	require.Equal(t, int32(6), processed.Load(), "Not all items were processed")
+	require.NoError(t, scheduler.AwaitTerminated(context.Background()))
 }
 
 func TestSchedulerWithErrorInQueue(t *testing.T) {

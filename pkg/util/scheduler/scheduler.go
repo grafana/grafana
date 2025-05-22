@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// Worker processes items from the qos.
+// Worker processes items from the QoS request queue
 type Worker struct {
 	id         int
 	queue      *Queue
@@ -68,11 +68,11 @@ func (w *Worker) dequeueWithRetries(ctx context.Context) {
 			continue
 		}
 
+		boff.Reset()
+
 		if !ok {
 			continue
 		}
-
-		boff.Reset()
 
 		runnable()
 	}
@@ -86,10 +86,6 @@ type Scheduler struct {
 	queue      *Queue
 	wg         sync.WaitGroup
 	maxBackoff time.Duration
-
-	// stopFunc is a function to cancel the scheduler's context.
-	// It is called when the scheduler is stopped.
-	stopFunc context.CancelFunc
 
 	// Subservices manager
 	subservices        *services.Manager
@@ -156,7 +152,6 @@ func (s *Scheduler) starting(ctx context.Context) error {
 		return fmt.Errorf("scheduler: failed to start subservices: %w", err)
 	}
 
-	ctx, s.stopFunc = context.WithCancel(ctx)
 	s.logger.Info("Scheduler starting", "numWorkers", s.numWorkers)
 	s.workers = make([]*Worker, 0, s.numWorkers)
 	s.wg.Add(s.numWorkers)
@@ -190,9 +185,6 @@ func (s *Scheduler) running(ctx context.Context) error {
 // stopping is called by the services.Service lifecycle to stop the scheduler.
 func (s *Scheduler) stopping(_ error) error {
 	s.logger.Info("Scheduler stopping")
-	s.stopFunc()
-	s.wg.Wait()
-	s.workers = nil
 
 	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
 	if err != nil {

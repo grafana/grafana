@@ -690,3 +690,58 @@ func TestQueueLen(t *testing.T) {
 	queueLen := q.Len()
 	require.Equal(t, queueLen, 2)
 }
+
+func TestQueueGracefulShutdown(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.StopAsync()
+		q.AwaitTerminated(ctx)
+	}()
+
+	processed := make(chan struct{})
+
+	// Enqueue an item that signals when processed
+	err := q.Enqueue(context.Background(), "tenant1", func() {
+		close(processed)
+	})
+	require.NoError(t, err)
+
+	// Start a goroutine to dequeue and run the item
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		runnable, ok, err := q.Dequeue(ctx)
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.NotNil(t, runnable)
+		runnable()
+	}()
+
+	// Wait for the item to be processed
+	select {
+	case <-processed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Timed out waiting for item to be processed before shutdown")
+	}
+
+	// Now gracefully stop the queue
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	q.StopAsync()
+	q.AwaitTerminated(ctx)
+	wg.Wait()
+
+	// Check that the queue is closed
+	err = q.Enqueue(context.Background(), "tenant1", func() {})
+	require.ErrorIs(t, err, ErrQueueClosed)
+}

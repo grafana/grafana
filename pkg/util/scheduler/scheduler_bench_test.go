@@ -69,9 +69,6 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 	b.ReportMetric(float64(processed.Load())/b.Elapsed().Seconds(), "items/sec")
 }
 
-// Benchmark with varying numbers of workers (1, 2, 4, 8, 16)
-// Each benchmark uses 10 tenants with 1000 items per tenant
-
 func BenchmarkScheduler_1Worker_10Tenants(b *testing.B) {
 	benchScheduler(b, 1, 10, 1000)
 }
@@ -92,36 +89,36 @@ func BenchmarkScheduler_16Workers_10Tenants(b *testing.B) {
 	benchScheduler(b, 16, 10, 1000)
 }
 
-// Benchmark with varying numbers of tenants (1, 10, 100)
-// Each benchmark uses 4 workers with 1000 items per tenant
-
-func BenchmarkScheduler_4Workers_1Tenant(b *testing.B) {
-	benchScheduler(b, 4, 1, 1000)
-}
-
-func BenchmarkScheduler_4Workers_10Tenants_1000Items(b *testing.B) {
-	benchScheduler(b, 4, 10, 1000)
-}
-
-func BenchmarkScheduler_4Workers_100Tenants(b *testing.B) {
-	benchScheduler(b, 4, 100, 1000)
-}
-
-// Benchmark with different ratios of items to workers
-// Each benchmark uses 4 workers with 10 tenants but varies items per tenant
-
 func BenchmarkScheduler_4Workers_10Tenants_100ItemsPerTenant(b *testing.B) {
 	benchScheduler(b, 4, 10, 100)
 }
 
-// This is a duplicate of BenchmarkScheduler_4Workers_10Tenants_1000Items
-// Replaced with a more descriptive name
-func BenchmarkScheduler_4Workers_10Tenants_ManyItems(b *testing.B) {
+func BenchmarkScheduler_4Workers_10Tenants_1000ItemsPerTenant(b *testing.B) {
 	benchScheduler(b, 4, 10, 1000)
 }
 
-func BenchmarkScheduler_4Workers_10Tenants_10000ItemsPerTenant(b *testing.B) {
-	benchScheduler(b, 4, 10, 10000)
+func BenchmarkScheduler_4Workers_100Tenant_100ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 100, 100)
+}
+
+func BenchmarkScheduler_4Workers_100Tenant_1000ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 100, 1000)
+}
+
+func BenchmarkScheduler_4Workers_1000Tenant_100ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 1000, 100)
+}
+
+func BenchmarkScheduler_4Workers_1000Tenant_1000ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 1000, 1000)
+}
+
+func BenchmarkScheduler_4Workers_10000Tenant_100ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 10000, 100)
+}
+
+func BenchmarkScheduler_4Workers_10000Tenant_1000ItemsPerTenant(b *testing.B) {
+	benchScheduler(b, 4, 10000, 1000)
 }
 
 // Benchmark comparing round-robin fairness among tenants
