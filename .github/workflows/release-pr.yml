@@ -91,7 +91,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ steps.generate_changelog_token.outputs.token }}
-          ref: km/use-main-in-release-pr
+          ref: main
           fetch-depth: '0'
           path: .grafana-main
 
