@@ -185,7 +185,7 @@ jobs:
           BRANCH: ${{ steps.branch.outputs.branch }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          LATEST_FLAG=""
+          LATEST_FLAG=()
           if [ "$LATEST" = "true" ]; then
             LATEST_FLAG=(-l "release/latest")
           fi
