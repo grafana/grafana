@@ -105,7 +105,7 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	// before the connection is used.
 	if err := db.Ping(); err != nil {
 		logger.Error("Failed to ping Postgres database", "error", err)
-		return nil, nil, fmt.Errorf("failed to ping Postgres database: %w", err)
+		return nil, nil, backend.DownstreamError(fmt.Errorf("failed to ping Postgres database: %w", err))
 	}
 
 	handler, err := sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
