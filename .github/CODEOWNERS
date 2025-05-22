@@ -790,6 +790,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
+/.github/workflows/main-notify.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
