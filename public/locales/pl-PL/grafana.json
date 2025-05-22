@@ -739,6 +739,7 @@
       "edit": "Edytuj",
       "export": "Eksport",
       "export-all": "Eksportuj wszystkie",
+      "learn-more": "Dowiedz się więcej",
       "loading": "Ładowanie…",
       "search-by-matchers": "Wyszukaj według dopasowań",
       "titles": {
@@ -1084,6 +1085,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1217,15 +1221,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Ładowanie…"
-    },
-    "group-actions": {
-      "actions-trigger": "Akcje grupowe reguły",
-      "details": "Szczegóły",
-      "edit": "Edytuj"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Nie udało się wczytać szczegółów grupy",
-      "unknown-error": "Nieznany błąd"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupa",
@@ -1420,11 +1415,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nowa reguła alertu",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nowa reguła rejestracji zarządzana przez źródło danych",
-        "new-grafana-recording-rule": "Nowa reguła rejestracji zarządzana przez usługę Grafana",
+        "new-grafana-alerting-rule": "Nowa reguła alertu",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nowa reguła rejestracji",
-        "provisioning": "Reguły można również definiować za pomocą konfiguracji plików lub przez Terraform. <2>Więcej informacji</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Brak skonfigurowanych źródeł danych Prometheus lub Loki",
       "no-rules": "Nie znaleziono reguł.",
@@ -2074,6 +2073,7 @@
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -2090,8 +2090,7 @@
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
       "new-grafana-recording-rule": "Nowa reguła rejestracji w usłudze Grafana",
       "pagination": {
-        "next-page": "następna strona",
-        "previous-page": "poprzednia strona"
+        "next-page": ""
       },
       "recording-rules": "Reguły rejestracji",
       "return-button": {
@@ -6207,6 +6206,7 @@
       "label-wrap-lines": "Zawijaj wiersze"
     },
     "log-details": {
+      "close": "",
       "fields": "Pola",
       "links": "Linki",
       "log-line": "Wiersz logu",
@@ -6226,15 +6226,20 @@
       "log-line": "wiersz logu"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiuj link do wiersza logu",
       "copy-log": "Kopiuj wiersz logu",
+      "hide-details": "",
       "icon-label": "Menu logu",
       "pin-to-outline": "Przypnij log",
       "show-context": "Pokaż kontekst",
+      "show-details": "",
       "unpin-from-outline": "Odepnij log"
     },
     "log-row-context-modal": {
@@ -6828,7 +6833,8 @@
       "title": "Panele biblioteki"
     },
     "machine-learning": {
-      "title": "Uczenie maszynowe"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Zarządzaj pulpitami folderów i uprawnieniami"
@@ -7425,8 +7431,8 @@
     "version-list": {
       "grafana-dependency": "Zależność Grafany",
       "installed-version": "{{versionNumber}} (zainstalowana wersja)",
-      "last-updated": "Ostatnia aktualizacja",
       "latest-compatible-version": "{{versionNumber}} (najnowsza zgodna wersja)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Nie znaleziono historii wersji.",
       "version": "Wersja"
     }

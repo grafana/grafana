@@ -731,6 +731,7 @@
       "edit": "Bewerken",
       "export": "Exporteren",
       "export-all": "Alles exporteren",
+      "learn-more": "Meer informatie",
       "loading": "Bezig met laden ...",
       "search-by-matchers": "Op matchers zoeken",
       "titles": {
@@ -1072,6 +1073,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1209,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Laden...."
-    },
-    "group-actions": {
-      "actions-trigger": "Groepacties voor regels",
-      "details": "Details",
-      "edit": "Bewerken"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Kan groepsgegevens niet laden",
-      "unknown-error": "Onbekende fout"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Groep",
@@ -1408,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nieuwe waarschuwingsregel",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nieuwe regel voor door gegevensbron beheerde opnamen",
-        "new-grafana-recording-rule": "Nieuwe door Grafana beheerde opnameregel",
+        "new-grafana-alerting-rule": "Nieuwe waarschuwingsregel",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nieuwe opnameregel",
-        "provisioning": "Je kunt ook regels definiëren via file provisioning of Terraform. <2>Meer informatie</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Er zijn geen Prometheus- of Loki-gegevensbronnen geconfigureerd",
       "no-rules": "Geen regels gevonden.",
@@ -2054,6 +2053,7 @@
         "description": "Controleer de configuratie van de gegevensbron. Ondersteunt de gegevensbron Prometheus API?",
         "title": "Kan regels uit deze gegevensbron niet laden"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -2070,8 +2070,7 @@
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",
       "new-grafana-recording-rule": "Nieuwe Grafana-opnameregel",
       "pagination": {
-        "next-page": "volgende pagina",
-        "previous-page": "vorige pagina"
+        "next-page": ""
       },
       "recording-rules": "Opnameregels",
       "return-button": {
@@ -4554,7 +4553,7 @@
   "data-source-picker": {
     "add-new-data-source": "Een nieuwe gegevensbron configureren",
     "built-in-list": {
-      "description-dashboard": "Gebruik queryresultaten van andere visualisaties opnieuw",
+      "description-dashboard": "Hergebruik queryresultaten van andere visualisaties",
       "description-grafana": "Ontdek visualisaties met behulp van proefgegevens",
       "description-mixed": "Gebruik meerdere gegevensbronnen"
     },
@@ -4562,7 +4561,7 @@
       "no-data-source-message": "Geen gegevensbronnen gevonden"
     },
     "modal": {
-      "configure-new-data-source": "Een nieuw tabblad openen en een gegevensbron configureren",
+      "configure-new-data-source": "Nieuw tabblad openen en een gegevensbron configureren",
       "input-placeholder": "Gegevensbron selecteren",
       "title": "Gegevensbron selecteren"
     },
@@ -6155,6 +6154,7 @@
       "label-wrap-lines": "Lijnen omsluiten"
     },
     "log-details": {
+      "close": "",
       "fields": "Velden",
       "links": "Links",
       "log-line": "Logregel",
@@ -6174,15 +6174,20 @@
       "log-line": "loglijn"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Link naar logboekregel kopiëren",
       "copy-log": "Logboekregel kopiëren",
+      "hide-details": "",
       "icon-label": "Logboekmenu",
       "pin-to-outline": "Logboek vastzetten",
       "show-context": "Context tonen",
+      "show-details": "",
       "unpin-from-outline": "Logboek vastzetten ongedaan maken"
     },
     "log-row-context-modal": {
@@ -6776,7 +6781,8 @@
       "title": "Bibliotheekpanelen"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Mapdashboards en toestemmingen beheren"
@@ -7373,8 +7379,8 @@
     "version-list": {
       "grafana-dependency": "Afhankelijkheid van Grafana",
       "installed-version": "{{versionNumber}} (geïnstalleerde versie)",
-      "last-updated": "Laatst bijgewerkt",
       "latest-compatible-version": "{{versionNumber}} (nieuwste compatibele versie)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Er is geen versiegeschiedenis gevonden.",
       "version": "Versie"
     }
@@ -8201,7 +8207,7 @@
       "remove-datasource-filter": "Gegevensbron: {{datasource}}",
       "sort-placeholder": "Sorteren",
       "starred": "Favorieten",
-      "view-as-folders": "Weergeven op mappen",
+      "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
     },
     "dashboard-actions": {

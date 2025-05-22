@@ -5,7 +5,7 @@ import { dateTime, makeTimeRange, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
-import { TimeRangePicker } from './TimeRangePicker';
+import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
 
 const selectors = e2eSelectors.components.TimePicker;
 
@@ -16,6 +16,12 @@ const value: TimeRange = {
   from,
   to,
   raw: { from, to },
+};
+
+const relativeValue: TimeRange = {
+  from: from.subtract(1, 'hour'),
+  to: to,
+  raw: { from: 'now-1h', to: 'now' },
 };
 
 describe('TimePicker', () => {
@@ -32,6 +38,38 @@ describe('TimePicker', () => {
     );
 
     expect(screen.getByLabelText(/Time range selected/i)).toBeInTheDocument();
+  });
+
+  it('renders move buttons with relative range', () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={(value) => {}}
+        value={relativeValue}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    expect(screen.getByLabelText(/Move time range backwards/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Move time range forwards/i)).toBeInTheDocument();
+  });
+
+  it('renders move buttons with absolute range', () => {
+    render(
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={(value) => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    expect(screen.getByLabelText(/Move time range backwards/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Move time range forwards/i)).toBeInTheDocument();
   });
 
   it('switches overlay content visibility when toolbar button is clicked twice', async () => {
@@ -112,4 +150,56 @@ it('does not submit wrapping forms', async () => {
   await Promise.all(clicks);
 
   expect(onSubmit).not.toHaveBeenCalled();
+});
+
+describe('TimePickerTooltip', () => {
+  beforeAll(() => {
+    const mockIntl = {
+      resolvedOptions: () => ({
+        timeZone: 'America/New_York',
+      }),
+    };
+
+    jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => mockIntl as Intl.DateTimeFormat);
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
+  const timeRange: TimeRange = {
+    from: dateTime('2024-01-01T00:00:00Z'),
+    to: dateTime('2024-01-02T00:00:00Z'),
+    raw: {
+      from: dateTime('2024-01-01T00:00:00Z'),
+      to: dateTime('2024-01-02T00:00:00Z'),
+    },
+  };
+
+  it('renders time range with UTC timezone', () => {
+    render(<TimePickerTooltip timeRange={timeRange} timeZone="utc" />);
+
+    expect(screen.getByText(/2024-01-01 00:00:00/)).toBeInTheDocument();
+    expect(screen.getByText('to')).toBeInTheDocument();
+    expect(screen.getByText(/2024-01-02 00:00:00/)).toBeInTheDocument();
+    expect(screen.getByText('UTC, GMT')).toBeInTheDocument();
+  });
+
+  it('renders time range without timezone if timezone is not passed in', () => {
+    render(<TimePickerTooltip timeRange={timeRange} />);
+    expect(screen.queryByText('United States, EDT')).not.toBeInTheDocument();
+  });
+
+  it('renders time range with browser timezone', () => {
+    render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
+
+    expect(screen.getByText('Local browser time')).toBeInTheDocument();
+    expect(screen.getByText('United States, EDT')).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block
+  });
+
+  it('renders time range with specific timezone', () => {
+    render(<TimePickerTooltip timeRange={timeRange} timeZone="Africa/Accra" />);
+
+    expect(screen.getByText('Ghana, GMT')).toBeInTheDocument();
+  });
 });
