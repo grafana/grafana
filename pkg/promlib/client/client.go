@@ -20,6 +20,23 @@ type doer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+var endpointsSupportOnlyGet = []string{
+	"api/v1/label/", // label values /api/v1/label/<label key>/values
+	"api/v1/metadata",
+	"/api/v1/targets",
+	"/api/v1/rules",
+	"/api/v1/alerts",
+	"/api/v1/targets/metadata",
+	"/api/v1/alertmanagers",
+	"/api/v1/status/config",
+	"/api/v1/status/flags",
+	"/api/v1/status/runtimeinfo",
+	"/api/v1/status/buildinfo",
+	"/api/v1/status/tsdb",
+	"/api/v1/status/walreplay",
+	"/api/v1/notifications",
+}
+
 // Client is a custom Prometheus client. Reason for this is that Prom Go client serializes response into its own
 // objects, we have to go through them and then serialize again into DataFrame which isn't very efficient. Using custom
 // client we can parse response directly into DataFrame.
@@ -102,14 +119,77 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
 
-	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
-	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
+	// Determine if this endpoint only supports GET
+	shouldUseGet := false
+
+	// Check if the endpoint is in the list of endpoints that only support GET
+	for _, endpoint := range endpointsSupportOnlyGet {
+		if strings.HasPrefix(req.Path, endpoint) {
+			shouldUseGet = true
+			break
+		}
+	}
+
+	var httpRequest *http.Request
+	if shouldUseGet {
+		// For GET requests, we need to move any body params to URL query parameters
+		addBodyToQueryParams(u, req.Body)
+		// Use GET with empty body
+		httpRequest, err = createRequest(ctx, http.MethodGet, u, http.NoBody)
+	} else {
+		// Try POST first with the body as is
+		httpRequest, err = createRequest(ctx, http.MethodPost, u, bytes.NewReader(req.Body))
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	return c.doer.Do(httpRequest)
+	resp, err := c.doer.Do(httpRequest)
+
+	if resp == nil {
+		return nil, err
+	}
+
+	// If POST failed with 405 Method Not Allowed or 400 Status Bad Request, try GET
+	if err != nil || resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusBadRequest {
+		// Close the first response body
+		err = resp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		// For GET fallback, move body params to URL
+		addBodyToQueryParams(u, req.Body)
+
+		// Retry with GET and empty body
+		httpRequest, err = createRequest(ctx, http.MethodGet, u, http.NoBody)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err = c.doer.Do(httpRequest)
+	}
+
+	return resp, err
+}
+
+// addBodyToQueryParams parses the request body as form data and adds its parameters to the URL query string
+func addBodyToQueryParams(u *url.URL, body []byte) {
+	if len(body) > 0 {
+		// Try to parse the body as form data
+		formValues, err := url.ParseQuery(string(body))
+		if err == nil && len(formValues) > 0 {
+			// Merge query params from URL and body
+			queryValues := u.Query()
+			for key, values := range formValues {
+				for _, value := range values {
+					queryValues.Add(key, value)
+				}
+			}
+			u.RawQuery = queryValues.Encode()
+		}
+	}
 }
 
 func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map[string]string) (*http.Request, error) {
