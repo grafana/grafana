@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Caricamento in corso..."
-    },
-    "group-actions": {
-      "actions-trigger": "Azioni di gruppo della regola",
-      "details": "Dettagli",
-      "edit": "Modifica"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Impossibile caricare i dettagli del gruppo",
-      "unknown-error": "Errore sconosciuto"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Gruppo",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Nuova regola di registrazione dell'origine dei dati",
       "new-grafana-recording-rule": "Nuova regola di registrazione Grafana",
       "pagination": {
-        "next-page": "pagina successiva",
-        "previous-page": "pagina precedente"
+        "next-page": ""
       },
       "recording-rules": "Regole di registrazione",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "A capo"
     },
     "log-details": {
+      "close": "",
       "fields": "Campi",
       "links": "Link",
       "log-line": "Riga registro",
@@ -6174,15 +6168,20 @@
       "log-line": "riga registro"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copia il link alla riga del registro",
       "copy-log": "Copia la riga del registro",
+      "hide-details": "",
       "icon-label": "Menu registro",
       "pin-to-outline": "Fissa registro",
       "show-context": "Mostra contesto",
+      "show-details": "",
       "unpin-from-outline": "Sblocca registro"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Pannelli della libreria"
     },
     "machine-learning": {
-      "title": "Apprendimento automatico"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestisci dashboard e autorizzazioni delle cartelle"

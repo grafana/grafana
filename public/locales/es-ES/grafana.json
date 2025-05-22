@@ -1072,6 +1072,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1208,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Cargando…"
-    },
-    "group-actions": {
-      "actions-trigger": "Acciones del grupo de reglas",
-      "details": "Detalles",
-      "edit": "Editar"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Error al cargar los detalles del grupo",
-      "unknown-error": "Error desconocido"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupo",
@@ -2070,8 +2064,7 @@
       "new-datasource-recording-rule": "Nueva regla de registro de fuente de datos",
       "new-grafana-recording-rule": "Nueva regla de registro de Grafana",
       "pagination": {
-        "next-page": "página siguiente",
-        "previous-page": "página anterior"
+        "next-page": ""
       },
       "recording-rules": "Reglas de registro",
       "return-button": {
@@ -6155,6 +6148,7 @@
       "label-wrap-lines": "Ajustar líneas"
     },
     "log-details": {
+      "close": "",
       "fields": "Campos",
       "links": "Enlaces",
       "log-line": "Línea de registro",
@@ -6174,15 +6168,20 @@
       "log-line": "línea de log"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
       "copy-log": "Copiar línea de registro",
+      "hide-details": "",
       "icon-label": "Menú de registro",
       "pin-to-outline": "Anclar registro",
       "show-context": "Mostrar contexto",
+      "show-details": "",
       "unpin-from-outline": "Desanclar registro"
     },
     "log-row-context-modal": {
@@ -6776,7 +6775,8 @@
       "title": "Paneles de librería"
     },
     "machine-learning": {
-      "title": "Aprendizaje automático"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
