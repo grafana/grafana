@@ -731,6 +731,7 @@
       "edit": "Düzenle",
       "export": "Dışa aktar",
       "export-all": "Tümünü dışa aktar",
+      "learn-more": "Daha fazla bilgi edinin",
       "loading": "Yükleniyor...",
       "search-by-matchers": "Eşleşenlerle ara",
       "titles": {
@@ -1402,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Yeni uyarı kuralı",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Yeni veri kaynağı tarafından yönetilen kayıt kuralı",
-        "new-grafana-recording-rule": "Grafana tarafından yönetilen yeni kayıt kuralı",
+        "new-grafana-alerting-rule": "Yeni uyarı kuralı",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Yeni kayıt kuralı",
-        "provisioning": "Kuralları dosya sağlama veya Terraform aracılığıyla da tanımlayabilirsiniz. <2>Daha fazla bilgi edinin</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Yapılandırılmış Prometheus veya Loki veri kaynağı yok",
       "no-rules": "Kural bulunamadı.",
@@ -2048,6 +2053,7 @@
         "description": "Veri kaynağı yapılandırmasını kontrol edin. Veri kaynağı Prometheus API'yi destekliyor mu?",
         "title": "Bu veri kaynağından kurallar yüklenemedi"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -5036,7 +5042,7 @@
       "displaying-partial-queries": "{{ count }} sorgu gösteriliyor",
       "displaying-queries": "{{ count }} sorgu",
       "filter-aria-label": "Veri kaynakları için sorguları filtreleyin",
-      "filter-history": "Geçmişi filtreleyin",
+      "filter-history": "Geçmişi filtrele",
       "filter-placeholder": "Veri kaynakları için sorguları filtreleyin",
       "history-local": "Geçmiş tarayıcınızda yerel olarak barındırılır ve başkalarıyla paylaşılmaz.",
       "loading": "Yükleniyor...",
@@ -8351,8 +8357,8 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "JSON olarak dışa aktar",
-      "share-externally-title": "Haricî olarak paylaşın",
-      "share-internally-title": "Dâhilî olarak paylaşın",
+      "share-externally-title": "Haricî olarak paylaş",
+      "share-internally-title": "Dâhilî olarak paylaş",
       "share-snapshot-title": "Anlık görüntüyü paylaş"
     },
     "share-button": "Paylaş",
@@ -8446,13 +8452,13 @@
   "share-panel": {
     "drawer": {
       "new-library-panel-title": "Yeni kütüphane paneli",
-      "share-embed-title": "Eklemeyi paylaşın",
+      "share-embed-title": "Eklemeyi paylaş",
       "share-link-title": "Bağlantı ayarları"
     },
     "menu": {
       "new-library-panel-title": "Yeni kütüphane paneli",
-      "share-embed-title": "Eklemeyi paylaşın",
-      "share-link-title": "Bağlantıyı paylaşın",
+      "share-embed-title": "Eklemeyi paylaş",
+      "share-link-title": "Bağlantıyı paylaş",
       "share-snapshot-title": "Anlık görüntüyü paylaşın"
     },
     "new-library-panel": {

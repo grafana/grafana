@@ -6,7 +6,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 # Build all of the grafana.tar.gz packages.
-dagger run --silent go run ./cmd \
+dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a targz:pro:linux/amd64 \
   -a targz:pro:linux/arm64 \
@@ -21,7 +21,6 @@ dagger run --silent go run ./cmd \
   --grafana-repo="https://github.com/grafana/grafana.git" \
   --enterprise-ref=${DRONE_COMMIT} \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base=${UBUNTU_BASE} \
   --alpine-base=${ALPINE_BASE} \
   --patches-repo=${PATCHES_REPO} \
