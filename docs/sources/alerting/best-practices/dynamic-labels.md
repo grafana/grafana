@@ -181,7 +181,7 @@ The resulting alerting flow might look like this:
 
 This alerting setup allows you to:
 
-- Use a single rule for multiple severity levels
+- Use a single rule for multiple severity levels.
 - Route alerts dynamically using the label value
 - Simplify alert rule maintenance and avoid duplication
 
