@@ -37,7 +37,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --github-token=${GITHUB_TOKEN} \
   --destination=${local_dst} \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" > assets.txt
 

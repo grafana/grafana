@@ -12,7 +12,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
   # -a deb:enterprise:linux/arm/v7:nightly \
   # -a docker:enterprise:linux/arm/v7 \
   # -a docker:enterprise:linux/arm/v7:ubuntu \
-  
+
 dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
@@ -46,7 +46,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --github-token=${GITHUB_TOKEN} \
   --destination=${local_dst} \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" > assets.txt
 

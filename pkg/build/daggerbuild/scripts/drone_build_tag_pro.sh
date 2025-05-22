@@ -33,7 +33,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
   --version=${DRONE_TAG} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --destination=${local_dst} > assets.txt
