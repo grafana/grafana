@@ -197,7 +197,7 @@ Here's what happens if `severity` changes from `minor` to `warning`:
 
 1. The instance with `severity="minor"` disappears → it becomes a missing series
 1. A new instance with `severity="warning"` appears → it starts from scratch
-1. After two evaluations without data, the `minor` instance is **resolved and evicted**
+1. After two evaluations without data, the `minor` instance is **resolved and evicted**.
 
 Here’s a sequence example:
 
