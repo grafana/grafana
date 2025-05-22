@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   canSave: boolean;

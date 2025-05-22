@@ -1,6 +1,4 @@
 ---
-cascade:
-  noindex: true
 description: Configuration guide for Grafana CLI, a command line tool for managing Grafana resources as code.
 keywords:
   - configuration

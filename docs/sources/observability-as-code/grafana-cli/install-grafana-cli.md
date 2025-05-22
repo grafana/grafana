@@ -1,6 +1,4 @@
 ---
-cascade:
-  noindex: true
 description: Installation guide for Grafana CLI, a command line tool for managing Grafana Observability as Code
 keywords:
   - configuration
@@ -44,5 +42,5 @@ To build `grafanactl` from source you must:
 - Have `go` v1.24 (or greater) installed
 
 ```bash
-go install github.com/grafana/grafanactl/cmd@latest
+go install github.com/grafana/grafanactl/cmd/grafanactl@latest
 ```

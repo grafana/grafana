@@ -16,9 +16,9 @@ import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
@@ -70,6 +70,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
       search.matchesOnly
     );
   }, [search.serviceName, search.spanName, search.from, search.to, search.tags, search.query, search.matchesOnly]);
+
+  const { t } = useTranslate();
 
   return (
     <div className={styles.container}>

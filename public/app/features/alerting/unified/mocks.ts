@@ -231,6 +231,9 @@ export const mockGrafanaPromAlertingRule = (
     ...mockPromAlertingRule(),
     uid: 'mock-rule-uid-123',
     folderUid: 'NAMESPACE_UID',
+    isPaused: false,
+    totals: { alerting: 1 },
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };
@@ -813,3 +816,35 @@ export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}):
     ...partial,
   },
 });
+
+class LocalStorageMock implements Storage {
+  [key: string]: any;
+
+  getItem(key: string) {
+    return this[key] ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this[key] = value;
+  }
+
+  clear() {
+    Object.keys(this).forEach((key) => delete this[key]);
+  }
+
+  removeItem(key: string) {
+    delete this[key];
+  }
+
+  key(index: number) {
+    return Object.keys(this)[index] ?? null;
+  }
+
+  get length() {
+    return Object.keys(this).length;
+  }
+}
+
+export function mockLocalStorage(): Storage {
+  return new LocalStorageMock();
+}

@@ -493,6 +493,22 @@
   },
   {
     "type": "label",
+    "name": "area/correlations",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/area/expressions/sql",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/auth",
     "action": "addToProject",
     "addToProject": {
@@ -1193,6 +1209,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/699"
+    }
+  },
+  {
+    "type": "label",
+    "name": "type/docs",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/69"
     }
   }
 ]

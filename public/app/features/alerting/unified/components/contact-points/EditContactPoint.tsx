@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { useTranslate } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
@@ -20,6 +20,7 @@ const EditContactPoint = () => {
     error,
     data: contactPoint,
   } = useGetContactPoint({ name: contactPointName, alertmanager: selectedAlertmanager! });
+  const { t } = useTranslate();
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.edit-contact-point.text-loading', 'Loading...')} />;

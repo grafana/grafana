@@ -157,6 +157,20 @@
     },
     {
       "metadata": {
+        "name": "alertingImportYAMLUI",
+        "resourceVersion": "1747836716080",
+        "creationTimestamp": "2025-05-21T14:11:56Z"
+      },
+      "spec": {
+        "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingInsights",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2023-09-14T12:58:04Z",
@@ -214,16 +228,18 @@
     {
       "metadata": {
         "name": "alertingMigrationUI",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-14T16:40:05Z"
+        "resourceVersion": "1747241866044",
+        "creationTimestamp": "2025-03-14T16:40:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-14 16:57:46.044198 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
-        "stage": "experimental",
+        "description": "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {
@@ -356,8 +372,9 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-11-10T13:14:39Z"
+        "resourceVersion": "1745491786560",
+        "creationTimestamp": "2023-11-10T13:14:39Z",
+        "deletionTimestamp": "2025-05-06T07:23:50Z"
       },
       "spec": {
         "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
@@ -384,7 +401,8 @@
       "metadata": {
         "name": "alertmanagerRemoteOnly",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-30T16:27:08Z"
+        "creationTimestamp": "2023-10-30T16:27:08Z",
+        "deletionTimestamp": "2025-05-09T12:58:01Z"
       },
       "spec": {
         "description": "Disable the internal Alertmanager and only use the external one defined.",
@@ -911,13 +929,16 @@
     {
       "metadata": {
         "name": "disableEnvelopeEncryption",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "expression": "false"
       }
@@ -1216,7 +1237,8 @@
       "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-05-10T13:37:04Z"
+        "creationTimestamp": "2023-05-10T13:37:04Z",
+        "deletionTimestamp": "2025-05-19T15:29:06Z"
       },
       "spec": {
         "description": "Enables extra themes",
@@ -1267,13 +1289,16 @@
     {
       "metadata": {
         "name": "featureHighlights",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-02-03T11:53:23Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2022-02-03T11:53:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Highlight Grafana Enterprise features",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "allowSelfServe": true,
         "expression": "false"
       }
@@ -1391,7 +1416,8 @@
       "metadata": {
         "name": "grafanaManagedRecordingRules",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-22T17:53:16Z"
+        "creationTimestamp": "2024-04-22T17:53:16Z",
+        "deletionTimestamp": "2025-05-16T18:56:20Z"
       },
       "spec": {
         "description": "Enables Grafana-managed recording rules.",
@@ -1404,15 +1430,17 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRulesDatasources",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-07T13:30:40Z"
+        "resourceVersion": "1746998568254",
+        "creationTimestamp": "2025-03-07T13:30:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables writing to data sources for Grafana-managed recording rules.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "false"
       }
     },
     {
@@ -1527,8 +1555,11 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-02-21T10:19:07Z"
+        "resourceVersion": "1746800362427",
+        "creationTimestamp": "2023-02-21T10:19:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-09 14:19:22.427054 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support overriding cookie preferences per user",
@@ -1682,6 +1713,22 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAggregatorCapTokenAuth",
+        "resourceVersion": "1746996924159",
+        "creationTimestamp": "2025-05-11T20:48:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-11 20:55:24.159856 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-18T23:11:26Z"
@@ -1803,13 +1850,16 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-06-10T08:56:55Z"
+        "resourceVersion": "1746651640866",
+        "creationTimestamp": "2022-06-10T08:56:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 21:00:40.866696 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Logs the path for requests that are instrumented as unknown",
         "stage": "experimental",
-        "codeowner": "@grafana/hosted-grafana-team"
+        "codeowner": "@grafana/grafana-backend-group"
       }
     },
     {
@@ -2366,13 +2416,16 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-08-02T07:39:25Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-08-02T07:39:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-group"
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2789,13 +2842,16 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-04-03T16:53:38Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-04-03T16:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/sharing-squad",
         "hideFromAdminPage": true
       }
     },
@@ -3013,13 +3069,17 @@
     {
       "metadata": {
         "name": "tableNextGen",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "resourceVersion": "1747058265248",
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-12 13:57:45.248176 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
       }
     },
     {
@@ -3146,8 +3206,11 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "resourceVersion": "1746651640866",
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 21:00:40.866696 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes error logs to the request logger",
@@ -3287,7 +3350,8 @@
       "metadata": {
         "name": "wargamesTesting",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-09-13T18:32:01Z"
+        "creationTimestamp": "2023-09-13T18:32:01Z",
+        "deletionTimestamp": "2025-05-07T20:58:55Z"
       },
       "spec": {
         "description": "Placeholder feature flag for internal testing",
