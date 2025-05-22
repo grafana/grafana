@@ -82,7 +82,7 @@ jobs:
           # * pull-requests: write
           # * workflows: write // Allows the token to create new branches with runnable GitHub workflows
           repositories: "[\"grafana\", \"grafana-enterprise\"]"
-          permissions: "{\"contents:\" \"write\", \"pull-requests:\" \"write\", \"workflows\": \"write\"}"
+          permissions: "{\"contents\": \"write\", \"pull-requests\": \"write\", \"workflows\": \"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
         uses: actions/checkout@v4
