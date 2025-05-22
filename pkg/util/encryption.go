@@ -102,6 +102,7 @@ func decryptCFB(block cipher.Block, payload []byte) ([]byte, error) {
 	payload = payload[saltLength+aes.BlockSize:]
 	payloadDst := make([]byte, len(payload))
 
+	//nolint:staticcheck // SA1019: We won't change this in old versions
 	stream := cipher.NewCFBDecrypter(block, iv)
 
 	// XORKeyStream can work in-place if the two arguments are the same.
@@ -136,6 +137,7 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 		return nil, err
 	}
 
+	//nolint:staticcheck // SA1019: We won't change this in old versions
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
