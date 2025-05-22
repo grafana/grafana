@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n/internal';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { changeTheme } from 'app/core/services/theme';
-import { currentMockApiState, toggleMockApiAndReload } from 'app/mock-api-utils';
+import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 
 import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
@@ -115,6 +115,18 @@ function getGlobalActions(): CommandPaletteAction[] {
       keywords: 'mock api',
       priority: PREFERENCES_PRIORITY,
       perform: toggleMockApiAndReload,
+    });
+
+    actions.push({
+      id: 'preferences/dev/pseudo-locale',
+      section,
+      name: 'Toggle pseudo locale',
+      subtitle: 'Toggles between default language and pseudo locale',
+      keywords: 'pseudo locale',
+      priority: PREFERENCES_PRIORITY,
+      perform: () => {
+        togglePseudoLocale();
+      },
     });
     // eslint-enable @grafana/no-untranslated-strings
   }
