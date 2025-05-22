@@ -84,6 +84,9 @@ export const components = {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
       },
+      scope: {
+        input: 'data-testid azure-monitor-arg-query-editor-scope',
+      },
       subscriptions: {
         input: 'data-testid azure-monitor-args-subscription',
       },
