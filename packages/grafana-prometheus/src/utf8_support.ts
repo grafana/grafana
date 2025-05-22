@@ -130,7 +130,6 @@ const isValidLegacyRune = (char: string, index: number): boolean => {
  * @returns true if the code point is valid (between 0 and 0x10FFFF), false otherwise
  */
 const isValidCodePoint = (codePoint: number): boolean => {
-  // Validate the code point for UTF-8 compliance if needed.
   return codePoint >= 0 && codePoint <= 0x10ffff;
 };
 
