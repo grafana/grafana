@@ -147,6 +147,7 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
       columnGap: '27px',
       rowGap: '16px',
       width: '100%',
+      paddingBottom: theme.spacing(1),
     }),
     searchInput: css({
       flexGrow: '1',
@@ -174,6 +175,7 @@ interface TransformationsGridProps {
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   const styles = useStyles2(getTransformationGridStyles);
+  const { t } = useTranslate();
 
   return (
     <div className={styles.grid}>
@@ -218,7 +220,12 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               {transform.tags && transform.tags.size > 0 && (
                 <div className={styles.tagsWrapper}>
                   {Array.from(transform.tags).map((tag) => (
-                    <Badge key={tag} text={tag} color="darkgrey" icon="tag-alt" />
+                    <Badge
+                      color="darkgrey"
+                      icon="tag-alt"
+                      key={tag}
+                      text={t(`transformers.concatenate-transformer-editor.tag-${tag}`, tag)}
+                    />
                   ))}
                 </div>
               )}
@@ -254,6 +261,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
+        gap: theme.spacing(1),
       },
     }),
     titleRow: css({
@@ -271,15 +279,16 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     image: css({
       display: 'block',
-      maxWidth: '100%`',
+      maxWidth: '100%',
       marginTop: theme.spacing(2),
     }),
     grid: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
       gridAutoRows: '1fr',
-      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      gap: theme.spacing(1),
       width: '100%',
+      padding: `${theme.spacing(1)} 0`,
     }),
     cardDisabled: css({
       backgroundColor: theme.colors.action.disabledBackground,
@@ -295,6 +304,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     newCard: css({
       gridTemplateRows: 'min-content 0 1fr 0',
+      marginBottom: 0,
     }),
     pluginStateInfoWrapper: css({
       marginLeft: theme.spacing(0.5),
@@ -303,7 +313,6 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(0.5),
-      marginTop: theme.spacing(1),
     }),
   };
 }
