@@ -124,7 +124,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, defaultValue: unknown, params = {}, options?: Partial<BackendSrvRequest>) => {
+  request = async (url: string, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
@@ -134,7 +134,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       }
     }
 
-    return defaultValue;
+    return undefined;
   };
 
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
@@ -152,7 +152,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         API_V1.METADATA,
-        {},
         {},
         {
           showErrorAlert: false,
@@ -189,7 +188,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const value = await this.request(
       API_V1.LABELS_VALUES(interpolatedAndEscapedName),
-      [],
       params,
       getDefaultCacheHeaders(this.datasource.cacheLevel)
     );
@@ -226,7 +224,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       url += `?${searchParams.toString()}`;
     }
 
-    const res = await this.request(url, [], searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
       return [...this.labelKeys];
@@ -277,7 +275,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName ?? ''));
 
-    const value = await this.request(API_V1.LABELS_VALUES(interpolatedAndEscapedName), [], urlParams, requestOptions);
+    const value = await this.request(API_V1.LABELS_VALUES(interpolatedAndEscapedName), urlParams, requestOptions);
     return value ?? [];
   };
 
@@ -342,7 +340,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
     }
 
-    const data = await this.request(API_V1.SERIES, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const data = await this.request(API_V1.SERIES, urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     const { values } = processLabels(data, withName);
     return values;
   };
@@ -366,7 +364,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const data: string[] = await this.request(
       API_V1.LABELS,
-      [],
       urlParams,
       getDefaultCacheHeaders(this.datasource.cacheLevel)
     );
@@ -380,7 +377,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeries = async (timeRange: TimeRange, match: string): Promise<Array<Record<string, string>>> => {
     const range = this.datasource.getTimeRangeParams(timeRange);
     const params = { ...range, 'match[]': match };
-    return await this.request(API_V1.SERIES, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    return await this.request(API_V1.SERIES, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   /**
@@ -413,7 +410,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const timeParams = this.datasource.getAdjustedInterval(timeRange);
     const value = await this.request(
       url,
-      [],
       {
         labelName,
         queries: queries?.map((q) =>
