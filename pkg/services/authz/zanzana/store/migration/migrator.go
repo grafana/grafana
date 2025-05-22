@@ -4,8 +4,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,107 +14,13 @@ import (
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-// parsePostgresConnStr parses a PostgreSQL connection string into a map of key-value pairs
-func parsePostgresConnStr(connStr string) map[string]string {
-	// Extract key parameters from the connection string, handling quoted values
-	re := regexp.MustCompile(`(\w+)=(?:'([^']*)'|([^ ]*))`)
-	matches := re.FindAllStringSubmatch(connStr, -1)
-
-	// Build a map of connection parameters
-	params := make(map[string]string)
-	for _, match := range matches {
-		if len(match) >= 3 {
-			// If the value was quoted, use the quoted value (index 2), otherwise use the unquoted value (index 3)
-			value := match[2]
-			if value == "" && len(match) > 3 {
-				value = match[3]
-			}
-			params[match[1]] = value
-		}
-	}
-
-	// Set defaults for required parameters
-	if _, ok := params["host"]; !ok {
-		params["host"] = "localhost"
-	}
-	if _, ok := params["port"]; !ok {
-		params["port"] = "5432"
-	}
-
-	return params
-}
-
 func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string, logger log.Logger) error {
-	logger.Debug("Original connection string", "dbType", dbType, "connStr", connStr)
-
-	// For PostgreSQL, convert to URL format expected by OpenFGA
-	if dbType == migrator.Postgres {
-		// Create a temporary xorm engine to extract connection details
-		engine, err := xorm.NewEngine(dbType, connStr)
-		if err != nil {
-			return fmt.Errorf("failed to initialize xorm engine: %w", err)
-		}
-		defer engine.Close()
-
-		// Get parsed dataSourceName to build the URL
-		dialect := engine.Dialect()
-		if dialect == nil {
-			return fmt.Errorf("unable to get dialect from engine")
-		}
-
-		// Extract database connection info from the engine
-		dbName := dialect.URI().DbName
-		if dbName == "" {
-			return fmt.Errorf("unable to extract database name from connection string")
-		}
-
-		// Create connection URL based on engine dialect information
-		pgURL := &url.URL{
-			Scheme: "postgresql",
-			Path:   "/" + dbName,
-		}
-
-		// Extract all connection parameters from the connection string
-		params := parsePostgresConnStr(connStr)
-
-		// Set user and password
-		userStr := params["user"]
-		if userStr == "" {
-			userStr = "grafana"
-		}
-		pgURL.User = url.UserPassword(
-			url.QueryEscape(userStr),
-			url.QueryEscape(params["password"]),
-		)
-
-		// Set host and port
-		host := params["host"]
-		if host == "" {
-			host = "127.0.0.1"
-		}
-		port := params["port"]
-		if port == "" {
-			port = "5432"
-		}
-		pgURL.Host = fmt.Sprintf("%s:%s", host, port)
-
-		// Add SSL mode and other SSL parameters if present
-		query := url.Values{}
-		for _, param := range []string{"sslmode", "sslcert", "sslkey", "sslrootcert"} {
-			if value, ok := params[param]; ok && value != "" {
-				query.Set(param, value)
-			}
-		}
-		if len(query) > 0 {
-			pgURL.RawQuery = query.Encode()
-		}
-
-		// Use the constructed URL
-		logger.Debug("Converted postgres connection string", "original", connStr, "pgURL", pgURL.String())
-		connStr = pgURL.String()
+	switch dbType {
+	case migrator.SQLite:
+		// openfga expects sqlite but grafana uses sqlite3
+		dbType = "sqlite"
 	}
 
-	logger.Debug("Running migrations", "dbType", dbType, "connStr", connStr)
 	migrationErr := migrate.RunMigrations(migrate.MigrationConfig{
 		URI:    connStr,
 		Engine: dbType,
