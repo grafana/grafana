@@ -162,7 +162,7 @@ This pattern lets you express multiple alerting scenarios in a single rule, whil
 
 ## Example overview
 
-In the previous severity template, you can set the alert condition to `$B > 70` to prevent firing when `severity=none`, and then use the `severity` label to route distint alert instances to different contact points.
+In the previous severity template, you can set the alert condition to `$B > 70` to prevent firing when `severity=none`, and then use the `severity` label to route distinct alert instances to different contact points.
 
 For example, configure a [notification policy](ref:notification-policies) that matches `alertname="ServerHighCPU"` with the following children policies:
 
