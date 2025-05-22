@@ -267,7 +267,7 @@ describe('Prometheus Language Provider', () => {
       it('should properly interpolate template variables in queries', () => {
         const languageProvider = new LanguageProvider({
           ...defaultDatasource,
-          interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+          interpolateString: (string: string) => string.replace(/\$/g, 'interpolated-'),
         } as PrometheusDatasource);
         const getSeriesValues = languageProvider.getSeriesValues;
         const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -302,7 +302,7 @@ describe('Prometheus Language Provider', () => {
       it('should interpolate variables in series queries', () => {
         const languageProvider = new LanguageProvider({
           ...defaultDatasource,
-          interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+          interpolateString: (string: string) => string.replace(/\$/g, 'interpolated-'),
         } as PrometheusDatasource);
         const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
         const requestSpy = jest.spyOn(languageProvider, 'request');
