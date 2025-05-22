@@ -117,7 +117,7 @@ Use templated labels to inject additional context into alerts. To learn about sy
 You can define templated labels that produce either:
 
 - A fixed value per alert instance.
-- A dynamic value per alert instance that changes based on the last query result
+- A dynamic value per alert instance that changes based on the last query result.
 
 ### Fixed values per alert instance
 
