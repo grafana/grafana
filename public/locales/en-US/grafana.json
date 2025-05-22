@@ -5004,11 +5004,6 @@
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
     },
-    "on-open-snapshot-original-dashboard": {
-      "title": {
-        "proceed-to-external-site": "Proceed to external site?"
-      }
-    },
     "on-remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -5720,12 +5715,7 @@
           "matches-null-undefined-and-na-n": "Matches null, undefined and NaN"
         },
         "label": {
-          "empty": "Empty",
-          "false": "False",
-          "na-n": "NaN",
-          "null": "Null",
-          "null-na-n": "Null + NaN",
-          "true": "True"
+          "empty": "Empty"
         }
       },
       "tooltip-remove-color": "Remove color",
@@ -10293,10 +10283,9 @@
       "map-valid-paths": {
         "description": {
           "extract-fields-from-object": "=> extract fields from object",
-          "extract-value-first-element": "=> extract value2 first element",
-          "extract-value-second-element": "=> extract value2 second element",
-          "extract-value1": "=> extract value1",
-          "extract-value2": "=> extract value2"
+          "extract-value": "=> extract <1>{{ value }}</1>",
+          "extract-value-first-element": "=> extract <1>{{ value }}</1> first element",
+          "extract-value-second-element": "=> extract <1>{{ value }}</1> second element"
         }
       },
       "valid-paths": "Valid Paths:"

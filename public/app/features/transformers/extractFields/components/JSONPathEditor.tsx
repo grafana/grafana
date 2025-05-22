@@ -133,11 +133,6 @@ const getTooltips = () => {
           =&gt; extract <code>{'{{ value }}'}</code> first element
         </Trans>
       ),
-
-      // t(
-      //   'transformers.get-tooltips.map-valid-paths.description.extract-value-first-element',
-      //   '=> extract value2 first element'
-      // ),
     },
     {
       path: 'object.value2[1]',
