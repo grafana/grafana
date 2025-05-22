@@ -10,10 +10,12 @@ try {
   const esmIndex = pkgJson.content.publishConfig?.module ?? pkgJson.content.module;
   const cjsTypes = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
   const esmTypes = `./${join(dirname(esmIndex), 'index.d.mts')}`;
+
+  // Capture subpath exports (https://nodejs.org/api/packages.html#subpath-exports)
   const exportsConfig = pkgJson.content.publishConfig?.exports ?? pkgJson.content.exports ?? {};
-  const exportsReservedKeys = new Set(['./package.json', '.']);
-  const exportsRest = Object.fromEntries(
-    Object.entries(exportsConfig).filter(([key]) => !exportsReservedKeys.has(key))
+  const exportsReservedKeys = new Set(['.', './package.json']);
+  const subpathExports = Object.fromEntries(
+    Object.entries(exportsConfig).filter(([key]) => key.startsWith('./') && !exportsReservedKeys.has(key))
   );
 
   const exports = {
@@ -28,7 +30,7 @@ try {
         default: cjsIndex,
       },
     },
-    ...exportsRest,
+    ...subpathExports,
   };
   // Fix so scenes can access `@grafana/schema` nested dist import paths e.g.
   // import {} from '@grafana/schema/dist/esm/raw/composable/bargauge/panelcfg/x/BarGaugePanelCfg_types.gen'
