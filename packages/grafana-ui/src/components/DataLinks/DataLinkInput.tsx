@@ -3,7 +3,7 @@ import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react
 import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
