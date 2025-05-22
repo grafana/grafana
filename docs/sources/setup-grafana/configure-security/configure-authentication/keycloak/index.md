@@ -66,6 +66,8 @@ It is useful as a fallback or if the user has more than 150 group memberships.
 
 ## Keycloak configuration
 
+This guide will be based on Keycloak version 26.2.4; details below might change across different version.
+
 1. Create a client in Keycloak with the following settings:
 
 - Client ID: `grafana-oauth`
@@ -97,7 +99,9 @@ roles
 These scopes do not add group claims to the `id_token`. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
 {{% /admonition %}}
 
-3. For role mapping to work with the example configuration above,
+3. Now click into `grafana-oauth-dedicated`, click on "Add predefined Mapper", check box with "client roles" and then click on "Add". This will add a mapper to the roles you create in next step. Click into it, you will find another configuration page with "User Client Role". turn on "Add to userinfo" then "Save". This will allow Keycloak to send the roles you defined in keycloak to Grafana; Grafana will parse it through `role_attribute_path`.
+
+4. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
 
 ```
@@ -105,6 +109,8 @@ admin
 editor
 viewer
 ```
+
+Then 
 
 ## Teamsync
 
@@ -165,7 +171,7 @@ This is useful if you want to grant server administrator privileges to a subset 
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
-role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(resource_access.grafanasso.roles[], 'grafanaadmin') && 'GrafanaAdmin' || contains(resource_access.grafanasso.roles[], 'admin') && 'Admin' || contains(resource_access.grafanasso.roles[], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
