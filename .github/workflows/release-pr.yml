@@ -163,7 +163,7 @@ jobs:
           VERSION: ${{ inputs.version }}
         with:
           verb: run
-          args: go run -C grafana-main ./pkg/build/actions/bump-version -version=${VERSION}
+          args: go run -C .grafana-main ./pkg/build/actions/bump-version -version=${VERSION}
 
       - name: make gen-cue
         shell: bash
