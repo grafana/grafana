@@ -4342,7 +4342,7 @@ steps:
     | tar zx -C /bin
   - apk add docker
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - dagger run --silent ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+  - dagger run --silent go run ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION}
   depends_on:
   - github-app-generate-token
@@ -5205,6 +5205,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 16b16fc72db02c6f5bd322703f1d7f13c2d1ac38f6efb324590ba14512aadce3
+hmac: 1da5c9da34dc5dbffef8bef4ef84282997cb2363f929fdf4b897d2ee87a33703
 
 ...
