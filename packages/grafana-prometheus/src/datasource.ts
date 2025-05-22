@@ -69,14 +69,6 @@ import {
 import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
-const GET_AND_POST_METADATA_ENDPOINTS = [
-  'api/v1/query',
-  'api/v1/query_range',
-  'api/v1/series',
-  'api/v1/labels',
-  'suggestions',
-];
-
 export const InstantQueryRefIdIndex = '-Instant';
 
 export class PrometheusDatasource
@@ -291,34 +283,21 @@ export class PrometheusDatasource
 
   // Use this for tab completion features, wont publish response to other components
   async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
-    // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
-    if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
-      try {
-        return await lastValueFrom(
-          this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
-            method: this.httpMethod,
-            hideFromInspector: true,
-            showErrorAlert: false,
-            ...options,
-          })
-        );
-      } catch (err) {
-        // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && isFetchError(err) && (err.status === 405 || err.status === 400)) {
-          console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
-        } else {
-          throw err;
-        }
+    try {
+      return await lastValueFrom(
+        this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
+          method: 'POST',
+          hideFromInspector: true,
+          showErrorAlert: false,
+          ...options,
+        })
+      );
+    } catch (err) {
+      if (!isFetchError(err)) {
+        throw err;
       }
+      return err;
     }
-
-    return await lastValueFrom(
-      this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
-        method: 'GET',
-        hideFromInspector: true,
-        ...options,
-      })
-    ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
