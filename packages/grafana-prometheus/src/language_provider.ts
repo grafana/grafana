@@ -22,6 +22,7 @@ import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
+  getClientCacheDurationInMinutes,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
@@ -43,12 +44,32 @@ type UrlParamsType = {
   limit?: string;
 };
 
+/**
+ * Builds cache headers for Prometheus API requests.
+ *
+ * @param {number} durationInSeconds - Cache duration in seconds
+ * @returns {object} Object with headers property containing cache headers
+ */
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
     headers: {
       'X-Grafana-Cache': `private, max-age=${durationInSeconds}`,
     },
   };
+};
+
+/**
+ * Gets appropriate cache headers based on the configured cache level.
+ * Returns undefined if caching is disabled.
+ *
+ * @param {PrometheusCacheLevel} cacheLevel - Cache level (None, Low, Medium, High)
+ * @returns {object|undefined} Cache headers object or undefined if caching is disabled
+ */
+const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
+  if (cacheLevel !== PrometheusCacheLevel.None) {
+    return buildCacheHeaders(getClientCacheDurationInMinutes(cacheLevel) * 60);
+  }
+  return;
 };
 
 export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
@@ -73,9 +94,6 @@ export function getMetadataType(metric: string, metadata: PromMetricsMetadata): 
   return metadata[metric].type;
 }
 
-const PREFIX_DELIMITER_REGEX =
-  /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
-
 const secondsInDay = 86400;
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
@@ -96,25 +114,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  getDefaultCacheHeaders() {
-    if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
-      return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
-    }
-    return;
-  }
-
-  // Strip syntax chars so that typeahead suggestions can work on clean inputs
-  cleanText(s: string) {
-    const parts = s.split(PREFIX_DELIMITER_REGEX);
-    const last = parts.pop()!;
-    return last.trimStart().replace(/"$/, '').replace(/^"/, '');
-  }
-
-  get syntax() {
-    return PromqlSyntax;
-  }
-
-  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>) => {
+  request = async (url: string, defaultValue: unknown, params = {}, options?: Partial<BackendSrvRequest>) => {
     try {
       const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
@@ -156,32 +156,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return this.labelKeys;
   }
 
-  importFromAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
-    return toPromLikeQuery(labelBasedQuery);
-  }
-
-  exportToAbstractQuery(query: PromQuery): AbstractQuery {
-    const promQuery = query.expr;
-    if (!promQuery || promQuery.length === 0) {
-      return { refId: query.refId, labelMatchers: [] };
-    }
-    const tokens = Prism.tokenize(promQuery, PromqlSyntax);
-    const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
-    const nameLabelValue = getNameLabelValue(promQuery, tokens);
-    if (nameLabelValue && nameLabelValue.length > 0) {
-      labelMatchers.push({
-        name: '__name__',
-        operator: AbstractLabelOperator.Equal,
-        value: nameLabelValue,
-      });
-    }
-
-    return {
-      refId: query.refId,
-      labelMatchers,
-    };
-  }
-
   async getSeries(timeRange: TimeRange, selector: string, withName?: boolean): Promise<Record<string, string[]>> {
     if (this.datasource.lookupsDisabled) {
       return {};
@@ -204,7 +178,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const interpolatedName = this.datasource.interpolateString(key);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
-    const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
+    const value = await this.request(url, [], params, getDefaultCacheHeaders(this.datasource.cacheLevel));
     return value ?? [];
   };
 
@@ -238,7 +212,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       url += `?${searchParams.toString()}`;
     }
 
-    const res = await this.request(url, [], searchParams, this.getDefaultCacheHeaders());
+    const res = await this.request(url, [], searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
       return [...this.labelKeys];
@@ -279,7 +253,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...(withLimit ? { limit: withLimit } : {}),
     };
     let requestOptions: Partial<BackendSrvRequest> | undefined = {
-      ...this.getDefaultCacheHeaders(),
+      ...getDefaultCacheHeaders(this.datasource.cacheLevel),
       ...(requestId && { requestId }),
     };
 
@@ -361,7 +335,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const url = `/api/v1/series`;
 
-    const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
+    const data = await this.request(url, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     const { values } = processLabels(data, withName);
     return values;
   };
@@ -384,7 +358,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
     const url = `/api/v1/labels`;
 
-    const data: string[] = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
+    const data: string[] = await this.request(url, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     // Convert string array to Record<string , []>
     return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
   };
@@ -396,7 +370,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams(timeRange);
     const params = { ...range, 'match[]': match };
-    return await this.request(url, {}, params, this.getDefaultCacheHeaders());
+    return await this.request(url, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   /**
@@ -455,7 +429,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       {
         ...(requestId && { requestId }),
         headers: {
-          ...this.getDefaultCacheHeaders()?.headers,
+          ...getDefaultCacheHeaders(this.datasource.cacheLevel)?.headers,
           'Content-Type': 'application/json',
         },
         method: 'POST',
@@ -464,6 +438,57 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     return value ?? [];
   };
+}
+
+export const importFromAbstractQuery = (labelBasedQuery: AbstractQuery): PromQuery => {
+  return toPromLikeQuery(labelBasedQuery);
+};
+
+export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
+  const promQuery = query.expr;
+  if (!promQuery || promQuery.length === 0) {
+    return { refId: query.refId, labelMatchers: [] };
+  }
+  const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+  const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
+  const nameLabelValue = getNameLabelValue(promQuery, tokens);
+  if (nameLabelValue && nameLabelValue.length > 0) {
+    labelMatchers.push({
+      name: '__name__',
+      operator: AbstractLabelOperator.Equal,
+      value: nameLabelValue,
+    });
+  }
+
+  return {
+    refId: query.refId,
+    labelMatchers,
+  };
+};
+
+/**
+ * Checks if an error is a cancelled request error.
+ * Used to avoid logging cancelled request errors.
+ *
+ * @param {unknown} error - Error to check
+ * @returns {boolean} True if the error is a cancelled request error
+ */
+function isCancelledError(error: unknown): error is {
+  cancelled: boolean;
+} {
+  return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
+}
+
+/**
+ * Removes quotes from a string if they exist.
+ * Used to handle utf8 label keys in Prometheus queries.
+ *
+ * @param {string} input - Input string that may have surrounding quotes
+ * @returns {string} String with surrounding quotes removed if they existed
+ */
+export function removeQuotesIfExist(input: string): string {
+  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
+  return match?.[1] ?? input;
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
@@ -476,17 +501,4 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
     }
   }
   return nameLabelValue;
-}
-
-function isCancelledError(error: unknown): error is {
-  cancelled: boolean;
-} {
-  return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
-}
-
-// For utf8 labels we use quotes around the label
-// While requesting the label values we must remove the quotes
-export function removeQuotesIfExist(input: string): string {
-  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
-  return match?.[1] ?? input;
 }

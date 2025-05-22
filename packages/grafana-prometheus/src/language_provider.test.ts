@@ -4,7 +4,11 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
-import LanguageProvider, { removeQuotesIfExist } from './language_provider';
+import LanguageProvider, {
+  exportToAbstractQuery,
+  importFromAbstractQuery,
+  removeQuotesIfExist,
+} from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
@@ -51,63 +55,10 @@ describe('Language completion provider', () => {
     getTimeRangeParams: getTimeRangeParams,
     interpolateString: (string: string) => string,
     hasLabelsMatchAPISupport: () => false,
-    getQuantizedTimeRangeParams: () =>
-      getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
     getDaysToCacheMetadata: () => 1,
     getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
     cacheLevel: PrometheusCacheLevel.None,
   } as unknown as PrometheusDatasource;
-
-  describe('cleanText', () => {
-    const cleanText = new LanguageProvider(defaultDatasource).cleanText;
-    it('does not remove metric or label keys', () => {
-      expect(cleanText('foo')).toBe('foo');
-      expect(cleanText('foo_bar')).toBe('foo_bar');
-    });
-
-    it('keeps trailing space but removes leading', () => {
-      expect(cleanText('foo ')).toBe('foo ');
-      expect(cleanText(' foo')).toBe('foo');
-    });
-
-    it('removes label syntax', () => {
-      expect(cleanText('foo="bar')).toBe('bar');
-      expect(cleanText('foo!="bar')).toBe('bar');
-      expect(cleanText('foo=~"bar')).toBe('bar');
-      expect(cleanText('foo!~"bar')).toBe('bar');
-      expect(cleanText('{bar')).toBe('bar');
-    });
-
-    it('removes previous operators', () => {
-      expect(cleanText('foo + bar')).toBe('bar');
-      expect(cleanText('foo+bar')).toBe('bar');
-      expect(cleanText('foo - bar')).toBe('bar');
-      expect(cleanText('foo * bar')).toBe('bar');
-      expect(cleanText('foo / bar')).toBe('bar');
-      expect(cleanText('foo % bar')).toBe('bar');
-      expect(cleanText('foo ^ bar')).toBe('bar');
-      expect(cleanText('foo and bar')).toBe('bar');
-      expect(cleanText('foo or bar')).toBe('bar');
-      expect(cleanText('foo unless bar')).toBe('bar');
-      expect(cleanText('foo == bar')).toBe('bar');
-      expect(cleanText('foo != bar')).toBe('bar');
-      expect(cleanText('foo > bar')).toBe('bar');
-      expect(cleanText('foo < bar')).toBe('bar');
-      expect(cleanText('foo >= bar')).toBe('bar');
-      expect(cleanText('foo <= bar')).toBe('bar');
-      expect(cleanText('memory')).toBe('memory');
-    });
-
-    it('removes aggregation syntax', () => {
-      expect(cleanText('(bar')).toBe('bar');
-      expect(cleanText('(foo,bar')).toBe('bar');
-      expect(cleanText('(foo, bar')).toBe('bar');
-    });
-
-    it('removes range syntax', () => {
-      expect(cleanText('[1m')).toBe('1m');
-    });
-  });
 
   describe('getSeriesLabels', () => {
     const timeRange = getMockTimeRange();
@@ -735,15 +686,13 @@ describe('Language completion provider', () => {
 
   describe('Query imports', () => {
     it('returns empty queries', async () => {
-      const instance = new LanguageProvider(defaultDatasource);
-      const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      const result = await importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
       expect(result).toEqual({ refId: 'bar', expr: '', range: true });
     });
 
     describe('exporting to abstract query', () => {
       it('exports labels with metric name', async () => {
-        const instance = new LanguageProvider(defaultDatasource);
-        const abstractQuery = instance.exportToAbstractQuery({
+        const abstractQuery = exportToAbstractQuery({
           refId: 'bar',
           expr: 'metric_name{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
           instant: true,

@@ -42,7 +42,11 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
+import PrometheusLanguageProvider, {
+  exportToAbstractQuery,
+  importFromAbstractQuery,
+  SUGGESTIONS_LIMIT,
+} from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -282,11 +286,11 @@ export class PrometheusDatasource
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
-    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+    return queries.map((query) => exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components
