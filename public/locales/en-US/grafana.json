@@ -10659,7 +10659,7 @@
     },
     "create-interval-variable-adapter": {
       "description": {
-        "define-timespan-interval": "Define a timespan interval (ex 1m, 1h, 1d)"
+        "define-timespan-interval": "Define a timespan interval (for example: {{timeIntervals}})"
       }
     },
     "create-query-variable-adapter": {

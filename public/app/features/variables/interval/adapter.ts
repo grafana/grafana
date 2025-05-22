@@ -18,7 +18,8 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
     id: 'interval',
     description: t(
       'variables.create-interval-variable-adapter.description.define-timespan-interval',
-      'Define a timespan interval (ex 1m, 1h, 1d)'
+      'Define a timespan interval (for example: {{timeIntervals}})',
+      { timeIntervals: '1m, 1h, 1d' }
     ),
     name: 'Interval',
     initialState: initialIntervalVariableModelState,
