@@ -6,10 +6,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { FolderDTO } from 'app/types';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
-import { Folder } from '../../../types/rule-form';
-import { useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { Folder } from '../../types/rule-form';
+import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 async function getNestedFoldersIn(uid: string) {
   const response = await lastValueFrom(

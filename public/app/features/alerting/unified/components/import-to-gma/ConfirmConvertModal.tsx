@@ -11,10 +11,10 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { trackImportToGMAError, trackImportToGMASuccess } from '../../../Analytics';
-import { convertToGMAApi } from '../../../api/convertToGMAApi';
-import { GRAFANA_ORIGIN_LABEL } from '../../../utils/labels';
-import { createListFilterLink } from '../../../utils/navigation';
+import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
+import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
+import { createListFilterLink } from '../../utils/navigation';
 
 import { ImportFormValues } from './ImportFromDSRules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';

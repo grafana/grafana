@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslate } from '@grafana/i18n';
 import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
 
-import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
+import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ImportFormValues } from './ImportFromDSRules';
 

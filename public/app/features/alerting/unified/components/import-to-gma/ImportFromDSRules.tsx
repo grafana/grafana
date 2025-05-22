@@ -21,12 +21,12 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { Folder } from '../../../types/rule-form';
-import { DataSourceType } from '../../../utils/datasource';
-import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
-import { AlertingPageWrapper } from '../../AlertingPageWrapper';
-import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
-import { CloudRulesSourcePicker } from '../../rule-editor/CloudRulesSourcePicker';
+import { Folder } from '../../types/rule-form';
+import { DataSourceType } from '../../utils/datasource';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { CreateNewFolder } from '../create-folder/CreateNewFolder';
+import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
