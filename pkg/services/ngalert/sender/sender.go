@@ -185,11 +185,11 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		s.logger.Debug(
 			"Sending alert",
 			"alert",
-			a,
+			na.String(),
 			"starts_at",
-			a.StartsAt,
+			na.StartsAt,
 			"ends_at",
-			a.EndsAt)
+			na.EndsAt)
 	}
 
 	s.manager.Send(as...)
