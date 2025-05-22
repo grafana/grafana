@@ -223,7 +223,6 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error
 		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
 	}
 
-	// TODO: delete metadata
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("get rows affected: %w", err)
