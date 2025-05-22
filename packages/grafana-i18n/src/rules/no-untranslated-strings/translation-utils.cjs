@@ -142,7 +142,7 @@ function canBeFixed(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/features\/(.+?)\//);
+  const match = filename.match(/public\/app\/(?:features|extensions)\/(.+?)\//);
   if (match) {
     return match[1];
   }
@@ -369,26 +369,29 @@ const firstCharIsUpper = (str) => {
  */
 const getUseTranslateFixer = (node, fixer, context) => {
   const parentMethod = getParentMethod(node, context);
+  if (!parentMethod || parentMethod.body.type !== AST_NODE_TYPES.BlockStatement) {
+    return;
+  }
+  const parentMethodName = (() => {
+    if (parentMethod.type === AST_NODE_TYPES.FunctionDeclaration && parentMethod.id) {
+      return parentMethod.id.name;
+    }
+    if (
+      parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
+      parentMethod.parent.id.type === AST_NODE_TYPES.Identifier
+    ) {
+      return parentMethod.parent.id.name;
+    }
+    return null;
+  })();
 
-  const functionIsNotUpperCase =
-    parentMethod &&
-    parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
-    (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name));
-
-  const variableDeclaratorIsNotUpperCase =
-    parentMethod &&
-    parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
-    parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
-    !firstCharIsUpper(parentMethod.parent.id.name);
+  const nameIsNotUpperCase = parentMethodName && !firstCharIsUpper(parentMethodName);
+  const nameStartsWithUse = parentMethodName && parentMethodName.startsWith('use');
 
   // If the node is not within a function, or the parent method does not start with an uppercase letter,
+  // and does not start with `use` (i.e. it's not a React hook),
   // then we can't reliably add `useTranslate`, as this may not be a React component
-  if (
-    !parentMethod ||
-    functionIsNotUpperCase ||
-    variableDeclaratorIsNotUpperCase ||
-    parentMethod.body.type !== AST_NODE_TYPES.BlockStatement
-  ) {
+  if (nameIsNotUpperCase && !nameStartsWithUse) {
     return;
   }
 
@@ -402,7 +405,7 @@ const getUseTranslateFixer = (node, fixer, context) => {
     (returnStatement.argument.type === AST_NODE_TYPES.JSXElement ||
       returnStatement.argument.type === AST_NODE_TYPES.JSXFragment);
 
-  if (!returnStatementIsJsx) {
+  if (!returnStatementIsJsx && !nameStartsWithUse) {
     return;
   }
   const tDeclarationExists = getTDeclaration(parentMethod, context);

@@ -413,6 +413,31 @@ const foo = function() {
     },
 
     {
+      name: 'Fixes using useTranslate when inside something named like a React hook',
+      code: `
+const useFoo = () => {
+  return { label: 'foo' };
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const useFoo = () => {
+  const { t } = useTranslate();
+return { label: t("some-feature.use-foo.label.foo", "foo") };
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
       name: 'Fixes when Trans import already exists',
       code: `
 ${TRANS_IMPORT}
