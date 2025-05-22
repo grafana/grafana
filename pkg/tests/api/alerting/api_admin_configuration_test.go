@@ -35,7 +35,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		EnableUnifiedAlerting:          true,
 		DisableAnonymous:               true,
 		NGAlertAdminConfigPollInterval: 2 * time.Second,
-		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 3
+		UnifiedAlertingDisabledOrgs:    []int64{disableOrgID}, // disable unified alerting for organisation 2
 		AppModeProduction:              true,
 	})
 
