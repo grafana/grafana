@@ -43,8 +43,6 @@ type outboxMessageDB struct {
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
-	var messageID string
-
 	messageID, err := s.insertMessage(ctx, input)
 	if err != nil {
 		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
