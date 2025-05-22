@@ -1,7 +1,7 @@
 import { HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
@@ -100,7 +100,7 @@ describe('GroupDetailsPage', () => {
       // Assert
       expect(header).toHaveTextContent('test-group-cpu');
       expect(await screen.findByRole('link', { name: /test-folder-title/ })).toBeInTheDocument();
-      expect(await screen.findByText(/5m/)).toBeInTheDocument();
+      expect(await screen.findByText(group.interval!)).toBeInTheDocument();
       expect(editLink).toHaveAttribute(
         'href',
         '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fgrafana%2Fnamespaces%2Ftest-folder-uid%2Fgroups%2Ftest-group-cpu%2Fview'
@@ -109,12 +109,18 @@ describe('GroupDetailsPage', () => {
       const tableRows = await ui.tableRow.findAll(await ui.rowsTable.find());
       expect(tableRows).toHaveLength(2);
 
-      expect(tableRows[0]).toHaveTextContent('High CPU Usage');
-      expect(tableRows[0]).toHaveTextContent('10m');
+      expect(within(tableRows[0]).getByRole('link', { name: rule1.grafana_alert.title })).toHaveAttribute(
+        'href',
+        `/alerting/grafana/${rule1.grafana_alert.uid}/view`
+      );
+      expect(tableRows[0]).toHaveTextContent(String(rule1.for));
       expect(tableRows[0]).toHaveTextContent('5');
 
-      expect(tableRows[1]).toHaveTextContent('Memory Pressure');
-      expect(tableRows[1]).toHaveTextContent('5m');
+      expect(within(tableRows[1]).getByRole('link', { name: rule2.grafana_alert.title })).toHaveAttribute(
+        'href',
+        `/alerting/grafana/${rule2.grafana_alert.uid}/view`
+      );
+      expect(tableRows[1]).toHaveTextContent(String(rule2.for));
       expect(tableRows[1]).toHaveTextContent('3');
     });
 
