@@ -182,7 +182,7 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
 
-		s.logger.Debug("msg",
+		s.logger.Debug(
 			"Sending alert",
 			"alert",
 			a,
