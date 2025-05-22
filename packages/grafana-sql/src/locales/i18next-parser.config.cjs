@@ -6,7 +6,7 @@ module.exports = {
   verbose: false,
   resetDefaultValueLocale: 'en-US', // Updates extracted values when they change in code
 
-  defaultNamespace: '@grafana/sql',
+  defaultNamespace: 'grafana-sql',
   input: ['../**/*.{tsx,ts}'],
-  output: './locales/$LOCALE/$NAMESPACE.json',
+  output: './src/locales/$LOCALE/$NAMESPACE.json',
 };
