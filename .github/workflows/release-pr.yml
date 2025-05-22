@@ -80,7 +80,7 @@ jobs:
           # Permissions:
           # * contents: write
           # * pull-requests: write
-          repositories: "[\"grafana\"]"
+          repositories: "[\"grafana/grafana\", \"grafana/grafana-enterprise\"]"
           permissions: "{\"contents\": \"write\", \"pull-requests\": \"write\"}"
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
