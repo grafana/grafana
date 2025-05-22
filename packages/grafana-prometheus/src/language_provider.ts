@@ -37,6 +37,16 @@ const EMPTY_SELECTOR = '{}';
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
 
+/**
+ * Prometheus API endpoints for fetching resoruces
+ */
+const API_V1 = {
+  METADATA: '/api/v1/metadata',
+  SERIES: '/api/v1/series',
+  LABELS: '/api/v1/labels',
+  LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
+};
+
 type UrlParamsType = {
   start?: string;
   end?: string;
@@ -141,7 +151,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
-        '/api/v1/metadata',
+        API_V1.METADATA,
         {},
         {},
         {
@@ -177,8 +187,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = { ...this.datasource.getAdjustedInterval(range), ...(limit ? { limit } : {}) };
     const interpolatedName = this.datasource.interpolateString(key);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
-    const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
-    const value = await this.request(url, [], params, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const value = await this.request(
+      API_V1.LABELS_VALUES(interpolatedAndEscapedName),
+      [],
+      params,
+      getDefaultCacheHeaders(this.datasource.cacheLevel)
+    );
     return value ?? [];
   };
 
@@ -190,7 +204,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[], limit?: string): Promise<string[]> => {
-    let url = '/api/v1/labels';
+    let url = API_V1.LABELS;
     const timeParams = this.datasource.getAdjustedInterval(timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
@@ -263,12 +277,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName ?? ''));
 
-    const value = await this.request(
-      `/api/v1/label/${interpolatedAndEscapedName}/values`,
-      [],
-      urlParams,
-      requestOptions
-    );
+    const value = await this.request(API_V1.LABELS_VALUES(interpolatedAndEscapedName), [], urlParams, requestOptions);
     return value ?? [];
   };
 
@@ -333,9 +342,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
     }
 
-    const url = `/api/v1/series`;
-
-    const data = await this.request(url, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const data = await this.request(API_V1.SERIES, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     const { values } = processLabels(data, withName);
     return values;
   };
@@ -356,9 +363,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
       ...(withLimit ? { limit: withLimit } : {}),
     };
-    const url = `/api/v1/labels`;
 
-    const data: string[] = await this.request(url, [], urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const data: string[] = await this.request(
+      API_V1.LABELS,
+      [],
+      urlParams,
+      getDefaultCacheHeaders(this.datasource.cacheLevel)
+    );
     // Convert string array to Record<string , []>
     return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
   };
@@ -367,10 +378,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.
    */
   fetchSeries = async (timeRange: TimeRange, match: string): Promise<Array<Record<string, string>>> => {
-    const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams(timeRange);
     const params = { ...range, 'match[]': match };
-    return await this.request(url, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    return await this.request(API_V1.SERIES, {}, params, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   /**

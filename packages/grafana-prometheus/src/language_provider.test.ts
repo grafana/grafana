@@ -56,8 +56,8 @@ const getMockQuantizedTimeRangeParams = (override?: Partial<TimeRange>): TimeRan
 const verifyRequestParams = (
   requestSpy: jest.SpyInstance,
   expectedUrl: string,
-  expectedParams: any,
-  expectedOptions?: any
+  expectedParams: unknown,
+  expectedOptions?: unknown
 ) => {
   expect(requestSpy).toHaveBeenCalled();
   expect(requestSpy).toHaveBeenCalledWith(
