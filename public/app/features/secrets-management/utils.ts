@@ -9,18 +9,9 @@ import {
   NewSecret,
   Secret,
   SecretFormValues,
-  SecretsListResponse,
   SecretsListResponseItem,
   SecretStatusPhase,
 } from './types';
-
-export function transformListResponse(response: SecretsListResponse): Secret[] {
-  if (!response.items) {
-    return [];
-  }
-
-  return response.items.map(transformToSecret);
-}
 
 export function transformToSecret(subject: SecretsListResponseItem): Secret {
   return {
@@ -98,7 +89,7 @@ export function secretFormValuesToSecret(secretFormValues: SecretFormValues): Ne
   return secret as NewSecret;
 }
 
-export function isSecretPending(secret: Secret): boolean {
+export function isSecretPending(secret: Pick<Secret, 'status'>): boolean {
   return secret.status === SecretStatusPhase.Pending;
 }
 
@@ -128,7 +119,7 @@ export function validateSecretDescription(value: string): true | string {
     return t('secrets-management.form.description.error.required', 'Description is required');
   }
 
-  if (value.length > 253) {
+  if (value.length > SUBDOMAIN_MAX_LENGTH) {
     return t(
       'secrets-management.form.description.error.too-long',
       'Description must be less than {{maxLength}} characters',
@@ -176,13 +167,25 @@ export function validateSecretLabel(key: 'name' | 'value', nameOrValue: string):
         );
   }
 
+  if (!RegExp(/^[a-zA-Z\d][a-zA-Z\d._-]*$/).test(nameOrValue)) {
+    return key === 'name'
+      ? t(
+          'secrets.form.label-name.error.invalid',
+          'Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
+        )
+      : t(
+          'secrets.form.label-value.error.invalid',
+          'Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
+        );
+  }
+
   return true;
 }
 
 export function checkLabelNameAvailability(
   name: Secret['labels'][number]['name'],
   index: number,
-  { labels }: SecretFormValues
+  { labels }: Pick<SecretFormValues, 'labels'>
 ) {
   const validation = validateSecretLabel('name', name);
   if (validation !== true) {
@@ -191,7 +194,7 @@ export function checkLabelNameAvailability(
 
   // Only check against label names before the current label
   if (labels.slice(0, index).some((subject) => subject.name === name)) {
-    return t('secrets-management.form.label-name.unique-name', 'Label name must be unique');
+    return t('secrets.form.label-name.error.unique', 'Label name must be unique');
   }
 
   return true;
@@ -231,7 +234,7 @@ export function transformSecretName(value: string): string {
  * @param nameOrValue
  */
 export function transformSecretLabel(nameOrValue: string): string {
-  return nameOrValue.toLowerCase().replaceAll(' ', '-');
+  return nameOrValue.replaceAll(' ', '-');
 }
 
 export function isFieldInvalid(fieldName: string, errors: Record<string, { message?: string } | undefined>) {

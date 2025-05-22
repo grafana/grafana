@@ -30,11 +30,11 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
   const isNew = isUninitialized;
   const initialValues = isNew ? undefined : secretToSecretFormValues(secret);
   const modalTitle = isNew
-    ? t('secrets-management.edit-modal.title.create', 'Create secret')
-    : t('secrets-management.edit-modal.title.edit', 'Edit secret {{name}}', { name: secret?.name ?? '' });
+    ? t('secrets.edit-modal.title.create', 'Create secret')
+    : t('secrets.edit-modal.title.edit', 'Edit secret {{name}}', { name: secret?.name ?? '' });
   const submitText = isNew
-    ? t('secrets-management.form.btn-create', 'Create')
-    : t('secrets-management.form.btn-update', 'Update');
+    ? t('secrets.edit-modal.form.button-create', 'Create')
+    : t('secrets.edit-modal.form.button-update', 'Update');
 
   const handleSubmit = useCallback(
     async (data: SecretFormValues) => {

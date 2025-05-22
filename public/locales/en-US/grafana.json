@@ -8241,6 +8241,16 @@
     "actions": {
       "create-secret": "Create secret"
     },
+    "edit-modal": {
+      "form": {
+        "button-create": "Create",
+        "button-update": "Update"
+      },
+      "title": {
+        "create": "Create secret",
+        "edit": "Edit secret {{name}}"
+      }
+    },
     "empty-state": {
       "description": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
       "title": "You don't have any secrets yet."
@@ -8248,12 +8258,15 @@
     "form": {
       "label-name": {
         "error": {
+          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
           "required": "Label name is required",
-          "too-long": "Label name must be less than {{maxLength}} characters"
+          "too-long": "Label name must be less than {{maxLength}} characters",
+          "unique": "Label name must be unique"
         }
       },
       "label-value": {
         "error": {
+          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
           "required": "Label value is required",
           "too-long": "Label value must be less than {{maxLength}} characters"
         }
@@ -8289,16 +8302,8 @@
     "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
   },
   "secrets-management": {
-    "edit-modal": {
-      "title": {
-        "create": "Create secret",
-        "edit": "Edit secret {{name}}"
-      }
-    },
     "form": {
       "btn-cancel": "Cancel",
-      "btn-create": "Create",
-      "btn-update": "Update",
       "decrypters": {
         "description": "Services able to decrypt secret value",
         "label": "Decrypters",
@@ -8313,8 +8318,7 @@
         "label": "Description"
       },
       "label-name": {
-        "placeholder": "name",
-        "unique-name": "Label name must be unique"
+        "placeholder": "name"
       },
       "label-value": {
         "placeholder": "value"

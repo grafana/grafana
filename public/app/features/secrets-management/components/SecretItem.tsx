@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
@@ -14,7 +14,6 @@ interface SecretItemProps {
   secret: Secret;
   onEditSecret: (name: string) => void;
   onDeleteSecret: (name: string) => void;
-  key?: React.Attributes['key']; // Needed for TypeScript (at least for me).
 }
 
 export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemProps) {
@@ -29,7 +28,7 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
     return debounce(
       () => {
         const { height } = itemRef?.current?.getBoundingClientRect() ?? { height: 0 };
-        // inline is 26px and wrapped is 62px+ (39px is in the middle of the two states).
+        // inline is 26px, and wrapped is 62px+ (39px is in the middle of the two states).
         // if there are no labels, we need to pretend that we are in a wrapped state to push the margin onto the name
         setIsHeadingWrapped(height > 39 || !hasLabels);
       },
