@@ -28,6 +28,7 @@ func ProvideOutboxQueue(db contracts.Database) contracts.OutboxQueue {
 }
 
 type outboxMessageDB struct {
+	RequestID       string
 	MessageID       string
 	MessageType     contracts.OutboxMessageType
 	Name            string
@@ -35,12 +36,67 @@ type outboxMessageDB struct {
 	EncryptedSecret sql.NullString
 	KeeperName      sql.NullString
 	ExternalID      sql.NullString
+	ReceiveCount    int
 	Created         int64
+}
+
+type outboxMessageMetadataDB struct {
+	MessageID    string
+	ReceiveCount int
 }
 
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
+	var messageID string
+
+	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		messageID, err := s.insertMessage(ctx, input)
+		if err != nil {
+			return fmt.Errorf("inserting message into outbox table: %+w", err)
+		}
+
+		if err := s.insertMessageMetadata(ctx, messageID); err != nil {
+			return fmt.Errorf("inserting outbox message metadata row: %+w", err)
+		}
+		return nil
+	})
+
+	return messageID, err
+}
+
+func (s *outboxStore) insertMessageMetadata(ctx context.Context, messageID string) error {
+	req := insertSecureValueOutboxMetadata{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row: &outboxMessageMetadataDB{
+			MessageID:    messageID,
+			ReceiveCount: 0,
+		},
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxInsertMetadata, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxInsertMetadata.Name(), err)
+	}
+
+	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("inserting message metadata into secure value outbox metadata table: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if rowsAffected != 1 {
+		return fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
+	}
+
+	return nil
+}
+
+func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
 	keeperName := sql.NullString{}
 	if input.KeeperName != nil {
 		keeperName = sql.NullString{
@@ -71,6 +127,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 	req := appendSecureValueOutbox{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Row: &outboxMessageDB{
+			RequestID:       input.RequestID,
 			MessageID:       messageID,
 			MessageType:     input.Type,
 			Name:            input.Name,
@@ -78,6 +135,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 			EncryptedSecret: encryptedSecret,
 			KeeperName:      keeperName,
 			ExternalID:      externalID,
+			ReceiveCount:    0,
 			Created:         time.Now().UTC().UnixMilli(),
 		},
 	}
@@ -85,23 +143,23 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxAppend, req)
 	if err != nil {
 		if unifiedsql.IsRowAlreadyExistsError(err) {
-			return "", contracts.ErrSecureValueOperationInProgress
+			return messageID, contracts.ErrSecureValueOperationInProgress
 		}
-		return "", fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
+		return messageID, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return "", fmt.Errorf("inserting message into secure value outbox table: %w", err)
+		return messageID, fmt.Errorf("inserting message into secure value outbox table: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return "", fmt.Errorf("get rows affected: %w", err)
+		return messageID, fmt.Errorf("get rows affected: %w", err)
 	}
 
 	if rowsAffected != 1 {
-		return "", fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
+		return messageID, fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
 	}
 
 	return messageID, nil
@@ -125,10 +183,12 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	defer func() { _ = rows.Close() }()
 
 	messages := make([]contracts.OutboxMessage, 0)
+	messageIDs := make([]string, 0, len(messages))
 
 	for rows.Next() {
 		var row outboxMessageDB
 		if err := rows.Scan(
+			&row.RequestID,
 			&row.MessageID,
 			&row.MessageType,
 			&row.Name,
@@ -136,10 +196,12 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 			&row.EncryptedSecret,
 			&row.KeeperName,
 			&row.ExternalID,
+			&row.ReceiveCount,
 			&row.Created,
 		); err != nil {
 			return nil, fmt.Errorf("scanning row from secure value outbox table: %w", err)
 		}
+		messageIDs = append(messageIDs, row.MessageID)
 
 		var keeperName *string
 		if row.KeeperName.Valid {
@@ -152,12 +214,14 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		}
 
 		msg := contracts.OutboxMessage{
-			Type:       row.MessageType,
-			MessageID:  row.MessageID,
-			Name:       row.Name,
-			Namespace:  row.Namespace,
-			KeeperName: keeperName,
-			ExternalID: externalID,
+			RequestID:    row.RequestID,
+			Type:         row.MessageType,
+			MessageID:    row.MessageID,
+			Name:         row.Name,
+			Namespace:    row.Namespace,
+			KeeperName:   keeperName,
+			ExternalID:   externalID,
+			ReceiveCount: row.ReceiveCount,
 		}
 
 		if row.MessageType != contracts.DeleteSecretOutboxMessage && row.EncryptedSecret.Valid {
@@ -168,16 +232,24 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		messages = append(messages, msg)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterating over rows: %w", err)
-	}
-
 	return messages, nil
 }
 
 func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
 	assert.True(messageID != "", "outboxStore.Delete: messageID is required")
 
+	return s.db.Transaction(ctx, func(ctx context.Context) error {
+		if err := s.deleteMessage(ctx, messageID); err != nil {
+			return fmt.Errorf("deleting message from outbox table %+w", err)
+		}
+		if err := s.deleteMessageMetadata(ctx, messageID); err != nil {
+			return fmt.Errorf("deleting message metadata from outbox metadata table %+w", err)
+		}
+		return nil
+	})
+}
+
+func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error {
 	req := deleteSecureValueOutbox{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		MessageID:   messageID,
@@ -193,13 +265,65 @@ func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
 		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
 	}
 
+	// TODO: delete metadata
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("get rows affected: %w", err)
 	}
 
-	if rowsAffected != 1 {
+	if rowsAffected > 1 {
 		return fmt.Errorf("bug: deleted more than one row from the outbox table, should delete only one at a time: deleted=%v", rowsAffected)
+	}
+
+	return nil
+}
+
+func (s *outboxStore) deleteMessageMetadata(ctx context.Context, messageID string) error {
+	req := deleteSecureValueOutboxMetadata{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageID:   messageID,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxDeleteMetadata, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxDeleteMetadata.Name(), err)
+	}
+
+	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
+	}
+
+	// TODO: delete metadata
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if rowsAffected > 1 {
+		return fmt.Errorf("bug: deleted more than one row from the outbox table, should delete only one at a time: deleted=%v", rowsAffected)
+	}
+
+	return nil
+}
+
+func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []string) error {
+	if len(messageIDs) == 0 {
+		return nil
+	}
+
+	req := incrementReceiveCountOutbox{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageIDs:  messageIDs,
+	}
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxUpdateReceiveCount, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxUpdateReceiveCount.Name(), err)
+	}
+
+	_, err = s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("updating outbox messages receive count: %w", err)
 	}
 
 	return nil

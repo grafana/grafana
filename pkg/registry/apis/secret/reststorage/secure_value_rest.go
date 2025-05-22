@@ -227,14 +227,15 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	updatedSv, err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name)
+	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, false, s.resource.NewNotFound(name)
 		}
 		return nil, false, fmt.Errorf("deleting secure value: %+w", err)
 	}
 
-	return nil, false, nil
+	return updatedSv, false, nil
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.

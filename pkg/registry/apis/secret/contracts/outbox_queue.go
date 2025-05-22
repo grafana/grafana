@@ -49,6 +49,8 @@ type OutboxMessage struct {
 	EncryptedSecret secretv0alpha1.ExposedSecureValue
 	KeeperName      *string
 	ExternalID      *string
+	// How many times this message has been received
+	ReceiveCount int
 }
 
 type OutboxQueue interface {
@@ -58,4 +60,6 @@ type OutboxQueue interface {
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
 	// Deletes a message from the outbox queue
 	Delete(ctx context.Context, messageID string) error
+	// Increments the number of times each message has been received by 1. Must be atomic.
+	IncrementReceiveCount(ctx context.Context, messageIDs []string) error
 }
