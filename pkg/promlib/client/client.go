@@ -21,7 +21,7 @@ type doer interface {
 }
 
 var endpointsSupportOnlyGet = []string{
-	"api/v1/label/", // label values /api/v1/label/<label key>/values
+	"api/v1/label/", // label values /api/v1/label/<label-key>/values
 	"api/v1/metadata",
 	"/api/v1/targets",
 	"/api/v1/rules",
