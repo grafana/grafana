@@ -125,15 +125,15 @@ You can use a known label value to enrich the alert with additional metadata not
 
 ```go
 {{- if eq $labels.instance "prod-server-1" -}}production
-{{- else if eq $labels.instance "staging-server-1" -}}staging
+{{- else if eq $labels.instance "stag-server-1" -}}staging
 {{- else -}}development
 {{- end -}}
 ```
 
 This produces alert instances like:
 
-- `{alertname="ServerHighCPU", instance="prod-server-1", env="prod"}`
-- `{alertname="ServerHighCPU", instance="prod-server-2", env="prod"}`
+- `{alertname="ServerHighCPU", instance="prod-server-1", env="production"}`
+- `{alertname="ServerHighCPU", instance="stag-server-1", env="staging"}`
 
 In this example, the `env` label is fixed for each alert instance and does not change during its lifecycle.
 
