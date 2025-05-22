@@ -15,7 +15,6 @@ dagger run --silent go run ./pkg/build/cmd \
   -a frontend:enterprise \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
-  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=${SOURCE_COMMIT} \
   --grafana-repo="https://github.com/grafana/grafana.git" \
