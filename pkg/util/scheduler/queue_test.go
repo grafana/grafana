@@ -80,11 +80,13 @@ func TestQueue(t *testing.T) {
 
 				// Let's simplify the dequeue check: Dequeue sequentially after enqueueing.
 				qSimple := NewQueue(QueueOptionsWithDefaults(nil))
+				qSimple.StartAsync(context.Background())
+				qSimple.AwaitRunning(context.Background())
 				defer func() {
 					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 					defer cancel()
-					qSimple.Close(ctx)
-					qSimple.StopWait(ctx)
+					qSimple.StopAsync()
+					qSimple.AwaitTerminated(ctx)
 				}()
 
 				for i := 0; i < numItems; i++ {
@@ -284,7 +286,7 @@ func TestQueue(t *testing.T) {
 				require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Close should return ErrQueueClosed")
 
 				// Stop the queue to clean up completely
-				q.StopWait(ctx)
+				q.AwaitTerminated(ctx)
 			},
 		},
 		{
@@ -365,13 +367,15 @@ func TestQueue(t *testing.T) {
 			t.Parallel() // Run table entries in parallel
 
 			q := NewQueue(tc.opts)
+			q.StartAsync(context.Background())
+			q.AwaitRunning(context.Background())
 			// Defer close and stopwait to ensure cleanup even if test fails
 			// Order matters: Close needs to be called before StopWait
 			defer func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 				defer cancel()
-				q.Close(ctx)
-				q.StopWait(ctx)
+				q.StopAsync()
+				q.AwaitTerminated(ctx)
 			}()
 
 			tc.test(t, q)
@@ -383,12 +387,13 @@ func TestQueue(t *testing.T) {
 // This is a basic sanity check to ensure our cleanup logic functions correctly.
 func TestQueueCleanup(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
 
 	// Explicitly close and wait for dispatcher to stop
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	q.Close(ctx)
-	q.StopWait(ctx)
 
 	// Queue should now be in a clean, shutdown state
 	_, ok, err := q.Dequeue(context.Background())
@@ -404,10 +409,15 @@ func TestConcurrentEnqueuersAndDequeuers(t *testing.T) {
 	t.Parallel()
 
 	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 100}))
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	defer q.Close(ctx)
-	defer q.StopWait(ctx)
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.StopAsync()
+		q.AwaitTerminated(ctx)
+	}()
 
 	const numProducers = 5
 	const numConsumers = 3
@@ -419,6 +429,8 @@ func TestConcurrentEnqueuersAndDequeuers(t *testing.T) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	// Start consumers first (they'll block until items are available)
 	for i := 0; i < numConsumers; i++ {
 		wg.Add(1)
@@ -427,11 +439,9 @@ func TestConcurrentEnqueuersAndDequeuers(t *testing.T) {
 			consumerCount := 0
 
 			for {
-				// Use the parent context with timeout to avoid hanging
 				runnable, ok, err := q.Dequeue(ctx)
 				if err != nil {
-					if errors.Is(err, context.DeadlineExceeded) ||
-						errors.Is(err, context.Canceled) {
+					if errors.Is(err, context.DeadlineExceeded) {
 						return
 					}
 					require.NoError(t, err)
@@ -481,7 +491,6 @@ func TestConcurrentEnqueuersAndDequeuers(t *testing.T) {
 				if err != nil {
 					// Context might have been canceled if test is slow
 					if errors.Is(err, context.DeadlineExceeded) ||
-						errors.Is(err, context.Canceled) ||
 						errors.Is(err, ErrQueueClosed) {
 						return
 					}
@@ -513,12 +522,17 @@ func TestSlowDequeuerHandling(t *testing.T) {
 	t.Parallel()
 
 	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 5}))
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	defer q.Close(ctx)
-	defer q.StopWait(ctx)
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
 
-	ctx = context.Background()
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.StopAsync()
+		q.AwaitTerminated(ctx)
+	}()
+
+	ctx := context.Background()
 	tenantA := "tenant-a"
 	tenantB := "tenant-b"
 	tenantC := "tenant-c"
@@ -628,10 +642,15 @@ func TestQueueActiveTenantsLen(t *testing.T) {
 	t.Parallel()
 
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	defer q.Close(ctx)
-	defer q.StopWait(ctx)
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.StopAsync()
+		q.AwaitTerminated(ctx)
+	}()
 
 	// Enqueue items for different tenants
 	err := q.Enqueue(context.Background(), "tenant1", func() {})
@@ -651,10 +670,15 @@ func TestQueueLen(t *testing.T) {
 	t.Parallel()
 
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	defer q.Close(ctx)
-	defer q.StopWait(ctx)
+	q.StartAsync(context.Background())
+	q.AwaitRunning(context.Background())
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.StopAsync()
+		q.AwaitTerminated(ctx)
+	}()
 
 	// Enqueue items
 	err := q.Enqueue(context.Background(), "tenant1", func() {})

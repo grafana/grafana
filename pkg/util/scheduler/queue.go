@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -50,6 +51,8 @@ type activeTenantsLenRequest struct {
 
 // Queue implements a multi-tenant qos with round-robin fairness using a dispatcher goroutine.
 type Queue struct {
+	services.Service
+
 	enqueueChan           chan enqueueRequest
 	dequeueChan           chan dequeueRequest
 	closeChan             chan closeRequest
@@ -93,7 +96,7 @@ func NewQueue(opts *QueueOptions) *Queue {
 		enqueueDuration:   opts.EnqueueDuration,
 	}
 
-	go q.dispatcherLoop()
+	q.Service = services.NewBasicService(q.starting, q.running, q.stopping)
 
 	return q
 }
@@ -445,35 +448,6 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), bool, error) {
 	}
 }
 
-// Close marks the queue as closed and signals the dispatcher.
-// It blocks until the dispatcher acknowledges the close.
-func (q *Queue) Close(ctx context.Context) {
-	respChan := make(chan struct{})
-	req := closeRequest{respChan: respChan}
-
-	select {
-	case q.closeChan <- req:
-		select {
-		case <-respChan:
-		case <-q.dispatcherStoppedChan:
-		case <-ctx.Done():
-		}
-	case <-q.dispatcherStoppedChan:
-	case <-ctx.Done():
-	}
-}
-
-// StopWait blocks until the dispatcher goroutine has fully stopped.
-// Call Close() first to initiate shutdown.
-func (q *Queue) StopWait(ctx context.Context) {
-	select {
-	case <-q.dispatcherStoppedChan:
-		return
-	case <-ctx.Done():
-		return
-	}
-}
-
 // Len returns the total number of items across all tenants in the qos.
 func (q *Queue) Len() int {
 	respChan := make(chan int, 1)
@@ -508,4 +482,46 @@ func (q *Queue) ActiveTenantsLen() int {
 	case <-q.dispatcherStoppedChan:
 		return 0
 	}
+}
+
+// Close marks the queue as closed and signals the dispatcher.
+// It blocks until the dispatcher acknowledges the Close.
+func (q *Queue) Close(ctx context.Context) {
+	respChan := make(chan struct{})
+	req := closeRequest{respChan: respChan}
+
+	select {
+	case q.closeChan <- req:
+		select {
+		case <-respChan:
+		case <-q.dispatcherStoppedChan:
+		case <-ctx.Done():
+		}
+	case <-q.dispatcherStoppedChan:
+	case <-ctx.Done():
+	}
+}
+
+// starting is called by the services.Service lifecycle to start the queue.
+func (q *Queue) starting(_ context.Context) error {
+	go q.dispatcherLoop()
+	return nil
+}
+
+// running is called by the services.Service lifecycle to check if the queue is running.
+func (q *Queue) running(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-q.dispatcherStoppedChan:
+		return ErrQueueClosed
+	}
+}
+
+// stopping is called by the services.Service lifecycle to stop the queue.
+func (q *Queue) stopping(_ error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	q.Close(ctx)
+	return nil
 }
