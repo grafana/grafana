@@ -123,7 +123,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
     {
-      label: t('dimensions.value-mapping-edit-row.special-match-options.label.null', 'Null'),
+      // eslint-disable-next-line @grafana/no-untranslated-strings
+      label: 'Null',
       value: SpecialValueMatch.Null,
       description: t(
         'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-and-undefined-values',
@@ -131,7 +132,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      label: t('dimensions.value-mapping-edit-row.special-match-options.label.na-n', 'NaN'),
+      // eslint-disable-next-line @grafana/no-untranslated-strings
+      label: 'NaN',
       value: SpecialValueMatch.NaN,
       description: t(
         'dimensions.value-mapping-edit-row.special-match-options.description.matches-against-number-na-n-not-a-number',
@@ -139,7 +141,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      label: t('dimensions.value-mapping-edit-row.special-match-options.label.null-na-n', 'Null + NaN'),
+      // eslint-disable-next-line @grafana/no-untranslated-strings
+      label: 'Null + NaN',
       value: SpecialValueMatch.NullAndNaN,
       description: t(
         'dimensions.value-mapping-edit-row.special-match-options.description.matches-null-undefined-and-na-n',
@@ -147,7 +150,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      label: t('dimensions.value-mapping-edit-row.special-match-options.label.true', 'True'),
+      // eslint-disable-next-line @grafana/no-untranslated-strings
+      label: 'True',
       value: SpecialValueMatch.True,
       description: t(
         'dimensions.value-mapping-edit-row.special-match-options.description.boolean-true-values',
@@ -155,7 +159,8 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      label: t('dimensions.value-mapping-edit-row.special-match-options.label.false', 'False'),
+      // eslint-disable-next-line @grafana/no-untranslated-strings
+      label: 'False',
       value: SpecialValueMatch.False,
       description: t(
         'dimensions.value-mapping-edit-row.special-match-options.description.boolean-false-values',
