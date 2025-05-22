@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from '@grafana/i18n';
 import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';
@@ -47,14 +48,14 @@ export const togglePseudoLocale = async () => {
   const prefsService = new PreferencesService('user');
   const prefs = await prefsService.load();
 
-  const isPseudoEnabled = prefs.language === 'pseudo';
+  const isPseudoEnabled = prefs.language === PSEUDO_LOCALE;
 
   const action = isPseudoEnabled ? 'Disabling' : 'Enabling';
   sendAppNotification(`${action} pseudo locale`, 'Reloading...', AppNotificationSeverity.Info);
 
   await prefsService.update({
     ...prefs,
-    language: isPseudoEnabled ? 'default' : 'pseudo',
+    language: isPseudoEnabled ? DEFAULT_LANGUAGE : PSEUDO_LOCALE,
   });
 
   setTimeout(() => {
