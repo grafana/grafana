@@ -1,6 +1,7 @@
 import {
   Action,
   ActionModel,
+  ActionVariableInput,
   AppEvents,
   DataContextScopedVar,
   DataFrame,
@@ -13,11 +14,34 @@ import {
   textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, config as grafanaConfig } from '@grafana/runtime';
+import { BackendSrvRequest, config as grafanaConfig, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
+
+/** @internal */
+export const genReplaceActionVars = (
+  boundReplaceVariables: InterpolateFunction,
+  action: Action,
+  actionVars?: ActionVariableInput
+): InterpolateFunction => {
+  return (value, scopedVars, format) => {
+    if (action.variables && actionVars) {
+      value = value.replace(/\$\w+/g, (matched) => {
+        const name = matched.slice(1);
+
+        if (action.variables!.some((action) => action.key === name) && actionVars[name] != null) {
+          return actionVars[name];
+        }
+
+        return matched;
+      });
+    }
+
+    return boundReplaceVariables(value, scopedVars, format);
+  };
+};
 
 /** @internal */
 export const getActions = (
@@ -50,22 +74,40 @@ export const getActions = (
       dataContext.value.calculatedValue = config.calculatedValue;
     }
 
-    const title = replaceVariables(action.title, actionScopedVars);
-    const confirmation = replaceVariables(
-      action.confirmation || `Are you sure you want to ${action.title}?`,
-      actionScopedVars
-    );
-
     const actionModel: ActionModel<Field> = {
-      title,
-      confirmation,
-      onClick: (evt: MouseEvent, origin: Field) => {
-        buildActionOnClick(action, boundReplaceVariables);
+      title: replaceVariables(action.title, actionScopedVars),
+      confirmation: (actionVars?: ActionVariableInput) =>
+        genReplaceActionVars(
+          boundReplaceVariables,
+          action,
+          actionVars
+        )(action.confirmation || `Are you sure you want to ${action.title}?`),
+      onClick: (evt: MouseEvent, origin: Field, actionVars?: ActionVariableInput) => {
+        let request = buildActionRequest(action, genReplaceActionVars(boundReplaceVariables, action, actionVars));
+
+        try {
+          getBackendSrv()
+            .fetch(request)
+            .subscribe({
+              error: (error) => {
+                appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+                console.error(error);
+              },
+              complete: () => {
+                appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+              },
+            });
+        } catch (error) {
+          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+          console.error(error);
+          return;
+        }
       },
       oneClick: action.oneClick ?? false,
       style: {
         backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
       },
+      variables: action.variables,
     };
 
     return actionModel;
@@ -75,52 +117,36 @@ export const getActions = (
 };
 
 /** @internal */
-const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
-  try {
-    const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+export const buildActionRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+  const url = new URL(getUrl(replaceVariables(action.fetch.url)));
 
-    const requestHeaders: Record<string, string> = {};
+  const requestHeaders: Record<string, string> = {};
 
-    let request: BackendSrvRequest = {
-      url: url.toString(),
-      method: action.fetch.method,
-      data: getData(action, replaceVariables),
-      headers: requestHeaders,
-    };
+  let request: BackendSrvRequest = {
+    url: url.toString(),
+    method: action.fetch.method,
+    data: getData(action, replaceVariables),
+    headers: requestHeaders,
+  };
 
-    if (action.fetch.headers) {
-      action.fetch.headers.forEach(([name, value]) => {
-        requestHeaders[replaceVariables(name)] = replaceVariables(value);
-      });
-    }
-
-    if (action.fetch.queryParams) {
-      action.fetch.queryParams?.forEach(([name, value]) => {
-        url.searchParams.append(replaceVariables(name), replaceVariables(value));
-      });
-
-      request.url = url.toString();
-    }
-
-    requestHeaders['X-Grafana-Action'] = '1';
-    request.headers = requestHeaders;
-
-    getBackendSrv()
-      .fetch(request)
-      .subscribe({
-        error: (error) => {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error(error);
-        },
-        complete: () => {
-          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-        },
-      });
-  } catch (error) {
-    appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-    console.error(error);
-    return;
+  if (action.fetch.headers) {
+    action.fetch.headers.forEach(([name, value]) => {
+      requestHeaders[replaceVariables(name)] = replaceVariables(value);
+    });
   }
+
+  if (action.fetch.queryParams) {
+    action.fetch.queryParams?.forEach(([name, value]) => {
+      url.searchParams.append(replaceVariables(name), replaceVariables(value));
+    });
+
+    request.url = url.toString();
+  }
+
+  requestHeaders['X-Grafana-Action'] = '1';
+  request.headers = requestHeaders;
+
+  return request;
 };
 
 /** @internal */
