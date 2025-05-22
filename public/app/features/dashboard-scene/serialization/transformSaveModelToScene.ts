@@ -181,17 +181,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
-  if (oldModel.templating?.list?.length) {
-    if (oldModel.meta.isSnapshot) {
-      variables = createVariablesForSnapshot(oldModel);
-    } else {
-      variables = createVariablesForDashboard(oldModel);
-    }
+  if (oldModel.meta.isSnapshot) {
+    variables = createVariablesForSnapshot(oldModel);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(oldModel);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {

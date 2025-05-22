@@ -731,6 +731,7 @@
       "edit": "Modifier",
       "export": "Exporter",
       "export-all": "Tout exporter",
+      "learn-more": "En savoir plus",
       "loading": "Chargement en cours...",
       "search-by-matchers": "Rechercher par correspondance",
       "titles": {
@@ -1072,6 +1073,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1209,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Chargement…"
-    },
-    "group-actions": {
-      "actions-trigger": "Actions du groupe de règles",
-      "details": "Détails",
-      "edit": "Modifier"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Vous n’avez pas réussi à charger les informations concernant le groupe",
-      "unknown-error": "Erreur inconnue"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Groupe",
@@ -1408,11 +1403,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nouvelle règle d'alerte",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nouvelle règle d'enregistrement gérée par la source de données",
-        "new-grafana-recording-rule": "Nouvelle règle d'enregistrement gérée par Grafana",
+        "new-grafana-alerting-rule": "Nouvelle règle d'alerte",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nouvelle règle d'enregistrement",
-        "provisioning": "Vous pouvez également définir des règles via la mise en service de fichiers ou Terraform. <2>En savoir plus</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Il n’y a pas de sources de données Prometheus ou Loki configurées",
       "no-rules": "Aucune règle n’a été trouvée.",
@@ -2054,6 +2053,7 @@
         "description": "Vérifiez la configuration de la source de données. La source de données prend-elle en charge l'API Prometheus ?",
         "title": "Impossible de charger les règles à partir de cette source de données"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -2070,8 +2070,7 @@
       "new-datasource-recording-rule": "Nouvelle règle d’enregistrement de source de données",
       "new-grafana-recording-rule": "Nouvelle règle d’enregistrement Grafana",
       "pagination": {
-        "next-page": "page suivante",
-        "previous-page": "page précédente"
+        "next-page": ""
       },
       "recording-rules": "Règles d’enregistrement",
       "return-button": {
@@ -6155,6 +6154,7 @@
       "label-wrap-lines": "Enrouler les lignes"
     },
     "log-details": {
+      "close": "",
       "fields": "Champs",
       "links": "Liens",
       "log-line": "Ligne du journal",
@@ -6174,15 +6174,20 @@
       "log-line": "ligne de journal"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
       "copy-log": "Copier la ligne de journal",
+      "hide-details": "",
       "icon-label": "Menu du journal",
       "pin-to-outline": "Épingler le journal",
       "show-context": "Afficher le contexte",
+      "show-details": "",
       "unpin-from-outline": "Désépingler le journal"
     },
     "log-row-context-modal": {
@@ -6776,7 +6781,8 @@
       "title": "Panneaux de bibliothèque"
     },
     "machine-learning": {
-      "title": "Apprentissage automatique"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
@@ -6807,7 +6813,7 @@
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
-      "title": "Listes de lecture"
+      "title": "Playlists"
     },
     "plugins": {
       "subtitle": "Prolonger l'expérience Grafana avec des plug-ins",
@@ -7373,8 +7379,8 @@
     "version-list": {
       "grafana-dependency": "Dépendance Grafana",
       "installed-version": "{{versionNumber}} (version installée)",
-      "last-updated": "Dernière mise à jour",
       "latest-compatible-version": "{{versionNumber}} (dernière version compatible)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Aucun historique de version n’a été trouvé.",
       "version": "Version"
     }
@@ -8731,7 +8737,7 @@
     },
     "content": {
       "empty-recent-list-docs": "<0><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></0>",
-      "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
+      "empty-recent-list-info": "Il semble que vous n'avez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "copy-paste": {

@@ -157,6 +157,20 @@
     },
     {
       "metadata": {
+        "name": "alertingImportYAMLUI",
+        "resourceVersion": "1747836716080",
+        "creationTimestamp": "2025-05-21T14:11:56Z"
+      },
+      "spec": {
+        "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingInsights",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2023-09-14T12:58:04Z",
@@ -1223,7 +1237,8 @@
       "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-05-10T13:37:04Z"
+        "creationTimestamp": "2023-05-10T13:37:04Z",
+        "deletionTimestamp": "2025-05-19T15:29:06Z"
       },
       "spec": {
         "description": "Enables extra themes",
@@ -1502,7 +1517,8 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-25T17:20:04Z"
+        "creationTimestamp": "2024-09-25T17:20:04Z",
+        "deletionTimestamp": "2025-05-20T16:08:36Z"
       },
       "spec": {
         "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",

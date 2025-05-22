@@ -168,6 +168,8 @@ function rulerRuleToPromRule(rule: RulerGrafanaRuleDTO): GrafanaPromRuleDTO {
     health: 'ok',
     state: PromAlertingRuleState.Inactive,
     type: rulerRuleType.grafana.alertingRule(rule) ? PromRuleType.Alerting : PromRuleType.Recording,
+    totals: {},
+    totalsFiltered: {},
   };
 }
 
