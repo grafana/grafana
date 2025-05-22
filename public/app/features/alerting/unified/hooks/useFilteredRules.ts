@@ -90,7 +90,11 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, activeFilters, searchQuery, setSearchQuery, updateFilters };
+  const clearAll = useCallback(() => {
+    updateQueryParams({ search: undefined });
+  }, [updateQueryParams]);
+
+  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters, clearAll, activeFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
