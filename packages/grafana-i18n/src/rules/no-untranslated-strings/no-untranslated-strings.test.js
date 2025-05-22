@@ -212,6 +212,24 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
     },
 
     {
+      name: 'non-alphanumeric characters outside child element',
+      code: `
+const Foo = () => {
+  return (
+      <>
+        <div>
+          something untranslated but i'm a naughty dev and
+          I put a bunch of non-alphanumeric characters outside of the div
+        </div>
+        .?!;
+      </>
+  )
+}`,
+      filename,
+      errors: 1,
+    },
+
+    {
       name: 'Text inside JSXElement, not in a function',
       code: `
 const thing = <div>foo</div>`,
