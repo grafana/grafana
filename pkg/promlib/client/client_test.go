@@ -55,7 +55,7 @@ func TestClient(t *testing.T) {
 	t.Run("QueryResource", func(t *testing.T) {
 		t.Run("sends correct POST request", func(t *testing.T) {
 			doer := &MockDoer{}
-			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
 
 			req := &backend.CallResourceRequest{
 				PluginContext: backend.PluginContext{},
@@ -79,6 +79,146 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
 			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())
+		})
+
+		t.Run("respects GET-only path for label values endpoint", func(t *testing.T) {
+			doer := &MockDoer{}
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "api/v1/label/label_key/values",
+				Method:        http.MethodPost,
+				URL:           "api/v1/label/label_key/values?match%5B%5D=ALERTS&start=1655272558&end=1655294158",
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err)
+			require.NotNil(t, doer.Req)
+
+			// Verify GET is used instead of POST because endpoint is in endpointsSupportOnlyGet list
+			require.Equal(t, http.MethodGet, doer.Req.Method)
+
+			// Verify URL is preserved
+			require.Equal(t, "http://localhost:9090/api/v1/label/label_key/values?match%5B%5D=ALERTS&start=1655272558&end=1655294158", doer.Req.URL.String())
+
+			// Verify body is empty
+			body, err := io.ReadAll(doer.Req.Body)
+			require.NoError(t, err)
+			require.Equal(t, []byte{}, body)
+		})
+
+		t.Run("respects client configured with GET-only method", func(t *testing.T) {
+			doer := &MockDoer{}
+			// Client specifically configured to use GET
+			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "api/v1/query",  // Not in endpointsSupportOnlyGet list
+				Method:        http.MethodPost, // This would normally trigger a POST, but client is configured for GET
+				URL:           "api/v1/query",
+				Body:          []byte("query=up&time=1234"),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err)
+			require.NotNil(t, doer.Req)
+
+			// Verify GET is used because client is configured for GET
+			require.Equal(t, http.MethodGet, doer.Req.Method)
+
+			// Verify only one request was made (no POST attempt)
+			require.Equal(t, 1, doer.RequestCount)
+
+			// Verify body params were moved to URL
+			require.Equal(t, "http://localhost:9090/api/v1/query?query=up&time=1234", doer.Req.URL.String())
+
+			// Verify body is empty
+			body, err := io.ReadAll(doer.Req.Body)
+			require.NoError(t, err)
+			require.Equal(t, []byte{}, body)
+		})
+
+		t.Run("does not fall back to GET when using GET client and getting errors", func(t *testing.T) {
+			doer := &MockDoer{
+				ResponseStatus: http.StatusBadRequest,
+				ResponseError:  fmt.Errorf("bad request error"),
+			}
+			// Client specifically configured to use GET
+			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "api/v1/query",
+				Method:        http.MethodGet,
+				URL:           "api/v1/query",
+				Body:          []byte("query=up&time=1234"),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+
+			// Error should be returned (no fallback attempted)
+			require.Error(t, err)
+			require.NotNil(t, res) // Ensure response is still returned
+
+			// Verify only one request was made
+			require.Equal(t, 1, doer.RequestCount)
+
+			// Verify GET was used
+			require.Equal(t, http.MethodGet, doer.Req.Method)
+		})
+
+		t.Run("no fallback when POST succeeds even with error status", func(t *testing.T) {
+			doer := &MockDoer{
+				ResponseStatus: http.StatusInternalServerError, // 500 error, not 400/405
+				ResponseError:  nil,
+			}
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "api/v1/query",
+				Method:        http.MethodPost,
+				URL:           "api/v1/query",
+				Body:          []byte("query=up&time=1234"),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err) // No error in request, but status code is 500
+
+			// Verify only one request was made (no fallback)
+			require.Equal(t, 1, doer.RequestCount)
+
+			// Verify POST was used
+			require.Equal(t, http.MethodPost, doer.Req.Method)
+
+			// Verify status code
+			require.Equal(t, http.StatusInternalServerError, res.StatusCode)
 		})
 
 		t.Run("sends correct GET request", func(t *testing.T) {

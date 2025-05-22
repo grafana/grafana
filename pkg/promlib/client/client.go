@@ -153,7 +153,8 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	// If POST failed with 405 Method Not Allowed or 400 Status Bad Request, try GET
-	if err != nil || resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusBadRequest {
+	if err == nil && httpRequest.Method == http.MethodPost &&
+		(resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusBadRequest) {
 		// Close the first response body
 		err = resp.Body.Close()
 		if err != nil {
