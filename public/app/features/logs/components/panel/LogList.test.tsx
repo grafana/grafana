@@ -7,7 +7,7 @@ import { createLogRow } from '../__mocks__/logRow';
 
 import { LogList, Props } from './LogList';
 
-describe.each([false, true])('LogList with scroll = %s', (noScroll: boolean) => {
+describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
     logs = [
@@ -21,7 +21,6 @@ describe.each([false, true])('LogList with scroll = %s', (noScroll: boolean) => 
       displayedFields: [],
       enableLogDetails: false,
       logs,
-      noScroll,
       showControls: false,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
