@@ -110,8 +110,6 @@ editor
 viewer
 ```
 
-Then 
-
 ## Teamsync
 
 {{< admonition type="note" >}}
@@ -171,7 +169,7 @@ This is useful if you want to grant server administrator privileges to a subset 
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
-role_attribute_path = contains(resource_access.grafanasso.roles[], 'grafanaadmin') && 'GrafanaAdmin' || contains(resource_access.grafanasso.roles[], 'admin') && 'Admin' || contains(resource_access.grafanasso.roles[], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(resource_access.grafana-oauth.roles[], 'grafanaadmin') && 'GrafanaAdmin' || contains(resource_access.grafana-oauth.roles[], 'admin') && 'Admin' || contains(resource_access.grafana-oauth.roles[], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
