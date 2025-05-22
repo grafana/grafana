@@ -250,7 +250,7 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 
    Use a threshold like `$B >= 50` (it always fires).
 
-1. Add a dynamic label by clicking **Edit Labels**.
+1. Click **Edit Labels** to add a dynamic label.
 
    Create a new label `severity` and set its value to the following:
 
