@@ -261,16 +261,17 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
 
   const op = { id: funcName, params };
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
-  visQuery.operations.unshift(op);
 
   if (body) {
     if (getString(expr, body) === '([' + interval + '])') {
       // This is a special case where we have a function with a single argument and it is the interval.
       // This happens when you start adding operations in query builder and did not set a metric yet.
+      visQuery.operations.push(op);
       return;
     }
     updateFunctionArgs(expr, body, context, op);
   }
+  visQuery.operations.push(op);
 }
 
 /**
@@ -304,8 +305,8 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const body = node.getChild(FunctionCallBody);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
-  visQuery.operations.unshift(op);
   updateFunctionArgs(expr, body, context, op);
+  visQuery.operations.push(op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -329,9 +330,18 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     case FunctionCallBody: {
       let child = node.firstChild;
 
+      const binQueryCount = context.query.binaryQueries?.length ?? 0;
       while (child) {
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
+      }
+      const newBinQueryCount = context.query.binaryQueries?.length ?? 0;
+      if (binQueryCount < newBinQueryCount) {
+        context.errors.push({
+          text: 'Query parsing is ambiguous.',
+          from: node.from,
+          to: node.to,
+        });
       }
       break;
     }
@@ -389,8 +399,6 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const rightBinary = right.type.id === BinaryExpr;
 
-  let oldLen = visQuery.operations.length;
-
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
     //  if query starts with a number that isn't handled now.
@@ -400,16 +408,14 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, left, context);
   }
 
-  let newLen = visQuery.operations.length;
-
   if (rightNumber) {
-    visQuery.operations.splice(newLen - oldLen, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.type.id === NumberDurationLiteral) {
-      visQuery.operations.splice(newLen - oldLen, 0, makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
     // If we added the first number literal as operation here we still can continue and handle the rest as the first

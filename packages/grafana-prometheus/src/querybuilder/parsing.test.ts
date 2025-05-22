@@ -199,33 +199,24 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  describe('nested binary operation in visual query editor', () => {
+  describe('nested binary operation errors in visual query editor', () => {
     // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
-    it('does not throw error when visual query parse is unambiguous (no brackets)', () => {
+    it('throws error when visual query parse is ambiguous', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
-      ).toEqual({
-        errors: [],
-        query: {
-          metric: 'node_arp_entries',
-          labels: [],
-          operations: [{ id: 'topk', params: [5] }],
-          binaryQueries: [
-            {
-              operator: '/',
-              query: {
-                metric: 'node_arp_entries',
-                labels: [{ label: 'cluster', op: '=', value: 'dev-eu-west-2' }],
-                operations: [],
-              },
-            },
-          ],
-        },
+      ).toMatchObject({
+        errors: [
+          {
+            from: 4,
+            text: 'Query parsing is ambiguous.',
+            to: 69,
+          },
+        ],
       });
     });
 
-    it('does not throw error when visual query parse with aggregation (scalar) is unambiguous', () => {
-      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toEqual({
+    it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
+      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
         errors: [],
         query: {
           metric: '',
@@ -238,38 +229,19 @@ describe('buildVisualQueryFromString', () => {
       });
     });
 
-    it('does not throw error when visual query parse with with functionCall is unambiguous', () => {
+    it('throws error when visual query parse with functionCall is ambiguous', () => {
       expect(
         buildVisualQueryFromString(
           'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
         )
-      ).toEqual({
-        errors: [],
-        query: {
-          metric: 'X',
-          labels: [{ label: 'le', op: '=', value: '2.5' }],
-          operations: [
-            { id: 'rate', params: ['5m'] },
-            {
-              id: '__sum_by',
-              params: ['cluster'],
-            },
-            { id: 'clamp_min', params: [0.001] },
-          ],
-          binaryQueries: [
-            {
-              operator: '+',
-              query: {
-                metric: 'X',
-                labels: [{ label: 'le', op: '=', value: '5' }],
-                operations: [
-                  { id: 'rate', params: ['5m'] },
-                  { id: '__sum_by', params: ['cluster'] },
-                ],
-              },
-            },
-          ],
-        },
+      ).toMatchObject({
+        errors: [
+          {
+            from: 9,
+            text: 'Query parsing is ambiguous.',
+            to: 95,
+          },
+        ],
       });
     });
 
@@ -740,18 +712,30 @@ describe('buildVisualQueryFromString', () => {
         metric: 'cluster_namespace_slug_dialer_name',
         labels: [],
         operations: [
-          { id: '__exponent', params: [1] },
-          {
-            id: '__divide_by',
-            params: [1],
-          },
-          { id: '__multiply_by', params: [1] },
-          { id: '__modulo', params: [1] },
           {
             id: '__addition',
             params: [1],
           },
-          { id: '__subtraction', params: [1] },
+          {
+            id: '__subtraction',
+            params: [1],
+          },
+          {
+            id: '__divide_by',
+            params: [1],
+          },
+          {
+            id: '__multiply_by',
+            params: [1],
+          },
+          {
+            id: '__modulo',
+            params: [1],
+          },
+          {
+            id: '__exponent',
+            params: [1],
+          },
         ],
       },
     });
@@ -987,7 +971,11 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses aggregation binary expression', () => {
-    expect(buildVisualQueryFromString('count_values("countGroups", count_values by(group) ("countReplicated", Foo{} == 0) == 8)')).toEqual(
+    expect(
+      buildVisualQueryFromString(
+        'count_values("countGroups", count_values by(group) ("countReplicated", Foo{} == 0) == 8)'
+      )
+    ).toEqual(
       noErrors({
         metric: 'Foo',
         labels: [],
