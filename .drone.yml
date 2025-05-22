@@ -826,35 +826,6 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-old-arch/various-suite
 - commands:
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /
-  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
-  depends_on:
-  - grafana-server
-  - github-app-generate-token
-  environment:
-    AZURE_SP_APP_ID:
-      from_secret: azure_sp_app_id
-    AZURE_SP_PASSWORD:
-      from_secret: azure_sp_app_pw
-    AZURE_TENANT:
-      from_secret: azure_tenant
-    CYPRESS_CI: "true"
-    HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
-  name: end-to-end-tests-cloud-plugins-suite-azure
-  volumes:
-  - name: github-app
-    path: /github-app
-  when:
-    paths:
-      include:
-      - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/azuremonitor/**
-      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
-    repo:
-    - grafana/grafana
-- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright
@@ -2294,35 +2265,6 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-old-arch/various-suite
-- commands:
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /
-  - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
-  depends_on:
-  - grafana-server
-  - github-app-generate-token
-  environment:
-    AZURE_SP_APP_ID:
-      from_secret: azure_sp_app_id
-    AZURE_SP_PASSWORD:
-      from_secret: azure_sp_app_pw
-    AZURE_TENANT:
-      from_secret: azure_tenant
-    CYPRESS_CI: "true"
-    HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
-  name: end-to-end-tests-cloud-plugins-suite-azure
-  volumes:
-  - name: github-app
-    path: /github-app
-  when:
-    paths:
-      include:
-      - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/azuremonitor/**
-      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
-    repo:
-    - grafana/grafana
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
@@ -5668,6 +5610,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3575a2899316cbc94d9a26960841ccd6efba6464b4e847d2a1c4e357a37ab8cb
+hmac: 3024a20fefb44fc005c20afd980f2a88d5f5c4c384bd22a401174f93da25bff3
 
 ...
