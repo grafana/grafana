@@ -182,7 +182,6 @@ jobs:
       - name: Create PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ steps.branch.outputs.branch }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           LATEST_FLAG=()
@@ -193,6 +192,6 @@ jobs:
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
             --dry-run="$DRY_RUN" \
-            -B "$BRANCH" \
+            -B "${RELEASE_BRANCH}" \
             --title "Release: $VERSION" \
             --body "These code changes must be merged after a release is complete"
