@@ -3,10 +3,10 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
@@ -94,6 +94,8 @@ export const ServiceAccountPageUnconnected = ({
     }
   }, [loadServiceAccount, loadServiceAccountTokens, id]);
 
+  const { t } = useTranslate();
+
   const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
     updateServiceAccount(serviceAccount);
   };
@@ -179,7 +181,10 @@ export const ServiceAccountPageUnconnected = ({
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
+                tooltip={t(
+                  'serviceaccounts.service-account-page-unconnected.tooltip-managed-service-account-cannot-modified',
+                  'This is a managed service account and cannot be modified'
+                )}
               />
             </Stack>
           )}

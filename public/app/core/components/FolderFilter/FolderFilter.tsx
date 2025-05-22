@@ -3,11 +3,12 @@ import debounce from 'debounce-promise';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
@@ -20,6 +21,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
   const [loading, setLoading] = useState(false);
   const getOptions = useCallback((searchString: string) => getFoldersAsOptions(searchString, setLoading), []);
   const debouncedLoadOptions = useMemo(() => debounce(getOptions, 300), [getOptions]);
+  const { t } = useTranslate();
 
   const [value, setValue] = useState<Array<SelectableValue<FolderInfo>>>([]);
   const onSelectOptionChange = useCallback(
@@ -86,7 +88,7 @@ async function getFoldersAsOptions(
   // Use existing backend service search
   const params = {
     query: searchString,
-    type: 'folder',
+    type: DashboardSearchItemType.DashFolder,
     permission: PermissionLevelString.View,
   };
 

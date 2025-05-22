@@ -8,7 +8,7 @@ import { K8sDashboardAPI } from './v1';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v1alpha1',
+  apiVersion: 'v1beta1',
 
   metadata: {
     name: 'dash-uid',
@@ -198,7 +198,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
       it('should provide dashboard URL with app sub url configured', async () => {
@@ -224,7 +224,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
@@ -242,7 +242,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
 
@@ -268,7 +268,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
@@ -293,7 +293,7 @@ describe('v1 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it.each(['v0alpha1', 'v1alpha1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
+    it.each(['v0alpha1', 'v1beta1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {

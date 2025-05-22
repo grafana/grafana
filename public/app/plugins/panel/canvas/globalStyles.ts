@@ -157,7 +157,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             '&.rc-tree-checkbox-indeterminate.rc-tree-checkbox-disabled': {
               position: 'relative',
               background: '#ccc',
-              borderRadius: '3px',
+              borderRadius: theme.shape.radius.default,
               '&::after': {
                 position: 'absolute',
                 top: '5px',

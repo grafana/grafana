@@ -1,6 +1,6 @@
 import { SceneObject } from '@grafana/scenes';
 
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 

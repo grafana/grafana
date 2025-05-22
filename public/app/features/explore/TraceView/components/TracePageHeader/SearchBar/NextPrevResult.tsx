@@ -18,10 +18,10 @@ import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
 
 import { Trace } from '../../types';
 
@@ -53,6 +53,8 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
       setFocusedSpanIdForSearch(spanMatches[focusedSpanIndexForSearch]);
     }
   }, [focusedSpanIndexForSearch, setFocusedSpanIdForSearch, spanFilterMatches]);
+
+  const { t } = useTranslate();
 
   const nextResult = (event: React.UIEvent, buttonEnabled: boolean) => {
     event.preventDefault();
@@ -136,8 +138,12 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           <span>{`${trace.spans.length} spans`}</span>
           {getTooltip(
             <>
-              <div>Services: {services}</div>
-              <div>Depth: {depth}</div>
+              <div>
+                <Trans i18nKey="explore.next-prev-result.services">Services: {{ services }}</Trans>
+              </div>
+              <div>
+                <Trans i18nKey="explore.next-prev-result.depth">Depth: {{ depth }}</Trans>
+              </div>
             </>
           )}
         </>
@@ -175,9 +181,16 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
               {getTooltip(
                 <>
                   <div>
-                    Services: {new Set(matchedServices).size}/{services}
+                    <Trans
+                      i18nKey="explore.next-prev-result.services-span-filter-matches"
+                      values={{ total: new Set(matchedServices).size }}
+                    >
+                      Services: {'{{total}}'}/{{ services }}
+                    </Trans>
                   </div>
-                  <div>Depth: {depth}</div>
+                  <div>
+                    <Trans i18nKey="explore.next-prev-result.depth-span-filter-matches">Depth: {{ depth }}</Trans>
+                  </div>
                 </>
               )}
             </>
@@ -198,7 +211,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
       <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
       <div className={buttonEnabled ? styles.buttons : cx(styles.buttons, styles.buttonsDisabled)}>
         <div
-          aria-label="Prev result button"
+          aria-label={t('explore.next-prev-result.aria-label-prev', 'Prev result button')}
           className={buttonClass}
           onClick={(event) => prevResult(event, buttonEnabled)}
           onKeyDown={(event) => prevResultOnKeyDown(event, buttonEnabled)}
@@ -208,7 +221,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           <Trans i18nKey="explore.prev">Prev</Trans>
         </div>
         <div
-          aria-label="Next result button"
+          aria-label={t('explore.next-prev-result.aria-label-next', 'Next result button')}
           className={buttonClass}
           onClick={(event) => nextResult(event, buttonEnabled)}
           onKeyDown={(event) => nextResultOnKeyDown(event, buttonEnabled)}

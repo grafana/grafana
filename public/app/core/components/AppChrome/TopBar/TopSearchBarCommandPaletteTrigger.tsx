@@ -1,40 +1,45 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
-export function TopSearchBarCommandPaletteTrigger() {
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
+export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
     kbarIsOpen: kbarState.visualState === VisualState.showing,
   }));
 
-  const isSmallScreen = !useMediaQueryMinWidth('lg');
-
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const { t } = useTranslate();
   const onOpenSearch = () => {
     kbar.toggle();
   };
 
-  if (isSmallScreen) {
+  if (!isLargeScreen) {
     return (
-      <ToolbarButton
-        iconOnly
-        icon="search"
-        aria-label={t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
-        onClick={onOpenSearch}
-      />
+      <>
+        <ToolbarButton
+          iconOnly
+          icon="search"
+          aria-label={t('nav.search.placeholderCommandPalette', 'Search...')}
+          onClick={onOpenSearch}
+        />
+        <NavToolbarSeparator />
+      </>
     );
   }
 
   return <PretendTextInput onClick={onOpenSearch} />;
-}
+});
 
 interface PretendTextInputProps {
   onClick: () => void;
@@ -43,7 +48,7 @@ interface PretendTextInputProps {
 function PretendTextInput({ onClick }: PretendTextInputProps) {
   const styles = useStyles2(getStyles);
   const modKey = useMemo(() => getModKey(), []);
-
+  const { t } = useTranslate();
   // We want the desktop command palette trigger to look like a search box,
   // but it actually behaves like a button - you active it and it performs an
   // action. You don't actually type into it.
@@ -56,11 +61,10 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </div>
 
         <button className={styles.fakeInput} onClick={onClick}>
-          {t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
+          {t('nav.search.placeholderCommandPalette', 'Search...')}
         </button>
 
         <div className={styles.suffix}>
-          <Icon name="keyboard" />
           <Text variant="bodySmall">{`${modKey}+k`}</Text>
         </div>
       </div>
@@ -72,7 +76,15 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
-    wrapper: baseStyles.wrapper,
+    wrapper: cx(
+      baseStyles.wrapper,
+      css({
+        width: 'auto',
+        minWidth: 140,
+        maxWidth: 350,
+        flexGrow: 1,
+      })
+    ),
     inputWrapper: baseStyles.inputWrapper,
     prefix: baseStyles.prefix,
     suffix: css([

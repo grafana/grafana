@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -17,7 +18,6 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { dashboardApi } from '../../api/dashboardApi';
@@ -110,6 +110,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     500,
     [dashboardFilter]
   );
+  const { t } = useTranslate();
 
   const DashboardRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
     const dashboard = filteredDashboards[index];
@@ -153,18 +154,30 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           {panelTitle}
         </div>
         {!isAlertingCompatible && !disabled && (
-          <Tooltip content="The alert tab and alert annotations are only supported on graph and timeseries panels.">
+          <Tooltip
+            content={t(
+              'alerting.dashboard-picker.panel-row.tooltip-alert-tab-support',
+              'The alert tab and alert annotations are only supported on graph and timeseries panels.'
+            )}
+          >
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
         {disabled && (
-          <Tooltip content="This panel does not have a valid identifier.">
+          <Tooltip
+            content={t(
+              'alerting.dashboard-picker.panel-row.content-panel-valid-identifier',
+              'This panel does not have a valid identifier.'
+            )}
+          >
             <Icon name="info-circle" data-testid="info-icon" />
           </Tooltip>
         )}
       </button>
     );
   };
+
+  const fallbackDashboardsString = t('alerting.dashboard-picker.fallback-dashboards-string', 'Dashboards');
 
   return (
     <Modal
@@ -185,12 +198,25 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           className={styles.modalAlert}
         >
           <div>
-            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
-            {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
+            <Trans
+              i18nKey="alerting.dashboard-picker.current-selection-dashboard"
+              values={{
+                dashboardTitle: dashboardModel.title,
+                dashboardUid: dashboardModel.uid,
+                folderTitle: dashboardModel.meta?.folderTitle ?? fallbackDashboardsString,
+              }}
+            >
+              Dashboard: {'{{dashboardTitle}}'} ({'{{ dashboardUid }}'}) in folder {'{{ folderTitle }}'}
+            </Trans>
           </div>
           {currentPanel && (
             <div>
-              Panel: {currentPanel.title} ({currentPanel.id})
+              <Trans
+                i18nKey="alerting.dashboard-picker.current-selection-panel"
+                values={{ panelTitle: currentPanel.title, panelId: currentPanel.id }}
+              >
+                Panel: {'{{ panelTitle }}'} ({'{{ panelId }}'})
+              </Trans>
             </div>
           )}
         </Alert>

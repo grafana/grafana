@@ -310,7 +310,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		line := string(jsn)
 
 		samples = append(samples, Sample{
-			T: state.State.LastEvaluationTime,
+			T: state.LastEvaluationTime,
 			V: line,
 		})
 	}

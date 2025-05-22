@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
+import { useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { changeDatasource } from './state/datasource';
@@ -44,7 +44,7 @@ export function ExploreRunQueryButton({
   const isPaneSplit = useSelector(isSplit);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
   const panesEntries = useSelector(selectPanesEntries);
-
+  const { t } = useTranslate();
   const isDifferentDatasource = (uid: string, exploreId: string) =>
     !exploreActiveDS.dsToExplore.find((di) => di.datasource.uid === uid)?.exploreIds.includes(exploreId);
 
@@ -108,6 +108,7 @@ export function ExploreRunQueryButton({
                   runQuery(pane[0]);
                   onClick?.();
                 }}
+                // eslint-disable-next-line @grafana/no-untranslated-strings
                 label={`${paneLabel}: ${buttonText.translation}`}
                 disabled={isInvalid || pane[0] === undefined}
               />

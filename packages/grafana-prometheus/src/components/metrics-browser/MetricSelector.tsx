@@ -1,31 +1,21 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
-import { LIST_ITEM_SIZE, SelectableLabel } from './types';
+import { useMetricsBrowser } from './MetricsBrowserContext';
+import { getStylesMetricSelector } from './styles';
+import { LIST_ITEM_SIZE } from './types';
 
-interface MetricSelectorProps {
-  metrics: SelectableLabel | undefined;
-  metricSearchTerm: string;
-  seriesLimit: string;
-  onChangeMetricSearch: (event: ChangeEvent<HTMLInputElement>) => void;
-  onChangeSeriesLimit: (event: ChangeEvent<HTMLInputElement>) => void;
-  onClickMetric: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
-  styles: Record<string, string>;
-}
+export function MetricSelector() {
+  const styles = useStyles2(getStylesMetricSelector);
+  const [metricSearchTerm, setMetricSearchTerm] = useState('');
+  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
 
-export function MetricSelector({
-  metrics,
-  metricSearchTerm,
-  seriesLimit,
-  onChangeMetricSearch,
-  onChangeSeriesLimit,
-  onClickMetric,
-  styles,
-}: MetricSelectorProps) {
-  const metricCount = metrics?.values?.length || 0;
+  const filteredMetrics = useMemo(() => {
+    return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
+  }, [metrics, selectedMetric, metricSearchTerm]);
 
   return (
     <div>
@@ -35,18 +25,18 @@ export function MetricSelector({
         </Label>
         <div>
           <Input
-            onChange={onChangeMetricSearch}
+            onChange={(e) => setMetricSearchTerm(e.currentTarget.value)}
             aria-label="Filter expression for metric"
             value={metricSearchTerm}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
           />
         </div>
-        <Label description="Set to 'none' to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
+        <Label description="The limit applies to all metrics, labels, and values. Leave the field empty to use the default limit. Set to 0 to disable the limit and fetch everything — this may cause performance issues.">
           Series limit
         </Label>
         <div>
           <Input
-            onChange={onChangeSeriesLimit}
+            onChange={(e) => setSeriesLimit(e.currentTarget.value.trim())}
             aria-label="Limit results from series endpoint"
             value={seriesLimit}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
@@ -58,26 +48,27 @@ export function MetricSelector({
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
           <FixedSizeList
-            height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
-            itemCount={metricCount}
+            height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
+            itemCount={filteredMetrics.length}
             itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => metrics!.values![i].name}
+            itemKey={(i) => filteredMetrics[i].name}
             width={300}
             className={styles.valueList}
           >
             {({ index, style }) => {
-              const value = metrics?.values?.[index];
-              if (!value) {
-                return null;
-              }
+              const metric = filteredMetrics[index];
               return (
                 <div style={style}>
                   <PromLabel
-                    name={metrics!.name}
-                    value={value?.name}
-                    title={value.details}
-                    active={value?.selected}
-                    onClick={onClickMetric}
+                    name={metric.name}
+                    value={metric.name}
+                    title={metric.details}
+                    active={metric.name === selectedMetric}
+                    onClick={(name: string, value: string | undefined) => {
+                      // Resetting search to prevent empty results
+                      setMetricSearchTerm('');
+                      onMetricClick(name);
+                    }}
                     searchTerm={metricSearchTerm}
                   />
                 </div>

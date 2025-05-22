@@ -5,8 +5,8 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { RuleFormValues } from '../../types/rule-form';
@@ -55,6 +55,7 @@ const AnnotationsStep = () => {
     const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
   }, [selectedPanelId, dashboardModel, isDashboardFetching]);
+  const { t } = useTranslate();
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {
@@ -181,9 +182,16 @@ const AnnotationsStep = () => {
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
+                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                              'https://'
+                            : (annotationField.key &&
+                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                  key: annotationField.key,
+                                })) ||
+                              t(
+                                'alerting.annotations-step.placeholder-value-input-default',
+                                'Enter custom annotation content...'
+                              )
                         }
                         defaultValue={annotationField.value}
                       />

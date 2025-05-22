@@ -91,6 +91,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-canvas-add-button': {
+      display: 'flex',
       opacity: 0.5,
       transition: theme.transitions.create('opacity'),
       filter: `grayscale(100%)`,
@@ -112,7 +113,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       '&:is(:hover),&:not(:hover)': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '0px',
-        borderRadius: '2px',
+        borderRadius: theme.shape.radius.default,
       },
     },
 

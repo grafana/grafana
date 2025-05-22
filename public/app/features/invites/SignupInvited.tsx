@@ -4,12 +4,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -54,6 +54,8 @@ export const SignupInvitedPage = () => {
     setInvitedBy(invite.invitedBy);
   }, [code]);
 
+  const { t } = useTranslate();
+
   const onSubmit = async (formData: FormModel) => {
     await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });
     window.location.href = getConfig().appSubUrl + '/';
@@ -66,13 +68,34 @@ export const SignupInvitedPage = () => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h3 className="page-sub-heading">Hello {greeting || 'there'}.</h3>
+        <h3 className="page-sub-heading">
+          {greeting
+            ? t('invites.signup-invited-page.greeting-custom', 'Hello {{greeting}}.', { greeting })
+            : t('invites.signup-invited-page.greeting-default', 'Hello there.')}
+        </h3>
 
         <div className={cx('modal-tagline', styles.tagline)}>
-          <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
-          <span className="highlight-word">{initFormModel.orgName}</span>
+          {invitedBy ? (
+            <Trans
+              i18nKey="invites.signup-invited-page.custom-has-invited-you"
+              values={{ invitedBy, orgName: initFormModel.orgName }}
+            >
+              <em>{'{{invitedBy}}'}</em> has invited you to join Grafana and the organization{' '}
+              <span className="highlight-word">{'{{orgName}}'}</span>
+            </Trans>
+          ) : (
+            <Trans
+              i18nKey="invites.signup-invited-page.default-has-invited-you"
+              values={{ orgName: initFormModel.orgName }}
+            >
+              <em>Someone</em> has invited you to join Grafana and the organization{' '}
+              <span className="highlight-word">{'{{orgName}}'}</span>
+            </Trans>
+          )}
           <br />
-          Please complete the following and choose a password to accept your invitation and continue:
+          <Trans i18nKey="invites.signup-invited-page.complete-following">
+            Please complete the following and choose a password to accept your invitation and continue:
+          </Trans>
         </div>
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (

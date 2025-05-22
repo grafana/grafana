@@ -90,7 +90,7 @@ func (s *service) QuotaReached(c *contextmodel.ReqContext, targetSrv quota.Targe
 
 	params := &quota.ScopeParameters{}
 	if c.IsSignedIn {
-		params.OrgID = c.SignedInUser.GetOrgID()
+		params.OrgID = c.GetOrgID()
 		params.UserID = c.UserID
 	}
 	return s.CheckQuotaReached(ctx, targetSrv, params)
@@ -106,9 +106,12 @@ func (s *service) GetQuotasByScope(ctx context.Context, scope quota.Scope, id in
 	q := make([]quota.QuotaDTO, 0)
 
 	scopeParams := quota.ScopeParameters{}
-	if scope == quota.OrgScope {
+	switch scope {
+	case quota.GlobalScope:
+		scopeParams.OrgID = 0
+	case quota.OrgScope:
 		scopeParams.OrgID = id
-	} else if scope == quota.UserScope {
+	case quota.UserScope:
 		scopeParams.UserID = id
 	}
 

@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -16,16 +16,17 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
-export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
-
+  const { t } = useTranslate();
   const rowCategory = useMemo(
     () =>
       new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard.rows-layout.row-options.row.title', 'Title'),
-            render: () => <RowTitleInput row={model} />,
+            title: '',
+            skipField: true,
+            render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -40,7 +41,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
             render: () => <RowHeaderSwitch row={model} />,
           })
         ),
-    [model]
+    [model, isNewElement, t]
   );
 
   const repeatCategory = useMemo(
@@ -59,7 +60,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
           render: () => <RowRepeatSelect row={model} />,
         })
       ),
-    [model]
+    [model, t]
   );
 
   const layoutCategory = useLayoutCategory(layout);
@@ -78,13 +79,15 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   return editOptions;
 }
 
-function RowTitleInput({ row }: { row: RowItem }) {
-  const { title, isNew } = row.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
+function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
+  const { title } = row.useState();
+  const { t } = useTranslate();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
     <Field
+      label={t('dashboard.rows-layout.row-options.row.title', 'Title')}
       invalid={!hasUniqueTitle}
       error={
         !hasUniqueTitle ? t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique') : undefined

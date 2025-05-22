@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { FolderRepositoryList } from './Shared/FolderRepositoryList';
+import { RepositoryList } from './Shared/RepositoryList';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -21,7 +21,7 @@ export default function HomePage() {
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
-
+  const { t } = useTranslate();
   const tabInfo = useMemo(
     () => [
       {
@@ -35,7 +35,7 @@ export default function HomePage() {
         title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
       },
     ],
-    []
+    [t]
   );
 
   // Early return for onboarding
@@ -51,7 +51,7 @@ export default function HomePage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case TabSelection.Repositories:
-        return <FolderRepositoryList items={items ?? []} />;
+        return <RepositoryList items={items ?? []} />;
       case TabSelection.GettingStarted:
         return <GettingStarted items={items ?? []} />;
       default:

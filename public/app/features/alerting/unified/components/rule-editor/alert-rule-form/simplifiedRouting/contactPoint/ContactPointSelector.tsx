@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { ActionMeta, Button, Drawer, Field, FieldValidationMessage, LinkButton, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { GrafanaReceiverForm } from 'app/features/alerting/unified/components/receivers/form/GrafanaReceiverForm';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
@@ -48,6 +48,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   useEffect(() => {
     validateContactPoint();
   }, [validateContactPoint]);
+  const { t } = useTranslate();
 
   return (
     <Stack direction="column">

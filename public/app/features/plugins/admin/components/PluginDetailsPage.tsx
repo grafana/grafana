@@ -4,10 +4,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
@@ -125,6 +125,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function NotFoundPlugin() {
+  const { t } = useTranslate();
+
   return (
     <Stack justifyContent="center" alignItems="center" height="100%">
       <Box>
@@ -132,8 +134,10 @@ function NotFoundPlugin() {
           severity={AppNotificationSeverity.Warning}
           title={t('plugins.not-found-plugin.title-plugin-not-found', 'Plugin not found')}
         >
-          That plugin cannot be found. Please check the url is correct or <br />
-          go to the <a href="/plugins">plugin catalog</a>.
+          <Trans i18nKey="plugins.not-found-plugin.body-plugin-not-found">
+            That plugin cannot be found. Please check the url is correct or <br />
+            go to the <TextLink href="/plugins">plugin catalog</TextLink>.
+          </Trans>
         </Alert>
       </Box>
     </Stack>

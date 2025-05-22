@@ -67,7 +67,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       {metric.type === 'moving_fn' && (
         <>
           <SettingField label="Window" metric={metric} settingName="window" />
-          <SettingField label="Script" metric={metric} settingName="script" />
+          <SettingField label="Script" metric={metric} settingName="script" inputType="textarea" />
           <SettingField label="Shift" metric={metric} settingName="shift" />
         </>
       )}
@@ -157,7 +157,13 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       )}
 
       {isMetricAggregationWithInlineScript(metric) && (
-        <SettingField label="Script" metric={metric} settingName="script" placeholder="_value * 1" />
+        <SettingField
+          label="Script"
+          metric={metric}
+          settingName="script"
+          placeholder="_value * 1"
+          inputType="textarea"
+        />
       )}
 
       {isMetricAggregationWithMissingSupport(metric) && (

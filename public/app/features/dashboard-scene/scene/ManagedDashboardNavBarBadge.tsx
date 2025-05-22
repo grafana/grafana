@@ -22,5 +22,5 @@ export default function ManagedDashboardNavBarBadge({ meta }: { meta: DashboardM
       text = `Plugin: ${id}`;
       break;
   }
-  return <Badge color="darkgrey" icon="exchange-alt" text={text} key="provisioned-dashboard-button-badge" />;
+  return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
 }

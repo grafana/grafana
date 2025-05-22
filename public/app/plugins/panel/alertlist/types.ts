@@ -34,7 +34,7 @@ export interface UnifiedAlertListOptions {
   groupBy: string[];
   alertName: string;
   showInstances: boolean;
-  folder: { id: number; title: string };
+  folder: { uid: string; title: string };
   stateFilter: StateFilter;
   alertInstanceLabelFilter: string;
   datasource: string;

@@ -1,9 +1,9 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Modal, Space, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
@@ -76,6 +76,8 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 }
 
 export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
+  const { t } = useTranslate();
+
   return (
     <ConfirmModal
       isOpen={true}
@@ -110,6 +112,8 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
 }
 
 function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModalProps) {
+  const { t } = useTranslate();
+
   return (
     <Modal
       isOpen={true}
@@ -121,24 +125,23 @@ function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModal
       onDismiss={onClose}
     >
       <p>
-        This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
-        file to delete it.
+        <Trans i18nKey="dashboard-scene.provisioned-delete-modal.cannot-be-deleted">
+          This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
+          file to delete it.
+        </Trans>
       </p>
       <p>
         <i>
-          See{' '}
-          <a
-            className="external-link"
-            href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
-            target="_blank"
-            rel="noreferrer"
-          >
-            documentation
-          </a>{' '}
-          for more information about provisioning.
+          <Trans i18nKey="dashboard-scene.provisioned-delete-modal.see-docs">
+            See{' '}
+            <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
+              documentation
+            </TextLink>{' '}
+            for more information about provisioning.
+          </Trans>
         </i>
         <br />
-        File path: {dashboardId}
+        <Trans i18nKey="dashboard-scene.provisioned-delete-modal.file-path">File path: {{ dashboardId }}</Trans>
       </p>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onClose}>

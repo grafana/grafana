@@ -6,10 +6,11 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
@@ -26,30 +27,6 @@ enum ShowContent {
   DataFrames = 'frames',
 }
 
-const options: Array<SelectableValue<ShowContent>> = [
-  {
-    label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
-    description: t(
-      'dashboard.inspect-json.panel-json-description',
-      'The model saved in the dashboard JSON that configures how everything works.'
-    ),
-    value: ShowContent.PanelJSON,
-  },
-  {
-    label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
-    description: t('dashboard.inspect-json.panel-data-description', 'The raw model passed to the panel visualization'),
-    value: ShowContent.PanelData,
-  },
-  {
-    label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
-    description: t(
-      'dashboard.inspect-json.dataframe-description',
-      'Raw data without transformations and field config applied. '
-    ),
-    value: ShowContent.DataFrames,
-  },
-];
-
 interface Props {
   onClose: () => void;
   dashboard?: DashboardModel;
@@ -58,6 +35,37 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
+  const { t } = useTranslate();
+
+  const options: Array<SelectableValue<ShowContent>> = useMemo(
+    () => [
+      {
+        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+        description: t(
+          'dashboard.inspect-json.panel-json-description',
+          'The model saved in the dashboard JSON that configures how everything works.'
+        ),
+        value: ShowContent.PanelJSON,
+      },
+      {
+        label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
+        description: t(
+          'dashboard.inspect-json.panel-data-description',
+          'The raw model passed to the panel visualization'
+        ),
+        value: ShowContent.PanelData,
+      },
+      {
+        label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
+        description: t(
+          'dashboard.inspect-json.dataframe-description',
+          'Raw data without transformations and field config applied. '
+        ),
+        value: ShowContent.DataFrames,
+      },
+    ],
+    [t]
+  );
   const styles = useStyles2(getPanelInspectorStyles2);
   const jsonOptions = useMemo(() => {
     if (panel) {
@@ -67,14 +75,14 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
       return options;
     }
     return options.slice(1, options.length);
-  }, [panel]);
+  }, [options, panel]);
   const [show, setShow] = useState(panel ? ShowContent.PanelJSON : ShowContent.DataFrames);
   const [text, setText] = useState('');
 
   useAsync(async () => {
-    const v = await getJSONObject(show, panel, data);
+    const v = await getJSONObject(show, t, panel, data);
     setText(getPrettyJSON(v));
-  }, [show, panel, data]);
+  }, [show, panel, data, t]);
 
   const onApplyPanelModel = useCallback(() => {
     if (panel && dashboard && text) {
@@ -160,7 +168,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   );
 }
 
-async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: PanelData) {
+async function getJSONObject(show: ShowContent, t: TFunction, panel?: PanelModel, data?: PanelData) {
   if (show === ShowContent.PanelData) {
     reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
     return data;

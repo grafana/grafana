@@ -400,44 +400,38 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return rulerRuleType.dataSource.alertingRule(rule)
-    ? {
-        name: rule.alert,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-        uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-      }
-    : rulerRuleType.dataSource.recordingRule(rule)
-      ? {
-          name: rule.record,
-          query: rule.expr,
-          labels: rule.labels || {},
-          annotations: {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-          uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-        }
-      : {
-          name: rule.grafana_alert.title,
-          query: '',
-          labels: rule.labels || {},
-          annotations: rule.annotations || {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-          uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-        };
+  const commonProps = {
+    labels: rule.labels || {},
+    rulerRule: rule,
+    namespace,
+    group,
+    instanceTotals: {},
+    filteredInstanceTotals: {},
+    uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
+  };
+
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.alert,
+      query: rule.expr,
+      annotations: rule.annotations || {},
+    };
+  }
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.record,
+      query: rule.expr,
+      annotations: {},
+    };
+  }
+  return {
+    ...commonProps,
+    name: rule.grafana_alert.title,
+    query: '',
+    annotations: rule.annotations || {},
+  };
 }
 
 // find existing rule in group that matches the given prom rule

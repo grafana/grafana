@@ -16,9 +16,9 @@ import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
-import { Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';
@@ -71,6 +71,8 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     );
   }, [search.serviceName, search.spanName, search.from, search.to, search.tags, search.query, search.matchesOnly]);
 
+  const { t } = useTranslate();
+
   return (
     <div className={styles.container}>
       <div className={styles.controls}>
@@ -81,7 +83,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               disabled={!clearEnabled}
               type="button"
               fill="outline"
-              aria-label="Clear filters button"
+              aria-label={t('explore.trace-page-search-bar.aria-label-clear-filters', 'Clear filters button')}
               onClick={clear}
             >
               <Trans i18nKey="explore.clear">Clear</Trans>
@@ -90,7 +92,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               <Switch
                 value={search.matchesOnly}
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
-                label="Show matches only switch"
+                label={t('explore.trace-page-search-bar.label-show-matches', 'Show matches only switch')}
                 disabled={!spanFilterMatches?.size}
               />
               <Button
@@ -107,7 +109,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               <Switch
                 value={search.criticalPathOnly}
                 onChange={(value) => setShowCriticalPathSpansOnly(value.currentTarget.checked ?? false)}
-                label="Show critical path only switch"
+                label={t('explore.trace-page-search-bar.label-show-paths', 'Show critical path only switch')}
               />
               <Button
                 onClick={() => setShowCriticalPathSpansOnly(!search.criticalPathOnly)}

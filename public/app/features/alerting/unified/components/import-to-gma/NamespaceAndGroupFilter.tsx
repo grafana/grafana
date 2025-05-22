@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { useTranslate } from '@grafana/i18n';
 import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
@@ -42,6 +42,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
     setValue('namespace', '');
     setValue('ruleGroup', '');
   }, [rulesSourceName, setValue]);
+  const { t } = useTranslate();
 
   return (
     <Stack direction="row" gap={2}>
@@ -59,7 +60,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
               {...field}
               onChange={(value) => {
                 setValue('ruleGroup', ''); //reset if namespace changes
-                onChange(value.value);
+                onChange(value?.value);
               }}
               id="namespace-picker"
               placeholder={t('alerting.namespace-and-group-filter.select-namespace', 'Select namespace')}
@@ -67,6 +68,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
               width={42}
               loading={isLoading}
               disabled={isLoading || !rulesSourceName}
+              isClearable
             />
           )}
           name="namespace"
@@ -88,12 +90,13 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
               options={groupOptions}
               width={42}
               onChange={(value) => {
-                setValue('ruleGroup', value.value ?? '');
+                setValue('ruleGroup', value?.value ?? '');
               }}
               id="group-picker"
               placeholder={t('alerting.namespace-and-group-filter.select-group', 'Select group')}
               loading={isLoading}
               disabled={isLoading || !namespace || !rulesSourceName}
+              isClearable
             />
           )}
           name="ruleGroup"

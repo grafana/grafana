@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -47,7 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -120,9 +121,9 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resource.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 	require.NoError(t, err, "unable to read resource client health check")
-	require.Equal(t, resource.HealthCheckResponse_SERVING, rsp.Status)
+	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
 	return c
 }
@@ -229,6 +230,15 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	statusError, ok := err.(*errors.StatusError)
 	require.True(c.t, ok)
 	return statusError
+}
+
+func (c *K8sTestHelper) EnsureStatusError(err error, expectedHttpStatus int, expectedMessage string) {
+	statusError := c.AsStatusError(err)
+	require.NotNil(c.t, statusError)
+	require.Equal(c.t, int32(expectedHttpStatus), statusError.ErrStatus.Code)
+	if expectedMessage != "" {
+		require.Equal(c.t, expectedMessage, statusError.ErrStatus.Message)
+	}
 }
 
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
@@ -884,4 +894,23 @@ func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64)
 	}, &struct{}{})
 
 	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
+}
+
+// Ensures that the passed error is an APIStatus error and fails the test if it is not.
+func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusReason, httpCode int) metav1.Status {
+	require.Error(c.t, err)
+	status, ok := utils.ExtractApiErrorStatus(err)
+	if !ok {
+		c.t.Fatalf("Expected error to be an APIStatus, but got %T", err)
+	}
+
+	if reason != metav1.StatusReasonUnknown {
+		require.Equal(c.t, status.Reason, reason)
+	}
+
+	if httpCode != 0 {
+		require.Equal(c.t, status.Code, int32(httpCode))
+	}
+
+	return status
 }

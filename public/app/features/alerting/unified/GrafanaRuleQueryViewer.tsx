@@ -3,11 +3,11 @@ import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -123,7 +123,12 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        {rangeUtil.secondsToHms(relativeTimeRange.from)} to now
+        <Trans
+          i18nKey="alerting.query-preview.relative-time-range"
+          values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
+        >
+          <code>{'{{from}}'}</code> to now
+        </Trans>
       </Text>
     );
   }
@@ -207,6 +212,7 @@ interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
 
 function ExpressionPreview({ refId, model, evalData, isAlertCondition }: ExpressionPreviewProps) {
   const styles = useStyles2(getQueryBoxStyles);
+  const { t } = useTranslate();
 
   function renderPreview() {
     switch (model.type) {
@@ -229,7 +235,11 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
-        return <>Expression not supported: {model.type}</>;
+        return (
+          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: model.type }}>
+            Expression not supported: {'{{type}}'}
+          </Trans>
+        );
     }
   }
 
@@ -271,6 +281,7 @@ interface QueryBoxProps extends React.PropsWithChildren<unknown> {
 
 function QueryBox({ refId, headerItems = [], children, isAlertCondition, exploreLink }: QueryBoxProps) {
   const styles = useStyles2(getQueryBoxStyles);
+  const { t } = useTranslate();
 
   return (
     <div className={cx(styles.container)}>
@@ -331,7 +342,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
 
 function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
   const styles = useStyles2(getClassicConditionViewerStyles);
-
+  const { t } = useTranslate();
   const reducerFunctions = keyBy(alertDef.reducerTypes, (rt) => rt.value);
   const evalOperators = keyBy(alertDef.evalOperators, (eo) => eo.value);
   const evalFunctions = keyBy(alertDef.evalFunctions, (ef) => ef.value);
@@ -344,7 +355,9 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
         return (
           <React.Fragment key={index}>
             <div className={styles.blue}>
-              {index === 0 ? 'WHEN' : !!operator?.type && evalOperators[operator?.type]?.text}
+              {index === 0
+                ? t('alerting.classic-condition-viewer.when', 'WHEN')
+                : !!operator?.type && evalOperators[operator?.type]?.text}
             </div>
             <div className={styles.bold}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
             <div className={styles.blue}>
@@ -492,7 +505,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         {unloadEvaluator && (
           <>
             <div className={styles.label}>
-              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">Stop alerting when </Trans>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
             </div>
             <div className={styles.value}>{expression}</div>
 

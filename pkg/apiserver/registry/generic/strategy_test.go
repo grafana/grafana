@@ -51,17 +51,17 @@ func TestGenericStrategy(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
-			newObj.ObjectMeta.Annotations = map[string]string{"foo": "baz"}
-			newObj.ObjectMeta.Labels = map[string]string{"foo": "baz"}
-			newObj.ObjectMeta.Finalizers = []string{"foo"}
-			newObj.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
+			newObj.Annotations = map[string]string{"foo": "baz"}
+			newObj.Labels = map[string]string{"foo": "baz"}
+			newObj.Finalizers = []string{"foo"}
+			newObj.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
 
 			strategy := generic.NewStrategy(runtime.NewScheme(), gv)
 			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
-			assert.Equal(t, map[string]string{"foo": "baz"}, newObj.ObjectMeta.Annotations)
-			assert.Equal(t, map[string]string{"foo": "baz"}, newObj.ObjectMeta.Labels)
-			assert.Equal(t, []string{"foo"}, newObj.ObjectMeta.Finalizers)
-			assert.Equal(t, []metav1.OwnerReference{{Name: "foo"}}, newObj.ObjectMeta.OwnerReferences)
+			assert.Equal(t, map[string]string{"foo": "baz"}, newObj.Annotations)
+			assert.Equal(t, map[string]string{"foo": "baz"}, newObj.Labels)
+			assert.Equal(t, []string{"foo"}, newObj.Finalizers)
+			assert.Equal(t, []metav1.OwnerReference{{Name: "foo"}}, newObj.OwnerReferences)
 			assert.Equal(t, int64(1), newObj.Generation)
 		})
 
@@ -165,7 +165,7 @@ func TestStatusStrategy(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
-			newObj.ObjectMeta.Labels = map[string]string{"foo": "baz"}
+			newObj.Labels = map[string]string{"foo": "baz"}
 			expectedObj := obj.DeepCopy()
 
 			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
@@ -177,7 +177,7 @@ func TestStatusStrategy(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
-			newObj.ObjectMeta.Annotations = map[string]string{"foo": "baz"}
+			newObj.Annotations = map[string]string{"foo": "baz"}
 			expectedObj := obj.DeepCopy()
 
 			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
@@ -189,7 +189,7 @@ func TestStatusStrategy(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
-			newObj.ObjectMeta.Finalizers = []string{"foo"}
+			newObj.Finalizers = []string{"foo"}
 			expectedObj := obj.DeepCopy()
 
 			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
@@ -201,7 +201,7 @@ func TestStatusStrategy(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
-			newObj.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
+			newObj.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
 			expectedObj := obj.DeepCopy()
 
 			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv)
@@ -302,27 +302,27 @@ func TestCompleteStrategy(t *testing.T) {
 				t.Parallel()
 				oldObj := obj.DeepCopy()
 				newObj := obj.DeepCopy()
-				newObj.ObjectMeta.Annotations = map[string]string{"foo": "baz"}
-				newObj.ObjectMeta.Labels = map[string]string{"foo": "baz"}
-				newObj.ObjectMeta.Finalizers = []string{"foo"}
-				newObj.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
+				newObj.Annotations = map[string]string{"foo": "baz"}
+				newObj.Labels = map[string]string{"foo": "baz"}
+				newObj.Finalizers = []string{"foo"}
+				newObj.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
 
 				strategy := generic.NewCompleteStrategy(runtime.NewScheme(), gv)
 				strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
-				assert.Equal(t, map[string]string{"foo": "baz"}, newObj.ObjectMeta.Annotations)
-				assert.Equal(t, map[string]string{"foo": "baz"}, newObj.ObjectMeta.Labels)
-				assert.Equal(t, []string{"foo"}, newObj.ObjectMeta.Finalizers)
-				assert.Equal(t, []metav1.OwnerReference{{Name: "foo"}}, newObj.ObjectMeta.OwnerReferences)
+				assert.Equal(t, map[string]string{"foo": "baz"}, newObj.Annotations)
+				assert.Equal(t, map[string]string{"foo": "baz"}, newObj.Labels)
+				assert.Equal(t, []string{"foo"}, newObj.Finalizers)
+				assert.Equal(t, []metav1.OwnerReference{{Name: "foo"}}, newObj.OwnerReferences)
 			})
 
 			t.Run("does not increment generation", func(t *testing.T) {
 				t.Parallel()
 				oldObj := obj.DeepCopy()
 				newObj := obj.DeepCopy()
-				newObj.ObjectMeta.Annotations = map[string]string{"foo": "baz"}
-				newObj.ObjectMeta.Labels = map[string]string{"foo": "baz"}
-				newObj.ObjectMeta.Finalizers = []string{"foo"}
-				newObj.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
+				newObj.Annotations = map[string]string{"foo": "baz"}
+				newObj.Labels = map[string]string{"foo": "baz"}
+				newObj.Finalizers = []string{"foo"}
+				newObj.OwnerReferences = []metav1.OwnerReference{{Name: "foo"}}
 
 				strategy := generic.NewCompleteStrategy(runtime.NewScheme(), gv)
 				strategy.PrepareForUpdate(t.Context(), newObj, oldObj)

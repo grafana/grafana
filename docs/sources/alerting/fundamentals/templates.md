@@ -90,7 +90,7 @@ In this diagram:
 
 [Annotations](ref:annotations) can be defined in the alert rule to add extra information to alert instances.
 
-When creating an alert rule, Grafana suggests several optional annotations, such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`, which help identify and respond to alerts. You can also create custom annotations.
+When creating an alert rule, Grafana suggests several optional annotations, such as `description`, `summary`, and `runbook_url`, which help identify and respond to alerts. You can also create custom annotations.
 
 Annotations are key-value pairs, and their values can contain a combination of text and template code that is evaluated when the alert fires.
 

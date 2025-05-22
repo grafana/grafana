@@ -1,19 +1,23 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { appEvents } from 'app/core/core';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
+  setPanelTitle,
 } from '../panel-edit/getPanelFrameOptions';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -36,7 +40,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;
 
@@ -53,7 +57,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} />,
+            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -69,7 +73,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             render: () => <PanelBackgroundSwitch panel={panel} />,
           })
         );
-    }, [panel]);
+    }, [panel, isNewElement]);
 
     const layoutCategories = useMemo(
       () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -84,6 +88,22 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     layout.removePanel?.(this.panel);
   }
 
+  public onConfirmDelete() {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.viz-panel.delete-panel-title', 'Delete panel?'),
+        text: t(
+          'dashboard.viz-panel.delete-panel-text',
+          'Deleting this panel will also remove all queries. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.viz-panel.delete-panel-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
+
   public onDuplicate() {
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
@@ -92,6 +112,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public onCopy() {
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
+  }
+
+  public onChangeName(name: string) {
+    setPanelTitle(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {

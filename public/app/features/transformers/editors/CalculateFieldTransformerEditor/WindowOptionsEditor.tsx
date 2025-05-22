@@ -6,9 +6,9 @@ import {
   WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -17,6 +17,7 @@ export const WindowOptionsEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
+  const { t } = useTranslate();
   const { options, names, onChange } = props;
   const { window } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));
@@ -120,12 +121,19 @@ export const WindowOptionsEditor = (props: {
         ></RadioButtonGroup>
       </InlineField>
       <InlineField
-        label={window?.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+        label={
+          window?.windowSizeMode === WindowSizeMode.Percentage
+            ? t('transformers.window-options-editor.label-window-size-percent', 'Window size %')
+            : t('transformers.window-options-editor.label-window-size', 'Window size')
+        }
         labelWidth={LABEL_WIDTH}
         tooltip={
           window?.windowSizeMode === WindowSizeMode.Percentage
-            ? 'Set the window size as a percentage of the total data'
-            : 'Window size'
+            ? t(
+                'transformers.window-options-editor.tooltip-window-size-percent',
+                'Set the window size as a percentage of the total data'
+              )
+            : t('transformers.window-options-editor.tooltip-window-size', 'Window size')
         }
       >
         <NumberInput

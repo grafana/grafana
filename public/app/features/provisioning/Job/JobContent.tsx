@@ -1,6 +1,6 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
@@ -13,11 +13,14 @@ export interface JobContentProps {
 }
 
 export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
+  const { t } = useTranslate();
+
   if (!job?.status) {
     return null;
   }
 
-  const { state, message, progress, summary } = job.status;
+  const { state, message, progress, summary, errors } = job.status;
+  const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
 
   const getStatusDisplay = () => {
     switch (state) {
@@ -34,7 +37,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
             severity="error"
             title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
           >
-            {message}
+            {message ?? errors?.join('\n')}
           </Alert>
         );
     }
@@ -52,11 +55,11 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
         {getStatusDisplay()}
-
-        <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-          <ProgressBar progress={progress} />
-        </Stack>
-
+        {state && !['success', 'error'].includes(state) && (
+          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+            <ProgressBar progress={progress ?? 0} />
+          </Stack>
+        )}
         {isFinishedJob && summary && (
           <Stack direction="column" gap={2}>
             <Text variant="h3">
@@ -66,7 +69,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           </Stack>
         )}
         {state === 'success' ? (
-          <RepositoryLink name={job.metadata?.labels?.repository} />
+          <RepositoryLink name={repoName} />
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>

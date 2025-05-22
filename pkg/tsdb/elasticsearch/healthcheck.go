@@ -163,7 +163,7 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 	indexList := strings.Join(indices, ",")
 
 	validateUrl := fmt.Sprintf("%s/%s/_field_caps?fields=%s", ds.URL, indexList, ds.ConfiguredFields.TimeField)
-	if indexList == "" || strings.Replace(indexList, ",", "", -1) == "" {
+	if indexList == "" || strings.ReplaceAll(indexList, ",", "") == "" {
 		validateUrl = fmt.Sprintf("%s/_field_caps?fields=%s", ds.URL, ds.ConfiguredFields.TimeField)
 	}
 

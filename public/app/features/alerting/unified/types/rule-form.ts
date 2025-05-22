@@ -16,6 +16,7 @@ export interface ContactPoint {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+  activeTimeIntervals: string[];
 }
 
 // key: name of alert manager, value ContactPoint
@@ -63,6 +64,7 @@ export interface RuleFormValues {
   keepFiringForTime?: number;
   keepFiringForTimeUnit?: string;
   expression: string;
+  missingSeriesEvalsToResolve?: number;
 }
 
 export type Folder = { title: string; uid: string };

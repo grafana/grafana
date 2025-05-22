@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { isUndefined } from 'lodash';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -41,6 +42,7 @@ interface DetailsProps {
 
 export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const pendingPeriod = usePendingPeriod(rule);
   const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
@@ -76,6 +78,12 @@ export const Details = ({ rule }: DetailsProps) => {
 
   const updated = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
   const isPaused = rulerRuleType.grafana.rule(rule.rulerRule) && isPausedRule(rule.rulerRule);
+
+  const missingSeriesEvalsToResolve =
+    rulerRuleType.grafana.rule(rule.rulerRule) &&
+    !isUndefined(rule.rulerRule.grafana_alert.missing_series_evals_to_resolve)
+      ? String(rule.rulerRule.grafana_alert.missing_series_evals_to_resolve)
+      : undefined;
 
   const pausedIcon = (
     <Stack>
@@ -152,7 +160,18 @@ export const Details = ({ rule }: DetailsProps) => {
               <DetailText
                 id="last-evaluation-duration"
                 label={t('alerting.alert.last-evaluation-duration', 'Last evaluation duration')}
-                value={isPaused ? pausedIcon : `${evaluationDuration} ms`}
+                value={`${evaluationDuration} ms`}
+              />
+            )}
+            {missingSeriesEvalsToResolve && (
+              <DetailText
+                id="missing-series-resolve"
+                label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
+                value={missingSeriesEvalsToResolve}
+                tooltipValue={t(
+                  'alerting.alert.description-missing-series-evaluations',
+                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                )}
               />
             )}
           </>

@@ -60,7 +60,7 @@ func RegisterAPIService(
 	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
 
 	// This requires devmode!
-	if !(explictPluginList || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !explictPluginList && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
@@ -78,7 +78,7 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		if !ds.JSONData.Backend {
+		if !ds.Backend {
 			continue // skip frontend only plugins
 		}
 

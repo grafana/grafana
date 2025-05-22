@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Catch-all field for datasource-specific properties
+	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -65,7 +67,7 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
+export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
@@ -870,10 +872,21 @@ export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: TabRepeatOptions;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources
@@ -1017,6 +1030,7 @@ export interface QueryVariableSpec {
 	includeAll: boolean;
 	allValue?: string;
 	placeholder?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1031,6 +1045,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	options: [],
 	multi: false,
 	includeAll: false,
+	allowCustomValue: true,
 });
 
 // Variable option specification
@@ -1164,6 +1179,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1177,6 +1193,7 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Interval variable kind
@@ -1243,6 +1260,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1254,6 +1272,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Group variable kind
@@ -1311,6 +1330,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1320,6 +1340,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	defaultKeys: [],
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Define the AdHocFilterWithLabels type
@@ -1331,6 +1352,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
+	origin?: FilterOrigin;
 	// @deprecated
 	condition?: string;
 }
@@ -1340,6 +1362,12 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	operator: "",
 	value: "",
 });
+
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+export type FilterOrigin = "dashboard" | "scope";
+
+export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
 
 // Define the MetricFindValue type
 export interface MetricFindValue {
@@ -1354,7 +1382,6 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 });
 
 export interface Spec {
-	// Title of dashboard.
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).

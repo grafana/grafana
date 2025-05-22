@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -53,6 +53,7 @@ const tooltipMessage = (
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
   options: Role[];
+  isFiltered?: boolean;
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
@@ -70,6 +71,7 @@ interface RolePickerMenuProps {
 export const RolePickerMenu = ({
   basicRole,
   options,
+  isFiltered,
   appliedRoles,
   showGroups,
   basicRoleDisabled,
@@ -135,6 +137,8 @@ export const RolePickerMenu = ({
       },
     });
   }, [options]);
+
+  const { t } = useTranslate();
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -259,6 +263,7 @@ export const RolePickerMenu = ({
             <RoleMenuGroupsSection
               key={groupId}
               roles={collection.roles}
+              isFiltered={isFiltered}
               renderedName={collection.renderedName}
               showGroups={showGroups}
               optionGroups={collection.optionGroup}

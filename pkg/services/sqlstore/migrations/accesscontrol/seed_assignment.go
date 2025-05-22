@@ -1,7 +1,7 @@
 package accesscontrol
 
 import (
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -63,10 +63,11 @@ func (m *seedAssignmentPrimaryKeyMigrator) SQL(dialect migrator.Dialect) string 
 func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
 	driver := mig.Dialect.DriverName()
 
-	if driver == migrator.MySQL {
+	switch driver {
+	case migrator.MySQL:
 		_, err := sess.Exec("ALTER TABLE seed_assignment ADD id INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (id)")
 		return err
-	} else if driver == migrator.Postgres {
+	case migrator.Postgres:
 		_, err := sess.Exec("ALTER TABLE seed_assignment ADD COLUMN id SERIAL PRIMARY KEY")
 		return err
 	}

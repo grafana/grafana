@@ -228,8 +228,11 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      // this tooltip is Portaled, but actions inside it create forms in Modals
+      const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
+
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if (!domRef.current!.contains(e.target as Node)) {
+      if ((e.target as HTMLElement).closest(isModalOrPortaled) == null) {
         dismiss();
       }
     };

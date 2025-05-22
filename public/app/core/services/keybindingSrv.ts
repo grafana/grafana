@@ -2,6 +2,7 @@ import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -55,6 +56,13 @@ export class KeybindingSrv {
 
     this.bind('c t', () => toggleTheme(false));
     this.bind('c r', () => toggleTheme(true));
+
+    if (process.env.NODE_ENV === 'development') {
+      // 'change mock'
+      this.bind('c m', () => toggleMockApiAndReload());
+      // 'change pseudo locale'
+      this.bind('c p l', () => togglePseudoLocale());
+    }
   }
 
   bindGlobalEsc() {
@@ -85,10 +93,6 @@ export class KeybindingSrv {
 
     // ok no focused input or editor that should block this, let exist!
     this.exit();
-  }
-
-  private closeSearch() {
-    this.locationService.partial({ search: null });
   }
 
   private openAlerting() {
@@ -141,10 +145,6 @@ export class KeybindingSrv {
     const { kioskMode } = this.chromeService.state.getValue();
     if (kioskMode) {
       this.chromeService.exitKioskMode();
-    }
-
-    if (search.search) {
-      this.closeSearch();
     }
   }
 

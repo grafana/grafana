@@ -51,10 +51,11 @@ import {
 
 import { Annotation } from './constants';
 import {
-  DataSourceType,
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
@@ -111,6 +112,7 @@ export function getNotificationSettingsForDTO(
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
       mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
+      active_time_intervals: contactPoints?.grafana?.activeTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -128,12 +130,14 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
+
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
     simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -149,6 +153,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     type,
     metric,
     targetDatasourceUid,
+    missingSeriesEvalsToResolve,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -178,6 +183,10 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
         metadata,
+        missing_series_evals_to_resolve: missingSeriesEvalsToResolve
+          ? Number(missingSeriesEvalsToResolve)
+          : // API uses 0 value to reset, as `missing_series_evals_to_resolve` cannot be 0
+            0,
       },
       annotations,
       labels,
@@ -225,6 +234,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
+        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [
@@ -315,6 +325,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           manualRouting: Boolean(routingSettings),
 
           editorSettings: getEditorSettingsFromDTO(ga),
+
+          missingSeriesEvalsToResolve: ga.missing_series_evals_to_resolve,
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');
@@ -473,7 +485,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
+  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -867,9 +879,12 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
 
   // find the datasource type from the UID
   const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+  if (!type) {
+    return undefined;
+  }
 
-  // if the datasource is not prometheus or loki, return "undefined"
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+  // if the datasource is not a supported prometheus flavor or loki, return "undefined"
+  if (!isSupportedExternalRulesSourceType(type)) {
     return undefined;
   }
 
@@ -879,6 +894,7 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
 
-  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  const isPrometheusFlavoredDataSourceType = isSupportedExternalPrometheusFlavoredRulesSourceType(type);
+  const isInstant = isPrometheusFlavoredDataSourceType ? isInstantForPrometheus : isInstantForLoki;
   return isInstant;
 }

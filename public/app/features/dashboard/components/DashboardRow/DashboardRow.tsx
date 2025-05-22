@@ -5,11 +5,14 @@ import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon, TextLink, Themeable2, withTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { Trans, t } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import grabDarkSvg from 'img/grab_dark.svg';
+import grabLightSvg from 'img/grab_light.svg';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -51,8 +54,10 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
       return (
         <div>
           <p>
-            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
-            the original row, not the ones in the repeated rows.
+            <Trans i18nKey="dashboard.untheme-dashboard-row.dashboard-datasource">
+              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
+              in the original row, not the ones in the repeated rows.
+            </Trans>
           </p>
           <TextLink
             external
@@ -173,6 +178,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
 export const DashboardRow = withTheme2(UnthemedDashboardRow);
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const dragHandle = theme.name === 'dark' ? grabDarkSvg : grabLightSvg;
   const actions = css({
     color: theme.colors.text.secondary,
     opacity: 0,
@@ -242,7 +248,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'move',
       width: '16px',
       height: '100%',
-      background: 'url("public/img/grab_dark.svg") no-repeat 50% 50%',
+      background: `url("${dragHandle}") no-repeat 50% 50%`,
       backgroundSize: '8px',
       visibility: 'hidden',
       position: 'absolute',

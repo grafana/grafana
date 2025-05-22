@@ -17,6 +17,10 @@ This migration guide is designed to assist Grafana OSS/Enterprise users in seaml
 There isn't yet a standard method for importing existing data into Grafana Cloud from self-managed databases.
 {{< /admonition >}}
 
+{{< admonition type="tip" >}}
+You can use the [Grafana Cloud Migration Assistant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/), generally available in Grafana v12, to automatically migrate your resources to Grafana Cloud.
+{{< /admonition >}}
+
 ## Plan and perform a manual migration
 
 If you need to migrate resources beyond what is supported by the Grafana Cloud Migration Assistant, you can migrate them manually with this guide. Moving your team from Grafana OSS/Enterprise to Grafana Cloud manually involves some coordination and communication in addition to the technical migration in the following documentation.
@@ -29,13 +33,13 @@ You may choose to test Grafana Cloud for some time before migrating your entire 
 
 When you decide to migrate, set aside a day of cutover during which users should not create new dashboards or alerts. Migrate any newly-created resources, turn on your production Alerting contact points and notification policies in Cloud and turn them off in Grafana OSS/Enterprise, and notify your users. You may also choose to redirect the Grafana OSS/Enterprise URL to your Grafana Cloud URL.
 
-| Component    | Migration Effort | Notes                                                                      |
-| ------------ | ---------------- | -------------------------------------------------------------------------- |
-| Folders      | Low              |                                                                            |
-| Dashboards   | Low              | Data source references might need to be renamed                            |
-| Alerts       | Medium           | Data source based alerts might need to be adapted                          |
-| Plugins      | Medium           | Depends on the feature set of the plugin                                   |
-| Data sources | High             | If the data sources references any secrets, you need to provide them again |
+| Component    | Migration Effort | Notes                                                                     |
+| ------------ | ---------------- | ------------------------------------------------------------------------- |
+| Folders      | Low              |                                                                           |
+| Dashboards   | Low              | Data source references might need to be renamed                           |
+| Alerts       | Medium           | Data source based alerts might need to be adapted                         |
+| Plugins      | Medium           | Depends on the feature set of the plugin                                  |
+| Data sources | High             | If the data sources reference any secrets, you need to provide them again |
 
 ## Before you begin
 

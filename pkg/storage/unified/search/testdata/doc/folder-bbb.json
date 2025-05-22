@@ -1,6 +1,6 @@
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v0alpha1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "bbb",
     "namespace": "default",

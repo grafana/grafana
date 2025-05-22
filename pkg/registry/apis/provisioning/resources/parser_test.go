@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -34,7 +34,7 @@ func TestParser(t *testing.T) {
 			Data: []byte("hello"), // not a real resource
 		})
 		require.Error(t, err)
-		require.Equal(t, "classic resource must be JSON", err.Error())
+		require.Equal(t, "unable to read file as a resource", err.Error())
 	})
 
 	t.Run("dashboard parsing (with and without name)", func(t *testing.T) {
@@ -56,7 +56,7 @@ spec:
 
 		// Now try again without a name
 		_, err = parser.Parse(context.Background(), &repository.FileInfo{
-			Data: []byte(`apiVersion: dashboard.grafana.app/v1alpha1
+			Data: []byte(`apiVersion: ` + dashboardV1.APIVERSION + `
 kind: Dashboard
 spec:
   title: Test dashboard

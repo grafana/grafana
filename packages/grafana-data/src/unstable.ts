@@ -10,4 +10,4 @@
  */
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
-export { DEFAULT_LANGUAGE, LANGUAGES } from './utils/i18n';
+export const unstable = {};

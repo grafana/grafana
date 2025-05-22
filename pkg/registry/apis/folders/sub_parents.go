@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 type subParentsREST struct {
@@ -21,7 +21,7 @@ var _ = rest.Connecter(&subParentsREST{})
 var _ = rest.StorageMetadata(&subParentsREST{})
 
 func (r *subParentsREST) New() runtime.Object {
-	return &v0alpha1.FolderInfoList{}
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) Destroy() {
@@ -36,7 +36,7 @@ func (r *subParentsREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subParentsREST) ProducesObject(verb string) interface{} {
-	return &v0alpha1.FolderInfoList{}
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -48,7 +48,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 	if err != nil {
 		return nil, err
 	}
-	folder, ok := obj.(*v0alpha1.Folder)
+	folder, ok := obj.(*folders.Folder)
 	if !ok {
 		return nil, fmt.Errorf("expecting folder, found: %T", folder)
 	}
@@ -61,16 +61,20 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (r *subParentsREST) parents(ctx context.Context, folder *v0alpha1.Folder) *v0alpha1.FolderInfoList {
-	info := &v0alpha1.FolderInfoList{
-		Items: []v0alpha1.FolderInfo{},
+func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *folders.FolderInfoList {
+	info := &folders.FolderInfoList{
+		Items: []folders.FolderInfo{},
 	}
 	for folder != nil {
 		parent := getParent(folder)
-		info.Items = append(info.Items, v0alpha1.FolderInfo{
+		descr := ""
+		if folder.Spec.Description != nil {
+			descr = *folder.Spec.Description
+		}
+		info.Items = append(info.Items, folders.FolderInfo{
 			Name:        folder.Name,
 			Title:       folder.Spec.Title,
-			Description: folder.Spec.Description,
+			Description: descr,
 			Parent:      parent,
 		})
 		if parent == "" {
@@ -79,7 +83,7 @@ func (r *subParentsREST) parents(ctx context.Context, folder *v0alpha1.Folder) *
 
 		obj, err := r.getter.Get(ctx, parent, &metav1.GetOptions{})
 		if err != nil {
-			info.Items = append(info.Items, v0alpha1.FolderInfo{
+			info.Items = append(info.Items, folders.FolderInfo{
 				Name:        parent,
 				Detached:    true,
 				Description: err.Error(),
@@ -87,9 +91,9 @@ func (r *subParentsREST) parents(ctx context.Context, folder *v0alpha1.Folder) *
 			break
 		}
 
-		parentFolder, ok := obj.(*v0alpha1.Folder)
+		parentFolder, ok := obj.(*folders.Folder)
 		if !ok {
-			info.Items = append(info.Items, v0alpha1.FolderInfo{
+			info.Items = append(info.Items, folders.FolderInfo{
 				Name:        parent,
 				Detached:    true,
 				Description: fmt.Sprintf("expected folder, found: %T", obj),

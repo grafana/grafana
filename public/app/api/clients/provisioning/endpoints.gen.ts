@@ -160,6 +160,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -175,6 +176,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -189,6 +191,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -488,7 +491,7 @@ export type DeleteRepositoryApiArg = {
 export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items?: any[];
+  items: any[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: any;
@@ -518,6 +521,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -532,6 +537,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -546,6 +553,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -729,6 +738,7 @@ export type MigrateJobOptions = {
   history?: boolean;
 };
 export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -820,7 +830,7 @@ export type ListMeta = {
 export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items?: Job[];
+  items: Job[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -945,7 +955,7 @@ export type Repository = {
 export type RepositoryList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items?: Repository[];
+  items: Repository[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -1090,20 +1100,23 @@ export type ResourceListItem = {
 export type ResourceList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items?: ResourceListItem[];
+  items: ResourceListItem[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
+};
+export type ErrorDetails = {
+  detail?: string;
+  field?: string;
+  type: string;
 };
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** HTTP status code */
   code: number;
-  /** Optional details */
-  details?: Unstructured;
-  /** Error descriptions */
-  errors?: string[];
+  /** Field related errors */
+  errors?: ErrorDetails[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Is the connection healthy */

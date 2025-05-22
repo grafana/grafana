@@ -92,7 +92,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			WeekStart:       &weekStartOne,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-GB",
-				Locale:   "en-US",
+				Locale:   "en",
 			},
 		},
 		pref.Preference{
@@ -104,7 +104,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			WeekStart:       &weekStartTwo,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-AU",
-				Locale:   "es-ES",
+				Locale:   "es",
 			},
 		},
 	)
@@ -120,7 +120,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			HomeDashboardID: 4,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-AU",
-				Locale:   "es-ES",
+				Locale:   "es",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -140,7 +140,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			HomeDashboardID: 1,
 			JSONData: &pref.PreferenceJSONData{
 				Language: "en-GB",
-				Locale:   "en-US",
+				Locale:   "en",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -162,7 +162,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		Language: "en-GB",
 	}
 	orgPreferencesWithLocaleJsonData := pref.PreferenceJSONData{
-		Locale: "en-US",
+		Locale: "en",
 	}
 	team2PreferencesJsonData := pref.PreferenceJSONData{}
 	team1PreferencesJsonData := pref.PreferenceJSONData{}
@@ -248,7 +248,7 @@ func TestGetDefaults_JSONData(t *testing.T) {
 		require.Equal(t, &pref.Preference{
 			WeekStart: &weekStart,
 			JSONData: &pref.PreferenceJSONData{
-				Locale:       "en-US",
+				Locale:       "en",
 				QueryHistory: queryPreference,
 			},
 		}, preference)

@@ -134,5 +134,5 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 // makeRuleGroupLabelValue returns a string that can be used as a label (rule_group) value for alert rule group metrics.
 func makeRuleGroupLabelValue(key models.AlertRuleGroupKeyWithFolderFullpath) string {
-	return fmt.Sprintf("%s;%s", key.FolderFullpath, key.AlertRuleGroupKey.RuleGroup)
+	return fmt.Sprintf("%s;%s", key.FolderFullpath, key.RuleGroup)
 }

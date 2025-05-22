@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -66,6 +67,8 @@ export function InstallControlsButton({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const { t } = useTranslate();
 
   const onInstall = async () => {
     trackPluginInstalled(trackingProps);
@@ -134,7 +137,9 @@ export function InstallControlsButton({
     <>
       <ConfirmModal
         isOpen={isConfirmModalVisible}
-        title={`Uninstall ${plugin.name}`}
+        title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
+          plugin: plugin.name,
+        })}
         body="Are you sure you want to uninstall this plugin?"
         confirmText="Confirm"
         icon="exclamation-triangle"
@@ -173,7 +178,9 @@ export function InstallControlsButton({
       <Stack alignItems="flex-start" width="auto" height="auto">
         {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
-            {isInstalling ? 'Updating' : 'Update'}
+            {isInstalling
+              ? t('plugins.install-controls.updating', 'Updating')
+              : t('plugins.install-controls.update', 'Update')}
           </Button>
         )}
         {uninstallControls}
@@ -185,7 +192,9 @@ export function InstallControlsButton({
 
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
+      {isInstalling
+        ? t('plugins.install-controls.installing', 'Installing')
+        : t('plugins.install-controls.install', 'Install')}
     </Button>
   );
 }

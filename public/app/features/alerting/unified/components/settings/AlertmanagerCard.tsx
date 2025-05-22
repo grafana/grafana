@@ -1,7 +1,8 @@
 import { capitalize } from 'lodash';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
@@ -28,7 +29,7 @@ export function AlertmanagerCard({
   name,
   href,
   url,
-  logo = 'public/app/plugins/datasource/alertmanager/img/logo.svg',
+  logo = alertmanagerLogo,
   provisioned = false,
   readOnly = provisioned,
   showStatus = true,
@@ -39,6 +40,7 @@ export function AlertmanagerCard({
   onEnable,
   onDisable,
 }: Props) {
+  const { t } = useTranslate();
   const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
 
   return (
@@ -121,7 +123,11 @@ export function AlertmanagerCard({
         <Stack direction="row" gap={1}>
           {/* ⚠️ provisioned Data sources cannot have their "enable" / "disable" actions but we should still allow editing of the configuration */}
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
-            {readOnly ? 'View configuration' : 'Edit configuration'}
+            {readOnly ? (
+              <Trans i18nKey="alerting.alertmanager-card.view-configuration">View configuration</Trans>
+            ) : (
+              <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
+            )}
           </Button>
           {showActions ? (
             <>

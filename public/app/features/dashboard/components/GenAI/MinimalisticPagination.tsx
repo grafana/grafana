@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface MinimalisticPaginationProps {
   currentPage: number;
@@ -20,6 +20,7 @@ export const MinimalisticPagination = ({
   className,
 }: MinimalisticPaginationProps) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   if (hideWhenSinglePage && numberOfPages <= 1) {
     return null;
@@ -34,7 +35,9 @@ export const MinimalisticPagination = ({
         onClick={() => onNavigate(currentPage - 1)}
         disabled={currentPage === 1}
       />
-      {currentPage} of {numberOfPages}
+      <Trans i18nKey="dashboard.minimalistic-pagination.page-count">
+        {{ currentPage }} of {{ numberOfPages }}
+      </Trans>
       <IconButton
         name="angle-right"
         size="md"

@@ -4,7 +4,6 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import {
   AbsoluteTimeRange,
-  Field,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
   LoadingState,
@@ -22,11 +21,12 @@ import {
   DataSourceWithQueryModificationSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -237,9 +237,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     return hasLogsContextSupport(this.state.dsInstances[row.dataFrame.refId]);
   };
 
-  getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
+  getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
     const { splitOpenFn, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
   };
 
   logDetailsFilterAvailable = () => {

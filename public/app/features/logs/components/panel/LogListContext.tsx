@@ -11,6 +11,7 @@ import {
 
 import {
   CoreApp,
+  DataFrame,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -24,13 +25,20 @@ import { PopoverContent } from '@grafana/ui';
 import { DownloadFormat, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
+import { LogListModel } from './processing';
 
-export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
+export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
+  closeDetails: () => void;
+  detailsDisplayed: (log: LogListModel) => boolean;
+  detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
+  enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
-  setDisplayedFields: (displayedFields: string[]) => void;
+  setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
@@ -39,17 +47,25 @@ export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 's
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
+  showDetails: LogListModel[];
+  toggleDetails: (log: LogListModel) => void;
 }
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
+  detailsDisplayed: () => false,
+  detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
+  enableLogDetails: false,
   filterLevels: [],
+  hasUnescapedContent: false,
   setDedupStrategy: () => {},
-  setDisplayedFields: () => {},
+  setDetailsWidth: () => {},
   setFilterLevels: () => {},
+  setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
@@ -58,9 +74,11 @@ export const LogListContext = createContext<LogListContextData>({
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
+  showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  toggleDetails: () => {},
   wrapLogMessage: false,
 });
 
@@ -81,8 +99,9 @@ export const useLogIsPinned = (log: LogRowModel) => {
 export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
-  | 'displayedFields'
+  | 'forceEscape'
   | 'filterLevels'
+  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -95,14 +114,25 @@ export type LogListState = Pick<
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
+  containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
+  enableLogDetails: boolean;
   filterLevels?: LogLevel[];
+  forceEscape?: boolean;
+  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -123,14 +153,25 @@ export interface Props {
 export const LogListContextProvider = ({
   app,
   children,
+  containerElement,
+  enableLogDetails,
   dedupStrategy,
   displayedFields,
+  filterLevels,
+  forceEscape = false,
+  hasUnescapedContent,
+  isLabelFilterActive,
   getRowContextQuery,
   logs,
   logsMeta,
   logOptionsStorageKey,
-  filterLevels,
   logSupportsContext,
+  onClickFilterLabel,
+  onClickFilterOutLabel,
+  onClickFilterString,
+  onClickFilterOutString,
+  onClickShowField,
+  onClickHideField,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
@@ -149,9 +190,10 @@ export const LogListContextProvider = ({
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
     dedupStrategy,
-    displayedFields,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
+    forceEscape,
+    hasUnescapedContent,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -160,6 +202,7 @@ export const LogListContextProvider = ({
     syntaxHighlighting,
     wrapLogMessage,
   });
+  const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -174,9 +217,6 @@ export const LogListContextProvider = ({
       syntaxHighlighting,
       wrapLogMessage,
     };
-    if (!shallowCompare(logListState.displayedFields, displayedFields)) {
-      newState.displayedFields = displayedFields;
-    }
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       newState.pinnedLogs = pinnedLogs;
     }
@@ -186,7 +226,6 @@ export const LogListContextProvider = ({
   }, [
     app,
     dedupStrategy,
-    displayedFields,
     logListState,
     pinnedLogs,
     showControls,
@@ -205,6 +244,17 @@ export const LogListContextProvider = ({
     }
   }, [filterLevels, logListState]);
 
+  useEffect(() => {
+    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
+      setLogListState({ ...logListState, hasUnescapedContent });
+    }
+  }, [hasUnescapedContent, logListState]);
+
+  const detailsDisplayed = useCallback(
+    (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
+    [showDetails]
+  );
+
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
@@ -213,12 +263,11 @@ export const LogListContextProvider = ({
     [logListState, onLogOptionsChange]
   );
 
-  const setDisplayedFields = useCallback(
-    (displayedFields: string[]) => {
-      setLogListState({ ...logListState, displayedFields });
-      onLogOptionsChange?.('displayedFields', displayedFields);
+  const setForceEscape = useCallback(
+    (forceEscape: boolean) => {
+      setLogListState({ ...logListState, forceEscape });
     },
-    [logListState, onLogOptionsChange]
+    [logListState]
   );
 
   const setFilterLevels = useCallback(
@@ -314,16 +363,64 @@ export const LogListContextProvider = ({
     [logListState.filterLevels, logs, logsMeta]
   );
 
+  const closeDetails = useCallback(() => {
+    setShowDetails([]);
+  }, []);
+
+  const toggleDetails = useCallback(
+    (log: LogListModel) => {
+      if (!enableLogDetails) {
+        return;
+      }
+      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found >= 0) {
+        setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
+      } else {
+        // Supporting one displayed details for now
+        setShowDetails([log]);
+      }
+    },
+    [enableLogDetails, showDetails]
+  );
+
+  const setDetailsWidth = useCallback(
+    (width: number) => {
+      if (!logOptionsStorageKey) {
+        return;
+      }
+      store.set(`${logOptionsStorageKey}.detailsWidth`, width);
+    },
+    [logOptionsStorageKey]
+  );
+
+  const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
+  const detailsWidth = logOptionsStorageKey
+    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
+    : defaultWidth;
+
   return (
     <LogListContext.Provider
       value={{
         app,
+        closeDetails,
+        detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
-        displayedFields: logListState.displayedFields,
+        detailsWidth: detailsWidth || defaultWidth,
+        displayedFields,
         downloadLogs,
+        enableLogDetails,
         filterLevels: logListState.filterLevels,
+        forceEscape: logListState.forceEscape,
+        hasUnescapedContent: logListState.hasUnescapedContent,
+        isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
+        onClickFilterLabel,
+        onClickFilterOutLabel,
+        onClickFilterString,
+        onClickFilterOutString,
+        onClickShowField,
+        onClickHideField,
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
@@ -333,8 +430,9 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
-        setDisplayedFields,
+        setDetailsWidth,
         setFilterLevels,
+        setForceEscape,
         setLogListState,
         setPinnedLogs,
         setPrettifyJSON,
@@ -343,10 +441,12 @@ export const LogListContextProvider = ({
         setSortOrder,
         setSyntaxHighlighting,
         setWrapLogMessage,
+        showDetails,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
+        toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
       }}
     >

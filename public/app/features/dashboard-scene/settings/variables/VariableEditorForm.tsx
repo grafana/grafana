@@ -5,11 +5,11 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -18,25 +18,24 @@ import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/var
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
+import {
+  EditableVariableType,
+  getVariableEditor,
+  hasVariableOptions,
+  isEditableVariableType,
+  validateVariableName,
+} from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-export function VariableEditorForm({
-  variable,
-  onTypeChange,
-  onGoBack,
-  onDelete,
-  onValidateVariableName,
-}: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const { name, type, label, description, hide, key } = variable.useState();
+  const [nameError, setNameError] = useState<string>();
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -49,13 +48,15 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
-      if (nameError !== errorMessage) {
-        setNameError(errorMessage);
+      const result = validateVariableName(variable, e.currentTarget.value);
+      if (result.errorMessage !== nameError) {
+        setNameError(result.errorMessage);
       }
     },
-    [key, nameError, onValidateVariableName]
+    [variable, nameError]
   );
+
+  const { t } = useTranslate();
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
     if (!nameError) {

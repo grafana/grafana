@@ -32,6 +32,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService,                      // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
+			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 		},
 	})
 
@@ -55,6 +57,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, info.Major, fmt.Sprintf("%d", v.Major()))
 		require.Equal(t, info.Minor, fmt.Sprintf("%d", v.Minor()))
+
+		// Check that OpenAPI v2 (used by kubectl) returns properly
+		v2, err := disco.OpenAPISchema()
+		require.NoError(t, err, "requesting OpenAPI v2")
+		require.Equal(t, "Grafana API Server", v2.Info.Title)
 	})
 
 	dir := "openapi_snapshots"
@@ -64,13 +71,13 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "dashboard.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}, {
 		Group:   "dashboard.grafana.app",
 		Version: "v2alpha1",
 	}, {
 		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
+		Version: "v1beta1",
 	}, {
 		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
@@ -79,6 +86,15 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "investigations.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "advisor.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

@@ -115,7 +115,7 @@ describe('ThresholdsEditor', () => {
     expect(baseThreshold).toBeDisabled();
     expect(baseThreshold).toHaveValue('Base');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Threshold 1' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 1' }));
 
     expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
 
@@ -129,7 +129,7 @@ describe('ThresholdsEditor', () => {
     expect(baseThreshold).toBeDisabled();
     expect(baseThreshold).toHaveValue('Base');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove Threshold 1' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove threshold 1' }));
 
     expect(screen.queryAllByRole('spinbutton')).toHaveLength(0);
 

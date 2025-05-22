@@ -28,8 +28,6 @@ const (
 	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
 	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
 	LabelJobClaim = "provisioning.grafana.app/claim"
-	// LabelJobOriginalUID contains the Job's original uid as a label. This allows for label selectors to find the archived version of a job.
-	LabelJobOriginalUID = "provisioning.grafana.app/original-uid"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
 )
@@ -85,6 +83,7 @@ type persistentStore struct {
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
+
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
@@ -95,7 +94,7 @@ type persistentStore struct {
 	notifications chan struct{}
 }
 
-func NewStore(
+func NewJobStore(
 	jobStore jobStorage,
 	expiry time.Duration,
 ) (*persistentStore, error) {
@@ -206,6 +205,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			}
 
 			// Rollback the claim.
+			refetchedJob = refetchedJob.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
 			refetchedJob.Status.State = provisioning.JobStatePending
 

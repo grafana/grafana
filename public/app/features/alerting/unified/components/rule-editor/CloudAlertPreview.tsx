@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { labelsToTags } from '../../utils/labels';
 import { AlertStateTag } from '../rules/AlertStateTag';
@@ -23,7 +23,11 @@ export function CloudAlertPreview({ preview }: CloudAlertPreviewProps) {
         <div>
           <Trans i18nKey="alerting.cloud-alert-preview.alerts-preview">Alerts preview</Trans>
         </div>
-        <span>Preview based on the result of running the query for this moment.</span>
+        <span>
+          <Trans i18nKey="alerting.cloud-alert-preview.running-query-preview">
+            Preview based on the result of running the query for this moment.
+          </Trans>
+        </span>
       </caption>
       <thead>
         <tr>

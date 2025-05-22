@@ -4,6 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -16,7 +17,6 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -55,6 +55,7 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // in here we'll track the configs we are comparing
   const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
+  const { t } = useTranslate();
 
   const {
     currentData: historicalConfigs = [],
@@ -94,11 +95,15 @@ const AlertmanagerConfigurationVersionManager = ({
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return <Trans i18nKey="alerting.alertmanager-configuration-version-manager.loading">Loading...</Trans>;
   }
 
   if (!historicalConfigs.length) {
-    return 'No previous configurations';
+    return (
+      <Trans i18nKey="alerting.alertmanager-configuration-version-manager.no-previous-configurations">
+        No previous configurations
+      </Trans>
+    );
   }
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
@@ -237,7 +242,7 @@ const AlertmanagerConfigurationVersionManager = ({
       {/* TODO make this modal persist while restore is in progress */}
       <ConfirmModal
         isOpen={confirmRestore}
-        title={'Restore Version'}
+        title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
         body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
         confirmText={'Yes, restore configuration'}
         onConfirm={() => {
