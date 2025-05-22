@@ -69,7 +69,7 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  permalinkedRowId?: string;
+  permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   showControls: boolean;
@@ -89,7 +89,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
-  | 'permalinkedRowId'
+  | 'permalinkedLogId'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -127,7 +127,7 @@ export const LogList = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
-  permalinkedRowId,
+  permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   showControls,
@@ -164,7 +164,7 @@ export const LogList = ({
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}
-      permalinkedRowId={permalinkedRowId}
+      permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
       showControls={showControls}
@@ -209,7 +209,7 @@ const LogListComponent = ({
     dedupStrategy,
     filterLevels,
     forceEscape,
-    permalinkedRowId,
+    permalinkedLogId,
     showDetails,
     showTime,
     sortOrder,
@@ -303,15 +303,15 @@ const LogListComponent = ({
   );
 
   const handleScrollPosition = useCallback(() => {
-    if (permalinkedRowId) {
-      const index = processedLogs.findIndex((log) => log.uid === permalinkedRowId);
+    if (permalinkedLogId) {
+      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
       if (index >= 0) {
         listRef.current?.scrollToItem(index, 'start');
         return;
       }
     }
     listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
-  }, [initialScrollPosition, permalinkedRowId, processedLogs]);
+  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered

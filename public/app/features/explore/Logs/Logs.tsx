@@ -1179,7 +1179,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
                   onUnpinLine={onPinToContentOutlineClick}
-                  permalinkedRowId={panelState?.logs?.id}
+                  permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
                   showControls

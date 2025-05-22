@@ -97,8 +97,8 @@ export const useLogIsPinned = (log: LogListModel) => {
 };
 
 export const useLogIsPermalinked = (log: LogListModel) => {
-  const { permalinkedRowId } = useContext(LogListContext);
-  return permalinkedRowId && permalinkedRowId === log.uid;
+  const { permalinkedLogId } = useContext(LogListContext);
+  return permalinkedLogId && permalinkedLogId === log.uid;
 };
 
 export type LogListState = Pick<
@@ -144,7 +144,7 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  permalinkedRowId?: string;
+  permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
@@ -184,7 +184,7 @@ export const LogListContextProvider = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
-  permalinkedRowId,
+  permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
@@ -436,7 +436,7 @@ export const LogListContextProvider = ({
         onPinLine,
         onOpenContext,
         onUnpinLine,
-        permalinkedRowId,
+        permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
