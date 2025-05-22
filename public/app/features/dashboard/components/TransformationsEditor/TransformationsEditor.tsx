@@ -12,6 +12,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -24,7 +26,6 @@ import {
   ScrollContainer,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { PanelModel } from '../../state/PanelModel';

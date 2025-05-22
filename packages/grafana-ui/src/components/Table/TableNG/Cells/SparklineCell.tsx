@@ -100,6 +100,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
           width: `${valueWidth - theme.spacing.gridSize}px`,
           textAlign: 'right',
           marginRight: theme.spacing(1),
+          marginLeft: theme.spacing(1),
         }}
         className={styles.valueContainer}
         value={displayValue}

@@ -467,6 +467,10 @@ const (
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
+
 	// FlagExpressionParser
 	// Enable new expression parser
 	FlagExpressionParser = "expressionParser"
@@ -848,8 +852,12 @@ const (
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
 	// FlagAlertingMigrationUI
-	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagAlertingImportYAMLUI
+	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner

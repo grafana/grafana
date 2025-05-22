@@ -1,9 +1,9 @@
 import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { useTranslate } from '@grafana/i18n';
 import { ConstantVariable, SceneVariable } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ConstantVariableForm } from '../components/ConstantVariableForm';
@@ -23,6 +23,8 @@ export function ConstantVariableEditor({ variable }: ConstantVariableEditorProps
 }
 
 export function getConstantVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  const { t } = useTranslate();
+
   if (!(variable instanceof ConstantVariable)) {
     console.warn('getConstantVariableOptions: variable is not a ConstantVariable');
     return [];
@@ -38,6 +40,7 @@ export function getConstantVariableOptions(variable: SceneVariable): OptionsPane
 
 function ConstantValueInput({ variable }: { variable: ConstantVariable }) {
   const { value } = variable.useState();
+  const { t } = useTranslate();
 
   const onBlur = async (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ value: event.currentTarget.value });
