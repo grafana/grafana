@@ -186,7 +186,7 @@ function useInit(entity: string) {
       setIsInitialized(true);
     }
     init();
-  });
+  }, [entity]);
 
   return isInitialized;
 }
