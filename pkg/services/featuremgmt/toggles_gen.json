@@ -1517,7 +1517,8 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-25T17:20:04Z"
+        "creationTimestamp": "2024-09-25T17:20:04Z",
+        "deletionTimestamp": "2025-05-20T16:08:36Z"
       },
       "spec": {
         "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
