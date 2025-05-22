@@ -17,6 +17,7 @@ import { isString } from 'lodash';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 
 const buttonLabels = {
@@ -64,11 +65,12 @@ export const widgets: Widgets = {
   datetime: {
     ...BasicConfig.widgets.datetime,
     factory: function DateTimeInput(props: WidgetProps) {
+      const { t } = useTranslate();
       if (props?.operator === Op.MACROS) {
         return (
           <Select
             id={props.id}
-            aria-label="Macros value selector"
+            aria-label={t('components.widgets.aria-label-macros-value-selector', 'Macros value selector')}
             menuShouldPortal
             options={macros.map(toOption)}
             value={props?.value}
@@ -121,10 +123,11 @@ export const settings: Settings = {
   deleteLabel: buttonLabels.remove,
   // This is the component that renders conjunctions (logical operators)
   renderConjs: function Conjunctions(conjProps) {
+    const { t } = useTranslate();
     return (
       <Select
         id={conjProps?.id}
-        aria-label="Conjunction"
+        aria-label={t('components.settings.aria-label-conjunction', 'Conjunction')}
         data-testid={selectors.components.SQLQueryEditor.filterConjunction}
         menuShouldPortal
         options={conjProps?.conjunctionOptions ? Object.keys(conjProps?.conjunctionOptions).map(toOption) : undefined}
@@ -135,12 +138,13 @@ export const settings: Settings = {
   },
   // This is the component that renders fields
   renderField: function Field(fieldProps) {
+    const { t } = useTranslate();
     const fields = fieldProps?.config?.fields || {};
     return (
       <Select
         id={fieldProps?.id}
         width={25}
-        aria-label="Field"
+        aria-label={t('components.settings.aria-label-field', 'Field')}
         data-testid={selectors.components.SQLQueryEditor.filterField}
         menuShouldPortal
         options={fieldProps?.items.map((f) => {
@@ -161,10 +165,13 @@ export const settings: Settings = {
   },
   // This is the component used for the Add/Remove buttons
   renderButton: function RAQBButton(buttonProps) {
+    const { t } = useTranslate();
     return (
       <Button
         type="button"
-        title={`${buttonProps?.label} filter`}
+        title={t('components.settings.title-button-filter', '{{ buttonLabel }} filter', {
+          buttonLabel: buttonProps?.label,
+        })}
         onClick={buttonProps?.onClick}
         variant="secondary"
         size="md"
@@ -174,10 +181,11 @@ export const settings: Settings = {
   },
   // This is the component used for the fields operator selector
   renderOperator: function Operator(operatorProps) {
+    const { t } = useTranslate();
     return (
       <Select
         options={operatorProps?.items.map((op) => ({ label: op.label, value: op.key }))}
-        aria-label="Operator"
+        aria-label={t('components.settings.aria-label-operator', 'Operator')}
         data-testid={selectors.components.SQLQueryEditor.filterOperator}
         menuShouldPortal
         value={operatorProps?.selectedKey}

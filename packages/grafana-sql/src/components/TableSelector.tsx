@@ -2,6 +2,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps } from '../types';
@@ -15,6 +16,7 @@ export interface TableSelectorProps extends ResourceSelectorProps {
 }
 
 export const TableSelector = ({ db, dataset, table, className, onChange, inputId }: TableSelectorProps) => {
+  const { t } = useTranslate();
   const state = useAsync(async () => {
     // No need to attempt to fetch tables for an unknown dataset.
     if (!dataset) {
@@ -29,7 +31,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
     <Select
       className={className}
       disabled={state.loading}
-      aria-label="Table selector"
+      aria-label={t('components.table-selector.aria-label-table-selector', 'Table selector')}
       inputId={inputId}
       data-testid={selectors.components.SQLQueryEditor.headerTableSelector}
       value={table}
@@ -37,7 +39,11 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={state.loading ? 'Loading tables' : 'Select table'}
+      placeholder={
+        state.loading
+          ? t('components.table-selector.placeholder-loading', 'Loading tables')
+          : t('components.table-selector.placeholder-select-table', 'Select table')
+      }
     />
   );
 };

@@ -2,6 +2,7 @@ import { useId } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
@@ -12,10 +13,11 @@ interface Props {
 }
 
 export function SelectColumn({ columns, onParameterChange, value }: Props) {
+  const { t } = useTranslate();
   const selectInputId = useId();
 
   return (
-    <EditorField label="Column" width={25}>
+    <EditorField label={t('components.select-column.label-column', 'Column')} width={25}>
       <Select
         value={value}
         data-testid={selectors.components.SQLQueryEditor.selectColumn}
