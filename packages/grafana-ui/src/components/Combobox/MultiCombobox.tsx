@@ -267,7 +267,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           ))}
           {selectedItems.length > visibleItems.length && (
             <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
               <Text>...</Text>
               <Tooltip
                 interactive

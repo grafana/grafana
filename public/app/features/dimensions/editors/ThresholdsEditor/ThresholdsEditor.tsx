@@ -192,7 +192,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               />
             </div>
             {isPercent && (
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               <div className={styles.percentIcon}>%</div>
             )}
           </div>
