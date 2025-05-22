@@ -306,24 +306,6 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlSecureValueOutboxFetchMetadata: {
-				{
-					Name: "fetch-outbox-message-metadata-1",
-					Data: &fetchOutboxMessageMetadata{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageIDs:  []string{"id1", "id2", "id3"},
-					},
-				},
-			},
-			sqlSecureValueOutboxDeleteMetadata: {
-				{
-					Name: "delete-outbox-metadata-1",
-					Data: &deleteSecureValueOutboxMetadata{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageID:   "ïd1",
-					},
-				},
-			},
 			sqlSecureValueOutboxUpdateReceiveCount: {
 				{
 
@@ -331,19 +313,6 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Data: &incrementReceiveCountOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						MessageIDs:  []string{"id1", "id2", "id3"},
-					},
-				},
-			},
-			sqlSecureValueOutboxInsertMetadata: {
-				{
-
-					Name: "update-receive-count",
-					Data: &insertSecureValueOutboxMetadata{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageMetadataDB{
-							MessageID:    "id1",
-							ReceiveCount: 1,
-						},
 					},
 				},
 			},

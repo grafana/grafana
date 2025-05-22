@@ -50,50 +50,12 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 
 	var messageID string
 
-	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		messageID, err := s.insertMessage(ctx, input)
-		if err != nil {
-			return fmt.Errorf("inserting message into outbox table: %+w", err)
-		}
-
-		if err := s.insertMessageMetadata(ctx, messageID); err != nil {
-			return fmt.Errorf("inserting outbox message metadata row: %+w", err)
-		}
-		return nil
-	})
+	messageID, err := s.insertMessage(ctx, input)
+	if err != nil {
+		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
+	}
 
 	return messageID, err
-}
-
-func (s *outboxStore) insertMessageMetadata(ctx context.Context, messageID string) error {
-	req := insertSecureValueOutboxMetadata{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Row: &outboxMessageMetadataDB{
-			MessageID:    messageID,
-			ReceiveCount: 0,
-		},
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueOutboxInsertMetadata, req)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxInsertMetadata.Name(), err)
-	}
-
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("inserting message metadata into secure value outbox metadata table: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
-	if rowsAffected != 1 {
-		return fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
-	}
-
-	return nil
 }
 
 func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
@@ -238,15 +200,11 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
 	assert.True(messageID != "", "outboxStore.Delete: messageID is required")
 
-	return s.db.Transaction(ctx, func(ctx context.Context) error {
-		if err := s.deleteMessage(ctx, messageID); err != nil {
-			return fmt.Errorf("deleting message from outbox table %+w", err)
-		}
-		if err := s.deleteMessageMetadata(ctx, messageID); err != nil {
-			return fmt.Errorf("deleting message metadata from outbox metadata table %+w", err)
-		}
-		return nil
-	})
+	if err := s.deleteMessage(ctx, messageID); err != nil {
+		return fmt.Errorf("deleting message from outbox table %+w", err)
+	}
+
+	return nil
 }
 
 func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error {
@@ -258,35 +216,6 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxDelete, req)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxDelete.Name(), err)
-	}
-
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
-	}
-
-	// TODO: delete metadata
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
-	if rowsAffected > 1 {
-		return fmt.Errorf("bug: deleted more than one row from the outbox table, should delete only one at a time: deleted=%v", rowsAffected)
-	}
-
-	return nil
-}
-
-func (s *outboxStore) deleteMessageMetadata(ctx context.Context, messageID string) error {
-	req := deleteSecureValueOutboxMetadata{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		MessageID:   messageID,
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueOutboxDeleteMetadata, req)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxDeleteMetadata.Name(), err)
 	}
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)

@@ -34,12 +34,9 @@ var (
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
 	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
-	sqlSecureValueOutboxInsertMetadata     = mustTemplate("secure_value_outbox_insert_metadata.sql")
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
 	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
-	sqlSecureValueOutboxFetchMetadata      = mustTemplate("secure_value_outbox_fetch_metadata.sql")
-	sqlSecureValueOutboxDeleteMetadata     = mustTemplate("secure_value_outbox_delete_metadata.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -241,13 +238,6 @@ type appendSecureValueOutbox struct {
 
 func (appendSecureValueOutbox) Validate() error { return nil }
 
-type insertSecureValueOutboxMetadata struct {
-	sqltemplate.SQLTemplate
-	Row *outboxMessageMetadataDB
-}
-
-func (insertSecureValueOutboxMetadata) Validate() error { return nil }
-
 type receiveNSecureValueOutbox struct {
 	sqltemplate.SQLTemplate
 	ReceiveLimit uint
@@ -262,23 +252,9 @@ type deleteSecureValueOutbox struct {
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
 
-type deleteSecureValueOutboxMetadata struct {
-	sqltemplate.SQLTemplate
-	MessageID string
-}
-
-func (deleteSecureValueOutboxMetadata) Validate() error { return nil }
-
 type incrementReceiveCountOutbox struct {
 	sqltemplate.SQLTemplate
 	MessageIDs []string
 }
 
 func (incrementReceiveCountOutbox) Validate() error { return nil }
-
-type fetchOutboxMessageMetadata struct {
-	sqltemplate.SQLTemplate
-	MessageIDs []string
-}
-
-func (fetchOutboxMessageMetadata) Validate() error { return nil }
