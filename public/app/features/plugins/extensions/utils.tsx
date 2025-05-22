@@ -378,7 +378,8 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   if (uncategorized.length > 0) {
     if (subMenu.length > 0) {
       subMenu.push({
-        text: t('plugins.create-extension-sub-menu.text.divider', 'divider'),
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        text: 'divider',
         type: 'divider',
       });
     }

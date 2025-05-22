@@ -4895,11 +4895,6 @@
     "empty-transformations-message": {
       "add-transformation": "Add transformation"
     },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "Annotations"
-      }
-    },
     "get-edit-options": {
       "title": {
         "column-options": "Column options",
@@ -8477,11 +8472,6 @@
         "confirmation-text-2": "You should normally not be doing this",
         "downgrade-confirm": "Downgrade",
         "downgrade-title": "Downgrade plugin version"
-      }
-    },
-    "create-extension-sub-menu": {
-      "text": {
-        "divider": "divider"
       }
     },
     "details": {
