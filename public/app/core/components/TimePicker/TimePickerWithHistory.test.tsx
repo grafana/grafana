@@ -67,6 +67,11 @@ describe('TimePickerWithHistory', () => {
   it('Should load with valid time picker history only', async () => {
     const BAD_LOCAL_STORAGE = [
       { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
+      {
+        from: '2022-12-01T00:00:00.000Z',
+        to: '2022-12-01T23:59:59.000Z',
+        raw: { from: '2022-12-03T00:00:00.000Z', to: '022-12-03T23:59:59.000Z' },
+      },
       {},
       { from: null, to: null },
     ];
@@ -77,6 +82,7 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-01 00:00:00 to 2022-12-01 23:59:59/i)).not.toBeInTheDocument(); // Invalid, because of raw
   });
 
   it('Should load with new TimePickerHistoryItem history', async () => {
