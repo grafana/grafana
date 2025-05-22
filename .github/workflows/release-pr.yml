@@ -16,10 +16,6 @@ on:
         required: true
         type: string
         description: The version of Grafana that is being released (without the `v` prefix)`
-      target:
-        required: true
-        type: string
-        description: The release branch pattern (eg v9.5.x) that these changes are being merged into
       changelog:
         required: false
         type: boolean
