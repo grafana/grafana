@@ -33,9 +33,10 @@ var (
 	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
-	sqlSecureValueOutboxAppend   = mustTemplate("secure_value_outbox_append.sql")
-	sqlSecureValueOutboxReceiveN = mustTemplate("secure_value_outbox_receiveN.sql")
-	sqlSecureValueOutboxDelete   = mustTemplate("secure_value_outbox_delete.sql")
+	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
+	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
+	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
+	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -250,3 +251,10 @@ type deleteSecureValueOutbox struct {
 }
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
+
+type incrementReceiveCountOutbox struct {
+	sqltemplate.SQLTemplate
+	MessageIDs []string
+}
+
+func (incrementReceiveCountOutbox) Validate() error { return nil }

@@ -66,6 +66,21 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
+	worker, err := worker.NewWorker(worker.Config{
+		BatchSize:                    1,
+		ReceiveTimeout:               5 * time.Second,
+		PollingInterval:              500 * time.Millisecond,
+		MaxMessageProcessingAttempts: 10,
+	},
+		database,
+		secretsOutboxQueue,
+		secureValueMetadataStorage,
+		keeperMetadataStorage,
+		keeperService,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
+	}
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
 		secretService:              secretService,
@@ -74,18 +89,8 @@ func NewSecretAPIBuilder(
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
-		worker: worker.NewWorker(worker.Config{
-			BatchSize:       1,
-			ReceiveTimeout:  5 * time.Second,
-			PollingInterval: 500 * time.Millisecond,
-		},
-			database,
-			secretsOutboxQueue,
-			secureValueMetadataStorage,
-			keeperMetadataStorage,
-			keeperService,
-		),
-		decryptersAllowList: decryptersAllowList,
+		worker:                     worker,
+		decryptersAllowList:        decryptersAllowList,
 	}, nil
 }
 

@@ -1,4 +1,5 @@
 INSERT INTO {{ .Ident "secret_secure_value_outbox" }} (
+  {{ .Ident "request_id" }},
   {{ .Ident "uid" }},
   {{ .Ident "message_type" }},
   {{ .Ident "name" }},
@@ -12,8 +13,10 @@ INSERT INTO {{ .Ident "secret_secure_value_outbox" }} (
 {{ if .Row.ExternalID.Valid }}
   {{ .Ident "external_id" }},
 {{ end }}
+  {{ .Ident "receive_count" }},
   {{ .Ident "created" }}
 ) VALUES (
+  {{ .Arg .Row.RequestID }},
   {{ .Arg .Row.MessageID }},
   {{ .Arg .Row.MessageType }},
   {{ .Arg .Row.Name }},
@@ -27,5 +30,6 @@ INSERT INTO {{ .Ident "secret_secure_value_outbox" }} (
 {{ if .Row.ExternalID.Valid }}
   {{ .Arg .Row.ExternalID.String }},
 {{ end }}
+  {{ .Arg .Row.ReceiveCount }},
   {{ .Arg .Row.Created }}
 );
