@@ -48,7 +48,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
 	}
 
-	return messageID, err
+	return messageID, nil
 }
 
 func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
