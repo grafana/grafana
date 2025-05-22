@@ -28,5 +28,5 @@ dagger run --silent go run ./pkg/build/cmd \
 
 echo "Final list of artifacts:"
 # Move the tar.gz packages to their expected locations
-cat assets.txt | grep -v "public" | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
-cat assets.txt | grep "public" | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./scripts/move_packages.go ./dist/cdn
+cat assets.txt | grep -v "public" | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/main
+cat assets.txt | grep "public" | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/cdn
