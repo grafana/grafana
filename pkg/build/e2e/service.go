@@ -73,8 +73,9 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "e2e:plugin:build"})
 
-	container := d.Container().From("alpine").
-		WithExec([]string{"apk", "add", "bash"}).
+	// _/ubuntu:latest sticks to latest LTS.
+	// We need ubuntu to support the image renderer plugin, which assumes glibc.
+	container := d.Container().From("ubuntu:latest").
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).

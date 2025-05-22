@@ -122,10 +122,15 @@ func Run() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:      "license-path",
-				Usage:     "Path to the Grafana Enterprise license file (optional)",
+				Usage:     "Path to the Grafana Enterprise license file (optional; requires --start-grafana)",
 				Value:     "",
 				TakesFile: true,
 				Category:  "Grafana Server",
+			},
+			&cli.BoolFlag{
+				Name:     "image-renderer",
+				Usage:    "Install the image renderer plugin (requires --start-grafana)",
+				Category: "Grafana Server",
 			},
 
 			&cli.StringFlag{
@@ -207,6 +212,9 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			cmd.Dir = repoRoot
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TZ=%s", c.String("timezone")))
+			if c.Bool("image-renderer") {
+				cmd.Env = append(cmd.Env, "INSTALL_IMAGE_RENDERER=true")
+			}
 			cmd.Stdout = prefixGrafana(os.Stdout)
 			cmd.Stderr = prefixGrafana(os.Stderr)
 			cmd.Stdin = nil
