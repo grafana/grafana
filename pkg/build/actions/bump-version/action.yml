@@ -4,9 +4,6 @@ inputs:
   version:
     description: The new version (ex. 1.2.3)
     required: true
-  go-mod-dir:
-    description: Path to module containing the bump-version command
-    required: false
 runs:
   using: "composite"
   steps:
@@ -20,7 +17,7 @@ runs:
         VERSION: ${{ inputs.version }}
       with:
         verb: run
-        args: if [ -z "GO_MOD_DIR" ]; then go run ./pkg/build/actions/bump-version -version=${VERSION}; else go run -C "$GO_MOD_DIR" ./pkg/build/actions/bump-version -version=${VERSION}; fi
+        args: go run ./pkg/build/actions/bump-version -version=${VERSION}
     - name: make gen-cue
       shell: bash
       run: make gen-cue
