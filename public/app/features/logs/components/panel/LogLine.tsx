@@ -263,7 +263,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       wordBreak: 'break-all',
       '&:hover': {
-        background: `hsla(0, 0%, 0%, 0.2)`,
+        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -312,7 +312,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     detailsDisplayed: css({
-      background: `hsla(0, 0%, 0%, 0.2)`,
+      background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
