@@ -99,10 +99,17 @@ func NewQueue(opts *QueueOptions) *Queue {
 }
 
 type dispatcherState struct {
-	tenantQueues     map[string]*tenantQueue
-	activeTenants    *list.List
-	pendingRequests  *list.List
-	closed           bool
+	// tenantQueues stores the queues for each tenant
+	tenantQueues map[string]*tenantQueue
+	// activeTenants is a list of tenants with items in their queues
+	// used for round-robin dequeueing
+	activeTenants *list.List
+	// pendingRequests is a list of dequeue requests waiting for items
+	// used for notifying when items are available
+	pendingRequests *list.List
+	// closed indicates if the queue is closed
+	closed bool
+	// maxSizePerTenant is the maximum number of items per tenant
 	maxSizePerTenant int
 
 	// Metrics
@@ -111,9 +118,9 @@ type dispatcherState struct {
 }
 
 type firstDequeueItem struct {
-	dequeueReqChan chan dequeueResponse
-	runnable       func()
-	tenantElem     *list.Element
+	dequeueRespChan chan dequeueResponse
+	runnable        func()
+	tenantElem      *list.Element
 }
 
 func (s *dispatcherState) shouldExit() bool {
@@ -133,7 +140,7 @@ func (s *dispatcherState) prepareFirstDequeue() firstDequeueItem {
 			}
 
 			item.runnable = tq.items[0]
-			item.dequeueReqChan = pendingReq.Value.(*dequeueRequest).respChan
+			item.dequeueRespChan = pendingReq.Value.(*dequeueRequest).respChan
 			item.tenantElem = pendingTenant
 		} else {
 			s.activeTenants.Remove(pendingTenant)
@@ -311,10 +318,7 @@ func (s *dispatcherState) sendDequeueResponse(
 }
 
 func (s *dispatcherState) dispatchDequeueResponse(req dequeueRequest, resp dequeueResponse) {
-	select {
-	case req.respChan <- resp:
-	default:
-	}
+	req.respChan <- resp
 }
 
 func (q *Queue) dispatcherLoop() {
@@ -355,7 +359,7 @@ func (q *Queue) dispatcherLoop() {
 		case req := <-q.activeTenantsLenChan:
 			req.respChan <- state.activeTenants.Len()
 
-		case first.dequeueReqChan <- dequeueResponse{runnable: first.runnable, ok: true, err: nil}:
+		case first.dequeueRespChan <- dequeueResponse{runnable: first.runnable, ok: true, err: nil}:
 			state.completeDequeue(first.tenantElem)
 		}
 
@@ -443,7 +447,7 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), bool, error) {
 
 // Close marks the queue as closed and signals the dispatcher.
 // It blocks until the dispatcher acknowledges the close.
-func (q *Queue) Close() {
+func (q *Queue) Close(ctx context.Context) {
 	respChan := make(chan struct{})
 	req := closeRequest{respChan: respChan}
 
@@ -452,25 +456,20 @@ func (q *Queue) Close() {
 		select {
 		case <-respChan:
 		case <-q.dispatcherStoppedChan:
-		case <-time.After(500 * time.Millisecond):
+		case <-ctx.Done():
 		}
 	case <-q.dispatcherStoppedChan:
-	case <-time.After(500 * time.Millisecond):
-		select {
-		case <-q.dispatcherStoppedChan:
-		default:
-			close(q.dispatcherStoppedChan)
-		}
+	case <-ctx.Done():
 	}
 }
 
 // StopWait blocks until the dispatcher goroutine has fully stopped.
 // Call Close() first to initiate shutdown.
-func (q *Queue) StopWait() {
+func (q *Queue) StopWait(ctx context.Context) {
 	select {
 	case <-q.dispatcherStoppedChan:
 		return
-	case <-time.After(2 * time.Second):
+	case <-ctx.Done():
 		return
 	}
 }

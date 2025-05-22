@@ -138,8 +138,10 @@ func TestNewScheduler(t *testing.T) {
 
 			// Close the queue to prevent leaks
 			if tc.queue != nil {
-				tc.queue.Close()
-				tc.queue.StopWait()
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				tc.queue.Close(ctx)
+				tc.queue.StopWait(ctx)
 			}
 		})
 	}
@@ -148,8 +150,10 @@ func TestNewScheduler(t *testing.T) {
 func TestSchedulerStartStop(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	scheduler, err := NewScheduler(q, &Config{
@@ -182,8 +186,10 @@ func TestSchedulerStartStop(t *testing.T) {
 func TestSchedulerProcessItems(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	// Use a sync.Map to store results across goroutines safely
@@ -248,8 +254,10 @@ func TestSchedulerProcessItems(t *testing.T) {
 func TestSchedulerGracefulShutdown(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	var processed atomic.Int32
@@ -357,7 +365,9 @@ func TestSchedulerWithErrorInQueue(t *testing.T) {
 	}
 
 	// Close the queue to simulate an error condition
-	q.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	q.Close(ctx)
 
 	// When the queue is closed, Dequeue operations should return ErrQueueClosed
 	// Try to add a new item, which should fail
@@ -375,5 +385,7 @@ func TestSchedulerWithErrorInQueue(t *testing.T) {
 	require.LessOrEqual(t, processedCount.Load(), int32(totalItems))
 
 	// Clean up
-	q.StopWait()
+	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	q.StopWait(ctx)
 }

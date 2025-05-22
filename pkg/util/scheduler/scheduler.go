@@ -172,9 +172,11 @@ func (s *Scheduler) Stop() {
 
 	s.startStopMu.Unlock()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
 	// Close the queue after signaling workers to allow them to finish current work
 	// while unblocking those waiting in Dequeue.
-	s.queue.Close()
+	s.queue.Close(ctx)
 
 	s.wg.Wait()
 

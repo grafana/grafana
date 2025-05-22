@@ -18,8 +18,10 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		MaxSizePerTenant: 10000, // Increased from 100 to avoid bottlenecks
 	}))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	// Create a scheduler with the requested number of workers
@@ -159,8 +161,10 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 		MaxSizePerTenant: 10000, // Increased from 100 to avoid bottlenecks
 	}))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	// Create a scheduler with 4 workers
@@ -287,8 +291,10 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	// Create a queue with much larger capacity
 	q := NewQueue(QueueOptionsWithDefaults(nil))
 	defer func() {
-		q.Close()
-		q.StopWait()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		cancel()
+		q.Close(ctx)
+		q.StopWait(ctx)
 	}()
 
 	// Create a scheduler with 4 workers
