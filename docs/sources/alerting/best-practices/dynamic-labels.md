@@ -168,7 +168,7 @@ For example, configure a [notification policy](ref:notification-policies) that m
 
 - `severity=critical` → escalate to an incident response and management solution (IRM).
 - `severity=warning` → send to the team's Slack channel.
-- `severity=minor` → send to a non-urgent queue or log-only dashboard
+- `severity=minor` → send to a non-urgent queue or log-only dashboard.
 
 The resulting alerting flow might look like this:
 
