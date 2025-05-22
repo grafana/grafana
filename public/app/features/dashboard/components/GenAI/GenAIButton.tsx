@@ -3,12 +3,13 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { llm } from '@grafana/llm';
 import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { StreamStatus, useOpenAIStream } from './hooks';
+import { StreamStatus, useLLMStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { OAI_MODEL, DEFAULT_OAI_MODEL, Message, sanitizeReply } from './utils';
+import { DEFAULT_LLM_MODEL, Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -23,7 +24,7 @@ export interface GenAIButtonProps {
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
-  model?: OAI_MODEL;
+  model?: llm.Model;
   // Event tracking source. Send as `src` to Rudderstack event
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
@@ -42,7 +43,7 @@ export const GenAIButton = ({
   text = 'Auto-generate',
   toggleTipTitle = '',
   onClick: onClickProp,
-  model = DEFAULT_OAI_MODEL,
+  model = DEFAULT_LLM_MODEL,
   messages,
   onGenerate,
   temperature = 1,
@@ -66,7 +67,7 @@ export const GenAIButton = ({
     [onGenerate, unshiftHistoryEntry]
   );
 
-  const { setMessages, stopGeneration, value, error, streamStatus } = useOpenAIStream({
+  const { setMessages, stopGeneration, value, error, streamStatus } = useLLMStream({
     model,
     temperature,
     onResponse,
@@ -85,7 +86,7 @@ export const GenAIButton = ({
 
   const showTooltip = error || tooltip ? undefined : false;
   const tooltipContent = error
-    ? 'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
+    ? 'Failed to generate content using LLM. Please try again or if the problem persists, contact your organization admin.'
     : tooltip || '';
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
