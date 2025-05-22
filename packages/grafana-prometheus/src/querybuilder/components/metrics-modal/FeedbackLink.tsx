@@ -2,6 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, useStyles2, Stack } from '@grafana/ui';
 
 export interface Props {
@@ -9,6 +10,7 @@ export interface Props {
 }
 
 export function FeedbackLink({ feedbackUrl }: Props) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return (
@@ -16,11 +18,15 @@ export function FeedbackLink({ feedbackUrl }: Props) {
       <a
         href={feedbackUrl}
         className={styles.link}
-        title="The metrics explorer is new, please let us know how we can improve it"
+        title={t(
+          'querybuilder.feedback-link.title-give-feedback',
+          'The metrics explorer is new, please let us know how we can improve it'
+        )}
         target="_blank"
         rel="noreferrer noopener"
       >
-        <Icon name="comment-alt-message" /> Give feedback
+        <Icon name="comment-alt-message" />{' '}
+        <Trans i18nKey="querybuilder.feedback-link.give-feedback">Give feedback</Trans>
       </a>
     </Stack>
   );

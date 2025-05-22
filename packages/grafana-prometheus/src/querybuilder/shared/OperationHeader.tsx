@@ -4,6 +4,7 @@ import { DraggableProvided } from '@hello-pangea/dnd';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
@@ -27,6 +28,7 @@ interface State {
 
 export const OperationHeader = memo<Props>(
   ({ operation, def, index, onChange, onRemove, queryModeller, dragHandleProps }) => {
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
     const [state, setState] = useState<State>({});
 
@@ -54,7 +56,10 @@ export const OperationHeader = memo<Props>(
                 onClick={onToggleSwitcher}
                 fill="text"
                 variant="secondary"
-                title="Click to view alternative operations"
+                title={t(
+                  'querybuilder.operation-header.title-click-to-view-alternative-operations',
+                  'Click to view alternative operations'
+                )}
               />
               <OperationInfoButton def={def} operation={operation} />
               <Button
@@ -63,7 +68,7 @@ export const OperationHeader = memo<Props>(
                 onClick={() => onRemove(index)}
                 fill="text"
                 variant="secondary"
-                title="Remove operation"
+                title={t('querybuilder.operation-header.title-remove-operation', 'Remove operation')}
               />
             </div>
           </>
@@ -73,7 +78,7 @@ export const OperationHeader = memo<Props>(
             <Select
               autoFocus
               openMenuOnFocus
-              placeholder="Replace with"
+              placeholder={t('querybuilder.operation-header.placeholder-replace-with', 'Replace with')}
               options={state.alternatives}
               isOpen={true}
               onCloseMenu={onToggleSwitcher}

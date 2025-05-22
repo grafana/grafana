@@ -6,6 +6,7 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { InlineFormLabel, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -21,6 +22,7 @@ export interface PromExploreExtraFieldProps {
 }
 
 export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQuery }: PromExploreExtraFieldProps) => {
+  const { t } = useTranslate();
   const rangeOptions = getQueryTypeOptions(true);
   const prevQuery = usePrevious(query);
   const styles = useStyles2(getStyles);
@@ -54,7 +56,7 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
 
   return (
     <div
-      aria-label="Prometheus extra field"
+      aria-label={t('components.prom-explore-extra-field.aria-label-prometheus-extra-field', 'Prometheus extra field')}
       className="gf-form-inline"
       data-testid={promExploreExtraFieldTestIds.extraFieldEditor}
     >
@@ -68,9 +70,11 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
             flexWrap: 'nowrap',
           })
         )}
-        aria-label="Query type field"
+        aria-label={t('components.prom-explore-extra-field.aria-label-query-type-field', 'Query type field')}
       >
-        <InlineFormLabel width="auto">Query type</InlineFormLabel>
+        <InlineFormLabel width="auto">
+          <Trans i18nKey="components.prom-explore-extra-field.query-type">Query type</Trans>
+        </InlineFormLabel>
 
         <RadioButtonGroup
           options={rangeOptions}
@@ -87,20 +91,23 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
             flexWrap: 'nowrap',
           })
         )}
-        aria-label="Step field"
+        aria-label={t('components.prom-explore-extra-field.aria-label-step-field', 'Step field')}
       >
         <InlineFormLabel
           width={6}
-          tooltip={
-            'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-          }
+          tooltip={t(
+            'components.prom-explore-extra-field.tooltip-units-builtin-variables-example-interval-rateinterval',
+            'Time units and built-in variables can be used here, for example: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Default if no unit is specified: {{default}})',
+            { example1: '$__interval', example2: '$__rate_interval', example3: '5s', example4: '1m', example5: '3h', example6: '1d', example7: '1y', default: 's' }
+          )}
         >
-          Min step
+          <Trans i18nKey="components.prom-explore-extra-field.min-step">Min step</Trans>
         </InlineFormLabel>
         <input
           type={'text'}
           className="gf-form-input width-4"
-          placeholder={'auto'}
+          // eslint-disable-next-line @grafana/no-untranslated-strings
+          placeholder="auto"
           onChange={onStepChange}
           onKeyDown={onReturnKeyDown}
           value={query.interval ?? ''}
