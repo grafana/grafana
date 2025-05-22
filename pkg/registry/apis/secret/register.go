@@ -67,9 +67,9 @@ func NewSecretAPIBuilder(
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
 	worker, err := worker.NewWorker(worker.Config{
-		BatchSize:                    1,
+		BatchSize:                    20,
 		ReceiveTimeout:               5 * time.Second,
-		PollingInterval:              500 * time.Millisecond,
+		PollingInterval:              100 * time.Millisecond,
 		MaxMessageProcessingAttempts: 10,
 	},
 		database,
