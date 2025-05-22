@@ -667,7 +667,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
  * This function calculates with 30 days month and 365 days year.
  * adapted from https://gist.github.com/remino/1563878
  * @param milliSeconds The duration in milliseconds
- * @returns A formated string of the duration
+ * @returns A formatted string of the duration
  */
 export function fmtDuration(milliSeconds: number): string {
   if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {
