@@ -207,19 +207,17 @@ function mapScopesNodesTreeToActions(
       const childTreeNode = tree.children[key];
       const child = nodes[key];
 
-      // Selected scopes are not shown in the list but in separate section
-      if (child.spec.nodeType === 'leaf') {
-        if (
-          selectedScopes.some((s) => {
-            if (s.scopeNodeId) {
-              return s.scopeNodeId === child.metadata.name;
-            } else {
-              return s.scopeId === child.spec.linkId;
-            }
-          })
-        ) {
-          continue;
+      const scopeIsSelected = selectedScopes.some((s) => {
+        if (s.scopeNodeId) {
+          return s.scopeNodeId === child.metadata.name;
+        } else {
+          return s.scopeId === child.spec.linkId;
         }
+      });
+
+      // Selected scopes are not shown in the list but in a separate section of the command palette.
+      if (child.spec.nodeType === 'leaf' && scopeIsSelected) {
+        continue;
       }
       let action = mapScopeNodeToAction(child, selectScope, parentId);
       actions.push(action);
