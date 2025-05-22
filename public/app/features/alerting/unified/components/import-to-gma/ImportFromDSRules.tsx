@@ -78,6 +78,7 @@ const ImportFromDSRules = () => {
     watch,
     control,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = formAPI;
 
@@ -156,9 +157,13 @@ const ImportFromDSRules = () => {
                         onChange={(ds: DataSourceInstanceSettings) => {
                           setValue('selectedDatasourceUID', ds.uid);
                           setValue('selectedDatasourceName', ds.name);
+
                           // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
-                          const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
-                          setValue('targetDatasourceUID', targetDataSourceUID);
+                          const recordingRulesTargetDs = getValues('targetDatasourceUID');
+                          if (!recordingRulesTargetDs) {
+                            const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                            setValue('targetDatasourceUID', targetDataSourceUID);
+                          }
                         }}
                       />
                     )}
@@ -220,6 +225,10 @@ const ImportFromDSRules = () => {
                           filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
                           onChange={(ds: DataSourceInstanceSettings) => {
                             setValue('yamlImportTargetDatasourceUID', ds.uid);
+                            const recordingRulesTargetDs = getValues('targetDatasourceUID');
+                            if (!recordingRulesTargetDs) {
+                              setValue('targetDatasourceUID', ds.uid);
+                            }
                           }}
                         />
                       )}
