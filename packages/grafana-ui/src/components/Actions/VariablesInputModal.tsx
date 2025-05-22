@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
-import { ActionModel, ActionVariable, ActionVariableInput } from '@grafana/data';
+import { ActionModel, ActionVariableInput } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -15,26 +14,15 @@ interface Props {
   action: ActionModel;
   onDismiss: () => void;
   onShowConfirm: () => void;
+  variables: ActionVariableInput;
   setVariables: (vars: ActionVariableInput) => void;
 }
 
 /**
  * @internal
  */
-export function VariablesInputModal({ action, onDismiss, onShowConfirm, setVariables: parentSetVariables }: Props) {
+export function VariablesInputModal({ action, onDismiss, onShowConfirm, variables, setVariables }: Props) {
   const styles = useStyles2(getStyles);
-
-  const [variables, setVariables] = useState<ActionVariable[]>(action.variables || []);
-  const [inputValues, setInputValues] = useState<ActionVariableInput>({});
-
-  const handleVariableChange = (index: number, key: string, value: string) => {
-    const newVariables = [...variables];
-    newVariables[index] = { ...newVariables[index], [key]: value };
-    setVariables(newVariables);
-    setInputValues({ ...inputValues, [`${key}`]: value });
-
-    parentSetVariables({ ...inputValues, [`${key}`]: value });
-  };
 
   const onModalContinue = () => {
     onDismiss();
@@ -49,12 +37,14 @@ export function VariablesInputModal({ action, onDismiss, onShowConfirm, setVaria
       className={styles.variablesModal}
     >
       <FieldSet>
-        {variables.map((variable, index) => (
-          <Field key={index} label={variable.name}>
+        {action.variables!.map((variable) => (
+          <Field key={variable.name} label={variable.name}>
             <Input
               type="text"
-              value={inputValues[`${variable.key}`] ?? ''}
-              onChange={(e) => handleVariableChange(index, variable.key, e.currentTarget.value)}
+              value={variables[variable.key] ?? ''}
+              onChange={(e) => {
+                setVariables({ ...variables, [variable.key]: e.currentTarget.value });
+              }}
               placeholder={t('grafana-ui.action-editor.button.variable-value-placeholder', 'Value')}
               width={20}
             />

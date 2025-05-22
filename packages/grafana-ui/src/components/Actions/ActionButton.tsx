@@ -25,7 +25,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
 
   // Action variables
   const [showVarsModal, setShowVarsModal] = useState(false);
-  const [inputValues, setInputValues] = useState<ActionVariableInput>({});
+  const [actionVars, setActionVars] = useState<ActionVariableInput>({});
 
   const actionHasVariables = action.variables && action.variables.length > 0;
 
@@ -35,10 +35,6 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
     } else {
       setShowConfirm(true);
     }
-  };
-
-  const getVariables = (vars: { [key: string]: string }) => {
-    setInputValues(vars);
   };
 
   return (
@@ -58,7 +54,8 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
           onDismiss={() => setShowVarsModal(false)}
           action={action}
           onShowConfirm={() => setShowConfirm(true)}
-          getVariables={getVariables}
+          variables={actionVars}
+          setVariables={setActionVars}
         />
       )}
 
@@ -66,12 +63,12 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
         <ConfirmModal
           isOpen={true}
           title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
-          body={action.confirmation}
+          body={action.confirmation(actionVars)}
           confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
           confirmButtonVariant="primary"
           onConfirm={() => {
             setShowConfirm(false);
-            action.onClick(new MouseEvent('click'), null, inputValues);
+            action.onClick(new MouseEvent('click'), null, actionVars);
           }}
           onDismiss={() => {
             setShowConfirm(false);
