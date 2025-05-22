@@ -17,6 +17,7 @@ type tenantQueue struct {
 	id    string
 	items []func()
 
+	// TODO: investigate the necessity of this field
 	activeElement *list.Element
 }
 
