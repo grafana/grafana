@@ -33,6 +33,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -182,6 +183,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	folderApiServerMock := httptest.NewServer(mux)
 	defer folderApiServerMock.Close()
 
+	origNewGuardian := guardian.New
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
 	db, cfg := sqlstore.InitTestDB(t)
 	cfg.AppURL = folderApiServerMock.URL
 
@@ -209,8 +215,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			[]accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
 			}),
 	}}
@@ -243,6 +247,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	t.Run("Folder service tests", func(t *testing.T) {
 		t.Run("Given user has no permissions", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
+
 			ctx = identity.WithRequester(context.Background(), noPermUsr)
 
 			f := folder.NewFolder("Folder", "")
@@ -298,9 +305,16 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.Error(t, err)
 				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
 			})
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
 		})
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
 			ctx = identity.WithRequester(context.Background(), usr)
 
 			f := &folder.Folder{
@@ -394,9 +408,16 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				})
 				require.NoError(t, err)
 			})
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
 		})
 
 		t.Run("Given user has permission to view", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
+
 			t.Run("When get folder by uid should return folder", func(t *testing.T) {
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &fooFolder.UID,
@@ -488,6 +509,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.Nil(t, actual)
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
 		})
 
 		t.Run("Returns root folder", func(t *testing.T) {
@@ -512,6 +537,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 func TestSearchFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
@@ -755,6 +784,10 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 
 func TestGetFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
@@ -766,8 +799,8 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		k8sclient:     fakeK8sClient,
 		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		unifiedStore:  folderStore,
-		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 		tracer:        tracer,
+		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -856,13 +889,16 @@ func TestDeleteFoldersFromApiServer(t *testing.T) {
 		unifiedStore:           fakeFolderStore,
 		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardFakeService,
-		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		registry:               make(map[string]folder.RegistryService),
 		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
 		tracer:                 tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
 	db, cfg := sqlstore.InitTestDB(t)
 
 	alertingStore := ngstore.DBstore{

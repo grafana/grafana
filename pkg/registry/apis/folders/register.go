@@ -52,7 +52,6 @@ type FolderAPIBuilder struct {
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	acService            accesscontrol.Service
-	ac                   accesscontrol.AccessControl
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
@@ -79,7 +78,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
-		ac:                   accessControl,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -186,7 +184,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
