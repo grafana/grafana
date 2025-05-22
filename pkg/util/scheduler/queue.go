@@ -127,8 +127,13 @@ func (s *dispatcherState) prepareFirstDequeue() firstDequeueItem {
 	if !s.closed && pendingTenant != nil && s.pendingRequests.Len() > 0 {
 		tq := pendingTenant.Value.(*tenantQueue)
 		if len(tq.items) > 0 {
+			pendingReq := s.pendingRequests.Front()
+			if pendingReq == nil {
+				return item
+			}
+
 			item.runnable = tq.items[0]
-			item.dequeueReqChan = s.pendingRequests.Front().Value.(*dequeueRequest).respChan
+			item.dequeueReqChan = pendingReq.Value.(*dequeueRequest).respChan
 			item.tenantElem = pendingTenant
 		} else {
 			s.activeTenants.Remove(pendingTenant)
