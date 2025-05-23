@@ -78,7 +78,7 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
-          ref: main
+          ref: grambbledook/security-patch-changelog
           sparse-checkout: |
             .github/workflows
             .github/actions
