@@ -167,25 +167,13 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
-	for id, state := range rs.states {
-		if predicate(state) {
-			delete(rs.states, id)
-			deleted = append(deleted, state)
-		}
-	}
-	return deleted
-}
-
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+func (c *cache) delete(ruleKey ngModels.AlertRuleKey, cacheID data.Fingerprint) {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		return ruleStates.deleteStates(predicate)
+		delete(ruleStates.states, cacheID)
 	}
-	return nil
 }
 
 func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
