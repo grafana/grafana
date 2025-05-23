@@ -12,7 +12,11 @@ import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
-import { trackInfluxDBConfigV1FluxDefaultBucketInputField, trackInfluxDBConfigV1FluxOrgInputField, trackInfluxDBConfigV1FluxTokenInputField } from './trackingv1';
+import {
+  trackInfluxDBConfigV1FluxDefaultBucketInputField,
+  trackInfluxDBConfigV1FluxOrgInputField,
+  trackInfluxDBConfigV1FluxTokenInputField,
+} from './trackingv1';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
 

@@ -16,7 +16,11 @@ import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } fro
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
-import { trackInfluxDBConfigV1InfluxQLDatabaseInputField, trackInfluxDBConfigV1InfluxQLPasswordInputField, trackInfluxDBConfigV1InfluxQLUserInputField } from './trackingv1';
+import {
+  trackInfluxDBConfigV1InfluxQLDatabaseInputField,
+  trackInfluxDBConfigV1InfluxQLPasswordInputField,
+  trackInfluxDBConfigV1InfluxQLUserInputField,
+} from './trackingv1';
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
