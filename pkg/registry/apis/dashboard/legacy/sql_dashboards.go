@@ -186,11 +186,6 @@ func (r *rowsWrapper) ContinueToken() string {
 	return r.row.token.String()
 }
 
-// ContinueTokenWithCurrentRV implements resource.ListIterator.
-func (r *rowsWrapper) ContinueTokenWithCurrentRV() string {
-	return r.row.token.String()
-}
-
 // Error implements resource.ListIterator.
 func (r *rowsWrapper) Error() error {
 	return r.err

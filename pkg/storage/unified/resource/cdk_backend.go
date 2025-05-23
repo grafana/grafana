@@ -235,16 +235,16 @@ func isDeletedValue(raw []byte) bool {
 }
 
 func (s *cdkBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
-	if req.Source != resourcepb.ListRequest_STORE {
-		return 0, fmt.Errorf("listing from history not supported in CDK backend")
-	}
-
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return 0, err
 	}
 	err = cb(resources)
 	return resources.listRV, err
+}
+
+func (s *cdkBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	return 0, fmt.Errorf("listing from history not supported in CDK backend")
 }
 
 func (s *cdkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
@@ -333,11 +333,6 @@ func (c *cdkListIterator) Value() []byte {
 
 // ContinueToken implements ListIterator.
 func (c *cdkListIterator) ContinueToken() string {
-	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
-}
-
-// ContinueTokenWithCurrentRV implements ListIterator.
-func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 

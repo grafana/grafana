@@ -229,7 +229,12 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.R
 	return rsp
 }
 
-// List implements AppendingStore.
+// ListHistory implements StorageBackend.
+func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	return a.ListIterator(ctx, req, cb)
+}
+
+// List implements StorageBackend.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	if req.ResourceVersion != 0 {
 		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
