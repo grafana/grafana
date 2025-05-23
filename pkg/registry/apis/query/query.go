@@ -383,8 +383,10 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		switch err {
 		case nil:
 			respStatus = "success"
+			expressionsLogger.Debug("expressions query success")
 		default:
 			respStatus = "failure"
+			expressionsLogger.Debug("expressions query failure", "error", err)
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
 		b.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
