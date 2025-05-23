@@ -123,7 +123,7 @@ func ProvideUnifiedStorageGrpcService(
 		storageRing:    storageRing,
 	}
 
-	subservices := []services.Service{s.storageRing}
+	subservices := []services.Service{}
 	if cfg.EnableSharding {
 		ringStore, err := kv.NewClient(
 			memberlistKVConfig,
@@ -158,7 +158,7 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
-		subservices = append(subservices, s.lifecycler)
+		subservices = append(subservices, s.storageRing, s.lifecycler)
 	}
 
 	if cfg.EnableQOS {
