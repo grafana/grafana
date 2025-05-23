@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { FetchError } from '@grafana/runtime';
+import { config, FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
 
@@ -32,7 +32,7 @@ export const SaveDashboardErrorProxy = ({
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
   const { t } = useTranslate();
-  const isRestoreDashboardsEnabled = false;
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
 
   return (
     <>
