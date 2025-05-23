@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,21 +17,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -67,14 +57,7 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("when quota limit doesn't exceed, importing a dashboard should succeed", func(t *testing.T) {
 		// Import dashboard
@@ -126,26 +109,6 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 	})
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
-}
-
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -188,14 +151,7 @@ providers:
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// give provisioner some time since we don't have a way to know when provisioning is complete
 	// TODO https://github.com/grafana/grafana/issues/85617
@@ -355,14 +311,7 @@ func testCreate(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("create dashboard should succeed", func(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
@@ -518,14 +467,7 @@ func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
 	for _, schemaVersion := range schemaVersions {
