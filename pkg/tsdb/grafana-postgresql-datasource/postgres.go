@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -22,15 +20,13 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/tls"
 )
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(features featuremgmt.FeatureToggles) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.postgres")
 	s := &Service{
-		tlsManager: newTLSManager(logger, cfg.DataPath),
+		tlsManager: newTLSManager(logger),
 		logger:     logger,
 		features:   features,
 	}
@@ -39,7 +35,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Serv
 }
 
 type Service struct {
-	tlsManager tlsSettingsProvider
+	tlsManager *tlsManager
 	im         instancemgmt.InstanceManager
 	logger     log.Logger
 	features   featuremgmt.FeatureToggles
@@ -105,6 +101,13 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
 	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
+	// We need to ping the database to ensure that the connection is valid and the temporary files are not deleted
+	// before the connection is used.
+	if err := db.Ping(); err != nil {
+		logger.Error("Failed to ping Postgres database", "error", err)
+		return nil, nil, backend.DownstreamError(fmt.Errorf("failed to ping Postgres database: %w", err))
+	}
+
 	handler, err := sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 		logger)
 	if err != nil {
@@ -138,18 +141,6 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 
 		pgxConf.ConnConfig.DialFunc = newPgxDialFunc(dialer)
 	}
-
-	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, pgxConf.ConnConfig.Host)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// before we set the TLS config, we need to make sure the `.Fallbacks` attribute is unset, see:
-	// https://github.com/jackc/pgx/discussions/1903#discussioncomment-8430146
-	if len(pgxConf.ConnConfig.Fallbacks) > 0 {
-		return nil, nil, errors.New("tls: fallbacks configured, unable to set up TLS config")
-	}
-	pgxConf.ConnConfig.TLSConfig = tlsConf
 
 	// by default pgx resolves hostnames to ip addresses. we must avoid this.
 	// (certain socks-proxy related functionality relies on the hostname being preserved)
@@ -223,12 +214,16 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		var cnnstr string
-		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-			cnnstr, err = s.generateConnectionStringPGX(dsInfo)
-		} else {
-			cnnstr, err = s.generateConnectionString(dsInfo)
+		tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
+		if err != nil {
+			return "", err
 		}
+
+		// Ensure cleanupCertFiles is called after the connection is opened
+		defer s.tlsManager.cleanupCertFiles(tlsSettings)
+
+		isPGX := s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX)
+		cnnstr, err := s.generateConnectionString(dsInfo, tlsSettings, isPGX)
 		if err != nil {
 			return nil, err
 		}
@@ -239,7 +234,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		var handler instancemgmt.Instance
-		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
+		if isPGX {
 			_, handler, err = newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
 		} else {
 			_, handler, err = newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
@@ -274,6 +269,7 @@ func parseConnectionParams(dsInfo sqleng.DataSourceInfo, logger log.Logger) (con
 
 	if strings.HasPrefix(dsInfo.URL, "/") {
 		params.host = dsInfo.URL
+		logger.Debug("Generating connection string with Unix socket specifier", "address", dsInfo.URL)
 	} else {
 		params.host, params.port, err = parseNetworkAddress(dsInfo.URL, logger)
 		if err != nil {
@@ -335,7 +331,7 @@ func buildBaseConnectionString(params connectionParams) string {
 	return connStr
 }
 
-func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
+func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo, tlsSettings tlsSettings, isPGX bool) (string, error) {
 	logger := s.logger
 
 	params, err := parseConnectionParams(dsInfo, logger)
@@ -345,18 +341,14 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 
 	connStr := buildBaseConnectionString(params)
 
-	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
-	if err != nil {
-		return "", err
-	}
-
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
 
 	// there is an issue with the lib/pq module, the `verify-ca` tls mode
 	// does not work correctly. ( see https://github.com/lib/pq/issues/1106 )
 	// to workaround the problem, if the `verify-ca` mode is chosen,
 	// we disable sslsni.
-	if tlsSettings.Mode == "verify-ca" {
+	if tlsSettings.Mode == "verify-ca" && !isPGX {
+		logger.Debug("Disabling sslsni for verify-ca mode")
 		connStr += " sslsni=0"
 	}
 
@@ -376,27 +368,6 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 
 	logger.Debug("Generated Postgres connection string successfully")
 	return connStr, nil
-}
-
-func (s *Service) generateConnectionStringPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
-	logger := s.logger
-
-	params, err := parseConnectionParams(dsInfo, logger)
-	if err != nil {
-		return "", err
-	}
-
-	connStr := buildBaseConnectionString(params)
-
-	// NOTE: we always set sslmode=disable in the connection string, we handle TLS manually later
-	connStr += " sslmode='disable'"
-
-	conf, err := pgxpool.ParseConfig(connStr)
-	if err != nil {
-		return "", err
-	}
-
-	return conf.ConnString(), nil
 }
 
 type postgresQueryResultTransformer struct{}
