@@ -57,7 +57,11 @@
       "aria-label-add": "Ajouter",
       "aria-label-delete": "Supprimer",
       "placeholder-key": "Clé",
+      "placeholder-name": "Nom",
       "placeholder-value": "Valeur"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Confirmer",
         "confirm-action": "Confirmer l'action",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valeur"
       },
+      "close": "Fermer",
+      "continue": "",
       "inline": {
         "add-action": "Ajouter l'action",
         "edit-action": "Modifier l'action"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Paramètres de requête",
         "action-title": "Titre",
         "action-title-placeholder": "Titre de l'action",
+        "action-variables": "Variables",
         "one-click-description": "Un seul lien ou une seule action peut avoir un clic activé à la fois"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Comptes de service"
     },
     "setup-guide": {
-      "title": "Guide de configuration"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gérez les tableaux de bord partagés en externe de votre organisation",

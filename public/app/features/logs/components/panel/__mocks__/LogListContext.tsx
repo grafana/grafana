@@ -1,8 +1,9 @@
 import { createContext, useContext } from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LogListContextData, Props } from '../LogListContext';
+import { LogListModel } from '../processing';
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
@@ -44,9 +45,14 @@ export const useLogListContext = (): LogListContextData => {
   return useContext(LogListContext);
 };
 
-export const useLogIsPinned = (log: LogRowModel) => {
+export const useLogIsPinned = (log: LogListModel) => {
   const { pinnedLogs } = useContext(LogListContext);
   return pinnedLogs?.some((logId) => logId === log.rowId);
+};
+
+export const useLogIsPermalinked = (log: LogListModel) => {
+  const { permalinkedLogId } = useContext(LogListContext);
+  return permalinkedLogId && permalinkedLogId === log.uid;
 };
 
 export const defaultValue: LogListContextData = {
@@ -114,6 +120,7 @@ export const LogListContextProvider = ({
   onPinLine = jest.fn(),
   onOpenContext = jest.fn(),
   onUnpinLine = jest.fn(),
+  permalinkedLogId,
   pinnedLogs = [],
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
@@ -137,6 +144,7 @@ export const LogListContextProvider = ({
         onPinLine,
         onOpenContext,
         onUnpinLine,
+        permalinkedLogId,
         pinnedLogs,
         setDedupStrategy: jest.fn(),
         setFilterLevels: jest.fn(),

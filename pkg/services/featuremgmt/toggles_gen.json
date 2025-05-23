@@ -1532,7 +1532,8 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-25T17:20:04Z"
+        "creationTimestamp": "2024-09-25T17:20:04Z",
+        "deletionTimestamp": "2025-05-20T16:08:36Z"
       },
       "spec": {
         "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
@@ -3121,6 +3122,21 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersTempo",
+        "resourceVersion": "1747930192816",
+        "creationTimestamp": "2025-05-20T14:50:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-22 16:09:52.816517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {

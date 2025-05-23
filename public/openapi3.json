@@ -1909,6 +1909,16 @@
         },
         "description": "(empty)"
       },
+      "searchTeamGroupsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "searchTeamsResponse": {
         "content": {
           "application/json": {
@@ -10635,6 +10645,29 @@
             "type": "integer"
           },
           "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SearchTeamGroupsQueryResult": {
+        "properties": {
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamGroups": {
+            "items": {
+              "$ref": "#/components/schemas/TeamGroupDTO"
+            },
+            "type": "array"
+          },
+          "totalCount": {
             "format": "int64",
             "type": "integer"
           }
@@ -23939,6 +23972,79 @@
           }
         },
         "summary": "Add External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      }
+    },
+    "/teams/{teamId}/groups/search": {
+      "get": {
+        "operationId": "searchTeamGroups",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items per page",
+            "in": "query",
+            "name": "perpage",
+            "schema": {
+              "default": 1000,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by exact name match",
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchTeamGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Search for team groups with optional filtering and pagination.",
         "tags": [
           "sync_team_groups",
           "enterprise"
