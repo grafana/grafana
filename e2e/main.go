@@ -208,6 +208,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			if c.String("license-path") != "" {
 				args = append(args, c.String("license-path"))
 			}
+			//nolint:gosec
 			cmd := exec.CommandContext(ctx, startServerPath, args...)
 			cmd.Dir = repoRoot
 			cmd.Env = os.Environ()
@@ -224,6 +225,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 			}
 		}()
 
+		//nolint:gosec
 		cmd := exec.CommandContext(ctx, waitForGrafanaPath)
 		cmd.Dir = repoRoot
 		cmd.Env = os.Environ()
@@ -241,6 +243,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 		"--config", joinCypressCfg(cypressConfig),
 		"--browser", c.String("browser")}
 	args = append(args, c.StringSlice("parameters")...)
+	//nolint:gosec
 	cmd := exec.CommandContext(ctx, "yarn", args...)
 	cmd.Dir = repoRoot
 	cmd.Env = os.Environ()
@@ -275,7 +278,7 @@ func normalisePath(p string) (string, error) {
 }
 
 func joinCypressCfg(cfg map[string]string) string {
-	var config []string
+	config := make([]string, 0, len(cfg))
 	for k, v := range cfg {
 		config = append(config, fmt.Sprintf("%s=%s", k, v))
 	}
