@@ -77,7 +77,7 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@main
+        uses: grafana/grafana-github-actions-go/backport@dev
         with:
           token: ${{ steps.generate_token.outputs.token }}
           # If triggered by being labelled, only backport that label.
