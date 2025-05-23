@@ -94,7 +94,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
 		connectLogger := b.log.New("traceId", traceId.String())
-		b.log = connectLogger
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
 				if statusCode >= 500 {
@@ -103,7 +102,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "good"}).Inc()
 				}
 				if statusCode >= 400 {
-					b.log.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
+					connectLogger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
 			},
