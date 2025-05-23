@@ -2281,6 +2281,11 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardGroupByVariableSpec(ref common.
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardDataSourceRef"),
 						},
 					},
+					"defaultValue": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVariableOption"),
+						},
+					},
 					"current": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
