@@ -522,20 +522,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      // check if cached db version is same as both
-      // response and current db state. There are scenarios where they can differ
-      // e.g: when reloadOnParamsChange ff is on the first loaded dashboard could be version 0
-      // then on this reload call the rsp increments the version. When the cache is not set
-      // it creates a new scene based on the new rsp. But if we navigate to another dashboard
-      // and then back to the initial one, the cache is still set, but the dashboard will be loaded
-      // again with version 0. Because the cache is set with the incremented version and the rsp on
-      // reload will match the cached version we return and do nothing, but the set scene is still
-      // the one for the version 0 dashboard, thus we verify dashboard state version as well
-      if (
-        fromCache &&
-        fromCache.state.version === rsp?.dashboard.version &&
-        fromCache.state.version === this.state.dashboard?.state.version
-      ) {
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         this.setState({ isLoading: false });
         return;
       }
@@ -552,11 +539,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
 
       const scene = transformSaveModelToScene(rsp);
-
-      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
-        restoreDashboardStateFromLocalStorage(scene);
-      }
 
       this.setSceneCache(options.uid, scene);
 
@@ -714,11 +696,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (
-        fromCache &&
-        fromCache.state.version === rsp?.metadata.generation &&
-        fromCache.state.version === this.state.dashboard?.state.version
-      ) {
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
         this.setState({ isLoading: false });
         return;
       }
@@ -735,11 +713,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       const scene = transformSaveModelSchemaV2ToScene(rsp);
-
-      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
-        restoreDashboardStateFromLocalStorage(scene);
-      }
 
       this.setSceneCache(options.uid, scene);
 
