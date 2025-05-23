@@ -40,7 +40,11 @@ export const ListGroup = ({
         actions={actions}
         href={href}
       />
-      {open && <div role="group">{children}</div>}
+      {open && (
+        <div role="group" className={styles.childrenWrapper}>
+          {children}
+        </div>
+      )}
     </div>
   );
 };
@@ -57,7 +61,7 @@ const GroupHeader = (props: GroupHeaderProps) => {
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={0}>
+        <Stack alignItems="center" gap={0.5}>
           <IconButton
             name={isOpen ? 'angle-down' : 'angle-right'}
             onClick={onToggle}
@@ -87,15 +91,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
   groupWrapper: css({
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
+
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      height: '100%',
+
+      marginLeft: theme.spacing(2.5),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
   }),
   headerWrapper: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+    padding: theme.spacing(1),
+    paddingLeft: theme.spacing(4),
+    position: 'relative',
 
-    background: theme.colors.background.secondary,
-
-    border: 'none',
-    borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    borderTopLeftRadius: theme.shape.radius.default,
-    borderTopRightRadius: theme.shape.radius.default,
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
+  }),
+  childrenWrapper: css({
+    position: 'relative',
   }),
 });

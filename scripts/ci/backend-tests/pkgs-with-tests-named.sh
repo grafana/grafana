@@ -44,7 +44,7 @@ done
 shift $((OPTIND - 1))
 
 if [[ ${#dirs[@]} -eq 0 ]]; then
-    dirs+=("./...")
+    readarray -t dirs <<< "$(find . -type f -name 'go.mod' -exec dirname '{}' ';' | awk '{ print $1 "/..."; }')"
 fi
 if [ -z "$beginningWith" ]; then
     for pkg in "${dirs[@]}"; do

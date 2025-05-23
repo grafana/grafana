@@ -19,7 +19,7 @@ const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
-const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor'];
+const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor', 'public/app/plugins/datasource/mssql'];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -119,21 +119,23 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['react-i18next', 'i18next'],
+              importNames: ['t'],
+              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+            },
+            {
+              group: ['react-i18next'],
+              importNames: ['Trans'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
               importNames: ['useDispatch', 'useSelector'],
               message: 'Please import from app/types instead.',
-            },
-            {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from app/core/internationalization instead',
-            },
-            {
-              name: 'i18next',
-              importNames: ['t'],
-              message: 'Please import from app/core/internationalization instead',
             },
           ],
         },
