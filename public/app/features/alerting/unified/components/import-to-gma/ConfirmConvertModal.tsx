@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useToggle } from 'react-use';
+import { useAsync, useToggle } from 'react-use';
 
 import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -56,6 +56,8 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     namespace,
     ruleGroup,
     targetDatasourceUID,
+    yamlFile,
+    importSource
   ] = watch([
     'targetFolder',
     'selectedDatasourceName',
@@ -65,13 +67,45 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'namespace',
     'ruleGroup',
     'targetDatasourceUID',
+    'yamlFile',
+    'importSource'
   ]);
 
-  const dataSourceToFetch = isOpen ? (selectedDatasourceName ?? '') : undefined;
-  const { rulesToBeImported, isloadingCloudRules } = useGetRulesToBeImported(!isOpen, dataSourceToFetch);
+  // for datasource import, we need to fetch the rules from the datasource
+  const dataSourceToFetch = (isOpen && importSource === 'datasource') ? (selectedDatasourceName ?? '') : undefined;
+  const { rulesToBeImported: rulesToBeImportedFromDatasource, isloadingCloudRules } = useGetRulesToBeImported(!isOpen || importSource === 'yaml', dataSourceToFetch);
+
+  // for yaml import, we need to fetch the rules from the yaml file
+  const { value: rulesToBeImportedFromYaml = {} } = useAsync(async () => {
+    if (!yamlFile || importSource !== 'yaml') {
+      return {};
+    }
+    try {
+      const data = await yamlFile.text();
+      // not sure what we should parse here
+      // if we want the preview to work, we need to parse the yaml to RulerRulesConfigDTO
+      return {} as RulerRulesConfigDTO;
+
+    } catch (error) {
+      console.error('Error parsing YAML file:', error);
+      return {};
+    }
+  }, [importSource, yamlFile]);
+
+  // filter the rules to be imported from the datasource 
   const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
-    () => filterRulerRulesConfig(rulesToBeImported, namespace, ruleGroup),
-    [rulesToBeImported, namespace, ruleGroup]
+    () => {
+      if (importSource === 'datasource') {
+        return filterRulerRulesConfig(rulesToBeImportedFromDatasource, namespace, ruleGroup);
+      }
+      // for yaml, we dont filter the rules
+      return ({
+        filteredConfig: rulesToBeImportedFromYaml,
+        someRulesAreSkipped: false
+      })
+    },
+    [rulesToBeImportedFromDatasource, namespace, ruleGroup, importSource, rulesToBeImportedFromYaml]
+
   );
   const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
 

@@ -289,7 +289,9 @@ const ImportFromDSRules = () => {
                       />
                     </Stack>
                   </Field>
-                  <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName || undefined} />
+                  {importSource === 'datasource' && (
+                    <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName || undefined} />
+                  )}
                 </Box>
 
                 <Divider />
