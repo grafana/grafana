@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -28,7 +27,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 )
@@ -46,7 +44,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	}
 
 	// we don't need grpc logs in tests so mute it so we don't get a bunch of health check errors during test
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
+	// grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
 
 	dbType := sqlutil.GetTestDBType()
 	db, err := sqlutil.GetTestDB(dbType)
@@ -81,16 +79,6 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	}()
 
-	for _, testServer := range testServers {
-		go func(s testModuleServer) {
-			if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-				mu.Lock()
-				runErrs = append(runErrs, err)
-				mu.Unlock()
-			}
-		}(testServer)
-	}
-
 	require.Eventually(t, func() bool {
 		res, err := distributorServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
@@ -100,13 +88,21 @@ func TestIntegrationDistributor(t *testing.T) {
 	}, 10*time.Second, 2*time.Second)
 
 	for _, testServer := range testServers {
+		go func(s testModuleServer) {
+			if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
+				mu.Lock()
+				runErrs = append(runErrs, err)
+				mu.Unlock()
+			}
+		}(testServer)
+
 		require.Eventually(t, func() bool {
 			res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 			if err != nil {
 				return false
 			}
 			return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-		}, 10*time.Second, 2*time.Second)
+		}, 20*time.Second, 2*time.Second, "server failed to start up or is too slow: "+testServer.id)
 	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
@@ -236,6 +232,7 @@ func TestIntegrationDistributor(t *testing.T) {
 						Namespace: ns,
 					},
 				},
+				Explain: false, // never include query_cost, as this will differ between the two requests
 			})
 			require.NoError(t, err)
 
@@ -249,6 +246,7 @@ func TestIntegrationDistributor(t *testing.T) {
 						Namespace: ns,
 					},
 				},
+				Explain: false, // never include query_cost, as this will differ between the two requests
 			}, grpc.Header(&header))
 			require.NoError(t, err)
 
@@ -319,6 +317,7 @@ type testModuleServer struct {
 	server         *ModuleServer
 	healthClient   grpc_health_v1.HealthClient
 	resourceClient resource.ResourceClient
+	id             string
 }
 
 func initDistributorServerForTest(t *testing.T) testModuleServer {
@@ -331,6 +330,7 @@ func initDistributorServerForTest(t *testing.T) testModuleServer {
 	cfg.MemberlistJoinMember = "127.0.0.1:7946"
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.Target = []string{modules.Distributor}
+	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -387,7 +387,7 @@ func initModuleServerForTest(
 
 	healthClient := grpc_health_v1.NewHealthClient(conn)
 
-	return testModuleServer{server: ms, healthClient: healthClient}
+	return testModuleServer{server: ms, healthClient: healthClient, id: cfg.InstanceID}
 }
 
 func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
@@ -403,6 +403,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch)
 	docBuilders, err := InitializeDocumentBuilders(cfg)
+	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil)
