@@ -57,7 +57,11 @@
       "aria-label-add": "추가",
       "aria-label-delete": "삭제",
       "placeholder-key": "키",
+      "placeholder-name": "이름",
       "placeholder-value": "값"
+    },
+    "variables-editor": {
+      "placeholder-type": "유형"
     }
   },
   "admin": {
@@ -5383,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "확인",
         "confirm-action": "작업 확인",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "값"
       },
+      "close": "닫기",
+      "continue": "",
       "inline": {
         "add-action": "작업 추가",
         "edit-action": "작업 편집"
@@ -5397,6 +5405,7 @@
         "action-query-params": "쿼리 파라미터",
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
+        "action-variables": "변수",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -6840,7 +6849,7 @@
       "title": "서비스 계정"
     },
     "setup-guide": {
-      "title": "초기 설정 가이드"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "조직의 외부 공유 대시보드 관리",

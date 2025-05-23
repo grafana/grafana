@@ -57,7 +57,11 @@
       "aria-label-add": "Tambahkan",
       "aria-label-delete": "Hapus",
       "placeholder-key": "Kunci",
+      "placeholder-name": "Nama",
       "placeholder-value": "Nilai"
+    },
+    "variables-editor": {
+      "placeholder-type": "Jenis"
     }
   },
   "admin": {
@@ -5383,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Konfirmasi",
         "confirm-action": "Konfirmasi tindakan",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Nilai"
       },
+      "close": "Tutup",
+      "continue": "",
       "inline": {
         "add-action": "Tambah tindakan",
         "edit-action": "Edit tindakan"
@@ -5397,6 +5405,7 @@
         "action-query-params": "Parameter kueri",
         "action-title": "Judul",
         "action-title-placeholder": "Judul tindakan",
+        "action-variables": "Variabel",
         "one-click-description": "Hanya satu tautan atau tindakan yang dapat diaktifkan satu klik pada satu waktu"
       }
     },
@@ -6840,7 +6849,7 @@
       "title": "Akun layanan"
     },
     "setup-guide": {
-      "title": "Panduan penyiapan"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Kelola dasbor bersama eksternal organisasi Anda",

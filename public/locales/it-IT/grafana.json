@@ -57,7 +57,11 @@
       "aria-label-add": "Aggiungi",
       "aria-label-delete": "Elimina",
       "placeholder-key": "Codice",
+      "placeholder-name": "Nome",
       "placeholder-value": "Valore"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tipo"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Conferma",
         "confirm-action": "Conferma azione",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valore"
       },
+      "close": "Chiudi",
+      "continue": "",
       "inline": {
         "add-action": "Aggiungi azione",
         "edit-action": "Modifica azione"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Parametri delle query",
         "action-title": "Titolo",
         "action-title-placeholder": "Titolo azione",
+        "action-variables": "Variabili",
         "one-click-description": "Solo un link o un'azione possono avere un clic abilitato alla volta"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Account di servizio"
     },
     "setup-guide": {
-      "title": "Guida alle impostazioni"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gestisci i dashboard condivisi esternamente della tua organizzazione",
