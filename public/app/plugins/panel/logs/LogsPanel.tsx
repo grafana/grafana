@@ -285,7 +285,13 @@ export const LogsPanel = ({
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = panelData
-      ? dataFrameToLogsModel(panelData.series, panelData.request?.intervalMs, undefined, panelData.request?.targets)
+      ? dataFrameToLogsModel(
+          panelData.series,
+          panelData.request?.intervalMs,
+          undefined,
+          panelData.request?.targets,
+          Boolean(enableInfiniteScrolling)
+        )
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
@@ -471,11 +477,11 @@ export const LogsPanel = ({
      * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
      * when new data is received. See https://github.com/grafana/grafana/pull/37634
      */
-    if (data.request?.app === CoreApp.Dashboard || data.request?.app === CoreApp.PanelEditor) {
+    if (app === CoreApp.Dashboard || app === CoreApp.PanelEditor) {
       return sortOrder === LogsSortOrder.Ascending ? 'bottom' : 'top';
     }
     return 'top';
-  }, [data.request?.app, sortOrder]);
+  }, [app, sortOrder]);
 
   const storageKey = useMemo(() => {
     if (controlsStorageKey) {
@@ -521,6 +527,7 @@ export const LogsPanel = ({
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
               initialScrollPosition={initialScrollPosition}
+              loading={infiniteScrolling}
               logs={deduplicatedRows}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
               onLogLineHover={onLogRowHover}
