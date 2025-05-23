@@ -164,7 +164,7 @@ After configuring your Graphite data source options, click **Save & test** at th
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for lists of common configuration options and JSON data options, refer to [Provisioning data sources](ref:provisioning-data-sources).
 
 Example Graphite YAML provisioning file:

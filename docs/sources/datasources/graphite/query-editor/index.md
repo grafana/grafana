@@ -57,7 +57,7 @@ To view the raw query, click the **Pencil icon** in the upper right. Click the *
 
 ## Choose metrics to query
 
-Click **Select metric** to navigate the metric space. Once you begin, you can use the mouse or keyboard arrow keys. You can also select a wildcard and continue.
+Click **Select metric** to browse the available metrics. You can navigate using your mouse or arrow keys. You can also select a wildcard.
 
 {{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png" animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
 
