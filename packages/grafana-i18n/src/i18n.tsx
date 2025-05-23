@@ -1,6 +1,5 @@
 import i18n, { InitOptions, ReactOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
-import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
@@ -11,6 +10,22 @@ import { TransProps, TransType } from './types';
 
 let tFunc: TFunction<string[], undefined> | undefined;
 let transComponent: TransType;
+
+(async () => {
+  // We want to translate grafana-ui without introducing any breaking changes for consumers
+  // who use grafana-ui outside of grafana (such as grafana.com self serve). The other struggle
+  // is that grafana-ui does not require a top-level provider component, so we don't get the
+  // chance to do the mandatory i18next setup that <Trans /> and t() requires
+  const isGrafanaContext = Object.hasOwn(window, 'grafanaBootData');
+  const isTestContext = process.env.NODE_ENV === 'test';
+
+  if (isGrafanaContext || isTestContext) {
+    return;
+  }
+
+  console.log('Initializing a default i18n instance');
+  await initPluginTranslations('unkown-context');
+})();
 
 async function initDefaultI18nInstance() {
   if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
@@ -152,62 +167,38 @@ export function addResourceBundle(language: string, namespace: string, resource:
   getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
 }
 
-function logWarning(entity: string) {
-  if (process.env.NODE_ENV !== 'test') {
-    console.warn(
-      `${entity} was called before i18n was initialized. This is probably caused by calling ${entity} outside of Grafana context or by calling ${entity} in the root module scope, instead of lazily on render. Initializing default instances.`
-    );
+function logError(entity: string) {
+  const message = `${entity} was called before i18n was initialized. This is probably caused by calling ${entity} outside of Grafana context or by calling ${entity} in the root module scope, instead of lazily on render. Initializing default instances.`;
+  console.error(message);
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    throw new Error(message);
   }
 }
 
 export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {
   if (!tFunc) {
-    logWarning('t()');
-
-    if (process.env.NODE_ENV === 'development') {
-      throw new Error('t() was called before i18n was initialized');
-    }
-
+    logError('t()');
     tFunc = getI18nInstance().t;
   }
 
   return tFunc(id, defaultMessage, values);
 }
 
-function useInit(entity: string) {
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    async function init() {
-      if (!tFunc || !transComponent) {
-        logWarning(entity);
-        await initPluginTranslations(entity);
-      }
-      setIsInitialized(true);
-    }
-    init();
-  }, [entity]);
-
-  return isInitialized;
-}
-
 export function useTranslate() {
-  const isInitialized = useInit('useTranslate()');
-
-  if (!isInitialized) {
-    return { t: () => '' };
+  if (!tFunc) {
+    logError('useTranslate()');
+    return { t: getI18nInstance().t };
   }
 
   return { t };
 }
 
 export function Trans(props: TransProps) {
-  const isInitialized = useInit('<Trans>');
-
-  if (!isInitialized) {
-    return null;
+  if (!transComponent) {
+    logError('Trans()');
+    return <I18NextTrans shouldUnescape {...props} />;
   }
 
-  const Component = transComponent ?? I18NextTrans;
+  const Component = transComponent;
   return <Component shouldUnescape {...props} />;
 }

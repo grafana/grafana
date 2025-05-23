@@ -45,13 +45,13 @@ interface InputState {
   errorMessage: React.ReactNode;
 }
 
-const DEFAULT_ERROR_MESSAGE = () => (
+const DefaultErrorMessage = () => (
   <Trans i18nKey="time-picker.range-content.default-error" values={{ now: 'now' }}>
     Please enter a past date or {'"{{now}}"'}
   </Trans>
 );
 
-const RANGE_ERROR_MESSAGE = () => (
+const RangeErrorMessage = () => (
   <Trans i18nKey="time-picker.range-content.range-error">"From" can't be after "To"</Trans>
 );
 
@@ -265,9 +265,9 @@ function valueToState(
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? <RANGE_ERROR_MESSAGE /> : <DEFAULT_ERROR_MESSAGE />,
+      errorMessage: rangeInvalid && !fromInvalid ? <RangeErrorMessage /> : <DefaultErrorMessage />,
     },
-    { value: toValue, invalid: toInvalid, errorMessage: <DEFAULT_ERROR_MESSAGE /> },
+    { value: toValue, invalid: toInvalid, errorMessage: <DefaultErrorMessage /> },
   ];
 }
 

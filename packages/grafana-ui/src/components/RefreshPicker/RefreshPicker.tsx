@@ -113,7 +113,7 @@ interface RefreshButtonSelectProps {
   variant: ToolbarButtonVariant;
 }
 
-export function RefreshButtonSelect({
+function RefreshButtonSelect({
   currentValue,
   intervals,
   showAutoInterval,

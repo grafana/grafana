@@ -5,8 +5,6 @@ import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 import failOnConsole from 'jest-fail-on-console';
 
-import { initPluginTranslations } from '@grafana/i18n';
-
 import getEnvConfig from '../../scripts/webpack/env-util';
 
 import { matchers } from './matchers';
@@ -22,8 +20,6 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
 }
 
 expect.extend(matchers);
-
-initPluginTranslations('tests');
 
 // mock out the worker that detects changes in the dashboard
 // The mock is needed because JSDOM does not support workers and

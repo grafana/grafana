@@ -5,6 +5,7 @@ import { TransformStream } from 'node:stream/web';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
+import { initPluginTranslations } from '@grafana/i18n';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
@@ -132,3 +133,5 @@ global.BroadcastChannel = class BroadcastChannel {
   addEventListener() {}
   removeEventListener() {}
 };
+
+initPluginTranslations('tests');
