@@ -4,7 +4,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, useStyles2, Combobox } from '@grafana/ui';
 
 import { TempoJsonData } from '../types';
 
@@ -14,6 +14,12 @@ interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
 export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+
+  const histogramOptions = [
+    { label: 'Classic', value: 'classic' },
+    { label: 'Native', value: 'native' },
+    { label: 'Both', value: 'both' },
+  ];
 
   return (
     <div className={styles.container}>
@@ -51,6 +57,26 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
             Clear
           </Button>
         ) : null}
+      </InlineFieldRow>
+      <InlineFieldRow className={styles.row}>
+        <InlineField
+          tooltip="Select which type of histograms are configured in Tempo and Prometheus"
+          label="Histogram type"
+          labelWidth={26}
+        >
+          <Combobox
+            id="histogram-type-select"
+            value={options.jsonData.serviceMap?.histogramType || 'classic'}
+            width={40}
+            options={histogramOptions}
+            onChange={(value) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
+                ...options.jsonData.serviceMap,
+                histogramType: value.value,
+              })
+            }
+          />
+        </InlineField>
       </InlineFieldRow>
     </div>
   );
