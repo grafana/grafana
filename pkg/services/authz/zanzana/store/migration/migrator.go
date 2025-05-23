@@ -2,7 +2,6 @@ package migration
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +14,20 @@ import (
 )
 
 func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string, logger log.Logger) error {
+	// running grafana migrations
+	engine, err := xorm.NewEngine(dbType, connStr)
+	if err != nil {
+		return fmt.Errorf("failed to create db engine: %w", err)
+	}
+
+	m := migrator.NewMigrator(engine, cfg)
+	m.AddCreateMigration()
+
+	if err := RunWithMigrator(m, cfg, fs, path); err != nil {
+		return err
+	}
+
+	// running openfga migrations
 	switch dbType {
 	case migrator.SQLite:
 		// openfga expects sqlite but grafana uses sqlite3
@@ -56,60 +69,75 @@ type migration struct {
 }
 
 func getMigrations(fs embed.FS, path string) ([]migration, error) {
-	entries, err := fs.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read migration dir: %w", err)
+	// create the drop migrations
+	dropMigrations := []migration{
+		{
+			name: "zanzana_removal_grafana_migrations_to_openfga_migrations",
+			migration: &rawMigration{stmts: []string{
+				`DROP TABLE IF EXISTS tuple;
+				DROP TABLE IF EXISTS authorization_model;
+				DROP TABLE IF EXISTS store;
+				DROP TABLE IF EXISTS assertion;
+				DROP TABLE IF EXISTS changelog;`,
+			}},
+		},
 	}
+	return dropMigrations, nil
 
-	// parseStatements extracts statements from a sql file so we can execute
-	// them as separate migrations. OpenFGA uses Goose as their migration egine
-	// and Goose uses a single sql file for both up and down migrations.
-	// Grafana only supports up migration so we strip out the down migration
-	// and parse each individual statement
-	parseStatements := func(data []byte) ([]string, error) {
-		scripts := strings.Split(strings.TrimPrefix(string(data), "-- +goose Up"), "-- +goose Down")
-		if len(scripts) != 2 {
-			return nil, errors.New("malformed migration file")
-		}
+	// entries, err := fs.ReadDir(path)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to read migration dir: %w", err)
+	// }
 
-		// We assume that up migrations are always before down migrations
-		parts := strings.SplitAfter(scripts[0], ";")
-		stmts := make([]string, 0, len(parts))
-		for _, p := range parts {
-			p = strings.TrimSpace(p)
-			if p != "" {
-				stmts = append(stmts, p)
-			}
-		}
+	// // parseStatements extracts statements from a sql file so we can execute
+	// // them as separate migrations. OpenFGA uses Goose as their migration egine
+	// // and Goose uses a single sql file for both up and down migrations.
+	// // Grafana only supports up migration so we strip out the down migration
+	// // and parse each individual statement
+	// parseStatements := func(data []byte) ([]string, error) {
+	// 	scripts := strings.Split(strings.TrimPrefix(string(data), "-- +goose Up"), "-- +goose Down")
+	// 	if len(scripts) != 2 {
+	// 		return nil, errors.New("malformed migration file")
+	// 	}
 
-		return stmts, nil
-	}
+	// 	// We assume that up migrations are always before down migrations
+	// 	parts := strings.SplitAfter(scripts[0], ";")
+	// 	stmts := make([]string, 0, len(parts))
+	// 	for _, p := range parts {
+	// 		p = strings.TrimSpace(p)
+	// 		if p != "" {
+	// 			stmts = append(stmts, p)
+	// 		}
+	// 	}
 
-	formatName := func(name string) string {
-		// Each migration file start with XXX where X is a number.
-		// We remove that part and prefix each migration with "zanzana".
-		return strings.TrimSuffix("zanzana"+name[3:], ".sql")
-	}
+	// 	return stmts, nil
+	// }
 
-	migrations := make([]migration, 0, len(entries))
-	for _, e := range entries {
-		data, err := fs.ReadFile(path + "/" + e.Name())
-		if err != nil {
-			return nil, fmt.Errorf("failed to read migration file: %w", err)
-		}
+	// formatName := func(name string) string {
+	// 	// Each migration file start with XXX where X is a number.
+	// 	// We remove that part and prefix each migration with "zanzana".
+	// 	return strings.TrimSuffix("zanzana"+name[3:], ".sql")
+	// }
 
-		stmts, err := parseStatements(data)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse migration: %w", err)
-		}
+	// migrations := make([]migration, 0, len(entries))
+	// for _, e := range entries {
+	// 	data, err := fs.ReadFile(path + "/" + e.Name())
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to read migration file: %w", err)
+	// 	}
 
-		migrations = append(migrations, migration{
-			name:      formatName(e.Name()),
-			migration: &rawMigration{stmts: stmts},
-		})
-	}
+	// 	stmts, err := parseStatements(data)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to parse migration: %w", err)
+	// 	}
 
-	return migrations, nil
+	// 	migrations = append(migrations, migration{
+	// 		name:      formatName(e.Name()),
+	// 		migration: &rawMigration{stmts: stmts},
+	// 	})
+	// }
+
+	// return migrations, nil
 }
 
 var _ migrator.CodeMigration = (*rawMigration)(nil)
