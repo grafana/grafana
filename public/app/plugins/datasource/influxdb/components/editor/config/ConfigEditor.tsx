@@ -7,7 +7,7 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
@@ -16,6 +16,7 @@ import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
 import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';
 import { InfluxSqlConfig } from './InfluxSQLConfig';
+import { trackInfluxDBConfigV1QueryLanguageSelection } from './trackingv1';
 
 const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
   [InfluxVersion.InfluxQL]: {
@@ -117,11 +118,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               options={versions}
               defaultValue={versionMap[InfluxVersion.InfluxQL]}
               onChange={this.onVersionChanged}
-              onBlur={() => {
-                reportInteraction('influxdb-configv1-query-language-dropdown', {
-                  version: this.props.options.jsonData.version,
-                });
-              }}
+              onBlur={() => trackInfluxDBConfigV1QueryLanguageSelection({ version: this.props.options.jsonData.version || "" })}
             />
           </Field>
         </FieldSet>
