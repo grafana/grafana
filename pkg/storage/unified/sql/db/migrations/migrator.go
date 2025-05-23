@@ -9,8 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateResourceStore(_ context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
-	// TODO: use the context.Context
+func MigrateResourceStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
 
 	mg := migrator.NewScopedMigrator(engine, cfg, "resource")
 	mg.AddCreateMigration()
@@ -18,7 +17,8 @@ func MigrateResourceStore(_ context.Context, engine *xorm.Engine, cfg *setting.C
 	initResourceTables(mg)
 
 	sec := cfg.Raw.Section("database")
-	return mg.Start(
+	return mg.RunMigrations(
+		ctx,
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt(),
 	)
