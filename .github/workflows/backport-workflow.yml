@@ -46,14 +46,14 @@ jobs:
           PR_INFO_FILE: ${{ steps.download-pr-info.outputs.download-path }}/pr_info.json
         # jq-magic to convert the JSON object into a list of key=value pairs for $GITHUB_OUTPUT
         run:
-          jq -r 'to_entries[] | select(.value | type != "object") | "\(.key)=\(.value)"' "$PR_INFO_FILE" >> $GITHUB_OUTPUT
+          jq -r 'to_entries[] | select(.value | type != "object") | "\(.key)=\(.value)"' "$PR_INFO_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Print PR info
         env:
           PR_ACTION: ${{ steps.pr-info.outputs.action }}
           PR_LABEL: ${{ steps.pr-info.outputs.label }}
           PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
-        run:
+        run: |
           echo "PR action: $PR_ACTION"
           echo "PR label: $PR_LABEL"
           echo "PR number: $PR_NUMBER"
