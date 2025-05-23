@@ -6,7 +6,7 @@ import { useAsyncFn } from 'react-use';
 import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { TFunction, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
@@ -104,7 +104,7 @@ export function SegmentAsync<T>({
   );
 }
 
-function mapStateToNoOptionsMessage<T>(t: Function) {
+function mapStateToNoOptionsMessage<T>(t: TFunction) {
   return function (state: AsyncState<Array<SelectableValue<T>>>): string {
     if (state.loading) {
       return t('grafana-ui.segment-async.loading', 'Loading options...');
