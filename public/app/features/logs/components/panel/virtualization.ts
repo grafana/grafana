@@ -131,7 +131,6 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
         delta += 1;
       } while (width >= availableWidth);
       if (beforeWidth) {
-        //console.log(testLogLine)
         beforeWidth = 0;
       }
       logLines += 1;
