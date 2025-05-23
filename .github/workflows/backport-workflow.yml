@@ -8,6 +8,8 @@ on:
     types:
       - completed
 
+permissions: {}
+
 jobs:
   backport:
     # Only run this job if the triggering workflow was not skipped (and on grafana repo)
