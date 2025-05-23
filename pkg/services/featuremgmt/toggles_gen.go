@@ -938,7 +938,7 @@ const (
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for data source configuration pages
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
-	
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"

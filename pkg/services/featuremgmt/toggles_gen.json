@@ -2239,19 +2239,6 @@
     },
     {
       "metadata": {
-        "name": "newInfluxDSConfigPageDesign",
-        "resourceVersion": "1746640331991",
-        "creationTimestamp": "2025-05-07T17:52:11Z",
-        "deletionTimestamp": "2025-05-23T03:13:20Z"
-      },
-      "spec": {
-        "description": "Enables new design for data source configuration pages",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources"
-      }
-    },
-    {
-      "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-08-30T12:48:13Z"
@@ -2279,8 +2266,26 @@
     {
       "metadata": {
         "name": "newInfluxDSConfigPageDesign",
+        "resourceVersion": "1748031660359",
+        "creationTimestamp": "2025-05-07T17:52:11Z",
+        "deletionTimestamp": "2025-05-23T03:13:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-23 20:21:00.359803 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables new design for data source configuration pages",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1747970000344",
-        "creationTimestamp": "2025-05-23T03:13:20Z"
+        "creationTimestamp": "2025-05-23T03:13:20Z",
+        "deletionTimestamp": "2025-05-23T20:21:00Z"
       },
       "spec": {
         "description": "Enables new design for data source configuration pages",
