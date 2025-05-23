@@ -37,8 +37,8 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 }
 
 type QOSMetrics struct {
-	QueueLength       *prometheus.GaugeVec   // per slug
-	DiscardedRequests *prometheus.CounterVec // per slug
+	QueueLength       *prometheus.GaugeVec
+	DiscardedRequests *prometheus.CounterVec
 	EnqueueDuration   prometheus.Histogram
 }
 
@@ -48,12 +48,12 @@ func ProvideQOSMetrics(reg prometheus.Registerer) *QOSMetrics {
 			Namespace: "storage_server",
 			Name:      "qos_queue_length",
 			Help:      "Number of items in the queue",
-		}, []string{"slug"}),
+		}, []string{"namespace"}),
 		DiscardedRequests: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Namespace: "storage_server",
 			Name:      "qos_discarded_requests_total",
 			Help:      "Total number of discarded requests",
-		}, []string{"slug", "reason"}),
+		}, []string{"namespace", "reason"}),
 		EnqueueDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Namespace: "storage_server",
 			Name:      "qos_enqueue_duration_seconds",

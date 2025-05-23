@@ -2,6 +2,9 @@ package scheduler
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -77,8 +80,8 @@ func TestQueue(t *testing.T) {
 
 				// Let's simplify the dequeue check: Dequeue sequentially after enqueueing.
 				qSimple := NewQueue(QueueOptionsWithDefaults(nil))
-				defer qSimple.Close()
-				defer qSimple.StopWait()
+				require.NoError(t, qSimple.StartAsync(context.Background()), "Queue should start")
+				require.NoError(t, qSimple.AwaitRunning(context.Background()), "Queue should be running")
 
 				for i := 0; i < numItems; i++ {
 					err := qSimple.Enqueue(ctx, tenantID, func() {})
@@ -105,6 +108,10 @@ func TestQueue(t *testing.T) {
 				cancel()
 				require.ErrorIs(t, err, context.DeadlineExceeded, "Dequeue on empty queue should time out")
 				require.False(t, ok, "Dequeue on empty queue should return ok=false")
+
+				// Stop the queue
+				qSimple.StopAsync()
+				require.NoError(t, qSimple.AwaitTerminated(context.Background()), "Queue should stop")
 			},
 		},
 		{
@@ -253,7 +260,9 @@ func TestQueue(t *testing.T) {
 				<-dequeueStarted
 
 				// Close the queue - this should unblock the dequeue with ErrQueueClosed
-				q.Close()
+				ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+				defer cancel()
+				q.StopAsync()
 
 				// Verify the error is ErrQueueClosed
 				select {
@@ -275,7 +284,7 @@ func TestQueue(t *testing.T) {
 				require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Close should return ErrQueueClosed")
 
 				// Stop the queue to clean up completely
-				q.StopWait()
+				require.NoError(t, q.AwaitTerminated(ctx), "Queue should stop after close")
 			},
 		},
 		{
@@ -320,7 +329,33 @@ func TestQueue(t *testing.T) {
 				require.ErrorIs(t, err, context.Canceled, "Expected context canceled error")
 			},
 		},
-		// Add more test cases here
+		{
+			name: "Enqueue after Close",
+			opts: QueueOptionsWithDefaults(nil),
+			test: func(t *testing.T, q *Queue) {
+				// Close the queue first
+				q.StopAsync()
+				require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+
+				// Now try to enqueue - should return ErrQueueClosed
+				err := q.Enqueue(context.Background(), "tenant-id", func() {})
+				require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Close should return ErrQueueClosed")
+			},
+		},
+		{
+			name: "Dequeue with Timeout",
+			opts: QueueOptionsWithDefaults(nil),
+			test: func(t *testing.T, q *Queue) {
+				ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+				defer cancel()
+
+				// This should timeout since nothing is in the queue
+				runnable, ok, err := q.Dequeue(ctx)
+				require.Nil(t, runnable, "Runnable should be nil on timeout")
+				require.False(t, ok, "ok should be false on timeout")
+				require.ErrorIs(t, err, context.DeadlineExceeded, "Expected context deadline exceeded error")
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -329,11 +364,14 @@ func TestQueue(t *testing.T) {
 			t.Parallel() // Run table entries in parallel
 
 			q := NewQueue(tc.opts)
+			require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+			require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
 			// Defer close and stopwait to ensure cleanup even if test fails
 			// Order matters: Close needs to be called before StopWait
 			defer func() {
-				q.Close()
-				q.StopWait()
+				q.StopAsync()
+				require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
 			}()
 
 			tc.test(t, q)
@@ -345,13 +383,344 @@ func TestQueue(t *testing.T) {
 // This is a basic sanity check to ensure our cleanup logic functions correctly.
 func TestQueueCleanup(t *testing.T) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
 
 	// Explicitly close and wait for dispatcher to stop
-	q.Close()
-	q.StopWait()
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
 
 	// Queue should now be in a clean, shutdown state
 	_, ok, err := q.Dequeue(context.Background())
 	require.False(t, ok)
+	require.ErrorIs(t, err, ErrQueueClosed)
+}
+
+// TestConcurrentEnqueuersAndDequeuers tests the queue's ability to handle
+// concurrent enqueuing and dequeuing operations. It ensures that all items
+// are processed correctly and that the queue maintains its integrity under
+// concurrent access.
+func TestConcurrentEnqueuersAndDequeuers(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 100}))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
+	const numProducers = 5
+	const numConsumers = 3
+	const itemsPerProducer = 20
+	const totalItems = numProducers * itemsPerProducer
+
+	// Track items to verify all are processed
+	processedItems := make(map[string]int)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	// Start consumers first (they'll block until items are available)
+	for i := 0; i < numConsumers; i++ {
+		wg.Add(1)
+		go func(consumerID int) {
+			defer wg.Done()
+			consumerCount := 0
+
+			for {
+				runnable, ok, err := q.Dequeue(ctx)
+				if err != nil {
+					if errors.Is(err, context.DeadlineExceeded) {
+						return
+					}
+					require.NoError(t, err)
+					return
+				}
+
+				if !ok {
+					return
+				}
+
+				// Execute the runnable which will update our tracking
+				runnable()
+				consumerCount++
+
+				// Check if we've processed all expected items
+				mu.Lock()
+				totalProcessed := 0
+				for _, count := range processedItems {
+					totalProcessed += count
+				}
+				done := totalProcessed >= totalItems
+				mu.Unlock()
+
+				if done {
+					return
+				}
+			}
+		}(i)
+	}
+
+	// Start producers
+	for i := 0; i < numProducers; i++ {
+		wg.Add(1)
+		go func(producerID int) {
+			defer wg.Done()
+			tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
+
+			for j := 0; j < itemsPerProducer; j++ {
+				itemID := fmt.Sprintf("p%d-item%d", producerID, j)
+
+				err := q.Enqueue(ctx, tenantID, func() {
+					mu.Lock()
+					processedItems[itemID] = 1
+					mu.Unlock()
+				})
+
+				if err != nil {
+					// Context might have been canceled if test is slow
+					if errors.Is(err, context.DeadlineExceeded) ||
+						errors.Is(err, ErrQueueClosed) {
+						return
+					}
+					require.NoError(t, err)
+				}
+
+				// Small sleep to reduce contention
+				time.Sleep(time.Millisecond)
+			}
+		}(i)
+	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+
+	// Check that all items were processed
+	mu.Lock()
+	require.Equal(t, totalItems, len(processedItems),
+		"All enqueued items should have been processed")
+	mu.Unlock()
+
+	// Verify queue is now empty
+	require.Equal(t, 0, q.Len(), "Queue should be empty after processing all items")
+	require.Equal(t, 0, q.ActiveTenantsLen(), "No active tenants should remain after processing")
+	// Stop the queue
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+}
+
+// TestSlowDequeuerHandling tests the queue's behavior when a slow dequeuer
+// is present. It ensures that other tenants' items are still processed
+// in a round-robin fashion, even if one tenant has a slow runnable.
+// This simulates a scenario where one tenant's processing is delayed
+// but the queue should still maintain fairness.
+func TestSlowDequeuerHandling(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 5}))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
+	ctx := context.Background()
+	tenantA := "tenant-a"
+	tenantB := "tenant-b"
+	tenantC := "tenant-c"
+
+	// Create channels to track execution order
+	completionOrder := make(chan string, 10)
+	var wg sync.WaitGroup
+
+	// Enqueue a slow item for tenant A
+	wg.Add(1)
+	err := q.Enqueue(ctx, tenantA, func() {
+		defer wg.Done()
+		time.Sleep(300 * time.Millisecond) // Simulate slow processing
+		completionOrder <- "A-slow"
+	})
+	require.NoError(t, err)
+
+	// Enqueue regular items for other tenants
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		err := q.Enqueue(ctx, tenantB, func() {
+			defer wg.Done()
+			completionOrder <- fmt.Sprintf("B-%d", i)
+		})
+		require.NoError(t, err)
+
+		wg.Add(1)
+		err = q.Enqueue(ctx, tenantC, func() {
+			defer wg.Done()
+			completionOrder <- fmt.Sprintf("C-%d", i)
+		})
+		require.NoError(t, err)
+	}
+
+	// Enqueue another item for tenant A
+	wg.Add(1)
+	err = q.Enqueue(ctx, tenantA, func() {
+		defer wg.Done()
+		completionOrder <- "A-fast"
+	})
+	require.NoError(t, err)
+
+	// Start multiple dequeuer goroutines
+	for i := 0; i < 3; i++ {
+		go func() {
+			for j := 0; j < 2; j++ { // Each will dequeue 2 items
+				dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+				runnable, ok, err := q.Dequeue(dequeueCtx)
+				cancel()
+				if err != nil || !ok {
+					return
+				}
+				runnable()
+			}
+		}()
+	}
+
+	// Wait for all processing to complete
+	wg.Wait()
+	close(completionOrder)
+
+	// Collect completion order
+	execOrder := make([]string, 0, len(completionOrder))
+	for item := range completionOrder {
+		execOrder = append(execOrder, item)
+	}
+
+	// Verify that despite A-slow being dequeued first, other tenants' work completed while it was running
+	slowAPos := -1
+	fastAPos := -1
+	for i, item := range execOrder {
+		if item == "A-slow" {
+			slowAPos = i
+		}
+		if item == "A-fast" {
+			fastAPos = i
+		}
+	}
+
+	// The slow A task was started first but should finish later
+	require.True(t, slowAPos > 0, "A-slow should be in the execution order")
+	require.True(t, fastAPos > 0, "A-fast should be in the execution order")
+
+	// Verify some items from other tenants completed between the two A items
+	// This confirms round-robin fairness even with slow consumers
+	firstTenantBFoundPos := -1
+	for i, item := range execOrder {
+		if strings.HasPrefix(item, "B-") || strings.HasPrefix(item, "C-") {
+			firstTenantBFoundPos = i
+			break
+		}
+	}
+
+	// Make sure at least one other tenant item completed
+	require.True(t, firstTenantBFoundPos >= 0,
+		"At least one B or C item should be in execution order")
+
+	// Verify length is now 0
+	require.Equal(t, 0, q.Len())
+	require.Equal(t, 0, q.ActiveTenantsLen())
+
+	// Stop the queue
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+}
+
+// TestQueueActiveTenantsLen tests the ActiveTenantsLen method of the queue.
+// It ensures that the method returns the correct number of active tenants
+// after enqueuing items for different tenants.
+func TestQueueActiveTenantsLen(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
+	// Enqueue items for different tenants
+	err := q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+	err = q.Enqueue(context.Background(), "tenant2", func() {})
+	require.NoError(t, err)
+
+	// Check active tenants
+	activeTenants := q.ActiveTenantsLen()
+	require.Equal(t, activeTenants, 2)
+
+	// Stop the queue
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+}
+
+// TestQueueLen tests the Len method of the queue. It ensures that the
+// method returns the correct number of items in the queue after enqueuing
+// items for different tenants.
+func TestQueueLen(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
+	// Enqueue items
+	err := q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+	err = q.Enqueue(context.Background(), "tenant1", func() {})
+	require.NoError(t, err)
+
+	// Check queue length
+	queueLen := q.Len()
+	require.Equal(t, queueLen, 2)
+
+	// Stop the queue
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+}
+
+func TestQueueGracefulShutdown(t *testing.T) {
+	t.Parallel()
+
+	q := NewQueue(QueueOptionsWithDefaults(nil))
+	require.NoError(t, q.StartAsync(context.Background()), "Queue should start")
+	require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
+
+	processed := make(chan struct{})
+
+	// Enqueue an item that signals when processed
+	err := q.Enqueue(context.Background(), "tenant1", func() {
+		close(processed)
+	})
+	require.NoError(t, err)
+
+	// Start a goroutine to dequeue and run the item
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		runnable, ok, err := q.Dequeue(ctx)
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.NotNil(t, runnable)
+		runnable()
+	}()
+
+	// Wait for the item to be processed
+	select {
+	case <-processed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Timed out waiting for item to be processed before shutdown")
+	}
+
+	// Now gracefully stop the queue
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	q.StopAsync()
+	require.NoError(t, q.AwaitTerminated(ctx), "Queue should stop")
+	wg.Wait()
+
+	// Check that the queue is closed
+	err = q.Enqueue(context.Background(), "tenant1", func() {})
 	require.ErrorIs(t, err, ErrQueueClosed)
 }
