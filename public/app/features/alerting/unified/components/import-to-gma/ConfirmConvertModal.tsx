@@ -59,7 +59,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     targetDatasourceUID,
     yamlFile,
     importSource,
-    yamlImportTargetDatasourceUID
+    yamlImportTargetDatasourceUID,
   ] = watch([
     'targetFolder',
     'selectedDatasourceName',
@@ -71,7 +71,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'targetDatasourceUID',
     'yamlFile',
     'importSource',
-    'yamlImportTargetDatasourceUID'
+    'yamlImportTargetDatasourceUID',
   ]);
 
   // for datasource import, we need to fetch the rules from the datasource
@@ -80,19 +80,18 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   // for yaml import, we need to fetch the rules from the yaml file
   const { value: rulesToBeImportedFromYaml = {} } = useAsync(async () => {
-    if (!yamlFile || importSource !== 'yaml' || !targetFolder) {
+    if (!yamlFile || importSource !== 'yaml') {
       return {};
     }
     try {
-      const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), targetFolder.title,
-      );
+      const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), yamlFile.name);
       return rulerConfigFromYAML;
 
     } catch (error) {
       console.error('Error parsing YAML file:', error);
       return {};
     }
-  }, [importSource, yamlFile, targetFolder]);
+  }, [importSource, yamlFile]);
 
   // filter the rules to be imported from the datasource 
   const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
@@ -296,12 +295,14 @@ function isGroup(obj: unknown): obj is Group {
   return group.rules.every(isRule);
 }
 
-function parseYamlToRulerRulesConfigDTO(yamlAsString: string, namespace: string): RulerRulesConfigDTO {
+function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
 
   const obj = load(yamlAsString);
   if (!obj || typeof obj !== 'object' || !('groups' in obj) || !Array.isArray((obj as { groups: unknown[] }).groups)) {
     throw new Error('Invalid YAML format: missing or invalid groups array');
   }
+
+  const namespace = 'namespace' in obj && isValidString(obj.namespace) ? obj.namespace : defaultNamespace;
 
   const data: RulerRulesConfigDTO = {};
   data[namespace] = (obj as { groups: unknown[] }).groups.map((group: unknown) => {

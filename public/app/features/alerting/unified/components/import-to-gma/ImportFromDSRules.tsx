@@ -83,8 +83,7 @@ const ImportFromDSRules = () => {
   } = formAPI;
 
   const [optionsShowing, toggleOptions] = useToggle(true);
-  const [targetFolder, selectedDatasourceName, importSource] = watch([
-    'targetFolder',
+  const [selectedDatasourceName, importSource] = watch([
     'selectedDatasourceName',
     'importSource',
   ]);
@@ -237,6 +236,9 @@ const ImportFromDSRules = () => {
                           }}
                         />
                       )}
+                      rules={{
+                        required: { value: true, message: 'Please select a target data source' },
+                      }}
                     />
                   </Field>
                 </>
@@ -273,7 +275,7 @@ const ImportFromDSRules = () => {
                               showRootFolder={false}
                               invalid={!!errors.targetFolder?.message}
                               {...field}
-                              value={targetFolder?.uid}
+                              value={field.value?.uid}
                               onChange={(uid, title) => {
                                 if (uid && title) {
                                   setValue('targetFolder', { title, uid });
@@ -286,9 +288,6 @@ const ImportFromDSRules = () => {
                         )}
                         name="targetFolder"
                         control={control}
-                        rules={{
-                          required: importSource === 'yaml' ? { value: true, message: 'Please select a target folder' } : undefined,
-                        }}
                       />
                       <CreateNewFolder
                         onCreate={(folder) => {
