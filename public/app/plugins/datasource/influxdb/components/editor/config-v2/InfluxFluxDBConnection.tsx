@@ -3,6 +3,12 @@ import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions } from '../../../types';
 
+import {
+  trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField,
+  trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
+  trackInfluxDBConfigV2FluxDBDetailsTokenInputField,
+} from './trackingv2';
+
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export const InfluxFluxDBConnection = ({ options, onOptionsChange }: Props) => {
@@ -18,6 +24,7 @@ export const InfluxFluxDBConnection = ({ options, onOptionsChange }: Props) => {
                 jsonData: { ...options.jsonData, organization: e.currentTarget.value },
               })
             }
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -32,6 +39,7 @@ export const InfluxFluxDBConnection = ({ options, onOptionsChange }: Props) => {
                 jsonData: { ...options.jsonData, defaultBucket: e.currentTarget.value },
               })
             }
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -69,6 +77,7 @@ export const InfluxFluxDBConnection = ({ options, onOptionsChange }: Props) => {
                   token: true,
                 },
               });
+              trackInfluxDBConfigV2FluxDBDetailsTokenInputField();
             }}
           />
         </InlineField>

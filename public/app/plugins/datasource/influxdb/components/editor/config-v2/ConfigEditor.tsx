@@ -9,7 +9,8 @@ export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
 import { RightSideBar } from './RightSideBar';
-import { UrlAndConnectionSection } from './UrlAndConnectionSection';
+import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
+import { trackInfluxDBConfigV2FeedbackButtonClicked } from './trackingv2';
 
 export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
   return (
@@ -31,12 +32,16 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
             <Alert severity="info" title="">
               <>
                 You are viewing a new design for InfluxDB configuration settings.{' '}
-                <TextLink href="https://github.com/grafana/grafana/issues" external>
+                <TextLink
+                  href="https://github.com/grafana/grafana/issues"
+                  external
+                  onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
+                >
                   Submit feedback.
                 </TextLink>
               </>
             </Alert>
-            <UrlAndConnectionSection options={options} onOptionsChange={onOptionsChange} />
+            <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
             <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
           </Stack>
         </ScrollContainer>

@@ -939,7 +939,7 @@ const (
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
 
-	// FlagNewDataSourceConfigPageDesign
+	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for data source configuration pages
-	FlagNewDataSourceConfigPageDesign = "newDataSourceConfigPageDesign"
+	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 )

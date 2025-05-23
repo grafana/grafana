@@ -7,6 +7,12 @@ import { InlineFieldRow, InlineField, Combobox, InlineSwitch, Input, Space, useS
 import { InfluxOptions, InfluxVersion } from '../../../types';
 
 import { getInlineLabelStyles, HTTP_MODES } from './constants';
+import {
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked,
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked,
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked,
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked,
+} from './trackingv2';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
@@ -26,6 +32,7 @@ export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props
         <InlineSwitch
           value={advancedDbConnectionSettingsIsOpen}
           onChange={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
+          onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked}
         />
       </InlineField>
       {advancedDbConnectionSettingsIsOpen && (
@@ -47,6 +54,7 @@ export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props
                     onChange={(e) =>
                       onOptionsChange({ ...options, jsonData: { ...options.jsonData, httpMode: e.label } })
                     }
+                    onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked}
                   />
                 </InlineField>
               </InlineFieldRow>
@@ -67,6 +75,7 @@ export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props
                         },
                       });
                     }}
+                    onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked}
                   />
                 </InlineField>
               </InlineFieldRow>
@@ -90,6 +99,7 @@ export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props
                         jsonData: { ...options.jsonData, timeInterval: e.currentTarget.value },
                       })
                     }
+                    onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked}
                   />
                 </InlineField>
               </InlineFieldRow>

@@ -3,6 +3,11 @@ import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions } from '../../../types';
 
+import {
+  trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
+  trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
+} from './trackingv2';
+
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export const InfluxSQLDBConnection = ({ options, onOptionsChange }: Props) => {
@@ -21,6 +26,7 @@ export const InfluxSQLDBConnection = ({ options, onOptionsChange }: Props) => {
                 },
               });
             }}
+            onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -58,6 +64,7 @@ export const InfluxSQLDBConnection = ({ options, onOptionsChange }: Props) => {
                   token: true,
                 },
               });
+              trackInfluxDBConfigV2SQLDBDetailsTokenInputField();
             }}
           />
         </InlineField>
