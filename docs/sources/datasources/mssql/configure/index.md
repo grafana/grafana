@@ -107,6 +107,48 @@ Windows AD: Credential cache file Windows Active Directory - Sign on for domain 
 The default is `SQL server authentication`. 
 
 
+**Additional settings:**
+
+Additional settings are optional settings you configure for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.
+
+- **Connection limits** - 
+  - **Max open** - The maximum number of open connections to the database. If set to 0, there is no limit. If `max open` is greater than 0 and less than the `max idle` setting, `max idle` will be adjusted to match it.
+
+  - **Auto max idle** - Toggle on to automatically set the maximum idle connections to match the max open connections. If max open connections isn’t set, it defaults to `100`.
+
+  - **Max idle** - The maximum number of idle connections in the pool. If `max open` connections is set to a value greater than 0 and is lower than this setting, `max idle` connections will be reduced to match it. If set to 0, idle connections are not retained.
+
+  - Max lifetime - 
+
+**Connection details** - 
+Min time interval
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example1m if your data is written every minute.
+
+Connection timeout
+The number of seconds to wait before canceling the request when connecting to the database. The default is 0, meaning no timeout.
+
+**Windows AD: Advanced Settings**
+
+UDP Preference Limit
+The default is 1 and means always use TCP and is optional.
+
+DNS Lookup KDC
+Indicate whether DNS `SRV` records should be used to locate the KDCs and other servers for a realm. The default is true.
+
+krb5 config file path
+The path to the configuration file for the MIT krb5 package. The default is /etc/krb5.conf.
+
+Private data source connect
+
+
+
+
+
+
+
+
+
+
 
 1. Set the data source's basic configuration options:
 
