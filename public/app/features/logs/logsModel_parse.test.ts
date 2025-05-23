@@ -76,6 +76,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
           dataFrame: frames[0],
           rowId: 'id1',
           datasourceType: undefined,
+          datasourceUid: undefined,
           entry: 'line1',
           entryFieldIndex: 4,
           hasAnsi: false,
