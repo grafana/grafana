@@ -17,6 +17,9 @@ func MigrateResourceStore(_ context.Context, engine *xorm.Engine, cfg *setting.C
 
 	initResourceTables(mg)
 
-	// since it's a new feature enable migration locking by default
-	return mg.Start(true, 0)
+	sec := cfg.Raw.Section("database")
+	return mg.Start(
+		sec.Key("migration_locking").MustBool(true),
+		sec.Key("locking_attempt_timeout_sec").MustInt(),
+	)
 }
