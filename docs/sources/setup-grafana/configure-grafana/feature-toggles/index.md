@@ -80,6 +80,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`           | Enables simplified step mode in the notifications section                                                                          | Yes                |
 | `lokiLabelNamesQueryApi`                  | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `grafanaManagedRecordingRulesDatasources` | Enables writing to data sources for Grafana-managed recording rules.                                                               |                    |
+| `alertingMigrationUI`                     | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
+| `alertingImportYAMLUI`                    | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                          | Enables unified navbars                                                                                                            |                    |
 
 ## Public preview feature toggles
@@ -103,6 +105,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `regressionTransformation`            | Enables regression analysis transformation                                                                                                                    |
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
 | `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                |
+| `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |

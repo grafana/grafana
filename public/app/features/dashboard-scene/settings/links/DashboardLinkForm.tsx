@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { LINK_ICON_MAP, NEW_LINK } from './utils';
 
@@ -21,6 +21,8 @@ interface DashboardLinkFormProps {
 }
 
 export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFormProps) {
+  const { t } = useTranslate();
+
   const onTagsChange = (tags: string[]) => {
     onUpdate({ ...link, tags: tags });
   };

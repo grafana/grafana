@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { FolderDTO, FolderListItemDTO } from '../../../../types';
 import { NestedFolderDTO } from '../../../search/service/types';
@@ -13,6 +13,8 @@ export interface Props {
 }
 
 export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
+  const { t } = useTranslate();
+
   return (
     <Modal
       isOpen={true}

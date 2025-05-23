@@ -1,13 +1,14 @@
-import i18n, { InitOptions, ReactOptions, TFunction } from 'i18next';
+import i18n, { InitOptions, ReactOptions, TFunction as I18NextTFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 // eslint-disable-next-line no-restricted-imports
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
+import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
-import { TransProps, TransType } from './types';
+import { TFunction, TransProps, TransType } from './types';
 
-let tFunc: TFunction<string[], undefined> | undefined;
+let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
 export async function initPluginTranslations(id: string) {
@@ -47,7 +48,7 @@ interface InitializeI18nOptions {
   module?: Module;
 }
 
-export async function initTranslations({
+async function initTranslations({
   ns,
   language = DEFAULT_LANGUAGE,
   module,
@@ -119,7 +120,16 @@ export function getNamespaces() {
 }
 
 export async function changeLanguage(language?: string) {
-  await getI18nInstance().changeLanguage(language ?? DEFAULT_LANGUAGE);
+  const validLanguage = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
+  await getI18nInstance().changeLanguage(validLanguage);
+}
+
+export async function initializeI18n(
+  { language, ns, module }: InitializeI18nOptions,
+  regionalFormat: string
+): Promise<{ language: string | undefined }> {
+  initRegionalFormat(regionalFormat);
+  return initTranslations({ language, ns, module });
 }
 
 type ResourceKey = string;
@@ -130,7 +140,7 @@ export function addResourceBundle(language: string, namespace: string, resource:
   getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
 }
 
-export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {
+export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
@@ -146,7 +156,7 @@ export function t(id: string, defaultMessage: string, values?: Record<string, un
   }
 
   return tFunc(id, defaultMessage, values);
-}
+};
 
 export function useTranslate() {
   return { t };

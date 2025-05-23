@@ -19,7 +19,7 @@ type JobList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Job `json:"items,omitempty"`
+	Items []Job `json:"items"`
 }
 
 // +enum

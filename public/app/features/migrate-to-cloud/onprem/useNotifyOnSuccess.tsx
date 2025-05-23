@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 
 import { GetSnapshotResponseDto, SnapshotDto } from '../api';
 
@@ -14,7 +14,7 @@ const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
 export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined) {
   const previousStatusRef = useRef<SnapshotDto['status']>(undefined);
   const notifyApp = useAppNotification();
-
+  const { t } = useTranslate();
   useEffect(() => {
     const status = snapshot?.status;
     const didJustFinish =
@@ -28,14 +28,14 @@ export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined
 
     if (snapshot) {
       const title = t('migrate-to-cloud.onprem.success-title', 'Migration completed!');
-      const message = getTranslatedMessage(snapshot);
+      const message = getTranslatedMessage(snapshot, t);
 
       notifyApp.success(title, message);
     }
-  }, [notifyApp, snapshot]);
+  }, [notifyApp, snapshot, t]);
 }
 
-function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
+function getTranslatedMessage(snapshot: GetSnapshotResponseDto, t: TFunction) {
   const types: string[] = [];
 
   let distinctItems = 0;

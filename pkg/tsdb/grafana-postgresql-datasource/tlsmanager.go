@@ -140,7 +140,7 @@ func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 			return fmt.Errorf("error checking file existence: %w", err)
 		}
 		if !exists {
-			return fmt.Errorf("certificate file %q does not exist", path)
+			return sqleng.ErrCertFileNotExist
 		}
 	}
 	return nil

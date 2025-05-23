@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -204,10 +203,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
 	orgID := int64(1)
 	permissions := []accesscontrol.Permission{
 		{
@@ -241,12 +236,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 		dashStore, err := database.ProvideDashboardStore(sql, cfg, features, tagService)
 		require.NoError(t, err)
-
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-		})
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		fStore := folderimpl.ProvideStore(sql)
