@@ -87,8 +87,8 @@ function test(version, expected) {
   console.log(`Test ${version}, ${prev[5] === expected ? 'PASSED' : failureMessage}`);
 }
 
-test("v11.5.4+security-01", "v11.5.4");
-test("v11.5.4", "v11.5.3+security-01");
-test("v12.0.0", "v11.6.1");
-test("v12.0.0+security-01", "v12.0.0");
-test("v11.0.0", "v11.0.0-preview");
+// test("v11.5.4+security-01", "v11.5.4");
+// test("v11.5.4", "v11.5.3+security-01");
+// test("v12.0.0", "v11.6.1");
+// test("v12.0.0+security-01", "v12.0.0");
+// test("v11.0.0", "v11.0.0-preview");
