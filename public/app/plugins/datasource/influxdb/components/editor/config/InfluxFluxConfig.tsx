@@ -6,7 +6,6 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
