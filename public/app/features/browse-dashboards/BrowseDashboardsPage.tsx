@@ -137,7 +137,7 @@ const BrowseDashboardsPage = memo(() => {
       renderTitle={renderTitle}
       actions={
         <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
+          {config.featureToggles.restoreDashboards && hasAdminRights && (
             <LinkButton
               variant="secondary"
               href={getConfig().appSubUrl + '/dashboard/recently-deleted'}

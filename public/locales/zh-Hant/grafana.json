@@ -57,7 +57,11 @@
       "aria-label-add": "新增",
       "aria-label-delete": "刪除",
       "placeholder-key": "鍵",
+      "placeholder-name": "名稱（名字）",
       "placeholder-value": "數值"
+    },
+    "variables-editor": {
+      "placeholder-type": "類型"
     }
   },
   "admin": {
@@ -5383,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "確認",
         "confirm-action": "確認動作",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "數值"
       },
+      "close": "關閉",
+      "continue": "",
       "inline": {
         "add-action": "新增動作",
         "edit-action": "編輯動作"
@@ -5397,6 +5405,7 @@
         "action-query-params": "查詢參數",
         "action-title": "標題",
         "action-title-placeholder": "動作標題",
+        "action-variables": "變數",
         "one-click-description": "一次只能啟用一個連結或動作的點擊"
       }
     },
@@ -6840,7 +6849,7 @@
       "title": "服務帳戶"
     },
     "setup-guide": {
-      "title": "快速安裝指南"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "管理組織的外部共用儀表板",

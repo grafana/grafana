@@ -44,7 +44,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          {config.featureToggles.dashboardRestore && (
+          {config.featureToggles.restoreDashboards && (
             <>
               <Text element="p">
                 <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">

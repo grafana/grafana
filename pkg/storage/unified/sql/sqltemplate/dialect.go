@@ -24,8 +24,6 @@ func DialectForDriver(driverName string) Dialect {
 		return PostgreSQL
 	case "sqlite", "sqlite3":
 		return SQLite
-	case "spanner":
-		return Spanner
 	default:
 		return nil
 	}

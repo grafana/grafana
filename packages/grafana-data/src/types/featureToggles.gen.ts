@@ -679,10 +679,6 @@ export interface FeatureToggles {
   */
   exploreLogsLimitedTimeRange?: boolean;
   /**
-  * Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-  */
-  homeSetupGuide?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -844,6 +840,10 @@ export interface FeatureToggles {
   * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
   */
   teamHttpHeadersMimir?: boolean;
+  /**
+  * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
+  */
+  teamHttpHeadersTempo?: boolean;
   /**
   * Test feature toggle to see how cohorts could be set up AB testing
   * @default false
@@ -1029,8 +1029,8 @@ export interface FeatureToggles {
   */
   extensionsReadOnlyProxy?: boolean;
   /**
-  * Enables deleted dashboard restore feature
+  * Enables restore deleted dashboards feature
   * @default false
   */
-  dashboardRestore?: boolean;
+  restoreDashboards?: boolean;
 }

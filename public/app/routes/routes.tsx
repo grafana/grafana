@@ -527,7 +527,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
     },
-    config.featureToggles.dashboardRestore && {
+    config.featureToggles.restoreDashboards && {
       path: '/dashboard/recently-deleted',
       roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
