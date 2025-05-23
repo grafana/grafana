@@ -57,7 +57,11 @@
       "aria-label-add": "Hozzáadás",
       "aria-label-delete": "Törlés",
       "placeholder-key": "Kulcs",
+      "placeholder-name": "Név",
       "placeholder-value": "Érték"
+    },
+    "variables-editor": {
+      "placeholder-type": "Típus"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Megerősítés",
         "confirm-action": "Művelet megerősítése",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Érték"
       },
+      "close": "Bezárás",
+      "continue": "",
       "inline": {
         "add-action": "Művelet hozzáadása",
         "edit-action": "Művelet szerkesztése"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Lekérdezési paraméterek",
         "action-title": "Cím",
         "action-title-placeholder": "Művelet címe",
+        "action-variables": "Változók",
         "one-click-description": "Egyszerre csak egy hivatkozáshoz vagy művelethez lehet egy kattintás engedélyezve"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Szolgáltatási fiókok"
     },
     "setup-guide": {
-      "title": "Beállítási útmutató"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Szervezete külső megosztott irányítópultjainak kezelése",
