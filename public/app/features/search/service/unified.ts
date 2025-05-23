@@ -4,11 +4,10 @@ import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataF
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
+import { DashboardDataDTO } from 'app/types';
 
-import { getAPIBaseURL, getAPINamespace } from '../../../api/utils';
-import { ScopedResourceClient } from '../../apiserver/client';
+import { getAPIBaseURL } from '../../../api/utils';
 import { isResourceList } from '../../apiserver/guards';
-import { AnnoKeyFolder } from '../../apiserver/types';
 
 import {
   DashboardQueryResult,
@@ -18,18 +17,14 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { replaceCurrentFolderQuery } from './utils';
+import { replaceCurrentFolderQuery, resourceToSearchResult } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
-const client = new ScopedResourceClient({
-  group: 'dashboard.grafana.app',
-  version: 'v0alpha1',
-  resource: 'dashboards',
-});
+const baseURL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
+const searchURI = `${baseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -116,7 +111,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
-    console.log('q', query);
     const uri = await this.newRequest(query);
     const rsp = await this.fetchResponse(uri);
 
@@ -199,49 +193,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async fetchResponse(uri: string) {
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
-    console.log('r', rsp);
-    if (isResourceList(rsp)) {
-      const hits = rsp.items.map((item) => {
-        const hit = {
-          resource: 'dashboards',
-          name: item.metadata.name,
-          title: item.spec.title,
-          location: 'general',
-          folder: item?.metadata?.annotations?.[AnnoKeyFolder],
-          tags: item.spec.tags || [],
-          field: null,
-        };
-        if (!hit.folder) {
-          return { ...hit, location: 'general', folder: 'general' };
-        }
-
-        // this means user has permission to see this dashboard, but not the folder contents
-        if (locationInfo[hit.folder] === undefined) {
-          return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
-        }
-
-        return hit;
-      });
+    if (isResourceList<DashboardDataDTO>(rsp)) {
+      const hits = resourceToSearchResult(rsp);
       const totalHits = rsp.items.length;
       return { ...rsp, hits, totalHits };
     }
-    const hits = rsp.hits.map((hit) => {
-      if (hit.folder === undefined) {
-        return { location: 'general', folder: 'general' };
-      }
-
-      // this means user has permission to see this dashboard, but not the folder contents
-      if (locationInfo[hit.folder] === undefined) {
-        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
-      }
-
-      return hit;
-    });
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;
     }
-    // sync the location info ( folders )
+    // sync the location info (folders)
     this.locationInfo = loadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
@@ -250,6 +211,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const locationInfo = await this.locationInfo;
+    const hits = rsp.hits.map((hit) => {
+      if (hit.folder === undefined) {
+        return { ...hit, location: 'general', folder: 'general' };
+      }
+
+      // this means a user has permission to see this dashboard, but not the folder contents
+      if (locationInfo[hit.folder] === undefined) {
+        return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
+      }
+
+      return hit;
+    });
 
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
