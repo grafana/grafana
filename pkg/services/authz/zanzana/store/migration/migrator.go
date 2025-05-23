@@ -1,7 +1,6 @@
 package migration
 
 import (
-	"embed"
 	"fmt"
 	"strings"
 
@@ -14,18 +13,19 @@ import (
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, fs embed.FS, path string, logger log.Logger) error {
+func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, logger log.Logger) error {
 	connStr := grafanaDBConfg.ConnectionString
 	// running grafana migrations
 	engine, err := xorm.NewEngine(dbType, connStr)
 	if err != nil {
 		return fmt.Errorf("failed to create db engine: %w", err)
 	}
+	defer engine.Close()
 
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
 
-	if err := RunWithMigrator(m, cfg, fs, path); err != nil {
+	if err := RunWithMigrator(m, cfg); err != nil {
 		return err
 	}
 
@@ -35,7 +35,6 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 		// openfga expects sqlite but grafana uses sqlite3
 		dbType = "sqlite"
 	case migrator.Postgres:
-
 		// Parse and transform the connection string to the format OpenFGA expects
 		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfg)
 	}
@@ -52,8 +51,8 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 	return nil
 }
 
-func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, fs embed.FS, path string) error {
-	migrations, err := getMigrations(fs, path)
+func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
+	migrations, err := getMigrations()
 	if err != nil {
 		return err
 	}
@@ -74,9 +73,7 @@ type migration struct {
 	migration migrator.Migration
 }
 
-func getMigrations(fs embed.FS, path string) ([]migration, error) {
-	migrations := make([]migration, 0, 1)
-
+func getMigrations() ([]migration, error) {
 	// create the drop migrations
 	data := `DROP TABLE IF EXISTS tuple;
 	DROP TABLE IF EXISTS authorization_model;
@@ -84,10 +81,12 @@ func getMigrations(fs embed.FS, path string) ([]migration, error) {
 	DROP TABLE IF EXISTS assertion;
 	DROP TABLE IF EXISTS changelog;`
 
-	migrations = append(migrations, migration{
-		name:      "zanzana_removal_grafana_migrations_to_openfga_migrations.sql",
-		migration: &rawMigration{stmts: []string{data}},
-	})
+	migrations := []migration{
+		{
+			name:      "zanzana_removal_grafana_migrations_to_openfga_migrations.sql",
+			migration: &rawMigration{stmts: []string{data}},
+		},
+	}
 
 	return migrations, nil
 }

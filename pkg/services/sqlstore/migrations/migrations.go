@@ -153,5 +153,4 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddDatasourceDrilldownRemovalMigration(mg)
 
 	ualert.DropTitleUniqueIndexMigration(mg)
-
 }
