@@ -178,18 +178,32 @@ func (m *mockCheckRegistry) Checks() []checks.Check {
 }
 
 type mockCheck struct {
-	checks.Check
-
 	id    string
 	steps []checks.Step
+}
+
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
 }
 
 func (m *mockCheck) ID() string {
 	return m.id
 }
 
+func (m *mockCheck) Name() string {
+	return "mock"
+}
+
 func (m *mockCheck) Steps() []checks.Step {
 	return m.steps
+}
+
+func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
+	return nil, nil
+}
+
+func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
+	return nil, nil
 }
 
 type mockStep struct {

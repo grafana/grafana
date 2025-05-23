@@ -33,7 +33,7 @@ type DashboardAnnotationQuerySpec struct {
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
 	// Catch-all field for datasource-specific properties
-	Options map[string]interface{} `json:"options,omitempty"`
+	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
@@ -1601,15 +1601,16 @@ func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
 // GroupBy variable specification
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableSpec struct {
-	Name        string                    `json:"name"`
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name         string                    `json:"name"`
+	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
+	Current      DashboardVariableOption   `json:"current"`
+	Options      []DashboardVariableOption `json:"options"`
+	Multi        bool                      `json:"multi"`
+	Label        *string                   `json:"label,omitempty"`
+	Hide         DashboardVariableHide     `json:"hide"`
+	SkipUrlSync  bool                      `json:"skipUrlSync"`
+	Description  *string                   `json:"description,omitempty"`
 }
 
 // NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.

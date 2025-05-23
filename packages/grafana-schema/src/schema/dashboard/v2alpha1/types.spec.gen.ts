@@ -20,7 +20,7 @@ export interface AnnotationQuerySpec {
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
 	// Catch-all field for datasource-specific properties
-	options?: Record<string, any>;
+	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -1290,6 +1290,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 export interface GroupByVariableSpec {
 	name: string;
 	datasource?: DataSourceRef;
+	defaultValue?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
