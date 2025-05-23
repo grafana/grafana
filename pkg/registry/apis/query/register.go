@@ -43,17 +43,17 @@ type QueryAPIBuilder struct {
 
 	authorizer authorizer.Authorizer
 
-	tracer     tracing.Tracer
-	metrics    *metrics.ExprMetrics
-	parser     *queryParser
-	client     clientapi.DataSourceClientSupplier
-	registry   query.DataSourceApiServerRegistry
-	converter  *expr.ResultConverter
-	queryTypes *query.QueryTypeDefinitionList
+	tracer         tracing.Tracer
+	metrics        *metrics.ExprMetrics
+	parser         *queryParser
+	clientSupplier clientapi.DataSourceClientSupplier
+	registry       query.DataSourceApiServerRegistry
+	converter      *expr.ResultConverter
+	queryTypes     *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	client clientapi.DataSourceClientSupplier,
+	clientSupplier clientapi.DataSourceClientSupplier,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
@@ -80,7 +80,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		client:               client,
+		clientSupplier:       clientSupplier,
 		authorizer:           ar,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),

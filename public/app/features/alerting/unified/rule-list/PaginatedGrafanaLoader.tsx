@@ -15,6 +15,7 @@ import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
+import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
@@ -24,7 +25,7 @@ import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups
 export const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
 
   const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
 
@@ -112,11 +113,14 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     [group.name, group.folderUid]
   );
 
+  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+
   return (
     <ListGroup
       key={group.name}
       name={group.name}
-      href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      href={detailsLink}
       isOpen={false}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
