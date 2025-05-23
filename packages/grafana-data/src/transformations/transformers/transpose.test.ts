@@ -103,7 +103,7 @@ describe('Transpose transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: ['january', 'february', 'metricName'],
+          values: ['january', 'february', 'type'],
           config: {},
         },
         {
