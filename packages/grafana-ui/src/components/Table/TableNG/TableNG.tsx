@@ -11,7 +11,16 @@ import {
   SetStateAction,
   RefObject,
 } from 'react';
-import { DataGrid, RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle, Column } from 'react-data-grid';
+import {
+  DataGrid,
+  RenderCellProps,
+  RenderRowProps,
+  Row,
+  SortColumn,
+  DataGridHandle,
+  Column,
+  CalculatedColumn,
+} from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -648,12 +657,12 @@ const useColumnResizeDone = (done: OnColResizeDone) => {
     colResizeState.width = 0;
   }, []);
 
-  const onColumnResize = useCallback((idx: number, width: number) => {
+  const onColumnResize = useCallback((col: CalculatedColumn<TableRow>, width: number) => {
     if (colResizeState.idx === -1) {
       window.addEventListener('click', finished, { capture: true });
     }
 
-    colResizeState.idx = idx;
+    colResizeState.idx = col.idx;
     colResizeState.width = width;
   }, []);
 
