@@ -50,6 +50,17 @@ type activeTenantsLenRequest struct {
 	respChan chan int
 }
 
+type NoopQueue struct{}
+
+func (*NoopQueue) Enqueue(_ context.Context, _ string, runnable func()) error {
+	runnable()
+	return nil
+}
+
+func NewNoopQueue() *NoopQueue {
+	return &NoopQueue{}
+}
+
 // Queue implements a multi-tenant qos with round-robin fairness using a dispatcher goroutine.
 type Queue struct {
 	services.Service

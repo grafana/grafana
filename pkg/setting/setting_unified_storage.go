@@ -49,12 +49,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.UnifiedStorage = storageConfig
 
-	// Set indexer config for unified storaae
+	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.EnableSharding = section.Key("enable_sharding").MustBool(false)
+	cfg.EnableQOS = section.Key("enable_qos").MustBool(false)
+	cfg.NumWorkerQOS = section.Key("num_worker_qos").MustInt(4)
+	cfg.MaxSizePerTenantQOS = section.Key("max_size_per_tenant_qos").MustInt(100)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
