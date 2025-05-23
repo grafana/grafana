@@ -28,31 +28,32 @@ export function semverCompare(a, b) {
   return 0;
 };
 
-export const findPreviousVersion = (versionList, version) => {
+// this function relies on the following invariant: versions are sorted by the release date.
+// It will produce wrong result if invariant doesn't hold.
+export const findPreviousVersion = (versionByDate, target) => {
   let prev = null;
 
-  for (let i = 0; i < versionList.length; i++) {
-    const other = versionList[i];
+  for (let i = 0; i < versionByDate.length; i++) {
+    const version = versionByDate[i];
 
-    // version is greater than the other
-    if (semverCompare(version, other) > 0) {
+    // version is greater than the target
+    if (semverCompare(target, version) > 0) {
       continue;
     }
 
-    // we reached the combination of major, minor, patch and build is the same, i.e. we have reached the "version"
-    if (semverCompare(version, other) === 0 && version[4] === other[4]) {
-      const tmp = prev;
+    // we came across the target version, all versions seen previously have greater release date.
+    if (semverCompare(target, version) === 0 && target[4] === version[4]) {
       prev = null;
       continue;
     }
 
     if (prev == null) {
-      prev = other;
+      prev = version;
       continue;
     }
 
-    if (semverCompare(prev, other) > 0) {
-      prev = other;
+    if (semverCompare(prev, version) > 0) {
+      prev = version;
     }
   }
 
