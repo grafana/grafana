@@ -3,9 +3,9 @@ import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
@@ -26,6 +26,7 @@ interface Props {
   handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
+  onClick: (log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
@@ -43,6 +44,7 @@ export const InfiniteScroll = ({
   handleOverflow,
   loadMore,
   logs,
+  onClick,
   scrollElement,
   setInitialScrollPosition,
   showTime,
@@ -131,6 +133,8 @@ export const InfiniteScroll = ({
     };
   }, [infiniteLoaderState, loadMore, logs.length, onLoadMore, scrollElement]);
 
+  const { t } = useTranslate();
+
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
@@ -140,7 +144,7 @@ export const InfiniteScroll = ({
             styles={styles}
             onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
           >
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
+            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder, t)}
           </LogLineMessage>
         );
       }
@@ -149,6 +153,7 @@ export const InfiniteScroll = ({
           displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          onClick={onClick}
           showTime={showTime}
           style={style}
           styles={styles}
@@ -163,11 +168,13 @@ export const InfiniteScroll = ({
       handleOverflow,
       infiniteLoaderState,
       logs,
+      onClick,
       onLoadMore,
       showTime,
       sortOrder,
       styles,
       wrapLogMessage,
+      t,
     ]
   );
 
@@ -197,7 +204,7 @@ export const InfiniteScroll = ({
   return <>{children({ getItemKey, itemCount, onItemsRendered, Renderer })}</>;
 };
 
-function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
+function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder, t: TFunction) {
   switch (state) {
     case 'out-of-bounds':
       return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');

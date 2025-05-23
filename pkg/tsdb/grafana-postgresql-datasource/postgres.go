@@ -400,7 +400,7 @@ func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err e
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+		return sqleng.ErrToHealthCheckResult(err)
 	}
 	return dsHandler.CheckHealth(ctx, req, s.features)
 }

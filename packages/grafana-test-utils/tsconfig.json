@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "declarationDir": "./compiled",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "ESNext",
+      "moduleResolution": "Node"
+    }
+  },
+  "exclude": ["dist/**/*"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*"]
+}

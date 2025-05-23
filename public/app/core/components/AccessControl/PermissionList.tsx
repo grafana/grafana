@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
 
 import { PermissionListItem } from './PermissionListItem';
 import { ResourcePermission } from './types';

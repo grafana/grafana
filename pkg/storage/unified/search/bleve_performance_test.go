@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -85,7 +87,7 @@ func BenchmarkBleveQuery(b *testing.B) {
 }
 
 func newTestWriter(size int, batchSize int) IndexWriter {
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -105,7 +107,7 @@ func newTestWriter(size int, batchSize int) IndexWriter {
 				Doc: &resource.IndexableDocument{
 					RV:   int64(i),
 					Name: name,
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Name:      name,
 						Namespace: key.Namespace,
 						Group:     key.Group,
