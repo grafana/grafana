@@ -87,13 +87,16 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithEnvVariable("GF_APP_MODE", "development").
 		WithEnvVariable("GF_SERVER_HTTP_PORT", "3001").
 		WithEnvVariable("GF_SERVER_ROUTER_LOGGING", "1").
-		WithEnvVariable("INSTALL_IMAGE_RENDERER", fmt.Sprintf("%t", opts.InstallImageRenderer)).
 		WithExposedPort(3001)
 
 	var licenseArg string
 	if opts.License != nil {
 		container = container.WithMountedFile("/src/license.jwt", opts.License)
 		licenseArg = "/src/license.jwt"
+	}
+
+	if opts.InstallImageRenderer {
+		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true")
 	}
 
 	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
