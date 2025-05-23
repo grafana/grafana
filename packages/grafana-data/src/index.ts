@@ -563,7 +563,7 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
-  type PluginExtensionTraceViewResourceAttributesContext,
+  type PluginExtensionResourceAttributesContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

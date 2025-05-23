@@ -237,8 +237,8 @@ export type PluginExtensionDataSourceConfigContext<
 
 export type PluginExtensionCommandPaletteContext = {};
 
-export type PluginExtensionTraceViewResourceAttributesContext = {
-  // Key-value pairs of resource attributes
+export type PluginExtensionResourceAttributesContext = {
+  // Key-value pairs of resource attributes, attribute name is the key
   attributes: Record<string, string[]>;
   datasource: {
     type: string;
