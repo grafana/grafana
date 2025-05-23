@@ -2605,7 +2605,9 @@
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
         "aria-label-show-filters": "Filter",
-        "label-custom-filter": "Custom filter"
+        "label-custom-filter": "Custom filter",
+        "placeholder-namespace": "Select namespace",
+        "placeholder-search-input": "Search by name or enter filter query..."
       },
       "health": "Health",
       "label": {
@@ -2638,7 +2640,7 @@
         "labels": "Labels",
         "namespace": "Folder / Namespace",
         "rule-health": "Health",
-        "rule-name": "Alerting rule name",
+        "rule-name": "Rule name",
         "rule-type": "Type",
         "state": "State"
       },
