@@ -99,6 +99,8 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
         run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
+      - name: debug
+        run: cat ./.github/actions/changelog/index.js
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/actions/changelog
