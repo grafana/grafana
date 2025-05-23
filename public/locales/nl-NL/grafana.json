@@ -57,7 +57,11 @@
       "aria-label-add": "Toevoegen",
       "aria-label-delete": "Verwijderen",
       "placeholder-key": "Sleutel",
+      "placeholder-name": "Naam",
       "placeholder-value": "Waarde"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bevestigen",
         "confirm-action": "Actie bevestigen",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Waarde"
       },
+      "close": "Sluiten",
+      "continue": "",
       "inline": {
         "add-action": "Actie toevoegen",
         "edit-action": "Actie bewerken"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Query-parameters",
         "action-title": "Titel",
         "action-title-placeholder": "Actietitel",
+        "action-variables": "Variabelen",
         "one-click-description": "Slechts één link of actie kan tegelijk de één-klik-functionaliteit hebben ingeschakeld"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Serviceaccounts"
     },
     "setup-guide": {
-      "title": "Installatiehandleiding"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "De extern gedeelde dashboards van je organisatie beheren",
