@@ -22,10 +22,10 @@ const getPreviousVersion = async (version) => {
   const parsedTags = stdout
     .split('\n')
     .map(semverParse)
-    .filter((tag) => tag);
+    .filter(Boolean);
 
-  console.log("@@@@@@");
-  console.log(parsedTags);
+  // console.log("@@@@@@");
+  // console.log(parsedTags);
 
   const prev = findPreviousVersion(parsedTags, version);
   if (!prev) {
