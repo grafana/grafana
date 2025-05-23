@@ -19,6 +19,7 @@ describe('DataLinksActionsTooltip', () => {
   const mockAction: ActionModel = {
     title: 'Action1',
     onClick: jest.fn(),
+    confirmation: jest.fn(),
     style: { backgroundColor: '#ff0000' },
   };
 
