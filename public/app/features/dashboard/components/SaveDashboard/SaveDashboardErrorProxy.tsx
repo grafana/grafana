@@ -32,7 +32,7 @@ export const SaveDashboardErrorProxy = ({
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
   const { t } = useTranslate();
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
 
   return (
     <>
