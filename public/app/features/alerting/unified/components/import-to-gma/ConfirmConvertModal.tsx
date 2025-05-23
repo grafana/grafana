@@ -151,7 +151,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
       const isRootFolder = isEmpty(targetFolder?.uid);
 
-      trackImportToGMASuccess();
+      trackImportToGMASuccess({ importSource });
       const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', targetFolder?.title ?? '']], {
         skipSubPath: true,
       });
@@ -160,7 +160,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       );
       locationService.push(ruleListUrl);
     } catch (error) {
-      trackImportToGMAError();
+      trackImportToGMAError({ importSource });
       notifyApp.error(
         t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
           error: stringifyErrorLike(error),
