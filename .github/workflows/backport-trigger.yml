@@ -9,6 +9,8 @@ on:
       - closed
       - labeled
 
+permissions: {}
+
 jobs:
   trigger:
     # Only run this job if the PR has been merged and has a label containing "backport v"
