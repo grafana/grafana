@@ -57,7 +57,11 @@
       "aria-label-add": "追加",
       "aria-label-delete": "削除",
       "placeholder-key": "キー",
+      "placeholder-name": "名前",
       "placeholder-value": "値"
+    },
+    "variables-editor": {
+      "placeholder-type": "種類"
     }
   },
   "admin": {
@@ -5383,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "確定",
         "confirm-action": "操作を確認",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "値"
       },
+      "close": "閉じる",
+      "continue": "",
       "inline": {
         "add-action": "操作を追加",
         "edit-action": "操作を編集"
@@ -5397,6 +5405,7 @@
         "action-query-params": "クエリのパラメータ",
         "action-title": "タイトル",
         "action-title-placeholder": "操作のタイトル",
+        "action-variables": "変数",
         "one-click-description": "一度に1つのクリックを有効にできるリンクまたは操作は1つだけです"
       }
     },
@@ -6840,7 +6849,7 @@
       "title": "サービスアカウント"
     },
     "setup-guide": {
-      "title": "セットアップガイド"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "組織の外部共有ダッシュボードを管理する",

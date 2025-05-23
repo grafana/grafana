@@ -57,7 +57,11 @@
       "aria-label-add": "Adicionar",
       "aria-label-delete": "Excluir",
       "placeholder-key": "Chave",
+      "placeholder-name": "Nome",
       "placeholder-value": "Valor"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tipo"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Confirmar",
         "confirm-action": "Confirmar ação",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valor"
       },
+      "close": "Fechar",
+      "continue": "",
       "inline": {
         "add-action": "Adicionar ação",
         "edit-action": "Editar ação"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Parâmetros de consulta",
         "action-title": "Título",
         "action-title-placeholder": "Título da ação",
+        "action-variables": "Variáveis",
         "one-click-description": "Apenas um link ou ação pode ter um clique habilitado de cada vez"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Contas de serviço"
     },
     "setup-guide": {
-      "title": "Guia de configuração"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gerencie os painéis de controle da sua organização compartilhados externamente",

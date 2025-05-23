@@ -57,7 +57,11 @@
       "aria-label-add": "Dodaj",
       "aria-label-delete": "Usuń",
       "placeholder-key": "Klucz",
+      "placeholder-name": "Imię",
       "placeholder-value": "Wartość"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -5446,10 +5450,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Potwierdź",
         "confirm-action": "Potwierdź działanie",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Wartość"
       },
+      "close": "Zamknij",
+      "continue": "",
       "inline": {
         "add-action": "Dodaj działanie",
         "edit-action": "Edytuj działanie"
@@ -5460,6 +5468,7 @@
         "action-query-params": "Parametry zapytania",
         "action-title": "Tytuł",
         "action-title-placeholder": "Tytuł działania",
+        "action-variables": "Zmienne",
         "one-click-description": "Tylko jeden link lub działanie może mieć włączoną opcję jednego kliknięcia"
       }
     },
@@ -6918,7 +6927,7 @@
       "title": "Konta usługi"
     },
     "setup-guide": {
-      "title": "Instrukcja konfiguracji"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Zarządzaj udostępnionymi zewnętrznie pulpitami swojej organizacji",

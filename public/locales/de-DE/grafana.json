@@ -57,7 +57,11 @@
       "aria-label-add": "Hinzufügen",
       "aria-label-delete": "Löschen",
       "placeholder-key": "Key",
+      "placeholder-name": "Name",
       "placeholder-value": "Wert"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bestätigen",
         "confirm-action": "Aktion bestätigen",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Wert"
       },
+      "close": "Schließen",
+      "continue": "",
       "inline": {
         "add-action": "Aktion hinzufügen",
         "edit-action": "Aktion bearbeiten"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Abfrageparameter",
         "action-title": "Titel",
         "action-title-placeholder": "Titel der Aktion",
+        "action-variables": "Variable",
         "one-click-description": "Der Ein-Klick-Modus kann nur für einen Link oder eine Aktion gleichzeitig aktiviert werden"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Servicekonten"
     },
     "setup-guide": {
-      "title": "Setup-Anleitung"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Verwalten Sie die extern freigegebenen Dashboards Ihrer Organisation",

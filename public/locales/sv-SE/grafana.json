@@ -57,7 +57,11 @@
       "aria-label-add": "Lägg till",
       "aria-label-delete": "Ta bort",
       "placeholder-key": "Nyckel",
+      "placeholder-name": "Namn",
       "placeholder-value": "Värde"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bekräfta",
         "confirm-action": "Bekräfta åtgärd",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Värde"
       },
+      "close": "Stäng",
+      "continue": "",
       "inline": {
         "add-action": "Lägg till åtgärd",
         "edit-action": "Redigera åtgärd"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Frågeparametrar",
         "action-title": "Titel",
         "action-title-placeholder": "Åtgärdstitel",
+        "action-variables": "Variabler",
         "one-click-description": "Endast en länk eller en åtgärd kan ha en aktiverad klickning åt gången"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Servicekonton"
     },
     "setup-guide": {
-      "title": "Installationsguide"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Hantera din organisations externt delade instrumentpaneler",

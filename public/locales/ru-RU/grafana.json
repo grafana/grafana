@@ -57,7 +57,11 @@
       "aria-label-add": "Добавить",
       "aria-label-delete": "Удалить",
       "placeholder-key": "Ключ",
+      "placeholder-name": "Имя",
       "placeholder-value": "Значение"
+    },
+    "variables-editor": {
+      "placeholder-type": "Тип"
     }
   },
   "admin": {
@@ -5446,10 +5450,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Подтвердить",
         "confirm-action": "Подтвердить действие",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Значение"
       },
+      "close": "Закрыть",
+      "continue": "",
       "inline": {
         "add-action": "Добавить действие",
         "edit-action": "Редактировать действие"
@@ -5460,6 +5468,7 @@
         "action-query-params": "Параметры запроса",
         "action-title": "Название",
         "action-title-placeholder": "Название действия",
+        "action-variables": "Переменные",
         "one-click-description": "Только одна ссылка или действие могут быть активированы одним нажатием за раз"
       }
     },
@@ -6918,7 +6927,7 @@
       "title": "Служебные учетные записи"
     },
     "setup-guide": {
-      "title": "Руководство по настройке"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Управление дашбордами организации во внешнем совместном использовании",

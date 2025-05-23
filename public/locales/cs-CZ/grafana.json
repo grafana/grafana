@@ -57,7 +57,11 @@
       "aria-label-add": "Přidat",
       "aria-label-delete": "Odstranit",
       "placeholder-key": "Klíč",
+      "placeholder-name": "Název",
       "placeholder-value": "Hodnota"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -5446,10 +5450,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Potvrdit",
         "confirm-action": "Potvrdit akci",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Hodnota"
       },
+      "close": "Zavřít",
+      "continue": "",
       "inline": {
         "add-action": "Přidat akci",
         "edit-action": "Upravit akci"
@@ -5460,6 +5468,7 @@
         "action-query-params": "Parametry dotazu",
         "action-title": "Název",
         "action-title-placeholder": "Název akce",
+        "action-variables": "Proměnné",
         "one-click-description": "Současně může být povoleno pouze jedno kliknutí nebo akce na jeden odkaz"
       }
     },
@@ -6918,7 +6927,7 @@
       "title": "Účty služeb"
     },
     "setup-guide": {
-      "title": "Průvodce nastavením"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Spravujte externě sdílené nástěnky vaší organizace",

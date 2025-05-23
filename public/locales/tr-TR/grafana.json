@@ -57,7 +57,11 @@
       "aria-label-add": "Ekle",
       "aria-label-delete": "Sil",
       "placeholder-key": "Anahtar",
+      "placeholder-name": "Ad",
       "placeholder-value": "Değer"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tür"
     }
   },
   "admin": {
@@ -5404,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Onayla",
         "confirm-action": "İşlemi onayla",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Değer"
       },
+      "close": "Kapat",
+      "continue": "",
       "inline": {
         "add-action": "İşlem ekle",
         "edit-action": "İşlemi düzenle"
@@ -5418,6 +5426,7 @@
         "action-query-params": "Sorgu parametreleri",
         "action-title": "Başlık",
         "action-title-placeholder": "İşlem başlığı",
+        "action-variables": "Değişkenler",
         "one-click-description": "Aynı anda yalnızca bir bağlantı veya işlem için tek tıklama etkinleştirilebilir"
       }
     },
@@ -6866,7 +6875,7 @@
       "title": "Servis hesapları"
     },
     "setup-guide": {
-      "title": "Kurulum kılavuzu"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Kuruluşunuzun haricî olarak paylaşılan panolarını yönetin",
