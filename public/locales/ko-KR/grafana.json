@@ -57,7 +57,11 @@
       "aria-label-add": "추가",
       "aria-label-delete": "삭제",
       "placeholder-key": "키",
+      "placeholder-name": "이름",
       "placeholder-value": "값"
+    },
+    "variables-editor": {
+      "placeholder-type": "유형"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "편집",
       "export": "내보내기",
       "export-all": "모두 내보내기",
+      "learn-more": "자세히 알아보기",
       "loading": "로딩 중...",
       "search-by-matchers": "일치 조건으로 검색",
       "titles": {
@@ -1066,6 +1071,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1207,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "로딩 중...."
-    },
-    "group-actions": {
-      "actions-trigger": "규칙 그룹 작업",
-      "details": "세부 정보",
-      "edit": "편집"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "그룹 세부 정보 로딩 실패",
-      "unknown-error": "알 수 없는 오류"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "그룹",
@@ -1402,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "새 경고 규칙",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "새 데이터 소스 관리 기록 규칙",
-        "new-grafana-recording-rule": "새 Grafana 관리 기록 규칙",
+        "new-grafana-alerting-rule": "새 경고 규칙",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "새 기록 규칙",
-        "provisioning": "파일 프로비저닝 또는 Terraform을 통해 규칙을 정의할 수도 있습니다. <2>자세히 알아보기</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "구성된 Prometheus 또는 Loki 데이터 소스가 없습니다",
       "no-rules": "규칙을 찾을 수 없습니다.",
@@ -2044,6 +2047,7 @@
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -2060,8 +2064,7 @@
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
       "new-grafana-recording-rule": "새 Grafana 기록 규칙",
       "pagination": {
-        "next-page": "다음 페이지",
-        "previous-page": "이전 페이지"
+        "next-page": ""
       },
       "recording-rules": "기록 규칙",
       "return-button": {
@@ -5384,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "확인",
         "confirm-action": "작업 확인",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "값"
       },
+      "close": "닫기",
+      "continue": "",
       "inline": {
         "add-action": "작업 추가",
         "edit-action": "작업 편집"
@@ -5398,6 +5405,7 @@
         "action-query-params": "쿼리 파라미터",
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
+        "action-variables": "변수",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -6129,6 +6137,7 @@
       "label-wrap-lines": "줄 바꿈"
     },
     "log-details": {
+      "close": "",
       "fields": "필드",
       "links": "링크",
       "log-line": "로그 라인",
@@ -6148,15 +6157,20 @@
       "log-line": "로그 줄"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
       "copy-log": "로그 라인 복사",
+      "hide-details": "",
       "icon-label": "로그 메뉴",
       "pin-to-outline": "로그 고정",
       "show-context": "맥락 보기",
+      "show-details": "",
       "unpin-from-outline": "로그 고정 해제"
     },
     "log-row-context-modal": {
@@ -6750,7 +6764,8 @@
       "title": "라이브러리 패널"
     },
     "machine-learning": {
-      "title": "머신 러닝"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "폴더 대시보드 및 권한 관리"
@@ -6834,7 +6849,7 @@
       "title": "서비스 계정"
     },
     "setup-guide": {
-      "title": "초기 설정 가이드"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "조직의 외부 공유 대시보드 관리",
@@ -7347,8 +7362,8 @@
     "version-list": {
       "grafana-dependency": "Grafana 종속 관계",
       "installed-version": "{{versionNumber}}(설치된 버전)",
-      "last-updated": "마지막 업데이트",
       "latest-compatible-version": "{{versionNumber}}(호환되는 최신 버전)",
+      "latest-release-date": "",
       "no-version-history-was-found": "버전 이력을 찾을 수 없습니다.",
       "version": "버전"
     }

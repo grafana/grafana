@@ -57,7 +57,11 @@
       "aria-label-add": "Adicionar",
       "aria-label-delete": "Excluir",
       "placeholder-key": "Chave",
+      "placeholder-name": "Nome",
       "placeholder-value": "Valor"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tipo"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
+      "learn-more": "Saiba mais",
       "loading": "Carregando...",
       "search-by-matchers": "Pesquisar por correspondências",
       "titles": {
@@ -1072,6 +1077,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1205,15 +1213,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Carregando…."
-    },
-    "group-actions": {
-      "actions-trigger": "Ações do grupo de regras",
-      "details": "Detalhes",
-      "edit": "Editar"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Falha ao carregar detalhes do grupo",
-      "unknown-error": "Erro desconhecido"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Grupo",
@@ -1408,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nova regra de alerta",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nova regra de registro gerenciada pela fonte de dados",
-        "new-grafana-recording-rule": "Nova regra de registro gerenciada pela Grafana",
+        "new-grafana-alerting-rule": "Nova regra de alerta",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nova regra de registro",
-        "provisioning": "Você também pode definir regras por meio do provisionamento de arquivos ou do Terraform. <2>Saiba mais</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Não há fontes de dados Prometheus ou Loki configuradas",
       "no-rules": "Nenhuma regra foi encontrada.",
@@ -2054,6 +2057,7 @@
         "description": "Verifique a configuração da fonte de dados. A fonte de dados é compatível com a API do Prometheus?",
         "title": "Não é possível carregar regras desta fonte de dados"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não há mais resultados. Foram encontradas {{numberOfRules}} regras",
@@ -2070,8 +2074,7 @@
       "new-datasource-recording-rule": "Nova regra de registro de fonte de dados",
       "new-grafana-recording-rule": "Nova regra de registro da Grafana",
       "pagination": {
-        "next-page": "próxima página",
-        "previous-page": "página anterior"
+        "next-page": ""
       },
       "recording-rules": "Regras de registro",
       "return-button": {
@@ -5405,10 +5408,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Confirmar",
         "confirm-action": "Confirmar ação",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valor"
       },
+      "close": "Fechar",
+      "continue": "",
       "inline": {
         "add-action": "Adicionar ação",
         "edit-action": "Editar ação"
@@ -5419,6 +5426,7 @@
         "action-query-params": "Parâmetros de consulta",
         "action-title": "Título",
         "action-title-placeholder": "Título da ação",
+        "action-variables": "Variáveis",
         "one-click-description": "Apenas um link ou ação pode ter um clique habilitado de cada vez"
       }
     },
@@ -6155,6 +6163,7 @@
       "label-wrap-lines": "Aplicar quebra de linha"
     },
     "log-details": {
+      "close": "",
       "fields": "Campos",
       "links": "Links",
       "log-line": "Linha de log",
@@ -6174,15 +6183,20 @@
       "log-line": "linha de log"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha do log",
       "copy-log": "Copiar linha do log",
+      "hide-details": "",
       "icon-label": "Menu do log",
       "pin-to-outline": "Fixar log",
       "show-context": "Exibir contexto",
+      "show-details": "",
       "unpin-from-outline": "Desafixar log"
     },
     "log-row-context-modal": {
@@ -6776,7 +6790,8 @@
       "title": "Painéis de biblioteca"
     },
     "machine-learning": {
-      "title": "Aprendizado de máquina"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerencie painéis de controle de pastas e permissões"
@@ -6860,7 +6875,7 @@
       "title": "Contas de serviço"
     },
     "setup-guide": {
-      "title": "Guia de configuração"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gerencie os painéis de controle da sua organização compartilhados externamente",
@@ -7373,8 +7388,8 @@
     "version-list": {
       "grafana-dependency": "Dependência da Grafana",
       "installed-version": "{{versionNumber}} (versão instalada)",
-      "last-updated": "Última atualização",
       "latest-compatible-version": "{{versionNumber}} (última versão compatível)",
+      "latest-release-date": "",
       "no-version-history-was-found": "Nenhum histórico de versão foi encontrado.",
       "version": "Versão"
     }

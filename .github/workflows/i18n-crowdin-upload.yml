@@ -6,6 +6,7 @@ on:
     paths:
       - 'public/locales/en-US/grafana.json'
       - 'public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json'
+      - 'public/app/plugins/datasource/mssql/locales/en-US/mssql.json'
     branches:
       - main
 
