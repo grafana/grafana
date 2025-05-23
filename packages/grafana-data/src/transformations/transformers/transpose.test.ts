@@ -90,18 +90,20 @@ describe('Transpose transformer', () => {
           name: 'metricName',
           type: FieldType.string,
           values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'],
+          config: {
+            displayName: 'type',
+          },
         },
       ],
     });
-    // toDataFrame removes state
-    seriesB.fields[3].state = { displayName: 'type' };
+
     await expect(transformDataFrame([cfgB], [seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0].fields).toEqual([
         {
           name: 'Field',
           type: FieldType.string,
-          values: ['january', 'february', 'type'],
+          values: ['january', 'february', 'metricName'],
           config: {},
         },
         {

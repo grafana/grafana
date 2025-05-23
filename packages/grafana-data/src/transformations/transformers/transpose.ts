@@ -1,5 +1,6 @@
 import { map } from 'rxjs/operators';
 
+import { cacheFieldDisplayNames } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
@@ -28,6 +29,8 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
 };
 
 function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
+  cacheFieldDisplayNames(data);
+
   return data.map((frame) => {
     const firstField = frame.fields[0];
     const firstName = !options.firstFieldName ? 'Field' : options.firstFieldName;
