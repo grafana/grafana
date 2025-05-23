@@ -4,7 +4,7 @@ name: Backport (workflow)
 run-name: "Backport for ${{ github.event.workflow_run.head_branch }} #${{ github.event.workflow_run.run_number }}"
 on:
   workflow_run:
-    workflows: "Backport (trigger)"
+    workflows: ["Backport (trigger)"]
     types:
       - completed
 
@@ -84,4 +84,4 @@ jobs:
           pr_label: ${{ steps.pr-info.outputs.action == 'labeled' && steps.pr-info.outputs.label || '' }}
           pr_number: ${{ steps.pr-info.outputs.pr_number }}
           repo_owner: ${{ github.repository_owner }}
-          repo_name: ${{ github.repository }}
+          repo_name: ${{ github.event.repository.name }}
