@@ -15,7 +15,6 @@ import {
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
-  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -230,10 +229,17 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
-  if (isSnapshot) {
-    variables = createVariablesForSnapshot(dashboard);
+  if (dashboard.variables.length) {
+    if (isSnapshot) {
+      variables = createVariablesForSnapshot(dashboard);
+    } else {
+      variables = createVariablesForDashboard(dashboard);
+    }
   } else {
-    variables = createVariablesForDashboard(dashboard);
+    // Create empty variable set
+    variables = new SceneVariableSet({
+      variables: [],
+    });
   }
 
   return variables;
@@ -252,10 +258,6 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
-
-  if (config.featureToggles.scopeFilters) {
-    variableObjects.push(new ScopesVariable({ enable: true }));
-  }
 
   return new SceneVariableSet({
     variables: variableObjects,

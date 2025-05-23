@@ -10,7 +10,6 @@ import {
   QueryVariable,
   SceneVariable,
   SceneVariableSet,
-  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -34,10 +33,6 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
-
-  if (config.featureToggles.scopeFilters) {
-    variableObjects.push(new ScopesVariable({ enable: true }));
-  }
 
   return new SceneVariableSet({
     variables: variableObjects,

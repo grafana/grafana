@@ -9,7 +9,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 
-import { isVariableEditable } from '../../serialization/sceneVariablesSetToVariables';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
@@ -47,9 +46,7 @@ export function VariableEditorList({
     onChangeOrder(result.source.index, result.destination.index);
   };
 
-  const editableVariables = variables.filter(isVariableEditable);
-
-  return editableVariables.length <= 0 ? (
+  return variables.length <= 0 ? (
     <EmptyVariablesList onAdd={onAdd} />
   ) : (
     <Stack direction="column" gap={3}>
@@ -74,10 +71,6 @@ export function VariableEditorList({
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
                 {variables.map((variableScene, index) => {
-                  if (!isVariableEditable(variableScene)) {
-                    return null;
-                  }
-
                   const variableState = variableScene.state;
                   return (
                     <VariableEditorListRow
