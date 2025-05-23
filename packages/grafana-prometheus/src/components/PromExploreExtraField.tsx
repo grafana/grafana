@@ -98,7 +98,16 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
           tooltip={t(
             'components.prom-explore-extra-field.tooltip-units-builtin-variables-example-interval-rateinterval',
             'Time units and built-in variables can be used here, for example: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Default if no unit is specified: {{default}})',
-            { example1: '$__interval', example2: '$__rate_interval', example3: '5s', example4: '1m', example5: '3h', example6: '1d', example7: '1y', default: 's' }
+            {
+              example1: '$__interval',
+              example2: '$__rate_interval',
+              example3: '5s',
+              example4: '1m',
+              example5: '3h',
+              example6: '1d',
+              example7: '1y',
+              default: 's',
+            }
           )}
         >
           <Trans i18nKey="components.prom-explore-extra-field.min-step">Min step</Trans>

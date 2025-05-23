@@ -271,7 +271,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByTestId(selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect);
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
     //display label in label select
@@ -297,7 +299,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByTestId(selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect);
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
 
