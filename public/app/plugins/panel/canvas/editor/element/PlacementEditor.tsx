@@ -131,9 +131,9 @@ export function PlacementEditor({ item }: Props) {
               return null;
             }
 
-            if (positions.includes(p) && p !== constraint.horizontal && p !== constraint.vertical) {
-              return null; // Don't show position fields that are not in the constraints
-            }
+            // if (positions.includes(p) && p !== constraint.horizontal && p !== constraint.vertical) {
+            //   return null; // Don't show position fields that are not in the constraints
+            // }
 
             // Need to set explicit min/max for rotation as logic only can handle 0-360
             const min = p === 'rotation' ? 0 : undefined;

@@ -109,11 +109,14 @@ export class ElementState implements LayerElement {
       return;
     }
 
+    const scene = this.getScene();
+    const { width: sceneWidth, height: sceneHeight } = scene ?? {};
+
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement: Placement = this.options.placement ?? {};
 
-    const editingEnabled = this.getScene()?.isEditingEnabled;
+    const editingEnabled = scene?.isEditingEnabled;
 
     const style: React.CSSProperties = {
       cursor: editingEnabled ? 'grab' : 'auto',
@@ -125,7 +128,7 @@ export class ElementState implements LayerElement {
       // rotate: `${placement.rotation ?? 0}deg`,
     };
 
-    const translate = ['0px', '0px'];
+    // const translate = ['0px', '0px'];
 
     switch (vertical) {
       case VerticalConstraint.Top:
@@ -153,7 +156,7 @@ export class ElementState implements LayerElement {
       case VerticalConstraint.Center:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        translate[1] = '-50%';
+        // translate[1] = '-50%';
         // style.top = `calc(50% - ${placement.top}px)`;
         style.height = `${placement.height}px`;
         // delete placement.bottom;
@@ -194,7 +197,7 @@ export class ElementState implements LayerElement {
       case HorizontalConstraint.Center:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        translate[0] = '-50%';
+        // translate[0] = '-50%';
         // style.left = `calc(50% - ${placement.left}px)`;
         style.width = `${placement.width}px`;
         // delete placement.right;
@@ -208,24 +211,40 @@ export class ElementState implements LayerElement {
         style.width = '';
         break;
     }
+    this.options.placement = placement;
 
-    const scene = this.getScene();
     let transformY = '0px';
     if (vertical === VerticalConstraint.Bottom) {
-      transformY = `${scene!.height - (placement.bottom ?? 0) - (placement.height ?? 100)}px`;
+      transformY = `${sceneHeight! - (placement.bottom ?? 0) - (placement.height ?? 100)}px`;
     } else if (vertical === VerticalConstraint.Top) {
       transformY = `${placement.top ?? 0}px`;
+    } else if (vertical === VerticalConstraint.TopBottom) {
+      transformY = `${placement.top ?? 0}px`;
+      style.height = `${sceneHeight! - (placement.top ?? 0) - (placement.bottom ?? 0)}px`;
+    } else if (vertical === VerticalConstraint.Center) {
+      transformY = `${sceneHeight! / 2 - (placement.top ?? 0) - (placement.height ?? 0) / 2}px`;
+    } else if (vertical === VerticalConstraint.Scale) {
+      transformY = `${(placement.top ?? 0) * (sceneHeight! / 100)}px`;
+      style.height = `${sceneHeight! - (placement.top ?? 0) * (sceneHeight! / 100) - (placement.bottom ?? 0) * (sceneHeight! / 100)}px`;
     }
+
     let transformX = '0px';
     if (horizontal === HorizontalConstraint.Right) {
-      transformX = `${scene!.width - (placement.right ?? 0) - (placement.width ?? 100)}px`;
+      transformX = `${sceneWidth! - (placement.right ?? 0) - (placement.width ?? 100)}px`;
     } else if (horizontal === HorizontalConstraint.Left) {
       transformX = `${placement.left ?? 0}px`;
+    } else if (horizontal === HorizontalConstraint.LeftRight) {
+      transformX = `${placement.left ?? 0}px`;
+      style.width = `${sceneWidth! - (placement.left ?? 0) - (placement.right ?? 0)}px`;
+    } else if (horizontal === HorizontalConstraint.Center) {
+      transformX = `${sceneWidth! / 2 - (placement.left ?? 0) - (placement.width ?? 0) / 2}px`;
+    } else if (horizontal === HorizontalConstraint.Scale) {
+      transformX = `${(placement.left ?? 0) * (sceneWidth! / 100)}px`;
+      style.width = `${sceneWidth! - (placement.left ?? 0) * (sceneWidth! / 100) - (placement.right ?? 0) * (sceneWidth! / 100)}px`;
     }
     style.transform = `translate(${transformX}, ${transformY}) rotate(${placement.rotation ?? 0}deg)`;
 
     // style.transform = `translate(${translate[0]}, ${translate[1]})`;
-    this.options.placement = placement;
     this.sizeStyle = style;
 
     if (this.div) {
