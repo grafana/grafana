@@ -22407,13 +22407,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ml-matrix@npm:^6.11.0":
-  version: 6.11.0
-  resolution: "ml-matrix@npm:6.11.0"
+"ml-matrix@npm:^6.12.0":
+  version: 6.12.1
+  resolution: "ml-matrix@npm:6.12.1"
   dependencies:
     is-any-array: "npm:^2.0.1"
     ml-array-rescale: "npm:^1.3.7"
-  checksum: 10/0fe34b43ae23a012ee616435766fafad2c35c69f1f5195b798975b89b279c940a87171d05906af2226c40d908310289dda7d6135a0d12a1a3d719a5d6e482e67
+  checksum: 10/b59a6f0fc2657b2ff2718327f1cf49db7f87a0370528e0f92cecb79c716d9887d0e5996d1228d66e3881927c7aa26ee8e3bd1035dc0c9efe0b3b98506f02618d
   languageName: node
   linkType: hard
 
@@ -22428,13 +22428,12 @@ __metadata:
   linkType: hard
 
 "ml-regression-polynomial@npm:^3.0.0":
-  version: 3.0.1
-  resolution: "ml-regression-polynomial@npm:3.0.1"
+  version: 3.0.2
+  resolution: "ml-regression-polynomial@npm:3.0.2"
   dependencies:
-    cheminfo-types: "npm:^1.7.3"
-    ml-matrix: "npm:^6.11.0"
+    ml-matrix: "npm:^6.12.0"
     ml-regression-base: "npm:^4.0.0"
-  checksum: 10/ae0dd3a05458af2a75ea24bcd9e0c1201650eca8a2bee699d9a432a6ba89074b0961496b7b6ccc32c57e8913524620fda6383dfe4f0c9735844cf2d98bd21d90
+  checksum: 10/a36eedb96882465f10cc0c56ad57284195c35ee3404a29d4761781499c53ebbdc5efcc4769b17f27dbe5629b049ae581fa64bff473119bc9e8a787e384fb66b2
   languageName: node
   linkType: hard
 
