@@ -34,6 +34,10 @@ describe('Dashboard edit - variables', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
     const values = variable.value.split(',');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(values[0]).should('be.visible');
+
+    // check that variable deletion works
+    e2e.components.EditPaneHeader.deleteButton().click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('not.exist');
   });
 
   it('can add a new constant variable', () => {
