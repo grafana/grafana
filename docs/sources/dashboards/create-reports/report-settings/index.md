@@ -27,7 +27,7 @@ These settings are applied to all the reports for the current organization.
 To access the settings, go to **Dashboards > Reporting** and click the **Report settings** button.
 This opens the **Report template settings** drawer where you can make changes.
 
-You can also navigate these settings from tbe **Schedule report** drawer that opens when you create a report directly from a dashboard.
+You can also navigate these settings from the **Schedule report** drawer that opens when you create a report directly from a dashboard.
 
 ## Attachment settings
 
