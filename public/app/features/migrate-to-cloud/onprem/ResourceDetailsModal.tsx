@@ -1,5 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';
