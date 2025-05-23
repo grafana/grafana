@@ -110,9 +110,9 @@ Refer to specific guides to understand what permissions are required.
 
 ## Create a report
 
-The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page.
+The report creation process is multi-step, but you don't need to complete these steps in order.
 
-You can also save the report as a draft at any step in the process.
+You can also save the report as a draft at any point during the initial creation process.
 
 You can create directly from a dashboard or from the **Reporting** page.
 Select one of the following tabs for directions on each option.
@@ -151,9 +151,9 @@ To create a report, follow these steps:
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
 
    - **Schedule report** - The report is sent according the schedule you've set.
-   - **Save draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+   - **Save draft** - You can save a draft at any point during the initial report creation process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
 
-   To delete the report draft, click the **x** at the top of the drawer without scheduling or saving the report as a draft. This action can't be reversed.
+   If you click the **x** at the top of the drawer without scheduling or saving the report as a draft, the report is discarded. This action can't be reversed.
 
 1. When you finish configuring the report, click the **x** at the top of the **Schedule report** drawer to close it.
 
@@ -183,9 +183,9 @@ To create a report, follow these steps:
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
 
    - **Schedule report** - The report is sent according the schedule you've set.
-   - **Save draft** - Save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+   - **Save draft** - Save a draft at any point during the initial report creation process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
 
-   To delete the report draft, click the **x** at the top of the drawer without scheduling or saving the report as a draft. This action can't be reversed.
+   If you click the **x** at the top of the drawer without scheduling or saving the report as a draft, the report is discarded. This action can't be reversed.
 
 1. When you finish configuring the report, click the **x** at the top of the **Schedule report** drawer to close it.
 
@@ -202,7 +202,7 @@ The options are:
 | Option | Description |
 | ------ | ----------- |
 | Source dashboard (required) | Select or update the dashboard from which you want to generate the report. If you've created your report directly from a dashboard, this field is already filled in with the name of the current dashboard. |
-| [Time range](#time-range) | Update the report time range. If the dashboard is preselected, the default time range is that of the dashboard. Otherwise, the default time range is **Last 6 hours**. |
+| [Time range](#time-range) | Update the report time range. If you've created the report directly from a dashboard, the default time range is that of the dashboard. Otherwise, the default time range is **Last 6 hours**. |
 | [Customize template variables](#customize-template-variables) | Select and customize the variable values for the selected dashboard. This section is only displayed if the dashboard has variables. |
 | + Add dashboard | Add more dashboards to the report. |
 
@@ -239,7 +239,7 @@ Options vary depending on the frequency you select.
 | Option | Description |
 | ------ | ----------- |
 | Schedule | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
-| Frequency | You can schedule reports to be sent once, repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also generate and send a report [using the API](#send-a-report-using-the-api). |
+| Frequency | You can schedule reports to be sent once, repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. |
 | Start date | Set the date when the report should start being sent. |
 | Start time | Set the time when the report should start being sent. |
 | [Time zone](#time-zone) | Set the time zone of the report. |
@@ -307,9 +307,9 @@ If you selected a PDF attachment, configure the following formatting options:
 | Orientation                     | Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples. |
 | Layout                          | Select one of the following:<ul><li>**Simple** - Renders each panel as full-width across the PDF.</li><li>**Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard.</li></ul>Refer to the [Layout and orientation table](#layout-and-orientation) to see examples. |
 | Zoom                            | Zoom in to enlarge text in your PDF or zoom out to see more data (like table columns) per panel. |
-| Combine all dashboard PDFs in one file     | Click the checkbox if you want to generate one PDF file for all the dashboards included in the report. |
-| Show template variables         | Click the checkbox to show dashboard variables.                    |
-| [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. Public preview only. |
+| Combine all dashboard PDFs in one file     | Click the checkbox if you want to generate one PDF file for all the dashboards included in the report. This option is only displayed if there are multiple dashboards in the report. |
+| Show template variables         | Click the checkbox to show dashboard variables. This option is only displayed if the report contains variables. |
+| [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. _Public preview only._ |
 <!-- prettier-ignore-end -->
 
 ##### Layout and orientation
