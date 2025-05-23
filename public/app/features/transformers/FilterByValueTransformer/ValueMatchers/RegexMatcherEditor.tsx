@@ -12,8 +12,8 @@ import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryIt
 export function regexMatcherEditor(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<string>>> {
-  const { t } = useTranslate();
   return function Render({ options, onChange }) {
+    const { t } = useTranslate();
     const { validator } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));

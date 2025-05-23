@@ -12,7 +12,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   TraceToProfilesOptions,
   TraceToMetricsOptions,
@@ -150,7 +150,6 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars
 ) {
-  const { t } = useTranslate();
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);

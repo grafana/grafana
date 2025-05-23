@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
 import { TimeRange } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
-import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
+import { frameOld } from './utils/test-mocks';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -35,6 +36,19 @@ function renderTraceViewContainer(frames = [frameOld]) {
 
 describe('TraceViewContainer', () => {
   let user: ReturnType<typeof userEvent.setup>;
+
+  beforeAll(() => {
+    setPluginLinksHook(() => ({
+      isLoading: false,
+      links: [],
+    }));
+
+    setDataSourceSrv({
+      getInstanceSettings() {
+        return undefined;
+      },
+    } as DataSourceSrv);
+  });
 
   beforeEach(() => {
     user = userEvent.setup();
