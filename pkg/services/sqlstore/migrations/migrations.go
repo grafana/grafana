@@ -154,5 +154,4 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.DropTitleUniqueIndexMigration(mg)
 
-	accesscontrol.AddZananaRemovalMigrator(mg)
 }
