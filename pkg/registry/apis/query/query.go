@@ -410,12 +410,18 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
+					if dr.Error != nil {
+						expressionsLogger.Error("qdr has error in handle expressions", "error", dr.Error)
+					}
 					_, isSqlInput := req.SqlInputs[refId]
 
 					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
+					}
+					if res.Error != nil {
+						expressionsLogger.Error("res has error in handle expressions", "error", res.Error)
 					}
 
 					vars[refId] = res
