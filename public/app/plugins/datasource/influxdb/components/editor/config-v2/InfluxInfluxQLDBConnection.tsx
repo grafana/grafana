@@ -3,6 +3,12 @@ import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
 import { InfluxOptions } from '../../../types';
 
+import {
+  trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField,
+  trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
+  trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField,
+} from './trackingv2';
+
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export const InfluxInfluxQLDBConnection = ({ options, onOptionsChange }: Props) => {
@@ -21,6 +27,7 @@ export const InfluxInfluxQLDBConnection = ({ options, onOptionsChange }: Props) 
                 },
               });
             }}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -29,6 +36,7 @@ export const InfluxInfluxQLDBConnection = ({ options, onOptionsChange }: Props) 
           <Input
             value={options.user || ''}
             onChange={(e) => onOptionsChange({ ...options, user: e.currentTarget.value })}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -39,6 +47,7 @@ export const InfluxInfluxQLDBConnection = ({ options, onOptionsChange }: Props) 
             value={''}
             onReset={() => {}}
             onChange={() => {}}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField}
           />
         </InlineField>
       </InlineFieldRow>

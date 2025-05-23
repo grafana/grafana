@@ -21,6 +21,10 @@ import {
 import { InfluxOptions } from '../../../types';
 
 import { AUTH_RADIO_BUTTON_OPTIONS, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
+import {
+  trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
+  trackInfluxDBConfigV2AuthSettingsToggleClicked,
+} from './trackingv2';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
@@ -61,6 +65,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
           <InlineSwitch
             value={authenticationSettingsIsOpen}
             onChange={() => setAuthenticationSettingsIsOpen(!authenticationSettingsIsOpen)}
+            onBlur={trackInfluxDBConfigV2AuthSettingsToggleClicked}
           />
         </InlineField>
       </Box>
@@ -79,6 +84,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
                     basicAuth: option === AuthMethod.BasicAuth,
                     oAuthForward: option === AuthMethod.OAuthForward,
                   });
+                  trackInfluxDBConfigV2AuthSettingsAuthMethodSelected({ authMethod: option });
                 }}
               />
             </div>

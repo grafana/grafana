@@ -17,6 +17,11 @@ import { InfluxOptions, InfluxVersion } from '../../../types';
 import { AdvancedHttpSettings } from './AdvancedHttpSettings';
 import { AuthSettings } from './AuthSettings';
 import { CONFIG_SECTION_HEADERS } from './constants';
+import {
+  trackInfluxDBConfigV2ProductSelected,
+  trackInfluxDBConfigV2QueryLanguageSelected,
+  trackInfluxDBConfigV2URLInputField,
+} from './trackingv2';
 import { INFLUXDB_VERSION_MAP } from './versions';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -26,7 +31,7 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
   return product?.queryLanguages?.map(({ name }) => ({ value: name })) ?? [];
 };
 
-export const UrlAndConnectionSection = ({ options, onOptionsChange }: Props) => {
+export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props) => {
   const onProductChange = ({ value }: ComboboxOption) =>
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value } });
 
@@ -71,7 +76,12 @@ export const UrlAndConnectionSection = ({ options, onOptionsChange }: Props) => 
           </Text>
           <Box direction="column" gap={2} marginTop={3}>
             <Field label={<div style={{ paddingBottom: '5px' }}>URL</div>}>
-              <Input placeholder="http://localhost:3000/" onChange={onUrlChange} value={options.url || ''} />
+              <Input
+                placeholder="http://localhost:3000/"
+                onChange={onUrlChange}
+                value={options.url || ''}
+                onBlur={trackInfluxDBConfigV2URLInputField}
+              />
             </Field>
             <Box marginTop={2}>
               <Stack direction="row" gap={2}>
@@ -81,6 +91,7 @@ export const UrlAndConnectionSection = ({ options, onOptionsChange }: Props) => 
                       value={options.jsonData.product}
                       options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
                       onChange={onProductChange}
+                      onBlur={() => trackInfluxDBConfigV2ProductSelected({ product: options.jsonData.product! })}
                     />
                   </Field>
                 </Box>
@@ -90,6 +101,7 @@ export const UrlAndConnectionSection = ({ options, onOptionsChange }: Props) => 
                       value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                       options={getQueryLanguageOptions(options.jsonData.product || '')}
                       onChange={onQueryLanguageChange}
+                      onBlur={() => trackInfluxDBConfigV2QueryLanguageSelected({ version: options.url })}
                     />
                   </Field>
                 </Box>

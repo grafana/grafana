@@ -2173,9 +2173,10 @@
     },
     {
       "metadata": {
-        "name": "newDataSourceConfigPageDesign",
+        "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1746640331991",
-        "creationTimestamp": "2025-05-07T17:52:11Z"
+        "creationTimestamp": "2025-05-07T17:52:11Z",
+        "deletionTimestamp": "2025-05-23T03:13:20Z"
       },
       "spec": {
         "description": "Enables new design for data source configuration pages",
@@ -2207,6 +2208,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newInfluxDSConfigPageDesign",
+        "resourceVersion": "1747970000344",
+        "creationTimestamp": "2025-05-23T03:13:20Z"
+      },
+      "spec": {
+        "description": "Enables new design for data source configuration pages",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
       }
     },
     {

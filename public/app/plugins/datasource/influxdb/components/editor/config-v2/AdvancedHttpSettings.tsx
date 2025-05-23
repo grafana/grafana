@@ -17,6 +17,10 @@ import {
 import { InfluxOptions } from '../../../types';
 
 import { getInlineLabelStyles } from './constants';
+import {
+  trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField,
+  trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked,
+} from './trackingv2';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
@@ -36,6 +40,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
           <InlineSwitch
             value={advancedHttpSettingsIsOpen}
             onChange={() => setAdvancedHttpSettingsIsOpen(!advancedHttpSettingsIsOpen)}
+            onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked}
           />
         </InlineField>
       </Box>
@@ -98,6 +103,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                       },
                     });
                   }}
+                  onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField}
                 />
               </Field>
             </div>
