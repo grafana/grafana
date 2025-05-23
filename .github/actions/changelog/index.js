@@ -18,19 +18,23 @@ const LOG = (msg) => console.log(`::notice::${escapeData(msg)}`);
 const getPreviousVersion = async (version) => {
   const exec = promisify(execCallback);
   const {stdout} = await exec('git for-each-ref --sort=-creatordate --format \'%(refname:short)\' refs/tags');
-  LOG("@@@@@");
-  LOG(stdout);
+
+  LOG(`@@@@@`);
+  LOG(`Data: ${stdout}`);
+
   const parsedTags = stdout
     .split('\n')
     .map(semverParse)
     .filter((tag) => tag);
+
   LOG("@@@@@@");
   LOG(parsedTags);
+
   const prev = findPreviousVersion(parsedTags, version);
   if (!prev) {
     throw `Could not find previous git tag for ${version}`;
   }
-  return prev[4];
+  return prev[5];
 };
 
 
