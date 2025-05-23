@@ -32,6 +32,8 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 
 	ms.MemberlistKVConfig = KVStore
 
+	ms.httpServerRouter.Path("/memberlist").Methods("GET", "POST").Handler(memberlistKVsvc)
+
 	return memberlistKVsvc, nil
 }
 
@@ -41,6 +43,8 @@ func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
+	memberlistKVcfg.ClusterLabel = cfg.MemberlistClusterLabel
+	memberlistKVcfg.ClusterLabelVerificationDisabled = cfg.MemberlistClusterLabelVerificationDisabled
 	if cfg.MemberlistBindAddr != "" {
 		memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
 	}

@@ -22,6 +22,7 @@ import {
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -47,7 +48,6 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
@@ -71,7 +71,12 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
 
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
-  scene.setInitialSaveModel(rsp.dashboard);
+
+  const apiVersion = config.featureToggles.kubernetesDashboards
+    ? `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`
+    : undefined;
+
+  scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
   return scene;
 }
@@ -178,17 +183,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
-  if (oldModel.templating?.list?.length) {
-    if (oldModel.meta.isSnapshot) {
-      variables = createVariablesForSnapshot(oldModel);
-    } else {
-      variables = createVariablesForDashboard(oldModel);
-    }
+  if (oldModel.meta.isSnapshot) {
+    variables = createVariablesForSnapshot(oldModel);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(oldModel);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -238,7 +236,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
-    preserveDashboardSceneStateInLocalStorage,
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,

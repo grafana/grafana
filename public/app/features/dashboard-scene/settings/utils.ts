@@ -1,9 +1,9 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, useSelector } from 'app/types';
 
@@ -29,6 +29,7 @@ export interface DashboardEditView extends SceneObject {
 }
 
 export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditView: string) {
+  const { t } = useTranslate();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const navModel = getNavModel(navIndex, 'dashboards/browse');

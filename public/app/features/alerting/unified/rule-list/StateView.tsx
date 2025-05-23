@@ -34,6 +34,7 @@ export const StateView = ({ namespaces }: Props) => {
       [PromAlertingRuleState.Pending, []],
       [PromAlertingRuleState.Recovering, []],
       [PromAlertingRuleState.Inactive, []],
+      [PromAlertingRuleState.Unknown, []],
     ]);
 
     namespaces.forEach((namespace) =>
@@ -70,6 +71,7 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
   [PromAlertingRuleState.Pending]: 'Pending',
   [PromAlertingRuleState.Inactive]: 'Normal',
   [PromAlertingRuleState.Recovering]: 'Recovering',
+  [PromAlertingRuleState.Unknown]: 'Unknown',
 };
 
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
