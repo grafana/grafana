@@ -24,6 +24,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#math
+  table-data-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
   multi-dimensional-example:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
@@ -151,7 +156,11 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
     api-3,5
    ```
 
-   The `service` column must match the labels from `$A`. The `value` column is used for the alert comparison.
+   The `service` column must match the labels from `$A`.
+
+   The `value` column is a numeric value used for the alert comparison.
+
+   For details on CSV format requirements, see [table data examples](ref:table-data-example).
 
 1. Add a new **Reduce** expression (`$C`).
 
