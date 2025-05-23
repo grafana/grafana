@@ -85,7 +85,7 @@ function DashboardOutlineNode({
   return (
     <>
       <div
-        className={cx(styles.container, isSelected && styles.containerSelected)}
+        className={cx(styles.container, { [styles.containerSelected]: isSelected })}
         style={{ paddingLeft: theme.spacing(depth * 3) }}
         onPointerDown={onNodeClicked}
       >
@@ -102,7 +102,7 @@ function DashboardOutlineNode({
           </button>
         )}
         <button
-          className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
+          className={cx(styles.nodeName, { [styles.nodeNameClone]: isCloned })}
           onDoubleClick={outlineRename.onNameDoubleClicked}
           data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
