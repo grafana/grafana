@@ -79,7 +79,7 @@ refs:
 # Create and manage reports
 
 **Reporting** allows you to send automated and scheduled emails from any of your dashboards.
-You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
+You can configure several elements of these reports and generate PDFs and CSV files.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-report-config-v12.0.png" max-width="600px" alt="The report configuration screen" >}}
