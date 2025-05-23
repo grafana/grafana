@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// nolint:gosec // Defined in defaults.ini originally
 	defaultSecretKey = "SW2YcwTIb9zpOOhoPsMm"
 )
 

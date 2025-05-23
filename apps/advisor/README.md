@@ -60,12 +60,12 @@ For our example, we will need access to the grafana settings, which are exposed 
 
 ```go
 type check struct {
-	settings *setting.Cfg
+	cfg *setting.Cfg
 }
 
-func New(settings *setting.Cfg) checks.Check {
+func New(cfg *setting.Cfg) checks.Check {
 	return &check{
-		settings: settings,
+		cfg: cfg,
 	}
 }
 ```
@@ -73,18 +73,18 @@ func New(settings *setting.Cfg) checks.Check {
 Now, to register our check in the `checkregistry` package, we need to add it to the `ProvideService` function. First, we need to verify that the services we need are available in the `ProvideService` function, and if not, add them. Then, we need to add our check to the `Checks` slice.
 
 ```go
-func ProvideService(..., settings *setting.Cfg,
+func ProvideService(..., cfg *setting.Cfg,
 ) *Service {
     return &Service{
         ...
-        settings: settings,
+        cfg: cfg,
     }
 }
 
 func (s *Service) Checks() []checks.Check {
 	return []checks.Check{
         ...
-        configchecks.New(s.settings),
+        configchecks.New(s.cfg),
     }
 }
 ```

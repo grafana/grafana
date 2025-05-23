@@ -10,12 +10,12 @@ import (
 var _ checks.Check = (*check)(nil)
 
 type check struct {
-	settings *setting.Cfg
+	cfg *setting.Cfg
 }
 
-func New(settings *setting.Cfg) checks.Check {
+func New(cfg *setting.Cfg) checks.Check {
 	return &check{
-		settings: settings,
+		cfg: cfg,
 	}
 }
 
@@ -42,7 +42,7 @@ func (c *check) Init(ctx context.Context) error {
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&securityConfigStep{
-			securitySection: c.settings.SectionWithEnvOverrides("security"),
+			securitySection: c.cfg.SectionWithEnvOverrides("security"),
 		},
 	}
 }
