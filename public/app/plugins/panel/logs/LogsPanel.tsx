@@ -695,7 +695,10 @@ export async function requestMoreLogs(
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid],
+        targets:
+          'interpolateVariablesInQueries' in dataSource && dataSource.interpolateVariablesInQueries
+            ? dataSource.interpolateVariablesInQueries(targetGroups[uid], panelData.request.scopedVars)
+            : targetGroups[uid],
       })
     );
   }
