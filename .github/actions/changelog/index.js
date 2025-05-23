@@ -19,16 +19,13 @@ const getPreviousVersion = async (version) => {
   const exec = promisify(execCallback);
   const {stdout} = await exec('git for-each-ref --sort=-creatordate --format \'%(refname:short)\' refs/tags');
 
-  LOG(`@@@@@`);
-  LOG(`Data: ${stdout}`);
-
   const parsedTags = stdout
     .split('\n')
     .map(semverParse)
     .filter((tag) => tag);
 
-  LOG("@@@@@@");
-  LOG(parsedTags);
+  console.log("@@@@@@");
+  console.log(parsedTags);
 
   const prev = findPreviousVersion(parsedTags, version);
   if (!prev) {
