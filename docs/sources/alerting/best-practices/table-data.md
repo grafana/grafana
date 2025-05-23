@@ -25,11 +25,6 @@ refs:
   infinity-csv:
     - pattern: /docs/grafana/
       destination: /docs/plugins/yesoreyeram-infinity-datasource/latest/csv/
-  dynamic-thresholds-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-thresholds/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-thresholds/
 ---
 
 # Example of alerting on tabular data
@@ -125,11 +120,11 @@ To test this quickly, you can simulate the table using the [**TestData** data so
 
 ## CSV data with Infinity
 
-Tabular data can be used in many different scenarios, such as [dynamic thresholds](ref:dynamic-thresholds-example).
+Note that when the [Infinity plugin fetches CSV data](ref:infinity-csv), all the columns are parsed and returned as strings. By default, this causes the query expression to fail in Alerting.
 
-Note that when the [Infinity plugin fetches CSV data](ref:infinity-csv), all the columns are parsed and returned as _String_. By default, this causes the query expression to fail in Alerting.
+To make it work, you need to format the CSV data as [expected by Grafana Alerting](#how-grafana-alerting-evaluates-tabular-data).
 
-To make it work, you need to format the CSV data as [expected in Grafana Alerting](#how-grafana-alerting-evaluates-tabular-data). In the query editor, specify the column names and their types to ensure that only one column is treated as _Number_.
+In the query editor, specify the column names and their types to ensure that only one column is treated as a number.
 
 {{< figure src="/media/docs/alerting/example-table-data-infinity-csv-data.png" max-width="750px" alt="Using the Infinity data source plugin to fetch CSV data in Alerting" >}}
 
