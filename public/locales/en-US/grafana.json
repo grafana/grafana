@@ -3415,6 +3415,13 @@
           "values": "Values separated by comma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "Name filter",
+          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
+          "name-filter-placeholder": "Example: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choose data source type"
+        },
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "label": "Label",
@@ -3433,8 +3440,8 @@
           "category": "Selection options",
           "custom-all-value": "Custom all value",
           "custom-all-value-description": "A wildcard regex or other value to represent All",
-          "include-all": "Include All option",
-          "include-all-description": "Enables an option to include all values",
+          "include-all": "Include All value",
+          "include-all-description": "Enables a single option that represent all values",
           "multi-value": "Multi-value"
         },
         "type-category": "{{type}} options"
