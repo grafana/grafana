@@ -88,6 +88,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	}, 10*time.Second, 2*time.Second)
 
 	for _, testServer := range testServers {
+		fmt.Println("Starting ", testServer.id)
 		go func(s testModuleServer) {
 			if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
 				mu.Lock()
