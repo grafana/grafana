@@ -54,6 +54,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                 description="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should
                 be forwarded to the data source."
                 disabled={options.readOnly}
+                noMargin
               >
                 <TagsInput
                   id="advanced-http-cookies"
@@ -81,6 +82,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                 label="Timeout"
                 description="HTTP request timeout in seconds."
                 disabled={options.readOnly}
+                noMargin
               >
                 <Input
                   id="advanced-http-timeout"
