@@ -370,6 +370,7 @@ const LogListComponent = ({
               layout="vertical"
               onItemsRendered={onItemsRendered}
               outerRef={scrollRef}
+              overscanCount={5}
               ref={listRef}
               style={{ overflowY: 'scroll' }}
               width="100%"
