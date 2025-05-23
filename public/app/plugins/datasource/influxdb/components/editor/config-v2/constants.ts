@@ -17,8 +17,8 @@ export const AUTH_RADIO_BUTTON_OPTIONS = [
 ];
 
 export const CONFIG_SECTION_HEADERS = [
-  { label: 'URL and connection', id: 'url', isOpen: true },
-  { label: 'Database Connection Settings', id: 'tls', isOpen: true },
+  { label: 'URL and authentication', id: 'url', isOpen: true },
+  { label: 'Database settings', id: 'tls', isOpen: true },
   { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
 ];
 
