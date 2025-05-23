@@ -3,9 +3,12 @@ import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils'
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardDataDTO } from '../../../types';
+import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
 import { DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
+import { SearchHit } from './unified';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -131,4 +134,24 @@ export function queryResultToViewItem(
   }
 
   return viewItem;
+}
+
+export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+  return resource.items.map((item) => {
+    const hit = {
+      resource: 'dashboards',
+      name: item.metadata.name,
+      title: item.spec.title,
+      location: 'general',
+      folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
+      tags: item.spec.tags || [],
+      field: {},
+      url: '',
+    };
+    if (!hit.folder) {
+      return { ...hit, location: 'general', folder: 'general' };
+    }
+
+    return hit;
+  });
 }
