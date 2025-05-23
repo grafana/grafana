@@ -24,10 +24,8 @@ const getPreviousVersion = async (version) => {
     .map(semverParse)
     .filter(Boolean);
 
-  // console.log("@@@@@@");
-  // console.log(parsedTags);
-
-  const prev = findPreviousVersion(parsedTags, version);
+  const parsedVersion = semverParse(version);
+  const prev = findPreviousVersion(parsedTags, parsedVersion);
   if (!prev) {
     throw `Could not find previous git tag for ${version}`;
   }
@@ -204,7 +202,7 @@ const getChangeLogItems = async (name, owner, from, to) => {
 // ======================================================
 
 LOG(`Changelog action started`);
-
+console.log(process.argv);
 const ghtoken = process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN;
 if (!ghtoken) {
   throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
