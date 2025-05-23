@@ -141,7 +141,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     }
     try {
       await convert({
-        dataSourceUID: importSource === 'yaml' ? yamlImportTargetDatasourceUID : selectedDatasourceUID,
+        dataSourceUID: importSource === 'yaml' ? (yamlImportTargetDatasourceUID ?? '') : (selectedDatasourceUID ?? ''),
         targetFolderUID: targetFolder?.uid,
         pauseRecordingRules: pauseRecordingRules,
         pauseAlerts: pauseAlertingRules,
@@ -181,7 +181,10 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         <Stack direction="column" gap={2}>
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text>
-            {t(
+            {importSource === 'yaml' ? t(
+              'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
+              'There are no rules to import. Please select a different yaml file.'
+            ) : t(
               'alerting.import-to-gma.confirm-modal.no-rules-body',
               'There are no rules to import. Please select a different namespace or rule group.'
             )}
