@@ -3,7 +3,7 @@
 name: Backport (workflow)
 run-name: "Backport for ${{ github.event.workflow_run.head_branch }} #${{ github.event.workflow_run.run_number }}"
 on:
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers] backport-trigger.yml does not run any user code
     workflows: ["Backport (trigger)"]
     types:
       - completed
@@ -20,19 +20,20 @@ jobs:
       actions: read
     steps:
       - name: Get vault secrets
-        id: vault-secrets
+        id: secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
+          export_env: false
           # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+            APP_PEM=delivery-bot-app:PRIVATE_KEY
 
       - name: Generate token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          private_key: ${{ fromJSON(steps.secrets.outputs.secrets).APP_PEM }}
 
       - name: Download PR info artifact
         uses: actions/download-artifact@v4
