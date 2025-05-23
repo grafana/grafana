@@ -3,6 +3,7 @@ package checkregistry
 import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -33,6 +34,7 @@ type Service struct {
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
 	GrafanaVersion        string
+	settings              *setting.Cfg
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
@@ -53,6 +55,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		provisionedPlugins:    provisionedPlugins,
 		ssoSettingsSvc:        ssoSettingsSvc,
 		GrafanaVersion:        settings.BuildVersion,
+		settings:              settings,
 	}
 }
 
@@ -73,6 +76,7 @@ func (s *Service) Checks() []checks.Check {
 			s.GrafanaVersion,
 		),
 		authchecks.New(s.ssoSettingsSvc),
+		configchecks.New(s.settings),
 	}
 }
 
