@@ -34,7 +34,13 @@ import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor, hasVariableDependencies } from './utils/utils';
+import {
+  updateMap,
+  getNewOpenLayersMap,
+  notifyPanelEditor,
+  hasVariableDependencies,
+  hasLayerData,
+} from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -212,6 +218,9 @@ export class GeomapPanel extends Component<Props, State> {
         this.map.setView(view);
       }
     }
+
+    // Update legends when data changes
+    this.setState({ legends: this.getLegends() });
   }
 
   // view listerner handler, used to unregister when view changes
@@ -434,7 +443,10 @@ export class GeomapPanel extends Component<Props, State> {
     const legends: ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.legend) {
-        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        const hasData = hasLayerData(state.layer);
+        if (hasData) {
+          legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        }
       }
     }
 
