@@ -7,57 +7,68 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// Worker processes items from the qos.
+// Worker processes items from the QoS request queue
 type Worker struct {
-	id             int
-	queue          *Queue
-	wg             *sync.WaitGroup
-	stopCh         <-chan struct{}
-	dequeueTimeout time.Duration
-	logger         log.Logger
+	id         int
+	queue      *Queue
+	wg         *sync.WaitGroup
+	maxBackoff time.Duration
+	logger     log.Logger
 }
 
-func (w *Worker) run() {
+func (w *Worker) run(ctx context.Context) {
 	defer w.wg.Done()
 	w.logger.Debug("Worker started", "id", w.id)
 
 	for {
 		select {
-		case <-w.stopCh:
-			w.logger.Debug("Worker received stop signal", "id", w.id)
+		case <-ctx.Done():
+			w.logger.Debug("Worker context canceled", "id", w.id)
 			return
 		default:
 		}
 
-		dequeueCtx, cancelDequeue := context.WithTimeout(context.Background(), w.dequeueTimeout)
+		w.dequeueWithRetries(ctx)
+	}
+}
 
-		runnable, ok, err := w.queue.Dequeue(dequeueCtx)
-		cancelDequeue()
+func (w *Worker) dequeueWithRetries(ctx context.Context) {
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: 100 * time.Millisecond,
+		MaxBackoff: w.maxBackoff,
+		MaxRetries: 5,
+	})
 
+	for boff.Ongoing() {
+		runnable, ok, err := w.queue.Dequeue(ctx)
 		if err != nil {
 			if errors.Is(err, ErrQueueClosed) {
 				w.logger.Debug("Worker exiting due to queue closed", "id", w.id)
 				return
 			}
 			if errors.Is(err, context.DeadlineExceeded) {
+				boff.Wait()
+				if ctx.Err() != nil {
+					w.logger.Debug("Worker backoff exhausted", "id", w.id)
+					return
+				}
 				continue
 			}
-			if errors.Is(err, context.Canceled) {
-				w.logger.Debug("Worker exiting due to context canceled", "id", w.id)
-				return
-			}
 			w.logger.Error("Error dequeuing item", "id", w.id, "error", err)
-			select {
-			case <-time.After(500 * time.Millisecond):
-			case <-w.stopCh:
-				w.logger.Debug("Worker received stop signal while in backoff", "id", w.id)
+			boff.Wait()
+			if ctx.Err() != nil {
+				w.logger.Debug("Worker backoff exhausted", "id", w.id)
 				return
 			}
 			continue
 		}
+
+		boff.Reset()
 
 		if !ok {
 			continue
@@ -69,34 +80,34 @@ func (w *Worker) run() {
 
 // Scheduler manages a pool of Workers consuming from a FairQueue.
 type Scheduler struct {
-	queue *Queue
+	services.Service
 
-	numWorkers int
+	logger     log.Logger
+	queue      *Queue
+	wg         sync.WaitGroup
+	maxBackoff time.Duration
+
+	// Subservices manager
+	subservices        *services.Manager
+	subservicesWatcher *services.FailureWatcher
+
 	workers    []*Worker
-
-	wg          sync.WaitGroup
-	stopCh      chan struct{}
-	startStopMu sync.Mutex
-
-	dequeueTimeout time.Duration
-
-	running bool
-	logger  log.Logger
+	numWorkers int
 }
 
 // Config holds configuration for the Scheduler.
 type Config struct {
-	NumWorkers     int
-	DequeueTimeout time.Duration
-	Logger         log.Logger
+	NumWorkers int
+	MaxBackoff time.Duration
+	Logger     log.Logger
 }
 
 func (c *Config) validate() error {
 	if c.NumWorkers <= 0 {
 		return fmt.Errorf("NumWorkers must be positive, got %d", c.NumWorkers)
 	}
-	if c.DequeueTimeout <= 0 {
-		c.DequeueTimeout = 5 * time.Second
+	if c.MaxBackoff <= 0 {
+		c.MaxBackoff = 5 * time.Second
 	}
 	if c.Logger == nil {
 		c.Logger = log.New("qos.scheduler")
@@ -106,6 +117,8 @@ func (c *Config) validate() error {
 
 // NewScheduler creates a new scheduler instance.
 func NewScheduler(queue *Queue, config *Config) (*Scheduler, error) {
+	var err error
+
 	if queue == nil {
 		return nil, errors.New("scheduler: queue cannot be nil")
 	}
@@ -114,80 +127,70 @@ func NewScheduler(queue *Queue, config *Config) (*Scheduler, error) {
 	}
 
 	s := &Scheduler{
-		queue:          queue,
-		numWorkers:     config.NumWorkers,
-		dequeueTimeout: config.DequeueTimeout,
-		workers:        make([]*Worker, 0, config.NumWorkers),
-		logger:         config.Logger,
+		logger:             config.Logger,
+		queue:              queue,
+		numWorkers:         config.NumWorkers,
+		maxBackoff:         config.MaxBackoff,
+		workers:            make([]*Worker, 0, config.NumWorkers),
+		subservicesWatcher: services.NewFailureWatcher(),
 	}
+
+	subservices := []services.Service{s.queue}
+	s.subservices, err = services.NewManager(subservices...)
+	if err != nil {
+		return nil, fmt.Errorf("scheduler: failed to create subservices manager: %w", err)
+	}
+	s.Service = services.NewBasicService(s.starting, s.running, s.stopping)
 	return s, nil
 }
 
-// Start initializes and starts the worker goroutines.
-func (s *Scheduler) Start() error {
-	s.startStopMu.Lock()
-	defer s.startStopMu.Unlock()
+// starting is called by the services.Service lifecycle to start the scheduler.
+func (s *Scheduler) starting(ctx context.Context) error {
+	s.subservicesWatcher.WatchManager(s.subservices)
 
-	if s.running {
-		return errors.New("scheduler: already started")
+	if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
+		return fmt.Errorf("scheduler: failed to start subservices: %w", err)
 	}
 
-	s.stopCh = make(chan struct{})
-	s.running = true
-	s.workers = make([]*Worker, 0, s.numWorkers)
-
 	s.logger.Info("Scheduler starting", "numWorkers", s.numWorkers)
+	s.workers = make([]*Worker, 0, s.numWorkers)
 	s.wg.Add(s.numWorkers)
 
 	for i := 0; i < s.numWorkers; i++ {
 		worker := &Worker{
-			id:             i,
-			queue:          s.queue,
-			wg:             &s.wg,
-			stopCh:         s.stopCh,
-			dequeueTimeout: s.dequeueTimeout,
-			logger:         s.logger,
+			id:         i,
+			queue:      s.queue,
+			wg:         &s.wg,
+			maxBackoff: s.maxBackoff,
+			logger:     s.logger,
 		}
 		s.workers = append(s.workers, worker)
-		go worker.run()
+		go worker.run(ctx)
 	}
 
 	s.logger.Info("Scheduler started")
 	return nil
 }
 
-// Stop signals all workers to stop, closes the qos, and waits for them to finish.
-func (s *Scheduler) Stop() {
-	s.startStopMu.Lock()
-	if !s.running {
-		s.startStopMu.Unlock()
-		s.logger.Info("Scheduler not running, nothing to stop")
-		return
+// running is called by the services.Service lifecycle to check if the scheduler is running.
+func (s *Scheduler) running(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-s.subservicesWatcher.Chan():
+		return fmt.Errorf("scheduler: subservice failure: %w", err)
 	}
-
-	s.logger.Info("Scheduler stopping")
-
-	close(s.stopCh)
-	s.running = false
-
-	s.startStopMu.Unlock()
-
-	// Close the queue after signaling workers to allow them to finish current work
-	// while unblocking those waiting in Dequeue.
-	s.queue.Close()
-
-	s.wg.Wait()
-
-	s.startStopMu.Lock()
-	s.workers = nil
-	s.startStopMu.Unlock()
-
-	s.logger.Info("Scheduler stopped")
 }
 
-// IsRunning returns true if the scheduler is currently running.
-func (s *Scheduler) IsRunning() bool {
-	s.startStopMu.Lock()
-	defer s.startStopMu.Unlock()
-	return s.running
+// stopping is called by the services.Service lifecycle to stop the scheduler.
+func (s *Scheduler) stopping(_ error) error {
+	s.logger.Info("Scheduler stopping")
+
+	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
+	if err != nil {
+		return fmt.Errorf("scheduler: failed to stop subservices: %w", err)
+	}
+
+	s.logger.Info("Scheduler stopped")
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -16,7 +17,7 @@ type tenantQueue struct {
 	id    string
 	items []func()
 
-	activeElement *list.Element
+	isStoredInActiveTenants *list.Element
 }
 
 type enqueueRequest struct {
@@ -50,6 +51,8 @@ type activeTenantsLenRequest struct {
 
 // Queue implements a multi-tenant qos with round-robin fairness using a dispatcher goroutine.
 type Queue struct {
+	services.Service
+
 	enqueueChan           chan enqueueRequest
 	dequeueChan           chan dequeueRequest
 	closeChan             chan closeRequest
@@ -57,6 +60,17 @@ type Queue struct {
 	activeTenantsLenChan  chan activeTenantsLenRequest
 	dispatcherStoppedChan chan struct{}
 
+	// tenantQueues stores the queues for each tenant
+	tenantQueues map[string]*tenantQueue
+	// activeTenants is a list of tenants with items in their queues
+	// used for round-robin dequeueing
+	activeTenants *list.List
+	// pendingDequeueRequests is a list of dequeue requests waiting for items
+	// used for notifying when items are available
+	pendingDequeueRequests *list.List
+	// closed indicates if the queue is closed
+	closed bool
+	// maxSizePerTenant is the maximum number of items per tenant
 	maxSizePerTenant int
 
 	// Metrics
@@ -85,7 +99,12 @@ func NewQueue(opts *QueueOptions) *Queue {
 		lenChan:               make(chan lenRequest),
 		activeTenantsLenChan:  make(chan activeTenantsLenRequest),
 		dispatcherStoppedChan: make(chan struct{}),
-		maxSizePerTenant:      opts.MaxSizePerTenant,
+
+		tenantQueues:           make(map[string]*tenantQueue),
+		activeTenants:          list.New(),
+		pendingDequeueRequests: list.New(),
+		closed:                 false,
+		maxSizePerTenant:       opts.MaxSizePerTenant,
 
 		// Metrics
 		queueLength:       opts.QueueLength,
@@ -93,131 +112,130 @@ func NewQueue(opts *QueueOptions) *Queue {
 		enqueueDuration:   opts.EnqueueDuration,
 	}
 
-	go q.dispatcherLoop()
+	q.Service = services.NewBasicService(nil, q.running, nil)
 
 	return q
 }
 
-type dispatcherState struct {
-	tenantQueues     map[string]*tenantQueue
-	activeTenants    *list.List
-	waitingDequeuers *list.List
-	closed           bool
-	maxSizePerTenant int
-
-	// Metrics
-	queueLength       *prometheus.GaugeVec
-	discardedRequests *prometheus.CounterVec
-}
-
 type firstDequeueItem struct {
-	dequeueReqChan   chan dequeueResponse
-	runnable         func()
-	elementToDequeue *list.Element
+	dequeueRespChan chan dequeueResponse
+	runnable        func()
+	tenantElem      *list.Element
 }
 
-func (s *dispatcherState) shouldExit() bool {
-	return s.closed && s.activeTenants.Len() == 0 && s.waitingDequeuers.Len() == 0
+func (q *Queue) shouldExit() bool {
+	return q.closed && q.activeTenants.Len() == 0 && q.pendingDequeueRequests.Len() == 0
 }
 
-func (s *dispatcherState) prepareFirstDequeue() firstDequeueItem {
-	result := firstDequeueItem{}
+func (q *Queue) prepareFirstDequeue() firstDequeueItem {
+	item := firstDequeueItem{}
 
-	elementToDequeue := s.activeTenants.Front()
-	if !s.closed && elementToDequeue != nil && s.waitingDequeuers.Len() > 0 {
-		selectedTenantQ := elementToDequeue.Value.(*tenantQueue)
-		if len(selectedTenantQ.items) > 0 {
-			result.runnable = selectedTenantQ.items[0]
-			result.dequeueReqChan = s.waitingDequeuers.Front().Value.(*dequeueRequest).respChan
-			result.elementToDequeue = elementToDequeue
+	pendingTenant := q.activeTenants.Front()
+	if pendingTenant != nil && q.pendingDequeueRequests.Len() > 0 {
+		tq := pendingTenant.Value.(*tenantQueue)
+		if len(tq.items) > 0 {
+			pendingReq := q.pendingDequeueRequests.Front()
+			if pendingReq == nil {
+				return item
+			}
+
+			item.runnable = tq.items[0]
+			item.dequeueRespChan = pendingReq.Value.(*dequeueRequest).respChan
+			item.tenantElem = pendingTenant
 		} else {
-			s.activeTenants.Remove(elementToDequeue)
-			selectedTenantQ.activeElement = nil
+			q.activeTenants.Remove(pendingTenant)
+			tq.isStoredInActiveTenants = nil
 		}
 	}
 
-	return result
+	return item
 }
 
-func (s *dispatcherState) handleEnqueueRequest(req enqueueRequest) {
-	if s.closed {
-		s.discardedRequests.WithLabelValues(req.tenantID, "queue_closed").Inc()
+func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
+	if q.closed {
+		q.discardedRequests.WithLabelValues(req.tenantID, "queue_closed").Inc()
 		req.respChan <- ErrQueueClosed
 		return
 	}
 
-	s.processEnqueue(req)
-}
-
-func (s *dispatcherState) processEnqueue(req enqueueRequest) {
-	tq, exists := s.tenantQueues[req.tenantID]
+	tq, exists := q.tenantQueues[req.tenantID]
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
 			items: make([]func(), 0, 8),
 		}
-		s.tenantQueues[req.tenantID] = tq
+		q.tenantQueues[req.tenantID] = tq
 	}
 
-	if s.maxSizePerTenant > 0 && len(tq.items) >= s.maxSizePerTenant {
-		s.discardedRequests.WithLabelValues(req.tenantID, "queue_full").Inc()
+	if q.maxSizePerTenant > 0 && len(tq.items) >= q.maxSizePerTenant {
+		q.discardedRequests.WithLabelValues(req.tenantID, "queue_full").Inc()
 		req.respChan <- ErrTenantQueueFull
 		return
 	}
 
 	tq.items = append(tq.items, req.runnable)
-	s.queueLength.WithLabelValues(req.tenantID).Set(float64(len(tq.items)))
+	q.queueLength.WithLabelValues(req.tenantID).Set(float64(len(tq.items)))
 
-	if tq.activeElement == nil {
-		tq.activeElement = s.activeTenants.PushBack(tq)
+	if tq.isStoredInActiveTenants == nil {
+		tq.isStoredInActiveTenants = q.activeTenants.PushBack(tq)
 	}
 
 	req.respChan <- nil
 }
 
-func (s *dispatcherState) handleDequeueRequest(req dequeueRequest) {
-	if s.closed {
-		s.sendDequeueResponse(req, dequeueResponse{ok: false, err: ErrQueueClosed})
+func (q *Queue) handleDequeueRequest(req dequeueRequest) {
+	if q.closed {
+		q.dispatchDequeueResponse(&req, dequeueResponse{ok: false, err: ErrQueueClosed})
 		return
 	}
 
 	if req.ctx.Err() != nil {
-		s.sendDequeueResponse(req, dequeueResponse{ok: false, err: req.ctx.Err()})
+		q.dispatchDequeueResponse(&req, dequeueResponse{ok: false, err: req.ctx.Err()})
 		return
 	}
 
-	s.waitingDequeuers.PushBack(&req)
+	q.pendingDequeueRequests.PushBack(&req)
 }
 
-func (s *dispatcherState) sendDequeueResponse(req dequeueRequest, resp dequeueResponse) {
-	select {
-	case req.respChan <- resp:
-	default:
-	}
-}
+func (q *Queue) completeDequeue(tenantElem *list.Element) {
+	reqElem := q.pendingDequeueRequests.Front()
+	q.pendingDequeueRequests.Remove(reqElem)
 
-func (s *dispatcherState) completeDequeue(elementToDequeue *list.Element) {
-	dequeuerElement := s.waitingDequeuers.Front()
-	s.waitingDequeuers.Remove(dequeuerElement)
+	tq := tenantElem.Value.(*tenantQueue)
+	tq.items = tq.items[1:]
 
-	selectedTenantQ := elementToDequeue.Value.(*tenantQueue)
-	selectedTenantQ.items = selectedTenantQ.items[1:]
+	q.queueLength.WithLabelValues(tq.id).Set(float64(len(tq.items)))
 
-	s.queueLength.WithLabelValues(selectedTenantQ.id).Set(float64(len(selectedTenantQ.items)))
-
-	if len(selectedTenantQ.items) == 0 {
-		s.activeTenants.Remove(elementToDequeue)
-		selectedTenantQ.activeElement = nil
+	if len(tq.items) == 0 {
+		q.activeTenants.Remove(tenantElem)
+		tq.isStoredInActiveTenants = nil
+		tq.items = nil
+		delete(q.tenantQueues, tq.id)
 	} else {
-		s.activeTenants.MoveToBack(elementToDequeue)
+		q.activeTenants.MoveToBack(tenantElem)
 	}
 }
 
-func (s *dispatcherState) handleCloseRequest(req closeRequest) {
-	if !s.closed {
-		s.closed = true
-		s.notifyWaitingDequeuers()
-		s.clearQueues()
+func (q *Queue) handleCloseRequest(req closeRequest) {
+	if !q.closed {
+		q.closed = true
+
+		// Notify all pending requests that the queue is closed
+		for e := q.pendingDequeueRequests.Front(); e != nil; e = e.Next() {
+			dequeueReq := e.Value.(*dequeueRequest)
+			q.dispatchDequeueResponse(dequeueReq, dequeueResponse{ok: false, err: ErrQueueClosed})
+		}
+		q.pendingDequeueRequests.Init()
+
+		// Reset queue length metrics for all tenants before clearing
+		if q.queueLength != nil {
+			for tenantID := range q.tenantQueues {
+				q.queueLength.WithLabelValues(tenantID).Set(0)
+			}
+		}
+
+		q.tenantQueues = make(map[string]*tenantQueue)
+		q.activeTenants.Init()
 	}
 
 	select {
@@ -226,136 +244,94 @@ func (s *dispatcherState) handleCloseRequest(req closeRequest) {
 	}
 }
 
-func (s *dispatcherState) notifyWaitingDequeuers() {
-	for e := s.waitingDequeuers.Front(); e != nil; e = e.Next() {
-		waiterReq := e.Value.(*dequeueRequest)
-		s.sendDequeueResponse(*waiterReq, dequeueResponse{ok: false, err: ErrQueueClosed})
-	}
-	s.waitingDequeuers.Init()
-}
-
-func (s *dispatcherState) clearQueues() {
-	// Reset queue length metrics for all tenants before clearing
-	if s.queueLength != nil {
-		for tenantID := range s.tenantQueues {
-			s.queueLength.WithLabelValues(tenantID).Set(0)
-		}
-	}
-
-	s.tenantQueues = make(map[string]*tenantQueue)
-	s.activeTenants.Init()
-}
-
-func (s *dispatcherState) handleLenRequest(req lenRequest) {
+func (q *Queue) handleLenRequest(req lenRequest) {
 	total := 0
-	for _, tq := range s.tenantQueues {
+	for _, tq := range q.tenantQueues {
 		total += len(tq.items)
 	}
 	req.respChan <- total
 }
 
-func (s *dispatcherState) processWaitingDequeuers() {
-	currentWorkerElem := s.waitingDequeuers.Front()
-	for currentWorkerElem != nil && s.activeTenants.Len() > 0 {
-		nextWorkerElem := currentWorkerElem.Next()
+func (q *Queue) handlePendingRequests() {
+	for reqElem := q.pendingDequeueRequests.Front(); reqElem != nil && q.activeTenants.Len() > 0; {
+		req := reqElem.Value.(*dequeueRequest)
 
-		if s.processDequeuer(currentWorkerElem) {
+		// If the request context is done, respond and remove it.
+		if req.ctx.Err() != nil {
+			q.dispatchDequeueResponse(req, dequeueResponse{ok: false, err: req.ctx.Err()})
+			next := reqElem.Next()
+			q.pendingDequeueRequests.Remove(reqElem)
+			reqElem = next
+			continue
+		}
+
+		tenantElem := q.activeTenants.Front()
+		if tenantElem == nil {
 			break
 		}
 
-		currentWorkerElem = nextWorkerElem
+		tq := tenantElem.Value.(*tenantQueue)
+		if len(tq.items) == 0 {
+			q.activeTenants.Remove(tenantElem)
+			tq.isStoredInActiveTenants = nil
+			continue
+		}
+
+		// Respond to the request with the next runnable.
+		item := tq.items[0]
+		q.dispatchDequeueResponse(req, dequeueResponse{runnable: item, ok: true, err: nil})
+		q.pendingDequeueRequests.Remove(reqElem)
+		tq.items = tq.items[1:]
+
+		if len(tq.items) == 0 {
+			q.activeTenants.Remove(tenantElem)
+			tq.isStoredInActiveTenants = nil
+		} else {
+			q.activeTenants.MoveToBack(tenantElem)
+		}
+
+		reqElem = q.pendingDequeueRequests.Front()
 	}
 }
 
-func (s *dispatcherState) processDequeuer(workerElem *list.Element) bool {
-	workerReq := workerElem.Value.(*dequeueRequest)
-
-	if workerReq.ctx.Err() != nil {
-		s.sendDequeueResponse(*workerReq, dequeueResponse{ok: false, err: workerReq.ctx.Err()})
-		s.waitingDequeuers.Remove(workerElem)
-		return false
-	}
-
-	currentTenantElem := s.activeTenants.Front()
-	if currentTenantElem == nil {
-		return true
-	}
-
-	selectedTenantQ := currentTenantElem.Value.(*tenantQueue)
-	if len(selectedTenantQ.items) == 0 {
-		s.activeTenants.Remove(currentTenantElem)
-		selectedTenantQ.activeElement = nil
-		return true
-	}
-
-	s.sendItemToDequeuer(workerReq, workerElem, currentTenantElem, selectedTenantQ)
-	return false
+func (q *Queue) dispatchDequeueResponse(req *dequeueRequest, resp dequeueResponse) {
+	req.respChan <- resp
 }
 
-func (s *dispatcherState) sendItemToDequeuer(
-	workerReq *dequeueRequest,
-	workerElem *list.Element,
-	tenantElem *list.Element,
-	tenantQ *tenantQueue,
-) {
-	itemToSend := tenantQ.items[0]
-	workerReq.respChan <- dequeueResponse{runnable: itemToSend, ok: true, err: nil}
-
-	s.waitingDequeuers.Remove(workerElem)
-	tenantQ.items = tenantQ.items[1:]
-
-	if len(tenantQ.items) == 0 {
-		s.activeTenants.Remove(tenantElem)
-		tenantQ.activeElement = nil
-	} else {
-		s.activeTenants.MoveToBack(tenantElem)
-	}
-}
-
-func (q *Queue) dispatcherLoop() {
-	state := &dispatcherState{
-		tenantQueues:     make(map[string]*tenantQueue),
-		activeTenants:    list.New(),
-		waitingDequeuers: list.New(),
-		closed:           false,
-		maxSizePerTenant: q.maxSizePerTenant,
-
-		// Metrics
-		queueLength:       q.queueLength,
-		discardedRequests: q.discardedRequests,
-	}
-
+func (q *Queue) dispatcherLoop(ctx context.Context) {
 	defer close(q.dispatcherStoppedChan)
 
 	for {
-		if state.shouldExit() {
+		if q.shouldExit() {
 			return
 		}
 
-		first := state.prepareFirstDequeue()
+		first := q.prepareFirstDequeue()
 
 		select {
+		case <-ctx.Done():
+			return
 		case req := <-q.enqueueChan:
-			state.handleEnqueueRequest(req)
+			q.handleEnqueueRequest(req)
 
 		case req := <-q.dequeueChan:
-			state.handleDequeueRequest(req)
-
-		case first.dequeueReqChan <- dequeueResponse{runnable: first.runnable, ok: true, err: nil}:
-			state.completeDequeue(first.elementToDequeue)
+			q.handleDequeueRequest(req)
 
 		case req := <-q.closeChan:
-			state.handleCloseRequest(req)
+			q.handleCloseRequest(req)
 
 		case req := <-q.lenChan:
-			state.handleLenRequest(req)
+			q.handleLenRequest(req)
 
 		case req := <-q.activeTenantsLenChan:
-			req.respChan <- state.activeTenants.Len()
+			req.respChan <- q.activeTenants.Len()
+
+		case first.dequeueRespChan <- dequeueResponse{runnable: first.runnable, ok: true, err: nil}:
+			q.completeDequeue(first.tenantElem)
 		}
 
-		if !state.closed {
-			state.processWaitingDequeuers()
+		if !q.closed {
+			q.handlePendingRequests()
 		}
 	}
 }
@@ -436,40 +412,6 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), bool, error) {
 	}
 }
 
-// Close marks the queue as closed and signals the dispatcher.
-// It blocks until the dispatcher acknowledges the close.
-func (q *Queue) Close() {
-	respChan := make(chan struct{})
-	req := closeRequest{respChan: respChan}
-
-	select {
-	case q.closeChan <- req:
-		select {
-		case <-respChan:
-		case <-q.dispatcherStoppedChan:
-		case <-time.After(500 * time.Millisecond):
-		}
-	case <-q.dispatcherStoppedChan:
-	case <-time.After(500 * time.Millisecond):
-		select {
-		case <-q.dispatcherStoppedChan:
-		default:
-			close(q.dispatcherStoppedChan)
-		}
-	}
-}
-
-// StopWait blocks until the dispatcher goroutine has fully stopped.
-// Call Close() first to initiate shutdown.
-func (q *Queue) StopWait() {
-	select {
-	case <-q.dispatcherStoppedChan:
-		return
-	case <-time.After(2 * time.Second):
-		return
-	}
-}
-
 // Len returns the total number of items across all tenants in the qos.
 func (q *Queue) Len() int {
 	respChan := make(chan int, 1)
@@ -504,4 +446,10 @@ func (q *Queue) ActiveTenantsLen() int {
 	case <-q.dispatcherStoppedChan:
 		return 0
 	}
+}
+
+// running is called by the services.Service lifecycle to check if the queue is running.
+func (q *Queue) running(ctx context.Context) error {
+	q.dispatcherLoop(ctx)
+	return nil
 }
