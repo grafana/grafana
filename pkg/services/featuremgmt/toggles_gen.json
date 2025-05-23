@@ -2832,7 +2832,8 @@
       "metadata": {
         "name": "regressionTransformation",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-11-24T14:49:16Z"
+        "creationTimestamp": "2023-11-24T14:49:16Z",
+        "deletionTimestamp": "2025-05-23T21:15:21Z"
       },
       "spec": {
         "description": "Enables regression analysis transformation",
