@@ -45,6 +45,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Name() string {
+	return "Plugin"
+}
+
 func (c *check) Items(ctx context.Context) ([]any, error) {
 	ps := c.PluginStore.Plugins(ctx)
 	res := make([]any, len(ps))
