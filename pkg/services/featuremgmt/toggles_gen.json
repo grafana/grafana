@@ -2914,6 +2914,20 @@
     },
     {
       "metadata": {
+        "name": "restoreDashboards",
+        "resourceVersion": "1748002635285",
+        "creationTimestamp": "2025-05-23T12:17:15Z"
+      },
+      "spec": {
+        "description": "Enables restore deleted dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-09-26T12:51:38Z"

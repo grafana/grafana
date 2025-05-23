@@ -1029,8 +1029,8 @@ export interface FeatureToggles {
   */
   extensionsReadOnlyProxy?: boolean;
   /**
-  * Enables deleted dashboard restore feature
+  * Enables restore deleted dashboards feature
   * @default false
   */
-  dashboardRestore?: boolean;
+  restoreDashboards?: boolean;
 }
