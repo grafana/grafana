@@ -6,6 +6,7 @@ import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDa
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
+import { secretsManagementApi } from 'app/features/secrets-management/api/secretsManagementApi';
 import { StoreState } from 'app/types/store';
 
 import { advisorAPI } from '../api/clients/advisor';
@@ -13,6 +14,7 @@ import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
 import { playlistAPI } from '../api/clients/playlist';
 import { provisioningAPI } from '../api/clients/provisioning';
+
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
@@ -51,6 +53,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPI.middleware,
         folderAPI.middleware,
         advisorAPI.middleware,
+        secretsManagementApi.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware
