@@ -34,6 +34,7 @@ const propertiesToCheck = [
   'description',
   'placeholder',
   'aria-label',
+  'ariaLabel',
   'title',
   'subTitle',
   'text',
