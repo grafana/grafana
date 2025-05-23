@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { load } from 'js-yaml';
 import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -57,7 +58,8 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     ruleGroup,
     targetDatasourceUID,
     yamlFile,
-    importSource
+    importSource,
+    yamlImportTargetDatasourceUID
   ] = watch([
     'targetFolder',
     'selectedDatasourceName',
@@ -68,7 +70,8 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'ruleGroup',
     'targetDatasourceUID',
     'yamlFile',
-    'importSource'
+    'importSource',
+    'yamlImportTargetDatasourceUID'
   ]);
 
   // for datasource import, we need to fetch the rules from the datasource
@@ -77,14 +80,13 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   // for yaml import, we need to fetch the rules from the yaml file
   const { value: rulesToBeImportedFromYaml = {} } = useAsync(async () => {
-    if (!yamlFile || importSource !== 'yaml') {
+    if (!yamlFile || importSource !== 'yaml' || !targetFolder) {
       return {};
     }
     try {
-      const data = await yamlFile.text();
-      // not sure what we should parse here
-      // if we want the preview to work, we need to parse the yaml to RulerRulesConfigDTO
-      return {} as RulerRulesConfigDTO;
+      const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), targetFolder.title,
+      );
+      return rulerConfigFromYAML;
 
     } catch (error) {
       console.error('Error parsing YAML file:', error);
@@ -131,9 +133,15 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   }
 
   async function onConvertConfirm() {
+    if (!yamlImportTargetDatasourceUID || !selectedDatasourceUID) {
+      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
+        error: 'No data source selected',
+      }));
+      return;
+    }
     try {
       await convert({
-        dataSourceUID: selectedDatasourceUID,
+        dataSourceUID: importSource === 'yaml' ? yamlImportTargetDatasourceUID : selectedDatasourceUID,
         targetFolderUID: targetFolder?.uid,
         pauseRecordingRules: pauseRecordingRules,
         pauseAlerts: pauseAlertingRules,
@@ -210,6 +218,114 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     />
   );
 };
+
+interface Group {
+  name: string;
+  rules: Rule[];
+}
+
+interface Rule {
+  alert: string;
+  expr: string;
+  for?: string;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+function isValidString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function isValidObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && Boolean(value);
+}
+
+function hasRequiredProperties(obj: Record<string, unknown>, properties: string[]): boolean {
+  return properties.every(prop => prop in obj);
+}
+
+function isRule(obj: unknown): obj is Rule {
+  if (!isValidObject(obj)) {
+    return false;
+  }
+
+  const requiredProps = ['alert', 'expr'];
+  if (!hasRequiredProperties(obj, requiredProps)) {
+    return false;
+  }
+
+  const rule = obj as unknown as Rule;
+  if (!isValidString(rule.alert) || !isValidString(rule.expr)) {
+    return false;
+  }
+
+  // Check optional properties if they exist
+  if ('for' in rule && !isValidString(rule.for)) {
+    return false;
+  }
+
+  if ('labels' in rule && !isValidObject(rule.labels)) {
+    return false;
+  }
+
+  if ('annotations' in rule && !isValidObject(rule.annotations)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isGroup(obj: unknown): obj is Group {
+  if (!isValidObject(obj)) {
+    return false;
+  }
+
+  const requiredProps = ['name', 'rules'];
+  if (!hasRequiredProperties(obj, requiredProps)) {
+    return false;
+  }
+
+  const group = obj as unknown as Group;
+  if (!isValidString(group.name) || !Array.isArray(group.rules)) {
+    return false;
+  }
+
+  return group.rules.every(isRule);
+}
+
+function parseYamlToRulerRulesConfigDTO(yamlAsString: string, namespace: string): RulerRulesConfigDTO {
+
+  const obj = load(yamlAsString);
+  if (!obj || typeof obj !== 'object' || !('groups' in obj) || !Array.isArray((obj as { groups: unknown[] }).groups)) {
+    throw new Error('Invalid YAML format: missing or invalid groups array');
+  }
+
+  const data: RulerRulesConfigDTO = {};
+  data[namespace] = (obj as { groups: unknown[] }).groups.map((group: unknown) => {
+    if (!isGroup(group)) {
+      throw new Error('Invalid group format: missing name or rules array');
+    }
+
+    return {
+      name: group.name,
+      rules: group.rules.map((rule: unknown) => {
+        if (!isRule(rule)) {
+          throw new Error('Invalid rule format: missing alert or expr');
+        }
+
+        return {
+          alert: rule.alert,
+          expr: rule.expr,
+          for: rule.for,
+          labels: rule.labels,
+          annotations: rule.annotations
+        };
+      })
+    };
+  });
+
+  return data;
+}
 
 function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,

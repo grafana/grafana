@@ -36,8 +36,8 @@ import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 export interface ImportFormValues {
   importSource: 'datasource' | 'yaml';
   yamlFile: File | null;
-  yamlImportTargetDatasourceUID: string | null;
-  selectedDatasourceUID: string;
+  yamlImportTargetDatasourceUID?: string;
+  selectedDatasourceUID?: string;
   selectedDatasourceName: string | null;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
@@ -63,7 +63,7 @@ const ImportFromDSRules = () => {
     defaultValues: {
       importSource: 'datasource',
       yamlFile: null,
-      yamlImportTargetDatasourceUID: null,
+      yamlImportTargetDatasourceUID: undefined,
       selectedDatasourceUID: defaultDataSource?.uid,
       selectedDatasourceName: defaultDataSource?.name,
       pauseAlertingRules: true,
@@ -201,7 +201,12 @@ const ImportFromDSRules = () => {
                           accept=".yaml,.yml,.json"
                         />
                       )}
-                      rules={{ required: true }}
+                      rules={{
+                        required: {
+                          value: true,
+                          message: t('alerting.import-to-gma.yaml.required-message', 'Please select a file')
+                        }
+                      }}
                     />
                   </Field>
                   <Field
@@ -281,6 +286,9 @@ const ImportFromDSRules = () => {
                         )}
                         name="targetFolder"
                         control={control}
+                        rules={{
+                          required: importSource === 'yaml' ? { value: true, message: 'Please select a target folder' } : undefined,
+                        }}
                       />
                       <CreateNewFolder
                         onCreate={(folder) => {
@@ -366,7 +374,7 @@ const ImportFromDSRules = () => {
 
             <Box marginTop={2}>
               <Stack gap={1}>
-                <Button type="submit" variant="primary" disabled={isSubmitting || !selectedDatasourceName}>
+                <Button type="submit" variant="primary" disabled={isSubmitting}>
                   <Stack direction="row" gap={2} alignItems="center">
                     {isSubmitting && <Spinner inline={true} />}
                     <Trans i18nKey="alerting.import-to-gma.action-button">Import</Trans>
