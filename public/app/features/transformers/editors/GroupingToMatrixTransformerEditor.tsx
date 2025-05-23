@@ -62,11 +62,46 @@ export const GroupingToMatrixTransformerEditor = ({
   );
 
   const specialValueOptions: Array<SelectableValue<SpecialValue>> = [
-    { label: 'Null', value: SpecialValue.Null, description: 'Null value' },
-    { label: 'True', value: SpecialValue.True, description: 'Boolean true value' },
-    { label: 'False', value: SpecialValue.False, description: 'Boolean false value' },
-    { label: 'Zero', value: SpecialValue.Zero, description: 'Number 0 value' },
-    { label: 'Empty', value: SpecialValue.Empty, description: 'Empty string' },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.null', 'Null'),
+      value: SpecialValue.Null,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.null-value',
+        'Null value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.true', 'True'),
+      value: SpecialValue.True,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-true-value',
+        'Boolean true value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.false', 'False'),
+      value: SpecialValue.False,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.boolean-false-value',
+        'Boolean false value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.zero', 'Zero'),
+      value: SpecialValue.Zero,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.number-value',
+        'Number 0 value'
+      ),
+    },
+    {
+      label: t('transformers.grouping-to-matrix-transformer-editor.special-value-options.label.empty', 'Empty'),
+      value: SpecialValue.Empty,
+      description: t(
+        'transformers.grouping-to-matrix-transformer-editor.special-value-options.description.empty-string',
+        'Empty string'
+      ),
+    },
   ];
 
   const onSelectEmptyValue = useCallback(

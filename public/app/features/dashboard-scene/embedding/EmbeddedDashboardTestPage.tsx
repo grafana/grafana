@@ -1,18 +1,26 @@
 import { useState } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { EmbeddedDashboard } from './EmbeddedDashboard';
 
 export function EmbeddedDashboardTestPage() {
+  const { t } = useTranslate();
   const [state, setState] = useState('?from=now-5m&to=now');
 
   return (
     <Page
       navId="dashboards/browse"
-      pageNav={{ text: 'Embedding dashboard', subTitle: 'Showing dashboard: Panel Tests - Pie chart' }}
+      pageNav={{
+        text: t('dashboard-scene.embedded-dashboard-test-page.text.embedding-dashboard', 'Embedding dashboard'),
+        subTitle: t(
+          'dashboard-scene.embedded-dashboard-test-page.subTitle.showing-dashboard-panel-tests-pie-chart',
+          'Showing dashboard: Panel Tests - Pie chart'
+        ),
+      }}
       layout={PageLayoutType.Canvas}
     >
       {/* this is a test page, no need to translate */}

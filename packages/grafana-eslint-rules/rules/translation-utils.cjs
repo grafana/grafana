@@ -5,9 +5,9 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
-
 const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 /**
@@ -77,7 +77,7 @@ function shouldBeFixed(context) {
 
 /**
  * Checks if a node can be fixed automatically
- * @param {JSXAttribute|JSXElement|JSXFragment} node The node to check
+ * @param {JSXAttribute|JSXElement|JSXFragment|Property} node The node to check
  * @param {RuleContextWithOptions} context
  * @returns {boolean} Whether the node can be fixed
  */
@@ -86,16 +86,28 @@ function canBeFixed(node, context) {
     return false;
   }
 
+  const parentMethod = getParentMethod(node, context);
+  const isAttribute = node.type === AST_NODE_TYPES.JSXAttribute;
+  const isProperty = node.type === AST_NODE_TYPES.Property;
+  const isPropertyOrAttribute = isAttribute || isProperty;
+
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
-  if (node.type === AST_NODE_TYPES.JSXAttribute) {
-    const parentMethod = getParentMethod(node, context);
-    if (!parentMethod) {
+  if (isPropertyOrAttribute && !parentMethod) {
+    return false;
+  }
+
+  // If we're going to try and fix using `t`, and it already exists in the scope,
+  // but not from `useTranslate`, then we can't fix/provide a suggestion
+  if (isPropertyOrAttribute && parentMethod) {
+    const hasTDeclaration = getTDeclaration(parentMethod, context);
+    const hasUseTranslateDeclaration = methodHasUseTranslate(parentMethod, context);
+    if (hasTDeclaration && !hasUseTranslateDeclaration) {
       return false;
     }
-    if (node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-      return isStringLiteral(node.value.expression);
-    }
+  }
+  if (isAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    return isStringLiteral(node.value.expression);
   }
 
   const values =
@@ -130,7 +142,7 @@ function canBeFixed(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/features\/([^/]+)/);
+  const match = filename.match(/public\/app\/features\/(.+?)\//);
   if (match) {
     return match[1];
   }
@@ -139,7 +151,7 @@ function getTranslationPrefix(context) {
 
 /**
  * Gets the i18n key for a node
- * @param {JSXAttribute|JSXText} node The node
+ * @param {JSXAttribute|JSXText|Property} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string} The i18n key
  */
@@ -148,6 +160,10 @@ const getI18nKey = (node, context) => {
   const stringValue = getNodeValue(node);
 
   const componentNames = getComponentNames(node, context);
+
+  const propertyName =
+    node.type === AST_NODE_TYPES.Property && node.key.type === AST_NODE_TYPES.Identifier ? String(node.key.name) : null;
+
   const words = stringValue
     .trim()
     .replace(/[^\a-zA-Z\s]/g, '')
@@ -185,14 +201,14 @@ const getI18nKey = (node, context) => {
     kebabString = [potentialId, propName, kebabString].filter(Boolean).join('-');
   }
 
-  const fullPrefix = [prefixFromFilePath, ...componentNames, kebabString].filter(Boolean).join('.');
+  const fullPrefix = [prefixFromFilePath, ...componentNames, propertyName, kebabString].filter(Boolean).join('.');
 
   return fullPrefix;
 };
 
 /**
  * Gets component names from ancestors
- * @param {JSXAttribute|JSXText} node The node
+ * @param {JSXAttribute|JSXText|Property} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string[]} The component names
  */
@@ -218,13 +234,22 @@ function getComponentNames(node, context) {
 }
 
 /**
- * Checks if a method has a variable declaration of `t`
- * that came from a `useTranslate` call
- * @param {Node} method The node
+ * For a given node, check the scope and find a variable declaration of `t`
+ * @param {Node} node
  * @param {RuleContextWithOptions} context
  */
-function methodHasUseTranslate(method, context) {
-  const tDeclaration = method ? context.sourceCode.getScope(method).variables.find((v) => v.name === 't') : null;
+function getTDeclaration(node, context) {
+  return context.sourceCode.getScope(node).variables.find((v) => v.name === 't');
+}
+
+/**
+ * Checks if a node has a variable declaration of `t`
+ * that came from a `useTranslate` call
+ * @param {Node} node The node
+ * @param {RuleContextWithOptions} context
+ */
+function methodHasUseTranslate(node, context) {
+  const tDeclaration = getTDeclaration(node, context);
   return (
     tDeclaration &&
     tDeclaration.defs.find((definition) => {
@@ -243,7 +268,7 @@ function methodHasUseTranslate(method, context) {
 
 /**
  * Gets the import fixer for a node
- * @param {JSXElement|JSXFragment|JSXAttribute} node
+ * @param {JSXElement|JSXFragment|JSXAttribute|Property} node
  * @param {RuleFixer} fixer The fixer
  * @param {'Trans'|'t'|'useTranslate'} importName The member to import from either `@grafana/i18n` or `@grafana/i18n/internal`
  * @param {RuleContextWithOptions} context
@@ -337,7 +362,7 @@ const firstCharIsUpper = (str) => {
 };
 
 /**
- * @param {JSXAttribute} node
+ * @param {JSXAttribute|Property} node
  * @param {RuleFixer} fixer
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
@@ -380,9 +405,10 @@ const getUseTranslateFixer = (node, fixer, context) => {
   if (!returnStatementIsJsx) {
     return;
   }
+  const tDeclarationExists = getTDeclaration(parentMethod, context);
   const useTranslateExists = methodHasUseTranslate(parentMethod, context);
 
-  if (useTranslateExists) {
+  if (tDeclarationExists && useTranslateExists) {
     return;
   }
 
@@ -396,7 +422,7 @@ const getUseTranslateFixer = (node, fixer, context) => {
 };
 
 /**
- * @param {JSXAttribute} node
+ * @param {JSXAttribute|Property} node
  * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
  */
@@ -406,9 +432,13 @@ const getTFixers = (node, context) => (fixer) => {
   const value = getNodeValue(node);
   const wrappingQuotes = value.includes('"') ? "'" : '"';
 
-  fixes.push(
-    fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
-  );
+  if (node.type === AST_NODE_TYPES.Property) {
+    fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+  } else {
+    fixes.push(
+      fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
+    );
+  }
 
   // Check if we need to add `useTranslate` to the node
   const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
@@ -428,11 +458,19 @@ const getTFixers = (node, context) => (fixer) => {
 
 /**
  * Gets the value of a node
- * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild} node The node
+ * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild|Property} node The node
  * @returns {string} The node value
  */
 function getNodeValue(node) {
-  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.Literal) {
+  if (
+    (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property) &&
+    node.value?.type === AST_NODE_TYPES.Literal
+  ) {
+    // TODO: Update this to return bool/number values and handle the type issues elsewhere
+    // For now, we'll just return an empty string so we consider any numbers or booleans as not being issues
+    if (typeof node.value.value === 'boolean' || typeof node.value.value === 'number') {
+      return '';
+    }
     return String(node.value.value) || '';
   }
   if (node.type === AST_NODE_TYPES.JSXText) {

@@ -60,12 +60,21 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   }
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
-    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
     {
-      label: 'Library panels',
+      label: t('dashboard.visualization-select-pane.radio-options.label.visualizations', 'Visualizations'),
+      value: VisualizationSelectPaneTab.Visualizations,
+    },
+    {
+      label: t('dashboard.visualization-select-pane.radio-options.label.suggestions', 'Suggestions'),
+      value: VisualizationSelectPaneTab.Suggestions,
+    },
+    {
+      label: t('dashboard.visualization-select-pane.radio-options.label.library-panels', 'Library panels'),
       value: VisualizationSelectPaneTab.LibraryPanels,
-      description: 'Reusable panels you can share between multiple dashboards.',
+      description: t(
+        'dashboard.visualization-select-pane.radio-options.description.reusable-panels-share-between-multiple-dashboards',
+        'Reusable panels you can share between multiple dashboards.'
+      ),
     },
   ];
 

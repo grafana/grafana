@@ -14,7 +14,7 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const filename = 'public/app/features/some-feature/SomeFile.tsx';
+const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
 
 const packageName = '@grafana/i18n';
 
@@ -31,6 +31,7 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     {
       name: 'Text in Trans component',
       code: `const Foo = () => <Bar><Trans>Translated text</Trans></Bar>`,
+      filename,
     },
     {
       name: 'Text in Trans component with whitespace/JSXText elements',
@@ -38,58 +39,72 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       <Trans>
         Translated text
     </Trans>   </Bar>`,
+      filename,
     },
     {
       name: 'Empty component',
       code: `<div>     </div>`,
+      filename,
     },
     {
       name: 'Text using t() function',
       code: `<div>{t('translated.key', 'Translated text')}</div>`,
+      filename,
     },
     {
       name: 'Prop using t() function',
       code: `<div aria-label={t('aria.label', 'Accessible label')} />`,
+      filename,
     },
     {
       name: 'Empty string prop',
       code: `<div title="" />`,
+      filename,
     },
     {
       name: 'Prop using boolean',
       code: `<div title={false} />`,
+      filename,
     },
     {
       name: 'Prop using number',
       code: `<div title={0} />`,
+      filename,
     },
     {
       name: 'Prop using null',
       code: `<div title={null} />`,
+      filename,
     },
     {
       name: 'Prop using undefined',
       code: `<div title={undefined} />`,
+      filename,
     },
     {
       name: 'Variable interpolation',
       code: `<div>{variable}</div>`,
+      filename,
     },
     {
       name: 'Entirely non-alphanumeric text (prop)',
       code: `<div title="-" />`,
+      filename,
     },
     {
       name: 'Entirely non-alphanumeric text',
       code: `<div>-</div>`,
+      filename,
     },
     {
       name: 'Non-alphanumeric siblings',
       code: `<div>({variable})</div>`,
+      filename,
     },
     {
       name: "Ternary in an attribute we don't care about",
       code: `<div icon={isAThing ? 'Foo' : 'Bar'} />`,
+      filename,
     },
     {
       name: 'Ternary with falsy strings',
@@ -98,6 +113,76 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     {
       name: 'Ternary with no strings',
       code: `<div title={isAThing ? 1 : 2} />`,
+      filename,
+    },
+    {
+      name: 'Object property',
+      code: `const getThing = () => ({
+        label: t('test', 'Test'),
+      })`,
+      filename,
+    },
+    {
+      // Ideally we would catch this, but test case is to ensure that
+      // we aren't reporting an error
+      name: 'Object property using variable',
+      code: `
+      const getThing = () => {
+        const foo = 'test';
+        const thing = {
+          label: foo,
+        }
+      }`,
+      filename,
+    },
+    {
+      name: 'Object property using dynamic/other keys',
+      code: `
+      const getThing = () => {
+        const foo = 'label';
+        const label = 'not-a-label';
+        const thing = {
+          1: 'a',
+          // We can't easily check for computed keys, so for now don't worry about this case
+          [foo]: 'test',
+
+          // This is dumb, but we need to check that we don't confuse
+          // the name of the variable for the key name
+          [label]: 'test',
+          ['title']: 'test',
+        }
+      }`,
+      filename,
+    },
+    {
+      name: 'Label reference inside `css` call',
+      code: `const getThing = () => {
+        const thing = css({
+          label: 'red',
+        });
+      }`,
+      options: [{ calleesToIgnore: ['somethingelse', '^css$'] }],
+      filename,
+    },
+    {
+      name: 'Object property value that is a boolean or number',
+      code: `const getThing = () => {
+        const thing = {
+          label: true,
+          title: 1
+        };
+      }`,
+      filename,
+    },
+    {
+      name: 'Object property at top level',
+      code: `const thing = { label: 'test' }`,
+      filename,
+    },
+    {
+      name: 'Object property in default props',
+      code: `const Foo = ({ foobar = {label: 'test'} }) => <div>{foobar.label}</div>`,
+      filename,
     },
   ],
   invalid: [
@@ -667,6 +752,97 @@ const Foo = () => {
       ],
     },
 
+    {
+      name: 'Untranslated object property',
+      code: `
+const Foo = () => {
+  const thing = {
+    label: 'test',
+  }
+
+  return <div>{thing.label}</div>;
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+const thing = {
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  }
+
+  return <div>{thing.label}</div>;
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Untranslated object property with existing import',
+      code: `
+${T_IMPORT}
+const Foo = () => {
+  const thing = {
+    label: 'test',
+  }
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  const thing = {
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Untranslated object property with calleesToIgnore',
+      code: `
+const Foo = () => {
+  const thing = doAThing({
+    label: 'test',
+  })
+}`,
+      options: [{ calleesToIgnore: ['doSomethingElse'] }],
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  const thing = doAThing({
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  })
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
     /**
      * AUTO FIXES
      */
@@ -716,6 +892,42 @@ ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
   const { t } = useTranslate();
 return <div title={t("some-feature.foo.title-foo", "foo")} />
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Auto fixes object property',
+      code: `
+const Foo = () => {
+  return {
+    label: 'test',
+  }
+}`,
+      filename,
+      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
+}`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => {
+  return {
+    label: t("some-feature.foo.label.test", "test"),
+  }
 }`,
             },
           ],
@@ -824,5 +1036,34 @@ const Foo = () => {
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
+
+    {
+      name: 'Cannot fix if `t` already exists from somewhere else',
+      code: `
+const Foo = () => {
+  const t = () => 'something else';
+  return (
+    <div title="foo" />
+  )
+}`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStringsProp' }],
+    },
+
+    // TODO: Enable test once all top-level issues have been fixed
+    // and rule is enabled again
+    //     {
+    //       name: 'Object property at top level scope',
+    //       code: `
+    // const thing = {
+    //   label: 'test',
+    // }`,
+    //       filename,
+    //       errors: [
+    //         {
+    //           messageId: 'noUntranslatedStringsProperties',
+    //         },
+    //       ],
+    //     },
   ],
 });

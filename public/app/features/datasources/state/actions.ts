@@ -7,6 +7,7 @@ import {
   DataSourceTestFailed,
   DataSourceApi,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import {
   config,
   DataSourceSrv,
@@ -290,7 +291,15 @@ export function updateDataSource(dataSource: DataSourceSettings) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
-      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
+      const errorInfo = isFetchError(err)
+        ? err.data
+        : {
+            message: t(
+              'datasources.update-data-source.error-info.message.an-unexpected-error-occurred',
+              'An unexpected error occurred.'
+            ),
+            traceID: '',
+          };
       return Promise.reject(errorInfo);
     }
 

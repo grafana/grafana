@@ -1,6 +1,7 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { NavModel, NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
@@ -9,6 +10,7 @@ import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types';
 
 export function useDataSourceSettingsNav(pageIdParam?: string) {
+  const { t } = useTranslate();
   const { uid = '' } = useParams<{ uid: string }>();
   const location = useLocation();
   const datasource = useDataSource(uid);
@@ -27,17 +29,17 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
   let pageNav: NavModel = {
     node: {
-      text: 'Data Source Nav Node',
+      text: t('connections.use-data-source-settings-nav.page-nav.text.data-source-nav-node', 'Data Source Nav Node'),
     },
     main: {
-      text: 'Data Source Nav Node',
+      text: t('connections.use-data-source-settings-nav.page-nav.text.data-source-nav-node', 'Data Source Nav Node'),
     },
   };
 
   if (loadError) {
     const node: NavModelItem = {
       text: loadError,
-      subTitle: 'Data Source Error',
+      subTitle: t('connections.use-data-source-settings-nav.node.subTitle.data-source-error', 'Data Source Error'),
       icon: 'exclamation-triangle',
     };
 

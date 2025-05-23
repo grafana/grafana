@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -545,7 +546,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           isLoading: false,
           loadError: {
             status: 404,
-            message: 'Dashboard not found',
+            message: t(
+              'dashboard-scene.dashboard-scene-page-state-manager.message.dashboard-not-found',
+              'Dashboard not found'
+            ),
           },
         });
         return;
@@ -728,7 +732,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           isLoading: false,
           loadError: {
             status: 404,
-            message: 'Dashboard not found',
+            message: t(
+              'dashboard-scene.dashboard-scene-page-state-manager-v2.message.dashboard-not-found',
+              'Dashboard not found'
+            ),
           },
         });
         return;

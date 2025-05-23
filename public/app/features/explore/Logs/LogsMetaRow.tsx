@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -35,6 +35,7 @@ export type Props = {
 
 export const LogsMetaRow = memo(
   ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
+    const { t } = useTranslate();
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -42,7 +43,7 @@ export const LogsMetaRow = memo(
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
       logsMetaItem.push({
-        label: 'Deduplication count',
+        label: t('explore.logs-meta-row.label.deduplication-count', 'Deduplication count'),
         value: dedupCount,
         kind: LogsMetaKind.Number,
       });
@@ -52,7 +53,7 @@ export const LogsMetaRow = memo(
     if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
-          label: 'Showing only selected fields',
+          label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
           value: <LogLabelsList labels={displayedFields} />,
         },
         {

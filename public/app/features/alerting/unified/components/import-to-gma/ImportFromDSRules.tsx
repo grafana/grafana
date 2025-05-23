@@ -240,7 +240,13 @@ const ImportFromDSRules = () => {
                         name="targetDatasourceUID"
                         control={control}
                         rules={{
-                          required: { value: true, message: 'Please select a target data source' },
+                          required: {
+                            value: true,
+                            message: t(
+                              'alerting.import-from-dsrules.message.please-select-a-target-data-source',
+                              'Please select a target data source'
+                            ),
+                          },
                         }}
                       />
                     </Field>
