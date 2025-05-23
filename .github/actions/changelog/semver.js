@@ -60,7 +60,7 @@ export const findPreviousVersion = (versionList, version) => {
 
 
 const versionsByDate = [
-  "v10.4.19", "v11.4.5", "v11.3.7", "v11.2.10", "v12.0.0+security-01", "v11.2.9+security-01", "v11.3.6+security-01",
+  "v10.4.19", "v11.6.2", "v11.5.5", "v11.4.5", "v11.3.7", "v11.2.10", "v12.0.0+security-01", "v11.2.9+security-01", "v11.3.6+security-01",
   "v11.6.1+security-01", "v11.4.4+security-01", "v11.5.4+security-01", "v10.4.18+security-01", "v12.0.0", "v11.6.1",
   "v11.5.4", "v11.4.4", "v11.3.6", "v11.2.9", "v10.4.18", "v11.6.0+security-01", "v11.5.3+security-01", "v11.4.3+security-01",
   "v11.3.5+security-01", "v11.2.8+security-01", "v10.4.17+security-01", "v11.2.8", "v11.6.0", "v11.5.2", "v11.4.2",
@@ -77,7 +77,7 @@ function test(version, expected) {
 
   const failureMessage = `FAIILED. Expected ${expected}, but was ${prev[5]}`;
 
-  console.log(`Test ${version}, ${prev[5] === expected? 'PASSED': failureMessage }`);
+  console.log(`Test ${version}, ${prev[5] === expected ? 'PASSED' : failureMessage}`);
 }
 
 test("v11.5.4+security-01", "v11.5.4");
