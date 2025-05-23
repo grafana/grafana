@@ -1,4 +1,5 @@
 import { MutableDataFrame } from '@grafana/data';
+
 import { TraceData, TraceSpanData } from '../components/types/trace';
 
 const response: TraceData & { spans: TraceSpanData[] } = {
