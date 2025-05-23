@@ -90,8 +90,11 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
-      if (!currentLegacyRow) {
-        // This is the first row. We should flush the current panels into a row item with header hidden.
+      if (!currentLegacyRow && currentRowPanels.length === 0) {
+        // This is the first row, and we have no panels before it. We set currentLegacyRow to the first row.
+        currentLegacyRow = panel;
+      } else if (!currentLegacyRow) {
+        // This is the first row but we have panels before the first row. We should flush the current panels into a row item with header hidden.
         rowItems.push(
           new RowItem({
             title: '',
@@ -117,6 +120,11 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
     } else {
       currentRowPanels.push(buildGridItemForPanel(panel));
     }
+  }
+
+  if (currentLegacyRow) {
+    // If there is a row left to process, we should flush it into a row item.
+    rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
   }
 
   return new RowsLayoutManager({
@@ -230,8 +238,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
         children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
       }),
     }),
-    // TODO: add repeat behavior
-    $behaviors: [],
+    $behaviors: row.repeat ? [new RowRepeaterBehavior({ variableName: row.repeat })] : undefined,
   });
   return rowItem;
 }

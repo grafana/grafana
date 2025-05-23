@@ -614,6 +614,8 @@ describe('ResponseTransformers', () => {
             type: 'row',
             title: 'Row test title',
             gridPos: { x: 0, y: 16, w: 12, h: 1 },
+            repeat: 'var1',
+            repeatDirection: 'v',
             panels: [],
             collapsed: false,
           },
@@ -740,6 +742,11 @@ describe('ResponseTransformers', () => {
       expect(row0grid.spec.items[0].spec.y).toBe(0);
       expect(row0grid.spec.items[1].spec.element.name).toBe('panel-2');
       expect(row0grid.spec.items[1].spec.y).toBe(8);
+
+      const row1 = layout.spec.rows[1] as RowsLayoutRowKind;
+      expect(row1.kind).toBe('RowsLayoutRow');
+      expect(row1.spec.repeat?.value).toBe('var1');
+      expect(row1.spec.repeat?.mode).toBe('variable');
 
       const row1grid = layout.spec.rows[1].spec.layout as GridLayoutKind;
       expect(row1grid.kind).toBe('GridLayout');
