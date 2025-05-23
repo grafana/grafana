@@ -72,7 +72,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
       {authenticationSettingsIsOpen && (
         <div style={{ paddingLeft: '10px' }}>
           <Space v={2} />
-          <Field label={<Text element="h5">Authentication Method</Text>}>
+          <Field label={<Text element="h5">Authentication Method</Text>} noMargin>
             <div style={{ width: '50%', display: 'flex', marginTop: '20px' }}>
               <RadioButtonGroup
                 options={AUTH_RADIO_BUTTON_OPTIONS}
@@ -89,7 +89,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
               />
             </div>
           </Field>
-          <Field>
+          <Field noMargin>
             <>
               {authOptions.basicAuth && (
                 <>
@@ -148,7 +148,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
               )}
             </>
           </Field>
-          <Field>
+          <Field noMargin>
             <>
               <Text element="h5">TLS Settings</Text>
               <Space v={3} />
@@ -195,7 +195,7 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
               )}
             </>
           </Field>
-          <Field>
+          <Field noMargin>
             <>
               <Box display="flex" alignItems="center">
                 <Label style={{ width: '125px' }}>CA Cert</Label>

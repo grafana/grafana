@@ -75,7 +75,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
             .
           </Text>
           <Box direction="column" gap={2} marginTop={3}>
-            <Field label={<div style={{ paddingBottom: '5px' }}>URL</div>}>
+            <Field label={<div style={{ paddingBottom: '5px' }}>URL</div>} noMargin>
               <Input
                 placeholder="http://localhost:3000/"
                 onChange={onUrlChange}
@@ -86,7 +86,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
             <Box marginTop={2}>
               <Stack direction="row" gap={2}>
                 <Box flex={1}>
-                  <Field label={<div style={{ paddingBottom: '5px' }}>Product</div>}>
+                  <Field label={<div style={{ paddingBottom: '5px' }}>Product</div>} noMargin>
                     <Combobox
                       value={options.jsonData.product}
                       options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
@@ -96,7 +96,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
                   </Field>
                 </Box>
                 <Box flex={1}>
-                  <Field label={<div style={{ paddingBottom: '5px' }}>Query language</div>}>
+                  <Field label={<div style={{ paddingBottom: '5px' }}>Query language</div>} noMargin>
                     <Combobox
                       value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                       options={getQueryLanguageOptions(options.jsonData.product || '')}
