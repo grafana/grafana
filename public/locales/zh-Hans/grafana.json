@@ -57,7 +57,11 @@
       "aria-label-add": "添加",
       "aria-label-delete": "删除",
       "placeholder-key": "密钥",
+      "placeholder-name": "名称",
       "placeholder-value": "值"
+    },
+    "variables-editor": {
+      "placeholder-type": "类型"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "编辑",
       "export": "导出",
       "export-all": "导出全部",
+      "learn-more": "了解更多",
       "loading": "加载中...",
       "search-by-matchers": "通过匹配器搜索",
       "titles": {
@@ -1066,6 +1071,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1199,15 +1207,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "正在加载..."
-    },
-    "group-actions": {
-      "actions-trigger": "规则组操作",
-      "details": "详情",
-      "edit": "编辑"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "加载组详情失败",
-      "unknown-error": "未知错误"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "组",
@@ -1402,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新建警报规则",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新的数据源管理录制规则",
-        "new-grafana-recording-rule": "新的 Grafana 管理录制规则",
+        "new-grafana-alerting-rule": "新建警报规则",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新的录制规则",
-        "provisioning": "您还可以通过文件配置或 Terraform 定义规则。<2>了解更多</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "未配置 Prometheus 或 Loki 数据源",
       "no-rules": "未找到规则。",
@@ -2044,6 +2047,7 @@
         "description": "检查数据源配置。数据源是否支持 Prometheus API？",
         "title": "无法从此数据源加载规则"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -2060,8 +2064,7 @@
       "new-datasource-recording-rule": "新的数据源录制规则",
       "new-grafana-recording-rule": "新的 Grafana 录制规则",
       "pagination": {
-        "next-page": "下一页",
-        "previous-page": "上一页"
+        "next-page": ""
       },
       "recording-rules": "录制规则",
       "return-button": {
@@ -5384,10 +5387,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "确认",
         "confirm-action": "确认操作",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "值"
       },
+      "close": "关闭",
+      "continue": "",
       "inline": {
         "add-action": "添加操作",
         "edit-action": "编辑操作"
@@ -5398,6 +5405,7 @@
         "action-query-params": "查询参数",
         "action-title": "标题",
         "action-title-placeholder": "操作标题",
+        "action-variables": "变量",
         "one-click-description": "一次只能为一个链接或操作启用一次点击"
       }
     },
@@ -6129,6 +6137,7 @@
       "label-wrap-lines": "多行显示"
     },
     "log-details": {
+      "close": "",
       "fields": "字段",
       "links": "链接",
       "log-line": "日志行",
@@ -6148,15 +6157,20 @@
       "log-line": "日志行"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "将链接复制到日志行",
       "copy-log": "复制日志行",
+      "hide-details": "",
       "icon-label": "日志菜单",
       "pin-to-outline": "固定日志",
       "show-context": "显示上下文",
+      "show-details": "",
       "unpin-from-outline": "取消固定日志"
     },
     "log-row-context-modal": {
@@ -6750,7 +6764,8 @@
       "title": "库面板"
     },
     "machine-learning": {
-      "title": "机器学习"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
@@ -6814,7 +6829,7 @@
       "title": "已记录查询"
     },
     "reporting": {
-      "title": "正在报告"
+      "title": "报告"
     },
     "scenes": {
       "title": "场景"
@@ -6834,7 +6849,7 @@
       "title": "服务帐户"
     },
     "setup-guide": {
-      "title": "安装指南"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "管理您组织的外部共享数据面板",

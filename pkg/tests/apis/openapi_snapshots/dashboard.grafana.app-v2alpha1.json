@@ -1141,9 +1141,14 @@
           "filters",
           "defaultKeys",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
+          },
           "baseFilters": {
             "type": "array",
             "items": {
@@ -1272,16 +1277,16 @@
             "type": "string",
             "default": ""
           },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "options": {
+          "legacyOptions": {
             "description": "Catch-all field for datasource-specific properties",
             "type": "object",
             "additionalProperties": {
               "type": "object"
             }
+          },
+          "name": {
+            "type": "string",
+            "default": ""
           },
           "query": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
@@ -1705,11 +1710,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -1954,11 +1964,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -2956,11 +2971,16 @@
           "sort",
           "options",
           "multi",
-          "includeAll"
+          "includeAll",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},

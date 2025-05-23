@@ -6,6 +6,7 @@ import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { GrafanaRulesSource } from '../utils/datasource';
+import { totalFromStats } from '../utils/ruleStats';
 import { rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
@@ -123,13 +124,14 @@ export function GrafanaRuleListItem({
 
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
+    const instancesCount = totalFromStats(promAlertingRule?.totals ?? {});
 
     return (
       <AlertRuleListItem
         {...commonProps}
         summary={annotations.summary}
         state={promAlertingRule?.state}
-        instancesCount={promAlertingRule?.alerts?.length}
+        instancesCount={instancesCount}
         operation={operation}
       />
     );

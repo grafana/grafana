@@ -60,6 +60,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -98,12 +99,12 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the options properties that need to be
+    // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.options) {
+    if (annoQuerySpec?.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.options,
+        ...annoQuerySpec.legacyOptions,
       };
     }
     return new DashboardAnnotationsDataLayer({
@@ -195,6 +196,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
+        preserveDashboardSceneStateInLocalStorage,
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,

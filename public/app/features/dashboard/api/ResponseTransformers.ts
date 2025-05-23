@@ -570,6 +570,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
               kind: v.datasource?.type || getDefaultDatasourceType(),
               spec: query,
             },
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(qv);
@@ -596,6 +597,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(dv);
@@ -614,6 +616,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
             includeAll: v.includeAll,
             ...(v.allValue && { allValue: v.allValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(cv);
@@ -627,6 +630,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             baseFilters: v.baseFilters || [],
             filters: v.filters || [],
             defaultKeys: v.defaultKeys || [],
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(av);
