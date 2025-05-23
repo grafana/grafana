@@ -531,6 +531,7 @@ export const LogsPanel = ({
               logs={deduplicatedRows}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
               onLogLineHover={onLogRowHover}
+              onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}
