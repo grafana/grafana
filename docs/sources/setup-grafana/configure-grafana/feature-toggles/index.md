@@ -81,6 +81,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiLabelNamesQueryApi`                  | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `grafanaManagedRecordingRulesDatasources` | Enables writing to data sources for Grafana-managed recording rules.                                                               |                    |
 | `alertingMigrationUI`                     | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
+| `alertingImportYAMLUI`                    | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                          | Enables unified navbars                                                                                                            |                    |
 
 ## Public preview feature toggles

@@ -29,7 +29,7 @@ describe('DataSourceVariableEditor', () => {
     render(<DataSourceVariableEditor {...props} />);
 
     const selectContainer = getSelectParent(screen.getByLabelText('Type'));
-    expect(selectContainer).toHaveTextContent('Prometheus');
+    expect(selectContainer).toHaveTextContent('Choose');
   });
 
   it('calls the handler when the data source is changed', async () => {

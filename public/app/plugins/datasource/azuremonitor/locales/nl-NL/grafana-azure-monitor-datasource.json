@@ -72,9 +72,9 @@
     },
     "config-editor": {
       "description-additional-settings": "",
+      "description-request-timeout": "",
       "title-additional-settings": "Aanvullende instellingen",
-      "title-request-timeout": "",
-      "description-request-timeout": ""
+      "title-request-timeout": ""
     },
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "",

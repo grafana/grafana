@@ -1106,6 +1106,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
+		GUID:  uuid.New().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,

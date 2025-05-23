@@ -444,9 +444,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 
 	var orgID int64 = 1
 
@@ -553,9 +550,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			features:       []any{},
 			expectedResult: []string{"parent"},
 		},
-	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
 	}
 
 	var orgID int64 = 1
@@ -665,10 +659,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 	}
 
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
 	var orgID int64 = 1
 
 	for _, tc := range testCases {
@@ -757,9 +747,6 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 
 		// Insert dashboards in batches
 		batchSize := 500
-		if db.IsTestDBSpanner() {
-			batchSize = 30 // spanner has a limit of 950 parameters per query
-		}
 		for i := 0; i < len(dashes); i += batchSize {
 			end := i + batchSize
 			if end > len(dashes) {

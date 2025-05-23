@@ -56,7 +56,7 @@ export function useFilteredRulesIteratorProvider() {
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
   const getFilteredRulesIterable = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */

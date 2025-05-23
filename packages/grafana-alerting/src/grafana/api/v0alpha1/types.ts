@@ -3,7 +3,7 @@
  */
 import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 
-import type { ListReceiverApiResponse, Receiver, Integration as ReceiverIntegration } from './api.gen';
+import type { ListReceiverApiResponse, Receiver, ReceiverIntegration } from './api.gen';
 
 type GenericIntegration = OverrideProperties<
   ReceiverIntegration,
@@ -58,11 +58,30 @@ export type Integration = EmailIntegration | SlackIntegration | GenericIntegrati
 export type ContactPoint = MergeDeep<
   Receiver,
   {
+    metadata: {
+      annotations: ContactPointMetadataAnnotations;
+    };
     spec: {
       integrations: Integration[];
     };
   }
 >;
+
+export type ContactPointMetadataAnnotations = AlertingEntityMetadataAnnotations &
+  Partial<{
+    // reading secrets is unique to contact points / receivers
+    'grafana.com/access/canReadSecrets': 'true' | 'false';
+    'grafana.com/inUse/routes': `${number}`;
+    'grafana.com/inUse/rules': `${number}`;
+  }>;
+
+export type AlertingEntityMetadataAnnotations = Partial<{
+  'grafana.com/access/canAdmin': 'true' | 'false';
+  'grafana.com/access/canDelete': 'true' | 'false';
+  'grafana.com/access/canWrite': 'true' | 'false';
+  // used for provisioning to identify what system created the entity
+  'grafana.com/provenance': string;
+}>;
 
 export type EnhancedListReceiverApiResponse = OverrideProperties<
   ListReceiverApiResponse,

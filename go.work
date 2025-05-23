@@ -5,17 +5,11 @@ go 1.24.3
 
 use (
 	. // skip:golangci-lint
-	./.citools/bra
-	./.citools/cog
-	./.citools/cue
-	./.citools/golangci-lint
-	./.citools/jb
-	./.citools/lefthook
-	./.citools/swagger
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard
 	./apps/folder
+	./apps/iam
 	./apps/investigations
 	./apps/playlist
 	./pkg/aggregator

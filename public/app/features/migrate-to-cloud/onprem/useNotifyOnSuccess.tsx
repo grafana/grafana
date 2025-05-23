@@ -1,7 +1,6 @@
 import { useRef, useEffect } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { GetSnapshotResponseDto, SnapshotDto } from '../api';

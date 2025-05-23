@@ -94,12 +94,12 @@ func NewService(
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }

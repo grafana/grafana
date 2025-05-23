@@ -417,11 +417,6 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
-	// XXX: Spanner cannot execute DDL statements in transactions
-	if mg.Dialect.DriverName() == Spanner {
-		return callback(sess)
-	}
-
 	if err := sess.Begin(); err != nil {
 		return err
 	}

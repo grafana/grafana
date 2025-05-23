@@ -44,6 +44,7 @@ export function GrafanaGroupLoader({
     {
       folderUid: groupIdentifier.namespace.uid,
       groupName: groupIdentifier.groupName,
+      limitAlerts: 0,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );

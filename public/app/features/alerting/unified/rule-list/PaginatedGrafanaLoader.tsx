@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans } from '@grafana/i18n';
@@ -8,12 +8,14 @@ import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
+import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
+import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
@@ -23,7 +25,7 @@ import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups
 export const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
 
   const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
 
@@ -40,6 +42,7 @@ export function PaginatedGrafanaLoader() {
   );
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
+  const hasNoRules = isEmpty(groups) && !isLoading;
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
@@ -81,6 +84,7 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
+        {hasNoRules && <GrafanaNoRulesCTA />}
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
@@ -109,11 +113,14 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
     [group.name, group.folderUid]
   );
 
+  const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
+
   return (
     <ListGroup
       key={group.name}
       name={group.name}
-      href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
+      href={detailsLink}
       isOpen={false}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />

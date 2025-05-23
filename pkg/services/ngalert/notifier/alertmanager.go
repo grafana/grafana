@@ -114,7 +114,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
-	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
+	l := log.New("ngalert.notifier")
 
 	opts := alertingNotify.GrafanaAlertmanagerOpts{
 		ExternalURL:        cfg.AppURL,
@@ -127,9 +127,8 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
 		EmailSender:   &emailSender{ns},
-		ImageProvider: newImageProvider(store, log.New("ngalert.notifier.image-provider")),
+		ImageProvider: newImageProvider(store, l.New("component", "image-provider")),
 		Decrypter:     decryptFn,
-		LoggerFactory: LoggerFactory,
 		Version:       setting.BuildVersion,
 		TenantKey:     "orgID",
 		TenantID:      orgID,
@@ -149,7 +148,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		DefaultConfiguration: cfg.UnifiedAlerting.DefaultConfiguration,
 		Store:                store,
 		stateStore:           stateStore,
-		logger:               l,
+		logger:               l.New("component", "alertmanager", opts.TenantKey, opts.TenantID), // similar to what the base does
 	}
 
 	return am, nil

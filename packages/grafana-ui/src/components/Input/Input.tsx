@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
-import useMeasure from 'react-use/lib/useMeasure';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

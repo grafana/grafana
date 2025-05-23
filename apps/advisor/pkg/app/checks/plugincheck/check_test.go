@@ -47,7 +47,7 @@ func TestRun(t *testing.T) {
 					Links: []advisor.CheckErrorLink{
 						{
 							Url:     "/plugins/plugin1",
-							Message: "Admin",
+							Message: "View plugin",
 						},
 					},
 				},

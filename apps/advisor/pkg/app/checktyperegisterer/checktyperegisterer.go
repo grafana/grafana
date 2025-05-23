@@ -3,6 +3,7 @@ package checktyperegisterer
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -70,8 +71,13 @@ func (r *Runner) createOrUpdate(ctx context.Context, log logging.Logger, obj res
 			if err != nil {
 				return err
 			}
-			annotations := current.GetAnnotations()
-			obj.SetAnnotations(annotations)
+			currentAnnotations := current.GetAnnotations()
+			if currentAnnotations == nil {
+				currentAnnotations = make(map[string]string)
+			}
+			annotations := obj.GetAnnotations()
+			maps.Copy(currentAnnotations, annotations)
+			obj.SetAnnotations(currentAnnotations) // This will update the annotations in the object
 			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
 			if err != nil {
 				// Ignore the error, it's probably due to a race condition
@@ -103,6 +109,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				Name:      t.ID(),
 				Namespace: r.namespace,
 				Annotations: map[string]string{
+					checks.NameAnnotation: t.Name(),
 					// Flag to indicate feature availability
 					checks.RetryAnnotation:       "1",
 					checks.IgnoreStepsAnnotation: "1",

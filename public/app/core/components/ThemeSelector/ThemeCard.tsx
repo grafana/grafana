@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { FeatureBadge, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ThemePreview } from '../Theme/ThemePreview';

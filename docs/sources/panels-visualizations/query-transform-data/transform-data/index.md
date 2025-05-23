@@ -201,6 +201,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+  > **Note:** If a variable will be used in this transformation, the default alias will be interpolated with the value of the variable. Please explicitly define an alias if you would like the alias to not be affected by variable changes.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, we added two fields together and named them Sum.
