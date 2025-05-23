@@ -29,6 +29,8 @@ export function semverCompare(a, b) {
 };
 
 export const findPreviousVersion = (versionList, version) => {
+  console.log(`Finding prev version for ${version[5]}`);
+
   let prev = null;
 
   for (let i = 0; i < versionList.length; i++) {
@@ -41,10 +43,14 @@ export const findPreviousVersion = (versionList, version) => {
 
     // we reached the combination of major, minor, patch and build is the same, i.e. we have reached the "version"
     if (semverCompare(version, other) === 0 && version[4] === other[4]) {
+      const tmp = prev;
       prev = null;
+      console.log(` Reached itself, cleaning prev. Prev prev == ${tmp[5]}`);
       continue;
     }
 
+    console.log(`  Found candidate: ${other[5]}`);
+    console.log(`  Prev: ${prev? prev[5]:"null"}`);
     if (prev == null) {
       prev = other;
       continue;
@@ -52,6 +58,7 @@ export const findPreviousVersion = (versionList, version) => {
 
     if (semverCompare(prev, other) > 0) {
       prev = other;
+      console.log(`  New prev: ${prev[5]}`);
     }
   }
 
@@ -60,7 +67,7 @@ export const findPreviousVersion = (versionList, version) => {
 
 
 const versionsByDate = [
-  "v10.4.19", "v11.6.2", "v11.5.5", "v11.4.5", "v11.3.7", "v11.2.10", "v12.0.0+security-01", "v11.2.9+security-01", "v11.3.6+security-01",
+  "v10.4.19", "v12.0.1", "v11.6.2", "v11.5.5", "v11.4.5", "v11.3.7", "v11.2.10", "v12.0.0+security-01", "v11.2.9+security-01", "v11.3.6+security-01",
   "v11.6.1+security-01", "v11.4.4+security-01", "v11.5.4+security-01", "v10.4.18+security-01", "v12.0.0", "v11.6.1",
   "v11.5.4", "v11.4.4", "v11.3.6", "v11.2.9", "v10.4.18", "v11.6.0+security-01", "v11.5.3+security-01", "v11.4.3+security-01",
   "v11.3.5+security-01", "v11.2.8+security-01", "v10.4.17+security-01", "v11.2.8", "v11.6.0", "v11.5.2", "v11.4.2",
