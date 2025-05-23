@@ -31,7 +31,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "Config"
+	return "config setting"
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -125,19 +125,19 @@ func (c *check) Init(ctx context.Context) error {
 }
 ```
 
-One example more interesting example is the `plugincheck`, where we need to gather all the plugins information from GCOM and store it in the check struct.
+One more interesting example is the `plugincheck`, where we gather all the plugin information from GCOM and store it in the check struct.
 
 ### 4. Implement Steps
 
-Each step implements the `checks.Step` interface, as for the `check` struct, the step will need to return some information (metadata) about the step, which will be used to populate the UI, and the logic to `Run` the step.
+Like the `Check` interface, each `Step` needs to return some information (metadata) about the step, which will be used to populate the UI, and the logic to `Run` the step.
 
-In our example, we will implement a step that will check if the `security.secret_key` is set correctly. In case it's not set, we only recommend the user to follow the documentation.
+In our example, we will implement a step that will check if the `security.secret_key` is set correctly. In case it's not correct, we recommend the user to follow the documentation.
 
 Check [`security_config_step.go`](./pkg/app/checks/configchecks/security_config_step.go) for the full implementation.
 
 ## Best Practices
 
-1. **Error Handling**: In general, avoid returning errors for known issues, these will mark the check report as failed. Only unexpected errors should be returned.
+1. **Error Handling**: In general, avoid returning errors for known issues, these will mark the check report as failed and the UI will render an error page. Only unexpected errors should be returned.
 
 2. **Type Safety**: Use type assertions to ensure you're working with the correct type of item.
 
