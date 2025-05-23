@@ -36,12 +36,12 @@ func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.F
 		url = dashboards.GetFolderURL(uid, slug)
 	}
 
-	created := meta.GetCreationTimestamp().UTC()
+	created := meta.GetCreationTimestamp().Local()
 	updated, _ := meta.GetUpdatedTimestamp()
 	if updated == nil {
 		updated = &created
 	} else {
-		tmp := updated.UTC()
+		tmp := updated.Local()
 		updated = &tmp
 	}
 
@@ -88,6 +88,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		updaterId = creatorId
 	}
 
+	folder.Version = int(item.GetGeneration())
 	folder.CreatedBy = creatorId
 	folder.UpdatedBy = updaterId
 
@@ -124,6 +125,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 			updaterId = creatorId
 		}
 
+		folder.Version = int(item.GetGeneration())
 		folder.CreatedBy = creatorId
 		folder.UpdatedBy = updaterId
 		folders = append(folders, folder)

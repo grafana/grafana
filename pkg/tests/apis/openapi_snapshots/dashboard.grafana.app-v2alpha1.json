@@ -1212,7 +1212,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "byte",
+              "format": "int64",
               "default": 0
             }
           }

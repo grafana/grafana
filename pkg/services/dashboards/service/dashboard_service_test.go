@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -42,8 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"golang.org/x/exp/slices"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -422,8 +423,8 @@ func TestGetAllDashboards(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetAllDashboards", mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
-		dashboard, err := service.GetAllDashboards(context.Background())
+		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{}, nil).Once()
+		dashboard, err := service.GetAllDashboardsByOrgId(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
 		fakeStore.AssertExpectations(t)
@@ -455,7 +456,7 @@ func TestGetAllDashboards(t *testing.T) {
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
-		dashes, err := service.GetAllDashboards(ctx)
+		dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashes)
 		k8sCliMock.AssertExpectations(t)
@@ -1118,6 +1119,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 			"spec": map[string]any{},
 		}}
+		fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": dashboardv0.APIVERSION,
@@ -1168,6 +1170,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		err := service.UnprovisionDashboard(ctx, 1)
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
+		fakeStore.AssertExpectations(t)
 	})
 }
 
@@ -1287,8 +1290,9 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 						UID: "general",
 					},
 				},
-				ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-				log: log.NewNopLogger(),
+				ac:        actest.FakeAccessControl{ExpectedEvaluate: true},
+				acService: &actest.FakeService{},
+				log:       log.NewNopLogger(),
 			}
 
 			cmd := &folder.CreateFolderCommand{
@@ -1582,6 +1586,8 @@ func TestSearchDashboards(t *testing.T) {
 			},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 		{
 			UID:         "uid2",
@@ -1593,6 +1599,8 @@ func TestSearchDashboards(t *testing.T) {
 			Tags:        []string{},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1608,7 +1616,9 @@ func TestSearchDashboards(t *testing.T) {
 				Title:       "Dashboard 1",
 				Tags:        []string{"tag1", "tag2"},
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 			{
 				UID:         "uid2",
@@ -1616,7 +1626,9 @@ func TestSearchDashboards(t *testing.T) {
 				OrgID:       1,
 				Title:       "Dashboard 2",
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
@@ -1631,6 +1643,7 @@ func TestSearchDashboards(t *testing.T) {
 			{
 				UID:   "f1",
 				Title: "testing-folder-1",
+				ID:    1,
 			},
 		}
 		fakeFolders.ExpectedHitList = expectedFolders
@@ -2496,6 +2509,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
+					acService:                 &actest.FakeService{},
 				}
 				service.RegisterDashboardPermissions(permService)
 
@@ -2564,6 +2578,7 @@ func TestCleanUpDashboard(t *testing.T) {
 
 			ctx := context.Background()
 			dashboardUID := "dash-uid"
+			dashboardID := int64(1)
 			orgID := int64(1)
 
 			// Setup mocks
@@ -2573,11 +2588,12 @@ func TestCleanUpDashboard(t *testing.T) {
 				fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{
 					OrgID: orgID,
 					UID:   dashboardUID,
+					ID:    dashboardID,
 				}).Return(tc.cleanupError).Maybe()
 			}
 
 			// Execute
-			err := service.CleanUpDashboard(ctx, dashboardUID, orgID)
+			err := service.CleanUpDashboard(ctx, dashboardUID, dashboardID, orgID)
 
 			// Assert
 			if tc.expectedError != nil {
@@ -2595,11 +2611,12 @@ func TestCleanUpDashboard(t *testing.T) {
 
 func TestK8sDashboardCleanupJob(t *testing.T) {
 	tests := []struct {
-		name           string
-		featureEnabled bool
-		batchSize      int
-		setupFunc      func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
-		verifyFunc     func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
+		name            string
+		featureEnabled  bool
+		readFromUnified bool
+		batchSize       int
+		setupFunc       func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
+		verifyFunc      func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
 	}{
 		{
 			name:           "Should not run cleanup when feature flag is disabled",
@@ -2607,9 +2624,16 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			batchSize:      10,
 		},
 		{
-			name:           "Should process dashboard cleanup for all orgs",
-			featureEnabled: true,
-			batchSize:      10,
+			name:            "Should not run cleanup when feature flag is enabled but we're reading from legacy",
+			featureEnabled:  true,
+			readFromUnified: false,
+			batchSize:       10,
+		},
+		{
+			name:            "Should process dashboard cleanup for all orgs",
+			featureEnabled:  true,
+			readFromUnified: true,
+			batchSize:       10,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organizations
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2677,9 +2701,10 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			},
 		},
 		{
-			name:           "Should handle pagination and batching when processing large sets of dashboards",
-			featureEnabled: true,
-			batchSize:      3,
+			name:            "Should handle pagination and batching when processing large sets of dashboards",
+			featureEnabled:  true,
+			readFromUnified: true,
+			batchSize:       3,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organization
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2763,6 +2788,8 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 			sqlStore, _ := sqlstore.InitTestDB(t)
 			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
+			dual := dualwrite.NewMockService(t)
+			dual.On("ReadFromUnified", mock.Anything, mock.Anything).Return(tc.readFromUnified, nil)
 
 			fakeStore := dashboards.FakeDashboardStore{}
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2782,6 +2809,7 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 				serverLockService:      lockService,
 				kvstore:                kv,
 				features:               features,
+				dual:                   dual,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)

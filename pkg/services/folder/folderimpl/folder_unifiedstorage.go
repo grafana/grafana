@@ -591,6 +591,8 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		NewTitle:       cmd.NewTitle,
 		NewDescription: cmd.NewDescription,
 		SignedInUser:   user,
+		Overwrite:      cmd.Overwrite,
+		Version:        cmd.Version,
 	})
 
 	if err != nil {

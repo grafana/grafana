@@ -35,9 +35,10 @@ jobs:
         with:
           # required for the `grafana/grafana-github-actions/has-matching-release-tag` action to work
           fetch-depth: 0
+          persist-credentials: false
 
       - name: "Setup Go"
-        uses: "actions/setup-go@v4"
+        uses: "actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639"
         with:
           go-version-file: go.mod
 

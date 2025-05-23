@@ -353,7 +353,6 @@ describe('getPanelMenu()', () => {
   });
 
   describe('onNavigateToExplore', () => {
-    const testSubUrl = '/testSubUrl';
     const testUrl = '/testUrl';
     const windowOpen = jest.fn();
     let event: any;
@@ -387,15 +386,16 @@ describe('getPanelMenu()', () => {
       expect(windowOpen).toHaveBeenLastCalledWith(testUrl);
     });
 
-    it('should navigate to url with subUrl', () => {
-      config.appSubUrl = testSubUrl;
+    it('should navigate to url without subUrl even if appSubUrl is set', () => {
+      const exploreUrl = '/explore?param1=a&param2=b';
+      config.appSubUrl = 'grafana';
       explore.onClick!(event);
 
       const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
 
-      openInNewWindow(testUrl);
-
-      expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
+      openInNewWindow(`${exploreUrl}`);
+      // When opening in a new window, onNavigateToExplore should not include the subUrl, as getExploreUrl already handles it.
+      expect(windowOpen).toHaveBeenLastCalledWith(`${exploreUrl}`);
     });
   });
 

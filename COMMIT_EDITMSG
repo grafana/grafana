@@ -1,0 +1,24 @@
+TableNG: Fix interpolation for actions (#104577)
+
+(cherry picked from commit 6c0250dde285affbdc56edcd069473f33d48b3be)
+
+# Conflicts:
+#	packages/grafana-ui/src/components/Table/TableNG/Cells/TableCellNG.tsx
+#
+# It looks like you may be committing a cherry-pick.
+# If this is not correct, please run
+#	git update-ref -d CHERRY_PICK_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    Adela Almasan <88068998+adela-almasan@users.noreply.github.com>
+# Date:      Wed Apr 30 09:42:15 2025 -0500
+#
+# On branch backport-104577-to-release-12.0.1
+# Your branch is up to date with 'origin/backport-104577-to-release-12.0.1'.
+#
+# You are currently cherry-picking commit 6c0250dde28.
+#

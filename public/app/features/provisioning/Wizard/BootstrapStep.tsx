@@ -57,7 +57,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   useEffect(() => {
     const { target } = options[0];
     setValue('repository.sync.target', target);
-    onOptionSelect(target !== 'folder' || resourceCount > 0);
+    onOptionSelect(settingsData?.legacyStorage || resourceCount > 0);
     // Only run this effect on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
