@@ -10,7 +10,6 @@ import (
 )
 
 func MigrateResourceStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
-
 	mg := migrator.NewScopedMigrator(engine, cfg, "resource")
 	mg.AddCreateMigration()
 
