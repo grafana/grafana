@@ -15,9 +15,11 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/corerole"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -43,6 +45,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
+
+	enableAuthZResources bool
 }
 
 func RegisterAPIService(
@@ -55,11 +59,12 @@ func RegisterAPIService(
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:        store,
-		sso:          ssoService,
-		authorizer:   authorizer,
-		accessClient: client,
-		display:      user.NewLegacyDisplayREST(store),
+		store:                store,
+		sso:                  ssoService,
+		authorizer:           authorizer,
+		accessClient:         client,
+		display:              user.NewLegacyDisplayREST(store),
+		enableAuthZResources: true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -89,6 +94,10 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	if b.enableAuthZResources {
+		iamv0b.AddToScheme(scheme)
+	}
+
 	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
 
 	// Link this version to the internal representation.
@@ -123,12 +132,29 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
+	if b.enableAuthZResources {
+		// v0alpha1
+		coreRoleResource := iamv0b.CoreRoleInfo
+		storage[coreRoleResource.StoragePath()] = corerole.NewLegacyStore(b.store, b.accessClient)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return iamv0.GetOpenAPIDefinitions
+	defs := iamv0.GetOpenAPIDefinitions
+	if b.enableAuthZResources {
+		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			def1 := iamv0.GetOpenAPIDefinitions(ref)
+			def2 := iamv0b.GetOpenAPIDefinitions(ref)
+			for k, v := range def2 {
+				def1[k] = v
+			}
+			return def1
+		}
+	}
+	return defs
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {

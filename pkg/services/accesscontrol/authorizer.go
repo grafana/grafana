@@ -159,6 +159,7 @@ func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, re
 
 	check := Checker(ident, action)
 	return func(name, _ string) bool {
+		// TODO fix here the resource is not necessarily the same the scope e.g. core role
 		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
 	}, nil
 }

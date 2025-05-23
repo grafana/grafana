@@ -18,14 +18,16 @@ func NewRolespecPermission() *RolespecPermission {
 // +k8s:openapi-gen=true
 type RoleSpec struct {
 	// Display name of the role
-	Title   string `json:"title"`
-	Version int64  `json:"version"`
-	Group   string `json:"group"`
+	Title       string               `json:"title"`
+	Version     int64                `json:"version"`
+	Group       string               `json:"group"`
+	Permissions []RolespecPermission `json:"permissions"`
+	// Required for authz checks
 	// TODO:
 	// delegatable?: bool
 	// created?
 	// updated?
-	Permissions []RolespecPermission `json:"permissions"`
+	InternalID int64 `json:"internalID"`
 }
 
 // NewRoleSpec creates a new RoleSpec object.

@@ -1767,6 +1767,14 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 		},
+		{
+			Name:              "kubernetesAuthzApis",
+			Description:       "Registers AuthZ /apis endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 

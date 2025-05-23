@@ -25,6 +25,12 @@ type CoreRole struct {
 	Status CoreRoleStatus `json:"status" yaml:"status"`
 }
 
+// TODO How do we handle this? This is manually added and hacky.
+// It's used for AuthZ Check to determine if the user is allowed on this specific resource
+func (o CoreRole) AuthID() string {
+	return fmt.Sprintf("%d", o.Spec.InternalID)
+}
+
 func (o *CoreRole) GetSpec() any {
 	return o.Spec
 }

@@ -26,6 +26,9 @@ type LegacyIdentityStore interface {
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
 	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
+
+	GetRoleInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetRoleInternalIDQuery) (*GetRoleInternalIDResult, error)
+	ListCoreRoles(ctx context.Context, ns claims.NamespaceInfo, query ListCoreRolesQuery) (*ListCoreRolesResult, error)
 }
 
 var (

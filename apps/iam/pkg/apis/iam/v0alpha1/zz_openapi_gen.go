@@ -180,8 +180,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -192,8 +191,16 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"internalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required for authz checks delegatable?: bool created? updated?",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "version", "group", "permissions", "internalID"},
 			},
 		},
 		Dependencies: []string{
@@ -734,8 +741,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -746,8 +752,16 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							},
 						},
 					},
+					"internalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required for authz checks delegatable?: bool created? updated?",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "version", "group", "permissions", "internalID"},
 			},
 		},
 		Dependencies: []string{
@@ -1594,8 +1608,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1606,8 +1619,16 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"internalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required for authz checks delegatable?: bool created? updated?",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
-				Required: []string{"title", "version", "group", "permissions"},
+				Required: []string{"title", "version", "group", "permissions", "internalID"},
 			},
 		},
 		Dependencies: []string{
