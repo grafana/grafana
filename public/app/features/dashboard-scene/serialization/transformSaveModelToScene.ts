@@ -45,6 +45,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -55,7 +56,6 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
-import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;

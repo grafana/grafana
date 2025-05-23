@@ -53,12 +53,7 @@ function isLayoutEmpty(layout: DashboardV2Spec['layout']) {
   switch (layout.kind) {
     case 'GridLayout': {
       const items = layout.spec.items || [];
-      return (
-        items.length === 0 ||
-        items.every((item) => {
-          return false;
-        })
-      );
+      return items.length === 0;
     }
 
     case 'AutoGridLayout': {
