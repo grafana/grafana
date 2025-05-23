@@ -43,7 +43,7 @@ type Store interface {
 		users []accesscontrol.User,
 		cmd SetResourcePermissionCommand,
 		hook UserResourceHookFunc,
-	) ([]*accesscontrol.ResourcePermission, error)
+	) ([]accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
@@ -237,7 +237,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 }
 
 // SetUsersPermission sets the same permission for multiple users on a resource
-func (s *Service) SetUsersPermission(ctx context.Context, orgID int64, users []accesscontrol.User, resourceID, permission string) ([]*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUsersPermission(ctx context.Context, orgID int64, users []accesscontrol.User, resourceID, permission string) ([]accesscontrol.ResourcePermission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUsersPermission")
 	defer span.End()
 

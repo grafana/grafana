@@ -134,7 +134,7 @@ func (s *store) SetUsersResourcePermission(
 	ctx context.Context, orgID int64, users []accesscontrol.User,
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
-) ([]*accesscontrol.ResourcePermission, error) {
+) ([]accesscontrol.ResourcePermission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUsersResourcePermission")
 	defer span.End()
 
@@ -149,7 +149,7 @@ func (s *store) SetUsersResourcePermission(
 		}
 	}
 
-	var permissions []*accesscontrol.ResourcePermission
+	var permissions []accesscontrol.ResourcePermission
 	var err error
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -164,7 +164,7 @@ func (s *store) setUsersResourcePermission(
 	sess *db.Session, orgID int64, users []accesscontrol.User,
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
-) ([]*accesscontrol.ResourcePermission, error) {
+) ([]accesscontrol.ResourcePermission, error) {
 	// Create a map to store user IDs for quick lookup
 	userIDs := make(map[int64]struct{}, len(users))
 	for _, usr := range users {
@@ -241,7 +241,7 @@ func (s *store) setUsersResourcePermission(
 	}
 
 	// Convert to resource permissions
-	permissions := make([]*accesscontrol.ResourcePermission, 0, len(users))
+	permissions := make([]accesscontrol.ResourcePermission, 0, len(users))
 	permissionsByUser := make(map[int64][]flatResourcePermission)
 	for _, p := range allPermissions {
 		permissionsByUser[p.UserId] = append(permissionsByUser[p.UserId], p)
@@ -250,7 +250,7 @@ func (s *store) setUsersResourcePermission(
 	for _, usr := range users {
 		if userPerms, ok := permissionsByUser[usr.ID]; ok {
 			if perm := flatPermissionsToResourcePermission(scope, userPerms); perm != nil {
-				permissions = append(permissions, perm)
+				permissions = append(permissions, *perm)
 			}
 		}
 	}
