@@ -49,6 +49,7 @@ import {
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
 } from './transformSaveModelToScene';
+import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 
 describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {
@@ -844,9 +845,9 @@ describe('transformSaveModelToScene', () => {
 
       const row2 = layout.state.rows[1];
 
-      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
+      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowItemRepeaterBehavior);
 
-      const repeatBehavior = row2.state.$behaviors?.[0] as RowRepeaterBehavior;
+      const repeatBehavior = row2.state.$behaviors?.[0] as RowItemRepeaterBehavior;
       expect(repeatBehavior.state.variableName).toBe('server');
 
       const lastRow = layout.state.rows[layout.state.rows.length - 1];

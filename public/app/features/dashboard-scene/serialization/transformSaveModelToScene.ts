@@ -55,6 +55,7 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -238,7 +239,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
         children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
       }),
     }),
-    $behaviors: row.repeat ? [new RowRepeaterBehavior({ variableName: row.repeat })] : undefined,
+    $behaviors: row.repeat ? [new RowItemRepeaterBehavior({ variableName: row.repeat })] : undefined,
   });
   return rowItem;
 }
