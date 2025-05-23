@@ -167,11 +167,15 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	fmt.Println("Initializing resource server for instance ", s.cfg.InstanceID)
 	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	fmt.Println("done Initializing resource server for instance ", s.cfg.InstanceID, err)
 	if err != nil {
 		return err
 	}
+	fmt.Println("providing grpc service for instance ", s.cfg.InstanceID)
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
+	fmt.Println("done providing grpc service for instance ", s.cfg.InstanceID)
 	if err != nil {
 		return err
 	}
@@ -218,6 +222,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// start the gRPC server
 	go func() {
+		fmt.Println("starting grpc server for instance ", s.cfg.InstanceID)
 		err := s.handler.Run(ctx)
 		if err != nil {
 			s.stoppedCh <- err
