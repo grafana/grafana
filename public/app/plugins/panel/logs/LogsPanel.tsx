@@ -661,7 +661,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1.5),
   }),
   logListContainer: css({
-    marginBottom: theme.spacing(1.5),
     minHeight: '100%',
     maxHeight: '100%',
     display: 'flex',
