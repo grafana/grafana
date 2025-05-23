@@ -45,7 +45,7 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, onLogLineHover } = useLogListContext();
+  const { detailsDisplayed, dedupStrategy, onLogLineHover } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -99,6 +99,39 @@ export const LogLine = ({
         onFocus={handleMouseOver}
       >
         <LogLineMenu styles={styles} log={log} />
+        {dedupStrategy !== LogsDedupStrategy.none && (
+          <div className={`${styles.duplicates}`}>
+            {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
+          </div>
+        )}
+        {log.hasError && (
+          <div className={`${styles.hasError}`}>
+            <Tooltip
+              content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', { errorMessage: log.errorMessage })}
+              placement="right"
+              theme="error"
+            >
+              <Icon
+                className={styles.logIconError}
+                name="exclamation-triangle"
+                aria-label={t('logs.log-line.has-error', 'Has errors')}
+                size="xs"
+              />
+            </Tooltip>
+          </div>
+        )}
+        {log.isSampled && (
+          <div className={`${styles.isSampled}`}>
+            <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
+              <Icon
+                className={styles.logIconInfo}
+                name="info-circle"
+                size="xs"
+                aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+              />
+            </Tooltip>
+          </div>
+        )}
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
@@ -153,43 +186,8 @@ interface LogProps {
 }
 
 const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
-  const { dedupStrategy } = useLogListContext();
-  const { t } = useTranslate();
   return (
     <>
-      {dedupStrategy !== LogsDedupStrategy.none && (
-        <span className={`${styles.duplicates} field`}>
-          {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
-        </span>
-      )}
-      {log.hasError && (
-        <span className={`${styles.hasError} field`}>
-          <Tooltip
-            content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', { errorMessage: log.errorMessage })}
-            placement="right"
-            theme="error"
-          >
-            <Icon
-              className={styles.logIconError}
-              name="exclamation-triangle"
-              aria-label={t('logs.log-line.has-error', 'Has errors')}
-              size="xs"
-            />
-          </Tooltip>
-        </span>
-      )}
-      {log.isSampled && (
-        <span className={`${styles.isSampled} field`}>
-          <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
-            <Icon
-              className={styles.logIconInfo}
-              name="info-circle"
-              size="xs"
-              aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
-            />
-          </Tooltip>
-        </span>
-      )}
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
@@ -334,12 +332,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-block',
     }),
     duplicates: css({
-      display: 'inline-block',
+      flexShrink: 0,
       textAlign: 'center',
       width: theme.spacing(4.5),
     }),
     hasError: css({
-      display: 'inline-block',
+      flexShrink: 0,
       width: theme.spacing(2),
       '& svg': {
         position: 'relative',
@@ -347,7 +345,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     isSampled: css({
-      display: 'inline-block',
+      flexShrink: 0,
       width: theme.spacing(2),
       '& svg': {
         position: 'relative',

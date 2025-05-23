@@ -265,7 +265,7 @@ const LogListComponent = ({
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, showDetails, displayedFields]);
+  }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
