@@ -209,6 +209,10 @@ You can use the `org_attribute_path` and `org_mapping` configuration options to 
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
+{{< admonition type="note" >}}
+When using `org_attribute_path`, the value returned by the JMESPath expression must be an array, not a string.
+{{< /admonition >}}
+
 #### Role mapping examples
 
 This section includes examples of JMESPath expressions used for role mapping.
