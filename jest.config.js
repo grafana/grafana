@@ -21,7 +21,7 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
-  "react-data-grid"
+  'react-data-grid',
 ].join('|');
 
 module.exports = {
