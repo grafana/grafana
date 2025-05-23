@@ -54,7 +54,7 @@ import (
 var testData embed.FS
 
 func TestMain(m *testing.M) {
-	testsuite.RunButSkipOnSpanner(m)
+	testsuite.Run(m)
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {

@@ -6,8 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"cloud.google.com/go/spanner/spannertest"
 )
 
 // ITestDB is an interface of arguments for testing db
@@ -45,8 +43,6 @@ func GetTestDB(dbType string) (*TestDB, error) {
 		return postgresTestDB()
 	case "sqlite3":
 		return sqLite3TestDB()
-	case "spanner":
-		return spannerTestDB()
 	}
 
 	return nil, fmt.Errorf("unknown test db type: %s", dbType)
@@ -153,52 +149,6 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
-		Cleanup:    func() {},
-	}, nil
-}
-
-func spannerTestDB() (*TestDB, error) {
-	// See https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L56-L81 for connection string options.
-
-	spannerDB := os.Getenv("SPANNER_DB")
-	if spannerDB == "" {
-		spannerDB = "emulator"
-	}
-
-	if spannerDB == "spannertest" {
-		// Start in-memory spannertest instance.
-		srv, err := spannertest.NewServer("localhost:0")
-		if err != nil {
-			return nil, err
-		}
-
-		return &TestDB{
-			DriverName: "spanner",
-			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true", srv.Addr),
-			Cleanup:    srv.Close,
-		}, nil
-	}
-
-	if spannerDB == "emulator" {
-		host := os.Getenv("SPANNER_EMULATOR_HOST")
-		if host == "" {
-			host = "localhost:9010"
-		}
-
-		// To create instance and database manually, run:
-		//
-		//  $ curl "localhost:9020/v1/projects/grafanatest/instances" --data '{"instanceId": "'grafanatest'"}'
-		//  $ curl "localhost:9020/v1/projects/grafanatest/instances/grafanatest/databases" --data '{"createStatement": "CREATE DATABASE `grafanatest`"}'
-		return &TestDB{
-			DriverName: "spanner",
-			ConnStr:    fmt.Sprintf("%s/projects/grafanatest/instances/grafanatest/databases/grafanatest;usePlainText=true;inMemSequenceGenerator=true", host),
-			Cleanup:    func() {},
-		}, nil
-	}
-
-	return &TestDB{
-		DriverName: "spanner",
-		ConnStr:    spannerDB,
 		Cleanup:    func() {},
 	}, nil
 }

@@ -6,7 +6,6 @@ package extensions
 import (
 	_ "cloud.google.com/go/kms/apiv1"
 	_ "cloud.google.com/go/kms/apiv1/kmspb"
-	_ "cloud.google.com/go/spanner"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys"
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"

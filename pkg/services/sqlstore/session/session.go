@@ -110,11 +110,6 @@ func execWithReturningId(ctx context.Context, driverName string, query string, s
 		}
 		return id, nil
 	} else {
-		if driverName == "spanner" {
-			// LastInsertId requires THEN RETURN directive.
-			query = fmt.Sprintf("%s THEN RETURN id", query)
-		}
-
 		res, err := sess.Exec(ctx, query, args...)
 		if err != nil {
 			return id, err

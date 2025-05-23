@@ -146,11 +146,6 @@ func (sess *DBSession) WithReturningID(driverName string, query string, args []a
 			return id, err
 		}
 	} else {
-		if driverName == migrator.Spanner {
-			// Only works with INSERT statements.
-			query = fmt.Sprintf("%s THEN RETURN id", query)
-		}
-
 		sqlOrArgs := append([]any{query}, args...)
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {

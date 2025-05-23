@@ -8,8 +8,6 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -141,12 +139,10 @@ func getRetryErrors(t *testing.T, store *SQLStore) []error {
 	switch store.GetDialect().DriverName() {
 	case migrator.SQLite:
 		retryErrors = []error{sqlite3.Error{Code: sqlite3.ErrBusy}, sqlite3.Error{Code: sqlite3.ErrLocked}}
-	case migrator.Spanner:
-		retryErrors = []error{grpcstatus.Error(codes.Aborted, "aborted transaction")}
 	}
 
 	if len(retryErrors) == 0 {
-		t.Skip("This test only works with sqlite or spanner")
+		t.Skip("This test only works with sqlite")
 	}
 	return retryErrors
 }
