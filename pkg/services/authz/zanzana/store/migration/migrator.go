@@ -8,12 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string, logger log.Logger) error {
+func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, fs embed.FS, path string, logger log.Logger) error {
+	connStr := grafanaDBConfg.ConnectionString
 	// running grafana migrations
 	engine, err := xorm.NewEngine(dbType, connStr)
 	if err != nil {
@@ -32,6 +34,10 @@ func Run(cfg *setting.Cfg, dbType, connStr string, fs embed.FS, path string, log
 	case migrator.SQLite:
 		// openfga expects sqlite but grafana uses sqlite3
 		dbType = "sqlite"
+	case migrator.Postgres:
+
+		// Parse and transform the connection string to the format OpenFGA expects
+		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfg)
 	}
 
 	migrationErr := migrate.RunMigrations(migrate.MigrationConfig{
@@ -69,75 +75,21 @@ type migration struct {
 }
 
 func getMigrations(fs embed.FS, path string) ([]migration, error) {
+	migrations := make([]migration, 0, 1)
+
 	// create the drop migrations
-	dropMigrations := []migration{
-		{
-			name: "zanzana_removal_grafana_migrations_to_openfga_migrations",
-			migration: &rawMigration{stmts: []string{
-				`DROP TABLE IF EXISTS tuple;
-				DROP TABLE IF EXISTS authorization_model;
-				DROP TABLE IF EXISTS store;
-				DROP TABLE IF EXISTS assertion;
-				DROP TABLE IF EXISTS changelog;`,
-			}},
-		},
-	}
-	return dropMigrations, nil
+	data := `DROP TABLE IF EXISTS tuple;
+	DROP TABLE IF EXISTS authorization_model;
+	DROP TABLE IF EXISTS store;
+	DROP TABLE IF EXISTS assertion;
+	DROP TABLE IF EXISTS changelog;`
 
-	// entries, err := fs.ReadDir(path)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to read migration dir: %w", err)
-	// }
+	migrations = append(migrations, migration{
+		name:      "zanzana_removal_grafana_migrations_to_openfga_migrations.sql",
+		migration: &rawMigration{stmts: []string{data}},
+	})
 
-	// // parseStatements extracts statements from a sql file so we can execute
-	// // them as separate migrations. OpenFGA uses Goose as their migration egine
-	// // and Goose uses a single sql file for both up and down migrations.
-	// // Grafana only supports up migration so we strip out the down migration
-	// // and parse each individual statement
-	// parseStatements := func(data []byte) ([]string, error) {
-	// 	scripts := strings.Split(strings.TrimPrefix(string(data), "-- +goose Up"), "-- +goose Down")
-	// 	if len(scripts) != 2 {
-	// 		return nil, errors.New("malformed migration file")
-	// 	}
-
-	// 	// We assume that up migrations are always before down migrations
-	// 	parts := strings.SplitAfter(scripts[0], ";")
-	// 	stmts := make([]string, 0, len(parts))
-	// 	for _, p := range parts {
-	// 		p = strings.TrimSpace(p)
-	// 		if p != "" {
-	// 			stmts = append(stmts, p)
-	// 		}
-	// 	}
-
-	// 	return stmts, nil
-	// }
-
-	// formatName := func(name string) string {
-	// 	// Each migration file start with XXX where X is a number.
-	// 	// We remove that part and prefix each migration with "zanzana".
-	// 	return strings.TrimSuffix("zanzana"+name[3:], ".sql")
-	// }
-
-	// migrations := make([]migration, 0, len(entries))
-	// for _, e := range entries {
-	// 	data, err := fs.ReadFile(path + "/" + e.Name())
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to read migration file: %w", err)
-	// 	}
-
-	// 	stmts, err := parseStatements(data)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to parse migration: %w", err)
-	// 	}
-
-	// 	migrations = append(migrations, migration{
-	// 		name:      formatName(e.Name()),
-	// 		migration: &rawMigration{stmts: stmts},
-	// 	})
-	// }
-
-	// return migrations, nil
+	return migrations, nil
 }
 
 var _ migrator.CodeMigration = (*rawMigration)(nil)
@@ -158,4 +110,15 @@ func (m *rawMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) err
 
 func (m *rawMigration) SQL(dialect migrator.Dialect) string {
 	return strings.Join(m.stmts, "\n")
+}
+
+// constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs
+// parses into a format like
+// postgresql://grafana:password@127.0.0.1:5432/grafana?sslmode=disable&sslcert=&sslkey=&sslrootcert=
+func constructPostgresConnStrForOpenFGA(grafanaDBCfg *sqlstore.DatabaseConfig) string {
+	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s/%s", grafanaDBCfg.User, grafanaDBCfg.Pwd, grafanaDBCfg.Host, grafanaDBCfg.Name)
+
+	sslParams := fmt.Sprintf("?sslmode=%s&sslcert=%s&sslkey=%s&sslrootcert=%s", grafanaDBCfg.SslMode, grafanaDBCfg.ClientCertPath, grafanaDBCfg.ClientKeyPath, grafanaDBCfg.CaCertPath)
+
+	return connectionStr + sslParams
 }

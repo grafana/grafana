@@ -31,7 +31,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		connStr := sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, connStr, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -39,19 +39,18 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
-		if err := migration.Run(cfg, migrator.MySQL, connStr, assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg, assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(connStr, zanzanaDBCfg)
 	case migrator.Postgres:
 		// Parse and transform the connection string to the format OpenFGA expects
-		postgresConnStr := constructPostgresConnStr(grafanaDBCfg)
-		if err := migration.Run(cfg, migrator.Postgres, postgresConnStr, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		return postgres.New(postgresConnStr, zanzanaDBCfg)
+		return postgres.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	}
 
 	// Should never happen
@@ -67,25 +66,23 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		grafanaDBCfg.ConnectionString = sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg, assets.EmbedMigrations, assets.SqliteMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
-		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg.ConnectionString+"&parseTime=true", assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, grafanaDBCfg, assets.EmbedMigrations, assets.MySQLMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
-		// Parse and transform the connection string to the format OpenFGA expects
-		postgresConnStr := constructPostgresConnStr(grafanaDBCfg)
-		if err := migration.Run(cfg, migrator.Postgres, postgresConnStr, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, grafanaDBCfg, assets.EmbedMigrations, assets.PostgresMigrationDir, logger); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		return postgres.New(postgresConnStr, zanzanaDBCfg)
+		return postgres.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	}
 
 	// Should never happen
@@ -122,15 +119,4 @@ func sqliteConnectionString(v string) string {
 
 	// hardcode zanzana.db for now
 	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
-}
-
-// constructPostgresConnStr parses a PostgreSQL connection string into a map of key-value pairs
-// parses into a format like
-// postgresql://grafana:password@127.0.0.1:5432/grafana?sslmode=disable&sslcert=&sslkey=&sslrootcert=
-func constructPostgresConnStr(grafanaDBCfg *sqlstore.DatabaseConfig) string {
-	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s/%s", grafanaDBCfg.User, grafanaDBCfg.Pwd, grafanaDBCfg.Host, grafanaDBCfg.Name)
-
-	sslParams := fmt.Sprintf("?sslmode=%s&sslcert=%s&sslkey=%s&sslrootcert=%s", grafanaDBCfg.SslMode, grafanaDBCfg.ClientCertPath, grafanaDBCfg.ClientKeyPath, grafanaDBCfg.CaCertPath)
-
-	return connectionStr + sslParams
 }
