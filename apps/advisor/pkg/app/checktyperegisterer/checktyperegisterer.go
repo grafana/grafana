@@ -73,8 +73,8 @@ func (r *Runner) createOrUpdate(ctx context.Context, log logging.Logger, obj res
 			}
 			currentAnnotations := current.GetAnnotations()
 			annotations := obj.GetAnnotations()
-			maps.Copy(annotations, currentAnnotations)
-			obj.SetAnnotations(annotations)
+			maps.Copy(currentAnnotations, annotations)
+			obj.SetAnnotations(currentAnnotations)
 			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
 			if err != nil {
 				// Ignore the error, it's probably due to a race condition
