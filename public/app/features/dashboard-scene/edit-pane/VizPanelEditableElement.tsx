@@ -123,10 +123,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof AutoGridItem) {
-      this.panel.parent.scrollIntoView();
-    }
-    if (this.panel.parent instanceof DashboardGridItem) {
+    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
       this.panel.parent.scrollIntoView();
     }
   }
