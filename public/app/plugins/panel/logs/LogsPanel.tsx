@@ -297,7 +297,7 @@ export const LogsPanel = ({
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
-  }, [dedupStrategy, panelData]);
+  }, [dedupStrategy, enableInfiniteScrolling, panelData]);
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
