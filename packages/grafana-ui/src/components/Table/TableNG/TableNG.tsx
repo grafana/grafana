@@ -159,10 +159,10 @@ export function TableNG(props: TableNGProps) {
       setIsContextMenuOpen(false);
     }
 
-    addEventListener('click', onClick);
+    window.addEventListener('click', onClick);
 
     return () => {
-      removeEventListener('click', onClick);
+      window.removeEventListener('click', onClick);
     };
   }, [isContextMenuOpen]);
 
@@ -280,8 +280,11 @@ export function TableNG(props: TableNGProps) {
 
     // Helper function to get displayed value
     const getDisplayedValue = (row: TableRow, key: string) => {
-      const field = props.data.fields.find((field) => field.name === key)!;
-      const displayedValue = formattedValueToString(field.display!(row[key]));
+      const field = props.data.fields.find((field) => getDisplayName(field) === key);
+      if (!field || !field.display) {
+        return '';
+      }
+      const displayedValue = formattedValueToString(field.display(row[key]));
       return displayedValue;
     };
 

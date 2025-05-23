@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
@@ -159,12 +160,12 @@ func (r *legacyResourceResourceMigrator) Close() error {
 }
 
 // CloseWithResults implements resource.BulkResourceWriter.
-func (r *legacyResourceResourceMigrator) CloseWithResults() (*resource.BulkResponse, error) {
-	return &resource.BulkResponse{}, nil
+func (r *legacyResourceResourceMigrator) CloseWithResults() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
 }
 
 // Write implements resource.BulkResourceWriter.
-func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourcepb.ResourceKey, value []byte) error {
 	// Reuse the same parse+cleanup logic
 	parsed, err := r.parser.Parse(ctx, &repository.FileInfo{
 		Path: "", // empty path to ignore file system

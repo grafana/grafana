@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { contentTypeOptions, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -33,6 +33,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
 
   // forces re-init of first SuggestionsInput(s), since they are stateful and don't respond to 'value' prop changes to be able to clear them :(
   const [entryKey, setEntryKey] = useState(Math.random().toString());
+  const { t } = useTranslate();
 
   const changeParamValue = (paramValue: string) => {
     setParamValue(paramValue);

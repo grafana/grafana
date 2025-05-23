@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Icon, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { t, Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 import { UserSession } from 'app/types';
 

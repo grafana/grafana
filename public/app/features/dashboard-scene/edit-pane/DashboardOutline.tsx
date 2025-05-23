@@ -4,9 +4,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -47,6 +47,7 @@ function DashboardOutlineNode({
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
+  const { t } = useTranslate();
 
   const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
   const elementInfo = editableElement.getEditableElementInfo();

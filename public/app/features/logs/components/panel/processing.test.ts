@@ -157,7 +157,7 @@ describe('preProcessLogs', () => {
       container = document.createElement('div');
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(200);
       entry = new Array(2 * getTruncationLength(null)).fill('e').join('');
-      longLog = createLogLine({ entry });
+      longLog = createLogLine({ entry, labels: { field: 'value' } });
     });
 
     test('Long lines that are not truncated are not modified', () => {
@@ -176,6 +176,18 @@ describe('preProcessLogs', () => {
       expect(longLog.collapsed).toBe(true);
       expect(longLog.body).not.toBe(entry);
       expect(entry).toContain(longLog.body);
+    });
+
+    test('Considers the displayed fields to set the collapsed state', () => {
+      // Make container half of the size
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(100);
+
+      expect(longLog.collapsed).toBeUndefined();
+
+      // Log line body is not included in the displayed fields, so it fits in the container
+      longLog.updateCollapsedState(['field'], container);
+
+      expect(longLog.collapsed).toBeUndefined();
     });
 
     test('Updates the body based on the collapsed state', () => {

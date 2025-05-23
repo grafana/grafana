@@ -34,7 +34,7 @@ for (const language of languages) {
   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds, workflowStepId);
 }
 
-async function getLanguages(projectId) {
+async function getLanguages(projectId: number) {
   try {
     const project = await projectsGroupsApi.getProject(projectId);
     const languages = project.data.targetLanguages;
@@ -49,7 +49,7 @@ async function getLanguages(projectId) {
   }
 }
 
-async function getFileIds(projectId) {
+async function getFileIds(projectId: number) {
   try {
     const response = await sourceFilesApi.listProjectFiles(projectId);
     const files = response.data;
@@ -65,7 +65,7 @@ async function getFileIds(projectId) {
   }
 }
 
-async function getWorkflowStepId(projectId) {
+async function getWorkflowStepId(projectId: number) {
   try {
     const response = await workflowsApi.listWorkflowSteps(projectId);
     const workflowSteps = response.data;
@@ -84,7 +84,7 @@ async function getWorkflowStepId(projectId) {
   }
 }
 
-async function createTask(projectId, title, languageId, fileIds, workflowStepId) {
+async function createTask(projectId: number, title: string, languageId: string, fileIds: number[], workflowStepId: number) {
   try {
     const taskParams = {
       title,

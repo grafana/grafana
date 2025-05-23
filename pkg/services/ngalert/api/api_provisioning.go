@@ -344,14 +344,6 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if upstreamModel.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return ErrResp(
-			http.StatusBadRequest,
-			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
-			"",
-		)
-	}
-
 	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
@@ -375,14 +367,6 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	updated, err := AlertRuleFromProvisionedAlertRule(ar)
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
-	}
-
-	if updated.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return ErrResp(
-			http.StatusBadRequest,
-			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
-			"",
-		)
 	}
 
 	if UID == "" {
@@ -629,6 +613,13 @@ func escapeRouteExport(r *definitions.RouteExport) {
 			muteTimeIntervals[i] = addEscapeCharactersToString(muteTimeInterval)
 		}
 		r.MuteTimeIntervals = &muteTimeIntervals
+	}
+	if r.ActiveTimeIntervals != nil {
+		intervals := make([]string, len(*r.ActiveTimeIntervals))
+		for i, timeInterval := range *r.ActiveTimeIntervals {
+			intervals[i] = addEscapeCharactersToString(timeInterval)
+		}
+		r.ActiveTimeIntervals = &intervals
 	}
 	for i := range r.Routes {
 		escapeRouteExport(r.Routes[i])

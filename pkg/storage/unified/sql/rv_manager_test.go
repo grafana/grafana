@@ -3,13 +3,14 @@ package sql
 import (
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func expectSuccessfulResourceVersionLock(t *testing.T, dbp test.TestDBProvider, rv int64, timestamp int64) {
@@ -44,7 +45,7 @@ func TestResourceVersionManager(t *testing.T) {
 	require.NotNil(t, manager)
 
 	t.Run("should handle single operation", func(t *testing.T) {
-		key := &resource.ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:    "test-group",
 			Resource: "test-resource",
 		}

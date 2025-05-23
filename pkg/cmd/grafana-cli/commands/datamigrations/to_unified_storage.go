@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
@@ -148,7 +150,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 
 		// Check the stats (eventually compare)
-		req := &resource.ResourceStatsRequest{
+		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
 		}
 		for _, r := range opts.Resources {
@@ -218,7 +220,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	}, nil, nil)
 }
 
-func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
+func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err

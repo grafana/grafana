@@ -7,6 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -25,7 +26,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -139,7 +139,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue,
     watch,
   } = formApi;
-
+  const { t } = useTranslate();
   const submit = async (values: TemplateFormValues) => {
     const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
       tab: ContactPointsActiveTabs.NotificationTemplates,
@@ -363,7 +363,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
 function TemplatingBasics() {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const intro = t(
     'alerting.templates.help.intro',
     `Notification templates use Go templating language to create notification messages.

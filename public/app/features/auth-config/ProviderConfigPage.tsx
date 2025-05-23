@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { useDispatch, useSelector } from 'app/types';
-
-import { t } from '../../core/internationalization';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';
@@ -46,6 +45,7 @@ export const ProviderConfigPage = () => {
   useEffect(() => {
     dispatch(loadProviders(provider));
   }, [dispatch, provider]);
+  const { t } = useTranslate();
 
   if (!config || !config.provider || !UIMap[config.provider]) {
     return <PageNotFound />;

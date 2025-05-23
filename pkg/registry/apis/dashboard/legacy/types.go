@@ -6,6 +6,7 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // This does not check if you have permissions!
@@ -30,7 +31,7 @@ type DashboardQuery struct {
 	GetFolders bool
 
 	// The label requirements
-	Labels []*resource.Requirement
+	Labels []*resourcepb.Requirement
 
 	// DESC|ASC, how to order the IDs
 	Order string // asc required to use lastID, desc required for export with history
@@ -52,7 +53,7 @@ type LibraryPanelQuery struct {
 
 type DashboardAccess interface {
 	resource.StorageBackend
-	resource.ResourceIndexServer
+	resourcepb.ResourceIndexServer
 	LegacyMigrator
 
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboardV1.Dashboard, int64, error)

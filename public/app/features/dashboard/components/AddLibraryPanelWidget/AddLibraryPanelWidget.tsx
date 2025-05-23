@@ -3,9 +3,9 @@ import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import {
   LibraryPanelsSearch,
@@ -20,6 +20,8 @@ interface Props {
 }
 
 export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
+  const { t } = useTranslate();
+
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
     evt.preventDefault();
     dashboard.removePanel(panel);

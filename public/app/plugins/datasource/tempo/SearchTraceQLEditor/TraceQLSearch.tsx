@@ -187,6 +187,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
           >
             <Stack gap={0}>
               <Select
+                width="auto"
                 options={[
                   { label: 'span', value: 'span' },
                   { label: 'trace', value: 'trace' },

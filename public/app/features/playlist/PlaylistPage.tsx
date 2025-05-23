@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
@@ -21,6 +21,8 @@ export const PlaylistPage = () => {
 
   const [startPlaylist, setStartPlaylist] = useState<Playlist | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | undefined>();
+
+  const { t } = useTranslate();
 
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);

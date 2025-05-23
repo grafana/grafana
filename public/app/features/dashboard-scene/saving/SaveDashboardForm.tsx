@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -36,6 +36,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       ...dashboard.state.meta.k8s,
     },
   });
+  const { t } = useTranslate();
 
   const onSave = async (overwrite: boolean) => {
     const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
@@ -202,6 +203,7 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
+  const { t } = useTranslate();
   const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
   const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 

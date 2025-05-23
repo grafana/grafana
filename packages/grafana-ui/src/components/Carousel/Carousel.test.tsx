@@ -111,13 +111,13 @@ describe('Carousel', () => {
 
     await user.click(screen.getByText('Alert rule'));
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowRight' });
+    await user.keyboard('{ArrowRight}');
 
     let previewImage = screen.getByTestId('carousel-full-image').querySelector('img');
     expect(previewImage).toHaveAttribute('src', testImages[1].path);
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowLeft' });
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'ArrowLeft' });
+    await user.keyboard('{ArrowLeft}');
+    await user.keyboard('{ArrowLeft}');
 
     previewImage = screen.getByTestId('carousel-full-image').querySelector('img');
     expect(previewImage).toHaveAttribute('src', testImages[3].path);
@@ -129,7 +129,7 @@ describe('Carousel', () => {
     await user.click(screen.getByText('Alert rule'));
     expect(screen.getByTestId('carousel-full-screen')).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByTestId('carousel-full-screen'), { key: 'Escape' });
+    await user.keyboard('{Escape}');
 
     expect(screen.queryByTestId('carousel-full-screen')).not.toBeInTheDocument();
   });

@@ -1,8 +1,8 @@
 import { Fragment, useEffect } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
@@ -52,6 +52,8 @@ const AlertGroups = () => {
       clearInterval(interval);
     };
   }, [dispatch, selectedAlertmanager]);
+
+  const { t } = useTranslate();
 
   return (
     <>

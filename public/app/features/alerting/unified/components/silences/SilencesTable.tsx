@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   CollapsableSection,
@@ -14,7 +15,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
@@ -110,6 +110,7 @@ const SilencesTable = () => {
       };
     });
   }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
+  const { t } = useTranslate();
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
@@ -282,6 +283,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
+  const { t } = useTranslate();
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   return useMemo((): SilenceTableColumnProps[] => {
@@ -404,7 +406,7 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
+  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported, t]);
 }
 
 function SilencesTablePage() {

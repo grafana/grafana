@@ -1,6 +1,6 @@
 import { NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -45,7 +45,7 @@ export function ExistingRuleEditor({
     loading: loadingEditable,
     error: errorEditable,
   } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
-
+  const { t } = useTranslate();
   if (fetchRuleError || errorEditable) {
     return (
       <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>

@@ -3,8 +3,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, CodeEditor, Space } from '@grafana/ui';
+import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -44,6 +45,7 @@ const QueryEditor = ({
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
   const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
+  const { t } = useTranslate();
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -119,7 +121,13 @@ const QueryEditor = ({
       {errorMessage && (
         <>
           <Space v={2} />
-          <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+          <Alert
+            severity="error"
+            title={t(
+              'components.query-editor.alert-error-occurred',
+              'An error occurred while requesting metadata from Azure Monitor'
+            )}
+          >
             {errorMessage instanceof Error ? errorMessage.message : errorMessage}
           </Alert>
         </>
@@ -149,6 +157,7 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
+  const { t } = useTranslate();
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
@@ -207,18 +216,19 @@ const EditorForQueryType = ({
     default:
       const type = query.queryType as unknown;
       return (
-        <Alert title="Unknown query type">
+        <Alert title={t('components.editor-for-query-type.title-unknown-query-type', 'Unknown query type')}>
           {(type === 'Application Insights' || type === 'Insights Analytics') && (
             <>
-              {type} was deprecated in Grafana 9. See the{' '}
-              <a
-                href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
-                target="_blank"
-                rel="noreferrer"
-              >
-                deprecation notice
-              </a>{' '}
-              to get more information about how to migrate your queries. This is the current query definition:
+              <Trans i18nKey="components.editor-for-query-type.body-unknown-query-type">
+                {{ type }} was deprecated in Grafana 9. See the{' '}
+                <TextLink
+                  href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
+                  external
+                >
+                  deprecation notice
+                </TextLink>{' '}
+                to get more information about how to migrate your queries. This is the current query definition:
+              </Trans>
               <CodeEditor height="200px" readOnly language="json" value={JSON.stringify(query, null, 4)} />
             </>
           )}
@@ -228,42 +238,48 @@ const EditorForQueryType = ({
 };
 
 const UserAuthAlert = () => {
+  const { t } = useTranslate();
   return (
-    <Alert title="Unsupported authentication provider" data-testid={selectors.components.queryEditor.userAuthAlert}>
-      <>
+    <Alert
+      title={t('components.user-auth-alert.title-unsupported-auth', 'Unsupported authentication provider')}
+      data-testid={selectors.components.queryEditor.userAuthAlert}
+    >
+      <Trans i18nKey="components.user-auth-alert.body-unsupported-auth">
         Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory).
         Please review the{' '}
-        <a
+        <TextLink
           href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
-          target="_blank"
-          rel="noreferrer"
+          external
         >
           documentation
-        </a>{' '}
+        </TextLink>{' '}
         for more information.
-      </>
+      </Trans>
     </Alert>
   );
 };
 
 const UserAuthFallbackAlert = () => {
+  const { t } = useTranslate();
   return (
     <Alert
-      title="No fallback credentials available"
+      title={t(
+        'components.user-auth-fallback-alert.title-no-fallback-credentials',
+        'No fallback credentials available'
+      )}
       data-testid={selectors.components.queryEditor.userAuthFallbackAlert}
     >
-      <>
+      <Trans i18nKey="components.user-auth-fallback-alert.body-no-fallback-credentials">
         Data source backend features (such as alerting) require service credentials to function. This data source is
         configured without service credential fallback, or the fallback functionality is disabled. Please review the{' '}
-        <a
+        <TextLink
           href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
-          target="_blank"
-          rel="noreferrer"
+          external
         >
           documentation
-        </a>{' '}
+        </TextLink>{' '}
         for more information.
-      </>
+      </Trans>
     </Alert>
   );
 };

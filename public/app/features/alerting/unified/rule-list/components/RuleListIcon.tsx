@@ -54,7 +54,7 @@ const operationIcons: Record<RuleOperation, IconName> = {
 };
 
 // ⚠️ not trivial to update this, you have to re-do the math for the loading spinner
-const ICON_SIZE = 18;
+const ICON_SIZE = 15;
 
 /**
  * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
@@ -109,7 +109,7 @@ export const RuleListIcon = memo(function RuleListIcon({
       <div>
         <Text color={iconColor}>
           <div className={styles.iconsContainer}>
-            <Icon name={iconName} width={18} height={18} title={stateName} />
+            <Icon name={iconName} width={ICON_SIZE} height={ICON_SIZE} title={stateName} />
             {/* this loading spinner works by using an optical illusion;
               the actual icon is static and the "spinning" part is just a semi-transparent darker circle overlayed on top.
               This makes it look like there is a small bright colored spinner rotating.
@@ -118,22 +118,22 @@ export const RuleListIcon = memo(function RuleListIcon({
               <svg
                 width={ICON_SIZE}
                 height={ICON_SIZE}
-                viewBox="0 0 24 24"
+                viewBox="0 0 20 20"
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
                 className={styles.spinning}
               >
                 <circle
                   r={ICON_SIZE / 2}
-                  cx="12"
-                  cy="12"
+                  cx="10"
+                  cy="10"
                   // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
                   stroke={theme.colors.background.primary}
-                  strokeWidth="3"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   fill="transparent"
                   strokeOpacity={0.85}
-                  strokeDasharray="24px"
+                  strokeDasharray="20px"
                 />
               </svg>
             )}
@@ -159,8 +159,8 @@ const spin = keyframes({
 const getStyles = (theme: GrafanaTheme2) => ({
   iconsContainer: css({
     position: 'relative',
-    width: 18,
-    height: 18,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
     '> *': {
       position: 'absolute',
     },

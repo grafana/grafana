@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export interface Props {
   timeRange: TimeRange;
@@ -20,7 +20,7 @@ export function SettingsSummary({
   annotationsEnabled,
 }: Props) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const translatedTimeRangePickerEnabledStatus = t(
     'public-dashboard.settings-summary.time-range-picker-enabled-text',
     'Time range picker = enabled'

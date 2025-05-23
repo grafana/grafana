@@ -6,9 +6,9 @@ import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
@@ -26,7 +26,7 @@ export function PreviewRule(): React.ReactElement | null {
   const { watch } = useFormContext<RuleFormValues>();
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
-
+  const { t } = useTranslate();
   if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }

@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,8 +24,8 @@ func TestChannelNotifier(t *testing.T) {
 		require.NoError(t, err)
 
 		testEvent := &resource.WrittenEvent{
-			Type: resource.WatchEvent_ADDED,
-			Key: &resource.ResourceKey{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Name:      "test1",

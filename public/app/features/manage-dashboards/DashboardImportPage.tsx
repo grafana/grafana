@@ -4,6 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -25,7 +27,6 @@ import {
 import appEvents from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
@@ -93,10 +94,20 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     try {
       const json = JSON.parse(String(result));
 
-      if (json.elements) {
+      if (json.spec?.elements) {
+        dispatch(importDashboardV2Json(json.spec));
+        return;
+      } else if (json.elements) {
         dispatch(importDashboardV2Json(json));
         return;
       }
+
+      // check if it's a v1 resource format
+      if (json.spec) {
+        this.props.importDashboardJson(json.spec);
+        return;
+      }
+
       this.props.importDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
@@ -113,8 +124,19 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
-    if (dashboard.elements) {
+    // check if it's a v2 resource format
+    if (dashboard.spec?.elements) {
+      dispatch(importDashboardV2Json(dashboard.spec));
+      return;
+      // check if it's just a v2 spec
+    } else if (dashboard.elements) {
       dispatch(importDashboardV2Json(dashboard));
+      return;
+    }
+
+    // check if it's a v1 resource format
+    if (dashboard.spec) {
+      this.props.importDashboardJson(dashboard.spec);
       return;
     }
 
@@ -249,7 +271,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     const { loadingState, dashboard } = this.props;
 
     if (loadingState === LoadingState.Done) {
-      if (dashboard.elements) {
+      if (dashboard.elements || dashboard.spec?.elements) {
         return <ImportDashboardOverviewV2 />;
       }
       return <ImportDashboardOverview />;

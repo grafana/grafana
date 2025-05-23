@@ -260,7 +260,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const searchRow1 = screen.queryByLabelText('search-result');
     expect(searchRow1).not.toBeInTheDocument();
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sea');
@@ -275,7 +275,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
     render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'some search that has no results');
@@ -294,7 +294,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
     render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sear');
@@ -320,7 +320,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const searchRow1 = screen.queryByLabelText('search-result');
     expect(searchRow1).not.toBeInTheDocument();
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sea');

@@ -112,7 +112,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 <EditorSwitch
                   value={query.exemplar || false}
                   onChange={onExemplarChange}
-                  data-test-id="prometheus-exemplars"
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
                 />
               </EditorField>
             )}

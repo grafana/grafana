@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { StepStatusInfo } from '../Wizard/types';
 
@@ -45,6 +45,8 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
       }
     };
   }, [finishedQuery, job, onStatusChange]);
+
+  const { t } = useTranslate();
 
   if (retryFailed) {
     onStatusChange({ status: 'error' });

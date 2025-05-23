@@ -82,7 +82,7 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 	})
 }
 
-// newConntrackRoundTripper takes a http.DefaultTransport and adds the Conntrack Dialer
+// newConntrackRoundTripper takes a http.Transport and adds the Conntrack Dialer
 // so we can instrument outbound connections
 func newConntrackRoundTripper(name string, transport *http.Transport) *http.Transport {
 	transport.DialContext = conntrack.NewDialContextFunc(

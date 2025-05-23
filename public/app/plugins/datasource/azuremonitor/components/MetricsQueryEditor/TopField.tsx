@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
@@ -9,6 +10,7 @@ import { Field } from '../shared/Field';
 import { setTop } from './setQueryValue';
 
 const TopField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
+  const { t } = useTranslate();
   const [value, setValue] = useState<string>(query.azureMonitor?.top ?? '');
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once
@@ -25,7 +27,7 @@ const TopField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   }, [onQueryChange, query, value]);
 
   return (
-    <Field label="Top">
+    <Field label={t('components.top-field.label-top', 'Top')}>
       <Input
         id="azure-monitor-metrics-top-field"
         value={value}

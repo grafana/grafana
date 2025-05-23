@@ -198,7 +198,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
       it('should provide dashboard URL with app sub url configured', async () => {
@@ -224,7 +224,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
@@ -242,7 +242,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
 
@@ -268,7 +268,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });

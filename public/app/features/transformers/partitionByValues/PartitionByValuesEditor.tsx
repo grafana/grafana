@@ -8,6 +8,7 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   InlineField,
   InlineFieldRow,
@@ -18,7 +19,6 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -90,6 +90,7 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
+  const { t } = useTranslate();
 
   if (input.length > 1) {
     return (

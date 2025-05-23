@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../../../saml/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:

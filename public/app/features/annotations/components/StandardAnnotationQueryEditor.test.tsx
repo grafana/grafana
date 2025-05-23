@@ -68,14 +68,14 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('v2 dashboard - should preserve options field when changing target', () => {
-    // Setup with annotation that has options
+  it('v2 dashboard - should preserve legacyOptions field when changing target', () => {
+    // Setup with annotation that has legacyOptions
     const mockOnChange = jest.fn();
     const { props } = setup({
       annotation: {
-        name: 'annotationWithOptions',
+        name: 'annotationWithLegacyOptions',
         target: { refId: 'refId1' },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -98,11 +98,11 @@ describe('StandardAnnotationQueryEditor', () => {
     // Simulate changing the target
     componentInstance.onChange({ refId: 'refId2', newField: 'value' });
 
-    // Check that options are preserved
+    // Check that legacyOptions are preserved
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
         target: { refId: 'refId2', newField: 'value' },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -110,13 +110,13 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('should preserve options field when using onAnnotationChange', () => {
-    // Setup with annotation that has options
+  it('should preserve legacyOptions field when using onAnnotationChange', () => {
+    // Setup with annotation that has legacyOptions
     const mockOnChange = jest.fn();
     const { props } = setup({
       annotation: {
-        name: 'annotationWithOptions',
-        options: {
+        name: 'annotationWithLegacyOptions',
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -142,12 +142,12 @@ describe('StandardAnnotationQueryEditor', () => {
       iconColor: 'red',
     });
 
-    // Check that options are preserved
+    // Check that legacyOptions are preserved
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'newName',
         iconColor: 'red',
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
         },
@@ -187,17 +187,17 @@ describe('StandardAnnotationQueryEditor', () => {
     );
   });
 
-  it('should propagate options to root level for v2 dashboards', () => {
+  it('should propagate legacyOptions to root level for v2 dashboards', () => {
     const { props } = setup({
       annotation: {
-        name: 'v2annotationWithOptions',
+        name: 'v2annotationWithLegacyOptions',
         query: {
           kind: 'prometheus',
           spec: {
             refId: 'A',
           },
         },
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           legendFormat: '{{method}} {{endpoint}}',
         },
@@ -210,13 +210,13 @@ describe('StandardAnnotationQueryEditor', () => {
       } as unknown as DataSourceApi,
     });
 
-    // Check that options are propagated to root level for the editor
+    // Check that legacyOptions are propagated to root level for the editor
     expect(props.datasource?.annotations?.QueryEditor).toHaveBeenCalledWith(
       expect.objectContaining({
         annotation: expect.objectContaining({
-          name: 'v2annotationWithOptions',
+          name: 'v2annotationWithLegacyOptions',
           query: expect.anything(),
-          options: expect.anything(),
+          legacyOptions: expect.anything(),
           expr: 'rate(http_requests_total[5m])',
           legendFormat: '{{method}} {{endpoint}}',
         }),
@@ -235,7 +235,7 @@ describe('StandardAnnotationQueryEditor', () => {
           type: 'prometheus',
           uid: 'abc123',
         },
-        // v1 dashboards don't have options field
+        // v1 dashboards don't have legacyOptions field
         enable: true,
         iconColor: 'red',
         hide: false,

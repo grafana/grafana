@@ -8,6 +8,7 @@ import { createLogLine } from '../__mocks__/logRow';
 import { getStyles } from './LogLine';
 import { LogLineMenu } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 
 jest.mock('./LogListContext');
@@ -15,6 +16,8 @@ jest.mock('./LogListContext');
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
+  ...defaultProps,
+  ...defaultValue,
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
@@ -111,6 +114,26 @@ describe('LogLineMenu', () => {
       expect(screen.queryByText('Pin log')).not.toBeInTheDocument();
       await userEvent.click(screen.getByText('Unpin log'));
       expect(onUnpinLine).toHaveBeenCalledTimes(1);
+    });
+
+    test('Allows to open log details', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={true}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      await screen.findByText('Show log details');
+    });
+
+    test('Does not show log details option when disabled', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={false}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.queryByText('Show log details')).not.toBeInTheDocument();
     });
   });
 });

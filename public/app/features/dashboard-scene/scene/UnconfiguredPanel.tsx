@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 
 import { PanelPlugin, PanelProps } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Dropdown, Menu, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -19,6 +19,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const onMenuClick = useCallback((isOpen: boolean) => {
     setIsOpen(isOpen);
   }, []);
+  const { t } = useTranslate();
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });

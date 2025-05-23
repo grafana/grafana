@@ -1,6 +1,7 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   DataSourceRuleGroupIdentifier,
   GrafanaRuleGroupIdentifier,
@@ -175,7 +176,7 @@ export function useMoveRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-
+  const { t } = useTranslate();
   // @TODO maybe add where we moved it from and to for additional peace of mind
   const successMessage = t('alerting.rule-groups.move.success', 'Successfully moved rule group');
 
@@ -245,7 +246,7 @@ export function useRenameRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
-
+  const { t } = useTranslate();
   return useAsync(async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
     const action = renameRuleGroupAction({ groupName, interval });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);

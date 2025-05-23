@@ -1,6 +1,6 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
@@ -13,6 +13,8 @@ export interface JobContentProps {
 }
 
 export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
+  const { t } = useTranslate();
+
   if (!job?.status) {
     return null;
   }

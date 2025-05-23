@@ -47,7 +47,8 @@ func TestNewByteLimitedTransport(t *testing.T) {
 			assert.Equal(t, int64(0), blt.Bytes)
 
 			if tt.transport == nil {
-				assert.Equal(t, http.DefaultTransport, blt.Transport)
+				assert.NotNil(t, blt.Transport)
+				assert.NotEqual(t, http.DefaultTransport, blt.Transport)
 			} else {
 				assert.Equal(t, tt.transport, blt.Transport)
 			}

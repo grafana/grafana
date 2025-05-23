@@ -1,5 +1,5 @@
 import { PluginState } from '@grafana/data';
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 export type Props = {

@@ -84,7 +84,7 @@ const openSilenceDrawer = async () => {
   await screen.findByText(/Configure silences/i);
 };
 
-beforeAll(() => {
+beforeEach(() => {
   grantPermissionsHelper([
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingRuleRead,
@@ -137,7 +137,7 @@ describe('RuleViewer', () => {
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
-    beforeAll(() => {
+    beforeEach(() => {
       grantPermissionsHelper([
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,

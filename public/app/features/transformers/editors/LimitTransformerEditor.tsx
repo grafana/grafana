@@ -8,8 +8,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -28,6 +28,8 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     },
     [onChange, options]
   );
+
+  const { t } = useTranslate();
 
   return (
     <>

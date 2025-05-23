@@ -82,17 +82,16 @@ const noUntranslatedStrings = createRule({
         if (expression.type === AST_NODE_TYPES.ConditionalExpression) {
           const alternateIsString = isExpressionUntranslated(expression.alternate);
           const consequentIsString = isExpressionUntranslated(expression.consequent);
+          const untranslatedExpressions = [
+            alternateIsString ? expression.alternate : undefined,
+            consequentIsString ? expression.consequent : undefined,
+          ].filter((node) => !!node);
 
-          if (alternateIsString || consequentIsString) {
+          if (untranslatedExpressions.length) {
             const messageId =
               parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
 
-            const nodesToReport = [
-              alternateIsString ? expression.alternate : undefined,
-              consequentIsString ? expression.consequent : undefined,
-            ].filter((node) => !!node);
-
-            nodesToReport.forEach((nodeToReport) => {
+            untranslatedExpressions.forEach((nodeToReport) => {
               context.report({
                 node: nodeToReport,
                 messageId,

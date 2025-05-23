@@ -164,10 +164,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Go 1.24.2
+      - name: Set up Go 1.24.3
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.2
+          go-version: 1.24.3
 
       - name: Verify Go version
         run: go version
@@ -208,7 +208,7 @@ This GitHub Action automates the deployment of a Grafana dashboard using the Fou
 The first few steps:
 
 - Check out the repository to access the project code.
-- Install Go 1.24.2 using the `actions/setup-go` action.
+- Install Go 1.24.3 using the `actions/setup-go` action.
 - Verify Go is properly installed.
 
 ### 2. Download and install `grafanactl`

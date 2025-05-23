@@ -3,8 +3,8 @@ import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
@@ -237,6 +237,7 @@ interface ValueInTransitionProps {
   record: LogRecord;
 }
 function ValueInTransition({ record }: ValueInTransitionProps) {
+  const { t } = useTranslate();
   const values = record?.line?.values
     ? JSON.stringify(record.line.values)
     : t('alerting.central-alert-history.details.no-values', 'No values');

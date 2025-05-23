@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { NodesMap, SelectedScope } from './types';
 
@@ -70,6 +70,8 @@ export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, on
 
   const scopesTitles = useMemo(() => scopes.map(({ scope }) => scope.spec.title).join(', '), [scopes]);
 
+  const { t } = useTranslate();
+
   const input = useMemo(
     () => (
       <Input
@@ -99,7 +101,7 @@ export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, on
         }}
       />
     ),
-    [disabled, loading, onInputClick, onRemoveAllClick, scopes, scopesTitles]
+    [disabled, loading, onInputClick, onRemoveAllClick, scopes, scopesTitles, t]
   );
 
   return (

@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { Dictionary } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Checkbox, Icon, RadioButtonDot, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
 import { Node, NodeReason, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
@@ -38,7 +38,7 @@ export function ScopesTreeItem({
   onNodeUpdate,
 }: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const nodes = groupedNodes[nodeReason] || [];
 
   if (nodes.length === 0) {

@@ -134,7 +134,7 @@ describe('CloneRuleEditor', function () {
           name: 'region: nasa',
         }).get()
       ).toBeInTheDocument();
-      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
+      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations![Annotation.summary]);
     });
   });
 

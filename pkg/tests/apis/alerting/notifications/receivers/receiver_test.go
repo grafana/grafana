@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -73,9 +73,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title:        "Test-Receiver",
-			Integrations: []v0alpha1.Integration{},
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
@@ -305,9 +305,9 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.ReceiverSpec{
 					Title:        "receiver-1",
-					Integrations: []v0alpha1.Integration{},
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(created)
@@ -571,9 +571,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.ReceiverSpec{
 					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
-					Integrations: []v0alpha1.Integration{},
+					Integrations: []v0alpha1.ReceiverIntegration{},
 				},
 			}
 			d, err := json.Marshal(expected)
@@ -878,9 +878,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -927,9 +927,9 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title:        "receiver-1",
-			Integrations: []v0alpha1.Integration{},
+			Integrations: []v0alpha1.ReceiverIntegration{},
 		},
 	}
 
@@ -1010,9 +1010,9 @@ func TestIntegrationPatch(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "receiver",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 				createIntegration(t, "webhook"),
 				createIntegration(t, "sns"),
@@ -1028,7 +1028,7 @@ func TestIntegrationPatch(t *testing.T) {
 		current, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
 		require.NoError(t, err)
 
-		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.Integration) bool {
+		index := slices.IndexFunc(current.Spec.Integrations, func(t v0alpha1.ReceiverIntegration) bool {
 			return t.Type == "webhook"
 		})
 
@@ -1269,9 +1269,9 @@ func TestIntegrationCRUD(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        defaultReceiver.Spec.Title,
-				Integrations: []v0alpha1.Integration{},
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 		_, err := adminClient.Create(ctx, newReceiver, v1.CreateOptions{})
@@ -1285,7 +1285,7 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	var receiver *v0alpha1.Receiver
 	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v0alpha1.Integration, 0, len(notify.AllKnownConfigsForTesting))
+		integrations := make([]v0alpha1.ReceiverIntegration, 0, len(notify.AllKnownConfigsForTesting))
 		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
 		keys := slices.Collect(keysIter)
 		sort.Strings(keys)
@@ -1297,7 +1297,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        "all-receivers",
 				Integrations: integrations,
 			},
@@ -1369,9 +1369,9 @@ func TestIntegrationCRUD(t *testing.T) {
 					ObjectMeta: v1.ObjectMeta{
 						Namespace: "default",
 					},
-					Spec: v0alpha1.Spec{
+					Spec: v0alpha1.ReceiverSpec{
 						Title:        fmt.Sprintf("invalid-%s", key),
-						Integrations: []v0alpha1.Integration{integration},
+						Integrations: []v0alpha1.ReceiverIntegration{integration},
 					},
 				}, v1.CreateOptions{})
 				require.Errorf(t, err, "Expected error but got successful result: %v", receiver)
@@ -1394,9 +1394,9 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -1408,9 +1408,9 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-2",
-			Integrations: []v0alpha1.Integration{
+			Integrations: []v0alpha1.ReceiverIntegration{
 				createIntegration(t, "email"),
 			},
 		},
@@ -1486,16 +1486,16 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.Spec{
+			Spec: v0alpha1.ReceiverSpec{
 				Title:        receiver.Name,
-				Integrations: []v0alpha1.Integration{},
+				Integrations: []v0alpha1.ReceiverIntegration{},
 			},
 		}
 
 		for _, integration := range receiver.GrafanaManagedReceivers {
 			settings := common.Unstructured{}
 			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
-			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.ReceiverIntegration{
 				Settings:              settings.Object,
 				Type:                  integration.Type,
 				DisableResolveMessage: util.Pointer(false),
@@ -1519,15 +1519,15 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	require.NoError(t, err)
 }
 
-func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
+func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
 	return createIntegrationWithSettings(t, integrationType, cfg.Config)
 }
-func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
 	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
-	return v0alpha1.Integration{
+	return v0alpha1.ReceiverIntegration{
 		Settings:              settings.Object,
 		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),

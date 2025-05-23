@@ -60,6 +60,7 @@ export const emptyRoute: FormAmRoute = {
   groupIntervalValue: '',
   repeatIntervalValue: '',
   muteTimeIntervals: [],
+  activeTimeIntervals: [],
 };
 
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
@@ -128,6 +129,7 @@ export const amRouteToFormAmRoute = (route: RouteWithID | undefined): FormAmRout
     repeatIntervalValue: route.repeat_interval ?? '',
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
+    activeTimeIntervals: route.active_time_intervals ?? [],
   };
 };
 
@@ -184,6 +186,7 @@ export const formAmRouteToAmRoute = (
     repeat_interval,
     routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
+    active_time_intervals: formAmRoute.activeTimeIntervals,
     receiver: receiver,
   };
 

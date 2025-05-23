@@ -1,5 +1,5 @@
+import { useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
@@ -18,6 +18,7 @@ function DeletedrulesPage() {
     rulerConfig: GRAFANA_RULER_CONFIG,
     filter: {}, // todo: add filters, and limit?????
   });
+  const { t } = useTranslate();
 
   return (
     <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>

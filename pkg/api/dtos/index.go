@@ -15,7 +15,7 @@ type IndexViewData struct {
 	GoogleAnalytics4Id                  string               `json:"-"`
 	GoogleAnalytics4SendManualPageViews bool                 `json:"-"`
 	GoogleTagManagerId                  string               `json:"-"`
-	NavTree                             *navtree.NavTreeRoot `json:"navtree"`
+	NavTree                             *navtree.NavTreeRoot `json:"navTree"`
 	BuildVersion                        string               `json:"-"`
 	BuildCommit                         string               `json:"-"`
 	ThemeType                           string               `json:"-"`

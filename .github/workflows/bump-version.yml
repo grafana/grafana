@@ -44,4 +44,4 @@ jobs:
           git add .
           git commit -m "bump version ${VERSION}"
           git push
-          gh pr create --dry-run=$DRY_RUN -l "type/ci" -l "no-changelog" -B "$REF_NAME" --title "Release: Bump version to ${VERSION}" --body "Updated version to ${VERSION}"
+          gh pr create --dry-run="$DRY_RUN" -l "type/ci" -l "no-changelog" -B "$REF_NAME" --title "Release: Bump version to ${VERSION}" --body "Updated version to ${VERSION}"

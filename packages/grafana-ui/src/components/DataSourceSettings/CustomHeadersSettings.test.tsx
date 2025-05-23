@@ -66,7 +66,7 @@ describe('Render', () => {
     setup();
     const b = screen.getByRole('button', { name: 'Add header' });
     expect(b).toBeInTheDocument();
-    expect(b.getAttribute('type')).toBe('button');
+    expect(b).toHaveAttribute('type', 'button');
   });
 
   it('should remove a header', async () => {

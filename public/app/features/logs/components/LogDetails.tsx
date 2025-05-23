@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, LogRowModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
@@ -33,6 +34,7 @@ export interface Props extends Themeable2 {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
+  mode?: 'inline' | 'sidebar';
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -55,6 +57,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       onPinLine,
       styles,
       pinLineButtonTooltipTitle,
+      mode = 'inline',
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
@@ -84,9 +87,14 @@ class UnThemedLogDetails extends PureComponent<Props> {
     return (
       <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
-        <td className={levelClassName} aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')} />
+        {mode === 'inline' && (
+          <td
+            className={levelClassName}
+            aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')}
+          />
+        )}
         <td colSpan={4}>
-          <div className={styles.logDetailsContainer}>
+          <div className={mode === 'inline' ? styles.logDetailsContainer : styles.logDetailsSidebarContainer}>
             <table className={styles.logDetailsTable}>
               <tbody>
                 {displayedFields && displayedFields.length > 0 && (

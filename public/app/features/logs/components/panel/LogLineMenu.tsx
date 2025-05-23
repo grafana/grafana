@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef, MouseEvent } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
@@ -23,8 +23,17 @@ interface Props {
 }
 
 export const LogLineMenu = ({ log, styles }: Props) => {
-  const { getRowContextQuery, onOpenContext, onPermalinkClick, onPinLine, onUnpinLine, logSupportsContext } =
-    useLogListContext();
+  const {
+    enableLogDetails,
+    detailsDisplayed,
+    getRowContextQuery,
+    onOpenContext,
+    onPermalinkClick,
+    onPinLine,
+    onUnpinLine,
+    logSupportsContext,
+    toggleDetails,
+  } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
 
@@ -48,6 +57,10 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     [onOpenContext, getRowContextQuery, log]
   );
 
+  const toggleLogDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
+
   const togglePinning = useCallback(() => {
     if (pinned) {
       onUnpinLine?.(log);
@@ -56,14 +69,21 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
+  const { t } = useTranslate();
+
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
-        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
-        {onPermalinkClick && log.rowId !== undefined && log.uid && (
-          <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
+        {enableLogDetails && (
+          <Menu.Item
+            onClick={toggleLogDetails}
+            label={
+              detailsDisplayed(log)
+                ? t('logs.log-line-menu.show-details', 'Hide log details')
+                : t('logs.log-line-menu.hide-details', 'Show log details')
+            }
+          />
         )}
-        {(shouldlogSupportsContext || onPinLine || onUnpinLine) && <Menu.Divider />}
         {shouldlogSupportsContext && (
           <Menu.Item onClick={showContext} label={t('logs.log-line-menu.show-context', 'Show context')} />
         )}
@@ -73,19 +93,27 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {pinned && onUnpinLine && (
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
+        <Menu.Divider />
+        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
+        {onPermalinkClick && log.rowId !== undefined && log.uid && (
+          <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
+        )}
       </Menu>
     ),
     [
       copyLinkToLogLine,
       copyLogLine,
-      log.rowId,
-      log.uid,
+      detailsDisplayed,
+      enableLogDetails,
+      log,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
       pinned,
       shouldlogSupportsContext,
       showContext,
+      t,
+      toggleLogDetails,
       togglePinning,
     ]
   );

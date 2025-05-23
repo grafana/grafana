@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { useSelector } from 'app/types';
 
-import { t } from '../../../internationalization';
 import { performInviteUserClick, shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -16,6 +16,7 @@ export interface Props {}
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslate();
   const createActions = useMemo(() => {
     const actions = findCreateActions(navBarTree);
 
@@ -32,7 +33,7 @@ export const QuickAdd = ({}: Props) => {
     }
 
     return actions;
-  }, [navBarTree]);
+  }, [navBarTree, t]);
   const showQuickAdd = createActions.length > 0;
 
   if (!showQuickAdd) {

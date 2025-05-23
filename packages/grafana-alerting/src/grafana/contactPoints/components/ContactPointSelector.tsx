@@ -2,8 +2,8 @@ import { chain } from 'lodash';
 
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
-import { useListContactPoints } from '../hooks/useContactPoints';
-import { ContactPoint } from '../types';
+import { ContactPoint } from '../../api/v0alpha1/types';
+import { useListContactPointsv0alpha1 } from '../hooks/useContactPoints';
 import { getContactPointDescription } from '../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
@@ -17,7 +17,7 @@ type ContactPointSelectorProps = {
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
 function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
-  const { currentData: contactPoints, isLoading } = useListContactPoints();
+  const { currentData: contactPoints, isLoading } = useListContactPointsv0alpha1();
 
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
@@ -27,7 +27,7 @@ function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
         label: contactPoint.spec.title,
         value: contactPoint.metadata.uid ?? contactPoint.spec.title,
         description: getContactPointDescription(contactPoint),
-      },
+      } satisfies ComboboxOption<string>,
       contactPoint,
     }))
     .value()

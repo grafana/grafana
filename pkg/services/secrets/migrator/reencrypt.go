@@ -25,7 +25,7 @@ func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secrets
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
 		return false
 	}
 
@@ -84,7 +84,7 @@ func (s b64Secret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
 		return false
 	}
 
@@ -155,7 +155,7 @@ func (s jsonSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
 		return false
 	}
 
@@ -219,7 +219,7 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(selectSQL).Find(&results)
 	}); err != nil {
-		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
+		logger.Warn("Could not find any alert_configuration secret to re-encrypt", "error", err)
 		return false
 	}
 
@@ -299,9 +299,8 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Find(&results)
 	})
-
 	if err != nil {
-		logger.Warn("Failed to fetch SSO settings to re-encrypt", "err", err)
+		logger.Warn("Failed to fetch SSO settings to re-encrypt", "error", err)
 		return false
 	}
 

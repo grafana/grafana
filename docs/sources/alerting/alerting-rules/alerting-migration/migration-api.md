@@ -9,6 +9,11 @@ title: Import data source-managed alert rules with Grafana Mimirtool
 menuTitle: API alert rules import
 weight: 601
 refs:
+  configure-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed alert rules with Grafana Mimirtool
@@ -17,7 +22,7 @@ You can convert data source-managed alert rules to Grafana-managed alert rules w
 
 ## Before you begin
 
-The `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
+To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To import data source-managed alert rules with Grafana Mimirtool, you need to have the Grafana Mimirtool command-line tool installed.
 
@@ -48,7 +53,7 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 - The newly created rules are given unique UIDs.  
   If you don't want the UID to be automatically generated, you can specify a specific UID with the `__grafana_alert_rule_uid__` label.
 
-## Import alert rules with Mimirtool or coretextool
+## Import alert rules with Mimirtool or cortextool
 
 You can use either [Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import your alert rules. For more information about Mimirtool commands, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules).
 
@@ -58,13 +63,13 @@ To convert your alert rules, use the following command prompt substituting the y
 MIMIR_ADDRESS=https://<Grafana URL>.grafana-dev.net/api/convert/ MIMIR_AUTH_TOKEN=<your token ID> MIMIR_TENANT_ID=1
 ```
 
-For coretextool, you need to set `--backend=loki` to import Loki alert rules. For example:
+For cortextool, you need to set `--backend=loki` to import Loki alert rules. For example:
 
 ```bash
 CORTEX_ADDRESS=<grafana url>/api/convert/ CORTEX_AUTH_TOKEN=<your token> CORTEX_TENANT_ID=1 cortextool rules --backend=loki list
 ```
 
-Headers can be passed to the `mimirtool` or `coretextool` via `--extra-headers`.
+Headers can be passed to the `mimirtool` or `cortextool` via `--extra-headers`.
 
 For more information about the Rule API points and examples of Mimirtool commands, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
 
@@ -92,8 +97,7 @@ POST /convert/prometheus/config/v1/rules - Create/update multiple rule groups ac
 POST /convert/prometheus/config/v1/rules/<NamespaceTitle> - Create/update a single rule group in a namespace
 ```
 
-Post rules also require the following header:
-When posting rules:
+When posting rules, the following header is required:
 `X-Grafana-Alerting-Datasource-UID` - Supply the UID of the data source to use for queries.
 
 **Delete**
@@ -109,5 +113,21 @@ Additional configuration headers for more granular import control include the fo
 
 - `X-Grafana-Alerting-Recording-Rules-Paused` - Set to "true" to import recording rules in paused state.
 - `X-Grafana-Alerting-Alert-Rules-Paused` - Set to "true" to import alert rules in paused state.
-- `X-Grafana-Alerting-Target-Datasource-UID` - Enter the UID of the target data source.
+- `X-Grafana-Alerting-Target-Datasource-UID` - The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
 - `X-Grafana-Alerting-Folder-UID` - Enter the UID of the target destination folder for imported rules.
+- `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
+- `X-Grafana-Alerting-Notification-Settings` – JSON-encoded `AlertRuleNotificationSettings` object that allows setting the contact point for the alert rules.
+
+#### AlertRuleNotificationSettings object
+
+When you set `X-Grafana-Alerting-Notification-Settings`, the header value must be a JSON-encoded object with the following keys:
+
+| Field                   | Type       | Required | Example                                    | Description                                                                                             |
+| ----------------------- | ---------- | -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `receiver`              | `string`   | Yes      | `"grafana-default-email"`                  | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
+| `group_by`              | `[]string` | No       | `["alertname","grafana_folder","cluster"]` | Label set used by Alertmanager to aggregate alerts into a single notification.                          |
+| `group_wait`            | `duration` | No       | `"30s"`                                    | How long Alertmanager waits before sending the first notification for a new group.                      |
+| `group_interval`        | `duration` | No       | `"5m"`                                     | Time to wait before adding new alerts to an existing group's next notification.                         |
+| `repeat_interval`       | `duration` | No       | `"4h"`                                     | Minimum time before a previously-sent notification is repeated. Must not be less than `group_interval`. |
+| `mute_time_intervals`   | `[]string` | No       | `["maintenance"]`                          | One or more mute time interval names that silence alerts during those windows.                          |
+| `active_time_intervals` | `[]string` | No       | `["maintenance"]`                          | List of active time interval names. Alerts are suppressed unless the current time matches one of them.  |

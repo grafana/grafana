@@ -576,10 +576,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     });
   });
 
-  it('should test annotation with options field', () => {
+  it('should test annotation with legacyOptions field', () => {
     // Create a scene with an annotation layer that has options
     const annotationWithOptions = new DashboardAnnotationsDataLayer({
-      key: 'layerWithOptions',
+      key: 'layerWithLegacyOptions',
       query: {
         datasource: {
           type: 'prometheus',
@@ -588,7 +588,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
           legendFormat: '{{method}} {{endpoint}}',
@@ -617,8 +617,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Verify the annotation options are properly serialized
     expect(result.annotations.length).toBe(1);
-    expect(result.annotations[0].spec.options).toBeDefined();
-    expect(result.annotations[0].spec.options).toEqual({
+    expect(result.annotations[0].spec.legacyOptions).toBeDefined();
+    expect(result.annotations[0].spec.legacyOptions).toEqual({
       expr: 'rate(http_requests_total[5m])',
       queryType: 'range',
       legendFormat: '{{method}} {{endpoint}}',

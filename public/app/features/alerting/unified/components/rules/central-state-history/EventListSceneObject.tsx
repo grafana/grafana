@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -14,7 +15,6 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
@@ -80,6 +80,7 @@ export const HistoryEventsList = ({
     stateFrom: valueInStateFromFilter.toString(),
     stateTo: valueInStateToFilter.toString(),
   });
+  const { t } = useTranslate();
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -295,6 +296,7 @@ interface EventStateProps {
 }
 export function EventState({ state, showLabel = false, addFilter, type }: EventStateProps) {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   const toolTip = t('alerting.central-alert-history.details.no-recognized-state', 'No recognized state');
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (

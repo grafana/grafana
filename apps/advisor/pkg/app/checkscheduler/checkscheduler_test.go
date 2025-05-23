@@ -214,7 +214,7 @@ func Test_getEvaluationInterval(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		interval, err := getEvaluationInterval(map[string]string{})
 		assert.NoError(t, err)
-		assert.Equal(t, 24*time.Hour, interval)
+		assert.Equal(t, 7*24*time.Hour, interval)
 	})
 
 	t.Run("invalid", func(t *testing.T) {
@@ -283,6 +283,17 @@ func Test_markUnprocessedChecksAsErrored(t *testing.T) {
 		checks.StatusAnnotation: "error",
 	}
 	assert.Equal(t, expectedAnnotations, patchOperation.Value)
+}
+
+func Test_getNextSendInterval(t *testing.T) {
+	lastCreated := time.Now().Add(-7 * 24 * time.Hour)
+	evaluationInterval := 7 * 24 * time.Hour
+	nextSendInterval := getNextSendInterval(lastCreated, evaluationInterval)
+	// The next send interval should be in < 1 hour
+	assert.True(t, nextSendInterval < time.Hour)
+	// Calculate the next send interval again and it should be different
+	nextSendInterval2 := getNextSendInterval(lastCreated, evaluationInterval)
+	assert.NotEqual(t, nextSendInterval, nextSendInterval2)
 }
 
 type MockCheckService struct {

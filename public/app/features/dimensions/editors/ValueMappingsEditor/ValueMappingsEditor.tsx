@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -41,6 +41,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
     },
     [rows, onChange]
   );
+  const { t } = useTranslate();
 
   return (
     <VerticalGroup>

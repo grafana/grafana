@@ -1,7 +1,7 @@
 import { ReducerID } from '@grafana/data';
 import { CalculateFieldTransformerOptions, ReduceOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { FilterPill, InlineField, Stack, StatsPicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -11,6 +11,7 @@ export const ReduceRowOptionsEditor = (props: {
   selected: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
+  const { t } = useTranslate();
   const { names, selected, onChange, options } = props;
   const { reduce } = options;
 

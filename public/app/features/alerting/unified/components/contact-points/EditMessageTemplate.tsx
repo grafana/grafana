@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { useTranslate } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 
 import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -26,6 +26,7 @@ const EditMessageTemplateComponent = () => {
     alertmanager: selectedAlertmanager ?? '',
     uid: templateUid ?? '',
   });
+  const { t } = useTranslate();
 
   if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
@@ -61,6 +62,8 @@ const EditMessageTemplateComponent = () => {
 };
 
 function EditMessageTemplate() {
+  const { t } = useTranslate();
+
   return (
     <AlertmanagerPageWrapper
       navId="receivers"

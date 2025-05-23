@@ -1,11 +1,10 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { t } from 'app/core/internationalization';
 
-import { Trans } from '../../../../../core/internationalization/index';
 import { Folder, RuleFormValues } from '../../types/rule-form';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 
@@ -19,6 +18,7 @@ export function FolderSelector() {
   const resetGroup = useCallback(() => {
     setValue('group', '');
   }, [setValue]);
+  const { t } = useTranslate();
 
   const folder = watch('folder');
 
@@ -50,6 +50,7 @@ export function FolderSelector() {
               render={({ field: { ref, ...field } }) => (
                 <div style={{ width: 420 }}>
                   <NestedFolderPicker
+                    permission="view"
                     showRootFolder={false}
                     invalid={!!errors.folder?.message}
                     {...field}

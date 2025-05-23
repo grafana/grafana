@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
@@ -108,13 +108,15 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls && !config.exploreHideLogsDownload && (
-              <Dropdown overlay={downloadMenu}>
-                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                </ToolbarButton>
-              </Dropdown>
-            )}
+            {!config.featureToggles.logsPanelControls &&
+              !config.featureToggles.newLogsPanel &&
+              !config.exploreHideLogsDownload && (
+                <Dropdown overlay={downloadMenu}>
+                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
+                  </ToolbarButton>
+                </Dropdown>
+              )}
           </div>
         )}
       </>
