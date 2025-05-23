@@ -28,6 +28,7 @@ export async function initPluginTranslations(id: string) {
     setI18n(getI18nInstance());
   }
 
+  console.log('initPluginTranslations with namespace', id);
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
 
@@ -137,7 +138,7 @@ type ResourceLanguage = Record<string, ResourceKey>;
 type ResourceType = Record<string, ResourceLanguage>;
 
 export function addResourceBundle(language: string, namespace: string, resource: ResourceType) {
-  getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
+  getI18nInstance().addResourceBundle(language, namespace, resource, true, false);
 }
 
 export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {

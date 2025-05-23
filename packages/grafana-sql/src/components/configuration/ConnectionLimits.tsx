@@ -2,6 +2,7 @@ import { DataSourceSettings } from '@grafana/data';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
+import { useTranslate } from '@grafana/i18n';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
@@ -13,6 +14,7 @@ interface Props<T> {
 }
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
+  const { t } = useTranslate();
   const { onOptionsChange, options } = props;
   const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
@@ -83,7 +85,9 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const labelWidth = 40;
 
   return (
-    <ConfigSubSection title="Connection limits">
+    <ConfigSubSection
+      title={t('grafana-sql.configuration-editor.title-connection-limits', 'Connection limits (translated!)')}
+    >
       <Field
         label={
           <Label>

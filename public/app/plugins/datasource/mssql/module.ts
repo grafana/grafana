@@ -7,8 +7,11 @@ import { ConfigurationEditor } from './configuration/ConfigurationEditor';
 import { MssqlDatasource } from './datasource';
 import pluginJson from './plugin.json';
 import { MssqlOptions } from './types';
+import { initTranslations } from '@grafana/sql';
 
-initPluginTranslations(pluginJson.id);
+await initPluginTranslations(pluginJson.id);
+
+await initTranslations(pluginJson.id);
 
 export const plugin = new DataSourcePlugin<MssqlDatasource, SQLQuery, MssqlOptions>(MssqlDatasource)
   .setQueryEditor(SqlQueryEditorLazy)
