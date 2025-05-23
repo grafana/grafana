@@ -128,7 +128,7 @@ In the query editor, specify the column names and their types to ensure that onl
 
 {{< figure src="/media/docs/alerting/example-table-data-infinity-csv-data.png" max-width="750px" alt="Using the Infinity data source plugin to fetch CSV data in Alerting" >}}
 
-## **Differences with time series data**
+## Differences with time series data
 
 Working with time series is similar—each series is treated as a separate alert instance, based on its label set.
 
