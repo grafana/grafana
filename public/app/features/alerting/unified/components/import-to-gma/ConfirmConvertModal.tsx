@@ -92,7 +92,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       console.error('Error parsing YAML file:', error);
       return {};
     }
-  }, [importSource, yamlFile]);
+  }, [importSource, yamlFile, targetFolder]);
 
   // filter the rules to be imported from the datasource 
   const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
@@ -133,7 +133,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   }
 
   async function onConvertConfirm() {
-    if (!yamlImportTargetDatasourceUID || !selectedDatasourceUID) {
+    if (!yamlImportTargetDatasourceUID && !selectedDatasourceUID) {
       notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
         error: 'No data source selected',
       }));
