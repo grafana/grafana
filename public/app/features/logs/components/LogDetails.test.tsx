@@ -20,6 +20,13 @@ import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  };
+});
+
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
   const styles = getLogRowStyles(theme);
@@ -306,6 +313,7 @@ describe('LogDetails', () => {
     const rowOverrides = {
       datasourceType: 'loki',
       datasourceUid: 'grafanacloud-logs',
+      labels: { key1: 'label1', key2: 'label2' },
     };
     setup(undefined, rowOverrides);
 
