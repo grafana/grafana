@@ -233,7 +233,7 @@ export const calculateCoordinates2 = (source: ElementState, target: ElementState
   return { x1, y1, x2, y2 };
 };
 
-export const getElementTransformAndDimensions = (element: HTMLElement) => {
+export const getElementTransformAndDimensions = (element: Element) => {
   const style = window.getComputedStyle(element);
 
   const transform = style.transform;

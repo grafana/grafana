@@ -7,7 +7,6 @@ import {
   CONNECTION_VERTEX_ID,
   CONNECTION_VERTEX_ADD_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
-import { getElementTransformAndDimensions } from 'app/plugins/panel/canvas/utils';
 
 import { dimensionViewable, constraintViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
@@ -221,8 +220,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       e.events.forEach((event) => {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
-          const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
-          targetedElement.setPlacementFromGlobalCoordinates(left, top);
+          targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
 
           // re-add the selected elements to the snappable guidelines
           if (scene.moveable && scene.moveable.elementGuidelines) {
@@ -237,10 +235,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     .on('dragEnd', (event) => {
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
       if (targetedElement) {
-        // targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
-        // TODO: revisit this after implementing constraints system
-        const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
-        targetedElement.setPlacementFromGlobalCoordinates(left, top);
+        targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
       }
 
       scene.moved.next(Date.now());
@@ -263,9 +258,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
             scene.moveable.elementGuidelines.splice(targetIndex, 1);
           }
         }
-
-        const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
-        targetedElement.setPlacementFromGlobalCoordinates(left, top);
+        targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
       }
     })
     .on('resizeGroupStart', (e) => {
@@ -313,8 +306,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
 
       if (targetedElement) {
-        const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
-        targetedElement.setPlacementFromGlobalCoordinates(left, top);
+        targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
 
         // re-add the selected element to the snappable guidelines
         if (scene.moveable && scene.moveable.elementGuidelines) {
@@ -410,8 +402,6 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
     preventWheelClick: false,
     useAutoZoom: true,
-    // useMouseDrag: true,
-    // useWheelScroll: true,
     useMouseDrag: scene.shouldPanZoom,
     useWheelScroll: scene.shouldPanZoom,
     displayHorizontalScroll: false,

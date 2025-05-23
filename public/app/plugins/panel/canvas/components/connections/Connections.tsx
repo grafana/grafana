@@ -180,7 +180,8 @@ export class Connections {
     // const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
     // const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
 
-    const { top, left, width, height } = element.options.placement!;
+    // const { top, left, width, height } = element.options.placement!;
+    const { top, left, width, height } = getElementTransformAndDimensions(element.div!);
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
