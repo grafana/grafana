@@ -61,6 +61,7 @@ import {
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
+import { LogList } from 'app/features/logs/components/panel/LogList';
 
 interface LogsPanelProps extends PanelProps<Options> {
   /**
@@ -306,6 +307,9 @@ export const LogsPanel = ({
   }, [data]);
 
   useLayoutEffect(() => {
+    if (config.featureToggles.newLogsPanel) {
+      return;
+    }
     if (!logsContainerRef.current || !scrollElement || keepScrollPositionRef.current) {
       keepScrollPositionRef.current =
         keepScrollPositionRef.current === 'infinite-scroll' ? null : keepScrollPositionRef.current;
@@ -462,6 +466,27 @@ export const LogsPanel = ({
     </div>
   );
 
+  const initialScrollPosition = useMemo(() => {
+    /**
+     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
+     * when new data is received. See https://github.com/grafana/grafana/pull/37634
+     */
+    if (data.request?.app === CoreApp.Dashboard || data.request?.app === CoreApp.PanelEditor) {
+      return sortOrder === LogsSortOrder.Ascending ? 'bottom' : 'top';
+    }
+    return 'top';
+  }, [data.request?.app, sortOrder]);
+
+  const storageKey = useMemo(() => {
+    if (controlsStorageKey) {
+      return controlsStorageKey;
+    }
+    if (!data.request) {
+      return undefined;
+    }
+    return `${data.request?.dashboardUID}.${id}`;
+  }, [controlsStorageKey, data.request, id]);
+
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
   const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
   const defaultOnClickFilterOutLabel = onAddAdHocFilter ? handleOnClickFilterOutLabel : undefined;
@@ -482,7 +507,36 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
-      {!showControls ? (
+      {config.featureToggles.newLogsPanel && (
+        <div
+          onMouseLeave={onLogContainerMouseLeave}
+          className={style.logListContainer}
+          ref={(element: HTMLDivElement) => setScrollElement(element)}
+        >
+          {deduplicatedRows.length > 0 && scrollElement && (
+            <LogList
+              app={isCoreApp(app) ? app : CoreApp.Dashboard}
+              containerElement={scrollElement}
+              dedupStrategy={dedupStrategy}
+              displayedFields={displayedFields}
+              enableLogDetails={enableLogDetails}
+              initialScrollPosition={initialScrollPosition}
+              logs={deduplicatedRows}
+              loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              onLogLineHover={onLogRowHover}
+              showControls={Boolean(showControls)}
+              showTime={showTime}
+              sortOrder={sortOrder}
+              logOptionsStorageKey={storageKey}
+              syntaxHighlighting={prettifyLogMessage}
+              timeRange={data.timeRange}
+              timeZone={timeZone}
+              wrapLogMessage={wrapLogMessage}
+            />
+          )}
+        </div>
+      )}
+      {!config.featureToggles.newLogsPanel && !showControls && (
         <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
           <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
             {showCommonLabels && !isAscending && renderCommonLabels()}
@@ -539,7 +593,8 @@ export const LogsPanel = ({
             {showCommonLabels && isAscending && renderCommonLabels()}
           </div>
         </ScrollContainer>
-      ) : (
+      )}
+      {!config.featureToggles.newLogsPanel && showControls && (
         <div onMouseLeave={onLogContainerMouseLeave} className={style.controlledLogsContainer}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <ControlledLogRows
@@ -585,7 +640,7 @@ export const LogsPanel = ({
             onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
-            renderPreview={false}
+            renderPreview={isAscending ? false : true}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
@@ -597,6 +652,14 @@ export const LogsPanel = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     marginBottom: theme.spacing(1.5),
+  }),
+  logListContainer: css({
+    marginBottom: theme.spacing(1.5),
+    minHeight: '100%',
+    maxHeight: '100%',
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'column',
   }),
   controlledLogsContainer: css({
     height: '100%',
