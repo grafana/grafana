@@ -73,25 +73,23 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     // This is wrapped in setTimeout in order to allow variables and scopes to be set in the URL before actually reloading the dashboard
-    setTimeout(() => {
-      const scopes = sceneGraph.getScopes(this) ?? [];
+    const scopes = sceneGraph.getScopes(this) ?? [];
 
-      getDashboardScenePageStateManager().reloadDashboard({
-        version: this.state.version!,
-        scopes: scopes.map((scope) => scope.metadata.name),
-        // We're not using the getUrlState from timeRange since it makes more sense to pass the absolute timestamps as opposed to relative time
-        timeRange: {
-          from: this._timeRange!.state.value.from.toISOString(),
-          to: this._timeRange!.state.value.to.toISOString(),
-        },
-        variables: sceneGraph.getVariables(this).state.variables.reduce<UrlQueryMap>(
-          (acc, variable) => ({
-            ...acc,
-            ...variable.urlSync?.getUrlState(),
-          }),
-          {}
-        ),
-      });
+    getDashboardScenePageStateManager().reloadDashboard({
+      version: this.state.version!,
+      scopes: scopes.map((scope) => scope.metadata.name),
+      // We're not using the getUrlState from timeRange since it makes more sense to pass the absolute timestamps as opposed to relative time
+      timeRange: {
+        from: this._timeRange!.state.value.from.toISOString(),
+        to: this._timeRange!.state.value.to.toISOString(),
+      },
+      variables: sceneGraph.getVariables(this).state.variables.reduce<UrlQueryMap>(
+        (acc, variable) => ({
+          ...acc,
+          ...variable.urlSync?.getUrlState(),
+        }),
+        {}
+      ),
     });
   }
 }
