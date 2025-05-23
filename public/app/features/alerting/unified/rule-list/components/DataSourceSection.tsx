@@ -10,7 +10,7 @@ import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { supportedImportTypes } from '../../components/import-to-gma/ImportFromDSRules';
+import { supportedImportTypes } from '../../components/import-to-gma/ImportToGMARules';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { isAdmin } from '../../utils/misc';
 

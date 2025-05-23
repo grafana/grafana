@@ -17,7 +17,7 @@ import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
 
-import { ImportFormValues } from './ImportFromDSRules';
+import { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
