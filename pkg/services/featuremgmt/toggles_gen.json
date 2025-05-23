@@ -779,6 +779,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1747744953711",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "deletionTimestamp": "2025-04-03T07:52:54Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-11-13T08:51:21Z"
@@ -2895,6 +2910,20 @@
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "restoreDashboards",
+        "resourceVersion": "1748002635285",
+        "creationTimestamp": "2025-05-23T12:17:15Z"
+      },
+      "spec": {
+        "description": "Enables restore deleted dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
       }
     },
     {
