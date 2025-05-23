@@ -2932,23 +2932,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/async-query-data@npm:0.4.0":
-  version: 0.4.0
-  resolution: "@grafana/async-query-data@npm:0.4.0"
+"@grafana/async-query-data@npm:0.4.1":
+  version: 0.4.1
+  resolution: "@grafana/async-query-data@npm:0.4.1"
   dependencies:
     semver: "npm:^7.6.3"
     tslib: "npm:^2.8.0"
-  checksum: 10/58232cc085b1bc813b002189bdf80f6e12a2dc418c86b43e42dc50349b2ab327fcaec1310d5878a6ba974eab9194c20cef6540912656bbb4d18ddac4dae08d7c
+  checksum: 10/f75d3114f15b91227e23fa8214ca55ec00f5b6bce0ebb977ab14ad197ae1ab46126e9fdcce9af5816774b13e2797e5e26283f6a14d3f57420a08b2ded64a6515
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.7.0":
-  version: 0.7.0
-  resolution: "@grafana/aws-sdk@npm:0.7.0"
+"@grafana/aws-sdk@npm:0.7.1":
+  version: 0.7.1
+  resolution: "@grafana/aws-sdk@npm:0.7.1"
   dependencies:
-    "@grafana/async-query-data": "npm:0.4.0"
+    "@grafana/async-query-data": "npm:0.4.1"
     "@grafana/plugin-ui": "npm:^0.10.1"
-  checksum: 10/7f29b5234081c1a13e6e8ad099d0e5e26b4b220c9343382105554e95251df3171f17b93280f1e3265912359c496ac5fe0182b93211ed16f907271cbb27884a7c
+  checksum: 10/3b03b2bc6a7174d7b7e8aae77d62d70e87fb694781e69c16bb75312071c2adac9c6cfa2a51c0881cc302c6630a7b94adbb2696e0dc674e43cc9de8954ac761bf
   languageName: node
   linkType: hard
 
@@ -17757,7 +17757,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/aws-sdk": "npm:0.7.0"
+    "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
