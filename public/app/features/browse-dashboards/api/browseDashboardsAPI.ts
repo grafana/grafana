@@ -15,6 +15,7 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
 import {
+  DashboardDataDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -24,6 +25,8 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { getAPIBaseURL } from '../../../api/utils';
+import { Resource, ResourceList } from '../../apiserver/types';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -421,13 +424,35 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID, targetFolderUID }) => ({
-        url: `/dashboards/uid/${dashboardUID}/trash`,
-        body: {
-          folderUid: targetFolderUID,
-        },
-        method: 'PATCH',
-      }),
+      // query: ({ dashboardUID, targetFolderUID }) => ({
+      //   url: `/dashboards/uid/${dashboardUID}/trash`,
+      //   body: {
+      //     folderUid: targetFolderUID,
+      //   },
+      //   method: 'PATCH',
+      // }),
+      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
+        const baseURL = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards`;
+        const dashboards = await getBackendSrv().get<ResourceList<DashboardDataDTO>>(
+          `${baseURL}/?labelSelector=grafana.app/get-trash=true`
+        );
+        const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
+        if (dashboard) {
+          dashboard.metadata.resourceVersion = '';
+          const response = await getBackendSrv().post<Resource<DashboardDataDTO>>(baseURL, dashboard);
+
+          const name = response.metadata.name;
+
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
+            });
+          }
+        }
+
+        return { data: undefined };
+      },
     }),
 
     // permanently delete a dashboard. used in PermanentlyDeleteModal.

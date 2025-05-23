@@ -16,6 +16,7 @@ import {
   AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
   ManagerKind,
+  ListOptions,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -36,6 +37,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
+  }
+
+  listDashboards(options: ListOptions) {
+    return this.client.list(options); //.then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
