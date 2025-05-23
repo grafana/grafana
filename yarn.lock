@@ -1594,10 +1594,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bsull/augurs@npm:^0.9.0":
-  version: 0.9.0
-  resolution: "@bsull/augurs@npm:0.9.0"
-  checksum: 10/284299c0af22ca9f91efc981b4e6471d9a5791de2ffa6b987ed95309c9d0fce1d6bfa6b3f58e8a935859b04b5b3714d3617be1d569f7164c68d4748ba12b6722
+"@bsull/augurs@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@bsull/augurs@npm:0.10.0"
+  checksum: 10/ba981263ed270d5c552ca41b0a8a22065dc67a34bb4834a30dda587694f5fa8a42dc7ffdd9d4f59695d3a5ac401a3ca513d54eba0de6b7eecbd04226b3afd6c4
   languageName: node
   linkType: hard
 
@@ -17693,7 +17693,7 @@ __metadata:
     "@babel/runtime": "npm:7.27.0"
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
-    "@bsull/augurs": "npm:^0.9.0"
+    "@bsull/augurs": "npm:^0.10.0"
     "@crowdin/crowdin-api-client": "npm:^1.42.0"
     "@cypress/webpack-preprocessor": "npm:6.0.4"
     "@emotion/css": "npm:11.13.5"
