@@ -134,13 +134,14 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 
    - Scenario: Random Walk
    - Alias: latency
-   - Series count: 4
-   - Start value: 1, Max: 4
    - Labels: service=api-$seriesIndex
+   - Series count: 4
+   - Start value: 1
+   - Min: 1, Max: 4
 
      This uses `$seriesIndex` to assign unique service labels: `api-0`, `api-1`, etc.
 
-   {{< figure src="/media/docs/alerting/example-dynamic-thresholds-latency-series.png" max-width="750px" alt="TestData data source returns 4 series to simulate latencies for distinct API services." >}}
+   {{< figure src="/media/docs/alerting/example-dynamic-thresholds-latency-series-v2.png" max-width="750px" alt="TestData data source returns 4 series to simulate latencies for distinct API services." >}}
 
 1. Define per-service thresholds with static data.
 
@@ -182,6 +183,8 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 1. **Preview** the alert.
 
    {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values" >}}
+
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/demqzyodxrd34e/view" >}}
 
 ## Other use cases
 

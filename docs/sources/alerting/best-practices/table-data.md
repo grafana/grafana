@@ -118,6 +118,8 @@ To test this quickly, you can simulate the table using the [**TestData** data so
 
    {{< figure src="/media/docs/alerting/example-table-data-preview.png" max-width="750px" alt="Alert preview with tabular data using the TestData data source" >}}
 
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eemqylh1l8tfkf/view" >}}
+
 ## CSV data with Infinity
 
 Note that when the [Infinity plugin fetches CSV data](ref:infinity-csv), all the columns are parsed and returned as strings. By default, this causes the query expression to fail in Alerting.

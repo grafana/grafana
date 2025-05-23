@@ -236,7 +236,8 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 
    - Scenario: Random Walk
    - Series count: 1
-   - Start value: 51, Max: 100
+   - Start value: 51
+   - Min: 50, Max: 100
    - Spread: 100 (ensures large changes between consecutive data points)
 
 1. Add an expression.
@@ -282,6 +283,8 @@ This setup reproduces label flapping and shows how dynamic label values affect a
 
    {{< figure src="/media/docs/alerting/example-dynamic-labels-alert-history-page.png" max-width="750px" caption="You can find multiple transitions over time as the label value fluctuates." >}}
 
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/femr0gkp9vsowe/view" >}}
+
 ## Considerations
 
 Dynamic labels lets you reuse a single alert rule across multiple escalation scenarios—but it also introduces complexity. When the label value depends on a noisy metric and changes frequently, it can lead to flapping alert instances and excessive notifications.
@@ -322,3 +325,4 @@ Here's a list of additional resources related to this example:
 - [Stale alert instances](ref:stale-alert-instances) – Understand how Grafana resolves and removes stale alert instances.
 - [Handle missing data](ref:missing-data-guide) – Learn how Grafana distinguishes between missing series and `NoData`.
 - [Notification policies and routing](ref:notification-policies) – Create multiple notification policies to route alerts based on label values like `severity` or `team`.
+- [Dynamic label example in Grafana Play](https://play.grafana.org/alerting/grafana/femr0gkp9vsowe/view) - View this example in Grafana Play to explore alert instances and state transitions with dynamic labels.
