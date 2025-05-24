@@ -259,6 +259,21 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	c.HTML(http.StatusOK, "index", data)
 }
 
+func (hs *HTTPServer) BootData(c *contextmodel.ReqContext) {
+	data, err := hs.setIndexViewData(c)
+	if err != nil {
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
+		return
+	}
+	c.JSON(http.StatusOK, util.DynMap{
+		"user":     data.User,
+		"settings": data.Settings,
+		"navTree":  data.NavTree,
+		"assets":   data.Assets,
+	})
+}
+
+
 func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
