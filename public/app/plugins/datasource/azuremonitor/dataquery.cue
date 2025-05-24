@@ -271,11 +271,14 @@ composableKinds: DataQuery: {
 					timeFilter?:  #BuilderQueryEditorWhereExpressionArray
 				} @cuetsy(kind="interface")
 
+				#ARGScope:   "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
 					query?: string
 					// Specifies the format results should be returned as. Defaults to table.
 					resultFormat?: string
+					// Specifies the scope of the query. Defaults to subscription.
+					scope?: #ARGScope
 				} @cuetsy(kind="interface")
 
 				#AzureMonitorResource: {
