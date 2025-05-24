@@ -28,7 +28,8 @@ var (
 			Name:      "datasource_request_duration_seconds",
 			Help:      "histogram of durations of outgoing data source requests sent from Grafana",
 			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-		}, []string{"datasource", "datasource_type", "code", "method", "secure_socks_ds_proxy_enabled"},
+		},
+		[]string{"datasource", "datasource_type", "code", "method", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
@@ -40,15 +41,17 @@ var (
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  100,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
+		},
+		[]string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceResponseGauge = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "plugins",
-			Name:      "datasource_response_size",
+			Name:      "datasource_response_size_bytes_gauge", // Renamed to avoid conflict
 			Help:      "gauge of external data source response sizes returned to Grafana in bytes",
-		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
+		},
+		[]string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceRequestsInFlight = promauto.NewGaugeVec(
@@ -77,8 +80,6 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 		}
 
 		datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
-		// if the datasource named cannot be turned into a prometheus
-		// label we will skip instrumenting these metrics.
 		if err != nil {
 			return next
 		}
@@ -88,8 +89,6 @@ func DataSourceMetricsMiddleware() sdkhttpclient.Middleware {
 			return next
 		}
 		datasourceLabelType, err := metricutil.SanitizeLabelName(datasourceType)
-		// if the datasource type cannot be turned into a prometheus
-		// label we will skip instrumenting these metrics.
 		if err != nil {
 			return next
 		}
