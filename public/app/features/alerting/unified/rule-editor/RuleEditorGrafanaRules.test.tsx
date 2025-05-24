@@ -61,6 +61,7 @@ describe('RuleEditor grafana managed rules', () => {
   });
 
   it('can create new grafana managed alert', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
     const { user } = renderRuleEditor();
