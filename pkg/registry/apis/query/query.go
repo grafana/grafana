@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -91,16 +92,23 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-
+		traceId := span.SpanContext().TraceID()
+		connectLogger := b.log.New("traceId", traceId.String())
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
+				if statusCode >= 500 {
+					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
+				} else {
+					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "good"}).Inc()
+				}
 				if statusCode >= 400 {
-					r.logger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
+					connectLogger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
 			},
 			func(err error) {
-				r.logger.Debug("error caught in handler", "err", err)
+				b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
+				b.log.Debug("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
@@ -375,8 +383,10 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		switch err {
 		case nil:
 			respStatus = "success"
+			expressionsLogger.Debug("expressions query success")
 		default:
 			respStatus = "failure"
+			expressionsLogger.Debug("expressions query failure", "error", err)
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
 		b.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
@@ -400,12 +410,18 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
+					if dr.Error != nil {
+						expressionsLogger.Error("qdr has error in handle expressions", "error", dr.Error)
+					}
 					_, isSqlInput := req.SqlInputs[refId]
 
 					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
+					}
+					if res.Error != nil {
+						expressionsLogger.Error("res has error in handle expressions", "error", res.Error)
 					}
 
 					vars[refId] = res
