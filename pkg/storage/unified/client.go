@@ -31,16 +31,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 type Options struct {
-	Cfg      *setting.Cfg
-	Features featuremgmt.FeatureToggles
-	DB       infraDB.DB
-	Tracer   tracing.Tracer
-	Reg      prometheus.Registerer
-	Authzc   types.AccessClient
-	Docs     resource.DocumentBuilderSupplier
+	Cfg          *setting.Cfg
+	Features     featuremgmt.FeatureToggles
+	DB           infraDB.DB
+	Tracer       tracing.Tracer
+	Reg          prometheus.Registerer
+	AccessClient types.AccessClient
+	Docs         resource.DocumentBuilderSupplier
 }
 
 type clientMetrics struct {
@@ -49,7 +50,11 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	qosMetrics *sql.QOSMetrics,
+) (resource.ResourceClient, error) {
 	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -58,7 +63,7 @@ func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.Storage
 		Address:            apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.AccessClient, opts.Docs, storageMetrics, indexMetrics, qosMetrics)
 	if err == nil {
 		// Used to get the folder stats
 		client = federated.NewFederatedClient(
@@ -76,10 +81,11 @@ func newClient(opts options.StorageOptions,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc types.AccessClient,
+	accessClient types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	qosMetrics *sql.QOSMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 	switch opts.StorageType {
@@ -143,20 +149,55 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		// Create a client instance
-		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
+		return resource.NewResourceClient(conn, cfg, features, tracer)
 
-	// Use the local SQL
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
+
+		serverOptions := sql.ResourceServerOptions{
+			DB:             db,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   accessClient,
+			SearchOptions:  searchOptions,
+			StorageMetrics: storageMetrics,
+			IndexMetrics:   indexMetrics,
+			Features:       features,
+		}
+
+		if cfg.EnableQOS {
+			queueOptions := &scheduler.QueueOptions{
+				MaxSizePerTenant:  cfg.MaxSizePerTenantQOS,
+				QueueLength:       qosMetrics.QueueLength,
+				DiscardedRequests: qosMetrics.DiscardedRequests,
+				EnqueueDuration:   qosMetrics.EnqueueDuration,
+			}
+
+			queue := scheduler.NewQueue(queueOptions)
+			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+				NumWorkers: cfg.NumWorkerQOS,
+				Logger:     cfg.Logger,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			err = scheduler.StartAsync(ctx)
+			if err != nil {
+				return nil, err
+			}
+			err = scheduler.AwaitRunning(ctx)
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.QOSQueue = queue
+		}
+
+		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
 		}

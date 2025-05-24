@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
@@ -49,6 +50,10 @@ type UnifiedStorageGrpcService interface {
 
 type service struct {
 	*services.BasicService
+
+	// Subservices manager
+	subservices        *services.Manager
+	subservicesWatcher *services.FailureWatcher
 
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
@@ -71,6 +76,9 @@ type service struct {
 
 	storageRing *ring.Ring
 	lifecycler  *ring.BasicLifecycler
+
+	queue     QOSEnqueuer
+	scheduler *scheduler.Scheduler
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -85,6 +93,7 @@ func ProvideUnifiedStorageGrpcService(
 	storageRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
+	var err error
 	tracer := otel.Tracer("unified-storage")
 
 	// reg can be nil when running unified storage in standalone mode
@@ -114,6 +123,7 @@ func ProvideUnifiedStorageGrpcService(
 		storageRing:    storageRing,
 	}
 
+	subservices := []services.Service{}
 	if cfg.EnableSharding {
 		ringStore, err := kv.NewClient(
 			memberlistKVConfig,
@@ -148,6 +158,33 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
+		subservices = append(subservices, s.storageRing, s.lifecycler)
+	}
+
+	if cfg.EnableQOS {
+		qosMetrics := ProvideQOSMetrics(reg)
+		queue := scheduler.NewQueue(&scheduler.QueueOptions{
+			MaxSizePerTenant:  cfg.MaxSizePerTenantQOS,
+			QueueLength:       qosMetrics.QueueLength,
+			DiscardedRequests: qosMetrics.DiscardedRequests,
+			EnqueueDuration:   qosMetrics.EnqueueDuration,
+		})
+		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			NumWorkers: cfg.NumWorkerQOS,
+			Logger:     log,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create scheduler: %s", err)
+		}
+
+		s.queue = queue
+		s.scheduler = scheduler
+		subservices = append(subservices, s.scheduler)
+	}
+
+	s.subservices, err = services.NewManager(subservices...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create subservices manager: %w", err)
 	}
 
 	// This will be used when running as a dskit service
@@ -157,6 +194,12 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
+	s.subservicesWatcher.WatchManager(s.subservices)
+
+	if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
+		return fmt.Errorf("failed to start subservices: %w", err)
+	}
+
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
@@ -167,7 +210,19 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	serverOptions := ResourceServerOptions{
+		DB:             s.db,
+		Cfg:            s.cfg,
+		Tracer:         s.tracing,
+		Reg:            s.reg,
+		AccessClient:   authzClient,
+		SearchOptions:  searchOptions,
+		StorageMetrics: s.storageMetrics,
+		IndexMetrics:   s.indexMetrics,
+		Features:       s.features,
+		QOSQueue:       s.queue,
+	}
+	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
@@ -197,11 +252,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	if s.cfg.EnableSharding {
-		err = s.lifecycler.StartAsync(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to start the lifecycler: %s", err)
-		}
-
 		s.log.Info("waiting until resource server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
