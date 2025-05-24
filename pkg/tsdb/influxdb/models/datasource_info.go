@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 )
 
@@ -24,6 +25,8 @@ type DatasourceInfo struct {
 
 	// FlightSQL grpc connection
 	InsecureGrpc bool `json:"insecureGrpc"`
+
+	TLSConfig *httpclient.TLSOptions
 
 	ProxyClient proxy.Client
 }
