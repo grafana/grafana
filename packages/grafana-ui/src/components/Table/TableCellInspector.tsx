@@ -1,7 +1,8 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
+
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
@@ -21,9 +22,9 @@ interface TableCellInspectorProps {
 }
 
 export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
+  const { t } = useTranslate();
   let displayValue = value;
   const [currentMode, setMode] = useState(mode);
-
   if (isString(value)) {
     const trimmedValue = value.trim();
     // Exclude numeric strings like '123' from being displayed in code/JSON mode

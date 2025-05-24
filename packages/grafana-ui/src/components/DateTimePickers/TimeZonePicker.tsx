@@ -10,8 +10,8 @@ import {
   TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
@@ -32,6 +32,7 @@ export interface Props {
 }
 
 export const TimeZonePicker = (props: Props) => {
+  const { t } = useTranslate();
   const {
     onChange,
     width,

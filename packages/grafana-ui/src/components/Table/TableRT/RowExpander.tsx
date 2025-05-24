@@ -1,4 +1,5 @@
-import { t } from '../../../utils/i18n';
+import { useTranslate } from '@grafana/i18n';
+
 import { Icon } from '../../Icon/Icon';
 import { GrafanaTableRow } from '../types';
 
@@ -10,6 +11,7 @@ export interface Props {
 }
 
 export function RowExpander({ row, tableStyles }: Props) {
+  const { t } = useTranslate();
   return (
     <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
       <Icon

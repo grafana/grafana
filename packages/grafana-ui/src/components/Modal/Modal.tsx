@@ -5,9 +5,10 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { PropsWithChildren, useRef } from 'react';
 import * as React from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -35,6 +36,7 @@ export interface Props {
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
+  const { t } = useTranslate();
   const {
     title,
     children,

@@ -16,9 +16,9 @@ import {
   getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
@@ -72,8 +72,8 @@ export interface State {
 }
 
 export function TimeRangePicker(props: TimeRangePickerProps) {
+  const { t } = useTranslate();
   const [isOpen, setOpen] = useState(false);
-
   const {
     value,
     onMoveBackward,

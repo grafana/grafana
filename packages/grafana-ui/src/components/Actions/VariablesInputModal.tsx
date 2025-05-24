@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { ActionModel, ActionVariableInput } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { FieldSet } from '../Forms/FieldSet';
@@ -22,6 +22,7 @@ interface Props {
  * @internal
  */
 export function VariablesInputModal({ action, onDismiss, onShowConfirm, variables, setVariables }: Props) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const onModalContinue = () => {

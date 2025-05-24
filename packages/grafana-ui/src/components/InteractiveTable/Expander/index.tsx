@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { CellProps, HeaderProps } from 'react-table';
 
-import { t } from '../../../utils/i18n';
+import { useTranslate } from '@grafana/i18n';
+
 import { IconButton } from '../../IconButton/IconButton';
 
 const expanderContainerStyles = css({
@@ -11,6 +12,7 @@ const expanderContainerStyles = css({
 });
 
 export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void>) {
+  const { t } = useTranslate();
   return (
     <div className={expanderContainerStyles}>
       <IconButton
@@ -29,6 +31,7 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
 }
 
 export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllRowsExpanded }: HeaderProps<K>) {
+  const { t } = useTranslate();
   return (
     <div className={expanderContainerStyles}>
       <IconButton

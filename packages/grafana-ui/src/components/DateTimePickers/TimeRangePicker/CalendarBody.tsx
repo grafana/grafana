@@ -3,9 +3,9 @@ import { useCallback } from 'react';
 import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
@@ -19,6 +19,7 @@ const weekStartMap: Record<WeekStart, CalendarType> = {
 };
 
 export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCalendarProps) {
+  const { t } = useTranslate();
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);

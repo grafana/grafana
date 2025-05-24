@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem } from './types';

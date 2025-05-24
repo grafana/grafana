@@ -2,8 +2,8 @@ import { cx } from '@emotion/css';
 import { ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { ToolbarButton } from '../ToolbarButton';
 import { TooltipPlacement } from '../Tooltip';
@@ -27,6 +27,7 @@ export function PanelMenu({
   menuButtonClass,
   onOpenMenu,
 }: PanelMenuProps) {
+  const { t } = useTranslate();
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
 
   const handleVisibility = useCallback(

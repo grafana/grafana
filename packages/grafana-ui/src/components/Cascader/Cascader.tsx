@@ -5,10 +5,10 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
 import { withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types';
-import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -285,12 +285,8 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
                 suffix={
                   <Stack gap={0.5}>
                     {isClearable && activeLabel !== '' && (
-                      <IconButton
-                        name="times"
-                        aria-label={t('grafana-ui.cascader.clear-button', 'Clear selection')}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                      <ClearButton
+                        onClear={() => {
                           this.setState({ rcValue: [], activeLabel: '', inputValue: '' });
                           this.props.onSelect('');
                         }}
@@ -309,5 +305,24 @@ class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
     );
   }
 }
+
+interface ClearButtonProps {
+  onClear: () => void;
+}
+
+const ClearButton = ({ onClear }: ClearButtonProps) => {
+  const { t } = useTranslate();
+  return (
+    <IconButton
+      name="times"
+      aria-label={t('grafana-ui.cascader.clear-button', 'Clear selection')}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClear();
+      }}
+    />
+  );
+};
 
 export const Cascader = withTheme2(UnthemedCascader);

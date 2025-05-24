@@ -22,7 +22,6 @@ import { SceneShareTabState, ShareView } from './types';
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 export const getExpireOptions = () => {
-  const { t } = useTranslate();
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
     label: t('share-modal.snapshot.expire-week', '1 Week'),
     value: 60 * 60 * 24 * 7,

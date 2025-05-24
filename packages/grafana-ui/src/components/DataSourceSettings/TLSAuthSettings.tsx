@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
-import { t, Trans } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -12,6 +12,7 @@ import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
 export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBaseProps) => {
+  const { t } = useTranslate();
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;

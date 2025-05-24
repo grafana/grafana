@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
 import { trimFileName } from '../../utils/file';
-import { t, Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -18,6 +18,7 @@ export interface FileListItemProps {
 }
 
 export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { file, progress, error, abortUpload, retryUpload } = customFile;
 

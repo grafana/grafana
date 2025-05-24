@@ -5,6 +5,7 @@ import {
   SelectableValue,
   StandardEditorProps,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { Field } from '../../components/Forms/Field';
@@ -13,7 +14,6 @@ import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
-import { t } from '../../utils/i18n';
 
 const category = ['Axis'];
 
@@ -146,6 +146,7 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
  * @internal
  */
 export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
+  const { t } = useTranslate();
   const type = value?.type ?? ScaleDistribution.Linear;
   const log = value?.log ?? 2;
 

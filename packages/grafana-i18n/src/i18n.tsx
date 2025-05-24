@@ -11,22 +11,49 @@ import { TFunction, TransProps, TransType } from './types';
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
-export async function initPluginTranslations(id: string) {
+(async () => {
+  // We want to translate grafana-ui without introducing any breaking changes for consumers
+  // who use grafana-ui outside of grafana (such as grafana.com self serve). The other struggle
+  // is that grafana-ui does not require a top-level provider component, so we don't get the
+  // chance to do the mandatory i18next setup that <Trans /> and t() requires
+  const isGrafanaContext = Object.hasOwn(window, 'grafanaBootData');
+  const isTestContext = process.env.NODE_ENV === 'test';
+
+  if (isGrafanaContext || isTestContext) {
+    return;
+  }
+
+  console.log('Initializing a default i18n instance');
+  await initPluginTranslations('unkown-context');
+})();
+
+async function initDefaultI18nInstance() {
+  if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
+    return;
+  }
+
   // If the resources are not an object, we need to initialize the plugin translations
-  if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
-    await getI18nInstance().use(initReactI18next).init({
-      resources: {},
-      returnEmptyString: false,
-      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
-    });
+  await getI18nInstance().use(initReactI18next).init({
+    resources: {},
+    returnEmptyString: false,
+    lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+  });
+}
+
+function initDefaultReactI18nInstance() {
+  if (getI18n()?.options?.react) {
+    return;
   }
 
   // If the initReactI18next is not set, we need to set them
-  if (!getI18n()?.options?.react) {
-    const options: ReactOptions = {};
-    setDefaults(options);
-    setI18n(getI18nInstance());
-  }
+  const options: ReactOptions = {};
+  setDefaults(options);
+  setI18n(getI18nInstance());
+}
+
+export async function initPluginTranslations(id: string) {
+  await initDefaultI18nInstance();
+  initDefaultReactI18nInstance();
 
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
@@ -140,18 +167,17 @@ export function addResourceBundle(language: string, namespace: string, resource:
   getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
 }
 
+function logError(entity: string) {
+  const message = `${entity} was called before i18n was initialized. This is probably caused by calling ${entity} outside of Grafana context or by calling ${entity} in the root module scope, instead of lazily on render. Initializing default instances.`;
+  console.error(message);
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    throw new Error(message);
+  }
+}
+
 export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   if (!tFunc) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.warn(
-        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
-      );
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      throw new Error('t() was called before i18n was initialized');
-    }
-
+    logError('t()');
     tFunc = getI18nInstance().t;
   }
 
@@ -159,10 +185,20 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
 };
 
 export function useTranslate() {
+  if (!tFunc) {
+    logError('useTranslate()');
+    return { t: getI18nInstance().t };
+  }
+
   return { t };
 }
 
 export function Trans(props: TransProps) {
-  const Component = transComponent ?? I18NextTrans;
+  if (!transComponent) {
+    logError('Trans()');
+    return <I18NextTrans shouldUnescape {...props} />;
+  }
+
+  const Component = transComponent;
   return <Component shouldUnescape {...props} />;
 }

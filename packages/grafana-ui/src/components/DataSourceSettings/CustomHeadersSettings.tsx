@@ -3,9 +3,9 @@ import { uniqueId } from 'lodash';
 import { PureComponent } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
@@ -54,8 +54,8 @@ const getCustomHeaderRowStyles = () => ({
 });
 
 const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: CustomHeaderRowProps) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getCustomHeaderRowStyles);
-
   return (
     <div className={styles.layout}>
       <FormField

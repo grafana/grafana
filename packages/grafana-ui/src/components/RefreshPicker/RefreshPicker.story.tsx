@@ -25,6 +25,7 @@ const meta: Meta<typeof RefreshPicker> = {
     value: '1h',
     primary: false,
     noIntervalPicker: false,
+    showAutoInterval: true,
     intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
   },
 };
@@ -52,6 +53,7 @@ export const Examples: StoryFn<typeof RefreshPicker> = (args) => {
       onRefresh={onRefresh}
       noIntervalPicker={args.noIntervalPicker}
       primary={args.primary}
+      showAutoInterval={args.showAutoInterval}
     />
   );
 };

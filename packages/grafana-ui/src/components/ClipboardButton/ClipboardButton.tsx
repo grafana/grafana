@@ -3,8 +3,8 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 
-import { t } from '../../../src/utils/i18n';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -30,6 +30,7 @@ export function ClipboardButton({
   variant,
   ...buttonProps
 }: Props) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 

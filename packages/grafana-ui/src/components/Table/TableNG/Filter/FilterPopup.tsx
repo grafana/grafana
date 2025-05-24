@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { Button, ButtonSelect, ClickOutsideWrapper, FilterInput, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
-import { t, Trans } from '../../../../utils/i18n';
 import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';
@@ -52,6 +52,7 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -97,7 +98,6 @@ export const FilterPopup = ({
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
   const styles = useStyles2(getStyles);
-
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}

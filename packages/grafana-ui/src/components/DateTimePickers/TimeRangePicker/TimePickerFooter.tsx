@@ -5,9 +5,9 @@ import * as React from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
@@ -27,6 +27,7 @@ interface Props {
 }
 
 export const TimePickerFooter = (props: Props) => {
+  const { t } = useTranslate();
   const {
     timeZone,
     fiscalYearStartMonth,
@@ -52,7 +53,6 @@ export const TimePickerFooter = (props: Props) => {
   );
 
   const style = useStyles2(getStyle);
-
   if (!isString(timeZone)) {
     return null;
   }

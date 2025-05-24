@@ -19,9 +19,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -214,6 +214,7 @@ type InputState = {
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, timeZone, showSeconds = true, clearable = false }, ref) => {
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
@@ -301,6 +302,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     },
     ref
   ) => {
+    const { t } = useTranslate();
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
 
