@@ -29,6 +29,11 @@ func (m *MockPermissionsService) SetUserPermission(ctx context.Context, orgID in
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
+func (m *MockPermissionsService) SetUsersPermission(ctx context.Context, orgID int64, users []accesscontrol.User, resourceID, permission string) ([]accesscontrol.ResourcePermission, error) {
+	mockedArgs := m.Called(ctx, orgID, users, resourceID, permission)
+	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
+}
+
 func (m *MockPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, teamID, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
