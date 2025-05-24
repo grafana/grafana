@@ -7,7 +7,7 @@ require (
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.20.5 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.50.0 // @grafana/grafana-backend-group
-	connectrpc.com/connect v1.17.0 // @grafana/observability-traces-and-profiling
+	connectrpc.com/connect v1.18.1 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
 	filippo.io/age v1.2.1 // @grafana/identity-access-team
 	github.com/1NCE-GmbH/grpc-go-pool v0.0.0-20231117122434-2a5bb974daa2 // @grafana/grafana-search-and-storage
