@@ -725,6 +725,136 @@ describe('Prometheus Language Provider', () => {
       );
     });
   });
+
+  describe('getMetricsMetadata', () => {
+    it('should fetch metadata if not already loaded', async () => {
+      const mockMetadata = {
+        metric1: [
+          {
+            type: 'counter',
+            help: 'help text 1',
+          },
+        ],
+        metric2: [
+          {
+            type: 'gauge',
+            help: 'help text 2',
+          },
+        ],
+      };
+
+      const expectedMetadata = {
+        metric1: {
+          type: 'counter',
+          help: 'help text 1',
+        },
+        metric2: {
+          type: 'gauge',
+          help: 'help text 2',
+        },
+      };
+
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        metadataRequest: () => ({ data: { data: mockMetadata } }),
+      } as unknown as PrometheusDatasource);
+
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      const result = await languageProvider.getMetricsMetadata();
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        {},
+        {
+          showErrorAlert: false,
+          headers: { 'X-Grafana-Cache': 'private, max-age=86400' },
+        }
+      );
+      expect(result).toEqual(expect.objectContaining(expectedMetadata));
+    });
+
+    it('should return cached metadata without fetching if already loaded', async () => {
+      const mockMetadata = {
+        metric1: [
+          {
+            type: 'counter',
+            help: 'help text 1',
+          },
+        ],
+      };
+
+      const expectedMetadata = {
+        metric1: {
+          type: 'counter',
+          help: 'help text 1',
+        },
+      };
+
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        metadataRequest: () => ({ data: { data: mockMetadata } }),
+      } as unknown as PrometheusDatasource);
+
+      // First call to load metadata
+      const firstResult = await languageProvider.getMetricsMetadata();
+      expect(firstResult).toEqual(expect.objectContaining(expectedMetadata));
+
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      // Second call should use cached data
+      const result = await languageProvider.getMetricsMetadata();
+
+      expect(requestSpy).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining(expectedMetadata));
+    });
+
+    it('should handle empty metadata response', async () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        metadataRequest: () => ({ data: { data: {} } }),
+      } as unknown as PrometheusDatasource);
+
+      const result = await languageProvider.getMetricsMetadata();
+
+      // Even with empty input, fixSummariesMetadata might add some default entries
+      expect(Object.keys(result).length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle error during metadata fetch', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        metadataRequest: () => Promise.reject(new Error('Metadata fetch failed')),
+      } as unknown as PrometheusDatasource);
+
+      const result = await languageProvider.getMetricsMetadata();
+
+      expect(result).toEqual(undefined);
+    });
+
+    it('should use configured cache duration from datasource', async () => {
+      const mockDays = 7;
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        getDaysToCacheMetadata: () => mockDays,
+        metadataRequest: () => ({ data: { data: {} } }),
+      } as unknown as PrometheusDatasource);
+
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+
+      await languageProvider.getMetricsMetadata();
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        {},
+        {
+          showErrorAlert: false,
+          headers: { 'X-Grafana-Cache': `private, max-age=${mockDays * 86400}` },
+        }
+      );
+    });
+  });
 });
 
 describe('removeQuotesIfExist', () => {

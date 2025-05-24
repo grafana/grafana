@@ -84,13 +84,19 @@ const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
 };
 
 export default class PromQlLanguageProvider extends LanguageProvider {
+  declare startTask: Promise<any>;
+  declare labelFetchTs: number;
+
+  private _metricsMetadata?: PromMetricsMetadata;
+
   histogramMetrics: string[];
   metrics: string[];
+  /**
+   * @deprecated Use getMetricsMetadata() method instead
+   */
   metricsMetadata?: PromMetricsMetadata;
-  declare startTask: Promise<any>;
   datasource: PrometheusDatasource;
   labelKeys: string[] = [];
-  declare labelFetchTs: number;
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -142,7 +148,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
    */
-  fetchMetadata = async () => {
+  private _fetchMetadata = async () => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
     const metadata = await this.request(
@@ -153,8 +159,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         ...headers,
       }
     );
-    this.metricsMetadata = fixSummariesMetadata(metadata);
-    return this.metricsMetadata;
+    return fixSummariesMetadata(metadata);
   };
 
   // ===================================
@@ -256,11 +261,32 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   // ======================================================================
 
+  public getMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+    if (!this._metricsMetadata) {
+      this._metricsMetadata = await this._fetchMetadata();
+    }
+
+    return this._metricsMetadata;
+  };
+
+  // ======================================================================
+
   /**
-   * @deprecated Use fetchMetadata instead
+   * @deprecated Use _fetchMetadata instead. If you want metadata itself use getMetricsMetadata() method.
    */
   async loadMetricsMetadata() {
-    this.fetchMetadata();
+    const secondsInDay = 86400;
+    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request(
+        API_V1.METADATA,
+        {},
+        {
+          showErrorAlert: false,
+          ...headers,
+        }
+      )
+    );
   }
 
   getLabelKeys(): string[] {
