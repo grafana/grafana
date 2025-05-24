@@ -17,7 +17,6 @@ export interface PostgresOptions extends SQLOptions {
   sslRootCertFile?: string;
   sslCertFile?: string;
   sslKeyFile?: string;
-  postgresVersion?: number;
   timescaledb?: boolean;
   enableSecureSocksProxy?: boolean;
 }
