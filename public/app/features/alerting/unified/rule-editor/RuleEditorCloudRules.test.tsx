@@ -43,7 +43,6 @@ describe('RuleEditor cloud', () => {
   });
 
   it('can create a new cloud alert', async () => {
-    jest.spyOn(console, 'error').mockImplementation();
     const { user } = renderRuleEditor();
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);

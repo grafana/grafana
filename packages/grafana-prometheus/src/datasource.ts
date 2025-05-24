@@ -113,7 +113,7 @@ export class PrometheusDatasource
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
-    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
@@ -296,7 +296,7 @@ export class PrometheusDatasource
       if (!isFetchError(err)) {
         throw err;
       }
-      return err;
+      return undefined;
     }
   }
 
@@ -608,7 +608,7 @@ export class PrometheusDatasource
   async loadRules() {
     try {
       const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
-      const groups = res.data?.data?.groups;
+      const groups = res?.data?.data?.groups;
 
       if (groups) {
         this.ruleMappings = extractRuleMappingFromGroups(groups);
@@ -633,7 +633,7 @@ export class PrometheusDatasource
           showErrorAlert: false,
         }
       );
-      if (res.data.status === 'success') {
+      if (res?.data.status === 'success') {
         return true;
       }
       return false;
