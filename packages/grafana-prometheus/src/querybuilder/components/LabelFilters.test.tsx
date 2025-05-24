@@ -81,7 +81,7 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(screen.getByLabelText(/remove-foo/));
+    await userEvent.click(screen.getByLabelText(/Remove foo/));
     expect(onChange).toHaveBeenCalledWith([]);
   });
 
@@ -93,7 +93,7 @@ describe('LabelFilters', () => {
         { label: 'le', op: '=', value: '' },
       ],
     });
-    await userEvent.click(screen.getByLabelText(/remove-foo/));
+    await userEvent.click(screen.getByLabelText(/Remove foo/));
     expect(onChange).toHaveBeenCalledWith([
       { label: 'lab', op: '=', value: 'bel' },
       { label: 'le', op: '=', value: '' },

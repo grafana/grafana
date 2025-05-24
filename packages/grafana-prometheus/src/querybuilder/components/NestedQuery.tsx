@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
@@ -23,13 +24,16 @@ export interface NestedQueryProps {
 }
 
 export const NestedQuery = memo<NestedQueryProps>((props) => {
+  const { t } = useTranslate();
   const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>Operator</div>
+        <div className={styles.name}>
+          <Trans i18nKey="querybuilder.nested-query.operator">Operator</Trans>
+        </div>
         <Select
           width="auto"
           options={operators}
@@ -41,7 +45,9 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
             });
           }}
         />
-        <div className={styles.name}>Vector matches</div>
+        <div className={styles.name}>
+          <Trans i18nKey="querybuilder.nested-query.vector-matches">Vector matches</Trans>
+        </div>
         <div className={styles.vectorMatchWrapper}>
           <Select<PromVisualQueryBinary['vectorMatchesType']>
             width="auto"
@@ -72,7 +78,12 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
           />
         </div>
         <FlexItem grow={1} />
-        <IconButton name="times" size="sm" onClick={() => onRemove(index)} tooltip="Remove match" />
+        <IconButton
+          name="times"
+          size="sm"
+          onClick={() => onRemove(index)}
+          tooltip={t('querybuilder.nested-query.tooltip-remove-match', 'Remove match')}
+        />
       </div>
       <div className={styles.body}>
         <EditorRows>

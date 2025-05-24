@@ -3,6 +3,7 @@ import { cx } from '@emotion/css';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
@@ -20,24 +21,34 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
   options,
   onOptionsChange,
 }: Props<T>): JSX.Element {
+  const { t } = useTranslate();
   const theme = useTheme2();
   // imported GrafanaTheme2 from @grafana/data does not match type of same from @grafana/ui
   // @ts-ignore
   const styles = overhaulStyles(theme);
 
   return (
-    <ConfigSubSection title="Alerting" className={cx(styles.container, styles.alertingTop)}>
+    <ConfigSubSection
+      title={t('configuration.alerting-settings-overhaul.title-alerting', 'Alerting')}
+      className={cx(styles.container, styles.alertingTop)}
+    >
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineField
               labelWidth={30}
-              label="Manage alerts via Alerting UI"
+              label={t(
+                'configuration.alerting-settings-overhaul.label-manage-alerts-via-alerting-ui',
+                'Manage alerts via Alerting UI'
+              )}
               disabled={options.readOnly}
               tooltip={
                 <>
-                  Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data
-                  source. {docsTip()}
+                  <Trans i18nKey="configuration.alerting-settings-overhaul.tooltip-manage-alerts-via-alerting-ui">
+                    Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager
+                    data source.
+                  </Trans>{' '}
+                  {docsTip()}
                 </>
               }
               interactive={true}

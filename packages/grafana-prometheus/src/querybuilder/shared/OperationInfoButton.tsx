@@ -13,6 +13,7 @@ import {
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Portal, useStyles2 } from '@grafana/ui';
 
@@ -24,6 +25,7 @@ export interface Props {
 }
 
 export const OperationInfoButton = memo<Props>(({ def, operation }) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(false);
 
@@ -55,7 +57,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   return (
     <>
       <Button
-        title="Click to show description"
+        title={t('querybuilder.operation-info-button.title-click-to-show-description', 'Click to show description')}
         ref={refs.setReference}
         icon="info-circle"
         size="sm"
@@ -74,7 +76,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
                 onClick={() => setShow(false)}
                 fill="text"
                 variant="secondary"
-                title="Remove operation"
+                title={t('querybuilder.operation-info-button.title-remove-operation', 'Remove operation')}
               />
             </div>
             <div

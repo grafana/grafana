@@ -4,6 +4,7 @@ import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
 
 import { getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
@@ -24,6 +25,7 @@ interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, Pro
 }
 
 export const PromQueryField = (props: PromQueryFieldProps) => {
+  const { t } = useTranslate();
   const {
     app,
     datasource,
@@ -165,7 +167,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             onChange={onChangeQuery}
             onRunQuery={onRunQuery}
             initialValue={query.expr ?? ''}
-            placeholder="Enter a PromQL query…"
+            placeholder={t('components.prom-query-field.placeholder-enter-a-prom-ql-query', 'Enter a PromQL query…')}
             datasource={datasource}
             timeRange={range ?? getDefaultTimeRange()}
           />

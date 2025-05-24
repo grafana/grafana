@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import Prism, { Grammar } from 'prismjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -15,6 +16,7 @@ export interface Props {
 }
 
 export function RawQuery({ query, lang, className }: Props) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getStyles(theme);
   const highlighted = Prism.highlight(query, lang.grammar, lang.name);
@@ -22,7 +24,7 @@ export function RawQuery({ query, lang, className }: Props) {
   return (
     <div
       className={cx(styles.editorField, 'prism-syntax-highlight', className)}
-      aria-label="selector"
+      aria-label={t('querybuilder.raw-query.aria-label-selector', 'selector')}
       dangerouslySetInnerHTML={{ __html: highlighted }}
     />
   );

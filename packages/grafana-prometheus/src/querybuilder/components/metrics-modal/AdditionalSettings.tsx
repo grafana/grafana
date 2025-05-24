@@ -2,6 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { metricsModaltestIds } from './MetricsModal';
@@ -17,6 +18,7 @@ type AdditionalSettingsProps = {
 };
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
+  const { t } = useTranslate();
   const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
     props;
 
@@ -44,7 +46,9 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
       </div>
       <div className={styles.selectItem}>
         <Switch value={state.disableTextWrap} onChange={() => onChangeDisableTextWrap()} />
-        <div className={styles.selectItemLabel}>Disable text wrap</div>
+        <div className={styles.selectItemLabel}>
+          <Trans i18nKey="querybuilder.additional-settings.disable-text-wrap">Disable text wrap</Trans>
+        </div>
       </div>
       <div className={styles.selectItem}>
         <Switch
@@ -54,7 +58,10 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         />
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
-          content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}
+          content={t(
+            'querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
+            'Filter metric names by regex search, using an additional call on the Prometheus API.'
+          )}
           placement="bottom-end"
         >
           <Icon name="info-circle" size="xs" className={styles.settingsIcon} />

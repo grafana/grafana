@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useMountedState, usePrevious } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
 
 import { OperationEditor } from './OperationEditor';
@@ -30,6 +31,7 @@ export function OperationList<T extends QueryWithOperations>({
   highlightedOp,
   timeRange,
 }: Props<T>) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { operations } = query;
 
@@ -126,11 +128,16 @@ export function OperationList<T extends QueryWithOperations>({
               autoFocus={true}
               alwaysOpen={true}
               hideActiveLevelLabel={true}
-              placeholder={'Search'}
+              placeholder={t('querybuilder.operation-list.placeholder-search', 'Search')}
             />
           ) : (
-            <Button icon={'plus'} variant={'secondary'} onClick={() => setCascaderOpen(true)} title={'Add operation'}>
-              Operations
+            <Button
+              icon={'plus'}
+              variant={'secondary'}
+              onClick={() => setCascaderOpen(true)}
+              title={t('querybuilder.operation-list.title-add-operation', 'Add operation')}
+            >
+              <Trans i18nKey="querybuilder.operation-list.operations">Operations</Trans>
             </Button>
           )}
         </div>

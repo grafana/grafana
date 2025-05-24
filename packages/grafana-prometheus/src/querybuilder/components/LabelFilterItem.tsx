@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { AsyncSelect, Select } from '@grafana/ui';
 
@@ -35,6 +36,7 @@ export function LabelFilterItem({
   getLabelValuesAutofillSuggestions,
   debounceDuration,
 }: LabelFilterItemProps) {
+  const { t } = useTranslate();
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     labelValues?: SelectableValue[];
@@ -93,7 +95,7 @@ export function LabelFilterItem({
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <AsyncSelect
-          placeholder="Select label"
+          placeholder={t('querybuilder.label-filter-item.placeholder-select-label', 'Select label')}
           data-testid={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
@@ -150,7 +152,7 @@ export function LabelFilterItem({
 
         {/* Label value async select: autocomplete calls prometheus API */}
         <AsyncSelect
-          placeholder="Select value"
+          placeholder={t('querybuilder.label-filter-item.placeholder-select-value', 'Select value')}
           data-testid={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
@@ -201,7 +203,12 @@ export function LabelFilterItem({
           }}
           invalid={invalidValue}
         />
-        <AccessoryButton aria-label={`remove-${item.label}`} icon="times" variant="secondary" onClick={onDelete} />
+        <AccessoryButton
+          aria-label={t('querybuilder.label-filter-item.aria-label-remove', 'Remove {{name}}', { name: item.label })}
+          icon="times"
+          variant="secondary"
+          onClick={onDelete}
+        />
       </InputGroup>
     </div>
   );
