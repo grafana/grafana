@@ -659,11 +659,11 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	dash.Set("panels", panels)
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions dashboard_versions getDashboardVersionsByID
+// swagger:route GET /dashboards/id/{DashboardID}/versions dashboards versions getDashboardVersionsByID
 //
 // Gets all existing versions for the dashboard.
 //
-// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
+// Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead
 //
 // Deprecated: true
 //
@@ -674,7 +674,7 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /dashboards/uid/{uid}/versions dashboard_versions getDashboardVersionsByUID
+// swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID
 //
 // Gets all existing versions for the dashboard using UID.
 //
@@ -769,11 +769,11 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	})
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
+// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByID
 //
 // Get a specific dashboard version.
 //
-// Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead
+// Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead
 //
 // Deprecated: true
 //
@@ -784,7 +784,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
 //
@@ -950,11 +950,11 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
-// swagger:route POST /dashboards/id/{DashboardID}/restore dashboard_versions restoreDashboardVersionByID
+// swagger:route POST /dashboards/id/{DashboardID}/restore dashboards versions restoreDashboardVersionByID
 //
 // Restore a dashboard to a given dashboard version.
 //
-// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+// Please refer to [updated API](#/dashboards/restoreDashboardVersionByUID) instead
 //
 // Deprecated: true
 //
@@ -965,7 +965,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /dashboards/uid/{uid}/restore dashboard_versions restoreDashboardVersionByUID
+// swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
 //
 // Restore a dashboard to a given dashboard version using UID.
 //
