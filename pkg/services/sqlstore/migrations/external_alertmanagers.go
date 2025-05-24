@@ -17,7 +17,7 @@ import (
 )
 
 func AddExternalAlertmanagerToDatasourceMigration(mg *migrator.Migrator) {
-	mg.AddMigration("migrate external alertmanagers to datsourcse", &externalAlertmanagerToDatasources{})
+	mg.AddMigration("migrate external alertmanagers to datasource", &externalAlertmanagerToDatasources{})
 }
 
 type externalAlertmanagerToDatasources struct {

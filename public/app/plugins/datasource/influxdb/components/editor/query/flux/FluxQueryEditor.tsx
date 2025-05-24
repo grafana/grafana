@@ -129,12 +129,12 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
       {
         label: 'v.defaultBucket',
         kind: CodeEditorSuggestionItemKind.Property,
-        detail: 'bucket configured in the datsource',
+        detail: 'bucket configured in the datasource',
       },
       {
         label: 'v.organization',
         kind: CodeEditorSuggestionItemKind.Property,
-        detail: 'org configured for the datsource',
+        detail: 'org configured for the datasource',
       },
     ];
 
