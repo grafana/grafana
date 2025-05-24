@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { FormEvent, useCallback, useEffect, useId, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useId, useState, useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -73,10 +73,10 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
+    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth);
     setFrom(fromValue);
     setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone]);
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]); // fiscalYearStartMonth is included here because valueToState depends on it
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -99,11 +99,11 @@ export const TimeRangeContent = (props: Props) => {
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      const [fromValue, toValue] = valueToState(from, to, timeZone);
+      const [fromValue, toValue] = valueToState(from, to, timeZone, fiscalYearStartMonth);
       setFrom(fromValue);
       setTo(toValue);
     },
-    [timeZone]
+    [timeZone, fiscalYearStartMonth]
   );
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,16 +130,23 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone);
+    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone, fiscalYearStartMonth);
     setFrom(fromValue);
     setTo(toValue);
   };
-
-  const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
+  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
+  
+  const fiscalYear = useMemo(() => {
+    return rangeUtil.convertRawToRange(
+      { from: value.raw.from, to: value.raw.to },
+      timeZone,
+      fiscalYearStartMonth
+      );
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]);
 
   const fyTooltip = (
     <div className={style.tooltip}>
-      {rangeUtil.isFiscal(value) ? (
+      {rangeUtil.isFiscal(value, timeZone, fiscalYearStartMonth) ? (
         <Tooltip
           content={t('time-picker.range-content.fiscal-year', 'Fiscal year: {{from}} - {{to}}', {
             from: fiscalYear.from.format('MMM-DD'),
@@ -235,9 +242,9 @@ export const TimeRangeContent = (props: Props) => {
   );
 };
 
-function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
+function isRangeInvalid(from: string, to: string, timezone?: string, fiscalYearStartMonth?: number): boolean {
   const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone, fiscalYearStartMonth); 
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
@@ -246,14 +253,15 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 function valueToState(
   rawFrom: DateTime | string,
   rawTo: DateTime | string,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  fiscalYearStartMonth?: number
 ): [InputState, InputState] {
   const fromValue = valueAsString(rawFrom, timeZone);
   const toValue = valueAsString(rawTo, timeZone);
   const fromInvalid = !isValid(fromValue, false, timeZone);
   const toInvalid = !isValid(toValue, true, timeZone);
-  // If "To" is invalid, we should not check the range anyways
-  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
+  // If "To" is invalid, we should not check the range anyways, fiscalYearStartMonth passed into rangeInvalid calculation
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone, fiscalYearStartMonth) && !toInvalid;
 
   return [
     {
