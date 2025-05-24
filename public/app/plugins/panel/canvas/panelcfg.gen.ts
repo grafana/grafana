@@ -112,10 +112,6 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 
 export interface Options {
   /**
-   * Enable infinite pan
-   */
-  infinitePan: boolean;
-  /**
    * Enable inline editing
    */
   inlineEditing: boolean;
@@ -145,11 +141,15 @@ export interface Options {
    * Show all available element types
    */
   showAdvancedTypes: boolean;
+  /**
+   * Zoom to content
+   */
+  zoomToContent: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
-  infinitePan: true,
   inlineEditing: true,
   panZoom: true,
   showAdvancedTypes: true,
+  zoomToContent: true,
 };
