@@ -265,7 +265,7 @@ const LogListComponent = ({
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, showDetails, displayedFields]);
+  }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -370,6 +370,7 @@ const LogListComponent = ({
               layout="vertical"
               onItemsRendered={onItemsRendered}
               outerRef={scrollRef}
+              overscanCount={5}
               ref={listRef}
               style={{ overflowY: 'scroll' }}
               width="100%"
