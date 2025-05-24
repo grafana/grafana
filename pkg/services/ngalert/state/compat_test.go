@@ -106,7 +106,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 
 				// feature flag is enabled
 				result = StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt))
-				require.Equal(t, strfmt.DateTime(alertState.FiredAt), result.StartsAt)
+				require.Equal(t, strfmt.DateTime(*alertState.FiredAt), result.StartsAt)
 			})
 
 			t.Run("should copy annotations", func(t *testing.T) {
@@ -361,7 +361,7 @@ func randomTransition(from, to eval.State) StateTransition {
 			State:              to,
 			AlertRuleUID:       util.GenerateShortUID(),
 			StartsAt:           time.Now(),
-			FiredAt:            randomTimeInPast(),
+			FiredAt:            util.Pointer(randomTimeInPast()),
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),

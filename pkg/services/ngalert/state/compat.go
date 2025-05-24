@@ -91,7 +91,9 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureTo
 
 	startsAt := strfmt.DateTime(alertState.StartsAt)
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt) {
-		startsAt = strfmt.DateTime(alertState.FiredAt)
+		if alertState.FiredAt != nil {
+			startsAt = strfmt.DateTime(*alertState.FiredAt)
+		}
 	}
 
 	return &models.PostableAlert{

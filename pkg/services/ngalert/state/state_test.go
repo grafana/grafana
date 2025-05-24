@@ -46,7 +46,7 @@ func TestSetAlerting(t *testing.T) {
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			FiredAt:     mock.Now(),
+			FiredAt:     util.Pointer(mock.Now()),
 		},
 	}, {
 		name: "previous state is removed",
@@ -61,7 +61,7 @@ func TestSetAlerting(t *testing.T) {
 			State:    eval.Alerting,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			FiredAt:  mock.Now(),
+			FiredAt:  util.Pointer(mock.Now()),
 		},
 	}}
 
