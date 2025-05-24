@@ -68,7 +68,7 @@ For other languages, refer to the Grafana Foundation SDK documentation for detai
 
 The following example demonstrates how you can create a simple dashboard using TypeScript:
 
-```bash
+```typescript
 import { DashboardBuilder, RowBuilder } from '@grafana/grafana-foundation-sdk/dashboard';
 import { DataqueryBuilder } from '@grafana/grafana-foundation-sdk/prometheus';
 import { PanelBuilder } from '@grafana/grafana-foundation-sdk/timeseries';
