@@ -379,10 +379,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MinInterval = uaMinInterval
 
-	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
-	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
-		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
-	}
+	uaCfg.DefaultRuleEvaluationInterval = max(uaMinInterval, DefaultRuleEvaluationInterval)
 
 	quotas := iniFile.Section("quota")
 	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)

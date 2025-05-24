@@ -1658,10 +1658,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
-	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
-	if cfg.TokenRotationIntervalMinutes < 2 {
-		cfg.TokenRotationIntervalMinutes = 2
-	}
+	cfg.TokenRotationIntervalMinutes = max(auth.Key("token_rotation_interval_minutes").MustInt(10), 2)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)

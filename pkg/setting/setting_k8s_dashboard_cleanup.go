@@ -30,10 +30,7 @@ func (cfg *Cfg) readK8sDashboardCleanupSettings() {
 	}
 
 	// Calculate timeout as 5 seconds less than interval, with minimum validation
-	cleanupTimeout := cleanupInterval - (5 * time.Second)
-	if cleanupTimeout < minK8sDashboardCleanupTimeout {
-		cleanupTimeout = minK8sDashboardCleanupTimeout
-	}
+	cleanupTimeout := max(cleanupInterval-(5*time.Second), minK8sDashboardCleanupTimeout)
 
 	// Read batch size with validation
 	batchSize := section.Key("batch_size").MustInt64(defaultK8sDashboardCleanupBatchSize)
