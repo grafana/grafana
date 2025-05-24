@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
 
-import { TimePickerWithHistory } from './TimePickerWithHistory';
+import { TimePickerWithHistory, isValidTimePickerHistoryValue, deserializeHistory } from './TimePickerWithHistory';
 
 describe('TimePickerWithHistory', () => {
   // In some of the tests we close and re-open the picker. When we do that we must re-find these inputs
@@ -52,15 +52,37 @@ describe('TimePickerWithHistory', () => {
     expect(screen.getByText(/It looks like you haven't used this time picker before/i)).toBeInTheDocument();
   });
 
-  it('Should load with old TimeRange history', async () => {
+  it('Should not load with old TimeRange history', async () => {
+    // TimePickerWithHistory only accepts TimePickerHistoryItem objects
     window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(OLD_LOCAL_STORAGE));
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
+    expect(screen.queryByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-02 00:00:00 to 2022-12-02 23:59:59/i)).not.toBeInTheDocument();
+  });
+
+  it('Should load with valid time picker history only', async () => {
+    const BAD_LOCAL_STORAGE = [
+      { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
+      {
+        from: '2022-12-01T00:00:00.000Z',
+        to: '2022-12-01T23:59:59.000Z',
+        raw: { from: '2022-12-03T00:00:00.000Z', to: '022-12-03T23:59:59.000Z' },
+      },
+      {},
+      { from: null, to: null },
+    ];
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(BAD_LOCAL_STORAGE));
+
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+
     expect(screen.getByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).toBeInTheDocument();
-    expect(screen.queryByText(/2022-12-02 00:00:00 to 2022-12-02 23:59:59/i)).toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-01 00:00:00 to 2022-12-01 23:59:59/i)).not.toBeInTheDocument(); // Invalid, because of raw
   });
 
   it('Should load with new TimePickerHistoryItem history', async () => {
@@ -167,6 +189,66 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
+  });
+});
+
+describe('isValidTimePickerHistoryValue', () => {
+  it('Should return true for TimePickerHistoryItem if format match exactly', () => {
+    const validValue = {
+      from: '2022-12-03T00:00:00.000Z',
+      to: '2022-12-03T23:59:59.000Z',
+    };
+    expect(isValidTimePickerHistoryValue(validValue)).toBe(true);
+  });
+
+  it('Should return false for TimePickerHistoryItem if format did not match exactly', () => {
+    const validValue = {
+      from: '2022-12-03T00:00:00.000Z',
+      to: '2022-12-03T23:59:59.000Z',
+      raw: { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
+    };
+    expect(isValidTimePickerHistoryValue(validValue)).toBe(false);
+  });
+
+  it('Should return false for invalid TimePickerHistoryItem', () => {
+    const invalidValue = { from: null, to: null };
+    expect(isValidTimePickerHistoryValue(invalidValue)).toBe(false);
+  });
+});
+
+describe('deserializeHistory', () => {
+  it('Should return empty array for empty input', () => {
+    expect(deserializeHistory([])).toEqual([]);
+  });
+
+  it('Should return empty array for invalid input', () => {
+    const invalidInputs = [
+      null,
+      undefined,
+      {},
+      { from: null, to: null },
+      { from: undefined, to: undefined },
+      { from: '2022-12-03T00:00:00.000Z' }, // missing 'to'
+      { to: '2022-12-03T23:59:59.000Z' }, // missing 'from'
+      { from: 123, to: '2022-12-03T23:59:59.000Z' }, // non-string 'from'
+      { from: '2022-12-03T00:00:00.000Z', to: 123 }, // non-string 'to'
+      { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z', extra: 'property' }, // extra property
+    ];
+
+    invalidInputs.forEach((input) => {
+      expect(deserializeHistory([input])).toEqual([]);
+    });
+  });
+
+  it('Should return only valid history items', () => {
+    const input = [
+      { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
+      { from: null, to: null }, // invalid item
+      { extra: 'property' }, // invalid item
+    ];
+
+    const result = deserializeHistory(input);
+    expect(result).toHaveLength(1); // Only one valid item
   });
 });
 
