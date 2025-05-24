@@ -3,19 +3,22 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"dagger.io/dagger"
 )
 
 func main() {
 	var (
-		ctx         = context.Background()
-		grafanaPath = flag.String("grafana-dir", ".", "Path to cloned grafana repo")
-		targzPath   = flag.String("package", "grafana.tar.gz", "Path to grafana tar.gz package")
-		suite       = flag.String("suite", "", "e2e suite name (used in arg to run-suite script)")
+		ctx           = context.Background()
+		grafanaPath   = flag.String("grafana-dir", ".", "Path to cloned grafana repo")
+		targzPath     = flag.String("package", "grafana.tar.gz", "Path to grafana tar.gz package")
+		suite         = flag.String("suite", "", "E2E test suite path (e.g. e2e/various-suite)")
+		licensePath   = flag.String("license", "", "the path to the Grafana Enterprise license file (optional)")
+		runnerFlags   = flag.String("flags", "", "flags to pass through to the e2e runner")
+		imageRenderer = flag.Bool("image-renderer", false, "install the image renderer plugin")
 	)
 	flag.Parse()
 
@@ -28,25 +31,32 @@ func main() {
 
 	log.Println("grafana dir:", *grafanaPath)
 	log.Println("targz:", *targzPath)
+	log.Println("license path:", *licensePath)
 
 	grafana := d.Host().Directory(".", dagger.HostDirectoryOpts{
-		Exclude: []string{".git", "node_modules", "*.tar.gz"},
+		Exclude: []string{"node_modules", "*.tar.gz"},
 	})
 
 	targz := d.Host().File("grafana.tar.gz")
+	var license *dagger.File
+	if *licensePath != "" {
+		license = d.Host().File(*licensePath)
+	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		GrafanaDir:   grafana,
-		GrafanaTarGz: targz,
-		YarnCache:    yarnCache,
+		GrafanaDir:           grafana,
+		GrafanaTarGz:         targz,
+		YarnCache:            yarnCache,
+		License:              license,
+		InstallImageRenderer: *imageRenderer,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	videosDir := fmt.Sprintf("/src/e2e/%s/videos", *suite)
+	videosDir := path.Join("/src", *suite, "videos")
 	// *spec.ts.mp4
-	c := RunSuite(d, svc, grafana, yarnCache, *suite)
+	c := RunSuite(d, svc, grafana, yarnCache, *suite, *runnerFlags)
 	c, err = c.Sync(ctx)
 	if err != nil {
 		log.Fatalf("error running dagger: %s", err)

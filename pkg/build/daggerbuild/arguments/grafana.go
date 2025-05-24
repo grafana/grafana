@@ -209,17 +209,26 @@ func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any,
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	ght, err := githubToken(ctx, o.GitHubToken)
-	if err != nil {
-		return nil, nil
+	var clone *dagger.Directory
+	if o.EnterpriseDir != "" {
+		slog.Info("Using local Grafana Enterprise directory", "path", o.EnterpriseDir)
+		clone, err = daggerutil.HostDir(opts.Client, o.EnterpriseDir)
+		if err != nil {
+			return nil, fmt.Errorf("error mounting local Grafana Enterprise directory: %w", err)
+		}
+	} else {
+		ght, err := githubToken(ctx, o.GitHubToken)
+		if err != nil {
+			return nil, nil
+		}
+
+		clone, err = git.CloneWithGitHubToken(opts.Client, ght, o.EnterpriseRepo, o.EnterpriseRef)
+		if err != nil {
+			return nil, fmt.Errorf("error cloning Grafana Enterprise repository: %w", err)
+		}
 	}
 
-	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, ght)
-	if err != nil {
-		return nil, err
-	}
-
-	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), src), nil
+	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), clone), nil
 }
 
 var GrafanaDirectoryFlags = []cli.Flag{
