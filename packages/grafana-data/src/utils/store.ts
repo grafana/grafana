@@ -1,6 +1,9 @@
 type StoreValue = string | number | boolean | null;
 type StoreSubscriber = () => void;
 
+/**
+ * @deprecated Import singleton instance 'store' from '@grafana/data' instead
+ */
 export class Store {
   private subscribers: Map<string, Set<StoreSubscriber>> = new Map();
 
