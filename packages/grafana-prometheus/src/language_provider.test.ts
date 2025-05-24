@@ -60,11 +60,7 @@ const verifyRequestParams = (
   expectedOptions?: unknown
 ) => {
   expect(requestSpy).toHaveBeenCalled();
-  expect(requestSpy).toHaveBeenCalledWith(
-    expectedUrl,
-    expect.objectContaining(expectedParams),
-    expectedOptions
-  );
+  expect(requestSpy).toHaveBeenCalledWith(expectedUrl, expect.objectContaining(expectedParams), expectedOptions);
 };
 
 describe('Prometheus Language Provider', () => {
