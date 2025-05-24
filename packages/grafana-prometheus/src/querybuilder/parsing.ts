@@ -240,7 +240,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   //   the query model.
   // - it is easier to handle template variables this way as template variable is an error for the parser
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
-    let match = getString(expr, node).match(/\[(.+)\]/);
+    let match = getString(expr, node).match(/\[(.+)]/);
     if (match?.[1]) {
       interval = match[1];
       // We were replaced the builtin variables to prevent errors
@@ -251,16 +251,17 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
 
   const op = { id: funcName, params };
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
-  visQuery.operations.unshift(op);
 
   if (body) {
     if (getString(expr, body) === '([' + interval + '])') {
       // This is a special case where we have a function with a single argument and it is the interval.
       // This happens when you start adding operations in query builder and did not set a metric yet.
+      visQuery.operations.push(op);
       return;
     }
     updateFunctionArgs(expr, body, context, op);
   }
+  visQuery.operations.push(op);
 }
 
 /**
@@ -294,8 +295,8 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const body = node.getChild(FunctionCallBody);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
-  visQuery.operations.unshift(op);
   updateFunctionArgs(expr, body, context, op);
+  visQuery.operations.push(op);
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -319,24 +320,18 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     case FunctionCallBody: {
       let child = node.firstChild;
 
+      const binQueryCount = context.query.binaryQueries?.length ?? 0;
       while (child) {
-        let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
-        if (child.type.id === BinaryExpr) {
-          binaryExpressionWithinFunctionArgs = child;
-        } else {
-          binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
-        }
-
-        if (binaryExpressionWithinFunctionArgs) {
-          context.errors.push({
-            text: 'Query parsing is ambiguous.',
-            from: binaryExpressionWithinFunctionArgs.from,
-            to: binaryExpressionWithinFunctionArgs.to,
-          });
-        }
-
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
+      }
+      const newBinQueryCount = context.query.binaryQueries?.length ?? 0;
+      if (binQueryCount < newBinQueryCount) {
+        context.errors.push({
+          text: 'Query parsing is ambiguous.',
+          from: node.from,
+          to: node.to,
+        });
       }
       break;
     }
@@ -455,8 +450,5 @@ function getBinaryModifier(
 }
 
 function isEmptyQuery(query: PromVisualQuery) {
-  if (query.labels.length === 0 && query.operations.length === 0 && !query.metric) {
-    return true;
-  }
-  return false;
+  return query.labels.length === 0 && query.operations.length === 0 && !query.metric;
 }
