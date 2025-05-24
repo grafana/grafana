@@ -156,6 +156,10 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
     updateDatasourcePluginJsonDataOption(props, 'configFilePath', event.currentTarget.value);
   };
 
+  const onServerSpnChanged = (event: SyntheticEvent<HTMLInputElement>) => {
+    updateDatasourcePluginJsonDataOption(props, 'serverSpn', event.currentTarget.value);
+  };
+
   return (
     <>
       <ConfigSubSection
@@ -236,6 +240,17 @@ export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorPro
               required
               value={configFilePath || '/etc/krb5.conf'}
             />
+          </Field>
+          <Field
+            label="Server SPN"
+            description={
+              <span>
+                The Kerberos SPN (Service Principal Name) for the server. This may need to be specified when attempting
+                to connect to a SQL Server that has Extended Protection enabled.
+              </span>
+            }
+          >
+            <Input type="text" width={LONG_WIDTH} onChange={onServerSpnChanged} value={jsonData.serverSpn} />
           </Field>
         </FieldSet>
       </ConfigSubSection>
