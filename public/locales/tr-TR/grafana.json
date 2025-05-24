@@ -3415,6 +3415,13 @@
           "values": "Virgülle ayrılmış değerler",
           "values-placeholder": "1, 10, anahtarım : değerim, değerim, kaçırılmış, değer"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tür",
+          "type-placeholder": ""
+        },
         "description": "Açıklama",
         "description-placeholder": "Açıklayıcı metin",
         "label": "Etiket",
@@ -3433,8 +3440,8 @@
           "category": "Seçim ayarları",
           "custom-all-value": "Özel tüm değer",
           "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
-          "include-all": "Tümünü Dahil Et seçeneği",
-          "include-all-description": "Tüm değerleri dahil etme seçeneğini etkinleştirir",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Çoklu değer"
         },
         "type-category": "{{type}} seçenekleri"

@@ -3415,6 +3415,13 @@
           "values": "Werte werden durch Komma getrennt",
           "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Typ",
+          "type-placeholder": ""
+        },
         "description": "Beschreibung",
         "description-placeholder": "Beschreibender Text",
         "label": "Label",
@@ -3433,8 +3440,8 @@
           "category": "Auswahloptionen",
           "custom-all-value": "Alle Werte benutzerdefiniert",
           "custom-all-value-description": "Ein Platzhalter-Regex oder ein anderer Wert, um „Alle“ darzustellen",
-          "include-all": "Option „Alle einschließen“",
-          "include-all-description": "Aktiviert eine Option, mit der alle Werte einbezogen werden",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Mehrwertig"
         },
         "type-category": "{{type}} Optionen"

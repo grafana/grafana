@@ -3397,6 +3397,13 @@
           "values": "Nilai dipisahkan dengan koma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Jenis",
+          "type-placeholder": ""
+        },
         "description": "Deskripsi",
         "description-placeholder": "Teks deskriptif",
         "label": "Label",
@@ -3415,8 +3422,8 @@
           "category": "Opsi pemilihan",
           "custom-all-value": "Nilai kustom untuk semua",
           "custom-all-value-description": "Regex wildcard atau nilai lainnya untuk merepresentsaikan Semua",
-          "include-all": "Sertakan opsi Semua",
-          "include-all-description": "Mengaktifkan opsi untuk menyertakan semua nilai",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multi-nilai"
         },
         "type-category": "Opsi {{type}}"

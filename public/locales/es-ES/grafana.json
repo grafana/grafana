@@ -3415,6 +3415,13 @@
           "values": "Valores separados por coma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descripción",
         "description-placeholder": "Texto descriptivo",
         "label": "Etiqueta",
@@ -3433,8 +3440,8 @@
           "category": "Opciones de selección",
           "custom-all-value": "Personalizar todos los valores",
           "custom-all-value-description": "Un regex comodín u otro valor para representar Todo",
-          "include-all": "Incluir la opción Todo",
-          "include-all-description": "Habilita una opción para incluir todos los valores",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multivalor"
         },
         "type-category": "Opciones de {{type}}"

@@ -3397,6 +3397,13 @@
           "values": "カンマで区切った値",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "種類",
+          "type-placeholder": ""
+        },
         "description": "説明",
         "description-placeholder": "説明用のテキスト",
         "label": "ラベル",
@@ -3415,8 +3422,8 @@
           "category": "選択オプション",
           "custom-all-value": "「すべて」を表すカスタム値",
           "custom-all-value-description": "「すべて」を表すワイルドカードの正規表現またはその他の値",
-          "include-all": "「すべて」オプションを含める",
-          "include-all-description": "すべての値を含めるオプションを有効にします",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "複数値"
         },
         "type-category": "{{type}}オプション"

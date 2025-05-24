@@ -3415,6 +3415,13 @@
           "values": "Valores separados por vírgula",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descrição",
         "description-placeholder": "Texto descritivo",
         "label": "Etiqueta",
@@ -3433,8 +3440,8 @@
           "category": "Opções de seleção",
           "custom-all-value": "Personalizar todos os valores",
           "custom-all-value-description": "Uma expressão regular genérica ou outro valor para representar Tudo",
-          "include-all": "Opção Incluir tudo",
-          "include-all-description": "Ativa uma opção para incluir todos os valores",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multivalor"
         },
         "type-category": "Opções de {{type}}"

@@ -3397,6 +3397,13 @@
           "values": "以逗号分隔的值",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "类型",
+          "type-placeholder": ""
+        },
         "description": "描述",
         "description-placeholder": "描述性文本",
         "label": "标签",
@@ -3415,8 +3422,8 @@
           "category": "选择内容选项",
           "custom-all-value": "自定义所有值",
           "custom-all-value-description": "用于表示“全部”的通配符正则表达式或其他值",
-          "include-all": "包含“全部”选项",
-          "include-all-description": "启用选项以包含所有值",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "多值"
         },
         "type-category": "{{type}} 选项"

@@ -3415,6 +3415,13 @@
           "values": "Värden åtskilda med kommatecken",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Typ",
+          "type-placeholder": ""
+        },
         "description": "Beskrivning",
         "description-placeholder": "Beskrivande text",
         "label": "Etikett",
@@ -3433,8 +3440,8 @@
           "category": "Urvalsalternativ",
           "custom-all-value": "Anpassa allt värde",
           "custom-all-value-description": "Ett reguljärt jokertecken eller annat värde som representerar alla",
-          "include-all": "Alternativet Inkludera alla",
-          "include-all-description": "Aktiverar ett alternativ för att inkludera alla värden",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multivärde"
         },
         "type-category": "{{type}}-alternativ"
