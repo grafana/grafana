@@ -246,7 +246,7 @@ func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*Re
 	if theme == "" {
 		theme = models.ThemeDark
 	}
-	imgUrl := "public/img/rendering_%s_%s.png"
+	imgUrl := "public/build/img/rendering_%s_%s.png"
 	if errors.Is(err, ErrTimeout) || errors.Is(err, ErrServerTimeout) {
 		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
 	} else {
@@ -264,7 +264,7 @@ func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*Re
 }
 
 func (rs *RenderingService) renderUnavailableImage() *RenderResult {
-	imgPath := "public/img/rendering_plugin_not_installed.png"
+	imgPath := "public/build/img/rendering_plugin_not_installed.png"
 
 	return &RenderResult{
 		FilePath: filepath.Join(rs.Cfg.HomePath, imgPath),
@@ -310,7 +310,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		if opts.Theme != "" {
 			theme = opts.Theme
 		}
-		filePath := fmt.Sprintf("public/img/rendering_limit_%s.png", theme)
+		filePath := fmt.Sprintf("public/build/img/rendering_limit_%s.png", theme)
 		return &RenderResult{
 			FilePath: filepath.Join(rs.Cfg.HomePath, filePath),
 		}, nil

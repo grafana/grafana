@@ -20,7 +20,7 @@ func TestUploadToS3(t *testing.T) {
 		s3Uploader, err := NewImageUploader(cfg)
 		require.NoError(t, err)
 
-		path, err := s3Uploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
+		path, err := s3Uploader.Upload(context.Background(), "../../../public/build/img/logo_transparent_400x.png")
 		require.NoError(t, err)
 		require.NotEqual(t, "", path)
 	})
