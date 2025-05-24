@@ -189,8 +189,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
-        filters: validateFiltersOrigin(variable.state.filters),
+        baseFilters: variable.state.baseFilters,
+        filters: variable.state.filters,
         defaultKeys: variable.state.defaultKeys,
       });
     } else if (variable.state.type === 'system') {
@@ -436,8 +436,8 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: validateFiltersOrigin(variable.state.baseFilters),
-          filters: validateFiltersOrigin(variable.state.filters),
+          baseFilters: variable.state.baseFilters || [],
+          filters: variable.state.filters,
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
           allowCustomValue: variable.state.allowCustomValue ?? true,
         },
