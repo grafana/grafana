@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -15,19 +16,107 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/metricwriter"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func Test_configureAlertStateMetricsWriter(t *testing.T) {
+	tests := []struct {
+		name           string
+		settings       setting.AlertStateMetricSettings
+		datasources    []*datasources.DataSource
+		expectedWriter string
+		expectErr      bool
+	}{
+		{
+			name:           "when disabled returns noop writer",
+			settings:       setting.AlertStateMetricSettings{Enabled: false},
+			expectedWriter: "NoopWriter",
+			expectErr:      false,
+		},
+		{
+			name: "when enabled but no datasource UID returns error",
+			settings: setting.AlertStateMetricSettings{
+				Enabled:       true,
+				DatasourceUID: "",
+				Timeout:       10 * time.Second,
+			},
+			expectedWriter: "NoopWriter",
+			expectErr:      true,
+		},
+		// {
+		// 	name: "when datasource not found returns error",
+		// 	settings: setting.AlertStateMetricSettings{
+		// 		Enabled:       true,
+		// 		DatasourceUID: "test-ds",
+		// 		Timeout:       10 * time.Second,
+		// 	},
+		// 	datasources: []*datasources.DataSource{},
+		// 	expectedWriter:  "NoopWriter",
+		// 	expectErr:     true,
+		// },
+		{
+			name: "when properly configured returns writer",
+			settings: setting.AlertStateMetricSettings{
+				Enabled:       true,
+				DatasourceUID: "test-ds",
+				Timeout:       10 * time.Second,
+			},
+			datasources: []*datasources.DataSource{
+				{
+					UID:  "test-ds",
+					Type: "prometheus",
+					ID:   1,
+				},
+			},
+			expectedWriter: "*metricwriter.Writer",
+			expectErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dsService := &fakeDatasources.FakeDataSourceService{
+				DataSources: tt.datasources,
+			}
+
+			httpProvider := httpclient.NewProvider()
+			clk := clock.New()
+			m := metrics.NewRemoteWriterMetrics(nil)
+
+			writer, err := configureAlertStateMetricsWriter(tt.settings, httpProvider, dsService, clk, m)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			writerType := "unknown"
+			switch writer.(type) {
+			case metricwriter.NoopWriter:
+				writerType = "NoopWriter"
+			case *metricwriter.Writer:
+				writerType = "*metricwriter.Writer"
+			}
+			assert.Equal(t, tt.expectedWriter, writerType)
+		})
+	}
+}
 
 func Test_subscribeToFolderChanges(t *testing.T) {
 	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
