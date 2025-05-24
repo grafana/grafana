@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import { load } from 'js-yaml';
 import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useToggle } from 'react-use';
+import { useAsync, useToggle } from 'react-use';
 
 import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -16,7 +17,7 @@ import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
 
-import { ImportFormValues } from './ImportFromDSRules';
+import { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
@@ -56,6 +57,9 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     namespace,
     ruleGroup,
     targetDatasourceUID,
+    yamlFile,
+    importSource,
+    yamlImportTargetDatasourceUID,
   ] = watch([
     'targetFolder',
     'selectedDatasourceName',
@@ -65,13 +69,44 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     'namespace',
     'ruleGroup',
     'targetDatasourceUID',
+    'yamlFile',
+    'importSource',
+    'yamlImportTargetDatasourceUID',
   ]);
 
-  const dataSourceToFetch = isOpen ? (selectedDatasourceName ?? '') : undefined;
-  const { rulesToBeImported, isloadingCloudRules } = useGetRulesToBeImported(!isOpen, dataSourceToFetch);
+  // for datasource import, we need to fetch the rules from the datasource
+  const dataSourceToFetch = (isOpen && importSource === 'datasource') ? (selectedDatasourceName ?? '') : undefined;
+  const { rulesToBeImported: rulesToBeImportedFromDatasource, isloadingCloudRules } = useGetRulesToBeImported(!isOpen || importSource === 'yaml', dataSourceToFetch);
+
+  // for yaml import, we need to fetch the rules from the yaml file
+  const { value: rulesToBeImportedFromYaml = {} } = useAsync(async () => {
+    if (!yamlFile || importSource !== 'yaml') {
+      return {};
+    }
+    try {
+      const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), yamlFile.name);
+      return rulerConfigFromYAML;
+
+    } catch (error) {
+      console.error('Error parsing YAML file:', error);
+      return {};
+    }
+  }, [importSource, yamlFile]);
+
+  // filter the rules to be imported from the datasource 
   const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
-    () => filterRulerRulesConfig(rulesToBeImported, namespace, ruleGroup),
-    [rulesToBeImported, namespace, ruleGroup]
+    () => {
+      if (importSource === 'datasource') {
+        return filterRulerRulesConfig(rulesToBeImportedFromDatasource, namespace, ruleGroup);
+      }
+      // for yaml, we dont filter the rules
+      return ({
+        filteredConfig: rulesToBeImportedFromYaml,
+        someRulesAreSkipped: false
+      })
+    },
+    [rulesToBeImportedFromDatasource, namespace, ruleGroup, importSource, rulesToBeImportedFromYaml]
+
   );
   const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
 
@@ -97,9 +132,15 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
   }
 
   async function onConvertConfirm() {
+    if (!yamlImportTargetDatasourceUID && !selectedDatasourceUID) {
+      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
+        error: 'No data source selected',
+      }));
+      return;
+    }
     try {
       await convert({
-        dataSourceUID: selectedDatasourceUID,
+        dataSourceUID: importSource === 'yaml' ? (yamlImportTargetDatasourceUID ?? '') : (selectedDatasourceUID ?? ''),
         targetFolderUID: targetFolder?.uid,
         pauseRecordingRules: pauseRecordingRules,
         pauseAlerts: pauseAlertingRules,
@@ -109,7 +150,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
       const isRootFolder = isEmpty(targetFolder?.uid);
 
-      trackImportToGMASuccess();
+      trackImportToGMASuccess({ importSource });
       const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', targetFolder?.title ?? '']], {
         skipSubPath: true,
       });
@@ -118,7 +159,7 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
       );
       locationService.push(ruleListUrl);
     } catch (error) {
-      trackImportToGMAError();
+      trackImportToGMAError({ importSource });
       notifyApp.error(
         t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
           error: stringifyErrorLike(error),
@@ -139,7 +180,10 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         <Stack direction="column" gap={2}>
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text>
-            {t(
+            {importSource === 'yaml' ? t(
+              'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
+              'There are no rules to import. Please select a different yaml file.'
+            ) : t(
               'alerting.import-to-gma.confirm-modal.no-rules-body',
               'There are no rules to import. Please select a different namespace or rule group.'
             )}
@@ -176,6 +220,116 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
     />
   );
 };
+
+interface Group {
+  name: string;
+  rules: Rule[];
+}
+
+interface Rule {
+  alert: string;
+  expr: string;
+  for?: string;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+function isValidString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function isValidObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && Boolean(value);
+}
+
+function hasRequiredProperties(obj: Record<string, unknown>, properties: string[]): boolean {
+  return properties.every(prop => prop in obj);
+}
+
+function isRule(obj: unknown): obj is Rule {
+  if (!isValidObject(obj)) {
+    return false;
+  }
+
+  const requiredProps = ['alert', 'expr'];
+  if (!hasRequiredProperties(obj, requiredProps)) {
+    return false;
+  }
+
+  const rule = obj as unknown as Rule;
+  if (!isValidString(rule.alert) || !isValidString(rule.expr)) {
+    return false;
+  }
+
+  // Check optional properties if they exist
+  if ('for' in rule && !isValidString(rule.for)) {
+    return false;
+  }
+
+  if ('labels' in rule && !isValidObject(rule.labels)) {
+    return false;
+  }
+
+  if ('annotations' in rule && !isValidObject(rule.annotations)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isGroup(obj: unknown): obj is Group {
+  if (!isValidObject(obj)) {
+    return false;
+  }
+
+  const requiredProps = ['name', 'rules'];
+  if (!hasRequiredProperties(obj, requiredProps)) {
+    return false;
+  }
+
+  const group = obj as unknown as Group;
+  if (!isValidString(group.name) || !Array.isArray(group.rules)) {
+    return false;
+  }
+
+  return group.rules.every(isRule);
+}
+
+function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
+
+  const obj = load(yamlAsString);
+  if (!obj || typeof obj !== 'object' || !('groups' in obj) || !Array.isArray((obj as { groups: unknown[] }).groups)) {
+    throw new Error('Invalid YAML format: missing or invalid groups array');
+  }
+
+  const namespace = 'namespace' in obj && isValidString(obj.namespace) ? obj.namespace : defaultNamespace;
+
+  const data: RulerRulesConfigDTO = {};
+  data[namespace] = (obj as { groups: unknown[] }).groups.map((group: unknown) => {
+    if (!isGroup(group)) {
+      throw new Error('Invalid group format: missing name or rules array');
+    }
+
+    return {
+      name: group.name,
+      rules: group.rules.map((rule: unknown) => {
+        if (!isRule(rule)) {
+          throw new Error('Invalid rule format: missing alert or expr');
+        }
+
+        return {
+          alert: rule.alert,
+          expr: rule.expr,
+          for: rule.for,
+          labels: rule.labels,
+          annotations: rule.annotations
+        };
+      })
+    };
+  });
+
+  return data;
+}
 
 function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,

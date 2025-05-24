@@ -213,27 +213,15 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/import-datasource-managed-rules',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalRead]),
-      component: config.featureToggles.alertingMigrationUI
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules'
-              )
-          )
-        : () => <Navigate replace to="/alerting/list" />,
-    },
-    {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()
         ? importAlertingComponent(
-            () =>
-              import(
+          () =>
+            import(
                 /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
-          )
+            )
+        )
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
@@ -241,11 +229,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalRead]),
       component: config.featureToggles.alertingMigrationUI
         ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportFromDSRules'
-              )
-          )
+          () =>
+            import(
+                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
+            )
+        )
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
