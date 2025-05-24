@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
@@ -126,7 +127,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			AccessClient: types.FixedAccessClient(true),
+			Backend:      backend,
 		})
 		require.NoError(t, err)
 
@@ -155,9 +157,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:     ret,
-			Diagnostics: ret,
-			Lifecycle:   ret,
+			AccessClient: types.FixedAccessClient(true),
+			Backend:      ret,
+			Diagnostics:  ret,
+			Lifecycle:    ret,
 		})
 		require.NoError(t, err)
 	default:
