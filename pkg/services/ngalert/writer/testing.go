@@ -71,10 +71,7 @@ func (s *TestRemoteWriteTarget) DatasourceURL() string {
 
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
 	return setting.RecordingRuleSettings{
-		URL:               s.srv.URL + RemoteWriteEndpoint,
-		Timeout:           1 * time.Second,
-		BasicAuthUsername: "",
-		BasicAuthPassword: "",
+		Timeout: 1 * time.Second,
 	}
 }
 
