@@ -2,12 +2,16 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "alwaysStrict": true,
+    "declaration": true,
+    "declarationMap": false,
+    "outDir": "./dist/esm",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

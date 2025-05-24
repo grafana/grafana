@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { docsTip } from '../../../configuration/ConfigEditor';
+import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';
