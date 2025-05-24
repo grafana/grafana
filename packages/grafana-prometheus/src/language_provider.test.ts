@@ -849,4 +849,69 @@ describe('processSeries', () => {
     expect(result.metrics).toEqual([]);
     expect(result.labelKeys).toEqual(['instance', 'job']);
   });
+
+  it('should extract label values for a specific key when findValuesForKey is provided', () => {
+    const series = [
+      {
+        __name__: 'alerts',
+        instance: 'host.docker.internal:3000',
+        job: 'grafana',
+        severity: 'critical',
+      },
+      {
+        __name__: 'alerts',
+        instance: 'prometheus-utf8:9112',
+        job: 'prometheus-utf8',
+        severity: 'critical',
+      },
+      {
+        __name__: 'counters_logins',
+        instance: 'fake-prometheus-data:9091',
+        job: 'fake-data-gen',
+        severity: 'warning',
+      },
+    ];
+
+    // Test finding values for 'job' label
+    const jobResult = processSeries(series, 'job');
+    expect(jobResult.labelValues).toEqual(['fake-data-gen', 'grafana', 'prometheus-utf8']);
+
+    // Test finding values for 'severity' label
+    const severityResult = processSeries(series, 'severity');
+    expect(severityResult.labelValues).toEqual(['critical', 'warning']);
+
+    // Test finding values for 'instance' label
+    const instanceResult = processSeries(series, 'instance');
+    expect(instanceResult.labelValues).toEqual([
+      'fake-prometheus-data:9091',
+      'host.docker.internal:3000',
+      'prometheus-utf8:9112',
+    ]);
+  });
+
+  it('should return empty labelValues array when findValuesForKey is not provided', () => {
+    const series = [
+      {
+        __name__: 'alerts',
+        instance: 'host.docker.internal:3000',
+        job: 'grafana',
+      },
+    ];
+
+    const result = processSeries(series);
+    expect(result.labelValues).toEqual([]);
+  });
+
+  it('should return empty labelValues array when findValuesForKey does not match any labels', () => {
+    const series = [
+      {
+        __name__: 'alerts',
+        instance: 'host.docker.internal:3000',
+        job: 'grafana',
+      },
+    ];
+
+    const result = processSeries(series, 'non_existent_label');
+    expect(result.labelValues).toEqual([]);
+  });
 });
