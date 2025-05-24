@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"runtime/trace"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -114,6 +115,20 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
+var createServer = func(addr string, handler http.Handler) (*http.Server, error) {
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	return server, nil
+}
+
+var defaultCreateServer = createServer
+
 func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
 	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
@@ -126,12 +141,12 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockR
 		runtime.SetMutexProfileFraction(profileDiagnostics.mutexRate)
 
 		go func() {
-			// TODO: We should enable the linter and fix G114 here.
-			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
-			//
-			//nolint:gosec
-			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
+			addr := fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port)
+			server, err := createServer(addr, nil)
 			if err != nil {
+				panic(err)
+			}
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				panic(err)
 			}
 		}()
