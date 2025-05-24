@@ -152,13 +152,17 @@ func (b *BaseDialect) AndStr() string {
 
 func (b *BaseDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
 	param := pattern
+	param = strings.ReplaceAll(param, "_", `\_`)
+	param = strings.ReplaceAll(param, "%", `\%`)
+
 	if wildcardBefore {
 		param = "%" + param
 	}
 	if wildcardAfter {
 		param = param + "%"
 	}
-	return fmt.Sprintf("%s LIKE ?", column), param
+
+	return fmt.Sprintf("%s LIKE ? ESCAPE '\\'", column), param
 }
 
 func (b *BaseDialect) OrStr() string {
