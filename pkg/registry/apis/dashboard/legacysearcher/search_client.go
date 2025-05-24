@@ -304,9 +304,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		return nil, err
 	}
 
-	hits := formatQueryResult(res)
-
-	for _, dashboard := range hits {
+	for _, dashboard := range res {
 		tags, err := json.Marshal(dashboard.Tags)
 		if err != nil {
 			return nil, err
@@ -324,7 +322,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		}
 
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
+			Key:   getResourceKey(&dashboard, req.Options.Key.Namespace),
 			Cells: cells,
 		})
 	}
@@ -350,35 +348,6 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 		Resource:  dashboard.DASHBOARD_RESOURCE,
 		Name:      item.UID,
 	}
-}
-
-func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards.DashboardSearchProjection {
-	hitList := make([]*dashboards.DashboardSearchProjection, 0)
-	hits := make(map[string]*dashboards.DashboardSearchProjection)
-
-	for _, item := range res {
-		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
-		hit, exists := hits[key]
-		if !exists {
-			hit = &dashboards.DashboardSearchProjection{
-				ID:        item.ID,
-				UID:       item.UID,
-				Title:     item.Title,
-				FolderUID: item.FolderUID,
-				Tags:      []string{},
-				IsFolder:  item.IsFolder,
-				SortMeta:  item.SortMeta,
-			}
-			hitList = append(hitList, hit)
-			hits[key] = hit
-		}
-
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
-		}
-	}
-
-	return hitList
 }
 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
