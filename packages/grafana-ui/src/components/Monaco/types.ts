@@ -29,6 +29,7 @@ export interface CodeEditorProps {
   showLineNumbers?: boolean;
   wordWrap?: boolean;
   monacoOptions?: MonacoOptions;
+  languageConfiguration?: monacoType.languages.LanguageConfiguration;
 
   /**
    * Callback before the editor has mounted that gives you raw access to monaco
