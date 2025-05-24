@@ -31,8 +31,12 @@ type ScheduleService interface {
 	Run(context.Context) error
 }
 
-// retryDelay represents how long to wait between each failed rule evaluation.
-const retryDelay = 1 * time.Second
+// minRetryDelay represents how long to initially wait between each failed rule evaluation.
+// Subsequent reties are doubled in length (1s, 2s, 4s, 8s, etc.)
+const initialRetryDelay = 1 * time.Second
+
+// maxRetryDelay is the maximum delay.
+const maxRetryDelay = 4 * time.Second
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
