@@ -169,11 +169,13 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
+		fmt.Println("Initializing doc builders for ", s.cfg.InstanceID)
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		fmt.Println("done Initializing doc builders for ", s.cfg.InstanceID, err)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
