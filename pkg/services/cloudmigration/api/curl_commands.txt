@@ -19,3 +19,5 @@ curl -X GET http://admin:admin@localhost:3000/api/cloudmigration/migration/{sess
 [upload snapshot]
 curl -X POST -H "Content-Type: application/json" \
    http://admin:admin@localhost:3000/api/cloudmigration/migration/{sessionUid}/snapshot/{snapshotUid}/upload
+
+# TODO: remove me
