@@ -594,6 +594,10 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}
 		hs.log.Warn("Failed to get slug from database", "err", err)
+		if len(homePage) > 0 {
+			homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
+			return response.JSON(http.StatusOK, &homePageRedirect)
+		}
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
