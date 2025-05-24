@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const defaultMaxSizePerTenant = 10000
+const defaultMaxBackoff = 1 * time.Second
+
 func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 	tenantIDs := make([]string, numTenants)
 	for i := range tenantIDs {
@@ -24,11 +27,11 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 
 	for n := 0; n < b.N; n++ {
 		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{
-			MaxSizePerTenant: 10000,
+			MaxSizePerTenant: defaultMaxSizePerTenant,
 		}))
 		scheduler, err := NewScheduler(q, &Config{
 			NumWorkers: numWorkers,
-			MaxBackoff: 100 * time.Millisecond,
+			MaxBackoff: defaultMaxBackoff,
 		})
 		require.NoError(b, err)
 

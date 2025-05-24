@@ -12,12 +12,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+const (
+	// DefaultMaxBackoff is the default maximum backoff duration for workers.
+	DefaultMaxBackoff = 1 * time.Second
+	// DefaultMinBackoff is the default minimum backoff duration for workers.
+	DefaultMinBackoff = 100 * time.Millisecond
+	// DefaultNumWorkers is the default number of workers in the scheduler.
+	DefaultNumWorkers = 4
+	// DefaultMaxRetries is the default maximum number of retries for dequeue operations.
+	DefaultMaxRetries = 5
+)
+
+type WorkQueue interface {
+	services.Service
+
+	Dequeue(ctx context.Context) (runnable func(), ok bool, err error)
+}
+
 // Worker processes items from the QoS request queue
 type Worker struct {
 	id         int
-	queue      *Queue
+	queue      WorkQueue
 	wg         *sync.WaitGroup
 	maxBackoff time.Duration
+	maxRetries int
 	logger     log.Logger
 }
 
@@ -31,17 +49,16 @@ func (w *Worker) run(ctx context.Context) {
 			w.logger.Debug("Worker context canceled", "id", w.id)
 			return
 		default:
+			w.dequeueWithRetries(ctx)
 		}
-
-		w.dequeueWithRetries(ctx)
 	}
 }
 
 func (w *Worker) dequeueWithRetries(ctx context.Context) {
 	boff := backoff.New(ctx, backoff.Config{
-		MinBackoff: 100 * time.Millisecond,
+		MinBackoff: DefaultMinBackoff,
 		MaxBackoff: w.maxBackoff,
-		MaxRetries: 5,
+		MaxRetries: w.maxRetries,
 	})
 
 	for boff.Ongoing() {
@@ -83,11 +100,10 @@ type Scheduler struct {
 	services.Service
 
 	logger     log.Logger
-	queue      *Queue
+	queue      WorkQueue
 	wg         sync.WaitGroup
 	maxBackoff time.Duration
 
-	// Subservices manager
 	subservices        *services.Manager
 	subservicesWatcher *services.FailureWatcher
 
@@ -99,24 +115,28 @@ type Scheduler struct {
 type Config struct {
 	NumWorkers int
 	MaxBackoff time.Duration
+	MaxRetries int
 	Logger     log.Logger
 }
 
 func (c *Config) validate() error {
 	if c.NumWorkers <= 0 {
-		return fmt.Errorf("NumWorkers must be positive, got %d", c.NumWorkers)
+		c.NumWorkers = DefaultNumWorkers
 	}
 	if c.MaxBackoff <= 0 {
-		c.MaxBackoff = 5 * time.Second
+		c.MaxBackoff = DefaultMaxBackoff
+	}
+	if c.MaxRetries <= 0 {
+		c.MaxRetries = DefaultMaxRetries
 	}
 	if c.Logger == nil {
-		c.Logger = log.New("qos.scheduler")
+		c.Logger = log.New("scheduler")
 	}
 	return nil
 }
 
 // NewScheduler creates a new scheduler instance.
-func NewScheduler(queue *Queue, config *Config) (*Scheduler, error) {
+func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 	var err error
 
 	if queue == nil {
