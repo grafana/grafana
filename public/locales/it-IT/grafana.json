@@ -3415,6 +3415,13 @@
           "values": "Valori separati da virgola",
           "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descrizione",
         "description-placeholder": "Testo descrittivo",
         "label": "Etichetta",
@@ -3433,8 +3440,8 @@
           "category": "Seleziona opzioni",
           "custom-all-value": "Personalizza tutti i valori",
           "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
-          "include-all": "Includi opzione Tutti",
-          "include-all-description": "Abilita un'opzione per includere tutti i valori",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Valori multipli"
         },
         "type-category": "Opzioni di {{type}}"

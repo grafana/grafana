@@ -3451,6 +3451,13 @@
           "values": "Значения, разделенные запятыми",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Тип",
+          "type-placeholder": ""
+        },
         "description": "Описание",
         "description-placeholder": "Поясняющий текст",
         "label": "Метка",
@@ -3469,8 +3476,8 @@
           "category": "Параметры выбора",
           "custom-all-value": "Пользовательское значение «все»",
           "custom-all-value-description": "Регулярное выражение с подстановочным знаком или другое значение для представления параметра «Все».",
-          "include-all": "Включить параметр «Все»",
-          "include-all-description": "Включает параметр для добавления всех значений",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Многозначное значение"
         },
         "type-category": "Тип параметров: {{type}}"
