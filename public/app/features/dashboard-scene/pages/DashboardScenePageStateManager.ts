@@ -376,7 +376,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+    if (fromCache && fromCache.state.meta.updated === rsp?.meta.updated) {
       return fromCache;
     }
 
