@@ -381,56 +381,86 @@ function joinOuterTabular(
  *
  * @returns {Array<Array<string | number | null | undefined>>} The joined tables as an array of arrays, where each array represents a row in the joined table.
  */
-function joinInner(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
-  const joinedTables: Array<Array<string | number | null | undefined>> = [];
+function joinInner(tables: AlignedData[]) {
+  let ltable = tables[0];
+  let lfield = ltable[0];
 
-  // Recursive function to perform the inner join.
-  const joinTables = (
-    currentTables: AlignedData[],
-    currentIndex: number,
-    currentRow: Array<string | number | null | undefined>
-  ) => {
-    if (currentIndex === currentTables.length) {
-      // Base case: all tables have been joined, add the current row to the final result.
-      joinedTables.push(currentRow);
-      return;
+  for (let ti = 1; ti < tables.length; ti++) {
+    let rtable = tables[ti];
+    let rfield = rtable[0];
+
+    // test if R is unique, build cheaper lookup?
+
+    // build R index
+    // console.time('index right');
+    let index: Record<string | number, number[]> = {};
+
+    for (let i = 0; i < rfield.length; i++) {
+      let val = rfield[i];
+
+      // if (val != null) {
+      let idxs = index[val];
+
+      if (idxs == null) {
+        idxs = index[val] = [];
+      }
+
+      idxs.push(i);
+      // }
     }
+    // console.timeEnd('index right');
 
-    const currentTable = currentTables[currentIndex];
-    const [xValues, ...yValues] = currentTable;
+    // console.time('match left');
+    let matched = [];
+    let count = 0;
+    for (let i = 0; i < lfield.length; i++) {
+      let v = lfield[i];
 
-    for (let i = 0; i < xValues.length; i++) {
-      const value = xValues[i];
+      if (v != null) {
+        let idxs = index[v];
 
-      if (currentIndex === 0 || currentRow.includes(value)) {
-        const newRow = [...currentRow];
-
-        if (currentIndex === 0) {
-          newRow.push(value);
+        if (idxs != null) {
+          matched.push([i, idxs]);
+          count += idxs.length;
+          // mark as matched, so does not get double added if full outer or right
+        } else {
+          // if left join, include
         }
-
-        for (let j = 0; j < yValues.length; j++) {
-          newRow.push(yValues[j][i]);
-        }
-
-        // Recursive call for the next table
-        joinTables(currentTables, currentIndex + 1, newRow);
       }
     }
-  };
+    // console.timeEnd('match left');
 
-  // Start the recursive join process.
-  joinTables(tables, 0, []);
+    // console.time('materialize');
+    let outFieldsTpl = Array.from({length: ltable.length + rtable.length - 1}, () => `Array(${count})`).join(',');
+    let copyLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ltable[${i}][lidx]`).join(';');
+    // (skips join field in right table)
+    let copyRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i+1}][ridxs[j]]`).join(';');
 
-  // Check if joinedTables is empty before transposing. No need to transpose if there are no joined tables.
-  if (joinedTables.length === 0) {
-    const fieldCount = tables.reduce((count, table) => count + (table.length - 1), 1);
-    return Array.from({ length: fieldCount }, () => []);
+    let materialize = new Function('matched', 'ltable', 'rtable', `
+      const joined = [${outFieldsTpl}];
+
+      let rowIdx = 0;
+
+      for (let i = 0; i < matched.length; i++) {
+        let [lidx, ridxs] = matched[i];
+
+        for (let j = 0; j < ridxs.length; j++, rowIdx++) {
+          ${copyLeftRowTpl};
+          ${copyRightRowTpl};
+        }
+      }
+
+      return joined;
+    `);
+
+    let joined = materialize(matched, ltable, rtable);
+    // console.timeEnd('materialize');
+
+    ltable = joined;
+    lfield = ltable[0];
   }
 
-  // Transpose the joined tables to get the desired output format.
-  // This essentially flips the rows and columns back to the stucture of the original `tables`.
-  return joinedTables[0].map((_, colIndex) => joinedTables.map((row) => row[colIndex]));
+  return ltable as  Array<Array<string | number | null | undefined>>;
 }
 
 //--------------------------------------------------------------------------------
