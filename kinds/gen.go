@@ -173,6 +173,9 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 			os.Exit(1)
 		}
 
+		if len(entries) == 0 {
+			continue
+		}
 		// It's assuming that we only have one file in each folder
 		entry := filepath.Join(dir.Name(), entries[0].Name())
 		cueFile, err := os.ReadFile(entry)
