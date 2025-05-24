@@ -1029,6 +1029,11 @@ export interface FeatureToggles {
   */
   extensionsReadOnlyProxy?: boolean;
   /**
+  * Enables new design for data source configuration pages
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */

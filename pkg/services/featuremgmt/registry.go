@@ -1768,6 +1768,14 @@ var (
 			FrontendOnly:      true,
 		},
 		{
+			Name:         "newInfluxDSConfigPageDesign",
+			Description:  "Enables new design for data source configuration pages",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:              "restoreDashboards",
 			Description:       "Enables restore deleted dashboards feature",
 			Stage:             FeatureStageExperimental,
