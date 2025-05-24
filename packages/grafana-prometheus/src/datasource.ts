@@ -42,6 +42,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
+import { exportToAbstractQuery, importFromAbstractQuery } from './lang_provider_shared';
 import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
@@ -105,7 +106,7 @@ export class PrometheusDatasource
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
   metricNamesAutocompleteSuggestionLimit: number;
-  seriesEndpoint: boolean;
+  preferSeriesEndpoint: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -130,7 +131,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
-    this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
+    this.preferSeriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
@@ -161,8 +162,6 @@ export class PrometheusDatasource
 
   /**
    * Get target signature for query caching
-   * @param request
-   * @param query
    */
   getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
     const targExpr = this.interpolateString(query.expr);
@@ -171,10 +170,16 @@ export class PrometheusDatasource
     }`;
   }
 
+  /**
+   * Determines if the current datasource version supports matchers for the labels API based on
+   * the application's version and type.
+   *
+   * @return {boolean} True if the datasource version supports matchers for the labels API; otherwise, false.
+   */
   hasLabelsMatchAPISupport(): boolean {
     // users may choose the series endpoint as it has a POST method
     // while the label values is only GET
-    if (this.seriesEndpoint) {
+    if (this.preferSeriesEndpoint) {
       return false;
     }
 
@@ -282,11 +287,11 @@ export class PrometheusDatasource
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
-    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+    return queries.map((query) => exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components

@@ -188,3 +188,8 @@ export type RecordingRuleIdentifier = {
   identifier?: string;
   identifierValue?: string;
 };
+
+export const DEFAULT_SERIES_LIMIT = '40000';
+export const REMOVE_SERIES_LIMIT = 'none';
+export const EMPTY_SELECTOR = '{}';
+export const METRICS_LABEL_KEY = '__name__';

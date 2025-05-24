@@ -32,6 +32,31 @@ export const processHistogramMetrics = (metrics: string[]) => {
   return [...resultSet];
 };
 
+export function processSeries(series: Array<{ [key: string]: string }>) {
+  const metrics: Set<string> = new Set();
+  const labelKeys: Set<string> = new Set();
+
+  // Extract metrics and label keys
+  series.forEach((item) => {
+    // Add the __name__ value to metrics
+    if ('__name__' in item) {
+      metrics.add(item.__name__);
+    }
+
+    // Add all keys except __name__ to labelKeys
+    Object.keys(item).forEach((key) => {
+      if (key !== '__name__') {
+        labelKeys.add(key);
+      }
+    });
+  });
+
+  return {
+    metrics: Array.from(metrics).sort(),
+    labelKeys: Array.from(labelKeys).sort(),
+  };
+}
+
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
   // For processing we are going to use sets as they have significantly better performance than arrays
   // After we process labels, we will convert sets to arrays and return object with label values in arrays

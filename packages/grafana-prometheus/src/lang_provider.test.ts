@@ -1,0 +1,414 @@
+import { AdHocVariableFilter, getDefaultTimeRange, Scope, TimeRange } from '@grafana/data';
+
+import { PrometheusDatasource } from './datasource';
+import { PrometheusLanguageProvider } from './lang_provider';
+import * as languageUtils from './language_utils';
+import { PrometheusCacheLevel, PromQuery } from './types';
+
+// Mock the dependencies
+jest.mock('./querybuilder/parsing', () => ({
+  buildVisualQueryFromString: jest.fn((expr) => ({
+    query: {
+      metric: expr,
+      binaryQueries: expr.includes('binary') ? [{ query: { metric: `binary_${expr}` } }] : undefined,
+    },
+  })),
+}));
+
+// Mock language_utils
+jest.mock('./language_utils', () => ({
+  processHistogramMetrics: jest.fn((metrics: string[]) => metrics.filter((m: string) => m.includes('histogram'))),
+  getRangeSnapInterval: jest.fn(() => ({ start: 'start', end: 'end' })),
+  getClientCacheDurationInMinutes: jest.fn(() => 1),
+  fixSummariesMetadata: jest.fn((data) => data),
+  processSeries: jest.fn(() => ({ metrics: ['metric1', 'histogram_bucket'], labelKeys: ['label1', 'label2'] })),
+}));
+
+// Mock utf8_support
+jest.mock('./utf8_support', () => ({
+  isValidLegacyName: jest.fn((name) => name !== 'utf8metric'),
+  escapeForUtf8Support: jest.fn((name) => name),
+}));
+
+describe('PrometheusLanguageProvider', () => {
+  let datasource: PrometheusDatasource;
+  let provider: PrometheusLanguageProvider;
+  let timeRange: TimeRange;
+
+  beforeEach(() => {
+    datasource = {
+      metadataRequest: jest.fn().mockResolvedValue({ data: { data: [] } }),
+      lookupsDisabled: false,
+      hasLabelsMatchAPISupport: jest.fn().mockReturnValue(true),
+      getDaysToCacheMetadata: jest.fn().mockReturnValue(1),
+      cacheLevel: PrometheusCacheLevel.Low,
+      getAdjustedInterval: jest.fn().mockReturnValue({ start: '1', end: '2' }),
+      interpolateString: jest.fn((s) => s),
+      httpMethod: 'GET',
+      getTimeRangeParams: jest.fn().mockReturnValue({ start: 'start', end: 'end' }),
+      getIntervalVars: jest.fn().mockReturnValue({}),
+      getRangeScopedVars: jest.fn().mockReturnValue({}),
+    } as unknown as PrometheusDatasource;
+
+    provider = new PrometheusLanguageProvider(datasource);
+    timeRange = getDefaultTimeRange();
+  });
+
+  describe('start', () => {
+    it('should return empty array if lookups are disabled', async () => {
+      datasource.lookupsDisabled = true;
+      const result = await provider.start();
+      expect(result).toEqual([]);
+    });
+
+    it('should fetch metrics, metadata and label keys if labels match API is supported', async () => {
+      const mockMetrics = ['metric1', 'metric2', 'histogram_metric_bucket'];
+
+      // Mock the provider methods
+      jest.spyOn(provider, 'fetchLabelValues').mockResolvedValue(mockMetrics);
+      jest.spyOn(provider, 'fetchMetadata').mockResolvedValue(undefined);
+      jest.spyOn(provider, 'fetchLabelKeys').mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.start(timeRange);
+
+      expect(provider.fetchLabelValues).toHaveBeenCalledWith(timeRange, '__name__');
+      expect(provider.metrics).toEqual(mockMetrics);
+      expect(provider.histogramMetrics).toContain('histogram_metric_bucket');
+      expect(result.length).toBe(2); // Promise.all with 2 promises
+    });
+
+    it('should use series endpoint if labels match API is not supported', async () => {
+      datasource.hasLabelsMatchAPISupport = jest.fn().mockReturnValue(false);
+
+      // Create a spy for fetchLabelValues
+      jest.spyOn(provider, 'fetchLabelValues');
+
+      // Mock the series fetch and process
+      const mockSeries = [{ __name__: 'metric1', label1: 'value1' }];
+      jest.spyOn(provider, 'fetchSeries').mockResolvedValue(mockSeries);
+
+      // Mock the processSeries function to return specific values
+      const processSeriesMock = languageUtils.processSeries as jest.Mock;
+      processSeriesMock.mockReturnValue({
+        metrics: ['metric1', 'histogram_bucket'],
+        labelKeys: ['label1', 'label2'],
+      });
+
+      const result = await provider.start(timeRange);
+
+      expect(provider.fetchLabelValues).not.toHaveBeenCalled();
+      expect(provider.fetchSeries).toHaveBeenCalledWith(timeRange, '{__name__!=""}', '40000');
+      expect(processSeriesMock).toHaveBeenCalledWith(mockSeries);
+
+      // Check that the metrics and labelKeys from processSeries are used
+      expect(provider.metrics).toEqual(['metric1', 'histogram_bucket']);
+      expect(provider.labelKeys).toEqual(['label1', 'label2']);
+      expect(provider.histogramMetrics).toContain('histogram_bucket'); // mock returns metrics with 'histogram' in the name
+      expect(result.length).toBe(1); // Promise.all with 1 promise (only fetchMetadata)
+    });
+  });
+
+  describe('request', () => {
+    it('should return data from datasource metadataRequest', async () => {
+      const expectedData = { metric: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
+
+      const result = await provider.request('/api/test', [], {}, undefined);
+
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', {}, undefined);
+      expect(result).toEqual(expectedData);
+    });
+
+    it('should append params to URL for GET requests', async () => {
+      datasource.httpMethod = 'GET';
+      const params = { param1: 'value1', param2: 'value2' };
+      const expectedData = { metric: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should add query params to URL and clear params object
+      expect(datasource.metadataRequest).toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/test\?.*param1=value1.*param2=value2/),
+        {},
+        undefined
+      );
+    });
+
+    it('should not append params to URL for non-GET requests', async () => {
+      datasource.httpMethod = 'POST';
+      const params = { param1: 'value1', param2: 'value2' };
+      const expectedData = { metric: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: expectedData } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should NOT modify URL or params for POST
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', params, undefined);
+    });
+
+    it('should return default value on error', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const defaultValue = { default: true };
+      datasource.metadataRequest = jest.fn().mockRejectedValue(new Error('Test error'));
+
+      const result = await provider.request('/api/test', defaultValue, {});
+
+      expect(result).toEqual(defaultValue);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should not log cancelled errors', async () => {
+      const consoleSpy = jest.spyOn(console, 'error');
+      datasource.metadataRequest = jest.fn().mockRejectedValue({ cancelled: true });
+
+      await provider.request('/api/test', {}, {});
+
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle empty URL parameters correctly', async () => {
+      datasource.httpMethod = 'GET';
+      const params = {};
+      datasource.metadataRequest = jest.fn().mockResolvedValue({ data: { data: [] } });
+
+      await provider.request('/api/test', [], params, undefined);
+
+      // Should not modify the URL when params is an empty object
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/test', {}, undefined);
+    });
+  });
+
+  describe('fetchLabelKeys', () => {
+    it('should call API with correct parameters', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['label1', 'label2']);
+
+      await provider.fetchLabelKeys(timeRange);
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        [],
+        expect.objectContaining({
+          limit: '40000',
+          start: 'start',
+          end: 'end',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should include match parameter when provided', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['label1', 'label2']);
+
+      await provider.fetchLabelKeys(timeRange, '{job="prometheus"}');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        [],
+        expect.objectContaining({
+          'match[]': '{job="prometheus"}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should sort and return label keys', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['c', 'a', 'b']);
+
+      const result = await provider.fetchLabelKeys(timeRange);
+
+      expect(result).toEqual(['a', 'b', 'c']);
+      expect(provider.labelKeys).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should return empty array if result is not an array', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+
+      const result = await provider.fetchLabelKeys(timeRange);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('fetchLabelValues', () => {
+    it('should call API with correct parameters', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['value1', 'value2']);
+
+      await provider.fetchLabelValues(timeRange, 'labelKey');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels/labelKey/values',
+        [],
+        expect.objectContaining({
+          limit: '40000',
+          start: '1',
+          end: '2',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should include match parameter when provided', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['value1', 'value2']);
+
+      await provider.fetchLabelValues(timeRange, 'labelKey', '{job="prometheus"}');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/labels/labelKey/values',
+        [],
+        expect.objectContaining({
+          'match[]': '{job="prometheus"}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle empty response', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+
+      const result = await provider.fetchLabelValues(timeRange, 'labelKey');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('fetchMetadata', () => {
+    it('should call API with correct parameters', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue({});
+
+      await provider.fetchMetadata();
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        {},
+        {},
+        expect.objectContaining({
+          showErrorAlert: false,
+          headers: expect.objectContaining({
+            'X-Grafana-Cache': expect.stringContaining('private, max-age='),
+          }),
+        })
+      );
+    });
+  });
+
+  describe('fetchSeries', () => {
+    it('should call API with correct parameters', async () => {
+      const mockSeriesData = [{ __name__: 'test_metric', instance: 'localhost:9090' }];
+      jest.spyOn(provider, 'request').mockResolvedValue(mockSeriesData);
+
+      const result = await provider.fetchSeries(timeRange, 'test_metric');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        {
+          start: 'start',
+          end: 'end',
+          'match[]': 'test_metric',
+          limit: '40000',
+        },
+        expect.any(Object)
+      );
+      expect(result).toEqual(mockSeriesData);
+    });
+
+    it('should handle custom limit parameter', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue([]);
+
+      await provider.fetchSeries(timeRange, 'test_metric', '100');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {},
+        expect.objectContaining({
+          limit: '100',
+        }),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('fetchSuggestions', () => {
+    it('should call API with correct parameters', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['suggestion1', 'suggestion2']);
+
+      const queries: PromQuery[] = [{ expr: 'metric1', refId: '1' }];
+      const scopes: Scope[] = [
+        {
+          metadata: { name: 'test_scope' },
+          spec: {
+            filters: [{ key: 'label', operator: 'equals', value: 'value' }],
+            title: 'test',
+            type: 'test',
+            description: 'test',
+            category: 'test',
+          },
+        },
+      ];
+      const adhocFilters: AdHocVariableFilter[] = [{ key: 'adhoc', operator: '=', value: 'filter' }];
+
+      const result = await provider.fetchSuggestions(
+        timeRange,
+        queries,
+        scopes,
+        adhocFilters,
+        'labelName',
+        100,
+        'req1'
+      );
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/suggestions',
+        [],
+        expect.objectContaining({
+          labelName: 'labelName',
+          limit: 100,
+          queries: ['metric1'],
+          scopes: [{ key: 'label', operator: 'equals', value: 'value' }],
+          adhocFilters: expect.arrayContaining([
+            expect.objectContaining({
+              key: 'adhoc',
+              operator: 'equals',
+              value: 'filter',
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          requestId: 'req1',
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+        })
+      );
+
+      expect(result).toEqual(['suggestion1', 'suggestion2']);
+    });
+
+    it('should use default timeRange if not provided', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(['suggestion']);
+
+      await provider.fetchSuggestions(undefined, [], [], [], 'label');
+
+      expect(provider.request).toHaveBeenCalledWith(
+        '/suggestions',
+        [],
+        expect.objectContaining({
+          labelName: 'label',
+          start: '1',
+          end: '2',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle empty response', async () => {
+      jest.spyOn(provider, 'request').mockResolvedValue(null);
+
+      const result = await provider.fetchSuggestions(timeRange, [], [], [], 'label');
+
+      expect(result).toEqual([]);
+    });
+  });
+});
