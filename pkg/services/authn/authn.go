@@ -322,7 +322,10 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 		maxAge = -1
 	}
 
-	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, func() cookies.CookieOptions {
+		opts := cookieOptions(cfg)()
+		return opts
+	})
 	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
 	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
 		opts := cookieOptions(cfg)()
@@ -348,6 +351,7 @@ func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {
 		}
 		return cookies.CookieOptions{
 			Path:             path,
+			Domain:           cfg.LoginCookieDomain,
 			Secure:           cfg.CookieSecure,
 			SameSiteDisabled: cfg.CookieSameSiteDisabled,
 			SameSiteMode:     cfg.CookieSameSiteMode,

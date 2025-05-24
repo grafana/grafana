@@ -9,6 +9,7 @@ import (
 type CookieOptions struct {
 	NotHttpOnly      bool
 	Path             string
+	Domain           string
 	Secure           bool
 	SameSiteDisabled bool
 	SameSiteMode     http.SameSite
@@ -21,6 +22,7 @@ func NewCookieOptions() CookieOptions {
 	}
 	return CookieOptions{
 		Path:             path,
+		Domain:           "",
 		Secure:           setting.CookieSecure,
 		SameSiteDisabled: setting.CookieSameSiteDisabled,
 		SameSiteMode:     setting.CookieSameSiteMode,
@@ -43,6 +45,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
+		Domain:   options.Domain,
 		HttpOnly: !options.NotHttpOnly,
 		Path:     options.Path,
 		Secure:   options.Secure,
