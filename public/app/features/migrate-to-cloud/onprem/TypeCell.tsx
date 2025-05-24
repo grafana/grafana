@@ -1,5 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { CellProps } from '@grafana/ui';
 
 import { ResourceTableItem } from './types';

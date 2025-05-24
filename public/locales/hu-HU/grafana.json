@@ -57,7 +57,11 @@
       "aria-label-add": "Hozzáadás",
       "aria-label-delete": "Törlés",
       "placeholder-key": "Kulcs",
+      "placeholder-name": "Név",
       "placeholder-value": "Érték"
+    },
+    "variables-editor": {
+      "placeholder-type": "Típus"
     }
   },
   "admin": {
@@ -3411,6 +3415,13 @@
           "values": "Értékek vesszővel elválasztva",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Típus",
+          "type-placeholder": ""
+        },
         "description": "Leírás",
         "description-placeholder": "Leírószöveg",
         "label": "Címke",
@@ -3429,8 +3440,8 @@
           "category": "Kijelölés beállításai",
           "custom-all-value": "Összes egyedi érték",
           "custom-all-value-description": "Helyettesítő karakteres reguláris kifejezés vagy más érték, amely az összeset jelöli",
-          "include-all": "Összes belefoglalása lehetőség",
-          "include-all-description": "Lehetővé teszi az összes érték belefoglalását",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Többértékű"
         },
         "type-category": "{{type}}-beállítások"
@@ -5404,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Megerősítés",
         "confirm-action": "Művelet megerősítése",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Érték"
       },
+      "close": "Bezárás",
+      "continue": "",
       "inline": {
         "add-action": "Művelet hozzáadása",
         "edit-action": "Művelet szerkesztése"
@@ -5418,6 +5433,7 @@
         "action-query-params": "Lekérdezési paraméterek",
         "action-title": "Cím",
         "action-title-placeholder": "Művelet címe",
+        "action-variables": "Változók",
         "one-click-description": "Egyszerre csak egy hivatkozáshoz vagy művelethez lehet egy kattintás engedélyezve"
       }
     },
@@ -6866,7 +6882,7 @@
       "title": "Szolgáltatási fiókok"
     },
     "setup-guide": {
-      "title": "Beállítási útmutató"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Szervezete külső megosztott irányítópultjainak kezelése",
