@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Button, InlineLabel, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType } from '../../expressions';
@@ -26,6 +27,7 @@ export function SelectCustomFunctionParameters({
   onParameterChange,
   currentColumnIndex,
 }: Props) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const macroOrFunction = query.sql?.columns?.[currentColumnIndex];
 
@@ -85,11 +87,18 @@ export function SelectCustomFunctionParameters({
           <Input
             onChange={(e) => onParameterChange(index)(e.currentTarget.value)}
             value={param.name}
-            aria-label={`Parameter ${index} for column ${columnIndex}`}
+            aria-label={t(
+              'components.select-custom-function-parameters.aria-label-parameter',
+              'Parameter {{index}} for column {{columnIndex}}',
+              { index, columnIndex }
+            )}
             data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
             addonAfter={
               <Button
-                title="Remove parameter"
+                title={t(
+                  'components.select-custom-function-parameters.render-parameters.params.title-remove-parameter',
+                  'Remove parameter'
+                )}
                 type="button"
                 icon="times"
                 variant="secondary"
@@ -119,7 +128,7 @@ export function SelectCustomFunctionParameters({
         variant="secondary"
         size="md"
         icon="plus"
-        title="Add parameter"
+        title={t('components.select-custom-function-parameters.title-add-parameter', 'Add parameter')}
       />
       <InlineLabel className={styles.label}>)</InlineLabel>
     </>
