@@ -23,6 +23,7 @@ import {
   extractLabelMatchers,
   fixSummariesMetadata,
   getClientCacheDurationInMinutes,
+  getRangeSnapInterval,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
@@ -82,29 +83,6 @@ const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
   return;
 };
 
-export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  const { type, help } = metadata[metric];
-  return `${type.toUpperCase()}: ${help}`;
-}
-
-export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].help;
-}
-
-export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].type;
-}
-
-const secondsInDay = 86400;
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   metrics: string[];
@@ -142,23 +120,147 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
+    // Prevent ts yelling
+    console.log(
+      this._withLabelsApiFetchLabelKeys,
+      this._withLabelsApiFetchLabelValues,
+      this._withSeriesApiFetchAllSeries,
+      this._withSeriesApiFetchLabelKeys,
+      this._withSeriesApiFetchLabelValues
+    );
+
     this.metrics = (await this.fetchLabelValues(timeRange, '__name__')) || [];
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return Promise.all([this.loadMetricsMetadata(), this.fetchLabels(timeRange)]);
   };
 
-  async loadMetricsMetadata() {
+  // ======================================================================
+
+  /**
+   * Fetches metadata for metrics from Prometheus.
+   * Sets cache headers based on the configured metadata cache duration.
+   *
+   * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
+   */
+  fetchMetadata = async () => {
+    const secondsInDay = 86400;
     const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
-    this.metricsMetadata = fixSummariesMetadata(
-      await this.request(
-        API_V1.METADATA,
-        {},
-        {
-          showErrorAlert: false,
-          ...headers,
-        }
-      )
+    const metadata = await this.request(
+      API_V1.METADATA,
+      {},
+      {
+        showErrorAlert: false,
+        ...headers,
+      }
     );
+    this.metricsMetadata = fixSummariesMetadata(metadata);
+    return this.metricsMetadata;
+  };
+
+  // ===================================
+  // Labels API
+  // ===================================
+
+  /**
+   * Fetches all available label keys from Prometheus using labels endpoint.
+   * Uses the labels endpoint with optional match parameter for filtering.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} match - Optional label matcher to filter results
+   * @param {string} limit - Maximum number of results to return
+   * @returns {Promise<string[]>} Array of label keys sorted alphabetically
+   */
+  private _withLabelsApiFetchLabelKeys = async (
+    timeRange: TimeRange,
+    match?: string,
+    limit: string = DEFAULT_SERIES_LIMIT
+  ): Promise<string[]> => {
+    let url = API_V1.LABELS;
+    const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
+    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
+
+    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    if (Array.isArray(res)) {
+      this.labelKeys = res.slice().sort();
+      return this.labelKeys.slice();
+    }
+
+    return [];
+  };
+
+  /**
+   * Fetches all values for a specific label key from Prometheus using labels values endpoint.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} labelKey - The label key to fetch values for
+   * @param {string} match - Optional label matcher to filter results
+   * @param {string} limit - Maximum number of results to return
+   * @returns {Promise<string[]>} Array of label values
+   */
+  private _withLabelsApiFetchLabelValues = async (
+    timeRange: TimeRange,
+    labelKey: string,
+    match?: string,
+    limit: string = DEFAULT_SERIES_LIMIT
+  ): Promise<string[]> => {
+    const timeParams = this.datasource.getAdjustedInterval(timeRange);
+    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
+    const interpolatedName = this.datasource.interpolateString(labelKey);
+    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
+    const url = API_V1.LABELS_VALUES(interpolatedAndEscapedName);
+    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    return value ?? [];
+  };
+
+  // ===================================
+  // Series API
+  // ===================================
+
+  /**
+   * Fetches all time series that match a specific label matcher using series endpoint.
+   *
+   * @param {TimeRange} timeRange - Time range to use for the query
+   * @param {string} match - Label matcher to filter time series
+   * @param {string} limit - Maximum number of series to return
+   */
+  private _withSeriesApiFetchAllSeries = async (
+    timeRange: TimeRange,
+    match: string,
+    limit: string = DEFAULT_SERIES_LIMIT
+  ) => {
+    const timeParams = this.datasource.getTimeRangeParams(timeRange);
+    const searchParams = { ...timeParams, 'match[]': match, limit };
+    return await this.request(API_V1.SERIES, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+  };
+
+  private _withSeriesApiFetchLabelKeys = async (
+    timeRange: TimeRange,
+    match: string,
+    limit: string = DEFAULT_SERIES_LIMIT
+  ): Promise<string[]> => {
+    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
+    const { labelKeys } = processSeries(series);
+    return labelKeys;
+  };
+
+  private _withSeriesApiFetchLabelValues = async (
+    timeRange: TimeRange,
+    labelKey: string,
+    match: string,
+    limit: string = DEFAULT_SERIES_LIMIT
+  ): Promise<string[]> => {
+    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
+    const { labelValues } = processSeries(series, labelKey);
+    return labelValues;
+  };
+
+  // ======================================================================
+
+  /**
+   * @deprecated Use fetchMetadata instead
+   */
+  async loadMetricsMetadata() {
+    this.fetchMetadata();
   }
 
   getLabelKeys(): string[] {
@@ -471,6 +573,36 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
     labelMatchers,
   };
 };
+
+export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
+  const metrics: Set<string> = new Set();
+  const labelKeys: Set<string> = new Set();
+  const labelValues: Set<string> = new Set();
+
+  // Extract metrics and label keys
+  series.forEach((item) => {
+    // Add the __name__ value to metrics
+    if ('__name__' in item) {
+      metrics.add(item.__name__);
+    }
+
+    // Add all keys except __name__ to labelKeys
+    Object.keys(item).forEach((key) => {
+      if (key !== '__name__') {
+        labelKeys.add(key);
+      }
+      if (findValuesForKey && key === findValuesForKey) {
+        labelValues.add(item[key]);
+      }
+    });
+  });
+
+  return {
+    metrics: Array.from(metrics).sort(),
+    labelKeys: Array.from(labelKeys).sort(),
+    labelValues: Array.from(labelValues).sort(),
+  };
+}
 
 /**
  * Checks if an error is a cancelled request error.
