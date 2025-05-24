@@ -169,18 +169,17 @@ export const mocksScopeDashboardBindings: ScopeDashboardBinding[] = [
   ),
 ] as const;
 
-export const mocksNodes: Array<ScopeNode & { parent: string }> = [
+export const mocksNodes: ScopeNode[] = [
   {
-    parent: '',
     metadata: { name: 'applications' },
     spec: {
       nodeType: 'container',
       title: 'Applications',
       description: 'Application Scopes',
+      parentName: '',
     },
   },
   {
-    parent: '',
     metadata: { name: 'cloud' },
     spec: {
       nodeType: 'container',
@@ -189,10 +188,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       disableMultiSelect: true,
       linkType: 'scope',
       linkId: 'cloud',
+      parentName: '',
     },
   },
   {
-    parent: 'applications',
     metadata: { name: 'applications-grafana' },
     spec: {
       nodeType: 'leaf',
@@ -200,10 +199,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Grafana',
       linkType: 'scope',
       linkId: 'grafana',
+      parentName: 'applications',
     },
   },
   {
-    parent: 'applications',
     metadata: { name: 'applications-mimir' },
     spec: {
       nodeType: 'leaf',
@@ -211,10 +210,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Mimir',
       linkType: 'scope',
       linkId: 'mimir',
+      parentName: 'applications',
     },
   },
   {
-    parent: 'applications',
     metadata: { name: 'applications-loki' },
     spec: {
       nodeType: 'leaf',
@@ -222,10 +221,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Loki',
       linkType: 'scope',
       linkId: 'loki',
+      parentName: 'applications',
     },
   },
   {
-    parent: 'applications',
     metadata: { name: 'applications-tempo' },
     spec: {
       nodeType: 'leaf',
@@ -233,10 +232,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Tempo',
       linkType: 'scope',
       linkId: 'tempo',
+      parentName: 'applications',
     },
   },
   {
-    parent: 'applications',
     metadata: { name: 'applications-cloud' },
     spec: {
       nodeType: 'container',
@@ -244,10 +243,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Application/Cloud Scopes',
       linkType: 'scope',
       linkId: 'cloud',
+      parentName: 'applications',
     },
   },
   {
-    parent: 'applications-cloud',
     metadata: { name: 'applications-cloud-dev' },
     spec: {
       nodeType: 'leaf',
@@ -255,10 +254,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Dev',
       linkType: 'scope',
       linkId: 'dev',
+      parentName: 'applications-cloud',
     },
   },
   {
-    parent: 'applications-cloud',
     metadata: { name: 'applications-cloud-ops' },
     spec: {
       nodeType: 'leaf',
@@ -266,10 +265,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Ops',
       linkType: 'scope',
       linkId: 'ops',
+      parentName: 'applications-cloud',
     },
   },
   {
-    parent: 'applications-cloud',
     metadata: { name: 'applications-cloud-prod' },
     spec: {
       nodeType: 'leaf',
@@ -277,10 +276,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Prod',
       linkType: 'scope',
       linkId: 'prod',
+      parentName: 'applications-cloud',
     },
   },
   {
-    parent: 'cloud',
     metadata: { name: 'cloud-dev' },
     spec: {
       nodeType: 'leaf',
@@ -288,10 +287,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Dev',
       linkType: 'scope',
       linkId: 'dev',
+      parentName: 'cloud',
     },
   },
   {
-    parent: 'cloud',
     metadata: { name: 'cloud-ops' },
     spec: {
       nodeType: 'leaf',
@@ -299,10 +298,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Ops',
       linkType: 'scope',
       linkId: 'ops',
+      parentName: 'cloud',
     },
   },
   {
-    parent: 'cloud',
     metadata: { name: 'cloud-prod' },
     spec: {
       nodeType: 'leaf',
@@ -310,19 +309,19 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Prod',
       linkType: 'scope',
       linkId: 'prod',
+      parentName: 'cloud',
     },
   },
   {
-    parent: 'cloud',
     metadata: { name: 'cloud-applications' },
     spec: {
       nodeType: 'container',
       title: 'Applications',
       description: 'Cloud/Application Scopes',
+      parentName: 'cloud',
     },
   },
   {
-    parent: 'cloud-applications',
     metadata: { name: 'cloud-applications-grafana' },
     spec: {
       nodeType: 'leaf',
@@ -330,10 +329,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Grafana',
       linkType: 'scope',
       linkId: 'grafana',
+      parentName: 'cloud-applications',
     },
   },
   {
-    parent: 'cloud-applications',
     metadata: { name: 'cloud-applications-mimir' },
     spec: {
       nodeType: 'leaf',
@@ -341,10 +340,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Mimir',
       linkType: 'scope',
       linkId: 'mimir',
+      parentName: 'cloud-applications',
     },
   },
   {
-    parent: 'cloud-applications',
     metadata: { name: 'cloud-applications-loki' },
     spec: {
       nodeType: 'leaf',
@@ -352,10 +351,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Loki',
       linkType: 'scope',
       linkId: 'loki',
+      parentName: 'cloud-applications',
     },
   },
   {
-    parent: 'cloud-applications',
     metadata: { name: 'cloud-applications-tempo' },
     spec: {
       nodeType: 'leaf',
@@ -363,6 +362,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
       description: 'Tempo',
       linkType: 'scope',
       linkId: 'tempo',
+      parentName: 'cloud-applications',
     },
   },
 ] as const;
@@ -376,8 +376,8 @@ export const getMock = jest
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
         return {
           items: mocksNodes.filter(
-            ({ parent, spec: { title } }) =>
-              parent === params.parent && title.toLowerCase().includes((params.query ?? '').toLowerCase())
+            ({ spec: { title, parentName } }) =>
+              parentName === params.parent && title.toLowerCase().includes((params.query ?? '').toLowerCase())
           ),
         };
       }
