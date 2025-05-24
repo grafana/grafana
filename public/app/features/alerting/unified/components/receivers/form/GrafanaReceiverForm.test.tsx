@@ -34,6 +34,8 @@ const renderWithProvider = (
     { historyOptions }
   );
 
+const noop = () => {};
+
 const server = setupMswServer();
 
 const ui = {
@@ -106,7 +108,7 @@ describe('GrafanaReceiverForm', () => {
     const capturedRequests = captureRequests(
       (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
     );
-    const { user } = renderWithProvider(<GrafanaReceiverForm />);
+    const { user } = renderWithProvider(<GrafanaReceiverForm onCreate={noop} />);
     const { type, click } = user;
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
@@ -141,7 +143,7 @@ describe('GrafanaReceiverForm', () => {
 
   describe('Slack contact point', () => {
     it('should disable webhook url field if the user typed the token', async () => {
-      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+      const { user } = renderWithProvider(<GrafanaReceiverForm onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -164,7 +166,7 @@ describe('GrafanaReceiverForm', () => {
     });
 
     it('should disable token field if the user typed the webhook URL', async () => {
-      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+      const { user } = renderWithProvider(<GrafanaReceiverForm onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -189,7 +191,7 @@ describe('GrafanaReceiverForm', () => {
         .withIntegrations((integrationFactory) => [integrationFactory.slack({ token: 'xoxb-my-token' }).build()])
         .build();
 
-      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -211,7 +213,7 @@ describe('GrafanaReceiverForm', () => {
         ])
         .build();
 
-      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -234,7 +236,9 @@ describe('GrafanaReceiverForm', () => {
         ])
         .build();
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+      const { user } = renderWithProvider(
+        <GrafanaReceiverForm contactPoint={contactPoint} editMode={true} onCreate={noop} />
+      );
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -272,7 +276,9 @@ describe('GrafanaReceiverForm', () => {
         (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+      const { user } = renderWithProvider(
+        <GrafanaReceiverForm contactPoint={contactPoint} editMode={true} onCreate={noop} />
+      );
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -334,7 +340,7 @@ describe('GrafanaReceiverForm', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
       disablePlugin(SupportedPlugin.OnCall);
 
-      renderWithProvider(<GrafanaReceiverForm />);
+      renderWithProvider(<GrafanaReceiverForm onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -354,7 +360,7 @@ describe('GrafanaReceiverForm', () => {
         { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+      const { user } = renderWithProvider(<GrafanaReceiverForm onCreate={noop} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -406,7 +412,9 @@ describe('GrafanaReceiverForm', () => {
         )
       );
 
-      renderWithProvider(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
+      renderWithProvider(
+        <GrafanaReceiverForm onCreate={noop} contactPoint={amConfig.alertmanager_config.receivers![0]} />
+      );
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -441,7 +449,9 @@ describe('GrafanaReceiverForm', () => {
         (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+      const { user } = renderWithProvider(
+        <GrafanaReceiverForm contactPoint={contactPoint} editMode={true} onCreate={noop} />
+      );
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

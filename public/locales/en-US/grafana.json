@@ -760,12 +760,12 @@
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
-      "aria-label-refresh-contact-points": "Refresh contact points",
       "contact-point-picker-label-contact-point": "Contact point",
       "title-failed-to-fetch-contact-points": "Failed to fetch contact points",
-      "tooltip-refresh-contact-points-list": "Refresh contact points list"
+      "tooltip-refresh-contact-points-list": "Refresh contact points"
     },
     "contact-points": {
+      "contact-point": "Contact point",
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
@@ -800,7 +800,8 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rule"
+      "used-by-rules_other": "Used by {{ count }} alert rule",
+      "view-all": "View all contact points"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -819,9 +820,6 @@
       "export-all": "Export all",
       "text-loading": "Loading...",
       "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
-    },
-    "contactPointFilter": {
-      "label": "Contact point"
     },
     "continue-matching-indicator": {
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
@@ -1400,10 +1398,6 @@
     "labels-without-suggestions": {
       "placeholder-key": "key",
       "placeholder-value": "value"
-    },
-    "link-to-contact-points": {
-      "aria-label-view-or-create-contact-points": "View or create contact points",
-      "view-or-create-contact-points": "View or create contact points"
     },
     "list-view": {
       "empty": {

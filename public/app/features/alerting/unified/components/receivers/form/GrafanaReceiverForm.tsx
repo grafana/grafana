@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
 import { Trans, useTranslate } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
   useCreateContactPoint,
@@ -47,11 +46,13 @@ interface Props {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
+  /** Callback method invoked when contact points was successfully created */
+  onCreate: (contactPoint: { name: string }) => void;
 }
 
 const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
-export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
+export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode, onCreate }: Props) => {
   const dispatch = useDispatch();
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -106,7 +107,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      locationService.push('/alerting/notifications');
+      onCreate(newReceiver);
     } catch (error) {
       // React form validation will handle this for us
     }

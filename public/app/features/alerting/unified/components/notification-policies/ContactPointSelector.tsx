@@ -96,11 +96,7 @@ export const ContactPointSelector = ({
         <IconButton
           name="sync"
           onClick={onClickRefresh}
-          aria-label={t('alerting.contact-point-selector.aria-label-refresh-contact-points', 'Refresh contact points')}
-          tooltip={t(
-            'alerting.contact-point-selector.tooltip-refresh-contact-points-list',
-            'Refresh contact points list'
-          )}
+          tooltip={t('alerting.contact-point-selector.tooltip-refresh-contact-points-list', 'Refresh contact points')}
           className={cx(styles.refreshButton, {
             [styles.loading]: loaderSpinning || isLoading,
           })}
