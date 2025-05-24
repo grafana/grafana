@@ -1,7 +1,12 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import { create } from '@storybook/theming';
 
+import logoLight from '../../../public/img/grafana_text_logo-light.svg';
+import logoDark from '../../../public/img/grafana_text_logo-dark.svg';
+
 export const createStorybookTheme = (theme: GrafanaTheme2) => {
+  const brandImage = theme.colors.mode === 'light' ? logoLight : logoDark;
+
   return create({
     base: theme.colors.mode,
     colorPrimary: theme.colors.primary.main,
@@ -30,10 +35,11 @@ export const createStorybookTheme = (theme: GrafanaTheme2) => {
     inputBg: theme.components.input.background,
     inputBorder: theme.components.input.borderColor,
     inputTextColor: theme.components.input.text,
-    inputBorderRadius: parseInt(theme.shape.borderRadius(1), 10),
+
+    inputBorderRadius: parseInt(theme.shape.radius.default, 10),
 
     brandTitle: 'Grafana UI',
     brandUrl: './',
-    brandImage: `public/img/grafana_text_logo-${theme.colors.mode}.svg`,
+    brandImage,
   });
 };
