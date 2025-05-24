@@ -18,6 +18,7 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
   };
 });
 

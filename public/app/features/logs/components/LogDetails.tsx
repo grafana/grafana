@@ -1,12 +1,17 @@
 import { cx } from '@emotion/css';
-import { PureComponent } from 'react';
+import { PureComponent, useMemo } from 'react';
 
-import { CoreApp, DataFrame, DataFrameType, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameType, LinkModel, LogRowModel } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
+import { usePluginLinks } from '@grafana/runtime';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
+import {
+  PluginExtensionPoints,
+  PluginExtensionResourceAttributesContext,
+} from '../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsBody } from './LogDetailsBody';
@@ -35,7 +40,57 @@ export interface Props extends Themeable2 {
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   mode?: 'inline' | 'sidebar';
+  links?: Record<string, LinkModel[]>;
 }
+
+const useAttributesExtensionLinks = (row: LogRowModel) => {
+  // Stable context for useMemo inside usePluginLinks
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
+    return {
+      attributes: Object.fromEntries(Object.entries(row.labels).map(([key, value]) => [key, [value]])),
+      datasource: {
+        type: row.datasourceType ?? '',
+        uid: row.datasourceUid ?? '',
+      },
+    };
+  }, [row.labels, row.datasourceType, row.datasourceUid]);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
+    limitPerPlugin: 10,
+    context,
+  });
+
+  return useMemo(() => {
+    return links.reduce<Record<string, LinkModel[]>>((acc, link) => {
+      if (link.category) {
+        const linkModel: LinkModel = {
+          href: link.path ?? '',
+          target: '_blank',
+          origin: link,
+          title: link.title,
+          onClick: link.onClick,
+        };
+
+        if (acc[link.category]) {
+          acc[link.category].push(linkModel);
+        } else {
+          acc[link.category] = [linkModel];
+        }
+      }
+      return acc;
+    }, {});
+  }, [links]);
+};
+
+const withAttributesExtensionLinks = (Component: React.ComponentType<Props>) => {
+  function ComponentWithLinks(props: Props) {
+    const labelLinks = useAttributesExtensionLinks(props.row);
+    return <Component {...props} links={labelLinks} />;
+  }
+
+  return ComponentWithLinks;
+};
 
 class UnThemedLogDetails extends PureComponent<Props> {
   render() {
@@ -58,6 +113,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       styles,
       pinLineButtonTooltipTitle,
       mode = 'inline',
+      links,
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
@@ -151,6 +207,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         displayedFields={displayedFields}
                         disableActions={false}
                         isFilterLabelActive={this.props.isFilterLabelActive}
+                        links={links?.[key]}
                       />
                     );
                   })}
@@ -246,5 +303,5 @@ class UnThemedLogDetails extends PureComponent<Props> {
   }
 }
 
-export const LogDetails = withTheme2(UnThemedLogDetails);
+export const LogDetails = withTheme2(withAttributesExtensionLinks(UnThemedLogDetails));
 LogDetails.displayName = 'LogDetails';
