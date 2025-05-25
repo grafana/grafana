@@ -39,7 +39,7 @@ const EMPTY_SELECTOR = '{}';
 export const SUGGESTIONS_LIMIT = 10000;
 
 /**
- * Prometheus API endpoints for fetching resoruces
+ * Prometheus API endpoints for fetching resources
  */
 const API_V1 = {
   METADATA: '/api/v1/metadata',
@@ -55,19 +55,106 @@ type UrlParamsType = {
   limit?: string;
 };
 
-export default class PromQlLanguageProvider extends LanguageProvider {
+export interface PrometheusBaseLanguageProvider {
+  datasource: PrometheusDatasource;
+
+  /**
+   * When no timeRange provided, we will use the default time range (now/now-6h)
+   * @param timeRange
+   */
+  start: (timeRange?: TimeRange) => Promise<any[]>;
+
+  fetchSuggestions: (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ) => Promise<string[]>;
+}
+
+/**
+ * @deprecated This interface is deprecated and will be removed.
+ */
+export interface PrometheusLegacyLanguageProvider {
+  /**
+   * @deprecated Use retrieveHistogramMetrics() method instead
+   */
+  histogramMetrics: string[];
+  /**
+   * @deprecated Use retrieveMetrics() method instead
+   */
+  metrics: string[];
+  /**
+   * @deprecated Use retrieveMetricsMetadata() method instead
+   */
+  metricsMetadata?: PromMetricsMetadata;
+  /**
+   * @deprecated Use retrieveLabelKeys() method instead
+   */
+  labelKeys: string[];
+
+  /**
+   * @deprecated Use queryMetricsMetadata() method instead. If you want existing metadata use retrieveMetricsMetadata() method.
+   */
+  loadMetricsMetadata: () => void;
+  getLabelKeys: () => string[];
+  getSeries: (timeRange: TimeRange, selector: string, withName?: boolean) => Promise<Record<string, string[]>>;
+  fetchLabelValues: (range: TimeRange, key: string, limit?: string) => Promise<string[]>;
+  fetchLabels: (timeRange: TimeRange, queries?: PromQuery[], limit?: string) => Promise<string[]>;
+  getSeriesValues: (timeRange: TimeRange, labelName: string, selector: string) => Promise<string[]>;
+  fetchSeriesValuesWithMatch: (
+    timeRange: TimeRange,
+    name: string,
+    match?: string,
+    requestId?: string,
+    withLimit?: string
+  ) => Promise<string[]>;
+  getSeriesLabels: (timeRange: TimeRange, selector: string, otherLabels: Label[]) => Promise<string[]>;
+  fetchLabelsWithMatch: (
+    timeRange: TimeRange,
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ) => Promise<Record<string, string[]>>;
+  fetchSeriesLabels: (
+    timeRange: TimeRange,
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ) => Promise<Record<string, string[]>>;
+  fetchSeriesLabelsMatch: (timeRange: TimeRange, name: string, withLimit?: string) => Promise<Record<string, string[]>>;
+  fetchSeries: (timeRange: TimeRange, match: string) => Promise<Array<Record<string, string>>>;
+  fetchDefaultSeries: (timeRange: TimeRange) => Promise<{}>;
+}
+
+export interface PrometheusLanguageProvider extends PrometheusBaseLanguageProvider, PrometheusLegacyLanguageProvider {
+  retrieveMetricsMetadata: () => PromMetricsMetadata | undefined;
+  retrieveHistogramMetrics: () => string[];
+  retrieveMetrics: () => string[];
+  retrieveLabelKeys: () => string[];
+
+  queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
+  queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: string) => string[];
+  queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => string[];
+}
+
+export default class PromQlLanguageProvider extends LanguageProvider implements PrometheusLanguageProvider {
   declare startTask: Promise<any>;
   declare labelFetchTs: number;
 
   private _metricsMetadata?: PromMetricsMetadata;
+  private _histogramMetrics: string[] = [];
+  private _metrics: string[] = [];
+  private _labelKeys: string[] = [];
+
+  datasource: PrometheusDatasource;
 
   histogramMetrics: string[];
   metrics: string[];
-  /**
-   * @deprecated Use getMetricsMetadata() method instead
-   */
   metricsMetadata?: PromMetricsMetadata;
-  datasource: PrometheusDatasource;
   labelKeys: string[] = [];
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
@@ -120,7 +207,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
    */
-  private _fetchMetadata = async () => {
+  private _queryMetadata = async () => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
@@ -158,8 +245,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
-      this.labelKeys = res.slice().sort();
-      return this.labelKeys.slice();
+      this._labelKeys = res.slice().sort();
+      return this._labelKeys.slice();
     }
 
     return [];
@@ -233,19 +320,37 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   // ======================================================================
 
-  public getMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
-    if (!this._metricsMetadata) {
-      this._metricsMetadata = await this._fetchMetadata();
-    }
-
+  public retrieveMetricsMetadata = (): PromMetricsMetadata | undefined => {
     return this._metricsMetadata;
+  };
+
+  public retrieveHistogramMetrics = (): string[] => {
+    return this._histogramMetrics;
+  };
+
+  public retrieveMetrics = (): string[] => {
+    return this._metrics;
+  };
+
+  public retrieveLabelKeys = (): string[] => {
+    return this._labelKeys;
+  };
+
+  public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+    this._metricsMetadata = await this._queryMetadata();
+    return this._metricsMetadata;
+  };
+
+  public queryLabelKeys = (timeRange: TimeRange, match?: string, limit?: string): string[] => {
+    return [];
+  };
+
+  public queryLabelValues = (timeRange: TimeRange, labelKey: string, match?: string, limit?: string): string[] => {
+    return [];
   };
 
   // ======================================================================
 
-  /**
-   * @deprecated Use _fetchMetadata instead. If you want metadata itself use getMetricsMetadata() method.
-   */
   async loadMetricsMetadata() {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
