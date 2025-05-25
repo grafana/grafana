@@ -10,6 +10,7 @@ import LanguageProvider, {
   importFromAbstractQuery,
   processSeries,
   removeQuotesIfExist,
+  PrometheusLanguageProvider,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
@@ -34,7 +35,7 @@ const getMockTimeRange = (): TimeRange => {
 
 const getTimeRangeParams = (
   timRange: TimeRange,
-  override?: Partial<{ start: string; end: string }>
+  override?: Partial<{ start: string; end: string }>,
 ): { start: string; end: string } => ({
   start: fromPrometheusTimeString,
   end: toPrometheusTimeString,
@@ -56,7 +57,7 @@ const verifyRequestParams = (
   requestSpy: jest.SpyInstance,
   expectedUrl: string,
   expectedParams: unknown,
-  expectedOptions?: unknown
+  expectedOptions?: unknown,
 ) => {
   expect(requestSpy).toHaveBeenCalled();
   expect(requestSpy).toHaveBeenCalledWith(expectedUrl, expect.objectContaining(expectedParams), expectedOptions);
@@ -153,7 +154,7 @@ describe('Prometheus Language Provider', () => {
       it('should call series endpoint when API support is not available', () => {
         const languageProvider = new LanguageProvider({
           ...defaultDatasource,
-          getAdjustedInterval: (timeRange: TimeRange) =>
+          getAdjustedInterval: (_: TimeRange) =>
             getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
         } as PrometheusDatasource);
         const getSeriesLabels = languageProvider.getSeriesLabels;
@@ -182,7 +183,7 @@ describe('Prometheus Language Provider', () => {
           ...defaultDatasource,
           hasLabelsMatchAPISupport: () => true,
           cacheLevel: PrometheusCacheLevel.Low,
-          getAdjustedInterval: (timeRange: TimeRange) =>
+          getAdjustedInterval: (_: TimeRange) =>
             getRangeSnapInterval(PrometheusCacheLevel.Low, getMockQuantizedTimeRangeParams()),
         } as PrometheusDatasource);
         const getSeriesLabels = languageProvider.getSeriesLabels;
@@ -215,7 +216,7 @@ describe('Prometheus Language Provider', () => {
                 .valueOf() / 1000
             ).toString(),
           },
-          { headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` } }
+          { headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` } },
         );
       });
     });
@@ -632,7 +633,7 @@ describe('Prometheus Language Provider', () => {
         undefined, // omitting scopes parameter
         [{ key: 'instance', operator: '=', value: 'localhost' }],
         'metric',
-        100
+        100,
       );
 
       expect(requestSpy).toHaveBeenCalled();
@@ -689,8 +690,161 @@ describe('Prometheus Language Provider', () => {
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy.mock.calls[0][2]?.headers).toHaveProperty('X-Grafana-Cache');
       expect(requestSpy.mock.calls[0][2]?.headers?.['X-Grafana-Cache']).toContain(
-        `private, max-age=${timeSnapMinutes * 60}`
+        `private, max-age=${timeSnapMinutes * 60}`,
       );
+    });
+  });
+
+  describe('New PrometheusLanguageProvider Interface', () => {
+    let provider: PrometheusLanguageProvider;
+
+    beforeEach(() => {
+      provider = new LanguageProvider(defaultDatasource);
+    });
+
+    describe('Retrieve Methods (Synchronous)', () => {
+      beforeEach(async () => {
+        // Setup the data through public methods
+        // This is the raw API response shape
+        const rawMetadata = {
+          metric1: [
+            {
+              type: 'counter',
+              help: 'help text',
+            },
+          ],
+        };
+        // Mock the request to return raw API shape
+        jest.spyOn(provider as any, 'request').mockResolvedValue(rawMetadata);
+        await provider.queryMetricsMetadata();
+
+        // Setup metrics through start method
+        const metrics = ['metric1', 'metric2'];
+        jest.spyOn(provider, 'fetchLabelValues').mockResolvedValue(metrics);
+        await provider.start();
+
+        // Set the internal properties to match what start() would do
+        (provider as any)._metrics = metrics;
+        (provider as any)._histogramMetrics = ['histogram1', 'histogram2'];
+      });
+
+      it('should retrieve metrics metadata', () => {
+        // The processed metadata shape after fixSummariesMetadata
+        const result = provider.retrieveMetricsMetadata();
+        expect(result).toEqual(
+          expect.objectContaining({
+            metric1: {
+              type: 'counter',
+              help: 'help text',
+            },
+          }),
+        );
+      });
+
+      it('should retrieve histogram metrics', () => {
+        const result = provider.retrieveHistogramMetrics();
+        expect(result).toEqual(['histogram1', 'histogram2']);
+      });
+
+      it('should retrieve metrics', () => {
+        const result = provider.retrieveMetrics();
+        expect(result).toEqual(['metric1', 'metric2']);
+      });
+
+      it('should retrieve label keys', () => {
+        const result = provider.retrieveLabelKeys();
+        expect(result).toEqual([]); // Empty because we haven't queried any labels
+      });
+    });
+
+    describe('Query Methods (Asynchronous)', () => {
+      const timeRange = getMockTimeRange();
+
+      it('should query metrics metadata', async () => {
+        // Raw API response shape
+        const rawMetadata = {
+          metric1: [
+            {
+              type: 'counter',
+              help: 'help text',
+            },
+          ],
+        };
+        // Expected processed shape
+        const expectedMetadata = {
+          metric1: {
+            type: 'counter',
+            help: 'help text',
+          },
+        };
+        jest.spyOn(provider as any, 'request').mockResolvedValue(rawMetadata);
+
+        const result = await provider.queryMetricsMetadata();
+
+        expect(result).toEqual(expect.objectContaining(expectedMetadata));
+        expect(provider.retrieveMetricsMetadata()).toEqual(expect.objectContaining(expectedMetadata));
+      });
+
+      describe('queryLabelKeys', () => {
+        it('should use labels API when supported', async () => {
+          const labelKeys = ['label1', 'label2'];
+          const datasourceWithLabelsAPI = {
+            ...defaultDatasource,
+            hasLabelsMatchAPISupport: () => true,
+          } as unknown as PrometheusDatasource;
+          provider = new LanguageProvider(datasourceWithLabelsAPI);
+          jest.spyOn(provider, 'request').mockResolvedValue(labelKeys);
+
+          const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
+
+          expect(result).toEqual(['label1', 'label2']);
+        });
+
+        it('should use series API when labels API not supported', async () => {
+          const series = [{ __name__: 'metric', label1: 'value1', label2: 'value2' }];
+          jest.spyOn(provider, 'request').mockResolvedValue(series);
+
+          const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
+
+          expect(result).toEqual(['label1', 'label2']);
+        });
+
+        it('should handle empty series response', async () => {
+          jest.spyOn(provider, 'request').mockResolvedValue([]);
+
+          const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
+
+          expect(result).toEqual([]);
+        });
+      });
+
+      describe('queryLabelValues', () => {
+        it('should use labels API when supported', async () => {
+          const labelValues = ['value1', 'value2'];
+          const datasourceWithLabelsAPI = {
+            ...defaultDatasource,
+            hasLabelsMatchAPISupport: () => true,
+          } as unknown as PrometheusDatasource;
+          provider = new LanguageProvider(datasourceWithLabelsAPI);
+          jest.spyOn(provider as any, 'request').mockResolvedValue(labelValues);
+
+          const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
+
+          expect(result).toEqual(labelValues);
+        });
+
+        it('should use series API when labels API not supported', async () => {
+          const series = [
+            { __name__: 'metric', job: 'grafana' },
+            { __name__: 'metric', job: 'prometheus' },
+          ];
+          jest.spyOn(provider as any, 'request').mockResolvedValue(series);
+
+          const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
+
+          expect(result).toEqual(['grafana', 'prometheus']);
+        });
+      });
     });
   });
 });

@@ -1,4 +1,10 @@
-import { getCacheDurationInMinutes, getDaysToCacheMetadata, getDebounceTimeInMilliseconds, buildCacheHeaders, getDefaultCacheHeaders } from './caching';
+import {
+  getCacheDurationInMinutes,
+  getDaysToCacheMetadata,
+  getDebounceTimeInMilliseconds,
+  buildCacheHeaders,
+  getDefaultCacheHeaders,
+} from './caching';
 import { PrometheusCacheLevel } from './types';
 
 describe('caching', () => {

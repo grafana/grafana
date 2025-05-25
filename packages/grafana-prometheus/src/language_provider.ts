@@ -59,6 +59,8 @@ export interface PrometheusBaseLanguageProvider {
    */
   start: (timeRange?: TimeRange) => Promise<any[]>;
 
+  request: (url: string, params?: any, options?: Partial<BackendSrvRequest>) => Promise<any>;
+
   fetchSuggestions: (
     timeRange?: TimeRange,
     queries?: PromQuery[],
