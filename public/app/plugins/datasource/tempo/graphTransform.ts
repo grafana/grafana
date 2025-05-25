@@ -15,6 +15,7 @@ export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
+export const nativeHistogramMetric = 'traces_service_graph_request_server_seconds';
 
 export const rateMetric = {
   expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
