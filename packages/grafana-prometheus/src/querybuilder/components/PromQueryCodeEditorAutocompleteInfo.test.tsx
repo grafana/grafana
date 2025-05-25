@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT } from '../../components/monaco-query-field/monaco-completion-provider/data_provider';
 import { PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
@@ -78,7 +78,7 @@ const getDefaultDatasource = (jsonDataOverrides = {}) =>
       readOnly: false,
     },
     undefined,
-    new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider
+    new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface
   );
 
 const defaultProps = {

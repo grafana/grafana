@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { TimeRange, dateTime } from '@grafana/data';
 
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 import * as selectorBuilderModule from './selectorBuilder';
@@ -42,7 +42,7 @@ const setupMocks = () => {
     fetchSeriesValuesWithMatch: jest.fn(),
     fetchSeriesLabelsMatch: jest.fn(),
     fetchLabelsWithMatch: jest.fn(),
-  } as unknown as PromQlLanguageProvider;
+  } as unknown as PrometheusLanguageProviderInterface;
 
   // Mock standard responses
   (mockLanguageProvider.fetchLabelValues as jest.Mock).mockResolvedValue(['metric1', 'metric2', 'metric3']);
