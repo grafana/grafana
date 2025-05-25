@@ -10,7 +10,7 @@ import LanguageProvider, {
   importFromAbstractQuery,
   processSeries,
   removeQuotesIfExist,
-  PrometheusLanguageProvider,
+  PrometheusLanguageProviderInterface,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
@@ -35,7 +35,7 @@ const getMockTimeRange = (): TimeRange => {
 
 const getTimeRangeParams = (
   timRange: TimeRange,
-  override?: Partial<{ start: string; end: string }>,
+  override?: Partial<{ start: string; end: string }>
 ): { start: string; end: string } => ({
   start: fromPrometheusTimeString,
   end: toPrometheusTimeString,
@@ -57,7 +57,7 @@ const verifyRequestParams = (
   requestSpy: jest.SpyInstance,
   expectedUrl: string,
   expectedParams: unknown,
-  expectedOptions?: unknown,
+  expectedOptions?: unknown
 ) => {
   expect(requestSpy).toHaveBeenCalled();
   expect(requestSpy).toHaveBeenCalledWith(expectedUrl, expect.objectContaining(expectedParams), expectedOptions);
@@ -216,7 +216,7 @@ describe('Prometheus Language Provider', () => {
                 .valueOf() / 1000
             ).toString(),
           },
-          { headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` } },
+          { headers: { 'X-Grafana-Cache': `private, max-age=${timeSnapMinutes * 60}` } }
         );
       });
     });
@@ -633,7 +633,7 @@ describe('Prometheus Language Provider', () => {
         undefined, // omitting scopes parameter
         [{ key: 'instance', operator: '=', value: 'localhost' }],
         'metric',
-        100,
+        100
       );
 
       expect(requestSpy).toHaveBeenCalled();
@@ -690,13 +690,13 @@ describe('Prometheus Language Provider', () => {
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy.mock.calls[0][2]?.headers).toHaveProperty('X-Grafana-Cache');
       expect(requestSpy.mock.calls[0][2]?.headers?.['X-Grafana-Cache']).toContain(
-        `private, max-age=${timeSnapMinutes * 60}`,
+        `private, max-age=${timeSnapMinutes * 60}`
       );
     });
   });
 
   describe('New PrometheusLanguageProvider Interface', () => {
-    let provider: PrometheusLanguageProvider;
+    let provider: PrometheusLanguageProviderInterface;
 
     beforeEach(() => {
       provider = new LanguageProvider(defaultDatasource);
@@ -737,7 +737,7 @@ describe('Prometheus Language Provider', () => {
               type: 'counter',
               help: 'help text',
             },
-          }),
+          })
         );
       });
 
