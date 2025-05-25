@@ -456,6 +456,27 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 	})
 
+	t.Run("Should resolve relative ExternalID paths to absolute paths", func(t *testing.T) {
+		setup()
+		cfg.Options["path"] = defaultDashboards
+		provisionedDashboard := []*dashboards.DashboardProvisioning{
+			{
+				Name:       configName,
+				ExternalID: "dashboard1.json",
+			},
+		}
+
+		fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
+		reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, folderSvc)
+		reader.dashboardProvisioningService = fakeService
+		require.NoError(t, err)
+		resolvedPath := reader.resolvedPath()
+		dashboards, err := reader.getProvisionedDashboardsByPath(context.Background(), fakeService, configName)
+		require.NoError(t, err)
+		expectedPath := filepath.Join(resolvedPath, "dashboard1.json")
+		require.Equal(t, expectedPath, dashboards[expectedPath].ExternalID)
+	})
+
 	t.Run("Given missing dashboard file", func(t *testing.T) {
 		absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
 		require.NoError(t, err)
