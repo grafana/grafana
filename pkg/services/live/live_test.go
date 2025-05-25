@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_provideLiveService_RedisUnavailable(t *testing.T) {
+func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	cfg.LiveHAEngine = "testredisunavailable"
