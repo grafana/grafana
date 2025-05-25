@@ -42,11 +42,9 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import {
+import PrometheusLanguageProvider, {
   exportToAbstractQuery,
   importFromAbstractQuery,
-  PrometheusLanguageProvider,
-  PrometheusLanguageProviderInterface,
   SUGGESTIONS_LIMIT,
 } from './language_provider';
 import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
@@ -94,7 +92,7 @@ export class PrometheusDatasource
   withCredentials: boolean;
   interval: string;
   httpMethod: string;
-  languageProvider: PrometheusLanguageProviderInterface;
+  languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: URLSearchParams;
@@ -111,7 +109,7 @@ export class PrometheusDatasource
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    languageProvider?: PrometheusLanguageProviderInterface
+    languageProvider?: PrometheusLanguageProvider
   ) {
     super(instanceSettings);
 
