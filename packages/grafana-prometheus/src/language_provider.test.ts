@@ -611,37 +611,6 @@ describe('Prometheus Language Provider', () => {
     });
   });
 
-  describe('Query transformation', () => {
-    describe('importFromAbstractQuery', () => {
-      it('should handle empty queries', async () => {
-        const result = importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
-        expect(result).toEqual({ refId: 'bar', expr: '', range: true });
-      });
-    });
-
-    describe('exportToAbstractQuery', () => {
-      it('should extract labels and metric name from PromQL', async () => {
-        const abstractQuery = exportToAbstractQuery({
-          refId: 'bar',
-          expr: 'metric_name{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
-          instant: true,
-          range: false,
-        });
-
-        expect(abstractQuery).toMatchObject({
-          refId: 'bar',
-          labelMatchers: [
-            { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
-            { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
-            { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
-            { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
-            { name: '__name__', operator: AbstractLabelOperator.Equal, value: 'metric_name' },
-          ],
-        });
-      });
-    });
-  });
-
   describe('fetchSuggestions', () => {
     it('should send POST request with correct parameters', async () => {
       const timeRange = getMockTimeRange();
@@ -722,6 +691,37 @@ describe('Prometheus Language Provider', () => {
       expect(requestSpy.mock.calls[0][2]?.headers?.['X-Grafana-Cache']).toContain(
         `private, max-age=${timeSnapMinutes * 60}`
       );
+    });
+  });
+});
+
+describe('Query transformation', () => {
+  describe('importFromAbstractQuery', () => {
+    it('should handle empty queries', async () => {
+      const result = importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      expect(result).toEqual({ refId: 'bar', expr: '', range: true });
+    });
+  });
+
+  describe('exportToAbstractQuery', () => {
+    it('should extract labels and metric name from PromQL', async () => {
+      const abstractQuery = exportToAbstractQuery({
+        refId: 'bar',
+        expr: 'metric_name{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        instant: true,
+        range: false,
+      });
+
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+          { name: '__name__', operator: AbstractLabelOperator.Equal, value: 'metric_name' },
+        ],
+      });
     });
   });
 });
