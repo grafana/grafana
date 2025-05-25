@@ -143,7 +143,6 @@ describe('PromVariableQueryEditor', () => {
           getLabelValues: jest.fn().mockImplementation(() => ['that']),
           fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
         } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
-        getDebounceTimeInMilliseconds: jest.fn(),
         getTagKeys: jest
           .fn()
           .mockImplementation(() => Promise.resolve([{ text: 'this', value: 'this', label: 'this' }])),

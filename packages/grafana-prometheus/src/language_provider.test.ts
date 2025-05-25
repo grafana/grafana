@@ -1,6 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
 import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
+import { getCacheDurationInMinutes } from './caching';
 import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
@@ -10,7 +11,7 @@ import LanguageProvider, {
   processSeries,
   removeQuotesIfExist,
 } from './language_provider';
-import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
+import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();
@@ -176,14 +177,13 @@ describe('Prometheus Language Provider', () => {
       });
 
       it('should call labels endpoint with quantized time parameters when cache level is set', () => {
-        const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.Low);
+        const timeSnapMinutes = getCacheDurationInMinutes(PrometheusCacheLevel.Low);
         const languageProvider = new LanguageProvider({
           ...defaultDatasource,
           hasLabelsMatchAPISupport: () => true,
           cacheLevel: PrometheusCacheLevel.Low,
           getAdjustedInterval: (timeRange: TimeRange) =>
             getRangeSnapInterval(PrometheusCacheLevel.Low, getMockQuantizedTimeRangeParams()),
-          getCacheDurationInMinutes: () => timeSnapMinutes,
         } as PrometheusDatasource);
         const getSeriesLabels = languageProvider.getSeriesLabels;
         const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -568,11 +568,10 @@ describe('Prometheus Language Provider', () => {
     });
 
     it('should include cache headers for requests when cacheLevel is set', () => {
-      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.Medium);
+      const timeSnapMinutes = getCacheDurationInMinutes(PrometheusCacheLevel.Medium);
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
         cacheLevel: PrometheusCacheLevel.Medium,
-        getCacheDurationInMinutes: () => timeSnapMinutes,
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -708,7 +707,7 @@ describe('Prometheus Language Provider', () => {
     });
 
     it('should include cache headers when cacheLevel is set', async () => {
-      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.Medium);
+      const timeSnapMinutes = getCacheDurationInMinutes(PrometheusCacheLevel.Medium);
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
         cacheLevel: PrometheusCacheLevel.Medium,

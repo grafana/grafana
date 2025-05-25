@@ -16,13 +16,13 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
+import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
-  getClientCacheDurationInMinutes,
   getRangeSnapInterval,
   processHistogramMetrics,
   processLabels,
@@ -30,7 +30,7 @@ import {
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -53,34 +53,6 @@ type UrlParamsType = {
   end?: string;
   'match[]'?: string;
   limit?: string;
-};
-
-/**
- * Builds cache headers for Prometheus API requests.
- *
- * @param {number} durationInSeconds - Cache duration in seconds
- * @returns {object} Object with headers property containing cache headers
- */
-const buildCacheHeaders = (durationInSeconds: number) => {
-  return {
-    headers: {
-      'X-Grafana-Cache': `private, max-age=${durationInSeconds}`,
-    },
-  };
-};
-
-/**
- * Gets appropriate cache headers based on the configured cache level.
- * Returns undefined if caching is disabled.
- *
- * @param {PrometheusCacheLevel} cacheLevel - Cache level (None, Low, Medium, High)
- * @returns {object|undefined} Cache headers object or undefined if caching is disabled
- */
-const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
-  if (cacheLevel !== PrometheusCacheLevel.None) {
-    return buildCacheHeaders(getClientCacheDurationInMinutes(cacheLevel) * 60);
-  }
-  return;
 };
 
 export default class PromQlLanguageProvider extends LanguageProvider {
@@ -150,7 +122,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   private _fetchMetadata = async () => {
     const secondsInDay = 86400;
-    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
+    const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
       API_V1.METADATA,
       {},
@@ -276,7 +248,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   async loadMetricsMetadata() {
     const secondsInDay = 86400;
-    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
+    const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         API_V1.METADATA,
