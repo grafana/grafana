@@ -2,7 +2,7 @@ import { createContext, PropsWithChildren, useCallback, useContext, useMemo } fr
 
 import { TimeRange } from '@grafana/data';
 
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import PromQlLanguageProvider from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
 import { Metric } from './types';
@@ -50,7 +50,7 @@ const MetricsBrowserContext = createContext<MetricsBrowserContextType | undefine
 
 type MetricsBrowserProviderProps = {
   timeRange: TimeRange;
-  languageProvider: PrometheusLanguageProviderInterface;
+  languageProvider: PromQlLanguageProvider;
   onChange: (selector: string) => void;
 };
 

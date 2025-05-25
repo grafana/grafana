@@ -1,6 +1,7 @@
 import { HistoryItem } from '@grafana/data';
+import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import PromQlLanguageProvider from '../../../language_provider';
 import { PromQuery } from '../../../types';
 import { isValidLegacyName } from '../../../utf8_support';
 
@@ -30,12 +31,12 @@ interface Metric {
 }
 
 export interface DataProviderParams {
-  languageProvider: PrometheusLanguageProviderInterface;
+  languageProvider: PromQlLanguageProvider;
   historyProvider: Array<HistoryItem<PromQuery>>;
 }
 
 export class DataProvider {
-  readonly languageProvider: PrometheusLanguageProviderInterface;
+  readonly languageProvider: PromQlLanguageProvider;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
   readonly getSeriesLabels: typeof this.languageProvider.getSeriesLabels;
   readonly getSeriesValues: typeof this.languageProvider.getSeriesValues;

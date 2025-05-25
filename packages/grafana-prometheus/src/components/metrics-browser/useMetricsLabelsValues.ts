@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import PromQlLanguageProvider from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
 import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, METRIC_LABEL } from './types';
 
-export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PrometheusLanguageProviderInterface) => {
+export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
   const lastSeriesLimitRef = useRef(DEFAULT_SERIES_LIMIT);
   const isInitializedRef = useRef(false);

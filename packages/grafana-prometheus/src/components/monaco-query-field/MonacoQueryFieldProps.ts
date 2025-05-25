@@ -2,7 +2,7 @@
 import { HistoryItem, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import type PromQlLanguageProvider from '../../language_provider';
 import { PromQuery } from '../../types';
 
 // we need to store this in a separate file,
@@ -11,7 +11,7 @@ import { PromQuery } from '../../types';
 // props as the sync-component.
 export type Props = {
   initialValue: string;
-  languageProvider: PrometheusLanguageProviderInterface;
+  languageProvider: PromQlLanguageProvider;
   history: Array<HistoryItem<PromQuery>>;
   placeholder: string;
   onRunQuery: (value: string) => void;
