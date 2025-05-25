@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSocialService_ProvideService(t *testing.T) {
+func TestIntegrationSocialService_ProvideService(t *testing.T) {
 	type testEnv struct {
 		features featuremgmt.FeatureToggles
 	}
@@ -138,7 +138,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	}
 }
 
-func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
+func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	testCases := []struct {
 		name                        string
 		rawIniContent               string

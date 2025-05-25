@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFolderUIDFilter(t *testing.T) {
+func TestIntegrationFolderUIDFilter(t *testing.T) {
 	testCases := []struct {
 		description          string
 		uids                 []string
