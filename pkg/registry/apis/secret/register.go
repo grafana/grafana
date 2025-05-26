@@ -69,7 +69,10 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	if err := secretDBMigrator.RunMigrations(); err != nil {
+	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
+	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+
+	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
 		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 

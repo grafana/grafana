@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,12 +27,12 @@ func NewWithEngine(db db.DB) contracts.SecretDBMigrator {
 	return &SecretDB{engine: db.GetEngine()}
 }
 
-func (db *SecretDB) RunMigrations() error {
+func (db *SecretDB) RunMigrations(ctx context.Context, lockDatabase bool) error {
 	mg := migrator.NewScopedMigrator(db.engine, nil, "secret")
 
 	db.AddMigration(mg)
 
-	return mg.Start(true, 0)
+	return mg.RunMigrations(ctx, lockDatabase, 0)
 }
 
 func (*SecretDB) AddMigration(mg *migrator.Migrator) {
