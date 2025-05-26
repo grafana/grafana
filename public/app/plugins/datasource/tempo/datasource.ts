@@ -52,6 +52,7 @@ import {
   rateMetric,
   serviceMapMetrics,
   totalsMetric,
+  nativeHistogramDurationMetric,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import {
@@ -521,7 +522,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           concatMap((result) =>
             rateQuery(options, result, datasourceUid).pipe(
               // this will need the histogram type too
-              concatMap((result) => errorAndDurationQuery(options, result, datasourceUid, tempoDsUid))
+              concatMap((result) => errorAndDurationQuery(options, result, datasourceUid, tempoDsUid, histogramType))
             )
           )
         )
@@ -949,7 +950,7 @@ function serviceMapQuery(
   tempoDatasourceUid: string,
   histogramType?: string
 ): Observable<ServiceMapQueryResponse> {
-  const serviceMapRequest = makePromServiceMapRequest(request);
+  const serviceMapRequest = makePromServiceMapRequest(request, histogramType);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
@@ -1032,9 +1033,10 @@ function serviceMapQuery(
 function rateQuery(
   request: DataQueryRequest<TempoQuery>,
   serviceMapResponse: ServiceMapQueryResponse,
-  datasourceUid: string
+  datasourceUid: string,
+  histogramType?: string
 ): Observable<ServiceMapQueryResponseWithRates> {
-  const serviceMapRequest = makePromServiceMapRequest(request);
+  const serviceMapRequest = makePromServiceMapRequest(request, histogramType);
   serviceMapRequest.targets = makeServiceGraphViewRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
@@ -1059,7 +1061,8 @@ function errorAndDurationQuery(
   request: DataQueryRequest<TempoQuery>,
   rateResponse: ServiceMapQueryResponseWithRates,
   datasourceUid: string,
-  tempoDatasourceUid: string
+  tempoDatasourceUid: string,
+  histogramType?: string
 ) {
   let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
@@ -1085,14 +1088,14 @@ function errorAndDurationQuery(
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
     serviceGraphViewMetrics.push(errorRateBySpanName);
     spanNames.map((name: string) => {
-      // check json data for native histogram for the nativeHistogramDurationMetric
-      const metric = buildExpr(durationMetric, 'span_name=~"' + name + '"', request);
+      const checkedDurationMetric = histogramType === 'native' ? nativeHistogramDurationMetric : durationMetric;
+      const metric = buildExpr(checkedDurationMetric, 'span_name=~"' + name + '"', request);
       durationsBySpanName.push(metric);
       serviceGraphViewMetrics.push(metric);
     });
   }
 
-  const serviceMapRequest = makePromServiceMapRequest(request);
+  const serviceMapRequest = makePromServiceMapRequest(request, histogramType);
   serviceMapRequest.targets = makeServiceGraphViewRequest(serviceGraphViewMetrics);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
@@ -1111,7 +1114,8 @@ function errorAndDurationQuery(
         errorRateBySpanName,
         durationsBySpanName,
         datasourceUid,
-        tempoDatasourceUid
+        tempoDatasourceUid,
+        histogramType
       );
 
       if (serviceGraphView.fields.length === 0) {
@@ -1224,9 +1228,9 @@ function makeHistogramLink(
         createHistogramLink(nativeHistogramMetric, 'Request native histogram'),
       ];
     case 'native':
-      return [createHistogramLink(nativeHistogramMetric, 'Request histogram')];
+      return [createHistogramLink(nativeHistogramMetric, 'Request native histogram')];
     default:
-      return [createHistogramLink(histogramMetric, 'Request histogram')];
+      return [createHistogramLink(histogramMetric, 'Request classic histogram')];
   }
 }
 
@@ -1336,11 +1340,14 @@ function makeTempoLinkServiceMap(
   };
 }
 
-function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>, histogramType?: string): DataQueryRequest<PromQuery> {
   return {
     ...options,
     targets: serviceMapMetrics
-      .map<PromQuery[]>((metric) => {
+      .map<PromQuery[]>((metric) => {        
+        if (histogramType === 'native' && metric.includes('_bucket')) {
+          metric = metric.replace('_bucket', '');
+        }
         const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
         const extraSumByFields = serviceMapIncludeNamespace
           ? ', client_service_namespace, server_service_namespace'
@@ -1381,7 +1388,8 @@ function getServiceGraphViewDataFrames(
   errorRateBySpanName: string,
   durationsBySpanName: string[],
   datasourceUid: string,
-  tempoDatasourceUid: string
+  tempoDatasourceUid: string,
+  histogramType?: string
 ) {
   let df: any = { fields: [] };
 
@@ -1506,6 +1514,7 @@ function getServiceGraphViewDataFrames(
       }
     });
     if (Object.keys(durationObj).length > 0) {
+      const checkedDurationMetric = histogramType === 'native' ? nativeHistogramDurationMetric : durationMetric;
       df.fields.push({
         ...duration[0].fields[1],
         name: 'Duration (p90)',
@@ -1514,8 +1523,7 @@ function getServiceGraphViewDataFrames(
           links: [
             makePromLink(
               'Duration',
-              // check for native histogram here
-              buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+              buildLinkExpr(buildExpr(checkedDurationMetric, 'span_name="${__data.fields[0]}"', request)),
               datasourceUid,
               false
             ),
