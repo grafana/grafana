@@ -1,4 +1,3 @@
-import { is } from 'immutable';
 import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
