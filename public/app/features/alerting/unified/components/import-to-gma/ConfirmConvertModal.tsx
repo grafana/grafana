@@ -295,7 +295,7 @@ function isGroup(obj: unknown): obj is Group {
   return group.rules.every(isRule);
 }
 
-function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
+export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
 
   const obj = load(yamlAsString);
   if (!obj || typeof obj !== 'object' || !('groups' in obj) || !Array.isArray((obj as { groups: unknown[] }).groups)) {
