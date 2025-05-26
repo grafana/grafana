@@ -136,6 +136,10 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
 
       if (targetedElement) {
         targetedElement.applyRotate(event);
+
+        if (scene.connections.connectionsNeedUpdate(targetedElement) && scene.moveableActionCallback) {
+          scene.moveableActionCallback(true);
+        }
       }
     })
     .on('rotateGroup', (e) => {

@@ -9,6 +9,7 @@ import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementMan
 
 import { ConnectionState } from '../../types';
 import {
+  calcRotationXY,
   calculateAngle,
   // calculateCoordinates,
   calculateCoordinates2,
@@ -181,7 +182,7 @@ export class Connections {
     // const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
 
     // const { top, left, width, height } = element.options.placement!;
-    const { top, left, width, height } = getElementTransformAndDimensions(element.div!);
+    const { top, left, width, height, rotation } = getElementTransformAndDimensions(element.div!);
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
@@ -190,8 +191,8 @@ export class Connections {
       // this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
       // this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
       // this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
-      this.connectionAnchorDiv.style.top = `${top}px`;
-      this.connectionAnchorDiv.style.left = `${left}px`;
+      // INFO: rotate the anchor div to match the element's rotation
+      this.connectionAnchorDiv.style.transform = `translate(${left}px, ${top}px) rotate(${rotation}deg)`;
       this.connectionAnchorDiv.style.height = `${height}px`;
       this.connectionAnchorDiv.style.width = `${width}px`;
     }
@@ -219,7 +220,6 @@ export class Connections {
       return;
     }
     const { scale } = this.scene;
-    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
@@ -237,10 +237,8 @@ export class Connections {
 
     if (!this.didConnectionLeaveHighlight) {
       const connectionLength = Math.hypot(x - connectionLineX1, y - connectionLineY1);
-      // if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
       if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET) {
         this.didConnectionLeaveHighlight = true;
-        // this.connectionSVG.style.display = 'block';
         this.connectionLine.style.display = 'block';
         this.isDrawingConnection = true;
       }
@@ -251,59 +249,31 @@ export class Connections {
     //
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-        // const sourceDiv = source.div;
-        // const { left, top, width, height } = getElementTransformAndDimensions(sourceDiv!);
-        // const sourceHorizontalCenter = left + width / 2;
-        // const sourceVerticalCenter = top + height / 2;
-        // const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
-        // const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
-
-        // const sourceRect = this.connectionSource.div.getBoundingClientRect();
+        // Get source element transform and dimensions (including rotation)
         const sourceRect = getElementTransformAndDimensions(this.connectionSource.div);
 
-        // const transformScale = this.scene.scale;
-        // const transformScale = 1;
-        // const parentRect = getParentBoundingClientRect(this.scene);
+        // Get parent rect for coordinate calculations
         const parentRect = this.scene.viewerDiv?.getBoundingClientRect();
 
         if (!parentRect) {
           return;
         }
 
-        // const sourceVerticalCenter = (sourceRect.top - parentRect.top + sourceRect.height / 2) / transformScale;
-        // const sourceHorizontalCenter = (sourceRect.left - parentRect.left + sourceRect.width / 2) / transformScale;
-        const sourceVerticalCenter = sourceRect.top + sourceRect.height / 2;
-        const sourceHorizontalCenter = sourceRect.left + sourceRect.width / 2;
-
-        // Convert from DOM coords to connection coords
-        // TODO: Break this out into util function and add tests
-        const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
-        const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
+        const { x: sourceX, y: sourceY } = calcRotationXY(sourceRect, connectionLineX1, connectionLineY1);
 
         let targetX;
         let targetY;
         let targetName;
 
         if (this.connectionTarget && this.connectionTarget.div) {
-          // if target exists
-          // const targetRect = this.connectionTarget.div.getBoundingClientRect();
+          // Get target element transform and dimensions (including rotation)
           const targetRect = getElementTransformAndDimensions(this.connectionTarget.div);
-
-          // const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
-          // const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
-          const targetVerticalCenter = targetRect.top + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left + targetRect.width / 2;
-
-          targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
-          targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
+          const { x: targetXRaw, y: targetYRaw } = calcRotationXY(targetRect, x, y);
+          targetX = targetXRaw;
+          targetY = targetYRaw;
           targetName = this.connectionTarget.options.name;
         } else {
           // if there is no target (open connection)
-          // const parentVerticalCenter = parentRect.height / 2;
-          // const parentHorizontalCenter = parentRect.width / 2;
-
-          // targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
-          // targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
           targetX = x;
           targetY = y;
         }
@@ -339,9 +309,6 @@ export class Connections {
         }
       }
 
-      // if (this.connectionSVG) {
-      //   this.connectionSVG.style.display = 'none';
-      // }
       if (this.connectionLine) {
         this.connectionLine.style.display = 'none';
       }
@@ -367,14 +334,13 @@ export class Connections {
       return;
     }
 
-    const { scale } = this.scene;
-    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
       return;
     }
 
+    const { scale } = this.scene;
     const x = (event.pageX - parentBoundingRect.x) / scale;
     const y = (event.pageY - parentBoundingRect.y) / scale;
 
@@ -382,16 +348,7 @@ export class Connections {
     this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const selectedValue = this.selection.value;
-    // const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
 
-    // calculate relative coordinates based on source and target coorindates of connection
-    // const { x1, y1, x2, y2 } = calculateCoordinates(
-    //   sourceRect,
-    //   parentBoundingRect,
-    //   selectedValue?.info!,
-    //   selectedValue!.target,
-    //   transformScale
-    // );
     const { x1, y1, x2, y2 } = calculateCoordinates2(
       selectedValue!.source,
       selectedValue!.target,
@@ -431,10 +388,10 @@ export class Connections {
     // Ignore if control key being held
     if (!event.ctrlKey) {
       // Check if segment before and after vertex are close to vertical or horizontal
-      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalBefore = Math.abs((xSnap - vx1) / (ySnap - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((xSnap - vx2) / (ySnap - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((ySnap - vy1) / (xSnap - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((ySnap - vy2) / (xSnap - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
 
       if (verticalBefore) {
         xSnap = vx1;
@@ -532,31 +489,20 @@ export class Connections {
       return;
     }
 
-    const transformScale = this.scene.scale;
-    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale;
+    const { scale } = this.scene;
+    const x = (event.pageX - parentBoundingRect.x) / scale;
+    const y = (event.pageY - parentBoundingRect.y) / scale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const selectedValue = this.selection.value;
-    // const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
-
-    // calculate relative coordinates based on source and target coorindates of connection
-    // const { x1, y1, x2, y2 } = calculateCoordinates(
-    //   sourceRect,
-    //   parentBoundingRect,
-    //   selectedValue?.info!,
-    //   selectedValue!.target,
-    //   transformScale
-    // );
 
     const { x1, y1, x2, y2 } = calculateCoordinates2(
       selectedValue!.source,
@@ -596,10 +542,10 @@ export class Connections {
     // Ignore if control key being held
     if (!event.ctrlKey) {
       // Check if segment before and after vertex are close to vertical or horizontal
-      const verticalBefore = Math.abs((x - vx1) / (y - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const verticalAfter = Math.abs((x - vx2) / (y - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const horizontalBefore = Math.abs((y - vy1) / (x - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
-      const horizontalAfter = Math.abs((y - vy2) / (x - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalBefore = Math.abs((xSnap - vx1) / (ySnap - vy1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const verticalAfter = Math.abs((xSnap - vx2) / (ySnap - vy2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalBefore = Math.abs((ySnap - vy1) / (xSnap - vx1)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
+      const horizontalAfter = Math.abs((ySnap - vy2) / (xSnap - vx2)) < CONNECTION_VERTEX_ORTHO_TOLERANCE;
 
       if (verticalBefore) {
         xSnap = vx1;
@@ -622,7 +568,6 @@ export class Connections {
     }
 
     this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
-    // this.connectionSVGVertex!.style.display = 'block';
     this.connectionVertexPath!.style.display = 'block';
     this.connectionVertex.style.display = 'block';
 
@@ -632,7 +577,6 @@ export class Connections {
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexAddListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexAddListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
-      // this.connectionSVGVertex!.style.display = 'none';
       this.connectionVertexPath!.style.display = 'none';
       this.connectionVertex.style.display = 'none';
 
@@ -644,7 +588,8 @@ export class Connections {
         const currentSource = selectedValue!.source;
         if (currentSource.options.connections) {
           const currentConnections = [...currentSource.options.connections];
-          const newVertex = { x: (x - xStart) / xDist, y: (y - yStart) / yDist };
+          // Calculate normalized coordinates for the new vertex, using rotatedX/Y
+          const newVertex = { x: (xSnap - xStart) / xDist, y: (ySnap - yStart) / yDist };
           if (currentConnections[connectionIndex].vertices) {
             const currentVertices = [...currentConnections[connectionIndex].vertices!];
             currentVertices.splice(vertexIndex, 0, newVertex);
