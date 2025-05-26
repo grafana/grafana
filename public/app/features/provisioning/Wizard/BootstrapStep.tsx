@@ -8,7 +8,7 @@ import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuer
 import { getResourceStats, useModeOptions } from './actions';
 import { StepStatusInfo, WizardFormData } from './types';
 
-interface Props {
+export interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
   onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
