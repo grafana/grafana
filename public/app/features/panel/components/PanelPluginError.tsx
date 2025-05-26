@@ -59,20 +59,15 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
   return plugin;
 }
 
-export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
+const NotFoundPanel = ({ id }: PanelProps) => {
   const { t } = useTranslate();
+  return (
+    <PanelPluginError title={t('panel.panel-plugin-error.title-not-found', 'Panel plugin not found: {{id}}', { id })} />
+  );
+};
 
-  const NotFound = class NotFound extends PureComponent<PanelProps> {
-    render() {
-      return (
-        <PanelPluginError
-          title={t('panel.panel-plugin-error.title-not-found', 'Panel plugin not found: {{id}}', { id })}
-        />
-      );
-    }
-  };
-
-  const plugin = new PanelPlugin(silent ? () => null : NotFound);
+export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
+  const plugin = new PanelPlugin(silent ? () => null : NotFoundPanel);
 
   plugin.meta = {
     id: id,

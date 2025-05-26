@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -35,6 +35,7 @@ export interface Props {
 const onClose = () => locationService.partial({ editview: null, editIndex: null });
 
 export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: Props) {
+  const { t } = useTranslate();
   const [updateId, setUpdateId] = useState(0);
   useEffect(() => {
     dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
@@ -42,7 +43,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 
   // updateId in deps so we can revaluate when dashboard is mutated
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const pages = useMemo(() => getSettingsPages(dashboard), [dashboard, updateId]);
+  const pages = useMemo(() => getSettingsPages(dashboard, t), [dashboard, updateId, t]);
 
   const onPostSave = () => {
     dashboard.meta.hasUnsavedFolderChange = false;
@@ -53,7 +54,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
   const editIndex = getEditIndex(location);
-  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location, dashboard.uid);
+  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location, dashboard.uid, t);
   const size = 'sm';
 
   const actions = [
@@ -87,8 +88,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   );
 }
 
-function getSettingsPages(dashboard: DashboardModel) {
-  const { t } = useTranslate();
+function getSettingsPages(dashboard: DashboardModel, t: TFunction) {
   const pages: SettingsPage[] = [];
 
   const generalTitle = t('dashboard-settings.general.title', 'General');
@@ -180,9 +180,9 @@ function getSectionNav(
   pages: SettingsPage[],
   currentPage: SettingsPage,
   location: H.Location,
-  dashboardUid: string
+  dashboardUid: string,
+  t: TFunction
 ): NavModel {
-  const { t } = useTranslate();
   const main: NavModelItem = {
     text: t('dashboard-settings.settings.title', 'Settings'),
     children: [],
