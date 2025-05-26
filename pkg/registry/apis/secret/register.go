@@ -64,6 +64,7 @@ func NewSecretAPIBuilder(
 	database contracts.Database,
 	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
+	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
 	worker, err := worker.NewWorker(worker.Config{
@@ -77,6 +78,7 @@ func NewSecretAPIBuilder(
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
 		keeperService,
+		encryptionManager,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
@@ -108,6 +110,7 @@ func RegisterAPIService(
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
+	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -135,6 +138,7 @@ func RegisterAPIService(
 		database,
 		keeperService,
 		accessClient,
+		encryptionManager,
 		nil, // OSS does not need an allow list.
 	)
 	if err != nil {

@@ -2,8 +2,6 @@ package contracts
 
 import (
 	"context"
-
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 type contextRequestIdKey struct{}
@@ -35,7 +33,7 @@ type AppendOutboxMessage struct {
 	Type            OutboxMessageType
 	Name            string
 	Namespace       string
-	EncryptedSecret secretv0alpha1.ExposedSecureValue
+	EncryptedSecret string
 	KeeperName      *string
 	ExternalID      *string
 }
@@ -46,7 +44,7 @@ type OutboxMessage struct {
 	MessageID       string
 	Name            string
 	Namespace       string
-	EncryptedSecret secretv0alpha1.ExposedSecureValue
+	EncryptedSecret string
 	KeeperName      *string
 	ExternalID      *string
 	// How many times this message has been received

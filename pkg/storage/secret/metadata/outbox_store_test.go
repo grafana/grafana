@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -65,7 +64,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -74,7 +73,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -83,7 +82,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -152,14 +151,14 @@ func TestOutboxStore(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 	m2 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-2",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -228,7 +227,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 					Type:            contracts.CreateSecretOutboxMessage,
 					Name:            fmt.Sprintf("s-%d", i),
 					Namespace:       fmt.Sprintf("n-%d", i),
-					EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+					EncryptedSecret: "value",
 					ExternalID:      nil,
 				}
 				messageID, err := outbox.Append(ctx, message)
