@@ -23,7 +23,7 @@ function RuleList() {
 
   return (
     <>
-      <RulesFilter onClear={() => {}} />
+      <RulesFilter onClear={() => { }} />
       {showListView ? <FilterView filterState={filterState} /> : <GroupedView />}
     </>
   );
@@ -46,6 +46,11 @@ export function RuleListActions() {
             label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
             icon="file-export"
             url="/alerting/export-new-rule"
+          />
+          <Menu.Item
+            label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
+            icon="import"
+            url="/alerting/import-datasource-managed-rules"
           />
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>

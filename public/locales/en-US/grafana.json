@@ -864,9 +864,6 @@
       "title-search-panel": "Search panel",
       "title-select-dashboard-and-panel": "Select dashboard and panel"
     },
-    "data-source-section": {
-      "import-to-grafana": "Import to Grafana rules"
-    },
     "datasource-not-found": {
       "card-description": "The datasource for this query was not found, it was either removed or is not installed correctly.",
       "remove-query": "Remove query",
@@ -1285,6 +1282,7 @@
         "loading": "Loading...",
         "loading-body": "Preparing data to be imported.This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
@@ -1328,6 +1326,7 @@
       },
       "yaml": {
         "label": "Prometheus YAML file",
+        "required-message": "Please select a file",
         "target-datasource": "Target data source",
         "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source."
       }
@@ -2110,6 +2109,9 @@
     "rule-list-v1": {
       "collapse-all": "Collapse all",
       "expand-all": "Expand all"
+    },
+    "rule-list-v2": {
+      "import-to-gma": "Import alert rules"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
