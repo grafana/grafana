@@ -176,7 +176,6 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 		}
 
 		if row.MessageType != contracts.DeleteSecretOutboxMessage && row.EncryptedSecret.Valid {
-			// TODO: dont do this because it is encrypted!
 			msg.EncryptedSecret = row.EncryptedSecret.String
 		}
 
