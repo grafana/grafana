@@ -141,6 +141,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
             noMargin
           >
             <Input
+              id="repository-title"
               {...register('repository.title', {
                 required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
               })}

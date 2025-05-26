@@ -253,7 +253,7 @@ describe('BootstrapStep', () => {
       await user.click(folderOption);
 
       // Check that the folder option is now selected by looking for the title field
-      expect(await screen.findByPlaceholderText('My repository connection')).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
   });
 
@@ -262,12 +262,12 @@ describe('BootstrapStep', () => {
       const { user } = setup();
 
       // Initially should not show title field (default is instance)
-      expect(screen.queryByPlaceholderText('My repository connection')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
 
       const folderOption = await screen.findByText('Sync external storage to a new Grafana folder');
       await user.click(folderOption);
 
-      expect(await screen.findByPlaceholderText('My repository connection')).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
   });
 });
