@@ -76,11 +76,6 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		r.SetMeta(metaKeySkipLastUsed, "true")
 	}
 
-	// plain API keys are no loger supported so an error is returned if the api key doesn't belong to a service account
-	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
-		return nil, errAPIKeyInvalid.Errorf("API key does not belong to a service account")
-	}
-
 	return newServiceAccountIdentity(key), nil
 }
 
@@ -210,6 +205,11 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 	if orgID != key.OrgID {
 		return errAPIKeyOrgMismatch.Errorf("API does not belong in Organization")
+	}
+
+	// plain API keys are no loger supported so an error is returned if the api key doesn't belong to a service account
+	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
+		return errAPIKeyInvalid.Errorf("API key does not belong to a service account")
 	}
 
 	return nil
