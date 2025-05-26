@@ -358,7 +358,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFolderService(t *testing.T) {
+func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
