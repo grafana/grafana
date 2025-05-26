@@ -335,6 +335,11 @@ describe('DashboardScenePage', () => {
   });
 
   describe('errors rendering', () => {
+    const origError = console.error;
+    const consoleErrorMock = jest.fn();
+    afterEach(() => (console.error = origError));
+    beforeEach(() => (console.error = consoleErrorMock));
+
     it('should render dashboard not found notice when dashboard... not found', async () => {
       setupLoadDashboardMockReject({
         status: 404,

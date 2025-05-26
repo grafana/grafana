@@ -190,6 +190,12 @@ export class DefaultGridLayoutManager
       return;
     }
 
+    if (!config.featureToggles.dashboardNewLayouts) {
+      // No undo/redo support in legacy edit mode
+      layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      return;
+    }
+
     dashboardEditActions.removeElement({
       removedObject: gridItem.state.body,
       source: this,
