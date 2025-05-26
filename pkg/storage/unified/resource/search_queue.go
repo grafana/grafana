@@ -109,8 +109,7 @@ func (b *indexQueueProcessor) process(batch []*WrittenEvent) {
 		}
 		resp = append(resp, result)
 
-		// Get a pooled BulkIndexItem
-		item := getBulkIndexItem()
+		item := &BulkIndexItem{}
 		if evt.Type == resourcepb.WatchEvent_DELETED {
 			item.Action = ActionDelete
 			item.Key = evt.Key
@@ -130,13 +129,6 @@ func (b *indexQueueProcessor) process(batch []*WrittenEvent) {
 	}
 
 	err := b.index.BulkIndex(req)
-
-	// Return all items to the pool after processing
-	// This ensures items are returned even if BulkIndex fails
-	for _, item := range req.Items {
-		putBulkIndexItem(item)
-	}
-
 	if err != nil {
 		for _, r := range resp {
 			r.Err = err

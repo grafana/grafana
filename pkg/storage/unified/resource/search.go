@@ -25,28 +25,6 @@ import (
 
 const maxBatchSize = 1000
 
-// Pool for BulkIndexItem objects to reduce allocations during bulk indexing.
-// This significantly reduces GC pressure when indexing large datasets (e.g., 100k+ documents).
-var bulkIndexItemPool = &sync.Pool{
-	New: func() interface{} {
-		return &BulkIndexItem{}
-	},
-}
-
-// getBulkIndexItem retrieves a BulkIndexItem from the pool
-func getBulkIndexItem() *BulkIndexItem {
-	return bulkIndexItemPool.Get().(*BulkIndexItem)
-}
-
-// putBulkIndexItem returns a BulkIndexItem to the pool after resetting it
-func putBulkIndexItem(item *BulkIndexItem) {
-	// Reset the item before returning to pool
-	item.Action = 0
-	item.Key = nil
-	item.Doc = nil
-	bulkIndexItemPool.Put(item)
-}
-
 type NamespacedResource struct {
 	Namespace string
 	Group     string
@@ -585,9 +563,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		}, func(iter ListIterator) error {
 			// Process documents in batches to avoid memory issues
 			// When dealing with large collections (e.g., 100k+ documents),
-			// loading all documents into memory at once can cause OOM errors
+			// loading all documents into memory at once can cause OOM errors.
 			items := make([]*BulkIndexItem, 0, maxBatchSize)
-			totalIndexed := 0
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -609,57 +586,33 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					continue
 				}
 
-				// Get a pooled BulkIndexItem and populate it
-				item := getBulkIndexItem()
-				item.Action = ActionIndex
-				item.Doc = doc
-
 				// Add to bulk items
-				items = append(items, item)
+				items = append(items, &BulkIndexItem{
+					Action: ActionIndex,
+					Doc:    doc,
+				})
 
-				// When we reach the batch size, perform bulk index and reset the batch
+				// When we reach the batch size, perform bulk index and reset the batch.
 				if len(items) >= maxBatchSize {
 					if err = index.BulkIndex(&BulkIndexRequest{
 						Items: items,
 					}); err != nil {
-						// Return items to pool before returning error
-						for _, item := range items {
-							putBulkIndexItem(item)
-						}
 						return err
 					}
-					totalIndexed += len(items)
 
-					// Return all items to the pool
-					for _, item := range items {
-						putBulkIndexItem(item)
-					}
-
-					// Reset the slice for the next batch while preserving capacity
+					// Reset the slice for the next batch while preserving capacity.
 					items = items[:0]
 				}
 			}
 
-			// Index any remaining items in the final batch
+			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
 				}); err != nil {
-					// Return items to pool before returning error
-					for _, item := range items {
-						putBulkIndexItem(item)
-					}
 					return err
 				}
-				totalIndexed += len(items)
-
-				// Return all remaining items to the pool
-				for _, item := range items {
-					putBulkIndexItem(item)
-				}
 			}
-
-			logger.Debug("Finished indexing documents", "total_indexed", totalIndexed)
 			return iter.Error()
 		})
 		return rv, err
