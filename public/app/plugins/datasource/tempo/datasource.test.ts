@@ -1303,8 +1303,16 @@ describe('histogram type functionality', () => {
     const tempoField = '__data.fields.target';
     const sourceField = '__data.fields.source';
 
-    const fieldConfig = getFieldConfig(datasourceUid, tempoDatasourceUid, targetField, tempoField, sourceField, undefined, 'native');
-    const histogramLink = fieldConfig.links.find(link => link.title === 'Request native histogram');
+    const fieldConfig = getFieldConfig(
+      datasourceUid,
+      tempoDatasourceUid,
+      targetField,
+      tempoField,
+      sourceField,
+      undefined,
+      'native'
+    );
+    const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
     expect(histogramLink).toBeDefined();
     expect(histogramLink?.internal?.query).toBeDefined();
     if (histogramLink?.internal?.query && 'expr' in histogramLink.internal.query) {
@@ -1315,15 +1323,20 @@ describe('histogram type functionality', () => {
   });
 
   it('should handle histogram type in service map query', () => {
-    const request = makePromServiceMapRequest({
-      targets: [{ serviceMapQuery: '{service="test"}' }],
-      range: getDefaultTimeRange(),
-    } as DataQueryRequest<TempoQuery>, 'native');
+    const request = makePromServiceMapRequest(
+      {
+        targets: [{ serviceMapQuery: '{service="test"}' }],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest<TempoQuery>,
+      'native'
+    );
 
     const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));
     expect(bucketMetric).toBeUndefined();
 
-    const nativeMetric = request.targets.find((t: PromQuery) => t.expr.includes('traces_service_graph_request_server_seconds'));
+    const nativeMetric = request.targets.find((t: PromQuery) =>
+      t.expr.includes('traces_service_graph_request_server_seconds')
+    );
     expect(nativeMetric).toBeDefined();
   });
 });

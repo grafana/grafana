@@ -515,7 +515,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         hasServiceMapQuery: targets.serviceMap[0].serviceMapQuery ? true : false,
       });
 
-      const {datasourceUid, histogramType} = this.serviceMap;
+      const { datasourceUid, histogramType } = this.serviceMap;
       const tempoDsUid = this.uid;
       subQueries.push(
         serviceMapQuery(options, datasourceUid, tempoDsUid, histogramType).pipe(
@@ -1213,7 +1213,7 @@ export function makeHistogramLink(
   serverSumBy: string,
   histogramType?: string
 ) {
-  const createHistogramLink = (metric: string, title: string) => 
+  const createHistogramLink = (metric: string, title: string) =>
     makePromLink(
       title,
       `histogram_quantile(0.9, sum(rate(${metric}{${source}${target}}[$__rate_interval])) by (le, client, ${serverSumBy}))`,
@@ -1340,11 +1340,14 @@ function makeTempoLinkServiceMap(
   };
 }
 
-export function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>, histogramType?: string): DataQueryRequest<PromQuery> {
+export function makePromServiceMapRequest(
+  options: DataQueryRequest<TempoQuery>,
+  histogramType?: string
+): DataQueryRequest<PromQuery> {
   return {
     ...options,
     targets: serviceMapMetrics
-      .map<PromQuery[]>((metric) => {        
+      .map<PromQuery[]>((metric) => {
         if (histogramType === 'native' && metric.includes('_bucket')) {
           metric = metric.replace('_bucket', '');
         }
