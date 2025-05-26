@@ -33,7 +33,7 @@ func QueueOptionsWithDefaults(opts *QueueOptions) *QueueOptions {
 	return opts
 }
 
-func TestQueue(t *testing.T) {
+func TestQueue(t *testing.T) { //nolint:gocyclo
 	t.Parallel()
 
 	t.Run("SimpleEnqueueAndDequeue", func(t *testing.T) {
