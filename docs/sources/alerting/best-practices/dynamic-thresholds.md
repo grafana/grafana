@@ -119,6 +119,14 @@ In this example:
 
 As long as both queries return series with matching label sets, Grafana evaluates the expression and triggers alerts where the condition is true.
 
+{{% admonition type="caution" %}}
+
+If `$B` is missing a series (dimension) from `$A`, or vice versa, the _Math_ expression evaluates only matching series. It cannot evaluate the missing series and display a warning message like:
+
+**1 items dropped from union(s): ["$A > $B": ($B: {service=payment-api})]**
+
+{{% /admonition %}}
+
 ## Try it with TestData
 
 You can use the [TestData data source](ref:testdata-data-source) to replicate this example:
