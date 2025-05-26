@@ -22,6 +22,10 @@ on:
         required: false
         default: false
         type: boolean
+      branch:
+        required: false
+        type: string
+        description: "Use specific branch for changelog"
 
   workflow_dispatch:
     inputs:
@@ -45,6 +49,10 @@ on:
         required: false
         default: false
         type: boolean
+      branch:
+        required: false
+        type: string
+        description: "Use specific branch for changelog"
 
 permissions: {}
 
@@ -98,6 +106,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
+        if: ${{ inputs.branch != '' }}
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: git checkout -b $BRANCH
+      - name: "Create branch"
+        if: ${{ inputs.branch == '' }}
         run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
       - name: "Generate changelog"
         id: changelog
@@ -145,13 +159,25 @@ jobs:
         if: inputs.dry_run != true
         run: git push
       - name: "Create changelog PR"
-        run: >
-          gh pr create \
-            --dry-run="${DRY_RUN}" \
-            --label "no-backport" \
-            --label "no-changelog" \
-            -B "${TARGET}" \
-            --title "Release: update changelog for ${VERSION}" \
-            --body "Changelog changes for release ${VERSION}"
+        run: |
+          if gh pr view &>/dev/null; then
+            echo "Changelog pr has already been created"
+          else
+            gh pr create \
+              --dry-run="${DRY_RUN}" \
+              --label "no-backport" \
+              --label "no-changelog" \
+              -B "${TARGET}" \
+              --title "Release: update changelog" \
+              --body "Changelog changes for release versions:"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Add release version to PR description"
+        if: inputs.dry_run != true
+        run: |
+          gh pr view --json body --jq .body > pr_body.md
+          echo " -  ${VERSION}" >> pr_body.md
+          gh pr edit --body-file pr_body.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
