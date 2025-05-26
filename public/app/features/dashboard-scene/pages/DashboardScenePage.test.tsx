@@ -399,15 +399,11 @@ describe('DashboardScenePage', () => {
   describe('UnifiedDashboardScenePageStateManager', () => {
     it('should reset active manager when unmounting', async () => {
       const manager = getDashboardScenePageStateManager();
-      const { unmount } = setup();
       manager.setActiveManager('v2');
-
-      await waitForDashboardToRender();
+      const { unmount } = setup();
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
-
       unmount();
-
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
   });
