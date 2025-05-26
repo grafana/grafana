@@ -151,7 +151,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0,0.5,0,0.5),
+      padding: theme.spacing(0, 0.5, 0, 0.5),
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,
       flexDirection: 'column',
@@ -254,15 +254,18 @@ function collectEditableElementChildren(
       return;
     }
 
-    // DashboardGridItem is a special case as it can contain repeated panels
-    // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
-    if (child instanceof DashboardGridItem && child.state.repeatedPanels?.length) {
-      for (const repeatedPanel of child.state.repeatedPanels) {
-        const editableElement = getEditableElementFor(repeatedPanel)!;
-        children.push({ sceneObject: repeatedPanel, editableElement, depth });
-      }
 
-      return;
+    if (child instanceof DashboardGridItem) {
+      // DashboardGridItem is a special case as it can contain repeated panels
+      // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
+      if (child.state.repeatedPanels?.length) {
+        for (const repeatedPanel of child.state.repeatedPanels) {
+          const editableElement = getEditableElementFor(repeatedPanel)!;
+          children.push({ sceneObject: repeatedPanel, editableElement, depth });
+        }
+
+        return;
+      }
     }
 
     collectEditableElementChildren(child, children, depth + 1);
