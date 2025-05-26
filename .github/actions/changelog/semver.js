@@ -28,7 +28,10 @@ export function semverCompare(a, b) {
   return 0;
 };
 
-// this function relies on the following invariant: versions are sorted by the release date.
+
+// Finds the highest version that is lower than the target version.
+//
+// This function relies on the following invariant: versions are sorted by the release date.
 // It will produce wrong result if invariant doesn't hold.
 export const findPreviousVersion = (versionByDate, target) => {
   let prev = null;
