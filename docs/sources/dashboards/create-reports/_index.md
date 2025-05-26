@@ -214,8 +214,6 @@ If you leave the **Time range** field empty, reports use the saved time range of
 Optionally, you can change the time range of the report by setting it in the **Time range** field.
 If specified, the custom time range overrides the time range from the report's dashboard.
 
-The page header of the report displays the time range for the dashboard's data queries.
-
 #### Customize template variables
 
 This option is only displayed if the dashboard has variables.
