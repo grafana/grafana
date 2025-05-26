@@ -60,4 +60,9 @@ declare function Trans(props: TransProps): React.ReactElement;
  */
 type TransType = typeof Trans;
 
-export type { UseTranslateHook, TransProps, TransType };
+/**
+ * Type for the translation function
+ */
+type TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
+
+export type { UseTranslateHook, TransProps, TransType, TFunction };

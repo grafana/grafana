@@ -48,6 +48,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	}
 
 	err = s.db.Transaction(ctx, func(ctx context.Context) error {
+
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
 		if err := s.validateSecureValueReferences(ctx, keeper); err != nil {
 			return err

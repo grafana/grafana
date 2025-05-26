@@ -69,14 +69,26 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+	ds, err := c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		UID:   id,
 		OrgID: requester.GetOrgID(),
 	})
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			// The data source does not exist, skip the check
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ds, nil
 }
 
 func (c *check) ID() string {
 	return CheckID
+}
+
+func (c *check) Name() string {
+	return "data source"
 }
 
 func (c *check) Init(ctx context.Context) error {
@@ -146,7 +158,7 @@ func (s *healthCheckStep) Title() string {
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Checks if a data sources is healthy."
+	return "Checks if a data source is healthy."
 }
 
 func (s *healthCheckStep) Resolution() string {
@@ -220,7 +232,7 @@ func (s *missingPluginStep) Title() string {
 }
 
 func (s *missingPluginStep) Description() string {
-	return "Checks if the plugin associated with the data source is installed."
+	return "Checks if the plugin associated with the data source is installed and available."
 }
 
 func (s *missingPluginStep) Resolution() string {
@@ -255,7 +267,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
-				Message: "Install plugin",
+				Message: "View plugin",
 				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
 			})
 		}

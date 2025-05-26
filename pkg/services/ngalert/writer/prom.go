@@ -25,6 +25,11 @@ import (
 const backendType = "prometheus"
 
 const (
+	// Network error strings
+	networkErrDialTCP           = "dial tcp"
+	networkErrConnectionRefused = "connection refused"
+	networkErrNoSuchHost        = "no such host"
+
 	// NOTE: Mimir errors were copied from globalerror package:
 	// https://github.com/grafana/mimir/blob/1ff367ef58987cd1941de03a8d6923fde82dfdd3/pkg/util/globalerror/user.go
 	// Variable names have been standardized as Mimir+{globalerror.ID}+Error for consistency
@@ -102,6 +107,9 @@ const (
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
+
+	// returned in some cases when multiple org IDs are present in the request
+	MimirErrTooManyOrgIDs = "multiple org IDs present"
 )
 
 var (
@@ -112,6 +120,7 @@ var (
 	ErrBadFrame               = errors.New("failed to read dataframe")
 	ErrDatasourceUnauthorized = errors.New("failed to authenticate in datasource")
 	ErrDatasourceForbidden    = errors.New("failed to authorize in datasource")
+	ErrConnectionFailure      = errors.New("failed to connect to remote write endpoint")
 
 	// IgnoredErrors don't cause the Write to fail, but are still logged.
 	IgnoredErrors = []string{
@@ -401,14 +410,27 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		return nil, false
 	}
 
-	// All 500-range statuses are automatically unexpected and not the fault of the data.
+	// Network errors will be in the error string since we can't unwrap
+	errString := writeErr.Error()
+	if strings.Contains(errString, networkErrDialTCP) ||
+		strings.Contains(errString, networkErrConnectionRefused) ||
+		strings.Contains(errString, networkErrNoSuchHost) {
+		return fmt.Errorf("%w: %v", ErrConnectionFailure, errString), false
+	}
+
+	// Most 500-range statuses are automatically unexpected and not the fault of the data.
 	if writeErr.StatusCode()/100 == 5 {
+		// mimir does return some errors as 500s that should maybe not be considered as such?
+		// e.g. `multiple org IDs present`. Handle those separately though to make sure they're treated as exceptions
+		if strings.Contains(errString, MimirErrTooManyOrgIDs) {
+			return errors.Join(ErrRejectedWrite, writeErr), true
+		}
 		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
 	}
 
 	// Special case for 400 status code. 400s may be ignorable in the event of HA writers, or the fault of the written data.
 	if writeErr.StatusCode() == 400 {
-		msg := writeErr.Error()
+		msg := errString
 		// HA may potentially write different values for the same timestamp, so we ignore this error
 		// TODO: this may not be needed, further testing needed
 		for _, e := range IgnoredErrors {

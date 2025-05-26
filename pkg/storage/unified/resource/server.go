@@ -4,26 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"log/slog"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
-	ringclient "github.com/grafana/dskit/ring/client"
-	userutils "github.com/grafana/dskit/user"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -50,9 +45,6 @@ type ListIterator interface {
 
 	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
-
-	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
-	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
 	ResourceVersion() int64
@@ -106,6 +98,9 @@ type StorageBackend interface {
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
 	ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// ListHistory is like ListIterator, but it returns the history of a resource
+	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -200,8 +195,6 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
-
-	Distributor *Distributor
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -267,12 +260,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
-		reg:            opts.Reg,
-	}
-
-	if opts.Distributor != nil {
-		s.shardingEnabled = true
-		s.distributor = *opts.Distributor
 	}
 
 	if opts.Search.Resources != nil {
@@ -317,34 +304,6 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
-
-	shardingEnabled bool
-	distributor     Distributor
-	reg             prometheus.Registerer
-}
-
-type Distributor struct {
-	ClientPool *ringclient.Pool
-	Ring       *ring.Ring
-	Lifecycler *ring.BasicLifecycler
-}
-
-type RingClient struct {
-	Client ResourceClient
-	grpc_health_v1.HealthClient
-	Conn *grpc.ClientConn
-}
-
-func (c *RingClient) Close() error {
-	return c.Conn.Close()
-}
-
-func (c *RingClient) String() string {
-	return c.RemoteAddress()
-}
-
-func (c *RingClient) RemoteAddress() string {
-	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.
@@ -373,39 +332,6 @@ func (s *server) Init(ctx context.Context) error {
 		}
 	})
 	return s.initErr
-}
-
-var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-	return s != ring.ACTIVE
-})
-
-func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
-	ringHasher := fnv.New32a()
-	_, err := ringHasher.Write([]byte(namespace))
-	if err != nil {
-		s.log.Error("Error hashing namespace. Will not distribute request", "err", err)
-		return nil
-	}
-
-	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
-
-	if err != nil {
-		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
-		return nil
-	}
-
-	if rs.Instances[0].Id != s.distributor.Lifecycler.GetInstanceID() {
-		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
-
-		ins, err := s.distributor.ClientPool.GetClientForInstance(rs.Instances[0])
-		if err != nil {
-			s.log.Error("Error getting client. Will not distribute request", "err", err)
-			return nil
-		}
-		return ins.(*RingClient)
-	}
-
-	return nil
 }
 
 func (s *server) Stop(ctx context.Context) error {
@@ -469,6 +395,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		Value:  value,
 		Key:    key,
 		Object: obj,
+		GUID:   uuid.New().String(),
 	}
 
 	if oldValue == nil {
@@ -746,6 +673,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
+		GUID:       uuid.New().String(),
 	}
 	requester, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -880,7 +808,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}}, nil
 	}
 
-	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+	iterFunc := func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
@@ -899,13 +827,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
-				if req.Source == resourcepb.ListRequest_HISTORY || req.Source == resourcepb.ListRequest_TRASH {
-					// For history lists, we need to use the current RV in the continue token
-					// to ensure consistent pagination. The order depends on VersionMatch:
-					// - NotOlderThan: ascending order (oldest to newest)
-					// - Unset: descending order (newest to oldest)
-					t = iter.ContinueTokenWithCurrentRV()
-				}
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
@@ -913,7 +834,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}
 		}
 		return iter.Error()
-	})
+	}
+
+	var rv int64
+	switch req.Source {
+	case resourcepb.ListRequest_STORE:
+		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
+	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
+		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
+	}
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -990,15 +922,48 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
+	// Determine a safe starting resource-version for the watch.
+	// When the client requests SendInitialEvents we will use the resource-version
+	// of the last object returned from the initial list (handled below).
+	// When the client supplies an explicit `since` we honour that.
+	// In the remaining case (SendInitialEvents == false && since == 0) we need
+	// a high-water-mark representing the current state of storage so that we
+	// donʼt replay events that happened before the watch was established. Using
+	// `mostRecentRV` – which is updated asynchronously by the broadcaster – is
+	// subject to races because the broadcaster may not yet have observed the
+	// latest committed writes. Instead we ask the backend directly for the
+	// current resource-version.
+	var mostRecentRV int64
 	if !req.SendInitialEvents && req.Since == 0 {
-		// This is a temporary hack only relevant for tests to ensure that the first events are sent.
-		// This is required because the SQL backend polls the database every 100ms.
-		// TODO: Implement a getLatestResourceVersion method in the backend.
-		time.Sleep(10 * time.Millisecond)
+		// We only need the current RV. A cheap way to obtain it is to issue a
+		// List with a very small limit and read the listRV returned by the
+		// iterator. The callback is a no-op so we avoid materialising any
+		// items.
+		listReq := &resourcepb.ListRequest{
+			Options: req.Options,
+			// This has right now no effect, as the list request only uses the limit if it lists from history or trash.
+			// It might be worth adding it in a subsequent PR. We only list once during setup of the watch, so it's
+			// fine for now.
+			Limit: 1,
+		}
+
+		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
+		if err != nil {
+			// Fallback to the broadcasterʼs view if the backend lookup fails.
+			// This preserves previous behaviour while still eliminating the
+			// common race in the majority of cases.
+			s.log.Warn("watch: failed to fetch current RV from backend, falling back to broadcaster", "err", err)
+			mostRecentRV = s.mostRecentRV.Load()
+		} else {
+			mostRecentRV = rv
+		}
+	} else {
+		// For all other code-paths we either already have an explicit RV or we
+		// will derive it from the initial list below.
+		mostRecentRV = s.mostRecentRV.Load()
 	}
 
-	mostRecentRV := s.mostRecentRV.Load() // get the latest resource version
-	var initialEventsRV int64             // resource version coming from the initial events
+	var initialEventsRV int64 // resource version coming from the initial events
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err = s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -1109,13 +1074,6 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 		return nil, fmt.Errorf("search index not configured")
 	}
 
-	if s.shardingEnabled {
-		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
-		if client != nil {
-			return client.Client.Search(userutils.InjectOrgID(ctx, "1"), req)
-		}
-	}
-
 	return s.search.Search(ctx, req)
 }
 
@@ -1123,13 +1081,6 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
-	}
-
-	if s.shardingEnabled {
-		client := s.getClientToDistributeRequest(req.Namespace)
-		if client != nil {
-			return client.Client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
-		}
 	}
 
 	if s.search == nil {
