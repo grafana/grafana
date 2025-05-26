@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"dagger.io/dagger"
@@ -99,6 +100,15 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true").
 			WithExec([]string{"apt-get", "update"}).
 			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
+	}
+
+	// We add all GF_ environment variables to allow for overriding Grafana configuration.
+	// It is unlikely the runner has any such otherwise.
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, "GF_") {
+			parts := strings.SplitN(env, "=", 2)
+			container = container.WithEnvVariable(parts[0], parts[1])
+		}
 	}
 
 	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
