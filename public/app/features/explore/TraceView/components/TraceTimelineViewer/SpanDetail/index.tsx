@@ -26,7 +26,7 @@ import {
   TimeRange,
   TraceKeyValuePair,
   TraceLog,
-  PluginExtensionTraceViewResourceAttributesContext,
+  PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
@@ -53,7 +53,7 @@ import SpanFlameGraph from './SpanFlameGraph';
 
 const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
   // Stable context for useMemo inside usePluginLinks
-  const context: PluginExtensionTraceViewResourceAttributesContext = useMemo(() => {
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
       if (acc[tag.key]) {
         acc[tag.key].push(tag.value);
