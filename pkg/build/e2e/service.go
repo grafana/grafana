@@ -28,6 +28,7 @@ type GrafanaServiceOpts struct {
 	YarnCache            *dagger.CacheVolume
 	License              *dagger.File
 	InstallImageRenderer bool
+	HostPorts            []dagger.PortForward
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -88,7 +89,8 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithEnvVariable("GF_APP_MODE", "development").
 		WithEnvVariable("GF_SERVER_HTTP_PORT", "3001").
 		WithEnvVariable("GF_SERVER_ROUTER_LOGGING", "1").
-		WithExposedPort(3001)
+		WithExposedPort(3001).
+		WithServiceBinding("host", d.Host().Service(opts.HostPorts))
 
 	var licenseArg string
 	if opts.License != nil {
