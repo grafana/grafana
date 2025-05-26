@@ -226,6 +226,38 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
+func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "item",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	obj.CheckStatus.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{
+			ItemID: "item",
+			StepID: "step",
+		},
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{nil},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
+	assert.Empty(t, obj.CheckStatus.Report.Failures)
+}
+
 func TestProcessCheckRetry_Success(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{
@@ -288,6 +320,10 @@ type mockCheck struct {
 
 func (m *mockCheck) ID() string {
 	return "mock"
+}
+
+func (m *mockCheck) Name() string {
+	return "Mock"
 }
 
 func (m *mockCheck) Items(ctx context.Context) ([]any, error) {

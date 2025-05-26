@@ -80,6 +80,7 @@ const (
 	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
 	provisioningConcurrencyLimit         = 10
+	listAllDashboardsLimit               = 100000
 )
 
 type DashboardServiceImpl struct {
@@ -1628,18 +1629,6 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	return hits, nil
 }
 
-func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return dr.listDashboardsThroughK8s(ctx, requester.GetOrgID())
-	}
-
-	return dr.dashboardStore.GetAllDashboards(ctx)
-}
-
 func (dr *DashboardServiceImpl) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.listDashboardsThroughK8s(ctx, orgID)
@@ -1661,55 +1650,44 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
 	hitList := make([]*model.Hit, 0)
-	hits := make(map[string]*model.Hit)
 
 	for _, item := range res {
-		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
-		hit, exists := hits[key]
-		if !exists {
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-			hit = &model.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				OrgID:       item.OrgID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
-				Type:        getHitType(item),
-				FolderID:    item.FolderID, // nolint:staticcheck
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			// when searching through unified storage, the dashboard will come as one
-			// item, when searching through legacy, the dashboard will come multiple times
-			// per tag. So we need to add the array here for unified, and the term below for legacy.
-			if item.Tags != nil {
-				hit.Tags = item.Tags
-			}
-
-			// nolint:staticcheck
-			if item.FolderID > 0 || item.FolderUID != "" {
-				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			hitList = append(hitList, hit)
-			hits[key] = hit
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		hit := &model.Hit{
+			ID:          item.ID,
+			UID:         item.UID,
+			OrgID:       item.OrgID,
+			Title:       item.Title,
+			URI:         "db/" + item.Slug,
+			URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
+			Type:        getHitType(item),
+			FolderID:    item.FolderID, // nolint:staticcheck
+			FolderUID:   item.FolderUID,
+			FolderTitle: item.FolderTitle,
+			Tags:        []string{},
 		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
+
+		if item.Tags != nil {
+			hit.Tags = item.Tags
 		}
+
+		// nolint:staticcheck
+		if item.FolderID > 0 || item.FolderUID != "" {
+			hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
+		}
+
+		if query.Sort.MetaName != "" {
+			hit.SortMeta = item.SortMeta
+			hit.SortMetaName = query.Sort.MetaName
+		}
+
 		if item.Deleted != nil {
 			deletedDate := (*item.Deleted).Add(daysInTrash)
 			hit.IsDeleted = true
 			hit.PermanentlyDeleteDate = &deletedDate
 		}
+
+		hitList = append(hitList, hit)
 	}
 	return hitList
 }
@@ -1935,29 +1913,40 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 }
 
 func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
-	out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	} else if out == nil {
-		return nil, dashboards.ErrDashboardNotFound
-	}
+	dashes := make([]*dashboards.Dashboard, 0)
 
-	// get users ahead of time to do just one db call, rather than 2 per item in the list
-	users, err := dr.getUsersForList(ctx, out.Items, orgID)
-	if err != nil {
-		return nil, err
-	}
+	for continueToken := ""; true; {
+		out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
+			Limit:    listAllDashboardsLimit,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		} else if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
+		}
 
-	dashboards := make([]*dashboards.Dashboard, 0)
-	for _, item := range out.Items {
-		dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
+		// get users ahead of time to do just one db call, rather than 2 per item in the list
+		users, err := dr.getUsersForList(ctx, out.Items, orgID)
 		if err != nil {
 			return nil, err
 		}
-		dashboards = append(dashboards, dash)
+
+		for _, item := range out.Items {
+			dash, err := dr.unstructuredToLegacyDashboardWithUsers(&item, orgID, users)
+			if err != nil {
+				return nil, err
+			}
+			dashes = append(dashes, dash)
+		}
+
+		continueToken = out.GetContinue()
+		if continueToken == "" {
+			break
+		}
 	}
 
-	return dashboards, nil
+	return dashes, nil
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0.SearchResults, error) {
