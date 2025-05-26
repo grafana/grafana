@@ -254,7 +254,6 @@ function collectEditableElementChildren(
       return;
     }
 
-
     if (child instanceof DashboardGridItem) {
       // DashboardGridItem is a special case as it can contain repeated panels
       // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
