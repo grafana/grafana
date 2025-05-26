@@ -96,7 +96,9 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	}
 
 	if opts.InstallImageRenderer {
-		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true")
+		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true").
+			WithExec([]string{"apt-get", "update"}).
+			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
 	}
 
 	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
