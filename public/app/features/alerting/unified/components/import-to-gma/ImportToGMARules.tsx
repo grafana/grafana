@@ -3,6 +3,7 @@ import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Box,
   Button,
@@ -87,10 +88,32 @@ const ImportToGMARules = () => {
     'importSource',
   ]);
   const [showConfirmModal, setShowConfirmModal] = useToggle(false);
+  const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
   const { t } = useTranslate();
   const onSubmit = async () => {
     setShowConfirmModal(true);
   };
+  const importSourceOptions: Array<{ label: string; description: string; value: 'datasource' | 'yaml' }> = [
+    {
+      label: t('alerting.import-to-gma.source.datasource', 'Existing data source-managed rules'),
+      description: t(
+        'alerting.import-to-gma.source.datasource-description',
+        'Import rules from existing data sources'
+      ),
+      value: 'datasource',
+    },
+  ];
+
+  if (isImportYamlEnabled) {
+    importSourceOptions.push({
+      label: t('alerting.import-to-gma.source.yaml', 'Prometheus YAML file'),
+      description: t(
+        'alerting.import-to-gma.source.yaml-description',
+        'Import rules from a Prometheus YAML file.'
+      ),
+      value: 'yaml',
+    });
+  }
 
   return (
     <AlertingPageWrapper
@@ -114,24 +137,7 @@ const ImportToGMARules = () => {
                     <RadioButtonList
                       {...field}
                       onChange={(value) => setValue('importSource', value)}
-                      options={[
-                        {
-                          label: t('alerting.import-to-gma.source.datasource', 'Existing data source-managed rules'),
-                          description: t(
-                            'alerting.import-to-gma.source.datasource-description',
-                            'Import rules from existing data sources'
-                          ),
-                          value: 'datasource',
-                        },
-                        {
-                          label: t('alerting.import-to-gma.source.yaml', 'Prometheus YAML file'),
-                          description: t(
-                            'alerting.import-to-gma.source.yaml-description',
-                            'Import rules from a Prometheus YAML file.'
-                          ),
-                          value: 'yaml',
-                        },
-                      ]}
+                      options={importSourceOptions}
                     />
                   )}
                   control={control}
@@ -141,7 +147,7 @@ const ImportToGMARules = () => {
 
               {importSource === 'datasource' && <DataSourceField />}
 
-              {importSource === 'yaml' && (
+              {isImportYamlEnabled && importSource === 'yaml' && (
                 <>
                   <YamlFileUpload />
                   <YamlTargetDataSourceField />
