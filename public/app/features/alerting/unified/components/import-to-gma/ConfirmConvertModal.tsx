@@ -330,8 +330,15 @@ export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultName
 
   return data;
 }
-
-function filterRulerRulesConfig(
+/**
+ * Filter the ruler rules config to be imported. It filters the rules by namespace and group name.
+ * It also filters out the rules that have the '__grafana_origin' label.
+ * @param rulerRulesConfig - The ruler rules config to be imported
+ * @param namespace - The namespace to filter the rules by
+ * @param groupName - The group name to filter the rules by
+ * @returns The filtered ruler rules config and if some rules are skipped
+ */
+export function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
@@ -344,26 +351,29 @@ function filterRulerRulesConfig(
       return;
     }
 
-    const filteredGroups = groups.filter((group) => {
-      if (groupName && group.name !== groupName) {
-        return false;
-      }
-
-      // Filter out rules that have the GRAFANA_ORIGIN_LABEL
-      const filteredRules = group.rules.filter((rule) => {
-        const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
-        if (hasGrafanaOriginLabel) {
-          someRulesAreSkipped = true;
+    const filteredGroups = groups
+      .filter((group) => {
+        if (groupName && group.name !== groupName) {
           return false;
         }
         return true;
-      });
+      })
+      .map((group) => {
+        const filteredRules = group.rules.filter((rule) => {
+          const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
+          if (hasGrafanaOriginLabel) {
+            someRulesAreSkipped = true;
+            return false;
+          }
+          return true;
+        });
 
-      return {
-        ...group,
-        rules: filteredRules,
-      };
-    });
+        return {
+          ...group,
+          rules: filteredRules,
+        };
+      })
+      .filter((group) => group.rules.length > 0);
 
     if (filteredGroups.length > 0) {
       filteredConfig[ns] = filteredGroups;
