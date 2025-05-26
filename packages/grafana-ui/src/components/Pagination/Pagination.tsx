@@ -102,7 +102,7 @@ export const Pagination = ({
   const nextPageLabel = t('grafana-ui.pagination.next-page', 'next page');
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div className={cx(styles.container, className)} role="navigation">
       <ol>
         <li className={styles.item}>
           <Button
