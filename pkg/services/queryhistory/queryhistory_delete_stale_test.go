@@ -14,6 +14,9 @@ func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	t.Parallel()
+
 	testScenarioWithQueryInQueryHistory(t, "Stale query history can be deleted",
 		func(t *testing.T, sc scenarioContext) {
 			olderThan := sc.service.now().Unix() + 60

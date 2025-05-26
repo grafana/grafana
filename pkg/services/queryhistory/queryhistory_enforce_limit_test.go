@@ -11,6 +11,9 @@ func TestIntegrationEnforceRowLimitInQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	t.Parallel()
+
 	testScenarioWithQueryInQueryHistory(t, "Enforce limit for query_history",
 		func(t *testing.T, sc scenarioContext) {
 			limit := 0

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -53,12 +54,17 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
+		t.Parallel()
+
 		ctx := web.Context{Req: &http.Request{
 			Header: http.Header{},
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+
+		sqlStore := sqlstore.NewTestStore(t)
+		cfg := setting.NewCfg()
+
 		service := QueryHistoryService{
 			Cfg:           setting.NewCfg(),
 			store:         sqlStore,

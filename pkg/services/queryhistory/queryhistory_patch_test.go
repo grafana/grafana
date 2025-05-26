@@ -12,6 +12,9 @@ func TestIntegrationPatchQueryCommentInQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
+	t.Parallel()
+
 	testScenarioWithQueryInQueryHistory(t, "When user tries to patch comment of query in query history that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.patchCommentHandler(sc.reqContext)
