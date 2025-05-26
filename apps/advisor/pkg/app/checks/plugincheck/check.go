@@ -46,7 +46,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "Plugin"
+	return "plugin"
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -149,7 +149,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
-					Message: "Admin",
+					Message: "View plugin",
 					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},
