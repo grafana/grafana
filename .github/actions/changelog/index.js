@@ -1,6 +1,7 @@
-import { appendFileSync, writeFileSync } from 'fs';
-import { exec as execCallback } from 'node:child_process';
-import { promisify } from 'node:util';
+import {appendFileSync, writeFileSync} from 'fs';
+import {exec as execCallback} from 'node:child_process';
+import {promisify} from 'node:util';
+import {findPreviousVersion, semverParse} from "./semver.js";
 
 //
 // Github Action core utils: logging (notice + debug log levels), must escape
@@ -9,35 +10,6 @@ import { promisify } from 'node:util';
 const escapeData = (s) => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
 const LOG = (msg) => console.log(`::notice::${escapeData(msg)}`);
 
-//
-// Semver utils: parse, compare, sort etc (using official regexp)
-// https://regex101.com/r/Ly7O1x/3/
-//
-const semverRegExp =
-  /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
-
-const semverParse = (tag) => {
-  const m = tag.match(semverRegExp);
-  if (!m) {
-    return;
-  }
-  const [_, major, minor, patch, prerelease] = m;
-  return [+major, +minor, +patch, prerelease, tag];
-};
-
-// semverCompare takes two parsed semver tags and comparest them more or less
-// according to the semver specs
-const semverCompare = (a, b) => {
-  for (let i = 0; i < 3; i++) {
-    if (a[i] !== b[i]) {
-      return a[i] < b[i] ? 1 : -1;
-    }
-  }
-  if (a[3] !== b[3]) {
-    return a[3] < b[3] ? 1 : -1;
-  }
-  return 0;
-};
 
 // Using `git tag -l` output find the tag (version) that goes semantically
 // right before the given version. This might not work correctly with some
@@ -45,29 +17,32 @@ const semverCompare = (a, b) => {
 // into this action explicitly to avoid this step.
 const getPreviousVersion = async (version) => {
   const exec = promisify(execCallback);
-  const { stdout } = await exec('git tag -l');
-  const prev = stdout
+  const {stdout} = await exec('git for-each-ref --sort=-creatordate --format \'%(refname:short)\' refs/tags');
+
+  const parsedTags = stdout
     .split('\n')
     .map(semverParse)
-    .filter((tag) => tag)
-    .sort(semverCompare)
-    .find((tag) => semverCompare(tag, semverParse(version)) > 0);
+    .filter(Boolean);
+
+  const parsedVersion = semverParse(version);
+  const prev = findPreviousVersion(parsedTags, parsedVersion);
   if (!prev) {
     throw `Could not find previous git tag for ${version}`;
   }
-  return prev[4];
+  return prev[5];
 };
+
 
 // A helper for Github GraphQL API endpoint
 const graphql = async (ghtoken, query, variables) => {
-  const { env } = process;
+  const {env} = process;
   const results = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${ghtoken}`,
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({query, variables}),
   });
 
   const res = await results.json();
@@ -100,7 +75,7 @@ const getCommitishDate = async (name, owner, target) => {
         }
       }
     `,
-    { name, owner, target }
+    {name, owner, target}
   );
   return result.repository.object.committedDate;
 };
@@ -160,7 +135,7 @@ const getHistory = async (name, owner, from, to) => {
 
   let cursor;
   let nodes = [];
-  for (;;) {
+  for (; ;) {
     const result = await graphql(ghtoken, query, {
       name,
       owner,
@@ -170,7 +145,7 @@ const getHistory = async (name, owner, from, to) => {
     });
     LOG(`GraphQL: ${JSON.stringify(result)}`);
     nodes = [...nodes, ...result.repository.ref.compare.commits.nodes];
-    const { hasNextPage, endCursor } = result.repository.ref.compare.commits.pageInfo;
+    const {hasNextPage, endCursor} = result.repository.ref.compare.commits.pageInfo;
     if (!hasNextPage) {
       break;
     }
@@ -186,7 +161,7 @@ const getHistory = async (name, owner, from, to) => {
 // PR grouping relies on Github labels only, not on the PR contents.
 const getChangeLogItems = async (name, owner, from, to) => {
   // check if a node contains a certain label
-  const hasLabel = ({ labels }, label) => labels.nodes.some(({ name }) => name === label);
+  const hasLabel = ({labels}, label) => labels.nodes.some(({name}) => name === label);
   // get all the PRs between the two "commitish" items
   const history = await getHistory(name, owner, from, to);
 
@@ -197,17 +172,17 @@ const getChangeLogItems = async (name, owner, from, to) => {
       return [];
     }
     const item = changes[0];
-    const { number, url, labels } = item;
+    const {number, url, labels} = item;
     const title = item.title.replace(/^\[[^\]]+\]:?\s*/, '');
     // for changelog PRs try to find a suitable category.
     // Note that we can not detect "deprecation notices" like that
     // as there is no suitable label yet.
-    const isBug = /fix/i.test(title) || hasLabel({ labels }, 'type/bug');
-    const isBreaking = hasLabel({ labels }, 'breaking change');
+    const isBug = /fix/i.test(title) || hasLabel({labels}, 'type/bug');
+    const isBreaking = hasLabel({labels}, 'breaking change');
     const isPlugin =
-      hasLabel({ labels }, 'area/grafana/ui') ||
-      hasLabel({ labels }, 'area/grafana/toolkit') ||
-      hasLabel({ labels }, 'area/grafana/runtime');
+      hasLabel({labels}, 'area/grafana/ui') ||
+      hasLabel({labels}, 'area/grafana/toolkit') ||
+      hasLabel({labels}, 'area/grafana/runtime');
     const author = item.commits.nodes[0].commit.author.user?.login;
     return {
       repo: name,
@@ -227,7 +202,7 @@ const getChangeLogItems = async (name, owner, from, to) => {
 // ======================================================
 
 LOG(`Changelog action started`);
-
+console.log(process.argv);
 const ghtoken = process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN;
 if (!ghtoken) {
   throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
@@ -286,15 +261,15 @@ const markdown = (changelog) => {
       : `### ${title}
 
 ${items
-  .map(
-    (item) =>
-      `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
-        item.repo === 'grafana-enterprise'
-          ? '(Enterprise)'
-          : `${pullRequestLink(item.number)}${item.author ? ', ' + userLink(item.author) : ''}`
-      }`
-  )
-  .join('\n')}
+        .map(
+          (item) =>
+            `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
+              item.repo === 'grafana-enterprise'
+                ? '(Enterprise)'
+                : `${pullRequestLink(item.number)}${item.author ? ', ' + userLink(item.author) : ''}`
+            }`
+        )
+        .join('\n')}
   `;
 
   // Render all present sections for the given changelog
