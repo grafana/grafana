@@ -194,7 +194,6 @@ export function useRuleGroupConsistencyCheck() {
         clearApiCheckInterval();
         const error = new Error('Timeout while waiting for rule group consistency');
         logError(error, { groupOrigin: groupIdentifier.groupOrigin });
-        console.error(error, { groupName: groupIdentifier.groupName });
         reject(error);
       }, CONSISTENCY_CHECK_TIMEOUT);
     });
