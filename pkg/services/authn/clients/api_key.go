@@ -207,7 +207,7 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 		return errAPIKeyOrgMismatch.Errorf("API does not belong in Organization")
 	}
 
-	// plain API keys are no loger supported so an error is returned if the api key doesn't belong to a service account
+	// plain API keys are no longer supported so an error is returned if the api key doesn't belong to a service account
 	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
 		return errAPIKeyInvalid.Errorf("API key does not belong to a service account")
 	}
