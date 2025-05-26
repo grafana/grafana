@@ -94,38 +94,45 @@ You can create a dynamic alert condition by operating on two queries with a [Mat
 - `$B` for per-service thresholds (from CSV data or another query).
 - `$A > $B` is the _Math_ expression that defines the alert condition.
 
-Grafana evaluates the _Math_ expression **per series**, but only if the label sets in `$A` and `$B` match exactly. That means each series in `$A` must have a corresponding series in `$B` with **identical label values**.
+Grafana evaluates the _Math_ expression **per series**, by joining series from `$A` and `$B` based on their shared labels before applying the expression.
 
-This alignment is required—Grafana joins the series by label set before applying the expression. Here’s an example of an arithmetic operation:
+Here’s an example of an arithmetic operation:
 
 {{< docs/shared lookup="alerts/math-example.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-In practice, you must align your threshold input with the label sets returned by your alert query. Each series in the query must have a corresponding **threshold series with identical labels and a threshold value**.
+In practice, you must align your threshold input with the label sets returned by your alert query.
 
 The following table illustrates how a per-service threshold is evaluated in the previous example:
 
-| $A: p95 latency query        | $B: threshold value            | $A\>$B        | Alert State |
-| :--------------------------- | :----------------------------- | :------------ | :---------- |
-| `{service="checkout-api"} 3` | `{service="checkout-api"} 1.5` | 3\>1.5\=**1** | Firing      |
-| `{service="auth-api"} 1`     | `{service="auth-api"} 1.5`     | 1\>1.5\=**0** | Normal      |
-| `{service="catalog-api"} 2`  | `{service="catalog-api"} 3`    | 2\>3\=**0**   | Normal      |
-| `{service="sync-work"} 3`    | `{service="sync-work"} 5`      | 3\>5\=**0**   | Normal      |
+| $A: p95 latency query        | $B: threshold value            | $C: $A\>$B                   | State      |
+| :--------------------------- | :----------------------------- | :--------------------------- | :--------- |
+| `{service="checkout-api"} 3` | `{service="checkout-api"} 1.5` | `{service="checkout-api"} 1` | **Firing** |
+| `{service="auth-api"} 1`     | `{service="auth-api"} 1.5`     | `{service="auth-api"} 0`     | **Normal** |
+| `{service="catalog-api"} 2`  | `{service="catalog-api"} 3`    | `{service="catalog-api"} 0`  | **Normal** |
+| `{service="sync-work"} 3`    | `{service="sync-work"} 5`      | `{service="sync-work"} 0`    | **Normal** |
 
 In this example:
 
 - `$A` comes from the `p95_api_latency` query.
 - `$B` is manually defined with a threshold value for each series in `$A`.
-- The alert condition compares `$A` to `$B` using a _Math_ relational operator (e.g., `>`, `<`, `>=`, `<=`, `==`, `!=`).
+- The alert condition compares `$A>$B` using a _Math_ relational operator (e.g., `>`, `<`, `>=`, `<=`, `==`, `!=`) that joins series by matching labels.
+- Grafana evaluates the alert condition and sets the firing state where the condition is true.
 
-As long as both queries return series with matching label sets, Grafana evaluates the expression and triggers alerts where the condition is true.
+The _Math_ expression works as long as each series in `$A` can be matched with exactly one series in `$B`. They must align in a way that produces a one-to-one match between series in `$A` and `$B`.
 
 {{% admonition type="caution" %}}
 
-If `$B` is missing a series (dimension) from `$A`, or vice versa, the _Math_ expression evaluates only matching series. It cannot evaluate the missing series and display a warning message like:
+If a series in one query doesn’t match any series in the other, it’s excluded from the result and a warning message is displayed:
 
-**1 items dropped from union(s): ["$A > $B": ($B: {service=payment-api})]**
+_1 items **dropped from union(s)**: ["$A > $B": ($B: {service=payment-api})]_
 
 {{% /admonition %}}
+
+**Labels in both series don’t need to be identical**. If labels are a subset of the other, they can join. For example:
+
+- `$A` returns series `{host="web01", job="event"}` 30 and `{host="web02", job="event"}` 20.
+- `$B` returns series `{host="web01"}` 10 and `{host="web02"}` 0.
+- `$A` + `$B` returns `{host="web01", job="event"}` 40 and `{host="web02", job="event"}` 20.
 
 ## Try it with TestData
 
@@ -205,4 +212,18 @@ By aligning series from two queries, you can apply a dynamic threshold—one val
 While this example uses static CSV content to define thresholds, the same technique works in other scenarios:
 
 - **Dynamic thresholds from queries or recording rules**: Fetch threshold values from a real-time query, or from [custom recording rules](ref:recording-rules).
-- **Combine multiple conditions**: Build more advanced threshold logic by combining expressions—for example: `latency > 3s && error_rate < 1%`.
+- **Combine multiple conditions**: Build more advanced threshold logic by combining multiple conditions—such as latency, error rate, or traffic volume.
+
+For example, you can define a PromQL expression that sets a latency threshold which adjusts based on traffic—allowing higher response times during periods of high-load.
+
+```
+(
+  // Fires when p95 latency > 2s during usual traffic (≤ 1000 req/s)
+  service:latency:p95 > 2 and service:request_rate:rate1m <= 1000
+)
+or
+(
+  // Fires when p95 latency > 4s during high traffic (> 1000 req/s)
+  service:latency:p95 > 4 and service:request_rate:rate1m > 1000
+)
+```
