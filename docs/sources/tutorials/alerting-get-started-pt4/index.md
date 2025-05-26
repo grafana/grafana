@@ -2,7 +2,7 @@
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
-description: Learn how to use templates to create customized and concise notifications — Part 4
+description: Learn how to use templates to create customized and concise notifications.
 labels:
   products:
     - enterprise
@@ -10,11 +10,11 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Part 4
+title: Get started with Grafana Alerting - Templating
 weight: 60
 killercoda:
-  title: Get started with Grafana Alerting - Part 4
-  description: Learn how to use templates to create customized and concise notifications — Part 4.
+  title: Get started with Grafana Alerting - Templating
+  description: Learn how to use templates to create customized and concise notifications.
   backend:
     imageid: ubuntu
 refs:
@@ -72,9 +72,9 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 4
+# Get started with Grafana Alerting - Templating
 
-The Get started with Grafana Alerting tutorial Part 4 is a continuation of [Get started with Grafana Alerting tutorial Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/).
+This tutorial is a continuation of the [Get started with Grafana Alerting - Grouping notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) tutorial.
 
 In this tutorial, you will learn:
 
@@ -109,7 +109,7 @@ There are different ways you can follow along with this tutorial.
 
 - **Interactive learning environment**
 
-  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 4](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt4/). It's a fully configured environment with all the dependencies already installed.
+  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Templating](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt4/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
 
@@ -246,7 +246,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 
 1. **Alert condition** section:
 
-   - Keep Last as the value for the reducer function (`WHEN`), and `75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
+   - Keep Last as the value for the reducer function (`WHEN`), and `IS ABOVE 75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
    - Click **Preview alert rule condition** to run the queries.
 
    It should return 3 series in Firing state, and 1 in Normal state.
@@ -260,9 +260,11 @@ Now that we've introduced how templating works, let’s move on to the next step
      Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
 
 1. **Set evaluation behaviour** section:
-   - In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `High usage`.
+   - In the **Evaluation group and interval**,  enter a name. For example: `High usage`.
    - Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
    - Set the **pending period** to 0s (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration.).
+   - Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
+   
 1. **Configure notifications** section:
 
    Select who should receive a notification when an alert rule fires.
