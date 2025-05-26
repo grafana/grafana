@@ -1,14 +1,16 @@
 import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
+import { isResourceList } from 'app/features/apiserver/guards';
+import { DashboardDataDTO, PermissionLevelString } from 'app/types';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
-import { replaceCurrentFolderQuery } from './utils';
+import { replaceCurrentFolderQuery, resourceToSearchResult } from './utils';
 
 interface APIQuery {
   query?: string;
@@ -146,7 +148,39 @@ export class SQLSearcher implements GrafanaSearcher {
   }
 
   async doAPIQuery(query: APIQuery): Promise<QueryResponse> {
-    const rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
+    let rsp: DashboardSearchHit[];
+
+    if (query.deleted) {
+      // Make call to k8s API for deleted dashboards
+      const deletedUri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
+      const deletedResponse = await backendSrv.get(deletedUri);
+
+      if (isResourceList<DashboardDataDTO>(deletedResponse)) {
+        const searchHits = resourceToSearchResult(deletedResponse);
+        // Transform SearchHit[] to DashboardSearchHit[]
+        rsp = searchHits.map((hit) => {
+          const dashboardHit: DashboardSearchHit = {
+            type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+            title: hit.title,
+            uid: hit.name, // k8s name is the uid
+            url: hit.url,
+            tags: hit.tags || [],
+            isDeleted: true, // All results from trash are deleted
+            sortMeta: 0, // Default value for deleted items
+          };
+
+          if (hit.folder && hit.folder !== 'general') {
+            dashboardHit.folderUid = hit.folder;
+          }
+
+          return dashboardHit;
+        });
+      } else {
+        rsp = [];
+      }
+    } else {
+      rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
+    }
 
     // Field values (columnar)
     const kind: string[] = [];
