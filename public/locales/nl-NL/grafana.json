@@ -3415,6 +3415,13 @@
           "values": "Waarden gescheiden door komma",
           "values-placeholder": "1, 10, mijnsleutel : mijnwaarde, mijnwaarde, escaped,waarde"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Type",
+          "type-placeholder": ""
+        },
         "description": "Beschrijving",
         "description-placeholder": "Omschrijving",
         "label": "Label",
@@ -3433,8 +3440,8 @@
           "category": "Selectiemogelijkheden",
           "custom-all-value": "Alle aangepaste waarde",
           "custom-all-value-description": "Een wildcard regex of een andere waarde om Alles weer te geven",
-          "include-all": "Optie Alles opnemen",
-          "include-all-description": "Schakelt een optie in om alle waarden op te nemen",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Meerdere waarden"
         },
         "type-category": "Opties voor {{type}}"
