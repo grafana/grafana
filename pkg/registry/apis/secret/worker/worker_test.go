@@ -260,7 +260,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 
-		sut.worker.receiveAndProcessMessages(ctx)
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
 
 		newValue := "v2"
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(newValue)
@@ -289,7 +289,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 
-		sut.worker.receiveAndProcessMessages(ctx)
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
 
 		// Queue a delete secure value operation
 		_, err = sut.deleteSv(sv.Namespace, sv.Name)
