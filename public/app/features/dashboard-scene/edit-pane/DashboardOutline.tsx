@@ -25,8 +25,8 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree">
-      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} />
+    <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+      <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} />
     </Box>
   );
 }
@@ -34,9 +34,10 @@ export function DashboardOutline({ editPane }: Props) {
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
+  depth: number;
 }
 
-function DashboardOutlineNode({ sceneObject, editPane }: DashboardOutlineNodeProps) {
+function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
   const { key } = sceneObject.useState();
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -86,10 +87,12 @@ function DashboardOutlineNode({ sceneObject, editPane }: DashboardOutlineNodePro
     <li
       role="treeitem"
       aria-selected={isSelected}
-      className={cx(styles.container, { [styles.containerSelected]: isSelected })}
+      className={styles.container}
       onClick={onNodeClicked}
+      style={{ '--depth': depth } as React.CSSProperties}
     >
-      <div className={styles.buttons}>
+      <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
+        <div className={styles.indentation}></div>
         {elementInfo.isContainer && (
           <button
             className={styles.angleButton}
@@ -133,6 +136,7 @@ function DashboardOutlineNode({ sceneObject, editPane }: DashboardOutlineNodePro
                 key={child.sceneObject.state.key}
                 sceneObject={child.sceneObject}
                 editPane={editPane}
+                depth={depth + 1}
               />
             ))
           ) : (
@@ -151,33 +155,34 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 0.5, 0, 0.5),
-      marginBottom: theme.spacing(0.5),
       flexGrow: 1,
       flexDirection: 'column',
       borderRadius: theme.shape.radius.default,
-      position: 'relative',
       color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        outline: `1px dashed ${theme.colors.border.strong}`,
-        outlineOffset: '0px',
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
-      },
     }),
     containerSelected: css({
       outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
       color: theme.colors.text.primary,
-
-      '&:hover': {
-        outline: `1px dashed ${theme.colors.primary.border}`,
-        color: theme.colors.text.primary,
-      },
     }),
-    buttons: css({
+    row: css({
       display: 'flex',
       gap: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+
+      '&:hover': {
+        color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+      },
+    }),
+    rowSelected: css({
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border} !important`,
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+    }),
+    indentation: css({
+      marginLeft: `calc(var(--depth) * ${theme.spacing(3)})`,
     }),
     angleButton: css({
       boxShadow: 'none',
@@ -228,9 +233,19 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      marginLeft: `calc(${theme.spacing(1)} - 1px)`,
-      paddingLeft: theme.spacing(1.5),
+      gap: theme.spacing(0.5),
+
+      // tree line
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        width: '1px',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+        background: theme.colors.border.weak,
+        marginLeft: `calc(11px + ${theme.spacing(3)} * var(--depth))`,
+      },
     }),
   };
 }
