@@ -10,7 +10,14 @@ import {
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription, EditorStack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
+import {
+  ConnectionLimits,
+  Divider,
+  MaxLifetimeField,
+  MaxOpenConnectionsField,
+  TLSSecretsConfig,
+  useMigrateDatabaseFields,
+} from '@grafana/sql';
 import {
   Input,
   Select,
@@ -74,6 +81,14 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     return (value: SelectableValue) => {
       updateDatasourcePluginJsonDataOption(props, property, value.value);
     };
+  };
+
+  const onMaxConnectionsChanged = (number?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'maxOpenConns', number);
+  };
+
+  const onMaxLifetimeChanged = (number?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'connMaxLifetime', number);
   };
 
   const onTimeScaleDBChanged = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -397,8 +412,18 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           </Field>
         </ConfigSubSection>
 
-        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
-
+        {config.featureToggles.postgresDSUsePGX ? (
+          <ConfigSubSection title="Connection limits">
+            <MaxOpenConnectionsField
+              labelWidth={WIDTH_LONG}
+              jsonData={jsonData}
+              onMaxConnectionsChanged={onMaxConnectionsChanged}
+            />
+            <MaxLifetimeField labelWidth={WIDTH_LONG} jsonData={jsonData} onMaxLifetimeChanged={onMaxLifetimeChanged} />
+          </ConfigSubSection>
+        ) : (
+          <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
+        )}
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}

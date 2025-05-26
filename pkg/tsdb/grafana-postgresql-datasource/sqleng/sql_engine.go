@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -88,6 +89,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
+	pool                   *pgxpool.Pool
 }
 
 type QueryJson struct {
@@ -489,6 +491,7 @@ type dataQueryModel struct {
 	Interval          time.Duration
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
+	columnTypesPGX    []string
 	timeIndex         int
 	timeEndIndex      int
 	metricIndex       int
