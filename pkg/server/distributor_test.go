@@ -48,6 +48,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	dbType := sqlutil.GetTestDBType()
 	db, err := sqlutil.GetTestDB(dbType)
+	fmt.Println("testdb: ", db.ConnStr)
 	require.NoError(t, err)
 
 	testNamespaces := make([]string, 0, namespaceCount)
