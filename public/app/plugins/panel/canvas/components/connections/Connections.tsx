@@ -9,12 +9,12 @@ import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementMan
 
 import { ConnectionState } from '../../types';
 import {
-  calcRotationXY,
   calculateAngle,
   // calculateCoordinates,
   calculateCoordinates2,
   getConnections,
   getElementTransformAndDimensions,
+  getNormalizedRotatedOffset,
   getParentBoundingClientRect,
   isConnectionSource,
   isConnectionTarget,
@@ -249,28 +249,18 @@ export class Connections {
     //
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-        // Get source element transform and dimensions (including rotation)
-        const sourceRect = getElementTransformAndDimensions(this.connectionSource.div);
-
-        // Get parent rect for coordinate calculations
-        const parentRect = this.scene.viewerDiv?.getBoundingClientRect();
-
-        if (!parentRect) {
-          return;
-        }
-
-        const { x: sourceX, y: sourceY } = calcRotationXY(sourceRect, connectionLineX1, connectionLineY1);
+        const { x: sourceX, y: sourceY } = getNormalizedRotatedOffset(
+          this.connectionSource.div,
+          connectionLineX1,
+          connectionLineY1
+        );
 
         let targetX;
         let targetY;
         let targetName;
 
         if (this.connectionTarget && this.connectionTarget.div) {
-          // Get target element transform and dimensions (including rotation)
-          const targetRect = getElementTransformAndDimensions(this.connectionTarget.div);
-          const { x: targetXRaw, y: targetYRaw } = calcRotationXY(targetRect, x, y);
-          targetX = targetXRaw;
-          targetY = targetYRaw;
+          ({ x: targetX, y: targetY } = getNormalizedRotatedOffset(this.connectionTarget.div, x, y));
           targetName = this.connectionTarget.options.name;
         } else {
           // if there is no target (open connection)

@@ -15,7 +15,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 
-import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray, Rect } from './types';
+import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -207,45 +207,13 @@ export const calculateCoordinates = (
 };
 
 export const calculateCoordinates2 = (source: ElementState, target: ElementState, info: CanvasConnection) => {
-  const sourceDiv = source.div;
-  const { left, top, width, height, rotation } = getElementTransformAndDimensions(sourceDiv!);
-  const sourceHorizontalCenter = left + width / 2;
-  const sourceVerticalCenter = top + height / 2;
-
-  // Calculate offset from center before rotation
-  const offsetX = (info.source.x * width) / 2;
-  const offsetY = -(info.source.y * height) / 2;
-
-  // Convert rotation to radians
-  const rad = (rotation * Math.PI) / 180;
-  // Apply rotation to offset
-  const rotatedOffsetX = offsetX * Math.cos(rad) - offsetY * Math.sin(rad);
-  const rotatedOffsetY = offsetX * Math.sin(rad) + offsetY * Math.cos(rad);
-
-  const x1 = sourceHorizontalCenter + rotatedOffsetX;
-  const y1 = sourceVerticalCenter + rotatedOffsetY;
+  const { x: x1, y: y1 } = getRotatedConnectionPoint(source.div!, info.source.x, info.source.y);
 
   let x2 = 0;
   let y2 = 0;
   const targetDiv = target.div;
   if (info.targetName && targetDiv) {
-    const { left, top, width, height, rotation } = getElementTransformAndDimensions(targetDiv);
-    const targetHorizontalCenter = left + width / 2;
-    const targetVerticalCenter = top + height / 2;
-
-    // Calculate offset from center before rotation
-    const targetOffsetX = (info.target.x * width) / 2;
-    const targetOffsetY = -(info.target.y * height) / 2;
-
-    // Convert rotation to radians
-    const targetRad = (rotation * Math.PI) / 180;
-
-    // Apply rotation to offset
-    const rotatedTargetOffsetX = targetOffsetX * Math.cos(targetRad) - targetOffsetY * Math.sin(targetRad);
-    const rotatedTargetOffsetY = targetOffsetX * Math.sin(targetRad) + targetOffsetY * Math.cos(targetRad);
-
-    x2 = targetHorizontalCenter + rotatedTargetOffsetX;
-    y2 = targetVerticalCenter + rotatedTargetOffsetY;
+    ({ x: x2, y: y2 } = getRotatedConnectionPoint(targetDiv, info.target.x, info.target.y));
   } else {
     x2 = info.target.x;
     y2 = info.target.y;
@@ -284,17 +252,18 @@ export const getElementTransformAndDimensions = (element: Element) => {
   return { left: x, top: y, width, height, x, y, rotation };
 };
 
-export const calcRotationXY = (rect: Rect, x1: number, y1: number) => {
+export const getNormalizedRotatedOffset = (div: HTMLDivElement, x: number, y: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
   // Calculate center of source element
-  const sourceVerticalCenter = rect.top + rect.height / 2;
-  const sourceHorizontalCenter = rect.left + rect.width / 2;
+  const centerY = top + height / 2;
+  const centerX = left + width / 2;
 
   // Calculate the offset from the center to the connection start point
-  let dx = x1 - sourceHorizontalCenter;
-  let dy = y1 - sourceVerticalCenter;
+  let dx = x - centerX;
+  let dy = y - centerY;
 
   // Adjust for rotation
-  const rotationRad = (rect.rotation || 0) * (Math.PI / 180);
+  const rotationRad = (rotation || 0) * (Math.PI / 180);
   const cos = Math.cos(-rotationRad);
   const sin = Math.sin(-rotationRad);
   // Rotate the delta by the negative of the element's rotation
@@ -302,8 +271,29 @@ export const calcRotationXY = (rect: Rect, x1: number, y1: number) => {
   const rotatedDy = dx * sin + dy * cos;
 
   // Convert to normalized coordinates
-  const x = rotatedDx / (rect.width / 2);
-  const y = -rotatedDy / (rect.height / 2);
+  const normalizedX = rotatedDx / (width / 2);
+  const normalizedY = -rotatedDy / (height / 2);
+
+  return { x: normalizedX, y: normalizedY };
+};
+
+export const getRotatedConnectionPoint = (div: HTMLDivElement, normalizedX: number, normalizedY: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+
+  // Calculate offset from center before rotation
+  const offsetX = (normalizedX * width) / 2;
+  const offsetY = -(normalizedY * height) / 2;
+
+  // Convert rotation to radians
+  const rad = (rotation * Math.PI) / 180;
+  // Apply rotation to offset
+  const rotatedOffsetX = offsetX * Math.cos(rad) - offsetY * Math.sin(rad);
+  const rotatedOffsetY = offsetX * Math.sin(rad) + offsetY * Math.cos(rad);
+
+  const x = centerX + rotatedOffsetX;
+  const y = centerY + rotatedOffsetY;
 
   return { x, y };
 };
