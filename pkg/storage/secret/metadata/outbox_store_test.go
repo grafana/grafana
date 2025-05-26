@@ -104,6 +104,43 @@ func TestOutboxStoreModel(t *testing.T) {
 	require.Empty(t, model.ReceiveN(1))
 }
 
+func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Append returns error when the queue already contains an operation for the secure value", func(t *testing.T) {
+		t.Parallel()
+
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+
+		ctx := context.Background()
+
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
+
+		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID:       "1",
+			Type:            contracts.CreateSecretOutboxMessage,
+			Name:            "name1",
+			Namespace:       "ns1",
+			EncryptedSecret: secretv0alpha1.NewExposedSecureValue("v1"),
+			KeeperName:      nil,
+			ExternalID:      nil,
+		})
+		require.NoError(t, err)
+
+		_, err = outbox.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID:       "1",
+			Type:            contracts.UpdateSecretOutboxMessage,
+			Name:            "name1",
+			Namespace:       "ns1",
+			EncryptedSecret: secretv0alpha1.NewExposedSecureValue("v1"),
+			KeeperName:      nil,
+			ExternalID:      nil,
+		})
+
+		require.ErrorIs(t, err, contracts.ErrSecureValueOperationInProgress)
+	})
+}
+
 func TestOutboxStore(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 

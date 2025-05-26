@@ -97,14 +97,14 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxAppend, req)
 	if err != nil {
-		if unifiedsql.IsRowAlreadyExistsError(err) {
-			return messageID, contracts.ErrSecureValueOperationInProgress
-		}
 		return messageID, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
+		if unifiedsql.IsRowAlreadyExistsError(err) {
+			return messageID, contracts.ErrSecureValueOperationInProgress
+		}
 		return messageID, fmt.Errorf("inserting message into secure value outbox table: %w", err)
 	}
 
