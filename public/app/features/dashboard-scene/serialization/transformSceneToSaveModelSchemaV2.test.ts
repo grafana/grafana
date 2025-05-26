@@ -10,7 +10,6 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
-  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -45,7 +44,6 @@ import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -253,30 +251,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // itemHeight?: number,
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
-            }),
-            new SceneGridRow({
-              key: 'panel-4',
-              title: 'Test Row',
-              y: 10,
-              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-              children: [
-                new DashboardGridItem({
-                  y: 11,
-                  body: new VizPanel({
-                    key: 'panel-2',
-                    pluginId: 'graph',
-                    title: 'Test Panel 2',
-                    description: 'Test Description 2',
-                    fieldConfig: { defaults: {}, overrides: [] },
-                    pluginVersion: '7.0.0',
-                    $timeRange: new SceneTimeRange({
-                      timeZone: 'UTC',
-                      from: 'now-3h',
-                      to: 'now',
-                    }),
-                  }),
-                }),
-              ],
             }),
           ],
         }),
