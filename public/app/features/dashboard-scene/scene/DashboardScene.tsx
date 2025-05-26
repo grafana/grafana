@@ -496,13 +496,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      layout.addPanel(vizPanel);
-      return;
-    }
-
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
   }
@@ -634,23 +627,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return addNewRowTo(layout);
-    }
-
     return addNewRowTo(this.state.body);
-  }
-
-  public onCreateNewTab() {
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return addNewTabTo(layout);
-    }
-
-    return addNewTabTo(this.state.body);
   }
 
   public onCreateNewPanel(): VizPanel {
