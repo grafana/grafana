@@ -16,7 +16,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
@@ -42,15 +42,21 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
-  errorMessage: string;
+  errorMessage: React.ReactNode;
 }
 
-const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
-  range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
-};
+const DefaultErrorMessage = () => (
+  <Trans i18nKey="time-picker.range-content.default-error" values={{ now: 'now' }}>
+    Please enter a past date or {'"{{now}}"'}
+  </Trans>
+);
+
+const RangeErrorMessage = () => (
+  <Trans i18nKey="time-picker.range-content.range-error">"From" can't be after "To"</Trans>
+);
 
 export const TimeRangeContent = (props: Props) => {
+  const { t } = useTranslate();
   const {
     value,
     isFullscreen = false,
@@ -259,9 +265,9 @@ function valueToState(
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.default(),
+      errorMessage: rangeInvalid && !fromInvalid ? <RangeErrorMessage /> : <DefaultErrorMessage />,
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default() },
+    { value: toValue, invalid: toInvalid, errorMessage: <DefaultErrorMessage /> },
   ];
 }
 

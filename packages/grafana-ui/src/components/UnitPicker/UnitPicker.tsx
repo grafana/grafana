@@ -2,7 +2,7 @@ import { PureComponent } from 'react';
 
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Cascader, CascaderOption } from '../Cascader/Cascader';
 
 export interface UnitPickerProps {
@@ -55,17 +55,38 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
     }
 
     return (
-      <Cascader
+      <UnitCascader
         width={width}
-        initialValue={current && current.label}
-        allowCustomValue
-        changeOnSelect={false}
+        current={current}
+        groupOptions={groupOptions}
+        onChange={this.props.onChange}
         formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
-        placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
-        isClearable
-        onSelect={this.props.onChange}
       />
     );
   }
 }
+
+interface UnitCascaderProps {
+  width?: number;
+  current?: SelectableValue<string>;
+  groupOptions: CascaderOption[];
+  onChange: (value: string) => void;
+  formatCreateLabel?: (val: string) => string;
+}
+
+const UnitCascader = ({ width, current, groupOptions, onChange, formatCreateLabel }: UnitCascaderProps) => {
+  const { t } = useTranslate();
+  return (
+    <Cascader
+      width={width}
+      initialValue={current && current.label}
+      allowCustomValue
+      changeOnSelect={false}
+      formatCreateLabel={formatCreateLabel}
+      options={groupOptions}
+      placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
+      isClearable
+      onSelect={onChange}
+    />
+  );
+};

@@ -8,7 +8,7 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -39,6 +39,7 @@ export const SelectMenu = ({
   innerProps,
   selectProps,
 }: React.PropsWithChildren<SelectMenuProps>) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -106,6 +107,7 @@ export const VirtualizedSelectMenu = ({
   selectProps,
   focusedOption,
 }: VirtualSelectMenuProps<SelectableValue>) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);

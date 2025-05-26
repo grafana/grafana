@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
@@ -53,6 +53,7 @@ export const PageToolbar = memo(
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
   }: Props) => {
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
 
     /**

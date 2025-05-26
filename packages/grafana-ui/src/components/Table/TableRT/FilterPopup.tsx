@@ -6,7 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -32,6 +32,7 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);

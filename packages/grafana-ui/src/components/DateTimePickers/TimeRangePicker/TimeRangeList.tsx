@@ -4,7 +4,7 @@ import { useRef, ReactNode } from 'react';
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
+import { useTranslate } from '../../../utils/i18n';
 
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';
@@ -43,6 +43,7 @@ export const TimeRangeList = (props: Props) => {
 };
 
 const Options = ({ options, value, onChange, title }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);

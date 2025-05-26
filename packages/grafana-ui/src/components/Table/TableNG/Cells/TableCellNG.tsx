@@ -7,7 +7,7 @@ import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafa
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { t } from '../../../../utils/i18n';
+import { useTranslate } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 // import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
@@ -30,6 +30,7 @@ import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
 export function TableCellNG(props: TableCellNGProps) {
+  const { t } = useTranslate();
   const {
     field,
     frame,

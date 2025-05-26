@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button';
 import { Field } from '../Forms/Field';
@@ -28,6 +28,7 @@ import { HttpSettingsProps } from './types';
 const ACCESS_HELP_ID = 'grafana-http-access-help';
 
 const HttpAccessHelp = () => {
+  const { t } = useTranslate();
   return (
     <Alert
       severity="info"
@@ -74,6 +75,7 @@ const LABEL_WIDTH = 26;
  * @deprecated Use components from `@grafana/plugin-ui` instead, according to the [migration guide](https://github.com/grafana/plugin-ui/blob/main/src/components/ConfigEditor/migrating-from-datasource-http-settings.md).
  */
 export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
+  const { t } = useTranslate();
   const {
     defaultUrl,
     dataSourceConfig,
@@ -99,7 +101,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         value: 'direct',
       },
     ],
-    []
+    [t]
   );
 
   const DEFAULT_ACCESS_OPTION = useMemo(() => ACCESS_OPTIONS[0], [ACCESS_OPTIONS]);

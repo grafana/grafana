@@ -1,7 +1,7 @@
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 
 export interface Props<T extends DataSourceJsonData>
@@ -15,6 +15,7 @@ export function SecureSocksProxySettings<T extends SecureSocksProxyConfig>({
   options,
   onOptionsChange,
 }: Props<T>): JSX.Element {
+  const { t } = useTranslate();
   return (
     <div>
       <h3 className="page-heading">

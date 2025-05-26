@@ -7,7 +7,7 @@ import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue 
 
 import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
@@ -78,6 +78,7 @@ export const FilterList = ({
   operator,
   setOperator,
 }: Props) => {
+  const { t } = useTranslate();
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>

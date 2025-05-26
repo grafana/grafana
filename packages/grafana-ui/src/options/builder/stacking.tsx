@@ -12,7 +12,7 @@ import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
 import { graphFieldOptions } from '../../components/uPlot/config';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 
 export const StackingEditor = ({
   value,
@@ -20,6 +20,7 @@ export const StackingEditor = ({
   onChange,
   item,
 }: StandardEditorProps<StackingConfig, { options: Array<SelectableValue<StackingMode>> }>) => {
+  const { t } = useTranslate();
   return (
     <Stack>
       <RadioButtonGroup

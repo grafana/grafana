@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 
 import { UserIcon } from './UserIcon';
 import { UserView } from './types';
@@ -17,6 +17,7 @@ export interface UsersIndicatorProps {
   onClick?: () => void;
 }
 export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProps) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   if (!users.length) {
     return null;

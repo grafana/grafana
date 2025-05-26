@@ -6,7 +6,7 @@ import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzo
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -59,6 +59,7 @@ export interface DropzoneFile {
 }
 
 export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
+  const { t } = useTranslate();
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
 

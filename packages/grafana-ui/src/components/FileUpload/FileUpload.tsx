@@ -10,7 +10,7 @@ import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { getButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -35,6 +35,7 @@ export const FileUpload = ({
   size = 'md',
   showFileName,
 }: React.PropsWithChildren<Props>) => {
+  const { t } = useTranslate();
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
   const id = uuidv4();

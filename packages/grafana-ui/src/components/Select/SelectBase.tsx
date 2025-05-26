@@ -14,7 +14,7 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -126,7 +126,7 @@ export function SelectBase<T, Rest = {}>({
   menuPlacement = 'auto',
   menuPosition,
   menuShouldPortal = true,
-  noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
+  noOptionsMessage,
   onBlur,
   onChange,
   onCloseMenu,
@@ -140,7 +140,7 @@ export function SelectBase<T, Rest = {}>({
   toggleAllOptions,
   openMenuOnFocus = false,
   options = [],
-  placeholder = t('grafana-ui.select.placeholder', 'Choose'),
+  placeholder,
   prefix,
   renderControl,
   showAllSelectedWhenOpen = true,
@@ -155,8 +155,11 @@ export function SelectBase<T, Rest = {}>({
   selectRef,
   ...rest
 }: SelectBaseProps<T> & Rest) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+  noOptionsMessage = noOptionsMessage ?? t('grafana-ui.select.no-options-label', 'No options found');
+  placeholder = placeholder ?? t('grafana-ui.select.placeholder', 'Choose');
 
   const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);

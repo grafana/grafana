@@ -1,6 +1,7 @@
 import { FeatureState } from '@grafana/data';
+import { TFunction } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Badge, BadgeProps } from '../Badge/Badge';
 
 export interface FeatureBadgeProps {
@@ -9,11 +10,12 @@ export interface FeatureBadgeProps {
 }
 
 export const FeatureBadge = ({ featureState, tooltip }: FeatureBadgeProps) => {
-  const display = getPanelStateBadgeDisplayModel(featureState);
+  const { t } = useTranslate();
+  const display = getPanelStateBadgeDisplayModel(featureState, t);
   return <Badge text={display.text} color={display.color} icon={display.icon} tooltip={tooltip} />;
 };
 
-function getPanelStateBadgeDisplayModel(featureState: FeatureState): BadgeProps {
+function getPanelStateBadgeDisplayModel(featureState: FeatureState, t: TFunction): BadgeProps {
   switch (featureState) {
     case FeatureState.alpha:
       return {

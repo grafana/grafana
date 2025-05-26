@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { IconSize, isIconSize } from '../../types';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
@@ -37,6 +37,7 @@ export const Spinner = ({
   style,
   size = 'md',
 }: Props | PropsWithDeprecatedSize) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const deprecatedStyles = useStyles2(getDeprecatedStyles, size);

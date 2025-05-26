@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -61,6 +61,7 @@ export const ConfirmContent = ({
   justifyButtons = 'flex-end',
   disabled,
 }: ConfirmContentProps) => {
+  const { t } = useTranslate();
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);

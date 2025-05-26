@@ -4,7 +4,7 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
@@ -26,6 +26,7 @@ const asyncNoop = () => Promise.resolve([]);
  *  - loading and error states
  */
 export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
+  const { t } = useTranslate();
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -80,7 +81,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
       }
       return currentOptions;
     },
-    [createCustomValue, userTypedSearch]
+    [createCustomValue, userTypedSearch, t]
   );
 
   const updateOptions = useCallback(

@@ -5,7 +5,7 @@ import { PureComponent } from 'react';
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ToolbarButtonVariant, ToolbarButton } from '../ToolbarButton';
@@ -77,30 +77,6 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const currentValue = value || '';
     const variant = this.getVariant();
-    const options = intervalsToOptions({ intervals, showAutoInterval });
-    const option = options.find(({ value }) => value === currentValue);
-    const translatedOffOption = translateOption(RefreshPicker.offOption.value);
-    let selectedValue = option || translatedOffOption;
-
-    if (selectedValue.label === translatedOffOption.label) {
-      selectedValue = { value: '' };
-    }
-
-    const durationAriaLabel = selectedValue.ariaLabel;
-    const ariaLabelDurationSelectedMessage = t(
-      'refresh-picker.aria-label.duration-selected',
-      'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
-      { durationAriaLabel }
-    );
-    const ariaLabelChooseIntervalMessage = t(
-      'refresh-picker.aria-label.choose-interval',
-      'Auto refresh turned off. Choose refresh time interval'
-    );
-    const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
-
-    const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
-    const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
-    const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
 
     return (
       <ButtonGroup className="refresh-picker">
@@ -116,18 +92,12 @@ export class RefreshPicker extends PureComponent<Props> {
           {text}
         </ToolbarButton>
         {!noIntervalPicker && (
-          <ButtonSelect
-            className={css({
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
-            })}
-            value={selectedValue}
-            options={options}
+          <RefreshButtonSelect
+            currentValue={currentValue}
+            intervals={intervals}
+            showAutoInterval={showAutoInterval}
             onChange={this.onChangeSelect}
             variant={variant}
-            data-testid={selectors.components.RefreshPicker.intervalButtonV2}
-            aria-label={ariaLabel}
-            tooltip={tooltipAutoRefresh}
           />
         )}
       </ButtonGroup>
@@ -135,7 +105,66 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 }
 
-export function translateOption(option: string) {
+interface RefreshButtonSelectProps {
+  currentValue: string;
+  intervals?: string[];
+  onChange: (item: SelectableValue<string>) => void;
+  showAutoInterval?: boolean;
+  variant: ToolbarButtonVariant;
+}
+
+function RefreshButtonSelect({
+  currentValue,
+  intervals,
+  showAutoInterval,
+  onChange,
+  variant,
+}: RefreshButtonSelectProps) {
+  const { t } = useTranslate();
+  const options = useTranslatedOptions(intervals, showAutoInterval);
+  const option = options.find(({ value }) => value === currentValue);
+  const translatedOffOption = useTranslateOption(RefreshPicker.offOption.value);
+  let selectedValue = option || translatedOffOption;
+
+  if (selectedValue.label === translatedOffOption.label) {
+    selectedValue = { value: '' };
+  }
+
+  const durationAriaLabel = selectedValue.ariaLabel;
+  const ariaLabelDurationSelectedMessage = t(
+    'refresh-picker.aria-label.duration-selected',
+    'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
+    { durationAriaLabel }
+  );
+  const ariaLabelChooseIntervalMessage = t(
+    'refresh-picker.aria-label.choose-interval',
+    'Auto refresh turned off. Choose refresh time interval'
+  );
+  const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
+
+  const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
+  const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
+  const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
+
+  return (
+    <ButtonSelect
+      className={css({
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+      })}
+      value={selectedValue}
+      options={options}
+      onChange={onChange}
+      variant={variant}
+      data-testid={selectors.components.RefreshPicker.intervalButtonV2}
+      aria-label={ariaLabel}
+      tooltip={tooltipAutoRefresh}
+    />
+  );
+}
+
+function useTranslateOption(option: string) {
+  const { t } = useTranslate();
   switch (option) {
     case RefreshPicker.liveOption.value:
       return {
@@ -162,10 +191,12 @@ export function translateOption(option: string) {
   };
 }
 
-export function intervalsToOptions({
-  intervals = defaultIntervals,
-  showAutoInterval = false,
-}: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> {
+export function useTranslatedOptions(
+  intervals: string[] = defaultIntervals,
+  showAutoInterval = false
+): Array<SelectableValue<string>> {
+  const autoOption = useTranslateOption(RefreshPicker.autoOption.value);
+  const offOption = useTranslateOption(RefreshPicker.offOption.value);
   const options: Array<SelectableValue<string>> = intervals.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
@@ -178,8 +209,8 @@ export function intervalsToOptions({
   });
 
   if (showAutoInterval) {
-    options.unshift(translateOption(RefreshPicker.autoOption.value));
+    options.unshift(autoOption);
   }
-  options.unshift(translateOption(RefreshPicker.offOption.value));
+  options.unshift(offOption);
   return options;
 }

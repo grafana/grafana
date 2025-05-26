@@ -7,7 +7,7 @@ import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -19,6 +19,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
+    const { t } = useTranslate();
     // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
     const childrenWithoutNull = Children.toArray(children).filter((child) => child != null);
     const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));

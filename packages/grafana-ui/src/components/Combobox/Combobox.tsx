@@ -4,7 +4,7 @@ import { useCombobox } from 'downshift';
 import { useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
@@ -114,6 +114,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  * @alpha
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+  const { t } = useTranslate();
   const {
     options: allOptions,
     onChange,

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 
@@ -28,6 +28,7 @@ export const Pagination = ({
   showSmallVersion,
   className,
 }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
 

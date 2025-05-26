@@ -1,5 +1,5 @@
 import { withTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
 import { PopoverContentProps } from '../Tooltip';
@@ -12,6 +12,7 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 }
 
 export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) => {
+  const { t } = useTranslate();
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
   const yAxisLabel = t('grafana-ui.series-color-picker-popover.y-axis-usage', 'Use right y-axis');
   const customPickers = onToggleAxis

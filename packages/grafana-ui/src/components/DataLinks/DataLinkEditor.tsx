@@ -4,7 +4,7 @@ import { memo, ChangeEvent } from 'react';
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -33,6 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export const DataLinkEditor = memo(
   ({ index, value, onChange, suggestions, isLast, showOneClick = false }: DataLinkEditorProps) => {
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
 
     const onUrlChange = (url: string, callback?: () => void) => {

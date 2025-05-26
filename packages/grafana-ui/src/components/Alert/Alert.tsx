@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
@@ -42,6 +42,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
+    const { t } = useTranslate();
     const theme = useTheme2();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);

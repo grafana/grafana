@@ -3,11 +3,12 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { t } from '../../../../utils/i18n';
+import { useTranslate } from '../../../../utils/i18n';
 import { Icon } from '../../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
 export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGProps) {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles, height);
   function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
     if (e.key === ' ' || e.key === 'Enter') {

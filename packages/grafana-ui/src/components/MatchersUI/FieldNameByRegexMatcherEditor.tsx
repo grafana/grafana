@@ -3,12 +3,13 @@ import * as React from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+  const { t } = useTranslate();
   const { options, onChange } = props;
 
   const onBlur = useCallback(

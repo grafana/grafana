@@ -4,7 +4,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { t } from '../../../utils/i18n';
+import { useTranslate } from '../../../utils/i18n';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
@@ -28,6 +28,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   index,
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
+  const { t } = useTranslate();
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 

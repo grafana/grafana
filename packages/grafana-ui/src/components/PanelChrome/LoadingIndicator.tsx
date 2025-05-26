@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -20,6 +20,7 @@ export type LoadingIndicatorProps = {
  * @internal
  */
 export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
+  const { t } = useTranslate();
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const styles = useStyles2(getStyles);
 

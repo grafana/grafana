@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getTagColorsFromName } from '../../utils';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 
 interface Props {
@@ -22,6 +22,7 @@ interface Props {
  * Only used internally by TagsInput
  * */
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   // If configured, use random colors based on name.

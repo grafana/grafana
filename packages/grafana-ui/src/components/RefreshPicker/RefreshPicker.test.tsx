@@ -1,12 +1,14 @@
-import { intervalsToOptions } from './RefreshPicker';
+import { renderHook } from '@testing-library/react';
+
+import { useTranslatedOptions } from './RefreshPicker';
 
 describe('RefreshPicker', () => {
   describe('intervalsToOptions', () => {
     describe('when called without intervals', () => {
       it('then default options should be used', () => {
-        const result = intervalsToOptions();
+        const { result } = renderHook(() => useTranslatedOptions());
 
-        expect(result).toEqual([
+        expect(result.current).toEqual([
           { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
           { value: '5s', label: '5s', ariaLabel: '5 seconds' },
           { value: '10s', label: '10s', ariaLabel: '10 seconds' },
@@ -26,9 +28,9 @@ describe('RefreshPicker', () => {
       it('then the resulting options should be correct', () => {
         const intervals = ['5s', '10s'];
 
-        const result = intervalsToOptions({ intervals });
+        const { result } = renderHook(() => useTranslatedOptions(intervals));
 
-        expect(result).toEqual([
+        expect(result.current).toEqual([
           { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
           { value: '5s', label: '5s', ariaLabel: '5 seconds' },
           { value: '10s', label: '10s', ariaLabel: '10 seconds' },
@@ -39,8 +41,8 @@ describe('RefreshPicker', () => {
     it('should format durations with multiple units', () => {
       const intervals = ['10s', '1m 30s'];
 
-      const result = intervalsToOptions({ intervals });
-      expect(result).toEqual([
+      const { result } = renderHook(() => useTranslatedOptions(intervals));
+      expect(result.current).toEqual([
         { value: '', label: 'Off', ariaLabel: 'Turn off auto refresh' },
         { value: '10s', label: '10s', ariaLabel: '10 seconds' },
         { value: '1m 30s', label: '1m 30s', ariaLabel: '1 minute 30 seconds' },

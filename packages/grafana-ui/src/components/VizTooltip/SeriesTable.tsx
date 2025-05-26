@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
@@ -82,6 +82,7 @@ export interface SeriesTableProps {
  * @public
  */
 export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getSeriesTableRowStyles);
 
   return (

@@ -7,7 +7,7 @@ import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -47,6 +47,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onClickBackdrop,
     trapFocus = true,
   } = props;
+  const { t } = useTranslate();
   const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);

@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Trans, t } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 import { IconButton } from '../../IconButton/IconButton';
 import { Stack } from '../../Layout/Stack/Stack';
 
@@ -8,6 +8,7 @@ import { TimePickerCalendarProps } from './TimePickerCalendar';
 import { TimePickerTitle } from './TimePickerTitle';
 
 export function Header({ onClose }: TimePickerCalendarProps) {
+  const { t } = useTranslate();
   return (
     <Stack justifyContent="space-between">
       <TimePickerTitle>

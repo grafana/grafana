@@ -4,7 +4,7 @@ import { useMemo, PropsWithChildren } from 'react';
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { t, Trans } from '../../utils/i18n';
+import { Trans, useTranslate } from '../../utils/i18n';
 import { Tooltip } from '../Tooltip';
 
 import { UserView } from './types';
@@ -58,6 +58,7 @@ export const UserIcon = ({
   onClick,
   showTooltip = true,
 }: PropsWithChildren<UserIconProps>) => {
+  const { t } = useTranslate();
   const { user, lastActiveAt } = userView;
   const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();

@@ -10,7 +10,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -72,6 +72,7 @@ export function Drawer({
   size = 'md',
   tabs,
 }: Props) {
+  const { t } = useTranslate();
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);

@@ -14,7 +14,7 @@ import {
 import { ComparisonOperation } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -37,6 +37,7 @@ function isBooleanReducer(r: ReducerID) {
 }
 
 export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 

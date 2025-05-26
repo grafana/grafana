@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
@@ -17,6 +17,7 @@ export const HttpProxySettings = ({
   onChange,
   showForwardOAuthIdentityOption = true,
 }: HttpSettingsBaseProps) => {
+  const { t } = useTranslate();
   const gridLayout = useStyles2(getGridLayout);
   return (
     <div className={gridLayout}>

@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -148,6 +148,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
 }: PanelChromeProps) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();

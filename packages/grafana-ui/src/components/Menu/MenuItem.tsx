@@ -7,7 +7,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -80,6 +80,7 @@ export const MenuItem = React.memo(
       shortcut,
       testId,
     } = props;
+    const { t } = useTranslate();
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);

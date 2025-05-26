@@ -19,7 +19,7 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -61,6 +61,7 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
+  const { t } = useTranslate();
   const {
     cellHeight,
     enablePagination,

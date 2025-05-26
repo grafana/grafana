@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
-import { t, Trans } from '../../../utils/i18n';
+import { Trans, useTranslate } from '../../../utils/i18n';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { WeekStart } from '../WeekStartPicker';
@@ -46,6 +46,7 @@ interface FormProps extends Omit<Props, 'history'> {
 }
 
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
+  const { t } = useTranslate();
   const {
     quickOptions = [],
     isReversed,
@@ -123,6 +124,7 @@ export const TimePickerContent = (props: Props) => {
 };
 
 const NarrowScreenForm = (props: FormProps) => {
+  const { t } = useTranslate();
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
@@ -181,6 +183,7 @@ const NarrowScreenForm = (props: FormProps) => {
 };
 
 const FullScreenForm = (props: FormProps) => {
+  const { t } = useTranslate();
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
@@ -221,6 +224,7 @@ const FullScreenForm = (props: FormProps) => {
 };
 
 const EmptyRecentList = memo(() => {
+  const { t } = useTranslate();
   const styles = useStyles2(getEmptyListStyles);
   const emptyRecentListText = t(
     'time-picker.content.empty-recent-list-info',

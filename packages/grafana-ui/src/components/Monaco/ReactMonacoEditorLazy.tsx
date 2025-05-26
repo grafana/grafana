@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack } from '../ErrorBoundary/ErrorWithStack';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
@@ -17,6 +17,7 @@ import type { ReactMonacoEditorProps } from './types';
  * Experimental export
  **/
 export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')

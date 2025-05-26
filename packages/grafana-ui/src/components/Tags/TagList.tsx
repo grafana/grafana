@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
+import { useTranslate } from '../../utils/i18n';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { OnTagClick, Tag } from './Tag';
@@ -30,6 +30,7 @@ export interface Props {
 const TagListComponent = memo(
   forwardRef<HTMLUListElement, Props>(
     ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
+      const { t } = useTranslate();
       const theme = useTheme2();
       const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
       const numTags = tags.length;
