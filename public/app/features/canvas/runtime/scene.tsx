@@ -191,6 +191,10 @@ export class Scene {
         // update initial connections svg size
         this.updateConnectionsSize();
         this.fitContent(this, zoomToContent);
+
+        if (!this.shouldPanZoom) {
+          this.scale = 1;
+        }
       }
     });
     return this.root;
@@ -222,6 +226,10 @@ export class Scene {
 
     this.updateConnectionsSize();
     this.fitContent(this, this.zoomToContent!);
+
+    this.root.elements.forEach((el) => {
+      el.applyLayoutStylesToDiv(false);
+    });
   }
 
   updateConnectionsSize() {
@@ -256,8 +264,9 @@ export class Scene {
     if (updateMoveable) {
       setTimeout(() => {
         // if (this.div) {
-        if (this.viewportDiv) {
+        if (this.viewportDiv && this.viewerDiv) {
           initMoveable(true, this.isEditingEnabled, this);
+          this.updateConnectionsSize();
         }
       });
     }
@@ -439,7 +448,7 @@ export class Scene {
     return config.featureToggles.canvasPanelPanZoom ? (
       <>
         {/* <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper> */}
-        <div className={this.styles.viewer} ref={this.setViewerRef}>
+        <div className={this.styles.viewer} ref={this.setViewerRef} key={this.revId}>
           <div className={this.styles.viewport} ref={this.setViewportRef} key={this.revId}>
             {sceneDiv}
           </div>
@@ -467,5 +476,7 @@ const getStyles = () => ({
   viewport: css({
     // overflow: 'hidden',
     // position: 'relative',
+    width: '100%',
+    height: '100%',
   }),
 });
