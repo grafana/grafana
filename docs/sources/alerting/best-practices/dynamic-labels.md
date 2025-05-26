@@ -187,7 +187,7 @@ This alerting setup allows you to:
 
 However, dynamic labels can introduce unexpected behavior when label values change. The next section explains this.
 
-## Gotcha: a label change affects a distinct alert instance
+## Caveat: a label change affects a distinct alert instance
 
 Remember: **alert instances are defined by their labels**.
 
