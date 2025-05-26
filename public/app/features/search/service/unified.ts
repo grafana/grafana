@@ -2,12 +2,11 @@ import { isEmpty } from 'lodash';
 
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
+import { isResourceList } from 'app/features/apiserver/guards';
 import { DashboardDataDTO } from 'app/types';
-
-import { getAPIBaseURL } from '../../../api/utils';
-import { isResourceList } from '../../apiserver/guards';
 
 import {
   DashboardQueryResult,
