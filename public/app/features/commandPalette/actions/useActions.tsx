@@ -88,7 +88,7 @@ export function useRegisterScopesActions(
 
   const globalNodes = useGlobalScopesSearch(searchQuery, searchAllNodes, parentId);
 
-  // Load next level of scopes when the parentId changes.
+  // Load the next level of scopes when the parentId changes.
   useEffect(() => {
     if (parentId) {
       updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
@@ -100,18 +100,18 @@ export function useRegisterScopesActions(
     services.scopesSelectorService.state
   );
 
-  const { nodes, scopes, loading, loadingNodeName, tree, selectedScopes, appliedScopes } = selectorServiceState;
+  const { nodes, scopes, tree, selectedScopes, appliedScopes } = selectorServiceState;
 
-  // We either mat the tree in similar tree of action, or just flat list of action when global searching
-  const nodesActions = globalNodes
-    ? Object.values(globalNodes).map((node) => mapScopeNodeToAction(node, selectScope))
-    : mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
+  const nodesActions = useMemo(() => {
+    // If we have nodes from global search, we show those in a flat list.
+    return globalNodes
+      ? Object.values(globalNodes).map((node) => mapScopeNodeToAction(node, selectScope))
+      : mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
+  }, [globalNodes, nodes, tree, selectedScopes, selectScope]);
 
-  // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
-  // scopes tree though is loaded on demand, and it would be a deep check to see if something changes these deps are
-  // approximation of when the actions really change.
-  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, tree, globalNodes]);
+  useRegisterActions(nodesActions, [nodesActions]);
 
+  // Check if we have different selection than what is already applied. Used to show the apply button.
   const isDirty =
     appliedScopes
       .map((t) => t.scopeId)
@@ -143,6 +143,7 @@ export function useRegisterScopesActions(
     scopesRow:
       isDirty || selectedScopes?.length ? (
         <ScopesRow
+          nodes={nodes}
           scopes={scopes}
           deselectScope={deselectScope}
           selectedScopes={selectedScopes}
