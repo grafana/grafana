@@ -20,6 +20,7 @@ type Worker struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
+	encryptionManager          contracts.EncryptionManager
 }
 
 type Config struct {
@@ -40,6 +41,7 @@ func NewWorker(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
+	encryptionManager contracts.EncryptionManager,
 ) (*Worker, error) {
 	if config.BatchSize == 0 {
 		return nil, fmt.Errorf("config.BatchSize is required")
@@ -61,6 +63,7 @@ func NewWorker(
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
+		encryptionManager:          encryptionManager,
 	}, nil
 }
 
@@ -143,10 +146,12 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
-		// TODO: DECRYPT HERE
-		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret.DangerouslyExposeAndConsumeValue()))
+		if err != nil {
+			return fmt.Errorf("decrypting secure value secret: %w", err)
+		}
 
-		externalID, err := keeper.Store(ctx, keeperCfg, message.Namespace, rawSecret)
+		externalID, err := keeper.Store(ctx, keeperCfg, message.Namespace, string(rawSecret))
 		if err != nil {
 			return fmt.Errorf("storing secret: message=%+v %w", message, err)
 		}
@@ -162,10 +167,12 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
-		// TODO: DECRYPT HERE
-		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret.DangerouslyExposeAndConsumeValue()))
+		if err != nil {
+			return fmt.Errorf("decrypting secure value secret: %w", err)
+		}
 
-		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), string(rawSecret)); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 

@@ -11,7 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -20,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
@@ -218,6 +225,81 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, messages)
 	})
+
+	t.Run("when creating a secure value, the secret is encrypted before it is added to the outbox queue", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		var secret string
+		_, err := sut.createSv(func(cfg *createSvConfig) {
+			secret = string(cfg.sv.Spec.Value)
+		})
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+
+		encryptedSecret := messages[0].EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		require.NotEmpty(t, secret)
+		require.NotEmpty(t, encryptedSecret)
+		require.NotEqual(t, secret, encryptedSecret)
+	})
+
+	t.Run("when updating a secure value, the secret is encrypted before it is added to the outbox queue", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+
+		sut.worker.receiveAndProcessMessages(ctx)
+
+		newValue := "v2"
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(newValue)
+
+		// Queue an update secure value operation
+		_, err = sut.updateSv(sv)
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+
+		encryptedSecret := messages[0].EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		require.NotEmpty(t, encryptedSecret)
+		require.NotEqual(t, newValue, encryptedSecret)
+	})
+
+	t.Run("when deleting a secure value, no value is added to the outbox message", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+
+		sut.worker.receiveAndProcessMessages(ctx)
+
+		// Queue a delete secure value operation
+		_, err = sut.deleteSv(sv.Namespace, sv.Name)
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+		require.Empty(t, messages[0].EncryptedSecret)
+	})
 }
 
 type setupConfig struct {
@@ -279,7 +361,33 @@ func setup(t *testing.T, opts ...func(*setupConfig)) sut {
 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
-	secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueue)
+	defaultKey := "SdlklWklckeLS"
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          defaultKey,
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCleanupInterval: time.Nanosecond,
+				DataKeysCacheTTL:        5 * time.Minute,
+				Algorithm:               cipher.AesGcm,
+			},
+		},
+	}
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	require.NoError(t, err)
+
+	usageStats := &usagestats.UsageStatsMock{T: t}
+
+	encryptionManager, err := manager.ProvideEncryptionManager(
+		tracing.InitializeTracerForTest(),
+		store,
+		cfg,
+		usageStats,
+		encryption.ProvideThirdPartyProviderMap(),
+	)
+	require.NoError(t, err)
+
+	secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
 
 	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
 
@@ -289,6 +397,7 @@ func setup(t *testing.T, opts ...func(*setupConfig)) sut {
 		secureValueMetadataStorage,
 		keeperMetadataStorage,
 		keeperService,
+		encryptionManager,
 	)
 	require.NoError(t, err)
 
@@ -302,23 +411,33 @@ type sut struct {
 	database        *database.Database
 }
 
-func (s *sut) createSv() (*secretv0alpha1.SecureValue, error) {
-	ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
-	sv := &secretv0alpha1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sv1",
-			Namespace: "ns1",
-		},
-		Spec: secretv0alpha1.SecureValueSpec{
-			Description: "desc1",
-			Value:       secretv0alpha1.NewExposedSecureValue("v1"),
-		},
-		Status: secretv0alpha1.SecureValueStatus{
-			Phase: secretv0alpha1.SecureValuePhasePending,
+type createSvConfig struct {
+	sv *secretv0alpha1.SecureValue
+}
+
+func (s *sut) createSv(opts ...func(*createSvConfig)) (*secretv0alpha1.SecureValue, error) {
+	cfg := createSvConfig{
+		sv: &secretv0alpha1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sv1",
+				Namespace: "ns1",
+			},
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "desc1",
+				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+			},
+			Status: secretv0alpha1.SecureValueStatus{
+				Phase: secretv0alpha1.SecureValuePhasePending,
+			},
 		},
 	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+
 	validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
-	createdSv, err := s.secureValueRest.Create(ctx, sv, validationFunc, &metav1.CreateOptions{})
+	createdSv, err := s.secureValueRest.Create(ctx, cfg.sv, validationFunc, &metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

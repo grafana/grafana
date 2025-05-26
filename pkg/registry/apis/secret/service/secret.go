@@ -17,18 +17,21 @@ type SecretService struct {
 	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	outboxQueue                contracts.OutboxQueue
+	encryptionManager          contracts.EncryptionManager
 }
 
 func ProvideSecretService(
 	accessClient claims.AccessClient,
 	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	outboxQueue contracts.OutboxQueue) *SecretService {
+	outboxQueue contracts.OutboxQueue,
+	encryptionManager contracts.EncryptionManager) *SecretService {
 	return &SecretService{
 		accessClient:               accessClient,
 		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		outboxQueue:                outboxQueue,
+		encryptionManager:          encryptionManager,
 	}
 }
 
@@ -36,6 +39,12 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 	sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Creating secure value"}
 
 	var out *secretv0alpha1.SecureValue
+
+	buffer, err := s.encryptionManager.Encrypt(ctx, sv.Namespace, []byte(sv.Spec.Value.DangerouslyExposeAndConsumeValue()))
+	if err != nil {
+		return nil, fmt.Errorf("encrypting secure value secret: %w", err)
+	}
+	encryptedSecret := secretv0alpha1.NewExposedSecureValue(string(buffer))
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
@@ -45,12 +54,11 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 		out = createdSecureValue
 
 		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			RequestID: contracts.GetRequestId(ctx),
-			Type:      contracts.CreateSecretOutboxMessage,
-			Name:      sv.Name,
-			Namespace: sv.Namespace,
-			// TODO: encrypt
-			EncryptedSecret: sv.Spec.Value,
+			RequestID:       contracts.GetRequestId(ctx),
+			Type:            contracts.CreateSecretOutboxMessage,
+			Name:            sv.Name,
+			Namespace:       sv.Namespace,
+			EncryptedSecret: encryptedSecret,
 			KeeperName:      sv.Spec.Keeper,
 		}); err != nil {
 			return fmt.Errorf("failed to append message to create secure value to outbox queue: %w", err)
@@ -111,7 +119,18 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 	// Never true in this case since updating a secure value is async.
 	const updateIsSync = false
 
-	var out *secretv0alpha1.SecureValue
+	var (
+		out             *secretv0alpha1.SecureValue
+		encryptedSecret secretv0alpha1.ExposedSecureValue
+	)
+
+	if newSecureValue.Spec.Value != "" {
+		buffer, err := s.encryptionManager.Encrypt(ctx, newSecureValue.Namespace, []byte(newSecureValue.Spec.Value.DangerouslyExposeAndConsumeValue()))
+		if err != nil {
+			return nil, false, fmt.Errorf("encrypting secure value secret: %w", err)
+		}
+		encryptedSecret = secretv0alpha1.NewExposedSecureValue(string(buffer))
+	}
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
@@ -124,7 +143,7 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 		}
 
 		// Succeed immediately if the value is not going to be updated
-		if newSecureValue.Spec.Value == "" {
+		if encryptedSecret == "" {
 			newSecureValue.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}
 		} else {
 			newSecureValue.Status = secretv0alpha1.SecureValueStatus{
@@ -141,13 +160,12 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 		out = updatedSecureValue
 
 		// Only the value needs to be updated asynchronously by the outbox worker
-		if newSecureValue.Spec.Value != "" {
+		if encryptedSecret != "" {
 			if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-				Type:      contracts.UpdateSecretOutboxMessage,
-				Name:      newSecureValue.Name,
-				Namespace: newSecureValue.Namespace,
-				// TODO: encrypt
-				EncryptedSecret: newSecureValue.Spec.Value,
+				Type:            contracts.UpdateSecretOutboxMessage,
+				Name:            newSecureValue.Name,
+				Namespace:       newSecureValue.Namespace,
+				EncryptedSecret: encryptedSecret,
 				KeeperName:      newSecureValue.Spec.Keeper,
 				ExternalID:      &updatedSecureValue.Status.ExternalID,
 			}); err != nil {
