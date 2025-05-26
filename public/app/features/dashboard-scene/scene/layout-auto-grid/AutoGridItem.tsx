@@ -173,7 +173,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
       return;
     }
 
-    if (this.state.repeatedPanels?.length ?? 0 > 1) {
+    if ((this.state.repeatedPanels?.length ?? 0) > 1) {
       this.state.body.setState({
         $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
         $data: this.state.repeatedPanels![0].state.$data?.clone(),

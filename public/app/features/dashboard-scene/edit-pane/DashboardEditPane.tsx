@@ -145,7 +145,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   /**
-   * Removes last action from redo stack and adds it to undo stack.   *
+   * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
     const redoStack = this.state.redoStack.slice();
