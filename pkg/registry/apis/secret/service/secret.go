@@ -40,11 +40,10 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 
 	var out *secretv0alpha1.SecureValue
 
-	buffer, err := s.encryptionManager.Encrypt(ctx, sv.Namespace, []byte(sv.Spec.Value.DangerouslyExposeAndConsumeValue()))
+	encryptedSecret, err := s.encryptionManager.Encrypt(ctx, sv.Namespace, []byte(sv.Spec.Value.DangerouslyExposeAndConsumeValue()))
 	if err != nil {
 		return nil, fmt.Errorf("encrypting secure value secret: %w", err)
 	}
-	encryptedSecret := secretv0alpha1.NewExposedSecureValue(string(buffer))
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
@@ -58,7 +57,7 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 			Type:            contracts.CreateSecretOutboxMessage,
 			Name:            sv.Name,
 			Namespace:       sv.Namespace,
-			EncryptedSecret: encryptedSecret,
+			EncryptedSecret: string(encryptedSecret),
 			KeeperName:      sv.Spec.Keeper,
 		}); err != nil {
 			return fmt.Errorf("failed to append message to create secure value to outbox queue: %w", err)
@@ -121,7 +120,7 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 
 	var (
 		out             *secretv0alpha1.SecureValue
-		encryptedSecret secretv0alpha1.ExposedSecureValue
+		encryptedSecret string
 	)
 
 	if newSecureValue.Spec.Value != "" {
@@ -129,7 +128,7 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 		if err != nil {
 			return nil, false, fmt.Errorf("encrypting secure value secret: %w", err)
 		}
-		encryptedSecret = secretv0alpha1.NewExposedSecureValue(string(buffer))
+		encryptedSecret = string(buffer)
 	}
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {

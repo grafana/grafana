@@ -243,7 +243,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, len(messages))
 
-		encryptedSecret := messages[0].EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		encryptedSecret := messages[0].EncryptedSecret
 		require.NotEmpty(t, secret)
 		require.NotEmpty(t, encryptedSecret)
 		require.NotEqual(t, secret, encryptedSecret)
@@ -273,7 +273,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, len(messages))
 
-		encryptedSecret := messages[0].EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		encryptedSecret := messages[0].EncryptedSecret
 		require.NotEmpty(t, encryptedSecret)
 		require.NotEqual(t, newValue, encryptedSecret)
 	})

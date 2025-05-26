@@ -9,7 +9,6 @@ import (
 	unifiedsql "github.com/grafana/grafana/pkg/storage/unified/sql"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/assert"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -71,9 +70,8 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 	encryptedSecret := sql.NullString{}
 	if input.Type == contracts.CreateSecretOutboxMessage || input.Type == contracts.UpdateSecretOutboxMessage {
 		encryptedSecret = sql.NullString{
-			Valid: true,
-			// TODO: this type does not need to be exposed when encrypted (maybe []byte or string)
-			String: input.EncryptedSecret.DangerouslyExposeAndConsumeValue(),
+			Valid:  true,
+			String: input.EncryptedSecret,
 		}
 	}
 
@@ -179,7 +177,7 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 
 		if row.MessageType != contracts.DeleteSecretOutboxMessage && row.EncryptedSecret.Valid {
 			// TODO: dont do this because it is encrypted!
-			msg.EncryptedSecret = v0alpha1.ExposedSecureValue(row.EncryptedSecret.String)
+			msg.EncryptedSecret = row.EncryptedSecret.String
 		}
 
 		messages = append(messages, msg)

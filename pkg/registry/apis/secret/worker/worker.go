@@ -146,7 +146,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
-		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret.DangerouslyExposeAndConsumeValue()))
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret))
 		if err != nil {
 			return fmt.Errorf("decrypting secure value secret: %w", err)
 		}
@@ -167,7 +167,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
-		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret.DangerouslyExposeAndConsumeValue()))
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret))
 		if err != nil {
 			return fmt.Errorf("decrypting secure value secret: %w", err)
 		}
