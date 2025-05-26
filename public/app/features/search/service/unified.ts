@@ -118,8 +118,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
-    const meta = first.meta?.custom || ({} as SearchResultMeta);
+    const customMeta = first.meta?.custom;
+    const meta: SearchResultMeta = {
+      count: customMeta?.count ?? first.length,
+      max_score: customMeta?.max_score ?? 1,
+      locationInfo: customMeta?.locationInfo ?? {},
+      sortBy: customMeta?.sortBy,
+    };
     meta.locationInfo = await this.locationInfo;
+
+    // Update the DataFrame meta to point to the typed meta object
+    if (first.meta) {
+      first.meta.custom = meta;
+    }
 
     // Set the field name to a better display name
     if (meta.sortBy?.length) {
@@ -163,10 +174,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
         view.dataFrame.length = length;
 
         // Add all the location lookup info
-        const submeta = frame.meta?.custom as SearchResultMeta;
+        const submeta = frame.meta?.custom;
         if (submeta?.locationInfo && meta) {
-          for (const [key, value] of Object.entries(submeta.locationInfo)) {
-            meta.locationInfo[key] = value;
+          // Merge locationInfo from submeta into meta
+          const subLocationInfo = submeta.locationInfo;
+          if (subLocationInfo && typeof subLocationInfo === 'object') {
+            Object.assign(meta.locationInfo, subLocationInfo);
           }
         }
       }
