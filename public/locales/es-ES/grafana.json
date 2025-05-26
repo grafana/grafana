@@ -57,7 +57,11 @@
       "aria-label-add": "Añadir",
       "aria-label-delete": "Eliminar",
       "placeholder-key": "Clave",
+      "placeholder-name": "Nombre",
       "placeholder-value": "Valor"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tipo"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar todo",
+      "learn-more": "Más información",
       "loading": "Cargando...",
       "search-by-matchers": "Buscar por buscadores de coincidencias",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nueva regla de alerta",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nueva regla de registro administrada por la fuente de datos",
-        "new-grafana-recording-rule": "Nueva regla de registro administrada por Grafana",
+        "new-grafana-alerting-rule": "Nueva regla de alerta",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nueva regla de registro",
-        "provisioning": "También puedes definir reglas a través del aprovisionamiento de archivos o Terraform. <2>Más información</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "No hay configuradas fuentes de datos de Prometheus o Loki",
       "no-rules": "No se han encontrado reglas.",
@@ -2048,6 +2057,7 @@
         "description": "Comprueba la configuración de la fuente de datos. ¿La fuente de datos es compatible con la API de Prometheus?",
         "title": "No se pueden cargar las reglas de esta fuente de datos"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Cancelar búsqueda",
         "no-more-results": "No hay más resultados. Se han encontrado {{numberOfRules}} reglas",
@@ -3405,6 +3415,13 @@
           "values": "Valores separados por coma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descripción",
         "description-placeholder": "Texto descriptivo",
         "label": "Etiqueta",
@@ -3423,8 +3440,8 @@
           "category": "Opciones de selección",
           "custom-all-value": "Personalizar todos los valores",
           "custom-all-value-description": "Un regex comodín u otro valor para representar Todo",
-          "include-all": "Incluir la opción Todo",
-          "include-all-description": "Habilita una opción para incluir todos los valores",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multivalor"
         },
         "type-category": "Opciones de {{type}}"
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Confirmar",
         "confirm-action": "Confirmar acción",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valor"
       },
+      "close": "Cerrar",
+      "continue": "",
       "inline": {
         "add-action": "Añadir acción",
         "edit-action": "Editar acción"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Parámetros de la consulta",
         "action-title": "Título",
         "action-title-placeholder": "Título de la acción",
+        "action-variables": "Variables",
         "one-click-description": "Solo un enlace o acción puede tener un clic habilitado a la vez"
       }
     },
@@ -5756,7 +5778,7 @@
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
       "open-search": "Abrir búsqueda",
       "open-shared-modal": "Compartir instantánea del panel",
-      "paste-time-range": "Pegar rango de tiempo",
+      "paste-time-range": "Pegar intervalo de tiempo",
       "refresh-all-panels": "Actualizar todos los paneles",
       "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
@@ -6650,15 +6672,15 @@
       "title": "Administración"
     },
     "config-access": {
-      "subtitle": "Configurar el acceso para usuarios individuales, equipos y cuentas de servicio",
+      "subtitle": "Configura el acceso para usuarios individuales, equipos y cuentas de servicio",
       "title": "Usuarios y acceso"
     },
     "config-general": {
-      "subtitle": "Gestionar las preferencias y ajustes por defecto en Grafana",
+      "subtitle": "Gestiona las preferencias y ajustes por defecto en Grafana",
       "title": "General"
     },
     "config-plugins": {
-      "subtitle": "Instalar complementos y definir las relaciones entre los datos",
+      "subtitle": "Instala complementos y define las relaciones entre los datos",
       "title": "Complementos y datos"
     },
     "connect-data": {
@@ -6688,7 +6710,7 @@
       "title": "Importar panel de control"
     },
     "dashboards": {
-      "subtitle": "Cree y administre paneles de control para visualizar sus datos",
+      "subtitle": "Crea y administra paneles de control para visualizar tus datos",
       "title": "Paneles de control"
     },
     "data-sources": {
@@ -6860,7 +6882,7 @@
       "title": "Cuentas de servicios"
     },
     "setup-guide": {
-      "title": "Guía de configuración"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gestiona los paneles de control compartidos externamente de tu organización",
@@ -8730,16 +8752,16 @@
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
-      "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
+      "empty-recent-list-docs": "<0><0>Lee la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
+      "empty-recent-list-info": "Parece que no has utilizado antes este selector de tiempo. En cuanto introduzcas un intervalo de tiempo, los intervalos que hayas usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
     "copy-paste": {
       "copy-success-message": "Rango de tiempo copiado al portapapeles",
       "default-error-message": "{{error}} no es un rango de tiempo válido",
       "default-error-title": "Rango de tiempo no válido",
-      "tooltip-copy": "Copiar rango de tiempo al portapapeles",
-      "tooltip-paste": "Pegar rango de tiempo"
+      "tooltip-copy": "Copiar intervalo de tiempo al portapapeles",
+      "tooltip-paste": "Pegar intervalo de tiempo"
     },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",

@@ -1141,6 +1141,16 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: 'Data link',
     },
   },
+  DataLinksActionsTooltip: {
+    tooltipWrapper: {
+      '12.1.0': 'data-testid Data links actions tooltip wrapper',
+    },
+  },
+  TablePanel: {
+    autoCell: {
+      '12.1.0': 'data-testid Table panel auto cell',
+    },
+  },
   CodeEditor: {
     container: {
       '10.2.3': 'data-testid Code editor container',
