@@ -108,13 +108,15 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls && !config.exploreHideLogsDownload && (
-              <Dropdown overlay={downloadMenu}>
-                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                </ToolbarButton>
-              </Dropdown>
-            )}
+            {!config.featureToggles.logsPanelControls &&
+              !config.featureToggles.newLogsPanel &&
+              !config.exploreHideLogsDownload && (
+                <Dropdown overlay={downloadMenu}>
+                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
+                  </ToolbarButton>
+                </Dropdown>
+              )}
           </div>
         )}
       </>

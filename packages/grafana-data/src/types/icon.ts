@@ -69,6 +69,7 @@ export const availableIconsIndex = {
   'clock-nine': true,
   cloud: true,
   'cloud-download': true,
+  'cloud-provider': true,
   'cloud-upload': true,
   'code-branch': true,
   cog: true,

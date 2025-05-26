@@ -520,6 +520,10 @@ export interface FeatureToggles {
   */
   kubernetesAggregator?: boolean;
   /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enable new expression parser
   */
   expressionParser?: boolean;
@@ -674,10 +678,6 @@ export interface FeatureToggles {
   * Used in Logs Drilldown to limit the time range
   */
   exploreLogsLimitedTimeRange?: boolean;
-  /**
-  * Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-  */
-  homeSetupGuide?: boolean;
   /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
@@ -841,6 +841,10 @@ export interface FeatureToggles {
   */
   teamHttpHeadersMimir?: boolean;
   /**
+  * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
+  */
+  teamHttpHeadersTempo?: boolean;
+  /**
   * Test feature toggle to see how cohorts could be set up AB testing
   * @default false
   */
@@ -936,6 +940,11 @@ export interface FeatureToggles {
   */
   alertingMigrationUI?: boolean;
   /**
+  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+  * @default true
+  */
+  alertingImportYAMLUI?: boolean;
+  /**
   * Enables the unified storage history pruner
   * @default true
   */
@@ -994,6 +1003,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -1019,4 +1032,9 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Enables restore deleted dashboards feature
+  * @default false
+  */
+  restoreDashboards?: boolean;
 }

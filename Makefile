@@ -6,6 +6,7 @@ WIRE_TAGS = "oss"
 
 -include local/Makefile
 include .bingo/Variables.mk
+include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.24.3
@@ -60,13 +61,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(GO) tool swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -84,7 +85,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -98,7 +99,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(GO) tool swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -110,11 +111,11 @@ cleanup-old-git-hooks:
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
-	$(GO) tool lefthook install -f
+	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
 lefthook-uninstall:
-	$(GO) tool lefthook uninstall
+	$(lefthook) uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -139,6 +140,8 @@ endif
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	@echo "Extracting i18n strings for plugins"
+	yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -192,8 +195,8 @@ gen-go:
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(GO) tool cue fix kinds/**/*.cue
-	$(GO) tool cue fix public/app/plugins/**/**/*.cue
+	$(cue) fix kinds/**/*.cue
+	$(cue) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -250,7 +253,7 @@ build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
 run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(GO) tool bra run
+	$(bra) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -342,7 +345,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GO) tool golangci-lint run \
+	$(golangci-lint) run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
@@ -357,7 +360,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
+		$(XARGSR) $(golangci-lint) run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -450,11 +453,11 @@ devenv-mysql:
 .PHONY: protobuf
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
-	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
-	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 
