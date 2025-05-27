@@ -102,7 +102,7 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
         <IconButton
           className={measureStyle.icon}
           name="ruler-combined"
-          tooltip={t('geomap.measure-overlay.tooltip-show-measure-tools', 'show measure tools')}
+          tooltip={t('geomap.measure-overlay.tooltip-show-measure-tools', 'Show measure tools')}
           tooltipPlacement="left"
           onClick={toggleMenu}
         />

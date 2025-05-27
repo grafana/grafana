@@ -61,7 +61,7 @@ export class CursorView extends Component<Props, State> {
     if (!event) {
       return (
         <div>
-          <Trans i18nKey="debug.cursor-view.no-events-yet">no events yet</Trans>
+          <Trans i18nKey="debug.cursor-view.no-events-yet">No events yet</Trans>
         </div>
       );
     }

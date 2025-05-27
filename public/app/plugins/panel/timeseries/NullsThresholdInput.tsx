@@ -59,7 +59,7 @@ export const NullsThresholdInput = ({ value, onChange, inputPrefix, isTime }: Pr
   return (
     <Input
       autoFocus={false}
-      placeholder={t('timeseries.nulls-threshold-input.placeholder-never', 'never')}
+      placeholder={t('timeseries.nulls-threshold-input.placeholder-never', 'Never')}
       width={10}
       defaultValue={defaultValue}
       onKeyDown={handleEnterKey}

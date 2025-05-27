@@ -240,7 +240,7 @@ export const StyleEditor = (props: Props) => {
               }
             />
           </Field>
-          <Field label={t('geomap.style-editor.label-symbol-vertical-align', 'Symbol Vertical Align')}>
+          <Field label={t('geomap.style-editor.label-symbol-vertical-align', 'Symbol vertical align')}>
             <RadioButtonGroup
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAlignVerticalChange}
@@ -251,7 +251,7 @@ export const StyleEditor = (props: Props) => {
               ]}
             />
           </Field>
-          <Field label={t('geomap.style-editor.label-symbol-horizontal-align', 'Symbol Horizontal Align')}>
+          <Field label={t('geomap.style-editor.label-symbol-horizontal-align', 'Symbol horizontal align')}>
             <RadioButtonGroup
               value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
               onChange={onAlignHorizontalChange}

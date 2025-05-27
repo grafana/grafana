@@ -132,8 +132,9 @@ export class LivePanel extends PureComponent<Props, State> {
           <Trans i18nKey="live.live-panel.grafana-requires-feature">Grafana live requires a feature flag to run</Trans>
         </p>
 
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <b>
-          <Trans i18nKey="live.live-panel.customini">custom.ini:</Trans>
+          custom.ini:
         </b>
         <pre>{preformatted}</pre>
       </Alert>
@@ -261,7 +262,7 @@ export class LivePanel extends PureComponent<Props, State> {
       return (
         <div>
           <h2>
-            <Trans i18nKey="live.live-panel.error">ERROR</Trans>
+            <Trans i18nKey="live.live-panel.error">Error</Trans>
           </h2>
           <div>{JSON.stringify(error)}</div>
         </div>

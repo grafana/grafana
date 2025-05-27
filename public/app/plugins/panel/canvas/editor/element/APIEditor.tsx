@@ -170,7 +170,8 @@ export function APIEditor({ value, context, onChange }: Props) {
       {value?.method !== HttpRequestMethod.GET && (
         <InlineFieldRow>
           <InlineField
-            label={t('canvas.apieditor.label-content-type', 'Content-Type')}
+            // eslint-disable-next-line @grafana/no-untranslated-strings
+            label="Content-Type"
             labelWidth={LABEL_WIDTH}
             grow={true}
           >

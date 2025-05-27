@@ -115,7 +115,6 @@ export const SeriesEditor = ({
                   />
                   <IconButton
                     name="trash-alt"
-                    title={t('xychart.series-editor.title-remove', 'remove')}
                     className={cx(style.actionIcon)}
                     onClick={() => deleteSeries(index)}
                     tooltip={t('xychart.series-editor.tooltip-delete-series', 'Delete series')}

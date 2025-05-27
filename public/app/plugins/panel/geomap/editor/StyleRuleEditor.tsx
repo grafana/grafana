@@ -171,7 +171,7 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
               <NumberInput
                 key={`${check.property}/${check.operation}`}
                 value={!isNaN(Number(check.value)) ? Number(check.value) : 0}
-                placeholder={t('geomap.style-rule-editor.placeholder-numeric-value', 'numeric value')}
+                placeholder={t('geomap.style-rule-editor.placeholder-numeric-value', 'Numeric value')}
                 onChange={onChangeNumericValue}
               />
             )}

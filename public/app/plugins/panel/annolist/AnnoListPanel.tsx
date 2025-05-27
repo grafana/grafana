@@ -251,7 +251,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     if (!loaded) {
       return (
         <div>
-          <Trans i18nKey="annolist.anno-list-panel.loading">loading...</Trans>
+          <Trans i18nKey="annolist.anno-list-panel.loading">Loading...</Trans>
         </div>
       );
     }
@@ -301,7 +301,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
         {annotations.length < 1 && (
           <div className={this.style.noneFound}>
-            <Trans i18nKey="annolist.anno-list-panel.no-annotations-found">No Annotations Found</Trans>
+            <Trans i18nKey="annolist.anno-list-panel.no-annotations-found">No annotations found</Trans>
           </div>
         )}
 

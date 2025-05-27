@@ -81,7 +81,7 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
           />
           <IconButton
             name="trash-alt"
-            title={t('canvas.tree-node-title.title-remove', 'remove')}
+            title={t('canvas.tree-node-title.title-remove', 'Remove')}
             className={styles.actionIcon}
             onClick={() => onDelete(element)}
             tooltip={t('canvas.tree-node-title.tooltip-remove', 'Remove')}

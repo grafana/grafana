@@ -77,7 +77,7 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
         grow={true}
         tooltip={t(
           'geomap.fit-map-view-editor.last-only-editor-fragment.tooltip-padding-relative-percent-beyond-extent',
-          'sets padding in relative percent beyond data extent'
+          'Sets padding in relative percent beyond data extent'
         )}
       >
         <NumberInput value={value?.padding ?? 5} min={0} step={1} onChange={onChangePadding} />
