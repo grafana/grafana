@@ -180,10 +180,6 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
     return undefined;
   }
 
-  if (panel.spec.data.spec.queries.some((q) => q.spec.query.kind !== 'DataQuery')) {
-    throw new Error('Only DataQuery queries are supported');
-  }
-
   let datasource: DataSourceRef | undefined = undefined;
   let isMixedDatasource = false;
 

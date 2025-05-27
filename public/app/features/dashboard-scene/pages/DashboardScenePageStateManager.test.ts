@@ -1579,9 +1579,12 @@ const v2ProvisionedDashboardResource = {
             kind: 'AnnotationQuery',
             spec: {
               builtIn: true,
-              datasource: {
-                type: 'grafana',
-                uid: '-- Grafana --',
+
+              query: {
+                group: 'grafana',
+                kind: 'DataQuery',
+                spec: {},
+                version: 'v0',
               },
               enable: true,
               hide: true,
@@ -1604,13 +1607,14 @@ const v2ProvisionedDashboardResource = {
                     {
                       kind: 'PanelQuery',
                       spec: {
-                        datasource: {
-                          type: 'grafana-testdata-datasource',
-                          uid: 'PD8C576611E62080A',
-                        },
                         hidden: false,
                         query: {
-                          kind: 'grafana-testdata-datasource',
+                          kind: 'DataQuery',
+                          group: 'grafana-testdata-datasource',
+                          version: 'v0',
+                          datasource: {
+                            name: 'PD8C576611E62080A',
+                          },
                           spec: {
                             scenarioId: 'random_walk',
                             seriesCount: 2,
