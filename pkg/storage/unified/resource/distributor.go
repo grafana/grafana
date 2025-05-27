@@ -5,6 +5,11 @@ import (
 	"hash/fnv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
+
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
@@ -15,10 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -95,6 +96,15 @@ func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceS
 	}
 
 	return client.Search(ctx, r)
+}
+
+func (ds *distributorServer) CurrentResourceVersion(ctx context.Context, r *resourcepb.CurrentResourceVersionRequest) (*resourcepb.CurrentResourceVersionResponse, error) {
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, "default", "CurrentResourceVersion")
+	if err != nil {
+		return nil, err
+	}
+
+	return client.CurrentResourceVersion(ctx, r)
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {

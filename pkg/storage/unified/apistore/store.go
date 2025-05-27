@@ -172,6 +172,16 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 	return obj, err
 }
 
+// GetCurrentResourceVersion implements storage.Interface.
+// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	rsp, err := s.store.CurrentResourceVersion(ctx, &resourcepb.CurrentResourceVersionRequest{})
+	if err != nil {
+		return 0, err
+	}
+	return uint64(rsp.ResourceVersion), nil
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.

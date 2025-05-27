@@ -308,6 +308,23 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 	return res, err
 }
 
+func (b *backend) CurrentResourceVersion(ctx context.Context) (int64, error) {
+	fmt.Printf(">> CurrentResourceVersion...\n")
+	rv := int64(0)
+	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+		rsp, err := dbutil.Query(ctx, tx, sqlResourceCurrentRV, sqlCurrentRVRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+		})
+		if len(rsp) > 0 {
+			rv = rsp[0].ResourceVersion
+		}
+		return err
+	})
+
+	fmt.Printf(">> RV: %d\n", rv)
+	return rv, err
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
