@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -75,6 +75,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
       setError('configJSON', { type: 'deps', message: deletingError.message });
     }
   }, [deletingError, setError]);
+  const { t } = useTranslate();
 
   // manually register the config field with validation
   // @TODO sometimes the value doesn't get registered – find out why

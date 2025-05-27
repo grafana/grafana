@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { chain, isEmpty, truncate } from 'lodash';
+import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   LinkButton,
@@ -17,7 +18,6 @@ import {
 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
@@ -40,6 +40,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import {
@@ -85,7 +86,7 @@ const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
-
+  const { t } = useTranslate();
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
@@ -117,6 +118,7 @@ const RuleViewer = () => {
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
+          returnToHref="/alerting/list"
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
@@ -187,7 +189,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   const hasDashboardAndPanel = dashboardUID && panelID;
   const hasDashboard = dashboardUID;
-  const hasLabels = !isEmpty(labels);
+  const hasLabels = labelsSize(labels) > 0;
 
   const interval = group.interval;
   const styles = useStyles2(getStyles);
@@ -329,6 +331,7 @@ const PrometheusConsistencyCheck = withErrorBoundary(
         waitAction.execute(ruleLocation.groupIdentifier);
       }
     }, [ruleLocation, hasRuler, waitAction]);
+    const { t } = useTranslate();
 
     if (isError(waitState)) {
       return (

@@ -57,7 +57,11 @@
       "aria-label-add": "Add",
       "aria-label-delete": "Delete",
       "placeholder-key": "Key",
+      "placeholder-name": "Name",
       "placeholder-value": "Value"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
+      "learn-more": "Learn more",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
       "titles": {
@@ -1050,7 +1055,7 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": "Delete rules"
+          "label": "Delete all rules"
         }
       },
       "delete-modal-confirmation-text": "Delete",
@@ -1060,18 +1065,21 @@
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
       "more-button": {
-        "title": "Folder bulk Actions",
-        "tooltip": "Folder bulk Actions"
+        "title": "Folder actions",
+        "tooltip": "Folder actions"
       },
       "pause": {
         "button": {
-          "label": "Pause all rule evaluation"
+          "label": "Pause all rules"
         }
       },
       "unpause": {
         "button": {
-          "label": "Resume all rule evaluation"
+          "label": "Resume all rules"
         }
+      },
+      "view": {
+        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1205,15 +1213,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Loading...."
-    },
-    "group-actions": {
-      "actions-trigger": "Rule group actions",
-      "details": "Details",
-      "edit": "Edit"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Failed to load group details",
-      "unknown-error": "Unknown error"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Group",
@@ -1408,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "This data source has no rules configured",
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-alerting-rule": "New data source-managed alerting rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
-        "new-grafana-recording-rule": "New Grafana-managed recording rule",
+        "new-grafana-alerting-rule": "New alert rule",
+        "new-grafana-recording-rule": "New recording rule",
         "new-recording-rule": "New recording rule",
-        "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
+        "no-rules-created": "You haven't created any rules yet",
+        "provisioning": "You can also define rules through file provisioning or Terraform"
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
@@ -2054,6 +2057,7 @@
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
+      "empty-data-source": "No rules found",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2070,8 +2074,7 @@
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
       "pagination": {
-        "next-page": "next page",
-        "previous-page": "previous page"
+        "next-page": "Show more…"
       },
       "recording-rules": "Recording rules",
       "return-button": {
@@ -3412,6 +3415,13 @@
           "values": "Values separated by comma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "Name filter",
+          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
+          "name-filter-placeholder": "Example: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choose data source type"
+        },
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "label": "Label",
@@ -3430,8 +3440,8 @@
           "category": "Selection options",
           "custom-all-value": "Custom all value",
           "custom-all-value-description": "A wildcard regex or other value to represent All",
-          "include-all": "Include All option",
-          "include-all-description": "Enables an option to include all values",
+          "include-all": "Include All value",
+          "include-all-description": "Enables a single option that represent all values",
           "multi-value": "Multi-value"
         },
         "type-category": "{{type}} options"
@@ -4020,6 +4030,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
+      "alert-not-supported": "This data source does not support ad hoc filters",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -4244,6 +4255,7 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-target-data-source": "Target data source",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
@@ -4521,12 +4533,6 @@
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
       "week-start-label": "Week start"
-    },
-    "time-regions": {
-      "advanced-description-cron": "Cron syntax",
-      "advanced-description-rest": " to define a recurrence schedule and duration",
-      "advanced-description-use": "Use ",
-      "advanced-label": "Advanced"
     },
     "variables": {
       "title": "Variables"
@@ -5409,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "Action variables",
         "confirm": "Confirm",
         "confirm-action": "Confirm action",
-        "style": "Button style"
+        "style": "Button style",
+        "variable-value-placeholder": "Value"
       },
+      "close": "Close",
+      "continue": "Continue",
       "inline": {
         "add-action": "Add action",
         "edit-action": "Edit action"
@@ -5423,6 +5433,7 @@
         "action-query-params": "Query parameters",
         "action-title": "Title",
         "action-title-placeholder": "Action title",
+        "action-variables": "Variables",
         "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
@@ -6159,6 +6170,7 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
+      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -6178,15 +6190,20 @@
       "log-line": "log line"
     },
     "log-line": {
+      "has-error": "Has errors",
+      "is-sampled": "Is sampled",
       "show-less": "show less",
-      "show-more": "show more"
+      "show-more": "show more",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
       "copy-log": "Copy log line",
+      "hide-details": "Show log details",
       "icon-label": "Log menu",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
+      "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
     "log-row-context-modal": {
@@ -6780,7 +6797,8 @@
       "title": "Library panels"
     },
     "machine-learning": {
-      "title": "Machine learning"
+      "subtitle": "Explore AI and machine learning features",
+      "title": "AI & machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -6864,7 +6882,7 @@
       "title": "Service accounts"
     },
     "setup-guide": {
-      "title": "Setup guide"
+      "title": "Getting started guide"
     },
     "shared-dashboard": {
       "subtitle": "Manage your organization's externally shared dashboards",
@@ -7377,8 +7395,8 @@
     "version-list": {
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
-      "last-updated": "Last updated",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
+      "latest-release-date": "Latest release date",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }
@@ -9030,7 +9048,8 @@
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
-      "placeholder-value-or-variable": "Value or variable"
+      "placeholder-value-or-variable": "Value or variable",
+      "variable-regex-documentation": "Formats multi-value variable into a regex string"
     },
     "regression-transformer-editor": {
       "label-degree": "Degree",

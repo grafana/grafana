@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -53,7 +55,7 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 			group := fmt.Sprintf("group-%d", g)
 			for r := 0; r < opts.NumResourceTypes; r++ {
 				resourceType := fmt.Sprintf("resource-%d", r)
-				_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
+				_, err := writeEvent(ctx, backend, "init", resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
@@ -104,7 +106,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 				name := fmt.Sprintf("item-%d", uniqueID)
 
 				writeStart := time.Now()
-				_, err := writeEvent(ctx, backend, name, resource.WatchEvent_ADDED,
+				_, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
@@ -232,7 +234,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 
 			for jobID := range jobs {
 				doc := &resource.IndexableDocument{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Namespace: nr.Namespace,
 						Group:     nr.Group,
 						Resource:  nr.Resource,
@@ -366,7 +368,11 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	// Run the storage backend benchmark write throughput to create events
 	startTime := time.Now()
 	var result *BenchmarkResult
+	// Channel to signal when the benchmark goroutine completes
+	benchmarkDone := make(chan struct{})
+
 	go func() {
+		defer close(benchmarkDone)
 		result, err = runStorageBackendBenchmark(ctx, backend, opts)
 		require.NoError(tb, err)
 	}()
@@ -378,6 +384,8 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		latencies = append(latencies, evt.Latency.Seconds())
 	}
 	totalDuration := time.Since(startTime)
+
+	<-benchmarkDone
 	// Calculate index latency percentiles
 	sort.Float64s(latencies)
 	var p50, p90, p99 float64
@@ -420,7 +428,7 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 // testDocumentBuilder implements DocumentBuilder for testing
 type testDocumentBuilder struct{}
 
-func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	// convert value to unstructured.Unstructured
 	var u unstructured.Unstructured
 	if err := u.UnmarshalJSON(value); err != nil {
@@ -451,7 +459,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.R
 		}
 	}
 	return &resource.IndexableDocument{
-		Key: &resource.ResourceKey{
+		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,

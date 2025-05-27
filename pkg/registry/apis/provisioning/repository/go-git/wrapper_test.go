@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -25,7 +24,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/server"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/go-git/go-git/v5/storage/memory"
@@ -204,31 +202,6 @@ func TestGoGitRepo_Validate(t *testing.T) {
 	// Test Validate method
 	errs := repo.Validate()
 	require.Empty(t, errs, "Validate should return no errors")
-}
-
-func TestGoGitRepo_Webhook(t *testing.T) {
-	repo := &GoGitRepo{
-		config: &v0alpha1.Repository{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "test",
-				Namespace: "default",
-			},
-			Spec: v0alpha1.RepositorySpec{
-				GitHub: &v0alpha1.GitHubRepositoryConfig{
-					Path: "grafana/",
-				},
-			},
-		},
-	}
-
-	// Test Webhook method
-	ctx := context.Background()
-	_, err := repo.Webhook(ctx, nil)
-	require.Error(t, err, "Webhook should return an error as it's not implemented")
-	var statusErr *apierrors.StatusError
-	require.True(t, errors.As(err, &statusErr), "Error should be a StatusError")
-	require.Equal(t, http.StatusNotImplemented, int(statusErr.ErrStatus.Code))
-	require.Contains(t, statusErr.ErrStatus.Message, "history is not yet implemented")
 }
 
 func TestGoGitRepo_Read(t *testing.T) {

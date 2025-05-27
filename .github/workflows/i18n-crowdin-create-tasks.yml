@@ -2,8 +2,8 @@ name: Crowdin automatic task management
 
 on:
   workflow_dispatch:
-  # TODO uncomment when we're confident this works
   # once a week on Sunday at midnight
+  # TODO enable once we're ready to create tasks automatically
   # schedule:
   #   - cron: "0 0 * * 0"
 
@@ -37,14 +37,8 @@ jobs:
 
       - run: yarn install --immutable --check-cache
 
-      - name: Clean up completed tasks
-        env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/cleanup-tasks.ts
-
       - name: Create tasks
         env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          CROWDIN_PROJECT_ID: '5'
+          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_TOKEN }}
         run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/create-tasks.ts

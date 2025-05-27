@@ -20,7 +20,7 @@ weight: 300
 System for Cross-domain Identity Management (SCIM) is an open standard that allows automated user provisioning and management. With SCIM, you can automate the provisioning of users and groups from your identity provider to Grafana.
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 {{< admonition type="note" >}}
@@ -85,7 +85,7 @@ The table below describes all SCIM configuration options. Like any other Grafana
 
 - SCIM group sync (`group_sync_enabled = true`) and Team Sync cannot be enabled simultaneously
 - You can use SCIM user sync (`user_sync_enabled = true`) alongside Team Sync
-- For more details about migration and compatibility, see [SCIM vs Team Sync](./manage-users-teams/_index.md#scim-vs-team-sync)
+- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/#scim-vs-team-sync)
   {{< /admonition >}}
 
 ### Example SCIM configuration
@@ -134,5 +134,5 @@ The following table compares SCIM with other synchronization methods to help you
 ## Next steps
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
-- [Configure SCIM with Azure AD](azuread/)
-- [Configure SCIM with Okta](okta/)
+- [Configure SCIM with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/)
+- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/)

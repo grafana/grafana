@@ -12,13 +12,16 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -32,9 +35,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
@@ -55,10 +55,6 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
@@ -102,9 +98,6 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("Skipping benchmark on Spanner")
-	}
 
 	ctx := context.Background()
 
@@ -142,9 +135,6 @@ func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := db.InitTestDB(t)
@@ -155,9 +145,9 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 	require.NoError(t, err)
-	var client resource.ResourceStoreClient
+	var client resourcepb.ResourceStoreClient
 
 	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -193,7 +183,7 @@ func TestClientServer(t *testing.T) {
 			},
 			"spec": {}
 		}`)
-		resp, err := client.Create(clientCtx, &resource.CreateRequest{
+		resp, err := client.Create(clientCtx, &resourcepb.CreateRequest{
 			Key:   resourceKey("item1"),
 			Value: raw,
 		})
@@ -203,7 +193,7 @@ func TestClientServer(t *testing.T) {
 	})
 
 	t.Run("Read the resource", func(t *testing.T) {
-		resp, err := client.Read(clientCtx, &resource.ReadRequest{
+		resp, err := client.Read(clientCtx, &resourcepb.ReadRequest{
 			Key: resourceKey("item1"),
 		})
 		require.NoError(t, err)
@@ -217,8 +207,8 @@ func TestClientServer(t *testing.T) {
 	})
 }
 
-func resourceKey(name string) *resource.ResourceKey {
-	return &resource.ResourceKey{
+func resourceKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
 		Namespace: "namespace",
 		Group:     "group",
 		Resource:  "resource",
