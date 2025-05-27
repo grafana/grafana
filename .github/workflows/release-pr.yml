@@ -35,7 +35,7 @@ on:
       release_date:
         required: false
         type: string
-        description: "Release date in format "YYYY-MM-DD"
+        description: "Release date in format YYYY-MM-DD"
 
 permissions:
   contents: read
@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: compute_release_date
         run: |
-          if [[ $DATE != '' ]' then
+          if [ -n "$DATE" ]; then
             echo "release_date=$DATE" >> $GITHUB_ENV
             exit 0
           fi
