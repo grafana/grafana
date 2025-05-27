@@ -57,7 +57,11 @@
       "aria-label-add": "Toevoegen",
       "aria-label-delete": "Verwijderen",
       "placeholder-key": "Sleutel",
+      "placeholder-name": "Naam",
       "placeholder-value": "Waarde"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -3411,6 +3415,13 @@
           "values": "Waarden gescheiden door komma",
           "values-placeholder": "1, 10, mijnsleutel : mijnwaarde, mijnwaarde, escaped,waarde"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Type",
+          "type-placeholder": ""
+        },
         "description": "Beschrijving",
         "description-placeholder": "Omschrijving",
         "label": "Label",
@@ -3429,8 +3440,8 @@
           "category": "Selectiemogelijkheden",
           "custom-all-value": "Alle aangepaste waarde",
           "custom-all-value-description": "Een wildcard regex of een andere waarde om Alles weer te geven",
-          "include-all": "Optie Alles opnemen",
-          "include-all-description": "Schakelt een optie in om alle waarden op te nemen",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Meerdere waarden"
         },
         "type-category": "Opties voor {{type}}"
@@ -5404,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bevestigen",
         "confirm-action": "Actie bevestigen",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Waarde"
       },
+      "close": "Sluiten",
+      "continue": "",
       "inline": {
         "add-action": "Actie toevoegen",
         "edit-action": "Actie bewerken"
@@ -5418,6 +5433,7 @@
         "action-query-params": "Query-parameters",
         "action-title": "Titel",
         "action-title-placeholder": "Actietitel",
+        "action-variables": "Variabelen",
         "one-click-description": "Slechts één link of actie kan tegelijk de één-klik-functionaliteit hebben ingeschakeld"
       }
     },
@@ -6866,7 +6882,7 @@
       "title": "Serviceaccounts"
     },
     "setup-guide": {
-      "title": "Installatiehandleiding"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "De extern gedeelde dashboards van je organisatie beheren",

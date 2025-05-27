@@ -85,7 +85,6 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
@@ -191,8 +190,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     Dashboard | DashboardV2Spec,
     DashboardJson | DashboardV2Spec
   >;
-
-  private _layoutRestorer = new LayoutRestorer();
 
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
@@ -662,7 +659,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.setState({ body: layout });
     this.state.body.activateRepeaters?.();
   }
 

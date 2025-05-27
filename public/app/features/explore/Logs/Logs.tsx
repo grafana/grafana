@@ -1075,7 +1075,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   permalinkedRowId={panelState?.logs?.id}
-                  scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
@@ -1191,6 +1190,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
                   onUnpinLine={onPinToContentOutlineClick}
+                  permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
                   showControls

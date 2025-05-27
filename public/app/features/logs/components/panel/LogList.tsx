@@ -69,6 +69,7 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   showControls: boolean;
@@ -88,6 +89,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'permalinkedLogId'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -125,6 +127,7 @@ export const LogList = ({
   onPinLine,
   onOpenContext,
   onUnpinLine,
+  permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   showControls,
@@ -161,6 +164,7 @@ export const LogList = ({
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}
+      permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
       showControls={showControls}
@@ -205,6 +209,7 @@ const LogListComponent = ({
     dedupStrategy,
     filterLevels,
     forceEscape,
+    permalinkedLogId,
     showDetails,
     showTime,
     sortOrder,
@@ -213,7 +218,9 @@ const LogListComponent = ({
   } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
+    app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight
   );
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
@@ -262,7 +269,11 @@ const LogListComponent = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight);
+      setListHeight(
+        app === CoreApp.Explore
+          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+          : containerElement.clientHeight
+      );
     }, 50);
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -292,8 +303,15 @@ const LogListComponent = ({
   );
 
   const handleScrollPosition = useCallback(() => {
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : logs.length - 1);
-  }, [initialScrollPosition, logs.length]);
+    if (permalinkedLogId) {
+      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
+      if (index >= 0) {
+        listRef.current?.scrollToItem(index, 'start');
+        return;
+      }
+    }
+    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
@@ -302,6 +320,10 @@ const LogListComponent = ({
 
   const handleLogLineClick = useCallback(
     (log: LogListModel) => {
+      // Let people select text
+      if (document.getSelection()?.toString()) {
+        return;
+      }
       toggleDetails(log);
     },
     [toggleDetails]

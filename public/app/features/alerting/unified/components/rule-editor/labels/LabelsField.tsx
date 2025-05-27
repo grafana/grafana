@@ -3,8 +3,7 @@ import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { TFunction, t } from '@grafana/i18n/internal';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { labelsApi } from '../../../api/labelsApi';
@@ -117,6 +116,7 @@ export function useCombinedLabels(
   labelsInSubform: Array<{ key: string; value: string }>,
   selectedKey: string
 ) {
+  const { t } = useTranslate();
   // ------- Get labels keys and their values from existing alerts
   const { labels: labelsByKeyFromExisingAlerts, isLoading } = useGetLabelsFromDataSourceName(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.

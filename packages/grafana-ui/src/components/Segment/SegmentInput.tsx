@@ -1,7 +1,7 @@
 import { cx, css } from '@emotion/css';
 import { HTMLProps, useRef, useState } from 'react';
 import * as React from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
+import { useClickAway } from 'react-use';
 
 import { useStyles2 } from '../../themes';
 import { measureText } from '../../utils/measureText';
