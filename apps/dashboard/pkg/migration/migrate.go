@@ -1,6 +1,10 @@
 package migration
 
-import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+import (
+	"sync"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+)
 
 // Initialize provides the migrator singleton with required dependencies and builds the map of migrations.
 func Initialize(dsInfoProvider schemaversion.DataSourceInfoProvider) {
@@ -13,10 +17,13 @@ func Migrate(dash map[string]interface{}, targetVersion int) error {
 	return migratorInstance.migrate(dash, targetVersion)
 }
 
-var migratorInstance = &migrator{
-	migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
-	ready:      make(chan struct{}),
-}
+var (
+	migratorInstance = &migrator{
+		migrations: map[int]schemaversion.SchemaVersionMigrationFunc{},
+		ready:      make(chan struct{}),
+	}
+	initOnce sync.Once
+)
 
 type migrator struct {
 	ready      chan struct{}
@@ -24,8 +31,10 @@ type migrator struct {
 }
 
 func (m *migrator) init(dsInfoProvider schemaversion.DataSourceInfoProvider) {
-	m.migrations = schemaversion.GetMigrations(dsInfoProvider)
-	close(m.ready)
+	initOnce.Do(func() {
+		m.migrations = schemaversion.GetMigrations(dsInfoProvider)
+		close(m.ready)
+	})
 }
 
 func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error {
