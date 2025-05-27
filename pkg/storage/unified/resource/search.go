@@ -561,8 +561,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Collect all documents in a single bulk request
-			items := make([]*BulkIndexItem, 0)
+			// Process documents in batches to avoid memory issues
+			// When dealing with large collections (e.g., 100k+ documents),
+			// loading all documents into memory at once can cause OOM errors.
+			items := make([]*BulkIndexItem, 0, maxBatchSize)
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -589,9 +591,21 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Action: ActionIndex,
 					Doc:    doc,
 				})
+
+				// When we reach the batch size, perform bulk index and reset the batch.
+				if len(items) >= maxBatchSize {
+					if err = index.BulkIndex(&BulkIndexRequest{
+						Items: items,
+					}); err != nil {
+						return err
+					}
+
+					// Reset the slice for the next batch while preserving capacity.
+					items = items[:0]
+				}
 			}
 
-			// Perform single bulk index operation
+			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
