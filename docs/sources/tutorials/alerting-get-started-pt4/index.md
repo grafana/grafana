@@ -11,7 +11,7 @@ labels:
 tags:
   - intermediate
 title: Get started with Grafana Alerting - Templating
-weight: 60
+weight: 65
 killercoda:
   title: Get started with Grafana Alerting - Templating
   description: Learn how to use templates to create customized and concise notifications.

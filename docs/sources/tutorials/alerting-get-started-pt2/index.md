@@ -11,7 +11,7 @@ labels:
 tags:
   - beginner
 title: Get started with Grafana Alerting - Alert routing
-weight: 50
+weight: 63
 killercoda:
   title: Get started with Grafana Alerting - Alert routing
   description: Learn to use alert instances and route notifications by labels to contacts.

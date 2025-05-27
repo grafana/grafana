@@ -12,7 +12,7 @@ labels:
 tags:
   - beginner
 title: Get started with Grafana Alerting - Alert rules
-weight: 50
+weight: 60
 killercoda:
   title: Get started with Grafana Alerting - Alert rules
   description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live.

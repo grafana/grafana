@@ -11,7 +11,7 @@ labels:
 tags:
   - intermediate
 title: Get started with Grafana Alerting - Dynamic routing
-weight: 60
+weight: 66
 killercoda:
   title: Get started with Grafana Alerting - Dynamic routing
   description: Learn how to dynamically route alert notifications.
@@ -226,7 +226,7 @@ Make it short and descriptive, as this will appear in your alert notification. F
    - Enter `75` as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
    - Click **Preview alert rule condition** to run the queries.
 
-   {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
+   {{< figure src="/media/docs/alerting/flask-app-metrics.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
 
    Among the labels returned for `flask_app_cpu_usage`, the labels `instance` and `deployment` contain values that include the term _prod_ and _staging_. We will create a template later to detect these keywords, so that any firing alert instances are routed to the relevant contact points (e.g., alerts-prod, alerts-staging).
 
@@ -274,14 +274,6 @@ Select who should receive a notification when an alert rule fires.
 
    The environment label matcher should map to the notification policies created earlier. This makes sure that firing alert instances are routed to the appropriate contact points associated with each policy.
 
-### Configure notification message
-
-Link your dashboard panel to this alert rule to display alert annotations in your visualization whenever the alert rule triggers or resolves.
-
-1. Click **Link dashboard and panel**.
-1. Find the panel that you created earlier.
-1. Click **Confirm**.
-
 ## Step 3: Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
@@ -297,7 +289,7 @@ Now that the CPU and memory alert rules are set up, they are linked to the notif
 
 ## Done! Your alerts are now dynamically routed
 
-Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns simplified values like `prod` or `staging` to our custom environment label using the template.
+Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification polcicies, which route alerts to the correct contact points.
 
 To see this in action go to **Alerts & IRM > Alerting > Active notifications**
 

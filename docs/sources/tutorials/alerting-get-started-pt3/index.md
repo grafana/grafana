@@ -11,7 +11,7 @@ labels:
 tags:
   - intermediate
 title: Get started with Grafana Alerting - Grouping notifications
-weight: 60
+weight: 64
 killercoda:
   title: Get started with Grafana Alerting - Grouping notifications
   description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting.
