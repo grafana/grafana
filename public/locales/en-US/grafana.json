@@ -9062,8 +9062,8 @@
       "repository": "Repository",
       "tab-info": {
         "label": {
-          "dry-run-result-after-apply": "Dry Run (result after apply)",
-          "existing-from-grafana": "Existing (from grafana)",
+          "dry-run-result-after-apply": "Dry run (result after apply)",
+          "existing-from-grafana": "Existing (from Grafana)",
           "file-from-repository": "File (from repository)"
         }
       },

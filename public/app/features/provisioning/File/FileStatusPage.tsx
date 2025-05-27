@@ -93,11 +93,11 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
     },
     {
       value: TabSelection.Existing,
-      label: t('provisioning.resource-view.tab-info.label.existing-from-grafana', 'Existing (from grafana)'),
+      label: t('provisioning.resource-view.tab-info.label.existing-from-grafana', 'Existing (from Grafana)'),
     },
     {
       value: TabSelection.DryRun,
-      label: t('provisioning.resource-view.tab-info.label.dry-run-result-after-apply', 'Dry Run (result after apply)'),
+      label: t('provisioning.resource-view.tab-info.label.dry-run-result-after-apply', 'Dry run (result after apply)'),
     },
   ];
 
