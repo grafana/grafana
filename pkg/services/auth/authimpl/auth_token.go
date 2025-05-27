@@ -275,13 +275,14 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		if err != nil {
 			return nil, err
 		}
+		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
 		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
 			// Rotation happened too recently. Skip new rotation
-			s.log.FromContext(ctx).Debug("Token was last rotated very recently, skipping rotation", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+			log.Debug("Token was last rotated very recently, skipping rotation")
 			return token, nil
 		}
-		s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+		log.Debug("Rotating token")
 
 		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
