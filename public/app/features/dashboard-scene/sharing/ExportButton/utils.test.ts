@@ -146,6 +146,7 @@ describe('Dashboard Export Image Utils', () => {
         absolute: true,
         updateQuery: {
           height: -1,
+          width: 1000,
           scale: 2,
           kiosk: true,
           hideNav: true,
