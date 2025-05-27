@@ -91,17 +91,6 @@ export function getConfig(opts: TimelineCoreOptions) {
       .map((v) => Array(count).fill(null));
   };
 
-  // handle null and NaN mapped values when drawing a box
-  const shouldDrawYVal = (sidx: number, yVal: number | null): boolean => {
-    if (yVal == null) {
-      return isDiscrete(sidx) && hasMappedNull(sidx);
-    }
-    if (Number.isNaN(yVal)) {
-      return isDiscrete(sidx) && hasMappedNaN(sidx);
-    }
-    return true;
-  };
-
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hoveredAtCursor: Rect | null = null;
@@ -209,7 +198,9 @@ export function getConfig(opts: TimelineCoreOptions) {
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
         let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-        let discrete = isDiscrete(sidx);
+        const discrete = isDiscrete(sidx);
+        const mappedNull = discrete && hasMappedNull(sidx);
+        const mappedNaN = discrete && hasMappedNaN(sidx);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -219,8 +210,10 @@ export function getConfig(opts: TimelineCoreOptions) {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
+              const shouldDrawY =
+                Number.isFinite(yVal) || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
-              if (shouldDrawYVal(sidx, yVal)) {
+              if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
@@ -263,8 +256,10 @@ export function getConfig(opts: TimelineCoreOptions) {
 
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
+              const shouldDrawY =
+                Number.isFinite(yVal) || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
-              if (shouldDrawYVal(sidx, yVal)) {
+              if (shouldDrawY) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
                 let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
@@ -319,8 +314,16 @@ export function getConfig(opts: TimelineCoreOptions) {
               let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
               let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
+              const discrete = isDiscrete(sidx);
+              const mappedNull = discrete && hasMappedNull(sidx);
+              const mappedNaN = discrete && hasMappedNaN(sidx);
+
               for (let ix = 0; ix < dataY.length; ix++) {
-                if (shouldDrawYVal(sidx, dataY[ix])) {
+                const yVal = dataY[ix];
+                const shouldDrawY =
+                  Number.isFinite(yVal) || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+
+                if (shouldDrawY) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   if (!boxRect || boxRect.x >= xDim) {
