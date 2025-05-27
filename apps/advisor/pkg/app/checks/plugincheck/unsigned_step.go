@@ -43,7 +43,6 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 	if p.Signature == plugins.SignatureStatusUnsigned ||
 		p.Signature == plugins.SignatureStatusModified ||
 		p.Signature == plugins.SignatureStatusInvalid {
-
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
