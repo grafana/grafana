@@ -878,6 +878,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.activeManager = this.v2Manager;
     }
   }
+  public resetActiveManager() {
+    this.setActiveManager('v1');
+  }
 }
 
 const managers: {
