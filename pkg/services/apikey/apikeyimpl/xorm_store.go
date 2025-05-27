@@ -136,23 +136,6 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res 
 	return res, err
 }
 
-func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (res *apikey.APIKey, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var key apikey.APIKey
-		has, err := sess.ID(query.ApiKeyID).Get(&key)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return apikey.ErrInvalid
-		}
-
-		res = &key
-		return nil
-	})
-	return res, err
-}
-
 func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) (res *apikey.APIKey, err error) {
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
