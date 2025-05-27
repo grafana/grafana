@@ -64,10 +64,12 @@ func NewGitRepository(
 		token = string(decrypted)
 	}
 
+	logger := logging.FromContext(ctx)
 	// Create nanogit client with authentication
 	client, err := nanogit.NewHTTPClient(
 		gitURL,
 		nanogit.WithBasicAuth("git", token),
+		nanogit.WithLogger(logger),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
