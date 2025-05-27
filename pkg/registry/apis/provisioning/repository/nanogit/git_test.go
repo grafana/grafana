@@ -2,11 +2,15 @@ package nanogit
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func TestGitRepository_Validate(t *testing.T) {
@@ -187,7 +191,7 @@ func TestNewGit(t *testing.T) {
 
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGit(ctx, config, mockSecrets, func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+	gitRepo, err := NewGitRepository(ctx, config, mockSecrets, func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 		return nil, nil
 	})
 
@@ -196,4 +200,191 @@ func TestNewGit(t *testing.T) {
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
 	require.Equal(t, "main", gitRepo.Branch())
 	require.Equal(t, config, gitRepo.Config())
+}
+
+func TestCreateSignature(t *testing.T) {
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Git: &provisioning.GitRepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: "main",
+					Token:  "token123",
+				},
+			},
+		},
+	}
+
+	t.Run("should use default signature when no context signature", func(t *testing.T) {
+		ctx := context.Background()
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use context signature when available", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), author.Time)
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), committer.Time)
+	})
+
+	t.Run("should fallback to default when context signature has empty name", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use current time when signature time is zero", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Time{}, // Zero time
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		before := time.Now()
+		author, committer := gitRepo.createSignature(ctx)
+		after := time.Now()
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.True(t, author.Time.After(before.Add(-time.Second)))
+		require.True(t, author.Time.Before(after.Add(time.Second)))
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.True(t, committer.Time.After(before.Add(-time.Second)))
+		require.True(t, committer.Time.Before(after.Add(time.Second)))
+	})
+}
+
+func TestEnsureBranchExists(t *testing.T) {
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Git: &provisioning.GitRepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: "main",
+					Token:  "token123",
+				},
+			},
+		},
+	}
+
+	t.Run("should reject invalid branch name", func(t *testing.T) {
+		ctx := context.Background()
+		_, err := gitRepo.ensureBranchExists(ctx, "feature//branch")
+
+		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, int32(400), statusErr.Status().Code)
+		require.Equal(t, "invalid branch name", statusErr.Status().Message)
+	})
+
+	t.Run("should validate branch names for validation errors only", func(t *testing.T) {
+		testCases := []struct {
+			name        string
+			branchName  string
+			shouldError bool
+		}{
+			{"invalid double slash", "feature//branch", true},
+			{"invalid double dot", "feature..branch", true},
+			{"invalid ending with dot", "feature.", true},
+			{"invalid starting with slash", "/feature", true},
+			{"invalid ending with slash", "feature/", true},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				ctx := context.Background()
+				_, err := gitRepo.ensureBranchExists(ctx, tc.branchName)
+
+				if tc.shouldError {
+					require.Error(t, err)
+					var statusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &statusErr))
+					require.Equal(t, int32(400), statusErr.Status().Code)
+					require.Equal(t, "invalid branch name", statusErr.Status().Message)
+				}
+			})
+		}
+	})
+}
+
+func TestHistory(t *testing.T) {
+	t.Run("should test basic method structure", func(t *testing.T) {
+		gitRepo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+						Token:  "token123",
+						Path:   "configs",
+					},
+				},
+			},
+		}
+
+		ctx := context.Background()
+
+		// Test that the method signature is correct and handles nil client gracefully
+		// This will panic on a nil pointer dereference since we don't have a real client
+		// The actual functionality would be tested in integration tests with a real nanogit client
+		require.Panics(t, func() {
+			gitRepo.History(ctx, "test.json", "main")
+		}, "Expected panic due to nil client")
+	})
+
+	t.Run("should validate path handling", func(t *testing.T) {
+		// Test path validation logic that doesn't require a client
+		config := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Git: &provisioning.GitRepositoryConfig{
+					Path: "configs",
+				},
+			},
+		}
+
+		// Test path joining logic (using the same logic as in the method)
+		finalPath := safepath.Join(config.Spec.Git.Path, "test.json")
+		require.Equal(t, "configs/test.json", finalPath)
+
+		// Test with empty path
+		finalPathEmpty := safepath.Join("", "test.json")
+		require.Equal(t, "test.json", finalPathEmpty)
+	})
 }

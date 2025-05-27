@@ -46,7 +46,7 @@ type GitRepository interface {
 	Branch() string
 }
 
-func NewGit(
+func NewGitRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	secrets secrets.Service,
@@ -95,6 +95,9 @@ func (r *gitRepository) Branch() string {
 	return r.branch
 }
 
+// TODO: see if we can provide users with a way to generate those URLs.
+// some kind of template or pattern
+
 // Validate implements provisioning.Repository.
 func (r *gitRepository) Validate() (list field.ErrorList) {
 	git := r.config.Spec.Git
@@ -114,7 +117,6 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 	} else if !repository.IsValidGitBranchName(git.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "git", "branch"), git.Branch, "invalid branch name"))
 	}
-	// TODO: Use two fields for token
 	if git.Token == "" && len(git.EncryptedToken) == 0 {
 		list = append(list, field.Required(field.NewPath("spec", "git", "token"), "a git access token is required"))
 	}
@@ -225,7 +227,6 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	}
 
 	// get root hash
-	// TODO: simplify in library to get the ref already with the root if possible
 	root, err := r.client.GetTree(ctx, branchRef.Hash)
 	if err != nil {
 		return nil, fmt.Errorf("get root tree: %w", err)
@@ -259,32 +260,16 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
 	if err != nil {
 		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("tree not found; ref=%s", ref),
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, repository.ErrRefNotFound
 		}
 		return nil, fmt.Errorf("get branch ref: %w", err)
 	}
 
-	// get root hash
-	root, err := r.client.GetTree(ctx, branchRef.Hash)
-	if err != nil {
-		return nil, fmt.Errorf("get root tree: %w", err)
-	}
-
 	// Get flat tree using nanogit's GetFlatTree
-	tree, err := r.client.GetFlatTree(ctx, root.Hash)
+	tree, err := r.client.GetFlatTree(ctx, branchRef.Hash)
 	if err != nil {
 		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("tree not found; ref=%s", ref),
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, repository.ErrRefNotFound
 		}
 		return nil, fmt.Errorf("get flat tree: %w", err)
 	}
@@ -322,23 +307,12 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	// Get the branch reference
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
-		return fmt.Errorf("get branch ref: %w", err)
-	}
-	// TODO: Ensure branch exists
-
-	// TODO: handle for folder .keep
-
-	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
-	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
-
 	// Create .keep file if it is a directory
 	if safepath.IsDir(finalPath) {
 		if data != nil {
@@ -347,6 +321,12 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 
 		finalPath = safepath.Join(finalPath, ".keep")
 		data = []byte{}
+	}
+
+	// Create a staged writer
+	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	if err != nil {
+		return fmt.Errorf("create staged writer: %w", err)
 	}
 
 	if _, err = writer.CreateBlob(ctx, finalPath, data); err != nil {
@@ -364,17 +344,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 	}
 
 	// Commit the changes
-	// TODO: Use signature from context
-	author := nanogit.Author{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
-	committer := nanogit.Committer{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
+	author, committer := r.createSignature(ctx)
 
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
 		return fmt.Errorf("commit changes: %w", err)
@@ -394,13 +364,10 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	// Get the branch reference
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
-		return fmt.Errorf("get branch ref: %w", err)
+		return err
 	}
-
-	// TODO: Ensure branch exists
 
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
@@ -410,31 +377,16 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
 	if _, err = writer.UpdateBlob(ctx, finalPath, data); err != nil {
+		// TODO: improve nanogit library to have a better error type
 		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("file not found: %s", finalPath),
-					Code:    http.StatusNotFound,
-				},
-			}
+			return repository.ErrFileNotFound
 		}
 
 		return fmt.Errorf("update blob: %w", err)
 	}
 
 	// Commit the changes
-	author := nanogit.Author{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
-	committer := nanogit.Committer{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
-	// TODO: Use signature from context
-
+	author, committer := r.createSignature(ctx)
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
 		return fmt.Errorf("commit changes: %w", err)
 	}
@@ -470,11 +422,9 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	// TODO: Ensure branch exists
-	// Get the branch reference
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
-		return fmt.Errorf("get branch ref: %w", err)
+		return err
 	}
 
 	// Create a staged writer
@@ -486,22 +436,21 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
 
 	if _, err = writer.DeleteBlob(ctx, finalPath); err != nil {
-		// TODO: Handle not found error
+		if errors.Is(err, nanogit.ErrRefNotFound) {
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: fmt.Sprintf("file not found: %s", finalPath),
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+
 		return fmt.Errorf("delete blob: %w", err)
 	}
 
 	// Commit the changes
-	author := nanogit.Author{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
-	committer := nanogit.Committer{
-		Name:  "Grafana",
-		Email: "noreply@grafana.com",
-		Time:  time.Now(),
-	}
-	// TODO: Use signature from context
+	author, committer := r.createSignature(ctx)
+
 	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
 		return fmt.Errorf("commit changes: %w", err)
 	}
@@ -515,14 +464,72 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 }
 
 func (r *gitRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
-	// nanogit doesn't provide history/commit listing functionality
-	// Return not implemented error
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented for Git repositories",
-			Code:    http.StatusNotImplemented,
-		},
+	if ref == "" {
+		ref = r.branch
 	}
+	ctx, _ = r.logger(ctx, ref)
+
+	// Get the branch reference to start the history traversal
+	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	if err != nil {
+		if errors.Is(err, nanogit.ErrRefNotFound) {
+			return nil, repository.ErrFileNotFound
+		}
+		return nil, fmt.Errorf("get branch ref: %w", err)
+	}
+
+	// Prepare the final path by joining with the configured repository path
+	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
+
+	// Set up options for ListCommits with path filtering
+	options := nanogit.ListCommitsOptions{
+		PerPage: 10, // Reasonable default for history
+		Page:    1,
+		Path:    finalPath,
+	}
+
+	// Get commits using nanogit's ListCommits
+	commits, err := r.client.ListCommits(ctx, branchRef.Hash, options)
+	if err != nil {
+		return nil, fmt.Errorf("list commits: %w", err)
+	}
+
+	// Convert nanogit commits to provisioning.HistoryItem format
+	ret := make([]provisioning.HistoryItem, 0, len(commits))
+	for _, commit := range commits {
+		authors := make([]provisioning.Author, 0)
+
+		// Add author if available
+		if commit.Author.Name != "" {
+			authors = append(authors, provisioning.Author{
+				Name: commit.Author.Name,
+				// Use email for username as it's the only way to get a unique identifier
+				Username: commit.Author.Email,
+				// No avatar URL available in Git commits
+				AvatarURL: "",
+			})
+		}
+
+		// Add committer if different from author
+		if commit.Committer.Name != "" && commit.Author.Name != commit.Committer.Name {
+			authors = append(authors, provisioning.Author{
+				Name: commit.Committer.Name,
+				// Use email for username as it's the only way to get a unique identifier
+				Username: commit.Committer.Email,
+				// No avatar URL available in Git commits
+				AvatarURL: "",
+			})
+		}
+
+		ret = append(ret, provisioning.HistoryItem{
+			Ref:       commit.Hash.String(),
+			Message:   commit.Message,
+			Authors:   authors,
+			CreatedAt: commit.Time().UnixMilli(),
+		})
+	}
+
+	return ret, nil
 }
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
@@ -626,6 +633,84 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 
 func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 	return r.cloneFn(ctx, opts)
+}
+
+// ensureBranchExists checks if a branch exists and creates it if it doesn't,
+// returning the branch reference to avoid duplicate GetRef calls
+func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName string) (nanogit.Ref, error) {
+	if !repository.IsValidGitBranchName(branchName) {
+		return nanogit.Ref{}, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Code:    http.StatusBadRequest,
+				Message: "invalid branch name",
+			},
+		}
+	}
+
+	// Check if branch exists by trying to get the branch reference
+	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", branchName))
+	if err == nil {
+		// Branch exists, return it
+		logging.FromContext(ctx).Info("branch already exists", "branch", branchName)
+		return branchRef, nil
+	}
+
+	// If error is not "ref not found", return the error
+	if !errors.Is(err, nanogit.ErrRefNotFound) {
+		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", err)
+	}
+
+	// Branch doesn't exist, create it based on the configured branch
+	srcBranch := r.config.Spec.Git.Branch
+	srcRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", srcBranch))
+	if err != nil {
+		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", err)
+	}
+
+	// Create the new branch reference
+	newRef := nanogit.Ref{
+		Name: fmt.Sprintf("refs/heads/%s", branchName),
+		Hash: srcRef.Hash,
+	}
+
+	if err := r.client.CreateRef(ctx, newRef); err != nil {
+		return nanogit.Ref{}, fmt.Errorf("create branch: %w", err)
+	}
+
+	return newRef, nil
+}
+
+// createSignature creates author and committer signatures using the context signature if available,
+// falling back to default Grafana signature
+func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
+	// TODO: improve nanogit library to have a Signature type
+	author := nanogit.Author{
+		Name:  "Grafana",
+		Email: "noreply@grafana.com",
+		Time:  time.Now(),
+	}
+	committer := nanogit.Committer{
+		Name:  "Grafana",
+		Email: "noreply@grafana.com",
+		Time:  time.Now(),
+	}
+
+	// Use signature from context if available
+	if sig := repository.GetAuthorSignature(ctx); sig != nil && sig.Name != "" {
+		author.Name = sig.Name
+		author.Email = sig.Email
+		author.Time = sig.When
+		committer.Name = sig.Name
+		committer.Email = sig.Email
+		committer.Time = sig.When
+	}
+
+	if author.Time.IsZero() {
+		author.Time = time.Now()
+		committer.Time = time.Now()
+	}
+
+	return author, committer
 }
 
 func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -1146,13 +1147,16 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
+	cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+		return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
+	}
+
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitRepositoryType:
+		return nanogit.NewGitRepository(ctx, r, b.secrets, cloneFn)
 	case provisioning.GitHubRepositoryType:
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
-		}
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
