@@ -57,7 +57,11 @@
       "aria-label-add": "Tambahkan",
       "aria-label-delete": "Hapus",
       "placeholder-key": "Kunci",
+      "placeholder-name": "Nama",
       "placeholder-value": "Nilai"
+    },
+    "variables-editor": {
+      "placeholder-type": "Jenis"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "Edit",
       "export": "Ekspor",
       "export-all": "Ekspor semua",
+      "learn-more": "Pelajari lebih lanjut",
       "loading": "Memuat...",
       "search-by-matchers": "Cari berdasarkan pencocok",
       "titles": {
@@ -1396,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Aturan peringatan baru",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Aturan pencatatan baru yang dikelola sumber data",
-        "new-grafana-recording-rule": "Aturan pencatatan baru yang dikelola Grafana",
+        "new-grafana-alerting-rule": "Aturan peringatan baru",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Aturan pencatatan baru",
-        "provisioning": "Anda juga dapat menentukan aturan melalui penyediaan file atau Terraform. <2>Pelajari selengkapnya</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Tidak ada sumber data Prometheus atau Loki yang dikonfigurasi",
       "no-rules": "Tidak ada aturan yang ditemukan.",
@@ -2038,6 +2047,7 @@
         "description": "Periksa konfigurasi sumber data. Apakah sumber data mendukung API Prometheus?",
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -3387,6 +3397,13 @@
           "values": "Nilai dipisahkan dengan koma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Jenis",
+          "type-placeholder": ""
+        },
         "description": "Deskripsi",
         "description-placeholder": "Teks deskriptif",
         "label": "Label",
@@ -3405,8 +3422,8 @@
           "category": "Opsi pemilihan",
           "custom-all-value": "Nilai kustom untuk semua",
           "custom-all-value-description": "Regex wildcard atau nilai lainnya untuk merepresentsaikan Semua",
-          "include-all": "Sertakan opsi Semua",
-          "include-all-description": "Mengaktifkan opsi untuk menyertakan semua nilai",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multi-nilai"
         },
         "type-category": "Opsi {{type}}"
@@ -5377,10 +5394,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Konfirmasi",
         "confirm-action": "Konfirmasi tindakan",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Nilai"
       },
+      "close": "Tutup",
+      "continue": "",
       "inline": {
         "add-action": "Tambah tindakan",
         "edit-action": "Edit tindakan"
@@ -5391,6 +5412,7 @@
         "action-query-params": "Parameter kueri",
         "action-title": "Judul",
         "action-title-placeholder": "Judul tindakan",
+        "action-variables": "Variabel",
         "one-click-description": "Hanya satu tautan atau tindakan yang dapat diaktifkan satu klik pada satu waktu"
       }
     },
@@ -6834,7 +6856,7 @@
       "title": "Akun layanan"
     },
     "setup-guide": {
-      "title": "Panduan penyiapan"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Kelola dasbor bersama eksternal organisasi Anda",
