@@ -95,4 +95,37 @@ describe('spanAncestorIdsSpy', () => {
     };
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
   });
+
+  it('breaks when an infinite loop is detected', () => {
+    const spanWithLoopedReference = {
+      ...span, //ownSpan
+      references: [
+        {
+          ...span.references[0], //firstParentSpan
+          references: [
+            {
+              ...span.references[0].references[0], //firstParentFirstGrandparent
+              references: [
+                {
+                  ...span.references[0].references[0].references[0], //rootSpan
+                  references: [
+                    {
+                      span: {
+                        spanID: ownSpanID
+                      },
+                      refType: 'FOLLOWS_FROM',
+                    },
+                    ...span.references[0].references[0].references.slice(1),
+                  ],
+                },
+              ],
+            },
+            ...span.references[0].references.slice(1),
+          ],
+        }, 
+        ...span.references.slice(1),
+      ],
+    };
+    expect(spanAncestorIdsSpy(spanWithLoopedReference as TraceSpan)).toEqual(expectedAncestorIds);
+  })
 });
