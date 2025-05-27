@@ -22,7 +22,7 @@ on:
         required: false
         default: false
         type: boolean
-      branch:
+      work_branch:
         required: false
         type: string
         description: "Use specific branch for changelog"
@@ -49,7 +49,7 @@ on:
         required: false
         default: false
         type: boolean
-      branch:
+      work_branch:
         required: false
         type: string
         description: "Use specific branch for changelog"
@@ -107,17 +107,17 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
         run: |
-          BRANCH=${{ inputs.branch }}
-
-          if [[ $BRANCH == '' ]]; then
+          if [[ "$WORK_BRANCH" == '' ]]; then
             git switch -c "changelog/${RUN_ID}/${VERSION}"
             exit 0
           fi
 
           # Chekout the changelog branch if exists, otherwise create a new one
-          git show-ref --verify --quiet "refs/remotes/origin/$BRANCH" && \
-            git switch --track "origin/$BRANCH" || \
-            git switch -c "$BRANCH"
+          git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH" && \
+            git switch --track "origin/$WORK_BRANCH" || \
+            git switch -c "$WORK_BRANCH"
+        env:
+          WORK_BRANCH: ${{ inputs.work_branch }}
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/actions/changelog
