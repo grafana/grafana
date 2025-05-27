@@ -52,7 +52,7 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
       workflow: getDefaultWorkflow(repository, loadedFromRef),
     },
     isNew: !meta.k8s?.name,
-    isGitHub: repository?.type === 'github',
+    isGit: repository?.type === 'git' || repository?.type === 'github',
     repository,
   };
 }
