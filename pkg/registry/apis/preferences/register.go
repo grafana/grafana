@@ -59,7 +59,7 @@ func (b *PreferencesAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 
 	storage[resourceInfo.StoragePath()] = store
 
-	apiGroupInfo.VersionedResourcesStorageMap[preferences.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
 }
 
