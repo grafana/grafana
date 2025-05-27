@@ -120,7 +120,7 @@ Backporting is the process of copying the pull request into the version branch o
 
 Backporting should be a rare exception, reserved only for critical bug fixes, and must be initiated by a Grafana Labs employee. We generally avoid automatic backports, as these changes carry some risk: they typically receive less manual testing than changes included in regular point releases.
 
-If a pull request addresses a critical bug and backporting is warranted, a Grafana Labs team member can apply the appropriate `backport vx.x` labels for the relevant release branches. The team will review and approve the backport before proceeding. When the pull request is merged, seperate backport PRs will be automatically creataed.
+If a pull request addresses a critical bug and backporting is warranted, a Grafana Labs team member can apply the appropriate `backport vx.x` labels for the relevant release branches. The team will review and approve the backport before proceeding. When the pull request is merged, seperate backport PRs will automatically be creataed.
 
 #### Required labels
 
