@@ -80,6 +80,8 @@ func TestScheduler(t *testing.T) {
 
 		t.Run("ValidParameters", func(t *testing.T) {
 			q := NewQueue(QueueOptionsWithDefaults(nil))
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+
 			cfg := Config{
 				NumWorkers: 2,
 				MaxBackoff: 1 * time.Second,
@@ -110,6 +112,8 @@ func TestScheduler(t *testing.T) {
 		t.Parallel()
 
 		q := NewQueue(QueueOptionsWithDefaults(nil))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+
 		scheduler, err := NewScheduler(q, &Config{
 			NumWorkers: 3,
 			MaxBackoff: 100 * time.Millisecond,
@@ -120,7 +124,6 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 		require.True(t, scheduler.State() == services.Running)
 		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
-		require.NoError(t, err)
 		require.True(t, scheduler.State() == services.Terminated)
 	})
 
@@ -128,6 +131,8 @@ func TestScheduler(t *testing.T) {
 		t.Parallel()
 
 		q := NewQueue(QueueOptionsWithDefaults(nil))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+
 		const itemCount = 10
 		var processed sync.Map
 		var wg sync.WaitGroup
@@ -143,7 +148,7 @@ func TestScheduler(t *testing.T) {
 
 		for i := 0; i < itemCount; i++ {
 			itemID := i
-			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
+			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func(_ context.Context) {
 				processed.Store(itemID, true)
 				wg.Done()
 			}))
@@ -175,6 +180,8 @@ func TestScheduler(t *testing.T) {
 		t.Parallel()
 
 		q := NewQueue(QueueOptionsWithDefaults(nil))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+
 		var processed atomic.Int32
 		taskStarted := make(chan struct{})
 		taskFinished := make(chan struct{})
@@ -188,12 +195,12 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
 		for i := 0; i < 5; i++ {
-			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
+			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func(_ context.Context) {
 				processed.Add(1)
 			}))
 		}
 
-		require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
+		require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func(_ context.Context) {
 			close(taskStarted)
 			time.Sleep(1 * time.Second)
 			processed.Add(1)
@@ -222,10 +229,6 @@ func TestScheduler(t *testing.T) {
 		t.Parallel()
 
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		var processedCount atomic.Int32
-		const totalItems = 5
-		var wg sync.WaitGroup
-		wg.Add(totalItems)
 
 		scheduler, err := NewScheduler(q, &Config{
 			NumWorkers: 2,
@@ -233,34 +236,6 @@ func TestScheduler(t *testing.T) {
 			Logger:     log.New("qos.test"),
 		})
 		require.NoError(t, err)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
-
-		for i := 0; i < totalItems; i++ {
-			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
-				processedCount.Add(1)
-				wg.Done()
-			}))
-		}
-
-		done := make(chan struct{})
-		go func() {
-			wg.Wait()
-			close(done)
-		}()
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			// Some items may not process if queue is closed early
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, q))
-
-		err = q.Enqueue(context.Background(), "tenant-1", func() {})
-		require.ErrorIs(t, err, ErrQueueClosed)
-
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, scheduler))
-		require.LessOrEqual(t, processedCount.Load(), int32(totalItems))
+		require.ErrorIs(t, services.StartAndAwaitRunning(context.Background(), scheduler), ErrQueueNotRunning)
 	})
 }

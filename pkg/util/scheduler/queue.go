@@ -23,7 +23,7 @@ var ErrMissingTenantID = errors.New("item requires TenantID")
 
 type tenantQueue struct {
 	id       string
-	items    []func()
+	items    []func(ctx context.Context)
 	isActive bool
 }
 
@@ -40,23 +40,22 @@ func (tq *tenantQueue) isEmpty() bool {
 func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
-func (tq *tenantQueue) addItem(runnable func()) {
+func (tq *tenantQueue) addItem(runnable func(ctx context.Context)) {
 	tq.items = append(tq.items, runnable)
 }
 
 type enqueueRequest struct {
 	tenantID string
-	runnable func()
+	runnable func(ctx context.Context)
 	respChan chan error
 }
 
 type dequeueRequest struct {
-	ctx      context.Context
 	respChan chan dequeueResponse
 }
 
 type dequeueResponse struct {
-	runnable func()
+	runnable func(ctx context.Context)
 	err      error
 }
 
@@ -70,8 +69,8 @@ type activeTenantsLenRequest struct {
 
 type NoopQueue struct{}
 
-func (*NoopQueue) Enqueue(_ context.Context, _ string, runnable func()) error {
-	runnable()
+func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func(ctx context.Context)) error {
+	runnable(ctx)
 	return nil
 }
 
@@ -190,7 +189,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]func(), 0, 8),
+			items: make([]func(ctx context.Context), 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
@@ -251,7 +250,7 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 
 // Enqueue adds a work item to the appropriate tenant's qos.
 // It blocks only if the dispatcher is busy or the tenant queue is full.
-func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) error {
+func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
 	if runnable == nil {
 		return ErrNilRunnable
 	}
@@ -281,7 +280,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 		q.discardedRequests.WithLabelValues(tenantID, "dispatcher_stopped").Inc()
 		err = ErrQueueClosed
 	case <-ctx.Done():
-		q.discardedRequests.WithLabelValues(tenantID, "context_cancelled").Inc()
+		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
 	}
 
@@ -291,14 +290,13 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) e
 // Dequeue removes and returns a work item from the qos using linked-list round-robin.
 // It blocks until an item is available for any tenant, the queue is closed,
 // or the context is cancelled.
-func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
+func (q *Queue) Dequeue(ctx context.Context) (func(ctx context.Context), error) {
 	if q.State() != services.Running {
 		return nil, ErrQueueClosed
 	}
 
 	respChan := make(chan dequeueResponse, 1)
 	req := dequeueRequest{
-		ctx:      ctx,
 		respChan: respChan,
 	}
 
@@ -309,8 +307,6 @@ func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 			return resp.runnable, resp.err
 		case <-ctx.Done():
 			return nil, ctx.Err()
-		case resp := <-respChan:
-			return resp.runnable, resp.err
 		}
 	case <-ctx.Done():
 		return nil, ctx.Err()

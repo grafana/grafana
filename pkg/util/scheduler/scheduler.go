@@ -23,10 +23,12 @@ const (
 	DefaultMaxRetries = 5
 )
 
+var ErrQueueNotRunning = errors.New("queue is not running")
+
 type WorkQueue interface {
 	services.Service
 
-	Dequeue(ctx context.Context) (runnable func(), err error)
+	Dequeue(ctx context.Context) (runnable func(ctx context.Context), err error)
 }
 
 // Worker processes items from the QoS request queue
@@ -43,18 +45,16 @@ func (w *Worker) run(ctx context.Context) {
 	defer w.wg.Done()
 	w.logger.Debug("worker started", "id", w.id)
 
-	for {
-		select {
-		case <-ctx.Done():
-			w.logger.Debug("worker stopped", "id", w.id)
-			return
-		default:
-			w.dequeueWithRetries(ctx)
+	for ctx.Err() == nil {
+		err := w.dequeueWithRetries(ctx)
+		if err != nil {
+			break
 		}
 	}
+	w.logger.Debug("worker stopped", "id", w.id)
 }
 
-func (w *Worker) dequeueWithRetries(ctx context.Context) {
+func (w *Worker) dequeueWithRetries(ctx context.Context) error {
 	boff := backoff.New(ctx, backoff.Config{
 		MinBackoff: DefaultMinBackoff,
 		MaxBackoff: w.maxBackoff,
@@ -64,13 +64,13 @@ func (w *Worker) dequeueWithRetries(ctx context.Context) {
 	for boff.Ongoing() {
 		runnable, err := w.queue.Dequeue(ctx)
 		if err == nil {
-			runnable()
+			runnable(ctx)
 			break
 		}
 
 		if errors.Is(err, ErrQueueClosed) {
-			w.logger.Debug("queue closed, stopping worker", "id", w.id)
-			return
+			w.logger.Error("queue closed, stopping worker", "id", w.id)
+			return fmt.Errorf("worker %d: queue closed", w.id)
 		}
 
 		w.logger.Error("retrying dequeue", "id", w.id, "error", err, "attempt", boff.NumRetries())
@@ -78,11 +78,11 @@ func (w *Worker) dequeueWithRetries(ctx context.Context) {
 	}
 	if err := boff.ErrCause(); err != nil {
 		w.logger.Error("failed to dequeue after retries", "id", w.id, "error", err)
-		return
 	}
+	return nil
 }
 
-// Scheduler manages a pool of Workers consuming from a FairQueue.
+// Scheduler manages a pool of Workers consuming from a Queue.
 type Scheduler struct {
 	services.Service
 
@@ -90,9 +90,6 @@ type Scheduler struct {
 	queue      WorkQueue
 	wg         sync.WaitGroup
 	maxBackoff time.Duration
-
-	subservices        *services.Manager
-	subservicesWatcher *services.FailureWatcher
 
 	workers    []*Worker
 	numWorkers int
@@ -124,8 +121,6 @@ func (c *Config) validate() error {
 
 // NewScheduler creates a new scheduler instance.
 func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
-	var err error
-
 	if queue == nil {
 		return nil, errors.New("queue cannot be nil")
 	}
@@ -134,32 +129,25 @@ func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 	}
 
 	s := &Scheduler{
-		logger:             config.Logger,
-		queue:              queue,
-		numWorkers:         config.NumWorkers,
-		maxBackoff:         config.MaxBackoff,
-		workers:            make([]*Worker, 0, config.NumWorkers),
-		subservicesWatcher: services.NewFailureWatcher(),
+		logger:     config.Logger,
+		queue:      queue,
+		numWorkers: config.NumWorkers,
+		maxBackoff: config.MaxBackoff,
+		workers:    make([]*Worker, 0, config.NumWorkers),
 	}
 
-	subservices := []services.Service{s.queue}
-	s.subservices, err = services.NewManager(subservices...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create subservices manager: %w", err)
-	}
 	s.Service = services.NewBasicService(s.starting, s.running, s.stopping)
 	return s, nil
 }
 
 // starting is called by the services.Service lifecycle to start the scheduler.
 func (s *Scheduler) starting(ctx context.Context) error {
-	s.subservicesWatcher.WatchManager(s.subservices)
+	s.logger.Info("scheduler starting", "numWorkers", s.numWorkers)
 
-	if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
-		return fmt.Errorf("scheduler: failed to start subservices: %w", err)
+	if s.queue.State() != services.Running {
+		return ErrQueueNotRunning
 	}
 
-	s.logger.Info("scheduler starting", "numWorkers", s.numWorkers)
 	s.workers = make([]*Worker, 0, s.numWorkers)
 	s.wg.Add(s.numWorkers)
 
@@ -181,22 +169,15 @@ func (s *Scheduler) starting(ctx context.Context) error {
 
 // running is called by the services.Service lifecycle to check if the scheduler is running.
 func (s *Scheduler) running(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return nil
-	case err := <-s.subservicesWatcher.Chan():
-		return fmt.Errorf("subservice failure: %w", err)
-	}
+	<-ctx.Done()
+	return nil
 }
 
 // stopping is called by the services.Service lifecycle to stop the scheduler.
 func (s *Scheduler) stopping(_ error) error {
 	s.logger.Info("scheduler stopping")
 
-	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
-	if err != nil {
-		return fmt.Errorf("scheduler: failed to stop subservices: %w", err)
-	}
+	s.wg.Wait()
 
 	s.logger.Info("scheduler stopped")
 	return nil

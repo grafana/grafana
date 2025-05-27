@@ -29,6 +29,7 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{
 			MaxSizePerTenant: defaultMaxSizePerTenant,
 		}))
+		require.NoError(b, services.StartAndAwaitRunning(context.Background(), q))
 		scheduler, err := NewScheduler(q, &Config{
 			NumWorkers: numWorkers,
 			MaxBackoff: defaultMaxBackoff,
@@ -45,7 +46,7 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		for i := 0; i < numTenants; i++ {
 			tenantID := tenantIDs[i]
 			for j := 0; j < itemsPerTenant; j++ {
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
 					processed.Add(1)
 					wg.Done()
 				}))
@@ -127,7 +128,7 @@ func BenchmarkScheduler_4Workers_10000Tenant_100ItemsPerTenant(b *testing.B) {
 // Benchmark comparing round-robin fairness among tenants
 func BenchmarkSchedulerFairness(b *testing.B) {
 	q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 10000}))
-
+	require.NoError(b, services.StartAndAwaitRunning(context.Background(), q))
 	scheduler, err := NewScheduler(q, &Config{
 		NumWorkers: 4,
 		MaxBackoff: 100 * time.Millisecond,
@@ -165,7 +166,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 			tenantID := tenantIDs[i]
 			tenantIdx := i
 			for j := 0; j < itemsPerTenant; j++ {
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
 					processedPerTenant[tenantIdx].Add(1)
 					wg.Done()
 				}))
@@ -208,7 +209,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 // Add a new benchmark with alternating tenant enqueuing pattern
 func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	q := NewQueue(QueueOptionsWithDefaults(nil))
-
+	require.NoError(b, services.StartAndAwaitRunning(context.Background(), q))
 	scheduler, err := NewScheduler(q, &Config{
 		NumWorkers: 4,
 		MaxBackoff: 100 * time.Millisecond,
@@ -247,7 +248,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 			for i := 0; i < numTenants; i++ {
 				tenantID := tenantIDs[i]
 				tenantIdx := i
-				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
+				require.NoError(b, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
 					processedPerTenant[tenantIdx].Add(1)
 					wg.Done()
 				}))
