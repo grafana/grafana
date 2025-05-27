@@ -7,7 +7,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleA",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -21,7 +22,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleB",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",

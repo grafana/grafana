@@ -767,17 +767,9 @@ const (
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
-	// FlagABTestFeatureToggleA
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
-
 	// FlagTemplateVariablesUsesCombobox
 	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
-	// FlagABTestFeatureToggleB
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app

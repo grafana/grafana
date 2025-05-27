@@ -1438,27 +1438,11 @@ var (
 			Owner:        identityAccessTeam,
 		},
 		{
-			Name:         "ABTestFeatureToggleA",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-		},
-		{
 			Name:         "templateVariablesUsesCombobox",
 			Description:  "Use new **Combobox** component for template variables",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "ABTestFeatureToggleB",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
 		},
 		{
 			Name:        "grafanaAdvisor",
