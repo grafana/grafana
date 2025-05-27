@@ -69,7 +69,7 @@ This collapsible section displays issues requiring immediate attention:
 
 - Each issue is listed with descriptive text outlining the problem
 - For data source issues, Grafana Advisor displays the specific data source name.
-- A "Fix me" button appears. This button points point you to the relevant issues to fix
+- A "Fix me" button appears. This button points you to the relevant issues to fix
 
 ![Action needed](/media/docs/grafana-advisor/action_needed.png)
 
