@@ -1,18 +1,12 @@
 package schemaversion_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type mockDataSourceInfoProvider struct{}
-
-func (m *mockDataSourceInfoProvider) GetDataSource(ctx context.Context, datasourceID int64) (*datasources.DataSource, error) {
-	return &datasources.DataSource{}, nil
-}
 
 func (m *mockDataSourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
