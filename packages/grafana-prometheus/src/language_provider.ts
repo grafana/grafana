@@ -23,13 +23,13 @@ import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
-  getRangeSnapInterval,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
@@ -47,8 +47,6 @@ const API_V1 = {
   LABELS: '/api/v1/labels',
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
-
-const MATCH_ALL_LABELS = '{__name__!=""}';
 
 export interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
@@ -526,9 +524,40 @@ export interface PrometheusLanguageProviderInterface
 
 export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
   private _metricsMetadata?: PromMetricsMetadata;
-  private _histogramMetrics: string[] = [];
-  private _metrics: string[] = [];
-  private _labelKeys: string[] = [];
+  private _resourceClient: ResourceApiClient;
+
+  constructor(datasource: PrometheusDatasource) {
+    super(datasource);
+
+    this.datasource = datasource;
+
+    const { cacheLevel, getAdjustedInterval, getTimeRangeParams, interpolateString } = this.datasource;
+    if (this.datasource.hasLabelsMatchAPISupport()) {
+      this._resourceClient = new LabelsApiClient(
+        this.request,
+        cacheLevel,
+        getAdjustedInterval,
+        getTimeRangeParams,
+        interpolateString
+      );
+    } else {
+      this._resourceClient = new SeriesApiClient(
+        this.request,
+        cacheLevel,
+        getAdjustedInterval,
+        getTimeRangeParams,
+        interpolateString
+      );
+    }
+  }
+
+  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
+    if (this.datasource.lookupsDisabled) {
+      return [];
+    }
+
+    return Promise.all([this._resourceClient.start(timeRange), this._queryMetadata()]);
+  };
 
   /**
    * Fetches metadata for metrics from Prometheus.
@@ -550,117 +579,20 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     return fixSummariesMetadata(metadata);
   };
 
-  // ===================================
-  // Labels API
-  // ===================================
-
-  /**
-   * Fetches all available label keys from Prometheus using labels endpoint.
-   * Uses the labels endpoint with optional match parameter for filtering.
-   *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} match - Optional label matcher to filter results
-   * @param {string} limit - Maximum number of results to return
-   * @returns {Promise<string[]>} Array of label keys sorted alphabetically
-   */
-  private _withLabelsApiFetchLabelKeys = async (
-    timeRange: TimeRange,
-    match?: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    let url = API_V1.LABELS;
-    const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
-    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
-
-    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    if (Array.isArray(res)) {
-      this._labelKeys = res.slice().sort();
-      return this._labelKeys.slice();
-    }
-
-    return [];
-  };
-
-  /**
-   * Fetches all values for a specific label key from Prometheus using labels values endpoint.
-   *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} labelKey - The label key to fetch values for
-   * @param {string} match - Optional label matcher to filter results
-   * @param {string} limit - Maximum number of results to return
-   * @returns {Promise<string[]>} Array of label values
-   */
-  private _withLabelsApiFetchLabelValues = async (
-    timeRange: TimeRange,
-    labelKey: string,
-    match?: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const timeParams = this.datasource.getAdjustedInterval(timeRange);
-    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
-    const interpolatedName = this.datasource.interpolateString(labelKey);
-    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
-    const url = API_V1.LABELS_VALUES(interpolatedAndEscapedName);
-    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    return value ?? [];
-  };
-
-  // ===================================
-  // Series API
-  // ===================================
-
-  /**
-   * Fetches all time series that match a specific label matcher using series endpoint.
-   *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} match - Label matcher to filter time series
-   * @param {string} limit - Maximum number of series to return
-   */
-  private _withSeriesApiFetchAllSeries = async (
-    timeRange: TimeRange,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ) => {
-    const timeParams = this.datasource.getTimeRangeParams(timeRange);
-    const searchParams = { ...timeParams, 'match[]': match, limit };
-    return await this.request(API_V1.SERIES, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-  };
-
-  private _withSeriesApiFetchLabelKeys = async (
-    timeRange: TimeRange,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
-    const { labelKeys } = processSeries(series);
-    return labelKeys;
-  };
-
-  private _withSeriesApiFetchLabelValues = async (
-    timeRange: TimeRange,
-    labelKey: string,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
-    const { labelValues } = processSeries(series, labelKey);
-    return labelValues;
-  };
-
   public retrieveMetricsMetadata = (): PromMetricsMetadata | undefined => {
     return this._metricsMetadata;
   };
 
   public retrieveHistogramMetrics = (): string[] => {
-    return this._histogramMetrics;
+    return this._resourceClient?.histogramMetrics;
   };
 
   public retrieveMetrics = (): string[] => {
-    return this._metrics;
+    return this._resourceClient?.metrics;
   };
 
   public retrieveLabelKeys = (): string[] => {
-    return this._labelKeys;
+    return this._resourceClient?.labelKeys;
   };
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
@@ -669,11 +601,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   };
 
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: string): Promise<string[]> => {
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      return await this._withLabelsApiFetchLabelKeys(timeRange, match, limit);
-    }
-
-    return await this._withSeriesApiFetchLabelKeys(timeRange, match ?? MATCH_ALL_LABELS, limit);
+    return await this._resourceClient.queryLabelKeys(timeRange, match, limit);
   };
 
   public queryLabelValues = async (
@@ -682,11 +610,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: string
   ): Promise<string[]> => {
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      return await this._withLabelsApiFetchLabelValues(timeRange, labelKey, match, limit);
-    }
-
-    return await this._withSeriesApiFetchLabelValues(timeRange, labelKey, match ?? MATCH_ALL_LABELS, limit);
+    return await this._resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
   };
 }
 
@@ -715,36 +639,6 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
     labelMatchers,
   };
 };
-
-export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
-  const metrics: Set<string> = new Set();
-  const labelKeys: Set<string> = new Set();
-  const labelValues: Set<string> = new Set();
-
-  // Extract metrics and label keys
-  series.forEach((item) => {
-    // Add the __name__ value to metrics
-    if ('__name__' in item) {
-      metrics.add(item.__name__);
-    }
-
-    // Add all keys except __name__ to labelKeys
-    Object.keys(item).forEach((key) => {
-      if (key !== '__name__') {
-        labelKeys.add(key);
-      }
-      if (findValuesForKey && key === findValuesForKey) {
-        labelValues.add(item[key]);
-      }
-    });
-  });
-
-  return {
-    metrics: Array.from(metrics).sort(),
-    labelKeys: Array.from(labelKeys).sort(),
-    labelValues: Array.from(labelValues).sort(),
-  };
-}
 
 /**
  * Checks if an error is a cancelled request error.
