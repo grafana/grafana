@@ -175,10 +175,11 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // GetCurrentResourceVersion implements storage.Interface.
 // See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
 func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
-	// The RV is based on the current micro time
-	// Unlike etcd, each namespace will have its own max RV, so this seems like a reasonable compromise
-	now := time.Now().UnixMicro()
-	return uint64(now), nil
+	rsp, err := s.store.CurrentResourceVersion(ctx, &resourcepb.CurrentResourceVersionRequest{})
+	if err != nil {
+		return 0, err
+	}
+	return uint64(rsp.ResourceVersion), nil
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
