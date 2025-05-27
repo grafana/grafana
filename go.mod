@@ -86,9 +86,9 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.38.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.38.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-aws-sdk v0.38.1 // @grafana/aws-datasources
+	github.com/grafana/grafana-app-sdk v0.38.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.38.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-aws-sdk v0.38.2 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.2.1 // @grafana/partner-datasources
@@ -191,13 +191,13 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.33.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.33.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.33.0 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.33.0 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.33.0 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.33.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.33.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.33.1 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.33.1 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.33.0 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
@@ -558,8 +558,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	k8s.io/apiextensions-apiserver v0.33.0 // indirect
-	k8s.io/kms v0.33.0 // indirect
+	k8s.io/apiextensions-apiserver v0.33.1 // indirect
+	k8s.io/kms v0.33.1 // indirect
 	modernc.org/libc v1.62.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.9.1 // indirect

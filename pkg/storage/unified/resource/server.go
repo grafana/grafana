@@ -19,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -316,24 +318,6 @@ type Distributor struct {
 	ClientPool *ringclient.Pool
 	Ring       *ring.Ring
 	Lifecycler *ring.BasicLifecycler
-}
-
-type RingClient struct {
-	Client ResourceClient
-	grpc_health_v1.HealthClient
-	Conn *grpc.ClientConn
-}
-
-func (c *RingClient) Close() error {
-	return c.Conn.Close()
-}
-
-func (c *RingClient) String() string {
-	return c.RemoteAddress()
-}
-
-func (c *RingClient) RemoteAddress() string {
-	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.

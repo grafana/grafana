@@ -17,7 +17,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana-app-sdk/logging v0.38.1
+	github.com/grafana/grafana-app-sdk/logging v0.38.2
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grafana/grafana/apps/folder v0.0.0-20250422074709-7c8433fbb2c2
@@ -33,7 +33,7 @@ require (
 	gocloud.dev v0.40.0
 	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.72.1
-	k8s.io/apimachinery v0.33.0
+	k8s.io/apimachinery v0.33.1
 )
 
 require (
@@ -120,7 +120,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/grafana-app-sdk v0.38.1 // indirect
+	github.com/grafana/grafana-app-sdk v0.38.2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
@@ -212,7 +212,7 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.33.0 // indirect
+	k8s.io/apiserver v0.33.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
