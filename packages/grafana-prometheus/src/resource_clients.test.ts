@@ -1,4 +1,213 @@
-import { processSeries } from './resource_clients';
+import { dateTime, TimeRange } from '@grafana/data';
+
+import { LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
+import { PrometheusCacheLevel } from './types';
+
+const mockTimeRange: TimeRange = {
+  from: dateTime(1681300292392),
+  to: dateTime(1681300293392),
+  raw: {
+    from: 'now-1s',
+    to: 'now',
+  },
+};
+
+const mockRequest = jest.fn();
+const mockGetAdjustedInterval = jest.fn().mockReturnValue({
+  start: '1681300260',
+  end: '1681300320',
+});
+const mockGetTimeRangeParams = jest.fn().mockReturnValue({
+  start: '1681300260',
+  end: '1681300320',
+});
+const mockInterpolateString = jest.fn((str) => str);
+const defaultCacheHeaders = { headers: { 'X-Grafana-Cache': 'private, max-age=60' } };
+
+describe('LabelsApiClient', () => {
+  let client: LabelsApiClient;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    client = new LabelsApiClient(
+      mockRequest,
+      PrometheusCacheLevel.Low,
+      mockGetAdjustedInterval,
+      mockGetTimeRangeParams,
+      mockInterpolateString
+    );
+  });
+
+  describe('start', () => {
+    it('should initialize metrics and label keys', async () => {
+      mockRequest.mockResolvedValueOnce(['metric1', 'metric2']).mockResolvedValueOnce(['label1', 'label2']);
+
+      await client.start(mockTimeRange);
+
+      expect(client.metrics).toEqual(['metric1', 'metric2']);
+      expect(client.labelKeys).toEqual(['label1', 'label2']);
+    });
+  });
+
+  describe('queryMetrics', () => {
+    it('should fetch metrics and process histogram metrics', async () => {
+      mockRequest.mockResolvedValueOnce(['metric1_bucket', 'metric2_sum', 'metric3_count']);
+
+      const result = await client.queryMetrics(mockTimeRange);
+
+      expect(result.metrics).toEqual(['metric1_bucket', 'metric2_sum', 'metric3_count']);
+      expect(result.histogramMetrics).toEqual(['metric1_bucket']);
+    });
+  });
+
+  describe('queryLabelKeys', () => {
+    it('should fetch and sort label keys', async () => {
+      mockRequest.mockResolvedValueOnce(['label2', 'label1', 'label3']);
+
+      const result = await client.queryLabelKeys(mockTimeRange);
+
+      expect(result).toEqual(['label1', 'label2', 'label3']);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        {
+          limit: '40000',
+          start: expect.any(String),
+          end: expect.any(String),
+        },
+        defaultCacheHeaders
+      );
+    });
+
+    it('should include match parameter when provided', async () => {
+      mockRequest.mockResolvedValueOnce(['label1', 'label2']);
+
+      await client.queryLabelKeys(mockTimeRange, '{job="grafana"}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        {
+          'match[]': '{job="grafana"}',
+          limit: '40000',
+          start: expect.any(String),
+          end: expect.any(String),
+        },
+        defaultCacheHeaders
+      );
+    });
+  });
+
+  describe('queryLabelValues', () => {
+    it('should fetch label values with proper encoding', async () => {
+      mockRequest.mockResolvedValueOnce(['value1', 'value2']);
+      mockInterpolateString.mockImplementationOnce((str) => str);
+
+      const result = await client.queryLabelValues(mockTimeRange, 'job');
+
+      expect(result).toEqual(['value1', 'value2']);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/label/job/values',
+        {
+          start: expect.any(String),
+          end: expect.any(String),
+          limit: '40000',
+        },
+        defaultCacheHeaders
+      );
+    });
+
+    it('should handle UTF-8 label names', async () => {
+      mockRequest.mockResolvedValueOnce(['value1', 'value2']);
+      mockInterpolateString.mockImplementationOnce((str) => 'http.status:sum');
+
+      await client.queryLabelValues(mockTimeRange, '"http.status:sum"');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/label/U__http_2e_status:sum/values',
+        {
+          start: expect.any(String),
+          end: expect.any(String),
+          limit: '40000',
+        },
+        defaultCacheHeaders
+      );
+    });
+  });
+});
+
+describe('SeriesApiClient', () => {
+  let client: SeriesApiClient;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    client = new SeriesApiClient(
+      mockRequest,
+      PrometheusCacheLevel.Low,
+      mockGetAdjustedInterval,
+      mockGetTimeRangeParams,
+      mockInterpolateString
+    );
+  });
+
+  describe('start', () => {
+    it('should initialize metrics and histogram metrics', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1_bucket' }, { __name__: 'metric2_sum' }]);
+
+      await client.start(mockTimeRange);
+
+      expect(client.metrics).toEqual(['metric1_bucket', 'metric2_sum']);
+      expect(client.histogramMetrics).toEqual(['metric1_bucket']);
+    });
+  });
+
+  describe('queryMetrics', () => {
+    it('should fetch and process series data', async () => {
+      mockRequest.mockResolvedValueOnce([
+        { __name__: 'metric1', label1: 'value1' },
+        { __name__: 'metric2', label2: 'value2' },
+      ]);
+
+      const result = await client.queryMetrics(mockTimeRange);
+
+      expect(result.metrics).toEqual(['metric1', 'metric2']);
+      expect(client.labelKeys).toEqual(['label1', 'label2']);
+    });
+  });
+
+  describe('queryLabelKeys', () => {
+    it('should throw error if match parameter is not provided', async () => {
+      await expect(client.queryLabelKeys(mockTimeRange)).rejects.toThrow(
+        'Series endpoint always expects at least one matcher'
+      );
+    });
+
+    it('should fetch and process label keys from series', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
+
+      const result = await client.queryLabelKeys(mockTimeRange, '{job="grafana"}');
+
+      expect(result).toEqual(['label1', 'label2']);
+    });
+  });
+
+  describe('queryLabelValues', () => {
+    it('should throw error if match parameter is not provided', async () => {
+      await expect(client.queryLabelValues(mockTimeRange, 'job')).rejects.toThrow(
+        'Series endpoint always expects at least one matcher'
+      );
+    });
+
+    it('should fetch and process label values from series', async () => {
+      mockRequest.mockResolvedValueOnce([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      const result = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
+
+      expect(result).toEqual(['grafana', 'prometheus']);
+    });
+  });
+});
 
 describe('processSeries', () => {
   it('should extract metrics and label keys from series data', () => {
