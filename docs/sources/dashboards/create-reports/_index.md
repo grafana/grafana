@@ -216,8 +216,6 @@ If specified, the custom time range overrides the time range from the report's d
 
 #### Customize template variables
 
-This option is only displayed if the dashboard has variables.
-
 Configure report-specific template variables for the dashboard.
 The variables that you select override the variables from the dashboard.
 For detailed information about using template variables, refer to [Variables](ref:templates-and-variables).
@@ -226,6 +224,8 @@ The query variables saved with a report might become out of date if the results 
 For example, if your template variable queries for a list of hostnames and a new hostname is added, then it won't be included in the report.
 If that occurs, the selected variables must be manually updated in the report.
 If you select the **All** value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
+
+This option is only displayed if the dashboard has variables.
 
 ### 2. Schedule
 
