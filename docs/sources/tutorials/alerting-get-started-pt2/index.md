@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
+# Get started with Grafana Alerting: Multi-dimensional alerts and how to route them
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Alert rules](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
