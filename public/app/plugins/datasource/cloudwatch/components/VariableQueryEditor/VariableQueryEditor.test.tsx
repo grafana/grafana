@@ -190,7 +190,7 @@ describe('VariableEditor', () => {
       render(<VariableQueryEditor {...props} />);
 
       await waitFor(() => {
-        expect(screen.getByDisplayValue('Tags.blah')).toBeInTheDocument();
+        expect(screen.queryByText('Tags.blah')).toBeInTheDocument();
       });
 
       const filterItem = screen.getByTestId('cloudwatch-multifilter-item');
