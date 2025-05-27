@@ -149,15 +149,20 @@ In the provided demo setup, you're monitoring:
 You have a mixture of critical alerts (e.g., CPU usage over `75%`) and warning alerts (e.g., memory usage over `60%`).
 
 This Flask-based Python script simulates a service that:
-- Generates random CPU and memory usage values every **10 seconds**
+- Generates random CPU and memory usage values (10% to 100%) every **10 seconds**
 - Exposes them as Prometheus metrics
-- Each metric includes a default instance label (e.g., flask-prod:5000, based on the scrape target)
-
+- Each metric includes a default instance label based on the scrape target:
+   - `instance="flask-prod:5000"`
+   - `instance="flask-staging:5000"`
+- A custom deployment label added explicitly in the app logic (this serves as an additional example for dynamically routing production instances):
+   - `deployment="prod-us-cs30"`
+   - `deployment="staging-us-cs20"`
+ 
 <!-- INTERACTIVE page step2.md END -->
 
 <!-- INTERACTIVE page step3.md START -->
 
-## Create Notification Policies
+## Step 1: Create Notification Policies
 
 Notification policies route alert instances to contact points via label matchers. Since we know what labels our application returns (i.e., `environment`, `job`, `instance`), we can use these labels to match alert rules.
 
@@ -192,7 +197,7 @@ Now that the labels are defined, we can create alert rules for CPU and memory me
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
 
-## Create alert rules to monitor CPU and memory usage
+## Step 2: Create alert rules to monitor CPU and memory usage
 
 Follow these steps to manually create alert rules and link them to a visualization.
 
@@ -218,12 +223,12 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
 1. **Alert condition** section:
 
-   - Enter 75 as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
+   - Enter `75` as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
    - Click **Preview alert rule condition** to run the queries.
 
-   {{< figure src="/media/docs/alerting/promql-returning-metrics.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
+   {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
 
-   Among the labels returned for `flask_app_cpu_usage`, the environment label is particularly important, as it enables dynamic alert routing based on the environment value, ensuring the right team receives the relevant notifications.
+   Among the labels returned for `flask_app_cpu_usage`, the labels `instance` and `deployment` contain values that include the term _prod_ and _staging_. We will create a template later to detect these keywords, so that any firing alert instances are routed to the relevant contact points (e.g., alerts-prod, alerts-staging).
 
 ### Add folders and labels
 
@@ -244,15 +249,18 @@ In this section we add a [templated label based on query value](https://grafana.
    development
    {{- end -}}
    ```
-   This template uses regex to extract `prod`, `staging`, or `dev` from the instance label and maps it to a more readable label (like "production" for "prod").
+   This template uses a regular expression to extract `prod`, `staging`, or `dev` from the instance label and maps it to a more readable label (like "production" for "prod").
 
-  The template routes alert notifications based on the `instance` label. When a metric like CPU usage exceeds a threshold, the template checks the environment (e.g., `flask-prod:5000`, `flask-staging:5000`, or any other value). It then generates a label based on query value (e.g., _production_, _staging_, or _development_). This label is used in the alert notification policy to route alerts to the appropriate team, so that notifications are directed to the right group, making the process more efficient and avoiding unnecessary overlap.
+As result, when alerts exceed a threshold, the template checks the labels, such as `flask-prod:5000`, `flask-staging:5000`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of `production`, `staging` or `development` to the custom environment **environment** label.
+
+This label is then by the alert notification policy to route alerts to the appropriate team, so that notifications are delivered efficiently, and reducing unnecessary noise or overlap.
 
 ### Set evaluation behaviour
 
 1. Click + **New evaluation group**. Name it `system-usage`.
-1. Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`. Click Create.
+1. Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
 1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration.).
+1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
 
 ### Configure notifications
 
@@ -262,7 +270,7 @@ Select who should receive a notification when an alert rule fires.
 1. Click **Preview routing**.
    The preview should display which firing alerts are routed to contact points based on notification policies that match the `environment` label.
 
-   {{< figure src="/media/docs/alerting/routing-preview-cpu-metrics.png" max-width="1200px" caption="Notification policies matched by the environment label matcher." >}}
+   {{< figure src="/media/docs/alerting/dynamic-routing-preview-prod-staging.png" max-width="1200px" caption="Notification policies matched by the environment label matcher." >}}
 
    The environment label matcher should map to the notification policies created earlier. This makes sure that firing alert instances are routed to the appropriate contact points associated with each policy.
 
@@ -274,7 +282,7 @@ Link your dashboard panel to this alert rule to display alert annotations in you
 1. Find the panel that you created earlier.
 1. Click **Confirm**.
 
-## Create a second alert rule for memory usage
+## Step 3: Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
 1. Give it a name. For example: `memory-usage`
@@ -287,20 +295,18 @@ Now that the CPU and memory alert rules are set up, they are linked to the notif
 
 <!-- INTERACTIVE page step5.md START -->
 
-## Your alerts are now dynamically routed
+## Done! Your alerts are now dynamically routed
 
 Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns simplified values like `prod` or `staging` to our custom environment label using the template.
 
 To see this in action go to **Alerts & IRM > Alerting > Active notifications**
 
-{{< figure src="/media/docs/alerting/routing-active-notifications.png" max-width="1200px" caption="Alerts with active notifications" >}}
-
-This page shows grouped alerts that are currently triggering notifications.
-
-Click on any alert group to view its label set, contact point, and number of alert instances.
-You’ll notice that the environment label has been dynamically populated with values like `production`.
+This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
+
+You should notice that the environment label has been dynamically populated with values like `production`.
+
 
 
 
@@ -311,7 +317,7 @@ You’ll notice that the environment label has been dynamically populated with v
 
 ## Conclusion
 
-By using notification policies, you can route alerts based on query values, directing them to the appropriate teams. Integrating alerts into dashboards provides more context, and mute timings allow you to suppress alerts during maintenance or low-priority periods.
+By using notification policies, you can route alerts based on query values, directing them to the appropriate teams.
 
 ## Learn more
 
