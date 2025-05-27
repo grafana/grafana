@@ -38,7 +38,6 @@ describe('Panel edit tests', () => {
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Queries1'); // there's already a query so therefore Query + 1
         });
-        // cy.get('[data-testid]="query-editor-rows"').should('be.visible');
         cy.get(`[data-testid="${selectors.components.QueryTab.content}"]`).should('be.visible');
         e2e.components.TransformTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
