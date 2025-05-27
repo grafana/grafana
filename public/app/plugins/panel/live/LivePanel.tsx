@@ -133,9 +133,7 @@ export class LivePanel extends PureComponent<Props, State> {
         </p>
 
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-        <b>
-          custom.ini:
-        </b>
+        <b>custom.ini:</b>
         <pre>{preformatted}</pre>
       </Alert>
     );
