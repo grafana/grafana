@@ -306,7 +306,7 @@ $labels.deployment
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
-You should receive notifications at the contact point associated with either `prod` or `staging`. Aditionally, notice that the **environment** label has been dynamically populated with values like `production`.
+You should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, notice that the **environment** label has been dynamically populated with values like `production`.
 
 <!-- INTERACTIVE page step6.md END -->
 
