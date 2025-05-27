@@ -114,7 +114,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   return (
     <>
       <p className={styles.info}>
-        <Trans i18nKey="share-modal.image.info-text">Save this dashboard as an image.</Trans>
+        <Trans i18nKey="share-modal.image.info-text">Save this dashboard as an image</Trans>
       </p>
 
       <div className={styles.buttonRow}>
@@ -123,7 +123,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
             variant="primary"
             onClick={onExport}
             disabled={isLoading}
-            icon="document-info"
+            icon="gf-layout-simple"
             data-testid={selectors.components.ExportImage.buttons.generate}
           >
             <Trans i18nKey="share-modal.image.generate-button">Generate image</Trans>

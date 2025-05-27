@@ -57,6 +57,7 @@ export async function generateDashboardImage({
       absolute: true,
       updateQuery: {
         height: -1, // image renderer will scroll through the dashboard and set the appropriate height
+        width: config.rendererDefaultImageWidth || 1000,
         scale,
         kiosk: true,
         hideNav: true,
