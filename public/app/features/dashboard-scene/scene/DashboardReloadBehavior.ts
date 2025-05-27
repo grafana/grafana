@@ -88,7 +88,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     const newState = this.getCurrentState();
-    const stateChanged = !isEqual(newState.scopes, this._initialState.scopes);
+    const stateChanged = !isEqual(newState, this._initialState);
 
     console.log(
       `DashboardReloadBehavior reloadDashboard stateChanged ${stateChanged ? 'true' : 'false'}`,
