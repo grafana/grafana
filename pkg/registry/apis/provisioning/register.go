@@ -1155,6 +1155,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
+		// FIXME: use nanogit also to avoid cloning the repository
 		return nanogit.NewGitRepository(ctx, r, b.secrets, cloneFn)
 	case provisioning.GitHubRepositoryType:
 		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)

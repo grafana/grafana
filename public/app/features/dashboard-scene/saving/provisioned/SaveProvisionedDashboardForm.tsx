@@ -263,6 +263,7 @@ export function SaveProvisionedDashboardForm({
           />
         </Field>
 
+        {/* TODO: this should be a generic workflow selector for git repositories */}
         {isGitHub && !readOnly && (
           <>
             <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>

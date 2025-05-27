@@ -68,6 +68,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     );
   }
 
+  // TODO: what should we do for git repositories?
   // Check if this is a GitHub link
   const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
   if (githubURL) {

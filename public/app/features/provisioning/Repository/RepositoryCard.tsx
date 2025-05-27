@@ -23,7 +23,7 @@ export function RepositoryCard({ repository }: Props) {
 
     if (spec?.type === 'github') {
       const { url = '', branch } = spec.github ?? {};
-      // TODO: how to do this for local repositories?
+      // TODO: how to do this for git repositories?
       const branchUrl = branch ? `${url}/tree/${branch}` : url;
 
       meta.push(
