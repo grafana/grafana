@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/protocol"
+	"github.com/grafana/nanogit/protocol/hash"
 )
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -215,21 +216,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 // Read implements provisioning.Repository.
 func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
-	if ref == "" {
-		ref = r.branch
-	}
-
 	ctx, _ = r.logger(ctx, ref)
 	finalPath := safepath.Join(r.config.Spec.Git.Path, filePath)
 
-	// Get the branch reference
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	// Resolve ref to commit hash
+	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("get branch ref: %w", err)
+		return nil, err
 	}
 
 	// get root hash
-	root, err := r.client.GetTree(ctx, branchRef.Hash)
+	root, err := r.client.GetTree(ctx, refHash)
 	if err != nil {
 		return nil, fmt.Errorf("get root tree: %w", err)
 	}
@@ -252,23 +249,16 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 }
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	if ref == "" {
-		ref = r.branch
-	}
-
 	ctx, _ = r.logger(ctx, ref)
 
-	// Get the branch reference
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	// Resolve ref to commit hash
+	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return nil, repository.ErrRefNotFound
-		}
-		return nil, fmt.Errorf("get branch ref: %w", err)
+		return nil, err
 	}
 
 	// Get flat tree using nanogit's GetFlatTree
-	tree, err := r.client.GetFlatTree(ctx, branchRef.Hash)
+	tree, err := r.client.GetFlatTree(ctx, refHash)
 	if err != nil {
 		if errors.Is(err, nanogit.ErrRefNotFound) {
 			return nil, repository.ErrRefNotFound
@@ -466,18 +456,12 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 }
 
 func (r *gitRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
-	if ref == "" {
-		ref = r.branch
-	}
 	ctx, _ = r.logger(ctx, ref)
 
-	// Get the branch reference to start the history traversal
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
+	// Resolve ref to commit hash
+	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return nil, repository.ErrFileNotFound
-		}
-		return nil, fmt.Errorf("get branch ref: %w", err)
+		return nil, err
 	}
 
 	// Prepare the final path by joining with the configured repository path
@@ -491,7 +475,7 @@ func (r *gitRepository) History(ctx context.Context, path, ref string) ([]provis
 	}
 
 	// Get commits using nanogit's ListCommits
-	commits, err := r.client.ListCommits(ctx, branchRef.Hash, options)
+	commits, err := r.client.ListCommits(ctx, refHash, options)
 	if err != nil {
 		return nil, fmt.Errorf("list commits: %w", err)
 	}
@@ -545,28 +529,34 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 }
 
 func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
-	if ref == "" {
-		var err error
-		ref, err = r.LatestRef(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get latest ref: %w", err)
-		}
+	if base == "" && ref == "" {
+		return nil, fmt.Errorf("base and ref cannot be empty")
 	}
+	if ref == "" {
+		return nil, fmt.Errorf("ref cannot be empty")
+	}
+
 	ctx, logger := r.logger(ctx, ref)
 
+	// Resolve base ref to hash
+	var baseHash hash.Hash
+	if base != "" {
+		var err error
+		baseHash, err = r.resolveRefToHash(ctx, base)
+		if err != nil {
+			return nil, fmt.Errorf("resolve base ref: %w", err)
+		}
+	}
+
+	// Resolve ref to hash
+	refHash, err := r.resolveRefToHash(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("resolve ref: %w", err)
+	}
+
 	// Get commit hashes for base and ref
-	baseRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", base))
-	if err != nil {
-		return nil, fmt.Errorf("get base ref: %w", err)
-	}
-
-	refCommit, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", ref))
-	if err != nil {
-		return nil, fmt.Errorf("get ref commit: %w", err)
-	}
-
 	// Compare commits using nanogit
-	files, err := r.client.CompareCommits(ctx, baseRef.Hash, refCommit.Hash)
+	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
@@ -635,6 +625,32 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 
 func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 	return r.cloneFn(ctx, opts)
+}
+
+// resolveRefToHash resolves a ref (branch name or commit hash) to a commit hash
+func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
+	// Use default branch if ref is empty
+	if ref == "" {
+		ref = fmt.Sprintf("refs/heads/%s", r.branch)
+	}
+
+	// Try to parse ref as a hash first
+	refHash, err := hash.FromHex(ref)
+	if err == nil && refHash != nil {
+		// Valid hash, return it
+		return refHash, nil
+	}
+
+	// Not a valid hash, try to resolve as a branch reference
+	branchRef, err := r.client.GetRef(ctx, ref)
+	if err != nil {
+		if errors.Is(err, nanogit.ErrRefNotFound) {
+			return nil, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
+		}
+		return nil, fmt.Errorf("get ref %s: %w", ref, err)
+	}
+
+	return branchRef.Hash, nil
 }
 
 // ensureBranchExists checks if a branch exists and creates it if it doesn't,
