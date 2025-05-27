@@ -19,9 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
-	ringclient "github.com/grafana/dskit/ring/client"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -309,15 +306,6 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
-
-	shardingEnabled bool
-	distributor     Distributor
-	reg             prometheus.Registerer
-}
-type Distributor struct {
-	ClientPool *ringclient.Pool
-	Ring       *ring.Ring
-	Lifecycler *ring.BasicLifecycler
 }
 
 // Init implements ResourceServer.
