@@ -1619,12 +1619,6 @@ github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcr
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 h1:uKOBkqzjMwimPJvTOjlo0bFrrR17w8U5l3HtDETPacQ=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:w5oIOh8JhAEY/GwiIrLGBBRv2w0D7Ngv+dznv4k8Tek=
-github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a h1:2g/anKApzZYtClnHryXpURF3gPyGHbJs1pyU4Y6u55A=
-github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:/eXW4g4cROVmDxH0OhCoXmp9n+xULrmnncMUyFHXxP0=
-github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a h1:7QIwgb9nZmVPRjSi+UQDhjxrAWmEVExXLh4+TfoN/MU=
-github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:fs8tmn4kliX1914EZfGOL+A6BUqejjbdL+7Dj9ZmZPA=
-github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a h1:fWG9hWi5V7Lj/x1/SZwbvHOpVpGixUcdV7Prc6wO2uk=
-github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a/go.mod h1:hKusgccNxdAcv1x3cMSM46XYcUeLB7tWjnPP6m9tbG4=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718kSXOiIKdjZKljWLgBpzL5z1yutKABksQCMg=
