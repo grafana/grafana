@@ -219,6 +219,15 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	ctx, _ = r.logger(ctx, ref)
 	finalPath := safepath.Join(r.config.Spec.Git.Path, filePath)
 
+	// Check if the path represents a directory
+	if safepath.IsDir(filePath) {
+		// For directories, just return FileInfo without data (like GitHub implementation)
+		return &repository.FileInfo{
+			Path: filePath,
+			Ref:  ref,
+		}, nil
+	}
+
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
@@ -356,6 +365,11 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	}
 	ctx, _ = r.logger(ctx, ref)
 
+	// Check if trying to update a directory
+	if safepath.IsDir(path) {
+		return apierrors.NewBadRequest("cannot update a directory")
+	}
+
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
@@ -419,25 +433,29 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 		return err
 	}
 
+	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
+
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", err)
 	}
 
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
-
-	if _, err = writer.DeleteBlob(ctx, finalPath); err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
-			return &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("file not found: %s", finalPath),
-					Code:    http.StatusNotFound,
-				},
+	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
+	if safepath.IsDir(path) {
+		if _, err = writer.DeleteTree(ctx, finalPath); err != nil {
+			if errors.Is(err, nanogit.ErrRefNotFound) {
+				return repository.ErrFileNotFound
 			}
+			return fmt.Errorf("delete tree: %w", err)
 		}
-
-		return fmt.Errorf("delete blob: %w", err)
+	} else {
+		if _, err = writer.DeleteBlob(ctx, finalPath); err != nil {
+			if errors.Is(err, nanogit.ErrRefNotFound) {
+				return repository.ErrFileNotFound
+			}
+			return fmt.Errorf("delete blob: %w", err)
+		}
 	}
 
 	// Commit the changes
