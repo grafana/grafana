@@ -268,29 +268,35 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 	}
 
 	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
-		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
-		if err != nil {
-			return nil, err
-		}
+		var returnToken *auth.UserToken
+		err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+			token, err := s.LookupToken(ctx, cmd.UnHashedToken)
+			if err != nil {
+				return err
+			}
 
-		if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
-			// Rotation happened too recently. Skip new rotation
-			s.log.FromContext(ctx).Debug("Token was last rotated very recently, skipping rotation", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
-			return token, nil
-		}
-		s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+			if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+				// Rotation happened too recently. Skip new rotation
+				s.log.FromContext(ctx).Debug("Token was last rotated very recently, skipping rotation", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+				returnToken = token
+				return nil
+			}
+			s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
-		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
+			newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
-		if errors.Is(err, errTokenNotRotated) {
-			return token, nil
-		}
+			if errors.Is(err, errTokenNotRotated) {
+				returnToken = token
+			}
 
-		if err != nil {
-			return nil, err
-		}
+			if err != nil {
+				return err
+			}
 
-		return newToken, nil
+			returnToken = newToken
+			return nil
+		})
+		return returnToken, err
 	})
 
 	if err != nil {
@@ -326,7 +332,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 
 	now := getTime()
 	var affected int64
-	err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		res, err := dbSession.Exec(sql, userAgent, clientIPStr, hashedToken, s.sqlStore.GetDialect().BooleanValue(false), now.Unix(), token.Id)
 		if err != nil {
 			return err
