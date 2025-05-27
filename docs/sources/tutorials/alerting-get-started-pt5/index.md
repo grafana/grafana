@@ -301,7 +301,7 @@ This page shows grouped alerts that are currently triggering notifications. If y
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
-Finally, you should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, 
+Finally, you should receive notifications at the contact point associated with either `prod` or `staging`.
 
 Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
 
