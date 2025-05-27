@@ -57,10 +57,9 @@ function getValidHistory(values: unknown): TimePickerHistoryItem[] {
   // Check if the values are already in the correct format
 
   for (let item of values) {
-    const isValid = getValidHistoryItem(item);
-    if (isValid) {
-      // If the item is already in the correct format, add it to the result
-      result.push(item);
+    const parsed = getValidHistoryItem(item);
+    if (parsed) {
+      result.push(parsed);
     }
   }
 
