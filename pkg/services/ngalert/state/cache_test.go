@@ -251,3 +251,79 @@ func randomSate(ruleKey models.AlertRuleKey) State {
 		EvaluationDuration:   time.Duration(6000),
 	}
 }
+
+func TestCache_ForRuleState(t *testing.T) {
+	orgID := int64(1)
+	ruleUID := "test-rule-uid"
+	rule2UID := "test-rule-uid-2"
+
+	cache := newCache()
+
+	states := []*State{
+		{
+			OrgID:        orgID,
+			AlertRuleUID: ruleUID,
+			CacheID:      data.Fingerprint(0),
+			State:        eval.Normal,
+		},
+		{
+			OrgID:        orgID,
+			AlertRuleUID: ruleUID,
+			CacheID:      data.Fingerprint(1),
+			State:        eval.Alerting,
+		},
+		{
+			OrgID:        orgID,
+			AlertRuleUID: ruleUID,
+			CacheID:      data.Fingerprint(2),
+			State:        eval.Pending,
+		},
+	}
+
+	for _, state := range states {
+		cache.set(state)
+	}
+
+	cache.set(&State{
+		OrgID:        orgID,
+		AlertRuleUID: rule2UID,
+		CacheID:      data.Fingerprint(0),
+		State:        eval.Pending,
+	})
+
+	t.Run("should iterate over all states for rule", func(t *testing.T) {
+		var visited []*State
+		cache.forRuleState(orgID, ruleUID, func(s *State) {
+			visited = append(visited, s)
+		})
+
+		require.Len(t, visited, 3)
+
+		visitedCacheIDs := make(map[data.Fingerprint]bool)
+		for _, s := range visited {
+			visitedCacheIDs[s.CacheID] = true
+		}
+
+		for _, expectedState := range states {
+			require.True(t, visitedCacheIDs[expectedState.CacheID])
+		}
+	})
+
+	t.Run("should handle non-existent org", func(t *testing.T) {
+		visitCount := 0
+		cache.forRuleState(999, ruleUID, func(s *State) {
+			visitCount++
+		})
+
+		require.Equal(t, 0, visitCount)
+	})
+
+	t.Run("should handle non-existent rule", func(t *testing.T) {
+		visitCount := 0
+		cache.forRuleState(orgID, "non-existent rule", func(s *State) {
+			visitCount++
+		})
+
+		require.Equal(t, 0, visitCount)
+	})
+}
