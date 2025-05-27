@@ -7,7 +7,7 @@ import {
   trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField,
   trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
   trackInfluxDBConfigV2FluxDBDetailsTokenInputField,
-} from './trackingv2';
+} from './tracking';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 

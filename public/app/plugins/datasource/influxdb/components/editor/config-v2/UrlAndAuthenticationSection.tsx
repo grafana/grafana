@@ -22,7 +22,7 @@ import {
   trackInfluxDBConfigV2ProductSelected,
   trackInfluxDBConfigV2QueryLanguageSelected,
   trackInfluxDBConfigV2URLInputField,
-} from './trackingv2';
+} from './tracking';
 import { INFLUXDB_VERSION_MAP } from './versions';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;

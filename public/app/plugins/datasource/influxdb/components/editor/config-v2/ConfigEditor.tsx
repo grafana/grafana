@@ -10,7 +10,7 @@ import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
 import { RightSideBar } from './RightSideBar';
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
-import { trackInfluxDBConfigV2FeedbackButtonClicked } from './trackingv2';
+import { trackInfluxDBConfigV2FeedbackButtonClicked } from './tracking';
 
 export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
   return (

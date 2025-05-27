@@ -24,7 +24,7 @@ import { AUTH_RADIO_BUTTON_OPTIONS, getInlineLabelStyles, RADIO_BUTTON_OPTIONS }
 import {
   trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
   trackInfluxDBConfigV2AuthSettingsToggleClicked,
-} from './trackingv2';
+} from './tracking';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 

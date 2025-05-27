@@ -20,7 +20,7 @@ import { getInlineLabelStyles } from './constants';
 import {
   trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField,
   trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked,
-} from './trackingv2';
+} from './tracking';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 

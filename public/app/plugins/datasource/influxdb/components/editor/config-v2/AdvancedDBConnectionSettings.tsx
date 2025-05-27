@@ -12,7 +12,7 @@ import {
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked,
-} from './trackingv2';
+} from './tracking';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 

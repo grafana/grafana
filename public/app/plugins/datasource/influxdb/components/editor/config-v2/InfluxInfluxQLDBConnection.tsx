@@ -7,7 +7,7 @@ import {
   trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField,
-} from './trackingv2';
+} from './tracking';
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
