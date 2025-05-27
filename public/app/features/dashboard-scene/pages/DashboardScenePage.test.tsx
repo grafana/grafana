@@ -150,7 +150,7 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
-    locationService.push('/');
+    locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
@@ -367,6 +367,7 @@ describe('DashboardScenePage', () => {
 
       expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
     });
+
     it('should render error alert for backend errors', async () => {
       setupLoadDashboardMockReject({
         status: 500,
@@ -391,6 +392,7 @@ describe('DashboardScenePage', () => {
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
     });
+
     it('should render error alert for runtime errors', async () => {
       setupLoadDashboardRuntimeErrorMock();
 
