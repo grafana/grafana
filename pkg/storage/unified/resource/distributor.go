@@ -9,6 +9,7 @@ import (
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	userutils "github.com/grafana/dskit/user"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -242,9 +243,17 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
+	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
+	ctx = userutils.InjectOrgID(ctx, namespace)
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		ds.log.Error("a requester was not found in the context")
+		return ctx, nil, err
+	}
 
-	return userutils.InjectOrgID(ctx, namespace), client.(*RingClient).Client, nil
+	ctx = identity.WithRequester(ctx, requester)
+
+	return ctx, client.(*RingClient).Client, nil
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
