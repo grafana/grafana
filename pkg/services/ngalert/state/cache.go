@@ -168,8 +168,8 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 }
 
 func (c *cache) delete(ruleKey ngModels.AlertRuleKey, cacheID data.Fingerprint) {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
 		delete(ruleStates.states, cacheID)
