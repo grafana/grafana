@@ -27,11 +27,9 @@ export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
   const styles = useStyles2(getInlineLabelStyles);
 
-  const [advancedHttpSettingsIsOpen, setAdvancedHttpSettingsIsOpen] = useState(() => {
-    const hasKeepCookies = 'keepCookies' in options.jsonData;
-    const hasTimeout = 'timeout' in options.jsonData;
-    return hasKeepCookies || hasTimeout;
-  });
+  const [advancedHttpSettingsIsOpen, setAdvancedHttpSettingsIsOpen] = useState(
+    () => 'keepCookies' in options.jsonData || 'timeout' in options.jsonData
+  );
 
   return (
     <>

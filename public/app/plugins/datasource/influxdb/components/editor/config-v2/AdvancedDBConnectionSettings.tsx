@@ -19,11 +19,9 @@ export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props) => {
   const styles = useStyles2(getInlineLabelStyles);
 
-  const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(() => {
-    const timeInterval = !!options.jsonData.timeInterval;
-    const insecureGrpc = !!options.jsonData.insecureGrpc;
-    return timeInterval || insecureGrpc;
-  });
+  const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
+    () => !!options.jsonData.timeInterval || !!options.jsonData.insecureGrpc
+  );
 
   return (
     <>
