@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -95,21 +94,36 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		traceId := span.SpanContext().TraceID()
 		connectLogger := b.log.New("traceId", traceId.String())
 		responder := newResponderWrapper(incomingResponder,
-			func(statusCode int, obj runtime.Object) {
-				if statusCode >= 500 {
-					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
-				} else {
-					b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "good"}).Inc()
+			func(statusCode *int, obj runtime.Object) {
+				if *statusCode/100 == 4 {
+					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
 				}
-				if statusCode >= 400 {
-					connectLogger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
-					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
+
+				if *statusCode >= 500 {
+					o, ok := obj.(*query.QueryDataResponse)
+					if ok && o.Responses != nil {
+						for refId, response := range o.Responses {
+							if response.ErrorSource == backend.ErrorSourceDownstream {
+								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
+								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+								span.SetAttributes(attribute.String("error.source", "downstream"))
+								break
+							} else if response.Error != nil {
+								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
+								span.SetStatus(codes.Error, "500 error without downstream error source")
+							} else {
+								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
+								span.SetAttributes(attribute.String("error.ref_id", refId))
+							}
+						}
+					}
 				}
 			},
+
 			func(err error) {
-				b.metrics.QuerierResponseTotal.With(prometheus.Labels{"status": "err"}).Inc()
-				b.log.Debug("error caught in handler", "err", err)
+				connectLogger.Error("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
+
 				if err == nil {
 					return
 				}
@@ -216,7 +230,6 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 			b.log.Debug("error in executeConcurrentQueries", "err", err)
 		}
 	}
-
 	if err != nil {
 		b.log.Debug("error in query phase, skipping expressions", "error", err)
 		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
@@ -475,11 +488,11 @@ func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req data
 
 type responderWrapper struct {
 	wrapped    rest.Responder
-	onObjectFn func(statusCode int, obj runtime.Object)
+	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
 }
 
-func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
+func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
 	return &responderWrapper{
 		wrapped:    responder,
 		onObjectFn: onObjectFn,
@@ -489,7 +502,7 @@ func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode in
 
 func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
 	if r.onObjectFn != nil {
-		r.onObjectFn(statusCode, obj)
+		r.onObjectFn(&statusCode, obj)
 	}
 
 	r.wrapped.Object(statusCode, obj)

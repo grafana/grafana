@@ -12,7 +12,6 @@ type ExprMetrics struct {
 	SqlCommandDuration      *prometheus.HistogramVec
 	SqlCommandErrorCount    *prometheus.CounterVec
 	SqlCommandCellCount     *prometheus.HistogramVec
-	QuerierResponseTotal    *prometheus.CounterVec
 }
 
 func newExprMetrics(subsystem string) *ExprMetrics {
@@ -60,12 +59,6 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			},
 			[]string{"status"},
 		),
-		QuerierResponseTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: subsystem,
-			Name:      "ds_querier_response_total",
-			Help:      "Number of ds-querier responses",
-		}, []string{"status"}),
 	}
 }
 
@@ -112,8 +105,6 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandErrorCount: newExprMetrics(metricsSubSystem).SqlCommandErrorCount,
 
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
-
-		QuerierResponseTotal: newExprMetrics(metricsSubSystem).QuerierResponseTotal,
 	}
 
 	if reg != nil {
@@ -123,7 +114,6 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandDuration,
 			m.SqlCommandErrorCount,
 			m.SqlCommandCellCount,
-			m.QuerierResponseTotal,
 		)
 	}
 
