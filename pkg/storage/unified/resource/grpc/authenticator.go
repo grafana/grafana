@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -37,22 +38,27 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	ctx, span := f.Tracer.Start(ctx, "legacy.grpc.Authenticator.Authenticate")
 	defer span.End()
 
+	fmt.Println("authenticating")
 	r, err := identity.GetRequester(ctx)
 	if err == nil && r != nil {
+		fmt.Println("found user in ctx")
 		return ctx, nil // noop, requester exists
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
+		fmt.Println("error getting md from ctx")
 		err := status.Error(codes.Unauthenticated, "no metadata found in grpc context")
 		span.RecordError(err)
 		return nil, err
 	}
 	user, err := f.decodeMetadata(md)
 	if err != nil {
+		fmt.Println("no user in ctx")
 		span.RecordError(err)
 		return nil, err
 	}
+	fmt.Println("yes user")
 	return identity.WithRequester(ctx, user), nil
 }
 
