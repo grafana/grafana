@@ -223,6 +223,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *resourcepb.ReadReque
 	}
 }
 
+// finds the maximum resoruce version across all files
 func (s *cdkBackend) CurrentResourceVersion(ctx context.Context) (int64, error) {
 	maxrv := int64(0)
 	iter := s.bucket.List(&blob.ListOptions{
