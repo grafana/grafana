@@ -4,12 +4,13 @@ import { useState, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { Combobox, Field } from '@grafana/ui';
+import { Combobox } from '@grafana/ui';
 
 import { ARGScope } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { Field } from '../shared/Field';
 
 import QueryField from './QueryField';
 import SubscriptionField from './SubscriptionField';
@@ -101,19 +102,19 @@ const ArgQueryEditor = ({
     <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
-          <Field label={t('components.scope-selector.label', 'Scope')}>
-            <Combobox
-              onChange={onChangeScope}
-              options={[
-                { value: ARGScope.Directory, label: 'Directory' },
-                { value: ARGScope.Subscription, label: 'Subscription' },
-              ]}
-              value={query.azureResourceGraph?.scope || ARGScope.Subscription}
-              width={20}
-              data-testid={selectors.components.queryEditor.argsQueryEditor.scope.input}
-            />
-          </Field>
           <EditorFieldGroup>
+            <Field label={t('components.scope-selector.label', 'Scope')}>
+              <Combobox
+                onChange={onChangeScope}
+                options={[
+                  { value: ARGScope.Directory, label: 'Directory' },
+                  { value: ARGScope.Subscription, label: 'Subscription' },
+                ]}
+                value={query.azureResourceGraph?.scope || ARGScope.Subscription}
+                width={20}
+                data-testid={selectors.components.queryEditor.argsQueryEditor.scope.input}
+              />
+            </Field>
             {query?.azureResourceGraph?.scope !== ARGScope.Directory ? (
               <SubscriptionField
                 subscriptions={subscriptions}
