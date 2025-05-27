@@ -304,9 +304,11 @@ Feel free to experiment by changing the template to match other labels that cont
 $labels.deployment
 ```
 
+You should be able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
+
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
-You should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, notice that the **environment** label has been dynamically populated with values like `production`.
+Finally, you should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, notice that the **environment** label has been dynamically populated with values like `production`.
 
 <!-- INTERACTIVE page step6.md END -->
 
