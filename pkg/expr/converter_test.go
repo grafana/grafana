@@ -148,11 +148,7 @@ func TestHandleSqlInput(t *testing.T) {
 			frames: data.Frames{
 				data.NewFrame("test",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-					func() *data.Field {
-						f := data.NewField("value", nil, []*float64{fp(2)})
-						f.Labels = data.Labels{"foo": "bar"}
-						return f
-					}(),
+					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{fp(2)}),
 				),
 			},
 			expectErr: "frame has labels but frame type is missing or unsupported",
@@ -174,18 +170,10 @@ func TestHandleSqlInput(t *testing.T) {
 		{
 			name: "supported type (timeseries-multi) triggers ConvertToFullLong",
 			frames: data.Frames{
-				func() *data.Frame {
-					f := data.NewFrame("tsm",
-						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						func() *data.Field {
-							f := data.NewField("value", nil, []*float64{fp(2)})
-							f.Labels = data.Labels{"host": "a"}
-							return f
-						}(),
-					)
-					f.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
-					return f
-				}(),
+				data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", data.Labels{"host": "a"}, []*float64{fp(2)}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 			},
 			expectFrame: true,
 		},
@@ -197,7 +185,7 @@ func TestHandleSqlInput(t *testing.T) {
 
 			if tc.expectErr != "" {
 				require.Error(t, res.Error)
-				assert.Contains(t, res.Error.Error(), tc.expectErr)
+				require.ErrorContains(t, res.Error, tc.expectErr)
 			} else {
 				require.NoError(t, res.Error)
 				if tc.expectFrame {
