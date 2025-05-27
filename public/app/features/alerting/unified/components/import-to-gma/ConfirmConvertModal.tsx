@@ -22,6 +22,7 @@ import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
+  importPayload: ImportFormValues;
 };
 
 const AlertSomeRulesSkipped = () => {
@@ -44,70 +45,84 @@ const AlertSomeRulesSkipped = () => {
   );
 };
 
-export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
-  const { watch } = useFormContext<ImportFormValues>();
+const emptyObject = {};
+
+export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: ModalProps) => {
+  // const { watch } = useFormContext<ImportFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [
-    targetFolder,
+  // const [
+  //   targetFolder,
+  //   selectedDatasourceName,
+  //   selectedDatasourceUID,
+  //   pauseRecordingRules,
+  //   pauseAlertingRules,
+  //   namespace,
+  //   ruleGroup,
+  //   targetDatasourceUID,
+  //   yamlFile,
+  //   importSource,
+  //   yamlImportTargetDatasourceUID,
+  // ] = watch([
+  //   'targetFolder',
+  //   'selectedDatasourceName',
+  //   'selectedDatasourceUID',
+  //   'pauseRecordingRules',
+  //   'pauseAlertingRules',
+  //   'namespace',
+  //   'ruleGroup',
+  //   'targetDatasourceUID',
+  //   'yamlFile',
+  //   'importSource',
+  //   'yamlImportTargetDatasourceUID',
+  // ]);
+  const {
+    importSource,
     selectedDatasourceName,
     selectedDatasourceUID,
-    pauseRecordingRules,
-    pauseAlertingRules,
+    yamlFile,
+    targetFolder,
     namespace,
     ruleGroup,
     targetDatasourceUID,
-    yamlFile,
-    importSource,
     yamlImportTargetDatasourceUID,
-  ] = watch([
-    'targetFolder',
-    'selectedDatasourceName',
-    'selectedDatasourceUID',
-    'pauseRecordingRules',
-    'pauseAlertingRules',
-    'namespace',
-    'ruleGroup',
-    'targetDatasourceUID',
-    'yamlFile',
-    'importSource',
-    'yamlImportTargetDatasourceUID',
-  ]);
+    pauseRecordingRules,
+    pauseAlertingRules,
+  } = importPayload;
 
   // for datasource import, we need to fetch the rules from the datasource
-  const dataSourceToFetch = (isOpen && importSource === 'datasource') ? (selectedDatasourceName ?? '') : undefined;
-  const { rulesToBeImported: rulesToBeImportedFromDatasource, isloadingCloudRules } = useGetRulesToBeImported(!isOpen || importSource === 'yaml', dataSourceToFetch);
+  const dataSourceToFetch = isOpen && importSource === 'datasource' ? (selectedDatasourceName ?? '') : undefined;
+  const { rulesToBeImported: rulesToBeImportedFromDatasource, isloadingCloudRules } = useGetRulesToBeImported(
+    !isOpen || importSource === 'yaml',
+    dataSourceToFetch
+  );
 
   // for yaml import, we need to fetch the rules from the yaml file
-  const { value: rulesToBeImportedFromYaml = {} } = useAsync(async () => {
+  const { value: rulesToBeImportedFromYaml = emptyObject } = useAsync(async () => {
     if (!yamlFile || importSource !== 'yaml') {
-      return {};
+      return emptyObject;
     }
     try {
       const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), yamlFile.name);
       return rulerConfigFromYAML;
-
     } catch (error) {
       console.error('Error parsing YAML file:', error);
-      return {};
+      return emptyObject;
     }
   }, [importSource, yamlFile]);
 
-  // filter the rules to be imported from the datasource 
-  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(
-    () => {
-      if (importSource === 'datasource') {
-        return filterRulerRulesConfig(rulesToBeImportedFromDatasource, namespace, ruleGroup);
-      }
-      // for yaml, we dont filter the rules
-      return ({
-        filteredConfig: rulesToBeImportedFromYaml,
-        someRulesAreSkipped: false
-      })
-    },
-    [rulesToBeImportedFromDatasource, namespace, ruleGroup, importSource, rulesToBeImportedFromYaml]
+  // filter the rules to be imported from the datasource
+  const { filteredConfig: rulerRulesToPayload, someRulesAreSkipped } = useMemo(() => {
+    if (importSource === 'datasource') {
+      return filterRulerRulesConfig(rulesToBeImportedFromDatasource, namespace, ruleGroup);
+    }
+    // for yaml, we dont filter the rules
+    return {
+      filteredConfig: rulesToBeImportedFromYaml,
+      someRulesAreSkipped: false,
+    };
+  }, [namespace, ruleGroup, importSource, rulesToBeImportedFromYaml, rulesToBeImportedFromDatasource]);
 
-  );
   const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
 
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
@@ -133,9 +148,11 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
 
   async function onConvertConfirm() {
     if (!yamlImportTargetDatasourceUID && !selectedDatasourceUID) {
-      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
-        error: 'No data source selected',
-      }));
+      notifyApp.error(
+        t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
+          error: 'No data source selected',
+        })
+      );
       return;
     }
     try {
@@ -180,13 +197,15 @@ export const ConfirmConversionModal = ({ isOpen, onDismiss }: ModalProps) => {
         <Stack direction="column" gap={2}>
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text>
-            {importSource === 'yaml' ? t(
-              'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
-              'There are no rules to import. Please select a different yaml file.'
-            ) : t(
-              'alerting.import-to-gma.confirm-modal.no-rules-body',
-              'There are no rules to import. Please select a different namespace or rule group.'
-            )}
+            {importSource === 'yaml'
+              ? t(
+                  'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
+                  'There are no rules to import. Please select a different yaml file.'
+                )
+              : t(
+                  'alerting.import-to-gma.confirm-modal.no-rules-body',
+                  'There are no rules to import. Please select a different namespace or rule group.'
+                )}
           </Text>
         </Stack>
       </Modal>

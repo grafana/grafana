@@ -1,4 +1,5 @@
-import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -20,9 +21,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { useDatasource } from 'app/features/datasources/hooks';
 
 import { Folder } from '../../types/rule-form';
 import { DataSourceType } from '../../utils/datasource';
@@ -51,22 +50,13 @@ export interface ImportFormValues {
 export const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceType.Loki];
 
 const ImportToGMARules = () => {
-  const [queryParams] = useQueryParams();
-  const queryParamSelectedDatasourceUID: string = String(queryParams.datasourceUid) || '';
-  const defaultDataSourceSettings = useDatasource(queryParamSelectedDatasourceUID);
-  // useDatasource gets the default data source as a fallback, so we need to check if it's the right type
-  // before trying to use it
-  const defaultDataSource = supportedImportTypes.includes(defaultDataSourceSettings?.type || '')
-    ? defaultDataSourceSettings
-    : undefined;
-
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
       importSource: 'datasource',
       yamlFile: null,
       yamlImportTargetDatasourceUID: undefined,
-      selectedDatasourceUID: defaultDataSource?.uid,
-      selectedDatasourceName: defaultDataSource?.name,
+      selectedDatasourceUID: undefined,
+      selectedDatasourceName: undefined,
       pauseAlertingRules: true,
       pauseRecordingRules: true,
       targetFolder: undefined,
@@ -83,23 +73,20 @@ const ImportToGMARules = () => {
   } = formAPI;
 
   const [optionsShowing, toggleOptions] = useToggle(true);
-  const [selectedDatasourceName, importSource] = watch([
-    'selectedDatasourceName',
-    'importSource',
-  ]);
-  const [showConfirmModal, setShowConfirmModal] = useToggle(false);
+  const [selectedDatasourceName, importSource] = watch(['selectedDatasourceName', 'importSource']);
+
+  const [formImportPayload, setFormImportPayload] = useState<ImportFormValues | null>(null);
   const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
+
   const { t } = useTranslate();
-  const onSubmit = async () => {
-    setShowConfirmModal(true);
+  const onSubmit: SubmitHandler<ImportFormValues> = async (formData) => {
+    setFormImportPayload(formData);
   };
+
   const importSourceOptions: Array<{ label: string; description: string; value: 'datasource' | 'yaml' }> = [
     {
       label: t('alerting.import-to-gma.source.datasource', 'Existing data source-managed rules'),
-      description: t(
-        'alerting.import-to-gma.source.datasource-description',
-        'Import rules from existing data sources'
-      ),
+      description: t('alerting.import-to-gma.source.datasource-description', 'Import rules from existing data sources'),
       value: 'datasource',
     },
   ];
@@ -107,10 +94,7 @@ const ImportToGMARules = () => {
   if (isImportYamlEnabled) {
     importSourceOptions.push({
       label: t('alerting.import-to-gma.source.yaml', 'Prometheus YAML file'),
-      description: t(
-        'alerting.import-to-gma.source.yaml-description',
-        'Import rules from a Prometheus YAML file.'
-      ),
+      description: t('alerting.import-to-gma.source.yaml-description', 'Import rules from a Prometheus YAML file.'),
       value: 'yaml',
     });
   }
@@ -186,7 +170,12 @@ const ImportToGMARules = () => {
                     labelWidth={30}
                     htmlFor="pause-alerting-rules"
                   >
-                    <InlineSwitch transparent id="pause-alerting-rules" {...register('pauseAlertingRules')} />
+                    <InlineSwitch
+                      transparent
+                      id="pause-alerting-rules"
+                      {...register('pauseAlertingRules')}
+                      showLabel={false}
+                    />
                   </InlineField>
                 </Box>
 
@@ -203,7 +192,12 @@ const ImportToGMARules = () => {
                     labelWidth={30}
                     htmlFor="pause-recording-rules"
                   >
-                    <InlineSwitch transparent id="pause-recording-rules" {...register('pauseRecordingRules')} />
+                    <InlineSwitch
+                      transparent
+                      id="pause-recording-rules"
+                      {...register('pauseRecordingRules')}
+                      showLabel={false}
+                    />
                   </InlineField>
 
                   <Box marginLeft={1} width={50}>
@@ -227,7 +221,13 @@ const ImportToGMARules = () => {
                 </LinkButton>
               </Stack>
             </Box>
-            <ConfirmConversionModal isOpen={showConfirmModal} onDismiss={() => setShowConfirmModal(false)} />
+            {formImportPayload && (
+              <ConfirmConversionModal
+                isOpen={!!formImportPayload}
+                onDismiss={() => setFormImportPayload(null)}
+                importPayload={formImportPayload}
+              />
+            )}
           </form>
         </FormProvider>
       </Stack>
@@ -237,7 +237,9 @@ const ImportToGMARules = () => {
 
 function YamlFileUpload() {
   const { t } = useTranslate();
-  const { formState: { errors } } = useFormContext<ImportFormValues>();
+  const {
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
 
   return (
     <Field
@@ -263,17 +265,21 @@ function YamlFileUpload() {
         rules={{
           required: {
             value: true,
-            message: t('alerting.import-to-gma.yaml.required-message', 'Please select a file')
-          }
+            message: t('alerting.import-to-gma.yaml.required-message', 'Please select a file'),
+          },
         }}
       />
     </Field>
   );
-};
+}
 
 function YamlTargetDataSourceField() {
   const { t } = useTranslate();
-  const { formState: { errors }, setValue, getValues } = useFormContext<ImportFormValues>();
+  const {
+    formState: { errors },
+    setValue,
+    getValues,
+  } = useFormContext<ImportFormValues>();
 
   return (
     <Field
@@ -284,7 +290,7 @@ function YamlTargetDataSourceField() {
       )}
       invalid={!!errors.yamlImportTargetDatasourceUID}
       error={errors.yamlImportTargetDatasourceUID?.message}
-      htmlFor="yamlImportTargetDatasourceUID"
+      htmlFor="yaml-target-data-source"
     >
       <Controller
         name="yamlImportTargetDatasourceUID"
@@ -293,6 +299,7 @@ function YamlTargetDataSourceField() {
             {...field}
             current={value}
             noDefault
+            inputId="yaml-target-data-source"
             alerting
             filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
             onChange={(ds: DataSourceInstanceSettings) => {
@@ -310,21 +317,25 @@ function YamlTargetDataSourceField() {
       />
     </Field>
   );
-};
+}
 
 function TargetDataSourceForRecordingRulesField() {
   const { t } = useTranslate();
-  const { control, formState: { errors }, setValue } = useFormContext<ImportFormValues>();
+  const {
+    control,
+    formState: { errors },
+    setValue,
+  } = useFormContext<ImportFormValues>();
 
   return (
     <Field
       required
-      id="target-data-source"
       label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
       description={t(
         'alerting.recording-rules.description-target-data-source',
         'The Prometheus data source to store recording rules in'
       )}
+      htmlFor="recording-rules-target-data-source"
       error={errors.targetDatasourceUID?.message}
       invalid={!!errors.targetDatasourceUID?.message}
     >
@@ -333,6 +344,7 @@ function TargetDataSourceForRecordingRulesField() {
           <DataSourcePicker
             {...field}
             current={field.value}
+            inputId="recording-rules-target-data-source"
             noDefault
             filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
             onChange={(ds: DataSourceInstanceSettings) => {
@@ -348,11 +360,15 @@ function TargetDataSourceForRecordingRulesField() {
       />
     </Field>
   );
-};
+}
 
 function TargetFolderField() {
   const { t } = useTranslate();
-  const { control, formState: { errors }, setValue } = useFormContext<ImportFormValues>();
+  const {
+    control,
+    formState: { errors },
+    setValue,
+  } = useFormContext<ImportFormValues>();
 
   return (
     <Field
@@ -395,11 +411,16 @@ function TargetFolderField() {
       </Stack>
     </Field>
   );
-};
+}
 
 function DataSourceField() {
   const { t } = useTranslate();
-  const { control, formState: { errors }, setValue, getValues } = useFormContext<ImportFormValues>();
+  const {
+    control,
+    formState: { errors },
+    setValue,
+    getValues,
+  } = useFormContext<ImportFormValues>();
 
   return (
     <Field
@@ -438,6 +459,6 @@ function DataSourceField() {
       />
     </Field>
   );
-};
+}
 
 export default withPageErrorBoundary(ImportToGMARules);
