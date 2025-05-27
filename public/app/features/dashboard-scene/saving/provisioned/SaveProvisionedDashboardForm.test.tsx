@@ -390,8 +390,9 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
   });
 
-  it('should show read-only alert when repository has no workflows', () => {
+  it('should properly handle read-only state for a repository without workflows', () => {
     setup({
+      isNew: false,
       repository: {
         name: 'repo-abc',
         type: 'github',
@@ -401,6 +402,20 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     });
 
-    expect(screen.getByText('This repository is read only')).toBeInTheDocument();
+    // Alert is shown
+    expect(screen.getByRole('alert', { name: 'This repository is read only' })).toBeInTheDocument();
+
+    // Save button is disabled
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    expect(saveButton).toBeDisabled();
+
+    // Common options are not shown for existing dashboards
+    expect(screen.queryByTestId('common-options')).not.toBeInTheDocument();
+
+    // Workflow options are not shown
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+
+    // Branch field is not shown
+    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
   });
 });

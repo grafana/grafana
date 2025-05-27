@@ -779,6 +779,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1747744953711",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "deletionTimestamp": "2025-04-03T07:52:54Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-11-13T08:51:21Z"
@@ -1517,7 +1532,8 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-25T17:20:04Z"
+        "creationTimestamp": "2024-09-25T17:20:04Z",
+        "deletionTimestamp": "2025-05-20T16:08:36Z"
       },
       "spec": {
         "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
@@ -2557,6 +2573,18 @@
     },
     {
       "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1745320933872",
+        "creationTimestamp": "2025-04-22T11:22:13Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-07T12:14:25Z"
@@ -2898,6 +2926,20 @@
     },
     {
       "metadata": {
+        "name": "restoreDashboards",
+        "resourceVersion": "1748002635285",
+        "creationTimestamp": "2025-05-23T12:17:15Z"
+      },
+      "spec": {
+        "description": "Enables restore deleted dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-09-26T12:51:38Z"
@@ -3106,6 +3148,21 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersTempo",
+        "resourceVersion": "1747930192816",
+        "creationTimestamp": "2025-05-20T14:50:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-22 16:09:52.816517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {

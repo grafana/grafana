@@ -57,7 +57,11 @@
       "aria-label-add": "추가",
       "aria-label-delete": "삭제",
       "placeholder-key": "키",
+      "placeholder-name": "이름",
       "placeholder-value": "값"
+    },
+    "variables-editor": {
+      "placeholder-type": "유형"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "편집",
       "export": "내보내기",
       "export-all": "모두 내보내기",
+      "learn-more": "자세히 알아보기",
       "loading": "로딩 중...",
       "search-by-matchers": "일치 조건으로 검색",
       "titles": {
@@ -1396,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "새 경고 규칙",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "새 데이터 소스 관리 기록 규칙",
-        "new-grafana-recording-rule": "새 Grafana 관리 기록 규칙",
+        "new-grafana-alerting-rule": "새 경고 규칙",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "새 기록 규칙",
-        "provisioning": "파일 프로비저닝 또는 Terraform을 통해 규칙을 정의할 수도 있습니다. <2>자세히 알아보기</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "구성된 Prometheus 또는 Loki 데이터 소스가 없습니다",
       "no-rules": "규칙을 찾을 수 없습니다.",
@@ -2038,6 +2047,7 @@
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -3387,6 +3397,13 @@
           "values": "쉼표로 구분된 값",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "유형",
+          "type-placeholder": ""
+        },
         "description": "설명",
         "description-placeholder": "설명 텍스트",
         "label": "라벨",
@@ -3405,8 +3422,8 @@
           "category": "선택 옵션",
           "custom-all-value": "모든 값 사용자 지정",
           "custom-all-value-description": "전체를 나타내기 위한 와일드카드 정규 표현식 또는 기타 값",
-          "include-all": "모든 옵션 포함",
-          "include-all-description": "모든 값을 포함하는 옵션 활성화",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "다중-값"
         },
         "type-category": "{{type}} 옵션"
@@ -5377,10 +5394,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "확인",
         "confirm-action": "작업 확인",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "값"
       },
+      "close": "닫기",
+      "continue": "",
       "inline": {
         "add-action": "작업 추가",
         "edit-action": "작업 편집"
@@ -5391,6 +5412,7 @@
         "action-query-params": "쿼리 파라미터",
         "action-title": "제목",
         "action-title-placeholder": "작업 제목",
+        "action-variables": "변수",
         "one-click-description": "한 번에 하나의 링크나 작업만 원 클릭을 활성화할 수 있습니다."
       }
     },
@@ -6834,7 +6856,7 @@
       "title": "서비스 계정"
     },
     "setup-guide": {
-      "title": "초기 설정 가이드"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "조직의 외부 공유 대시보드 관리",

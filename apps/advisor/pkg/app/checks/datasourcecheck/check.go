@@ -88,7 +88,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "Data Source"
+	return "data source"
 }
 
 func (c *check) Init(ctx context.Context) error {

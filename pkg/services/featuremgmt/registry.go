@@ -1164,13 +1164,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "homeSetupGuide",
-			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        growthAndOnboarding,
-		},
-		{
 			Name:              "appPlatformGrpcClientAuth",
 			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:             FeatureStageExperimental,
@@ -1436,6 +1429,13 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+		},
+		{
+			Name:         "teamHttpHeadersTempo",
+			Description:  "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
 		},
 		{
 			Name:         "ABTestFeatureToggleA",
@@ -1721,6 +1721,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "postgresDSUsePGX",
+			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
@@ -1766,6 +1772,14 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:              "restoreDashboards",
+			Description:       "Enables restore deleted dashboards feature",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 	}
 )
