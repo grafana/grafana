@@ -296,6 +296,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					FiredAt:           v2.FiredAt,
 					ResolvedAt:        v2.ResolvedAt,
 					LastSentAt:        v2.LastSentAt,
 					ResultFingerprint: v2.ResultFingerprint.String(),
