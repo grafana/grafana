@@ -52,5 +52,6 @@ type GrafanaPyroscopeDataQuery struct {
 func NewGrafanaPyroscopeDataQuery() *GrafanaPyroscopeDataQuery {
 	return &GrafanaPyroscopeDataQuery{
 		LabelSelector: "{}",
+		GroupBy:       []string{},
 	}
 }
