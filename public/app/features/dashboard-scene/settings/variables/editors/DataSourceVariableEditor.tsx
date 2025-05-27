@@ -125,6 +125,7 @@ function DataSourceNameFilter({ variable }: { variable: DataSourceVariable }) {
     <Input
       defaultValue={regex}
       onBlur={onBlur}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}
       placeholder={t('dashboard.edit-pane.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
     />
   );
