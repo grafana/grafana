@@ -130,6 +130,9 @@ module.exports = [
               importNames: ['Trans'],
               message: 'Please import from @grafana/i18n instead',
             },
+            {
+              regex: '\\.test$',
+            },
           ],
           paths: [
             {
