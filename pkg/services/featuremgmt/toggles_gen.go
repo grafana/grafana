@@ -239,14 +239,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagWargamesTesting
-	// Placeholder feature flag for internal testing
-	FlagWargamesTesting = "wargamesTesting"
-
-	// FlagAlertingInsights
-	// Show the new alerting insights landing page
-	FlagAlertingInsights = "alertingInsights"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -343,10 +335,6 @@ const (
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
-	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and only use the external one defined.
-	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
-
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
@@ -390,10 +378,6 @@ const (
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
-
-	// FlagAlertingSimplifiedRouting
-	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
 	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
@@ -482,6 +466,10 @@ const (
 	// FlagKubernetesAggregator
 	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
+
+	// FlagKubernetesAggregatorCapTokenAuth
+	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
 	// FlagExpressionParser
 	// Enable new expression parser
@@ -626,10 +614,6 @@ const (
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
-
-	// FlagHomeSetupGuide
-	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-	FlagHomeSetupGuide = "homeSetupGuide"
 
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
@@ -779,17 +763,13 @@ const (
 	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
 	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
 
-	// FlagABTestFeatureToggleA
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+	// FlagTeamHttpHeadersTempo
+	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
+	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
 	// FlagTemplateVariablesUsesCombobox
 	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
-	// FlagABTestFeatureToggleB
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -864,8 +844,12 @@ const (
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
 	// FlagAlertingMigrationUI
-	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
+	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
+
+	// FlagAlertingImportYAMLUI
+	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
 
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
@@ -919,9 +903,17 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagPostgresDSUsePGX
+	// Enables using PGX instead of libpq for PostgreSQL datasource
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
+
+	// FlagMultiTenantFrontend
+	// Register MT frontend
+	FlagMultiTenantFrontend = "multiTenantFrontend"
 
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
@@ -934,4 +926,12 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
+
+	// FlagExtensionsReadOnlyProxy
+	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
+	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
+
+	// FlagRestoreDashboards
+	// Enables restore deleted dashboards feature
+	FlagRestoreDashboards = "restoreDashboards"
 )

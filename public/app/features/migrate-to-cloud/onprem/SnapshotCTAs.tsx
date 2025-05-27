@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Icon, Spinner, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { CTAInfo } from './CTAInfo';
 
@@ -11,6 +11,7 @@ interface SnapshotCTAProps {
 
 // TODO: this can be removed with the new configuration flow merged.
 export function BuildSnapshotCTA(props: SnapshotCTAProps) {
+  const { t } = useTranslate();
   const { disabled, isLoading, onClick } = props;
 
   return (
@@ -45,6 +46,7 @@ export function BuildSnapshotCTA(props: SnapshotCTAProps) {
 }
 
 export function CreatingSnapshotCTA(props: SnapshotCTAProps) {
+  const { t } = useTranslate();
   const { disabled, isLoading, onClick } = props;
 
   return (

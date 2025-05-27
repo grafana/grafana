@@ -922,7 +922,39 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	return res, nil
+	if len(res) <= 1 {
+		return res, nil
+	}
+
+	// the search query above will return one row per dashboard tag, and dashboards
+	// can have multiple tags. we only want to return one row per dashboard, so dedup
+	// the results by id.
+	// note: we must preserve the order of the results as we dedup, as the query can be sorted
+	seen := make(map[int64]int)
+	uniqueRes := make([]dashboards.DashboardSearchProjection, 0, len(res))
+
+	for _, item := range res {
+		if idx, exists := seen[item.ID]; exists {
+			if item.Term != "" {
+				if uniqueRes[idx].Tags == nil {
+					uniqueRes[idx].Tags = make([]string, 0)
+				}
+				uniqueRes[idx].Tags = append(uniqueRes[idx].Tags, item.Term)
+			}
+			continue
+		}
+
+		if item.Tags == nil {
+			item.Tags = make([]string, 0)
+		}
+		if item.Term != "" {
+			item.Tags = append(item.Tags, item.Term)
+		}
+		seen[item.ID] = len(uniqueRes)
+		uniqueRes = append(uniqueRes, item)
+	}
+
+	return uniqueRes, nil
 }
 
 func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
@@ -1011,21 +1043,6 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 		}
 		return nil
 	})
-}
-
-func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboards")
-	defer span.End()
-
-	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
-		err := session.Find(&dashboards)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
 }
 
 func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {

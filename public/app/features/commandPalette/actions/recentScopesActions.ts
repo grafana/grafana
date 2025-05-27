@@ -1,17 +1,18 @@
+import { useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
-import { defaultScopesServices } from 'app/features/scopes/ScopesContextProvider';
+import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 
 import { CommandPaletteAction } from '../types';
 import { RECENT_SCOPES_PRIORITY } from '../values';
 
 export function getRecentScopesActions(): CommandPaletteAction[] {
-  if (!config.featureToggles.scopeFilters) {
+  const services = useScopesServices();
+  const { t } = useTranslate();
+  if (!(config.featureToggles.scopeFilters && services)) {
     return [];
   }
 
-  const { scopesSelectorService } = defaultScopesServices();
-
+  const { scopesSelectorService } = services;
   const recentScopes = scopesSelectorService.getRecentScopes();
 
   return recentScopes.map((recentScope) => {

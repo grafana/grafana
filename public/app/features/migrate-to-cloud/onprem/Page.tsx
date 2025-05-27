@@ -1,9 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import {
   GetSnapshotResponseDto,
@@ -197,6 +197,7 @@ export const Page = () => {
     reconfiguring,
   ]);
 
+  const { t } = useTranslate();
   // UI State Machine
   useEffect(() => {
     // If we don't have a session or the snapshot is still loading, don't do anything yet!
@@ -304,15 +305,18 @@ export const Page = () => {
     uploadSnapshotResult.error,
   ]);
 
-  const error = getError({
-    snapshot: snapshot.data,
-    getSnapshotError: snapshot.error,
-    getSessionError: session.error,
-    createSnapshotError: createSnapshotResult.error,
-    uploadSnapshotError: uploadSnapshotResult.error,
-    cancelSnapshotError: cancelSnapshotResult.error,
-    disconnectSnapshotError: disconnectResult.error,
-  });
+  const error = getError(
+    {
+      snapshot: snapshot.data,
+      getSnapshotError: snapshot.error,
+      getSessionError: session.error,
+      createSnapshotError: createSnapshotResult.error,
+      uploadSnapshotError: uploadSnapshotResult.error,
+      cancelSnapshotError: cancelSnapshotResult.error,
+      disconnectSnapshotError: disconnectResult.error,
+    },
+    t
+  );
 
   // Action Callbacks
   const handleCreateSnapshot = useCallback(
@@ -460,7 +464,7 @@ interface ErrorDescription {
   error?: unknown;
 }
 
-function getError(props: GetErrorProps): ErrorDescription | undefined {
+function getError(props: GetErrorProps, t: TFunction): ErrorDescription | undefined {
   const {
     snapshot,
     getSnapshotError,
@@ -501,7 +505,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   if (createSnapshotError) {
-    return handleCreateSnapshotError(createSnapshotError, seeLogs);
+    return handleCreateSnapshotError(createSnapshotError, seeLogs, t);
   }
 
   if (uploadSnapshotError) {
@@ -561,7 +565,11 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   return undefined;
 }
 
-function handleCreateSnapshotError(createSnapshotError: unknown, seeLogs: string): ErrorDescription | undefined {
+function handleCreateSnapshotError(
+  createSnapshotError: unknown,
+  seeLogs: string,
+  t: TFunction
+): ErrorDescription | undefined {
   const apiError = maybeAPIError(createSnapshotError);
 
   let severity: AlertVariant = 'warning';

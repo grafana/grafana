@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
@@ -33,7 +33,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
 
-  // Since the plugins comes from the store and changes every time we update a plugin,
+  // Since the plugins come from the store and changes every time we update a plugin,
   // we need to keep track of the initial plugins.
   useEffect(() => {
     if (initialPluginsRef.current.length === 0) {
@@ -85,10 +85,12 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
     }
   }, [error, errorMap, inProgress, selectedPlugins]);
 
+  const { t } = useTranslate();
+
   const onConfirm = async () => {
     if (!inProgress) {
       reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME, {
-        path: location.pathname,
+        path: window.location.pathname,
         count: selectedPlugins?.size,
         creator_team: 'grafana_plugins_catalog',
         schema_version: '1.0.0',
@@ -159,13 +161,13 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
-      confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
+      confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected, t)}
       confirmButtonVariant="primary"
     />
   );
 };
 
-function getConfirmationText(installsRemaining: number, inProgress: boolean, pluginsSelected: number) {
+function getConfirmationText(installsRemaining: number, inProgress: boolean, pluginsSelected: number, t: TFunction) {
   if (inProgress) {
     return t('plugins.catalog.update-all.modal-in-progress', 'Updating...');
   }
