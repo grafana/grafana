@@ -39,10 +39,9 @@ dagger run --silent go run ./pkg/build/cmd \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --version=${DRONE_TAG} \
   --destination=${local_dst} > assets.txt
 
-cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
+cat assets.txt | go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/prerelease

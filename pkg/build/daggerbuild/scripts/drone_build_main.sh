@@ -24,7 +24,6 @@ dagger run --silent go run ./pkg/build/cmd \
   -a docker:grafana:linux/arm/v7 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
-  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-dir=${GRAFANA_DIR} \
   --github-token=${GITHUB_TOKEN} \
@@ -36,4 +35,4 @@ echo "Final list of artifacts:"
 cat assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/main

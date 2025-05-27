@@ -373,11 +373,6 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		return *ss.recursiveQueriesAreSupported, nil
 	}
 	recursiveQueriesAreSupported := func() (bool, error) {
-		if ss.GetDBType() == migrator.Spanner {
-			// no need to try...
-			return false, nil
-		}
-
 		var result []int
 		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 			recQry := `WITH RECURSIVE cte (n) AS
@@ -414,7 +409,6 @@ var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 var testSQLStoreCleanup []func()
-var testSQLStoreSkipTestsOnBackend string // When not empty and matches DB type, test is skipped.
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
@@ -458,12 +452,6 @@ func SetupTestDB() {
 		os.Exit(1)
 	}
 	testSQLStoreSetup = true
-}
-
-func SkipTestsOnSpanner() {
-	testSQLStoreMutex.Lock()
-	defer testSQLStoreMutex.Unlock()
-	testSQLStoreSkipTestsOnBackend = "spanner"
 }
 
 func CleanupTestDB() {
@@ -550,10 +538,6 @@ func TestMain(m *testing.M) {
 
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
-
-		if testSQLStoreSkipTestsOnBackend != "" && testSQLStoreSkipTestsOnBackend == dbType {
-			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
-		}
 
 		cfgDBSec := testCfg.Raw.Section("database")
 		cfgDBSec.Key("type").SetValue(dbType)

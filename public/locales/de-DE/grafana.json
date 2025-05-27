@@ -57,7 +57,11 @@
       "aria-label-add": "Hinzufügen",
       "aria-label-delete": "Löschen",
       "placeholder-key": "Key",
+      "placeholder-name": "Name",
       "placeholder-value": "Wert"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -3411,6 +3415,13 @@
           "values": "Werte werden durch Komma getrennt",
           "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Typ",
+          "type-placeholder": ""
+        },
         "description": "Beschreibung",
         "description-placeholder": "Beschreibender Text",
         "label": "Label",
@@ -3429,8 +3440,8 @@
           "category": "Auswahloptionen",
           "custom-all-value": "Alle Werte benutzerdefiniert",
           "custom-all-value-description": "Ein Platzhalter-Regex oder ein anderer Wert, um „Alle“ darzustellen",
-          "include-all": "Option „Alle einschließen“",
-          "include-all-description": "Aktiviert eine Option, mit der alle Werte einbezogen werden",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Mehrwertig"
         },
         "type-category": "{{type}} Optionen"
@@ -5404,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bestätigen",
         "confirm-action": "Aktion bestätigen",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Wert"
       },
+      "close": "Schließen",
+      "continue": "",
       "inline": {
         "add-action": "Aktion hinzufügen",
         "edit-action": "Aktion bearbeiten"
@@ -5418,6 +5433,7 @@
         "action-query-params": "Abfrageparameter",
         "action-title": "Titel",
         "action-title-placeholder": "Titel der Aktion",
+        "action-variables": "Variable",
         "one-click-description": "Der Ein-Klick-Modus kann nur für einen Link oder eine Aktion gleichzeitig aktiviert werden"
       }
     },
@@ -6866,7 +6882,7 @@
       "title": "Servicekonten"
     },
     "setup-guide": {
-      "title": "Setup-Anleitung"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Verwalten Sie die extern freigegebenen Dashboards Ihrer Organisation",
