@@ -181,16 +181,13 @@ func (q *Queue) scheduleRoundRobin() {
 		// Update bookkeeping
 		q.pendingDequeueRequests.Remove(reqElem)
 		tq.items = tq.items[1:]
-		if tq.isEmpty() {
-			tq.clear()
-			q.activeTenants.Remove(tenantElem)
-		}
 
 		// Update metrics
-		q.queueLength.WithLabelValues(tq.id).Set(float64(len(tq.items)))
+		q.queueLength.WithLabelValues(tq.id).Set(float64(tq.len()))
 
 		// Round-robin: move to back if tenant still has items, otherwise remove
 		if tq.isEmpty() {
+			tq.clear()
 			q.activeTenants.Remove(tenantElem)
 		} else {
 			q.activeTenants.MoveToBack(tenantElem)
