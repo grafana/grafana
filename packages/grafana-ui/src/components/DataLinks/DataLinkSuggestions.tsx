@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import { useRef, useMemo } from 'react';
 import * as React from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
+import { useClickAway } from 'react-use';
 
 import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 

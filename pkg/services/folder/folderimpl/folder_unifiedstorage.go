@@ -34,7 +34,7 @@ import (
 )
 
 const folderSearchLimit = 100000
-const folderListLimit = 100
+const folderListLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getFoldersFromApiServer")

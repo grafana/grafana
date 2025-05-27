@@ -94,12 +94,12 @@ func NewService(
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -107,7 +107,16 @@ func NewService(
 func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.Check")
 	defer span.End()
-	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", req.GetSubject(),
+		"namespace", req.GetNamespace(),
+		"group", req.GetGroup(),
+		"resource", req.GetResource(),
+		"verb", req.GetVerb(),
+	)
+	defer func(start time.Time) {
+		ctxLogger.Debug("Check execution time", "duration", time.Since(start).Milliseconds())
+	}(time.Now())
 
 	deny := &authzv1.CheckResponse{Allowed: false}
 
@@ -175,7 +184,16 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
-	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", req.GetSubject(),
+		"namespace", req.GetNamespace(),
+		"group", req.GetGroup(),
+		"resource", req.GetResource(),
+		"verb", req.GetVerb(),
+	)
+	defer func(start time.Time) {
+		ctxLogger.Debug("List execution time", "duration", time.Since(start).Milliseconds())
+	}(time.Now())
 
 	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {

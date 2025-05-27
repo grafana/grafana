@@ -35,6 +35,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     label: opt.name,
     icon: opt.icon,
     description: opt.description,
+    ariaLabel: `layout-selection-option-${opt.name}`,
   }));
 
   return (

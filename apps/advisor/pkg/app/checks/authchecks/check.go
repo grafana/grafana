@@ -2,6 +2,7 @@ package authchecks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -26,6 +27,10 @@ func New(ssoSettingsService ssosettings.Service) checks.Check {
 
 func (c *check) ID() string {
 	return CheckID
+}
+
+func (c *check) Name() string {
+	return "SSO setting"
 }
 
 func (c *check) Init(ctx context.Context) error {
@@ -53,6 +58,9 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 func (c *check) Item(ctx context.Context, id string) (any, error) {
 	ssoSetting, err := c.ssoSettingsService.GetForProviderWithRedactedSecrets(ctx, id)
 	if err != nil {
+		if errors.Is(err, ssosettings.ErrNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return ssoSetting, nil
