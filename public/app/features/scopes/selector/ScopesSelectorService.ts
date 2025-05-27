@@ -225,7 +225,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ selectedScopes, treeScopes, loading: true });
 
     // Fetches both dashboards and scope navigations
-    // this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
+    this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     if (treeScopes.length > 0) {
       selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
