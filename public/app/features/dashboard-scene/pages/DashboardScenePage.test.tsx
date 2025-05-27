@@ -21,7 +21,11 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
-import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import {
+  DashboardScenePageStateManager,
+  DashboardScenePageStateManagerV2,
+  getDashboardScenePageStateManager,
+} from './DashboardScenePageStateManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -80,7 +84,7 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
     );
   };
 
-  return { rerender, context, props };
+  return { rerender, context, props, unmount: renderResult.unmount };
 }
 
 const simpleDashboard: Dashboard = {
@@ -389,6 +393,18 @@ describe('DashboardScenePage', () => {
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Runtime error');
+    });
+  });
+
+  describe('UnifiedDashboardScenePageStateManager', () => {
+    it('should reset active manager when unmounting', async () => {
+      const manager = getDashboardScenePageStateManager();
+      manager.setActiveManager('v2');
+      const { unmount } = setup();
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      unmount();
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
   });
 });
