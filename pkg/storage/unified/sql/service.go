@@ -264,6 +264,7 @@ func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	span.SetAttributes(attribute.Bool("fallback_used", false))
 	newCtx, err := f.authenticator(ctx)
 	if err == nil {
+		fmt.Println("fallback not used")
 		// fallback not used, authentication successful
 		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
 		return newCtx, nil
