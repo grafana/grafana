@@ -13,18 +13,6 @@ describe('TimePickerWithHistory', () => {
   const getApplyButton = () => screen.getByRole('button', { name: 'Apply time range' });
 
   const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
-  const OLD_LOCAL_STORAGE = [
-    {
-      from: '2022-12-03T00:00:00.000Z',
-      to: '2022-12-03T23:59:59.000Z',
-      raw: { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
-    },
-    {
-      from: '2022-12-02T00:00:00.000Z',
-      to: '2022-12-02T23:59:59.000Z',
-      raw: { from: '2022-12-02T00:00:00.000Z', to: '2022-12-02T23:59:59.000Z' },
-    },
-  ];
 
   const NEW_LOCAL_STORAGE = [
     { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
