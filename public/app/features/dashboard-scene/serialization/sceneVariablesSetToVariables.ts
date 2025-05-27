@@ -458,7 +458,7 @@ function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFil
     filters?.map((filter) => {
       const { origin: initialOrigin, ...restOfFilter } = filter;
 
-      if (initialOrigin === 'dashboard' || initialOrigin === 'scope') {
+      if (initialOrigin === 'dashboard') {
         return {
           ...restOfFilter,
           origin: initialOrigin,
