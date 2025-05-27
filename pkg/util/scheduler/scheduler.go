@@ -26,7 +26,7 @@ const (
 type WorkQueue interface {
 	services.Service
 
-	Dequeue(ctx context.Context) (runnable func(), ok bool, err error)
+	Dequeue(ctx context.Context) (runnable func(), err error)
 }
 
 // Worker processes items from the QoS request queue
@@ -41,12 +41,12 @@ type Worker struct {
 
 func (w *Worker) run(ctx context.Context) {
 	defer w.wg.Done()
-	w.logger.Debug("Worker started", "id", w.id)
+	w.logger.Debug("worker started", "id", w.id)
 
 	for {
 		select {
 		case <-ctx.Done():
-			w.logger.Debug("Worker context canceled", "id", w.id)
+			w.logger.Debug("worker stopped", "id", w.id)
 			return
 		default:
 			w.dequeueWithRetries(ctx)
@@ -62,36 +62,23 @@ func (w *Worker) dequeueWithRetries(ctx context.Context) {
 	})
 
 	for boff.Ongoing() {
-		runnable, ok, err := w.queue.Dequeue(ctx)
-		if err != nil {
-			if errors.Is(err, ErrQueueClosed) {
-				w.logger.Debug("Worker exiting due to queue closed", "id", w.id)
-				return
-			}
-			if errors.Is(err, context.DeadlineExceeded) {
-				boff.Wait()
-				if ctx.Err() != nil {
-					w.logger.Debug("Worker backoff exhausted", "id", w.id)
-					return
-				}
-				continue
-			}
-			w.logger.Error("Error dequeuing item", "id", w.id, "error", err)
-			boff.Wait()
-			if ctx.Err() != nil {
-				w.logger.Debug("Worker backoff exhausted", "id", w.id)
-				return
-			}
-			continue
+		runnable, err := w.queue.Dequeue(ctx)
+		if err == nil {
+			runnable()
+			break
 		}
 
-		boff.Reset()
-
-		if !ok {
-			continue
+		if errors.Is(err, ErrQueueClosed) {
+			w.logger.Debug("queue closed, stopping worker", "id", w.id)
+			return
 		}
 
-		runnable()
+		w.logger.Error("retrying dequeue", "id", w.id, "error", err, "attempt", boff.NumRetries())
+		boff.Wait()
+	}
+	if err := boff.ErrCause(); err != nil {
+		w.logger.Error("failed to dequeue after retries", "id", w.id, "error", err)
+		return
 	}
 }
 
@@ -140,10 +127,10 @@ func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 	var err error
 
 	if queue == nil {
-		return nil, errors.New("scheduler: queue cannot be nil")
+		return nil, errors.New("queue cannot be nil")
 	}
 	if err := config.validate(); err != nil {
-		return nil, fmt.Errorf("scheduler: invalid config: %w", err)
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	s := &Scheduler{
@@ -158,7 +145,7 @@ func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 	subservices := []services.Service{s.queue}
 	s.subservices, err = services.NewManager(subservices...)
 	if err != nil {
-		return nil, fmt.Errorf("scheduler: failed to create subservices manager: %w", err)
+		return nil, fmt.Errorf("failed to create subservices manager: %w", err)
 	}
 	s.Service = services.NewBasicService(s.starting, s.running, s.stopping)
 	return s, nil
@@ -172,7 +159,7 @@ func (s *Scheduler) starting(ctx context.Context) error {
 		return fmt.Errorf("scheduler: failed to start subservices: %w", err)
 	}
 
-	s.logger.Info("Scheduler starting", "numWorkers", s.numWorkers)
+	s.logger.Info("scheduler starting", "numWorkers", s.numWorkers)
 	s.workers = make([]*Worker, 0, s.numWorkers)
 	s.wg.Add(s.numWorkers)
 
@@ -188,7 +175,7 @@ func (s *Scheduler) starting(ctx context.Context) error {
 		go worker.run(ctx)
 	}
 
-	s.logger.Info("Scheduler started")
+	s.logger.Info("scheduler started")
 	return nil
 }
 
@@ -198,19 +185,19 @@ func (s *Scheduler) running(ctx context.Context) error {
 	case <-ctx.Done():
 		return nil
 	case err := <-s.subservicesWatcher.Chan():
-		return fmt.Errorf("scheduler: subservice failure: %w", err)
+		return fmt.Errorf("subservice failure: %w", err)
 	}
 }
 
 // stopping is called by the services.Service lifecycle to stop the scheduler.
 func (s *Scheduler) stopping(_ error) error {
-	s.logger.Info("Scheduler stopping")
+	s.logger.Info("scheduler stopping")
 
 	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
 	if err != nil {
 		return fmt.Errorf("scheduler: failed to stop subservices: %w", err)
 	}
 
-	s.logger.Info("Scheduler stopped")
+	s.logger.Info("scheduler stopped")
 	return nil
 }

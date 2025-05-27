@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,19 +22,14 @@ func QueueOptionsWithDefaults(opts *QueueOptions) *QueueOptions {
 	if opts.MaxSizePerTenant <= 0 {
 		opts.MaxSizePerTenant = 10
 	}
-	if opts.QueueLength == nil {
-		opts.QueueLength = promauto.With(nil).NewGaugeVec(prometheus.GaugeOpts{}, []string{"slug"})
-	}
-	if opts.DiscardedRequests == nil {
-		opts.DiscardedRequests = promauto.With(nil).NewCounterVec(prometheus.CounterOpts{}, []string{"slug", "reason"})
-	}
-	if opts.EnqueueDuration == nil {
-		opts.EnqueueDuration = promauto.With(nil).NewHistogram(prometheus.HistogramOpts{})
+	if opts.Registerer == nil {
+		opts.Registerer = prometheus.NewRegistry()
 	}
 	return opts
 }
 
-func TestQueue(t *testing.T) { //nolint:gocyclo
+//nolint:gocyclo
+func TestQueue(t *testing.T) {
 	t.Parallel()
 
 	t.Run("SimpleEnqueueAndDequeue", func(t *testing.T) {
@@ -41,26 +37,21 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
-		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 
-		// Defer close and stopwait to ensure cleanup even if test fails
-		// Order matters: Close needs to be called before StopWait
 		defer func() {
-			q.StopAsync()
-			require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 		}()
 
 		var wg sync.WaitGroup
 		const numItems = 5
 		const tenantID = "tenant-a"
+		var processed atomic.Int32
 
 		// Enqueue items
 		for i := 0; i < numItems; i++ {
-			val := i // Capture loop variable
 			err := q.Enqueue(ctx, tenantID, func() {
-				// Simple work item
-				_ = val
+				processed.Add(1)
 			})
 			require.NoError(t, err, "Enqueue should succeed")
 		}
@@ -74,19 +65,20 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 				defer wg.Done()
 				dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 				defer cancel()
-				runnable, ok, err := q.Dequeue(dequeueCtx)
+				runnable, err := q.Dequeue(dequeueCtx)
 				require.NoError(t, err, "Dequeue should succeed")
-				require.True(t, ok, "Dequeue should return ok=true")
 				require.NotNil(t, runnable, "Dequeued runnable should not be nil")
+				runnable()
 			}()
 		}
 
 		wg.Wait()
 
+		require.Equal(t, numItems, int(processed.Load()), "All items should have been processed")
+
 		// Let's simplify the dequeue check: Dequeue sequentially after enqueueing.
 		qSimple := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, qSimple.StartAsync(context.Background()), "Queue should start")
-		require.NoError(t, qSimple.AwaitRunning(context.Background()), "Queue should be running")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, qSimple))
 
 		for i := 0; i < numItems; i++ {
 			err := qSimple.Enqueue(ctx, tenantID, func() {})
@@ -97,10 +89,9 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		for i := 0; i < numItems; i++ {
 			dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
-			runnable, ok, err := qSimple.Dequeue(dequeueCtx)
+			runnable, err := qSimple.Dequeue(dequeueCtx)
 			cancel() // Cancel context after use
 			require.NoError(t, err, "Dequeue %d should succeed (simple)", i)
-			require.True(t, ok, "Dequeue %d should return ok=true (simple)", i)
 			require.NotNil(t, runnable, "Dequeued runnable %d should not be nil (simple)", i)
 		}
 
@@ -109,14 +100,12 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		// Check dequeue on empty queue times out
 		dequeueCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-		_, ok, err := qSimple.Dequeue(dequeueCtx)
+		_, err := qSimple.Dequeue(dequeueCtx)
 		cancel()
 		require.ErrorIs(t, err, context.DeadlineExceeded, "Dequeue on empty queue should time out")
-		require.False(t, ok, "Dequeue on empty queue should return ok=false")
 
 		// Stop the queue
-		qSimple.StopAsync()
-		require.NoError(t, qSimple.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), qSimple))
 	})
 
 	t.Run("RoundRobinBetweenTenants", func(t *testing.T) {
@@ -124,8 +113,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
-		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 
 		tenantA := "tenant-a"
 		tenantB := "tenant-b"
@@ -147,14 +135,10 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		}
 
 		// First tenant A, then B, then A, then B
-		err := q.Enqueue(ctx, tenantA, makeRunnable(tenantA))
-		require.NoError(t, err)
-		err = q.Enqueue(ctx, tenantB, makeRunnable(tenantB))
-		require.NoError(t, err)
-		err = q.Enqueue(ctx, tenantA, makeRunnable(tenantA))
-		require.NoError(t, err)
-		err = q.Enqueue(ctx, tenantB, makeRunnable(tenantB))
-		require.NoError(t, err)
+		require.NoError(t, q.Enqueue(ctx, tenantA, makeRunnable(tenantA)))
+		require.NoError(t, q.Enqueue(ctx, tenantA, makeRunnable(tenantA)))
+		require.NoError(t, q.Enqueue(ctx, tenantB, makeRunnable(tenantB)))
+		require.NoError(t, q.Enqueue(ctx, tenantB, makeRunnable(tenantB)))
 
 		// Verify queue state
 		require.Equal(t, 4, q.Len(), "Queue should have 4 items")
@@ -167,36 +151,20 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		for i := 0; i < 4; i++ {
 			// Use a more reliable context with longer timeout for CI environments
 			dequeueCtx, cancel := context.WithTimeout(ctx, dequeueTimeout)
-			runnable, ok, err := q.Dequeue(dequeueCtx)
-			if !ok || err != nil {
-				// If there's an error, let's check if queue state is still consistent
-				t.Logf("Dequeue %d failed: ok=%v, err=%v", i, ok, err)
+			runnable, err := q.Dequeue(dequeueCtx)
+			if err != nil {
 				t.Logf("Queue state: Len=%d, ActiveTenantsLen=%d", q.Len(), q.ActiveTenantsLen())
 			}
 
 			cancel()
 			require.NoError(t, err, "Dequeue %d should succeed", i)
-			require.True(t, ok, "Dequeue %d should return ok=true", i)
 			require.NotNil(t, runnable, "Dequeued runnable %d should not be nil", i)
 			runnable() // Execute to record the tenant ID
 		}
 
 		// Check execution order - should alternate between tenants
 		resultsMu.Lock()
-		expectedOrder := []string{tenantA, tenantB, tenantA, tenantB}
-		equal := len(results) == len(expectedOrder)
-		if equal {
-			for i, v := range expectedOrder {
-				if i >= len(results) || results[i] != v {
-					equal = false
-					break
-				}
-			}
-		}
-
-		if !equal {
-			t.Errorf("Execution order mismatch: expected %v, got %v", expectedOrder, results)
-		}
+		require.Equal(t, []string{tenantA, tenantB, tenantA, tenantB}, results)
 		resultsMu.Unlock()
 
 		// Verify queue is now empty
@@ -232,10 +200,9 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		// Dequeue one item
 		dequeueCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-		_, ok, err := q.Dequeue(dequeueCtx)
+		_, err = q.Dequeue(dequeueCtx)
 		cancel()
 		require.NoError(t, err)
-		require.True(t, ok)
 		require.Equal(t, 1, q.Len())
 
 		// Now enqueue should succeed again
@@ -249,7 +216,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
 
 		// Create an already canceled context instead of using timeout
@@ -257,11 +224,10 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		cancel() // Cancel immediately
 
 		// This should return with context.Canceled error immediately
-		runnable, ok, err := q.Dequeue(cancelCtx)
+		runnable, err := q.Dequeue(cancelCtx)
 
 		// Verify the result - should be context.Canceled, not DeadlineExceeded
 		require.Nil(t, runnable, "Runnable should be nil on context cancellation")
-		require.False(t, ok, "ok should be false on context cancellation")
 		require.ErrorIs(t, err, context.Canceled, "Expected context canceled error")
 	})
 
@@ -270,16 +236,15 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 		defer cancel()
 
 		// This should timeout since nothing is in the queue
-		runnable, ok, err := q.Dequeue(ctx)
+		runnable, err := q.Dequeue(ctx)
 		require.Nil(t, runnable, "Runnable should be nil on timeout")
-		require.False(t, ok, "ok should be false on timeout")
 		require.ErrorIs(t, err, context.DeadlineExceeded, "Expected context deadline exceeded error")
 	})
 
@@ -288,16 +253,23 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
 
 		// Stop the queue first
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 
 		// Now try to enqueue - should return ErrQueueClosed
 		err := q.Enqueue(context.Background(), "tenant-id", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Stop should return ErrQueueClosed")
+	})
+
+	t.Run("EnqueueBeforeStarted", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		q := NewQueue(QueueOptionsWithDefaults(nil))
+		err := q.Enqueue(ctx, "tenant-id", func() {})
+		require.ErrorIs(t, err, ErrQueueClosed, "Enqueue before Start should return ErrQueueClosed")
 	})
 
 	t.Run("DequeueAfterStopped", func(t *testing.T) {
@@ -305,18 +277,24 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, q.StartAsync(ctx), "Queue should start")
+		require.NoError(t, services.StartAndAwaitRunning(ctx, q))
 		require.NoError(t, q.AwaitRunning(ctx), "Queue should be running")
 
 		// Stop the queue first
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 
 		// Now try to dequeue - should return ErrQueueClosed
-		runnable, ok, err := q.Dequeue(context.Background())
+		runnable, err := q.Dequeue(context.Background())
 		require.Nil(t, runnable, "Runnable should be nil after Stop")
-		require.False(t, ok, "ok should be false after Stop")
 		require.ErrorIs(t, err, ErrQueueClosed, "Dequeue after Stop should return ErrQueueClosed")
+	})
+
+	t.Run("DequeueBeforeStarted", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		q := NewQueue(QueueOptionsWithDefaults(nil))
+		_, err := q.Dequeue(ctx)
+		require.ErrorIs(t, err, ErrQueueClosed, "Dequeue before Start should return ErrQueueClosed")
 	})
 
 	t.Run("ConcurrentEnqueuersAndDequeuers", func(t *testing.T) {
@@ -343,10 +321,9 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 			wg.Add(1)
 			go func(consumerID int) {
 				defer wg.Done()
-				consumerCount := 0
 
 				for {
-					runnable, ok, err := q.Dequeue(ctx)
+					runnable, err := q.Dequeue(ctx)
 					if err != nil {
 						if errors.Is(err, context.DeadlineExceeded) {
 							return
@@ -355,13 +332,8 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 						return
 					}
 
-					if !ok {
-						return
-					}
-
 					// Execute the runnable which will update our tracking
 					runnable()
-					consumerCount++
 
 					// Check if we've processed all expected items
 					mu.Lock()
@@ -423,8 +395,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		require.Equal(t, 0, q.Len(), "Queue should be empty after processing all items")
 		require.Equal(t, 0, q.ActiveTenantsLen(), "No active tenants should remain after processing")
 		// Stop the queue
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 	})
 
 	t.Run("SlowDequeuerHandling", func(t *testing.T) {
@@ -482,9 +453,9 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 			go func() {
 				for j := 0; j < 2; j++ { // Each will dequeue 2 items
 					dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-					runnable, ok, err := q.Dequeue(dequeueCtx)
+					runnable, err := q.Dequeue(dequeueCtx)
 					cancel()
-					if err != nil || !ok {
+					if err != nil {
 						return
 					}
 					runnable()
@@ -537,8 +508,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		require.Equal(t, 0, q.ActiveTenantsLen())
 
 		// Stop the queue
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 	})
 
 	t.Run("ActiveTenantsLength", func(t *testing.T) {
@@ -559,8 +529,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		require.Equal(t, activeTenants, 2)
 
 		// Stop the queue
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 	})
 
 	t.Run("QueueLength", func(t *testing.T) {
@@ -581,8 +550,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		require.Equal(t, queueLen, 2)
 
 		// Stop the queue
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(context.Background()), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 	})
 
 	t.Run("GracefulShutdown", func(t *testing.T) {
@@ -607,9 +575,8 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			runnable, ok, err := q.Dequeue(ctx)
+			runnable, err := q.Dequeue(ctx)
 			require.NoError(t, err)
-			require.True(t, ok)
 			require.NotNil(t, runnable)
 			runnable()
 		}()
@@ -624,8 +591,7 @@ func TestQueue(t *testing.T) { //nolint:gocyclo
 		// Now gracefully stop the queue
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(ctx), "Queue should stop")
+		require.NoError(t, services.StopAndAwaitTerminated(ctx, q))
 		wg.Wait()
 
 		// Check that the queue is closed

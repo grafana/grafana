@@ -88,13 +88,11 @@ func TestScheduler(t *testing.T) {
 			scheduler, err := NewScheduler(q, &cfg)
 			require.NoError(t, err)
 			require.NotNil(t, scheduler)
-			require.NoError(t, scheduler.StartAsync(context.Background()))
-			require.NoError(t, scheduler.AwaitRunning(context.Background()))
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 			require.Equal(t, q, scheduler.queue)
 			require.Equal(t, cfg.NumWorkers, scheduler.numWorkers)
 			require.True(t, scheduler.State() == services.Running)
-			q.StopAsync()
-			require.NoError(t, q.AwaitTerminated(context.Background()))
+			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 		})
 
 		t.Run("NilQueue", func(t *testing.T) {
@@ -119,11 +117,9 @@ func TestScheduler(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.True(t, scheduler.State() == services.New)
-		require.NoError(t, scheduler.StartAsync(context.Background()))
-		require.NoError(t, scheduler.AwaitRunning(context.Background()))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 		require.True(t, scheduler.State() == services.Running)
-		scheduler.StopAsync()
-		err = scheduler.AwaitTerminated(context.Background())
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 		require.NoError(t, err)
 		require.True(t, scheduler.State() == services.Terminated)
 	})
@@ -143,8 +139,7 @@ func TestScheduler(t *testing.T) {
 			Logger:     log.New("qos.test"),
 		})
 		require.NoError(t, err)
-		require.NoError(t, scheduler.StartAsync(context.Background()))
-		require.NoError(t, scheduler.AwaitRunning(context.Background()))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
 		for i := 0; i < itemCount; i++ {
 			itemID := i
@@ -173,9 +168,7 @@ func TestScheduler(t *testing.T) {
 		})
 		require.Equal(t, itemCount, count, "Not all items were processed")
 
-		scheduler.StopAsync()
-		require.NoError(t, scheduler.AwaitTerminated(context.Background()))
-		require.Equal(t, services.Terminated, scheduler.State())
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 	})
 
 	t.Run("GracefulShutdown", func(t *testing.T) {
@@ -192,8 +185,7 @@ func TestScheduler(t *testing.T) {
 			Logger:     log.New("qos.test"),
 		})
 		require.NoError(t, err)
-		require.NoError(t, scheduler.StartAsync(context.Background()))
-		require.NoError(t, scheduler.AwaitRunning(context.Background()))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
 		for i := 0; i < 5; i++ {
 			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
@@ -226,7 +218,7 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, scheduler.AwaitTerminated(context.Background()))
 	})
 
-	t.Run("WithErrorInQueue", func(t *testing.T) {
+	t.Run("WithQueueClosed", func(t *testing.T) {
 		t.Parallel()
 
 		q := NewQueue(QueueOptionsWithDefaults(nil))
@@ -241,8 +233,7 @@ func TestScheduler(t *testing.T) {
 			Logger:     log.New("qos.test"),
 		})
 		require.NoError(t, err)
-		require.NoError(t, scheduler.StartAsync(context.Background()))
-		require.NoError(t, scheduler.AwaitRunning(context.Background()))
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
 		for i := 0; i < totalItems; i++ {
 			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
@@ -264,14 +255,12 @@ func TestScheduler(t *testing.T) {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		q.StopAsync()
-		require.NoError(t, q.AwaitTerminated(ctx))
+		require.NoError(t, services.StopAndAwaitTerminated(ctx, q))
 
 		err = q.Enqueue(context.Background(), "tenant-1", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed)
 
-		scheduler.StopAsync()
-		require.NoError(t, scheduler.AwaitTerminated(context.Background()))
+		require.NoError(t, services.StopAndAwaitTerminated(ctx, scheduler))
 		require.LessOrEqual(t, processedCount.Load(), int32(totalItems))
 	})
 }
