@@ -5,8 +5,8 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/grafana/dskit/ring"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
