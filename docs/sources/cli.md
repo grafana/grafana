@@ -251,7 +251,7 @@ grafana cli  --homepath /usr/share/grafana --config /etc/grafana/grafana.ini adm
 
 If you don't do this, the CLI:
 
-- Won't see the database connection information since it's in a directory outside of Grafana's homepath
+- Won't see the database connection information since it's in a directory outside of the Grafana homepath
 - Will configure the default SQLite database in `/var/lib/grafana` and reset that password instead of for your external database
 
 ### Migrate data and encrypt passwords
