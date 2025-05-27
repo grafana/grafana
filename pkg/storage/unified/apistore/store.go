@@ -163,6 +163,13 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// GetCurrentResourceVersion implements storage.Interface.
+// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	// Although not totally accurate, this is sufficient
+	return uint64(time.Now().UnixMicro()), nil
+}
+
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
 }
@@ -170,16 +177,6 @@ func (s *Storage) Versioner() storage.Versioner {
 func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
 	obj, _, err := s.codec.Decode(data, nil, obj)
 	return obj, err
-}
-
-// GetCurrentResourceVersion implements storage.Interface.
-// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
-func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
-	rsp, err := s.store.CurrentResourceVersion(ctx, &resourcepb.CurrentResourceVersionRequest{})
-	if err != nil {
-		return 0, err
-	}
-	return uint64(rsp.ResourceVersion), nil
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live

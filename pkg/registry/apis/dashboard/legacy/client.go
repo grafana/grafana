@@ -23,11 +23,6 @@ type directResourceClient struct {
 	server resource.ResourceServer
 }
 
-// CurrentResourceVersion implements resource.ResourceClient.
-func (d *directResourceClient) CurrentResourceVersion(ctx context.Context, in *resourcepb.CurrentResourceVersionRequest, opts ...grpc.CallOption) (*resourcepb.CurrentResourceVersionResponse, error) {
-	return d.server.CurrentResourceVersion(ctx, in)
-}
-
 // Create implements ResourceClient.
 func (d *directResourceClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
 	return d.server.Create(ctx, in)

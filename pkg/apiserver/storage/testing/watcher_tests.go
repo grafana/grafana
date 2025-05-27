@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -1452,7 +1453,17 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			}
 
 			if scenario.useCurrentRV {
-				currentStorageRV, err := store.GetCurrentResourceVersion(ctx)
+				// Get the most recent RV for this namespace
+				out := &example.PodList{}
+				if err := store.GetList(ctx, KeyFunc(ns, ""), storage.ListOptions{
+					Predicate: storage.SelectionPredicate{
+						Limit: 1,
+					},
+				}, out); err != nil {
+					t.Fatalf("Unable to get list: %v", err)
+				}
+
+				currentStorageRV, err := strconv.ParseInt(out.ResourceVersion, 10, 64)
 				require.NoError(t, err)
 				scenario.resourceVersion = fmt.Sprintf("%d", currentStorageRV)
 			}

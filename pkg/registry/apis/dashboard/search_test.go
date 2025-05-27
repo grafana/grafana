@@ -630,13 +630,6 @@ type MockClient struct {
 	CallCount     int
 }
 
-// CurrentResourceVersion implements resource.ResourceClient.
-func (m *MockClient) CurrentResourceVersion(ctx context.Context, in *resourcepb.CurrentResourceVersionRequest, opts ...grpc.CallOption) (*resourcepb.CurrentResourceVersionResponse, error) {
-	return &resourcepb.CurrentResourceVersionResponse{
-		ResourceVersion: 123,
-	}, nil
-}
-
 type MockResult struct {
 	Name     string
 	Resource string

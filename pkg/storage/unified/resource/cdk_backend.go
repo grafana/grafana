@@ -223,32 +223,6 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *resourcepb.ReadReque
 	}
 }
 
-// finds the maximum resoruce version across all files
-func (s *cdkBackend) CurrentResourceVersion(ctx context.Context) (int64, error) {
-	maxrv := int64(0)
-	iter := s.bucket.List(&blob.ListOptions{
-		Prefix:    s.root,
-		Delimiter: "/",
-	})
-	for {
-		obj, err := iter.Next(ctx)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if strings.HasSuffix(obj.Key, ".json") {
-			idx := strings.LastIndex(obj.Key, "/") + 1
-			edx := strings.LastIndex(obj.Key, ".")
-			if idx > 0 {
-				rv, err := strconv.ParseInt(obj.Key[idx:edx], 10, 64)
-				if err == nil && rv > maxrv {
-					maxrv = rv
-				}
-			}
-		}
-	}
-	return maxrv, nil
-}
-
 func isDeletedValue(raw []byte) bool {
 	if bytes.Contains(raw, []byte(`"generation":-999`)) {
 		tmp := &unstructured.Unstructured{}
