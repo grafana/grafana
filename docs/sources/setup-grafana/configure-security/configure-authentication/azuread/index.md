@@ -105,7 +105,7 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
         1. You must have set `client_authentication` (env var `GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION`) under `[auth.azuread]` to `workload_identity` in the Grafana server configuration for this to work.
 
-        1. You must have set `workload_identity_token_file` (env var `GF_AZURE_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration for this to work.
+        1. You must have set `workload_identity_token_file` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration for this to work.
 
         1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This should be the same ID you specified in the `azure.workload.identity/client-id` annotation of your Grafana's deployment ServiceAccount.
 
