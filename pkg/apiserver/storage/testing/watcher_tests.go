@@ -1468,9 +1468,11 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			require.NoError(t, err, "failed to create watch: %v")
 			defer w.Stop()
 
-			// make sure we only get initial events
-			testCheckResultsInRandomOrder(t, w, scenario.expectedInitialEventsInRandomOrder(createdPods))
-			testCheckResultsInStrictOrder(t, w, scenario.expectedInitialEventsInStrictOrder(createdPods))
+			if scenario.sendInitialEvents == nil || (*scenario.sendInitialEvents && scenario.resourceVersion == "") {
+				testCheckResultsInStrictOrder(t, w, scenario.expectedInitialEventsInStrictOrder(createdPods))
+			} else {
+				testCheckResultsInRandomOrder(t, w, scenario.expectedInitialEventsInRandomOrder(createdPods))
+			}
 			testCheckNoMoreResults(t, w)
 
 			createdPods = []*example.Pod{}
