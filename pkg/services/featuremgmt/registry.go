@@ -1782,7 +1782,7 @@ var (
 		},
 		{
 			Name:         "newInfluxDSConfigPageDesign",
-			Description:  "Enables new design for data source configuration pages",
+			Description:  "Enables new design for the InfluxDB data source configuration page",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
