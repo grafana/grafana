@@ -258,28 +258,84 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		if query.ManagedBy == utils.ManagerKindUnknown {
 			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
 		}
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_MANAGER_KIND,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
 
 		var dashes []*dashboards.Dashboard
-		if query.ManagedBy == utils.ManagerKindPlugin {
-			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
-				PluginID: query.ManagerIdentity,
-				OrgID:    user.GetOrgID(),
-			})
-		} else if query.ManagerIdentity != "" {
-			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
-		} else if len(query.ManagerIdentityNotIn) > 0 {
-			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
+		if query.ManagedBy == utils.ManagerKindPlugin || len(query.ManagerIdentityNotIn) > 0 {
+			if query.ManagedBy == utils.ManagerKindPlugin {
+				dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
+					PluginID: query.ManagerIdentity,
+					OrgID:    user.GetOrgID(),
+				})
+			} else {
+				dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			for _, dashboard := range dashes {
+				cells := [][]byte{
+					[]byte(dashboard.Title),
+					[]byte(dashboard.FolderUID),
+					[]byte("[]"), // no tags retrieved for provisioned dashboards
+					[]byte(strconv.FormatInt(dashboard.ID, 10)),
+					[]byte(query.ManagedBy),
+				}
+
+				if sortByField != "" {
+					cells = append(cells, []byte("0"))
+				}
+
+				list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
+					Key: getResourceKey(&dashboards.DashboardSearchProjection{
+						UID: dashboard.UID,
+					}, req.Options.Key.Namespace),
+					Cells: cells,
+				})
+			}
+
+			list.TotalHits = int64(len(list.Results.Rows))
+			return list, nil
 		}
+
+		// otherwise managerIdentity is set
+		provisioningData, err := c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
 		if err != nil {
 			return nil, err
 		}
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_MANAGER_ID,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_SOURCE_PATH,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_SOURCE_TIME,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+		list.Results.Columns = columns
 
-		for _, dashboard := range dashes {
+		for _, dashboard := range provisioningData {
 			cells := [][]byte{
-				[]byte(dashboard.Title),
-				[]byte(dashboard.FolderUID),
+				[]byte(dashboard.Dashboard.Title),
+				[]byte(dashboard.Dashboard.FolderUID),
 				[]byte("[]"), // no tags retrieved for provisioned dashboards
-				[]byte(strconv.FormatInt(dashboard.ID, 10)),
+				[]byte(strconv.FormatInt(dashboard.Dashboard.ID, 10)),
+				[]byte(query.ManagedBy),
+				[]byte(query.ManagerIdentity),
+				[]byte(dashboard.ExternalID),
+				[]byte(dashboard.CheckSum),
+				[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),
 			}
 
 			if sortByField != "" {
@@ -288,14 +344,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 
 			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
-					UID: dashboard.UID,
+					UID: dashboard.Dashboard.UID,
 				}, req.Options.Key.Namespace),
 				Cells: cells,
 			})
 		}
 
 		list.TotalHits = int64(len(list.Results.Rows))
-
 		return list, nil
 	}
 

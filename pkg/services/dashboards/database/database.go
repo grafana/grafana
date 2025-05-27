@@ -224,15 +224,17 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.DashboardProvisioningSearchResults, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
 	defer span.End()
 
-	dashes := []*dashboards.Dashboard{}
+	dashes := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
-			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).Find(&dashes)
+			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Find(&dashes)
 	})
 	if err != nil {
 		return nil, err
