@@ -45,9 +45,8 @@ func (c *check) Steps() []checks.Step {
 			securitySection: c.cfg.SectionWithEnvOverrides("security"),
 		},
 		&pinnedVersionStep{
-			StackID:        c.cfg.StackID,
-			GrafanaVersion: c.cfg.BuildVersion,
-			cfg:            c.cfg,
+			StackID:     c.cfg.StackID,
+			BuildBranch: c.cfg.BuildBranch,
 		},
 	}
 }
