@@ -23,28 +23,42 @@ export class ScopesApiClient {
     const response = new Promise<Scope>(async (resolve) => {
       const basicScope = getEmptyScopeObject(name);
 
-      try {
-        const serverScope = await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
-
-        const scope = {
+      setTimeout(() => {
+        resolve({
           ...basicScope,
-          ...serverScope,
           metadata: {
             ...basicScope.metadata,
-            ...serverScope.metadata,
+            name,
           },
           spec: {
             ...basicScope.spec,
-            ...serverScope.spec,
+            title: `${name} title`,
           },
-        };
+        });
+      }, Math.random() * 10);
 
-        resolve(scope);
-      } catch (err) {
-        this.scopesCache.delete(name);
+      // try {
+      //   const serverScope = await getBackendSrv().get<Scope>(apiUrl + `/scopes/${name}`);
 
-        resolve(basicScope);
-      }
+      //   const scope = {
+      //     ...basicScope,
+      //     ...serverScope,
+      //     metadata: {
+      //       ...basicScope.metadata,
+      //       ...serverScope.metadata,
+      //     },
+      //     spec: {
+      //       ...basicScope.spec,
+      //       ...serverScope.spec,
+      //     },
+      //   };
+
+      //   resolve(scope);
+      // } catch (err) {
+      //   this.scopesCache.delete(name);
+
+      //   resolve(basicScope);
+      // }
     });
 
     this.scopesCache.set(name, response);
@@ -53,6 +67,15 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopes(treeScopes: TreeScope[]): Promise<SelectedScope[]> {
+    // return Promise.resolve(
+    //   treeScopes.map(({ scopeName, path }, idx) => ({
+    //     scope: {
+    //       metadata: { name: scopeName },
+    //       spec: { title: `${scopeName} title`, type: '', description: '', category: '', filters: [] },
+    //     },
+    //     path: path,
+    //   }))
+    // );
     const scopes = await Promise.all(treeScopes.map(({ scopeName }) => this.fetchScope(scopeName)));
 
     return scopes.map<SelectedScope>((scope, idx) => {

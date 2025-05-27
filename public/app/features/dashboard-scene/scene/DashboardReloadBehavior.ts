@@ -23,7 +23,7 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _timeRange: SceneTimeRangeLike | undefined;
   private _dashboardScene: DashboardScene | undefined;
-  private _currentState: UrlQueryMap = {};
+  private _initialState?: UrlQueryMap;
 
   constructor(state: DashboardReloadBehaviorState) {
     super(state);
@@ -44,17 +44,13 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
       this._variableDependency = new VariableDependencyConfig(this, {
         onAnyVariableChanged: (variable: SceneVariable) => {
-          console.log('onAnyVariableChanged', variable.state.name, variable.getValue());
+          console.log('onAnyVariableChanged', variable.state.name, JSON.stringify(variable.getValue()));
           this.reloadDashboard();
         },
         dependsOnScopes: true,
       });
 
       this._subs.add(this._timeRange.subscribeToState(() => this.reloadDashboard()));
-
-      this._currentState = this.getCurrentState();
-
-      console.log('DashboardReloadBehavior activated with state', this._currentState);
     });
   }
 
@@ -84,12 +80,19 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
       return;
     }
 
+    // If we have not captured an initial state yet it means variables where still loading (probably means scopes are loading)
+    if (!this._initialState) {
+      this._initialState = this.getCurrentState();
+      console.log('DashboardReloadBehavior saving initial state after variables completed', this._initialState);
+      return;
+    }
+
     const newState = this.getCurrentState();
-    const stateChanged = !isEqual(newState.scopes, this._currentState.scopes);
+    const stateChanged = !isEqual(newState.scopes, this._initialState.scopes);
 
     console.log(
       `DashboardReloadBehavior reloadDashboard stateChanged ${stateChanged ? 'true' : 'false'}`,
-      this._currentState,
+      this._initialState,
       newState
     );
 
