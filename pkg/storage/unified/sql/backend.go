@@ -320,7 +320,6 @@ func (b *backend) CurrentResourceVersion(ctx context.Context) (int64, error) {
 		return err
 	})
 
-	fmt.Printf(">> RV: %d\n", rv)
 	return rv, err
 }
 
