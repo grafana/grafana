@@ -29,6 +29,8 @@ var (
 	errUserIDInvalid   = errors.New("invalid user ID")
 )
 
+const SkipRotationTime = 5 * time.Second
+
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
@@ -269,6 +271,12 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
 			return nil, err
+		}
+
+		if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+			// Rotation happened too recently. Skip new rotation
+			s.log.FromContext(ctx).Debug("Token was last rotated very recently, skipping rotation", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+			return token, nil
 		}
 		s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 

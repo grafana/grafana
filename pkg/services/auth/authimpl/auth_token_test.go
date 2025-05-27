@@ -491,6 +491,13 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("RotateToken", func(t *testing.T) {
+		advanceTime := func(d time.Duration) {
+			currentTime := getTime()
+			getTime = func() time.Time {
+				return currentTime.Add(d)
+			}
+		}
+
 		var prev string
 		token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 			User:      usr,
@@ -499,6 +506,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 		require.NoError(t, err)
 		t.Run("should rotate token when called with current auth token", func(t *testing.T) {
+			advanceTime(SkipRotationTime + 1*time.Second)
 			prev = token.UnhashedToken
 			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: token.UnhashedToken})
 			require.NoError(t, err)
@@ -507,6 +515,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should rotate token when called with previous", func(t *testing.T) {
+			advanceTime(SkipRotationTime + 1*time.Second)
 			newPrev := token.UnhashedToken
 			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prev})
 			require.NoError(t, err)
@@ -514,8 +523,31 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should not rotate token when called with old previous", func(t *testing.T) {
+			advanceTime(SkipRotationTime + 1*time.Second)
 			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prev})
 			require.ErrorIs(t, err, auth.ErrUserTokenNotFound)
+		})
+
+		t.Run("should not rotate token when last rotation happened recently", func(t *testing.T) {
+			advanceTime(SkipRotationTime + 1*time.Second)
+			prevToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
+			require.NoError(t, err)
+
+			advanceTime(SkipRotationTime + 1*time.Second)
+			rotatedToken, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prevToken.UnhashedToken})
+			require.NoError(t, err)
+			assert.True(t, rotatedToken.UnhashedToken != prevToken.UnhashedToken)
+			assert.True(t, rotatedToken.PrevAuthToken == hashToken("", prevToken.UnhashedToken))
+
+			// Should not rotate because it already rotated less than 5s ago
+			skippedToken, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: rotatedToken.UnhashedToken})
+			require.NoError(t, err)
+			assert.True(t, skippedToken.UnhashedToken == rotatedToken.UnhashedToken)
+			assert.True(t, skippedToken.PrevAuthToken == hashToken("", prevToken.UnhashedToken))
 		})
 
 		t.Run("should return error when token is revoked", func(t *testing.T) {
