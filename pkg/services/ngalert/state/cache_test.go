@@ -327,3 +327,84 @@ func TestCache_ForRuleState(t *testing.T) {
 		require.Equal(t, 0, visitCount)
 	})
 }
+
+func TestCache_Delete(t *testing.T) {
+	orgID := int64(1)
+	ruleUID := "test-rule-uid"
+
+	t.Run("should delete state", func(t *testing.T) {
+		cache := newCache()
+
+		states := []*State{
+			{
+				OrgID:        orgID,
+				AlertRuleUID: ruleUID,
+				CacheID:      data.Fingerprint(0),
+				State:        eval.Normal,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: ruleUID,
+				CacheID:      data.Fingerprint(1),
+				State:        eval.Alerting,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: ruleUID,
+				CacheID:      data.Fingerprint(2),
+				State:        eval.Pending,
+			},
+		}
+
+		for _, state := range states {
+			cache.set(state)
+		}
+
+		ruleKey := models.AlertRuleKey{OrgID: orgID, UID: ruleUID}
+		cache.delete(ruleKey, data.Fingerprint(0), data.Fingerprint(2))
+
+		require.Nil(t, cache.get(orgID, ruleUID, data.Fingerprint(0)))
+		require.Nil(t, cache.get(orgID, ruleUID, data.Fingerprint(2)))
+
+		require.Equal(t, states[1], cache.get(orgID, ruleUID, data.Fingerprint(1)))
+	})
+
+	t.Run("should handle deleting non-existent state", func(t *testing.T) {
+		cache := newCache()
+
+		state := &State{
+			OrgID:        orgID,
+			AlertRuleUID: ruleUID,
+			CacheID:      data.Fingerprint(1),
+			State:        eval.Normal,
+		}
+		cache.set(state)
+
+		// non-existent rule
+		ruleKey := models.AlertRuleKey{OrgID: orgID, UID: ruleUID}
+		cache.delete(ruleKey, data.Fingerprint(999))
+
+		require.NotNil(t, cache.get(orgID, ruleUID, data.Fingerprint(1)))
+
+		// non-existent org
+		ruleKey = models.AlertRuleKey{OrgID: 999, UID: ruleUID}
+		cache.delete(ruleKey, data.Fingerprint(0))
+	})
+
+	t.Run("should handle deleting from non-existent rule", func(t *testing.T) {
+		cache := newCache()
+
+		state := &State{
+			OrgID:        orgID,
+			AlertRuleUID: ruleUID,
+			CacheID:      data.Fingerprint(1),
+			State:        eval.Normal,
+		}
+		cache.set(state)
+
+		ruleKey := models.AlertRuleKey{OrgID: orgID, UID: "non-existent-rule"}
+		cache.delete(ruleKey, data.Fingerprint(1))
+
+		require.Equal(t, state, cache.get(orgID, ruleUID, data.Fingerprint(1)))
+	})
+}
