@@ -191,15 +191,16 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.33.1 // indirect; @grafana/grafana-app-platform-squad
+	k8s.io/api v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
-	sigs.k8s.io/randfill v1.0.0 // indirect; @grafana/grafana-app-platform-squad
+	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 )
