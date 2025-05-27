@@ -8,10 +8,11 @@ import { lastValueFrom } from 'rxjs';
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { config, getBackendSrv } from '@grafana/runtime';
+import { Button, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
+import { ImagePreview } from '../components/ImagePreview';
 
 type ImageSettingsForm = {
   width: number;
@@ -198,22 +199,15 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
             </Stack>
           </FieldSet>
         </form>
-        {loading && (
-          <div>
-            <LoadingBar width={128} />
-            <div className={styles.imageLoadingContainer}>
-              <Text variant="body">{title || ''}</Text>
-            </div>
-          </div>
-        )}
-        {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
-        {error && !loading && (
-          <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')}>
-            {isFetchError(error)
-              ? error.statusText
-              : t('link.share-panel.render-image-error-description', 'An error occurred when generating the image')}
-          </Alert>
-        )}
+
+        <ImagePreview
+          imageBlob={image || null}
+          isLoading={loading}
+          error={error ? { title: t('share-panel-image.error-title', 'Failed to generate image'), message: error.message } : null}
+          testId={selector.preview}
+          title={title}
+          showLoading={!!image || loading}
+        />
       </Stack>
     </div>
   );
@@ -222,15 +216,5 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
 const getStyles = (theme: GrafanaTheme2) => ({
   imageConfigurationField: css({
     flex: 1,
-  }),
-  image: css({
-    maxWidth: '100%',
-    width: 'max-content',
-  }),
-  imageLoadingContainer: css({
-    maxWidth: '100%',
-    height: 362,
-    border: `1px solid ${theme.components.input.borderColor}`,
-    padding: theme.spacing(1),
   }),
 });

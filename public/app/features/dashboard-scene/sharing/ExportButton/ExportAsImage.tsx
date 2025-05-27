@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useState, useEffect } from 'react';
-import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,10 +8,11 @@ import { Trans, useTranslate } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, LoadingBar, Alert, useStyles2 } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
+import { ImagePreview } from '../components/ImagePreview';
 import { ShareView } from '../types';
 
 import { generateDashboardImage, ImageGenerationError } from './utils';
@@ -42,7 +42,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
-  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   const { t } = useTranslate();
 
@@ -148,50 +147,15 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         </Button>
       </div>
 
-      <div
-        className={styles.previewContainer}
-        ref={ref}
-        data-testid={selectors.components.ExportImage.preview.container}
-      >
-        <div className={styles.loadingBarContainer} data-testid={selectors.components.ExportImage.preview.loading}>
-          {isLoading && <LoadingBar width={loadingBarWidth} />}
-        </div>
-
-        {error && !isLoading && <ErrorAlert error={error} />}
-        <ImagePreview imageBlob={imageBlob} isLoading={isLoading} />
-      </div>
+      <ImagePreview
+        imageBlob={imageBlob}
+        isLoading={isLoading}
+        error={error}
+        testId={selectors.components.ExportImage.preview.container}
+        title={dashboard.state.title}
+        showLoading={!!imageBlob || isLoading}
+      />
     </>
-  );
-}
-
-function ErrorAlert({ error }: { error: ErrorState }) {
-  if (!error) {
-    return null;
-  }
-
-  return (
-    <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
-      <div data-testid={selectors.components.ExportImage.preview.error.title}>{error.title}</div>
-      <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>
-    </Alert>
-  );
-}
-
-function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoading: boolean }) {
-  const styles = useStyles2(getStyles);
-
-  if (!imageBlob || isLoading) {
-    return null;
-  }
-
-  return (
-    <img
-      src={URL.createObjectURL(imageBlob)}
-      alt={t('share-modal.image.preview', 'Preview')}
-      className={styles.image}
-      data-testid={selectors.components.ExportImage.preview.image}
-      aria-label={t('share-modal.image.preview-aria', 'Generated dashboard image preview')}
-    />
   );
 }
 
@@ -231,33 +195,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   info: css({
     marginBottom: theme.spacing(2),
   }),
-  previewContainer: css({
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.background.secondary,
-    minHeight: '300px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  }),
-  loadingBarContainer: css({
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-    zIndex: 1,
-  }),
-  image: css({
-    maxWidth: '100%',
-    width: 'max-content',
-    display: 'block',
-  }),
   buttonRow: css({
     display: 'flex',
-    gap: theme.spacing(1),
-    justifyContent: 'flex-start',
+    gap: theme.spacing(2),
     marginBottom: theme.spacing(2),
   }),
 });
