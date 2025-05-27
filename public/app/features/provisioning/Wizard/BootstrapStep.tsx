@@ -5,17 +5,18 @@ import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 
+import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
-import { StepStatusInfo, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+  const { setStepStatusInfo } = useStepStatus();
   const {
     register,
     control,
@@ -50,8 +51,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
 
   useEffect(() => {
     const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [filesQuery.isLoading, onStepStatusUpdate, resourceStats.isLoading]);
+    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+  }, [filesQuery.isLoading, setStepStatusInfo, resourceStats.isLoading]);
 
   // Auto select the first option on mount
   useEffect(() => {

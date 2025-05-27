@@ -1,0 +1,65 @@
+import { createContext, useContext, useState, useCallback, PropsWithChildren } from 'react';
+
+import { StepStatusInfo } from './types';
+
+interface StepStatusContextData {
+  // Current status
+  stepStatusInfo: StepStatusInfo;
+
+  // Status setters
+  setStepStatusInfo: (info: StepStatusInfo) => void;
+  setStepError: (error: string) => void;
+
+  // Computed status checks
+  hasStepError: boolean;
+  isStepRunning: boolean;
+  isStepSuccess: boolean;
+  isStepIdle: boolean;
+}
+
+const StepStatusContext = createContext<StepStatusContextData | undefined>(undefined);
+
+interface StepStatusProviderProps {
+  onStepStatusChange?: (status: StepStatusInfo) => void;
+}
+
+export const StepStatusProvider = ({ children, onStepStatusChange }: PropsWithChildren<StepStatusProviderProps>) => {
+  const [stepStatusInfo, setStepStatusInfoState] = useState<StepStatusInfo>({ status: 'idle' });
+
+  const setStepStatusInfo = useCallback(
+    (info: StepStatusInfo) => {
+      setStepStatusInfoState(info);
+      onStepStatusChange?.(info);
+    },
+    [onStepStatusChange]
+  );
+
+  const setStepError = useCallback(
+    (error: string) => {
+      setStepStatusInfo({ status: 'error', error });
+    },
+    [setStepStatusInfo]
+  );
+
+  const value: StepStatusContextData = {
+    stepStatusInfo,
+    setStepStatusInfo,
+    setStepError,
+    hasStepError: stepStatusInfo.status === 'error',
+    isStepRunning: stepStatusInfo.status === 'running',
+    isStepSuccess: stepStatusInfo.status === 'success',
+    isStepIdle: stepStatusInfo.status === 'idle',
+  };
+
+  return <StepStatusContext.Provider value={value}>{children}</StepStatusContext.Provider>;
+};
+
+export const useStepStatus = () => {
+  const context = useContext(StepStatusContext);
+
+  if (context === undefined) {
+    throw new Error('useStepStatus must be used within a StepStatusProvider');
+  }
+
+  return context;
+};
