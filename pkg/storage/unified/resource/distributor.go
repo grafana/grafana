@@ -244,9 +244,9 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 
 	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
 	md, ok := metadata.FromIncomingContext(ctx)
-    if !ok {
-        md = metadata.New(nil)
-    }
+	if !ok {
+		md = metadata.New(nil)
+	}
 
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
