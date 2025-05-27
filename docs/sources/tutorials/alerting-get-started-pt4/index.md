@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Templating
+title: Get started with Grafana Alerting - Template your alert notifications
 weight: 65
 killercoda:
-  title: Get started with Grafana Alerting - Templating
+  title: Get started with Grafana Alerting - Template your alert notifications
   description: Learn how to use templates to create customized and concise notifications.
   backend:
     imageid: ubuntu
@@ -72,7 +72,7 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Templating
+# Get started with Grafana Alerting - Template your alert notifications
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Grouping notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) tutorial.
 

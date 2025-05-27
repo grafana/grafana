@@ -10,16 +10,16 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Dynamic routing
+title: Get started with Grafana Alerting - Route alerts using dynamic labels
 weight: 66
 killercoda:
-  title: Get started with Grafana Alerting - Dynamic routing
+  title: Get started with Grafana Alerting - Route alerts using dynamic labels
   description: Learn how to dynamically route alert notifications.
   backend:
     imageid: ubuntu
 ---
 
-# Get started with Grafana Alerting - Dynamic routing
+# Get started with Grafana Alerting - Route alerts using dynamic labels
 
 <!-- INTERACTIVE page intro.md START -->
 

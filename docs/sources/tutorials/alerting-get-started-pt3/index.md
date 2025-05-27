@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Grouping notifications
+title: Get started with Grafana Alerting - Group alert notifications
 weight: 64
 killercoda:
-  title: Get started with Grafana Alerting - Grouping notifications
+  title: Get started with Grafana Alerting - Group alert notifications
   description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting.
   backend:
     imageid: ubuntu
@@ -37,7 +37,7 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Grouping notifications
+# Get started with Grafana Alerting - Group alert notifications
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Alert routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/) tutorial.
 

@@ -10,10 +10,10 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Alert routing
+title: Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
 weight: 63
 killercoda:
-  title: Get started with Grafana Alerting - Alert routing
+  title: Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
   description: Learn to use alert instances and route notifications by labels to contacts.
   backend:
     imageid: ubuntu
@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Alert routing
+# Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
 
 This tutorial is a continuation of the [Get started with Grafana Alerting - Alert rules](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
