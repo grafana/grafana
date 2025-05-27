@@ -13,18 +13,6 @@ describe('TimePickerWithHistory', () => {
   const getApplyButton = () => screen.getByRole('button', { name: 'Apply time range' });
 
   const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
-  const OLD_LOCAL_STORAGE = [
-    {
-      from: '2022-12-03T00:00:00.000Z',
-      to: '2022-12-03T23:59:59.000Z',
-      raw: { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
-    },
-    {
-      from: '2022-12-02T00:00:00.000Z',
-      to: '2022-12-02T23:59:59.000Z',
-      raw: { from: '2022-12-02T00:00:00.000Z', to: '2022-12-02T23:59:59.000Z' },
-    },
-  ];
 
   const NEW_LOCAL_STORAGE = [
     { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' },
@@ -52,15 +40,28 @@ describe('TimePickerWithHistory', () => {
     expect(screen.getByText(/It looks like you haven't used this time picker before/i)).toBeInTheDocument();
   });
 
-  it('Should load with old TimeRange history', async () => {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(OLD_LOCAL_STORAGE));
+  it('Should load with valid time picker history only', async () => {
+    // TimePickerWithHistory only accepts TimePickerHistoryItem objects, invalid history items should be ignored
+    const BAD_LOCAL_STORAGE = [
+      { from: '2022-12-03T00:00:00.000Z', to: '2022-12-03T23:59:59.000Z' }, // valid
+      {
+        from: '2022-12-01T00:00:00.000Z',
+        to: '2022-12-01T23:59:59.000Z',
+        raw: { from: '2022-12-01T00:00:00.000Z', to: '022-12-01T23:59:59.000Z' }, // Invalid, because it has raw property which doesn't match TimePickerHistoryItem
+      },
+      {}, // Invalid, because empty
+      { from: null, to: null }, // Invalid, because both value are null
+      { from: '2022-12-04T00:00:00.000Z', to: null }, // Invalid because one value is null
+    ];
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(BAD_LOCAL_STORAGE));
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).toBeInTheDocument();
-    expect(screen.queryByText(/2022-12-02 00:00:00 to 2022-12-02 23:59:59/i)).toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-01 00:00:00 to 2022-12-01 23:59:59/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/2022-12-04 00:00:00 to 2022-12-04 23:59:59/i)).not.toBeInTheDocument();
   });
 
   it('Should load with new TimePickerHistoryItem history', async () => {
