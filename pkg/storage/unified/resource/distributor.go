@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"hash/fnv"
 	"time"
 
@@ -248,6 +249,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	ctx = userutils.InjectOrgID(ctx, namespace)
 	requester, err := identity.GetRequester(ctx)
 	user, ok := claims.AuthInfoFrom(ctx)
+	fmt.Println("user: ", user)
 	ds.log.Info("from claims.AuthInfoFrom", "user", user, "ok", ok)
 	if err != nil {
 		ds.log.Error("a requester was not found in the context")
