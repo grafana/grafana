@@ -845,19 +845,9 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleA?: boolean;
-  /**
   * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
-  /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleB?: boolean;
   /**
   * Enables Advisor app
   */
