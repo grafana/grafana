@@ -1461,6 +1461,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 					Predicate: storage.SelectionPredicate{
 						GetAttrs: generic.GetAttrs,
 						Label:    labels.Everything(),
+						Field:    fields.Everything(),
 						Limit:    1,
 					},
 				}, out); err != nil {
