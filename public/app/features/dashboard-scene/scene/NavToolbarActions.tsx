@@ -370,7 +370,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying && false;
   toolbarActions.push({
     group: 'main-buttons',
     condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
