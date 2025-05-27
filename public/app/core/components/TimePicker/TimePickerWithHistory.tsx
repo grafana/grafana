@@ -60,7 +60,7 @@ function getValidHistory(values: unknown): TimePickerHistoryItem[] {
     const isValid = getValidHistoryItem(item);
     if (isValid) {
       // If the item is already in the correct format, add it to the result
-      result.push(item as TimePickerHistoryItem);
+      result.push(item);
     }
   }
 
@@ -119,12 +119,10 @@ export function getValidHistoryItem(value: unknown): TimePickerHistoryItem | nul
     return null;
   }
 
-  // Safe type assertion after checking properties exist
-  const item = value as { from: unknown; to: unknown };
-
+  const { from, to } = value;
   // Check if both properties are strings
-  if (typeof item.from === 'string' && typeof item.to === 'string') {
-    return { from: item.from, to: item.to };
+  if (typeof from === 'string' && typeof to === 'string') {
+    return { from, to };
   }
 
   return null;
