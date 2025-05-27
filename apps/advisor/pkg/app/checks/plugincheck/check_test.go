@@ -119,6 +119,42 @@ func TestRun(t *testing.T) {
 			pluginProvisioned: []string{"plugin5"},
 			expectedFailures:  []advisor.CheckReportFailure{},
 		},
+		{
+			name: "Invalid signatures",
+			plugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin6", Name: "Plugin 6", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusInvalid},
+				{JSONData: plugins.JSONData{ID: "plugin7", Name: "Plugin 7", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusModified},
+				{JSONData: plugins.JSONData{ID: "plugin8", Name: "Plugin 8", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusUnsigned},
+			},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "active", Slug: "plugin6", Version: "1.0.0"},
+				{Status: "active", Slug: "plugin7", Version: "1.0.0"},
+				{Status: "active", Slug: "plugin8", Version: "1.0.0"},
+			},
+			expectedFailures: []advisor.CheckReportFailure{
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 6",
+					ItemID:   "plugin6",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin"}},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 7",
+					ItemID:   "plugin7",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin"}},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 8",
+					ItemID:   "plugin8",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin"}},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
