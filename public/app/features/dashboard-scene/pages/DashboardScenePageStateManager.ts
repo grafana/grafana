@@ -820,10 +820,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 
-  public resetActiveManager() {
-    this.setActiveManager('v1');
-  }
-
   public setActiveManager(manager: 'v1' | 'v2') {
     if (manager === 'v1') {
       this.activeManager = this.v1Manager;
