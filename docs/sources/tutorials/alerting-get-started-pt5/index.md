@@ -295,14 +295,6 @@ Now that the CPU and memory alert rules are set up, they are linked to the notif
 
 Based on your query's `instance` label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification policies, which route alerts to the correct contact points.
 
-Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
-
-```go
-$labels.deployment
-```
-
-You should be also able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
-
 To see this in action go to **Alerts & IRM > Alerting > Active notifications**
 
 This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
@@ -310,6 +302,14 @@ This page shows grouped alerts that are currently triggering notifications. If y
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
 Finally, you should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, notice that the **environment** label has been dynamically populated with values like `production`.
+
+Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
+
+```go
+$labels.deployment
+```
+
+You should be also able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
 
 <!-- INTERACTIVE page step6.md END -->
 
