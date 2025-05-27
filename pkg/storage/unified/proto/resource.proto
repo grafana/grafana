@@ -587,10 +587,10 @@ message ResourceTableRow {
   bytes object = 4;
 }
 
-message CurrentResourceVersionRequest {
-  string service = 1;
-}
+// Get the maximum resource version for everything in the storage 
+message CurrentResourceVersionRequest {}
 
+// Return the maximum RV across all resources
 message CurrentResourceVersionResponse {
   int64 resource_version = 1;
 }
