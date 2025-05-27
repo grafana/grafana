@@ -32,6 +32,8 @@ import (
 	utilflowcontrol "k8s.io/apiserver/pkg/util/flowcontrol"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/ptr"
+
+	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
 func RunTestWatch(ctx context.Context, t *testing.T, store storage.Interface) {
@@ -1457,7 +1459,9 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				out := &example.PodList{}
 				if err := store.GetList(ctx, KeyFunc(ns, ""), storage.ListOptions{
 					Predicate: storage.SelectionPredicate{
-						Limit: 1,
+						GetAttrs: generic.GetAttrs,
+						Label:    labels.Everything(),
+						Limit:    1,
 					},
 				}, out); err != nil {
 					t.Fatalf("Unable to get list: %v", err)
