@@ -3,6 +3,7 @@ import Map from 'ol/Map';
 import { useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
+  const { t } = useTranslate();
   const vector = useRef(new MeasureVectorLayer());
   const measureStyle = getStyles(config.theme2);
 
@@ -100,7 +102,7 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
         <IconButton
           className={measureStyle.icon}
           name="ruler-combined"
-          tooltip="show measure tools"
+          tooltip={t('geomap.measure-overlay.tooltip-show-measure-tools', 'show measure tools')}
           tooltipPlacement="left"
           onClick={toggleMenu}
         />
