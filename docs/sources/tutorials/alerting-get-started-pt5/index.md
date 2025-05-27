@@ -234,6 +234,9 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
 In this section we add a [templated label based on query value](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/#based-on-query-value) to map to the notification policies.
 
+<!-- INTERACTIVE page step4.md END -->
+<!-- INTERACTIVE page step5.md START -->
+
 1. In **Folder**, click _+ New folder_ and enter a name. For example: `app-metrics` . This folder contains our alerts.
 1. Click **+ Add labels**.
 1. **Key** field: `environment` .
@@ -249,9 +252,9 @@ In this section we add a [templated label based on query value](https://grafana.
    development
    {{- end -}}
    ```
-   This template uses a regular expression to extract `prod`, `staging`, or `dev` from the instance label and maps it to a more readable label (like "production" for "prod").
+   This template uses a regular expression to extract `prod`, `staging`, or `dev` from the instance label (`$labels.instance`) and maps it to a more readable label (like "production" for "prod").
 
-As result, when alerts exceed a threshold, the template checks the labels, such as `instance="flask-prod:5000"`, `instance="flask-staging:5000"`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of `production`, `staging` or `development` to the custom environment **environment** label.
+As result, when alerts exceed a threshold, the template checks the labels, such as `instance="flask-prod:5000"`, `instance="flask-staging:5000"`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of production, staging or development to the custom environment **environment** label.
 
 This label is then used by the alert notification policy to route alerts to the appropriate team, so that notifications are delivered efficiently, and reducing unnecessary noise.
 
@@ -283,9 +286,9 @@ Select who should receive a notification when an alert rule fires.
 
 Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using `$labels.instance`. This ensures that the label value will be set to production, staging, or development, depending on the environment.
 
-<!-- INTERACTIVE page step4.md END -->
 
-<!-- INTERACTIVE page step5.md START -->
+<!-- INTERACTIVE page step5.md END -->
+<!-- INTERACTIVE page step6.md START -->
 
 ## Done! Your alerts are now dynamically routed
 
@@ -303,13 +306,9 @@ $labels.deployment
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
-You should notice that the environment label has been dynamically populated with values like `production`.
+You should receive notifications at the contact point associated with either `prod` or `staging`. Aditionally, notice that the **environment** label has been dynamically populated with values like `production`.
 
-
-
-
-<!-- INTERACTIVE page step5.md END -->
-
+<!-- INTERACTIVE page step6.md END -->
 
 <!-- INTERACTIVE page finish.md START -->
 
