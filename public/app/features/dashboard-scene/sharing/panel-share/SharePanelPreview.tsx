@@ -203,7 +203,11 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
         <ImagePreview
           imageBlob={image || null}
           isLoading={loading}
-          error={error ? { title: t('share-panel-image.error-title', 'Failed to generate image'), message: error.message } : null}
+          error={
+            error
+              ? { title: t('share-panel-image.error-title', 'Failed to generate image'), message: error.message }
+              : null
+          }
           testId={selector.preview}
           title={title}
           showLoading={!!image || loading}
