@@ -127,7 +127,7 @@ Additional settings are optional settings that can be configured for more contro
 
 The following settings are specific to the Elasticsearch data source.
 
-- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
+- **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, for example `[logstash-]YYYY.MM.DD`, or a wildcard for the index name. When specifying a time pattern, the fixed part(s) of the pattern should be wrapped in square brackets.
 
 - **Pattern** - Select the matching pattern if using one in your index name. Options include:
 
@@ -137,6 +137,8 @@ The following settings are specific to the Elasticsearch data source.
   - weekly
   - monthly
   - yearly
+
+Only select a pattern option if you have specified a time pattern in the Index name field.
 
 - **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
@@ -160,7 +162,7 @@ For example, set this to `1m` if Elasticsearch writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options. The default is `10s`.
 
-- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
+- **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor](../query-editor/) with additional aggregations, such as `Rate` and `Top Metrics`.
 
 - **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. Includes frozen indices in searches. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 

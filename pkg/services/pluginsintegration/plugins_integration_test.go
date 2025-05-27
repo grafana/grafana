@@ -85,7 +85,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pr := prometheus.ProvideService(hcp)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
-	pg := postgres.ProvideService(cfg)
+	pg := postgres.ProvideService(features)
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
@@ -145,7 +145,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"gauge":          {},
 		"geomap":         {},
 		"gettingstarted": {},
-		"graph":          {},
 		"heatmap":        {},
 		"histogram":      {},
 		"live":           {},
@@ -161,7 +160,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"state-timeline": {},
 		"status-history": {},
 		"table":          {},
-		"table-old":      {},
 		"text":           {},
 		"timeseries":     {},
 		"trend":          {},

@@ -82,6 +82,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
+		r.logger.Debug("Connect name is not name")
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
 	b := r.builder
@@ -94,10 +95,12 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
 				if statusCode >= 400 {
+					r.logger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
 			},
 			func(err error) {
+				r.logger.Debug("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
@@ -160,9 +163,18 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
-			responder.Error(err)
-			return
+			b.log.Error("execute error", "http code", query.GetResponseCode(rsp), "err", err)
+			if rsp != nil { // if we have a response, we assume the err is set in the response
+				responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
+					QueryDataResponse: *rsp,
+				})
+				return
+			} else {
+				// return the error to the client, will send all non k8s errors as a k8 unexpected error
+				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
+				responder.Error(err)
+				return
+			}
 		}
 
 		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
@@ -179,13 +191,22 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if alertQueryWithoutExpression(req) {
-			b.log.Debug("handling alert query without expression")
-			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		if err != nil {
+			b.log.Debug("handleQuerySingleDatasource failed", err)
+		}
+		if err == nil && isSingleAlertQuery(req) {
+			b.log.Debug("handling alert query with single query")
+			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
+			if err != nil {
+				b.log.Debug("convertQueryFromAlerting failed", "err", err)
+			}
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+		if err != nil {
+			b.log.Debug("error in executeConcurrentQueries", "err", err)
+		}
 	}
 
 	if err != nil {
@@ -196,6 +217,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	if len(req.Expressions) > 0 {
 		b.log.Debug("executing expressions")
 		qdr, err = b.handleExpressions(ctx, req, qdr)
+		if err != nil {
+			b.log.Debug("handleExpressions failed", "err", err)
+		}
 	}
 
 	// Remove hidden results
@@ -205,7 +229,8 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 			delete(qdr.Responses, refId)
 		}
 	}
-	return
+
+	return qdr, err
 }
 
 // Process a single request
@@ -229,7 +254,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	client, err := b.client.GetDataSourceClient(
+	client, err := b.clientSupplier.GetDataSourceClient(
 		ctx,
 		v0alpha1.DataSourceRef{
 			Type: req.PluginId,
@@ -251,6 +276,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 				if ok && result.Error == nil {
 					err = q.ResultAssertions.Validate(result.Frames)
 					if err != nil {
+						b.log.Error("Validate failed", "err", err)
 						result.Error = err
 						result.ErrorSource = backend.ErrorSourceDownstream
 						rsp.Responses[q.RefID] = result
@@ -258,6 +284,11 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 				}
 			}
 		}
+	}
+
+	if err != nil {
+		b.log.Debug("error in single datasource query", "error", err)
+		rsp = buildErrorResponse(err, req)
 	}
 
 	return rsp, err
@@ -341,14 +372,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		b.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		b.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
 		span.End()
 	}()
@@ -369,11 +400,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
+					_, isSqlInput := req.SqlInputs[refId]
+
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
 					}
+
 					vars[refId] = res
 				} else {
 					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
@@ -388,7 +422,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		}
 
 		refId := expression.RefID
-		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
+		results, err := expression.Command.Execute(ctx, now, vars, b.tracer, b.metrics)
 		if err != nil {
 			expressionsLogger.Error("error executing expression", "error", err)
 			results.Error = err
@@ -401,21 +435,23 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req datasourceRequest,
 	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
 	if len(req.Request.Queries) == 0 {
 		return nil, errors.New("no queries to convert")
 	}
 	if qdr == nil {
-		return nil, errors.New("queryDataResponse is nil")
+		b.log.Debug("unexpected response of nil from datasource", "datasource.type", req.PluginId, "datasource.uid", req.UID)
+		return nil, errors.New("unexpected response of nil from datasource")
 	}
 	refID := req.Request.Queries[0].RefID
 	if _, exist := qdr.Responses[refID]; !exist {
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
 	if err != nil {
+		b.log.Error("issue converting query from alerting", "err", err)
 		results.Error = err
 	}
 	qdr = &backend.QueryDataResponse{
@@ -459,14 +495,14 @@ func (r responderWrapper) Error(err error) {
 	r.wrapped.Error(err)
 }
 
-// Checks if the request only contains a single query and not expression.
-func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+// Checks if the request only contains a single query and is from Alerting
+func isSingleAlertQuery(req parsedRequestInfo) bool {
 	if len(req.Requests) != 1 {
 		return false
 	}
 	headers := req.Requests[0].Headers
 	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+	if exist && len(req.Requests[0].Request.Queries) == 1 {
 		return true
 	}
 	return false

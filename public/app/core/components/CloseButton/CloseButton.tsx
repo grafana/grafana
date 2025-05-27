@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
 
 export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
+
   return (
     <IconButton
       aria-label={ariaLabel ?? 'Close'}
@@ -19,7 +22,7 @@ export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) 
       name="times"
       onClick={onClick}
       style={style}
-      tooltip="Close"
+      tooltip={t('close-button.tooltip', 'Close')}
     />
   );
 };

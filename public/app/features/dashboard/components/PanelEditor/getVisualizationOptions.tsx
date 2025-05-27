@@ -7,13 +7,9 @@ import {
   PanelPlugin,
   StandardEditorContext,
   VariableSuggestionsScope,
-} from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import {
-  NestedValueAccess,
   PanelOptionsEditorBuilder,
-  isNestedPanelOptions,
-} from '@grafana/data/src/utils/OptionsUIBuilders';
+} from '@grafana/data';
+import { NestedValueAccess, isNestedPanelOptions, PanelOptionsSupplier } from '@grafana/data/internal';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
@@ -52,6 +48,7 @@ export function getStandardEditorContext({
     eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(dataSeries, scope),
     instanceState,
+    annotations: data?.annotations,
   };
 
   return context;
@@ -102,11 +99,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
     if (fieldOption.isCustom) {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)) {
+      if (
+        fieldOption.showIf &&
+        !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
+      ) {
         continue;
       }
     } else {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series)) {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations)) {
         continue;
       }
     }
@@ -240,8 +240,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     const hideOption =
       fieldOption.showIf &&
       (fieldOption.isCustom
-        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
-        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series));
+        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
+        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations));
     if (fieldOption.hideFromDefaults || hideOption) {
       continue;
     }
@@ -298,7 +298,7 @@ export function fillOptionsPaneItems(
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
-    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
+    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
       continue;
     }
 

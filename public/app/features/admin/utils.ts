@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime/src';
+import { config } from '@grafana/runtime';
 
 // https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
 export const w3cStandardEmailValidator =

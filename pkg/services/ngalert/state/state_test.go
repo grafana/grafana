@@ -46,6 +46,7 @@ func TestSetAlerting(t *testing.T) {
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
+			FiredAt:     util.Pointer(mock.Now()),
 		},
 	}, {
 		name: "previous state is removed",
@@ -60,6 +61,7 @@ func TestSetAlerting(t *testing.T) {
 			State:    eval.Alerting,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
+			FiredAt:  util.Pointer(mock.Now()),
 		},
 	}}
 
@@ -1131,4 +1133,62 @@ func TestPatch(t *testing.T) {
 		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
 		assert.EqualValues(t, orig.Annotations, state.Annotations)
 	})
+}
+
+func TestResultStateReason(t *testing.T) {
+	gen := ngmodels.RuleGen
+	tests := []struct {
+		name     string
+		result   eval.Result
+		rule     *ngmodels.AlertRule
+		expected string
+	}{
+		{
+			name: "Error state with KeepLast",
+			result: eval.Result{
+				State: eval.Error,
+			},
+			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)).GenerateRef(),
+			expected: "Error, KeepLast",
+		},
+		{
+			name: "Error state without KeepLast",
+			result: eval.Result{
+				State: eval.Error,
+			},
+			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)).GenerateRef(),
+			expected: "Error",
+		},
+		{
+			name: "NoData state with KeepLast state",
+			result: eval.Result{
+				State: eval.NoData,
+			},
+			rule:     gen.With(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)).GenerateRef(),
+			expected: "NoData, KeepLast",
+		},
+		{
+			name: "NoData state without KeepLast",
+			result: eval.Result{
+				State: eval.NoData,
+			},
+			rule:     gen.With(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
+			expected: "NoData",
+		},
+		{
+			name: "Normal state",
+			result: eval.Result{
+				State: eval.NoData,
+			},
+			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState), ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
+			expected: "NoData",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := resultStateReason(tc.result, tc.rule)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }

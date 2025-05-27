@@ -28,6 +28,7 @@ import (
 const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
+	defaultDrainOnShutdown  = true
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -45,6 +46,7 @@ type ExternalAlertmanager struct {
 type ExternalAMcfg struct {
 	URL     string
 	Headers http.Header
+	Timeout time.Duration
 }
 
 type Option func(*ExternalAlertmanager)
@@ -106,8 +108,8 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
-		s.logger,
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg, DrainOnShutdown: defaultDrainOnShutdown},
+		toSlogLogger(s.logger),
 	)
 	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
 	if err != nil {
@@ -179,6 +181,15 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	for _, a := range alerts.PostableAlerts {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
+
+		s.logger.Debug(
+			"Sending alert",
+			"alert",
+			na.String(),
+			"starts_at",
+			na.StartsAt,
+			"ends_at",
+			na.EndsAt)
 	}
 
 	s.manager.Send(as...)
@@ -219,11 +230,16 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 			},
 		}
 
+		timeout := am.Timeout
+		if timeout == 0 {
+			timeout = defaultTimeout
+		}
+
 		amConfig := &config.AlertmanagerConfig{
 			APIVersion:              config.AlertmanagerAPIVersionV2,
 			Scheme:                  u.Scheme,
 			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(defaultTimeout),
+			Timeout:                 model.Duration(timeout),
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 
@@ -258,11 +274,11 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.sanitizeLabelSetFn(alert.Alert.Labels),
+		Labels:       s.sanitizeLabelSetFn(alert.Labels),
 		Annotations:  s.sanitizeLabelSetFn(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
-		GeneratorURL: alert.Alert.GeneratorURL.String(),
+		GeneratorURL: alert.GeneratorURL.String(),
 	}
 }
 

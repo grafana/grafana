@@ -3,13 +3,17 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
+import { logClickUnifiedHistoryEntryEvent, logUnifiedHistoryShowMoreEvent } from './eventsTracking';
+
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslate();
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
     return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
   });
@@ -60,7 +64,14 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
       </Box>
       {history.length > numItemsToShow && (
         <Box paddingLeft={2}>
-          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+          <Button
+            variant="secondary"
+            fill="text"
+            onClick={() => {
+              setNumItemsToShow(numItemsToShow + 5);
+              logUnifiedHistoryShowMoreEvent();
+            }}
+          >
             {t('nav.history-wrapper.show-more', 'Show more')}
           </Button>
         </Box>
@@ -78,6 +89,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [isExpanded, setIsExpanded] = useState(isSelected && entry.views.length > 0);
+  const { t } = useTranslate();
   const { breadcrumbs, views, time, url, sparklineData } = entry;
   const expandedLabel = isExpanded
     ? t('nav.history-wrapper.collapse', 'Collapse')
@@ -115,6 +127,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             onClick={() => {
               store.setObject('CLICKING_HISTORY', true);
               onClick();
+              logClickUnifiedHistoryEntryEvent({ entryURL: url });
             }}
             href={url}
             isCompact={true}
@@ -124,12 +137,16 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
               <div>
                 {breadcrumbs.map((breadcrumb, index) => (
                   <Text key={index}>
-                    {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
+                    {breadcrumb.text}{' '}
+                    {index !== breadcrumbs.length - 1
+                      ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                        '> '
+                      : ''}
                   </Text>
                 ))}
               </div>
               <Text variant="bodySmall" color="secondary">
-                {moment(time).format('h:mm A')}
+                {formatDate(time, { timeStyle: 'short' })}
               </Text>
               {sparklineData && (
                 <Sparkline
@@ -170,6 +187,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                   onClick={() => {
                     store.setObject('CLICKING_HISTORY', true);
                     onClick();
+                    logClickUnifiedHistoryEntryEvent({ entryURL: view.url, subEntry: 'timeRange' });
                   }}
                   isCompact={true}
                   className={view.time === selectedViewTime ? undefined : styles.subCard}

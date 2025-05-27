@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const getLinksContent = (): JSX.Element => {
     const interpolatedLinks = onShowPanelLinks();
@@ -37,7 +39,12 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
   } else {
     return (
       <Dropdown overlay={getLinksContent}>
-        <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" className={styles.menuTrigger} />
+        <ToolbarButton
+          icon="external-link-alt"
+          iconSize="md"
+          aria-label={t('dashboard.panel-links.aria-label-panel-links', 'Panel links')}
+          className={styles.menuTrigger}
+        />
       </Dropdown>
     );
   }

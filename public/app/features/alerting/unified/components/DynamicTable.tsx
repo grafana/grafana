@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
 
 import { usePagination } from '../hooks/usePagination';
@@ -78,6 +79,7 @@ export const DynamicTable = <T extends object>({
   dataTestId,
 }: DynamicTableProps<T>) => {
   const defaultPaginationStyles = useStyles2(getPaginationStyles);
+  const { t } = useTranslate();
 
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
     throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');
@@ -127,7 +129,11 @@ export const DynamicTable = <T extends object>({
               {isExpandable && (
                 <div className={cx(styles.cell(), styles.expandCell)}>
                   <IconButton
-                    tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
+                    tooltip={
+                      isItemExpanded
+                        ? t('alerting.dynamic-table.tooltip-collapse-row', 'Collapse row')
+                        : t('alerting.dynamic-table.tooltip-expand-row', 'Expand row')
+                    }
                     data-testid={selectors.components.AlertRules.toggle}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}

@@ -52,6 +52,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Pending))
 	r.MustRegister(newAlertCountByState(eval.Error))
 	r.MustRegister(newAlertCountByState(eval.NoData))
+	r.MustRegister(newAlertCountByState(eval.Recovering))
 }
 
 func (c *cache) countAlertsBy(state eval.State) float64 {
@@ -295,6 +296,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					FiredAt:           v2.FiredAt,
 					ResolvedAt:        v2.ResolvedAt,
 					LastSentAt:        v2.LastSentAt,
 					ResultFingerprint: v2.ResultFingerprint.String(),

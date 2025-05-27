@@ -21,6 +21,7 @@ export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContain
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, type CascaderOption } from './Cascader/Cascader';
+export { Carousel } from './Carousel/Carousel';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
@@ -40,7 +41,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart, isWeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
@@ -101,6 +102,7 @@ export {
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
 } from './Table/types';
+
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab, type TabProps } from './Tabs/Tab';
@@ -336,4 +338,6 @@ export {
   useElementSelection,
   type ElementSelectionContextState,
   type ElementSelectionContextItem,
+  type ElementSelectionOnSelectOptions,
+  type UseElementSelectionResult,
 } from './ElementSelectionContext/ElementSelectionContext';

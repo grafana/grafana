@@ -15,8 +15,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/core"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -61,7 +62,7 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
+	s, err := newStore(cfg, nil, features, migrations, bus, tracer, false)
 	if err != nil {
 		return nil, err
 	}
@@ -87,24 +88,20 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	return newSQLStore(cfg, nil, features, nil, bus, tracer)
+	return newStore(cfg, nil, features, nil, bus, tracer, true)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
+	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: false,
+		skipEnsureDefaultOrgAndUser: skipEnsureDefaultOrgAndUser,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
 		features:                    features,
-	}
-	for _, opt := range opts {
-		if !opt.EnsureDefaultOrgAndUser {
-			ss.skipEnsureDefaultOrgAndUser = true
-		}
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -351,7 +348,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
 			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
 			// replace with compatible system var for transaction isolation
-			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
+			connectionString = strings.ReplaceAll(connectionString, "&transaction_isolation", "&tx_isolation")
 			// recreate the xorm engine with new connection string that is compatible
 			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
 			if err != nil {
@@ -600,9 +597,17 @@ func TestMain(m *testing.M) {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
+		skipEnsureDefaultOrgAndUser := false
+		for _, opt := range opts {
+			if !opt.EnsureDefaultOrgAndUser {
+				skipEnsureDefaultOrgAndUser = true
+				break
+			}
+		}
+
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
+		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}
@@ -618,6 +623,8 @@ func TestMain(m *testing.M) {
 	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
+	testSQLStore.engine.ResetSequenceGenerator()
+
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err
 	}

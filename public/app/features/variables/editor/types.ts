@@ -6,7 +6,7 @@ export enum VariableNameConstraints {
 
 export interface OnPropChangeArguments<Model extends VariableModel = VariableModel> {
   propName: keyof Model;
-  propValue: any;
+  propValue: unknown;
   updateOptions?: boolean;
 }
 

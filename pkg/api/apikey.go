@@ -31,7 +31,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
-	query := apikey.GetApiKeysQuery{OrgID: c.SignedInUser.GetOrgID(), User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
+	query := apikey.GetApiKeysQuery{OrgID: c.GetOrgID(), User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
 	keys, err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query)
 	if err != nil {
@@ -86,7 +86,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := &apikey.DeleteCommand{ID: id, OrgID: c.SignedInUser.GetOrgID()}
+	cmd := &apikey.DeleteCommand{ID: id, OrgID: c.GetOrgID()}
 	err = hs.apiKeyService.DeleteApiKey(c.Req.Context(), cmd)
 	if err != nil {
 		var status int

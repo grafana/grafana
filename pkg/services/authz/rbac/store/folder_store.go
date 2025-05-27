@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/pager"
 
+	"github.com/grafana/authlib/types"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -102,13 +102,13 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 var _ FolderStore = (*APIFolderStore)(nil)
 
-func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) *rest.Config) *APIFolderStore {
+func NewAPIFolderStore(tracer tracing.Tracer, configProvider func(ctx context.Context) (*rest.Config, error)) *APIFolderStore {
 	return &APIFolderStore{tracer, configProvider}
 }
 
 type APIFolderStore struct {
 	tracer         tracing.Tracer
-	configProvider func(ctx context.Context) *rest.Config
+	configProvider func(ctx context.Context) (*rest.Config, error)
 }
 
 func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
@@ -150,9 +150,13 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 }
 
 func (s *APIFolderStore) client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := dynamic.NewForConfig(s.configProvider(ctx))
+	cfg, err := s.configProvider(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return client.Resource(folderv0alpha1.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
+	client, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return client.Resource(folderv1.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
 }

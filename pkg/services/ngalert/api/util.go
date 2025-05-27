@@ -31,7 +31,28 @@ const (
 	groupQueryTag     = "QUERY_GROUP"
 )
 
-var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
+var (
+	searchRegex = regexp.MustCompile(`\{(\w+)\}`)
+
+	prometheusCompatibleDsTypes = []string{
+		datasources.DS_PROMETHEUS,
+		datasources.DS_AMAZON_PROMETHEUS,
+		datasources.DS_AZURE_PROMETHEUS,
+	}
+)
+
+func isPrometheusCompatible(dsType string) bool {
+	for _, t := range prometheusCompatibleDsTypes {
+		if dsType == t {
+			return true
+		}
+	}
+	return false
+}
+
+func isLotexRulerCompatible(dsType string) bool {
+	return dsType == datasources.DS_LOKI || isPrometheusCompatible(dsType)
+}
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
@@ -52,8 +73,8 @@ func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheSer
 			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
 		}
 	case apimodels.LoTexRulerBackend:
-		if ds.Type != "loki" && ds.Type != "prometheus" {
-			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+		if !isLotexRulerCompatible(ds.Type) {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
 		}
 	default:
 		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
@@ -91,7 +112,7 @@ func (p *AlertingProxy) createProxyContext(ctx *contextmodel.ReqContext, request
 	// Some data sources require legacy Editor role in order to perform mutating operations. In this case, we elevate permissions for the context that we
 	// will provide downstream.
 	// TODO (yuri) remove this after RBAC for plugins is implemented
-	if !ctx.SignedInUser.HasRole(org.RoleEditor) {
+	if !ctx.HasRole(org.RoleEditor) {
 		newUser := *ctx.SignedInUser
 		newUser.OrgRole = org.RoleEditor
 		cpy.SignedInUser = &newUser
@@ -221,7 +242,7 @@ func ErrResp(status int, err error, msg string, args ...any) *response.NormalRes
 
 // accessForbiddenResp creates a response of forbidden access.
 func accessForbiddenResp() response.Response {
-	//nolint:stylecheck // Grandfathered capitalization of error.
+	//nolint:staticcheck // Grandfathered capitalization of error.
 	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }
 

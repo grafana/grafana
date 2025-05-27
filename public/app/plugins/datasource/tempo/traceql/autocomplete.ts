@@ -128,6 +128,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Negated regular expression',
     },
   ];
+  // https://grafana.com/docs/tempo/latest/traceql/#structural
   static readonly structuralOps: MinimalCompletionItem[] = [
     {
       label: '>>',
@@ -163,6 +164,78 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Sibling',
       documentation:
         'Sibling operator. Checks that spans matching {condA} and {condB} are siblings of the same parent span.',
+    },
+    // Union structural operators
+    {
+      label: '&>>',
+      insertText: '&>>',
+      detail: 'Union Descendant',
+      documentation:
+        'The descendant operator (>>) looks for spans matching {condB} that are descendants of a span matching {condA}',
+    },
+    {
+      label: '&>',
+      insertText: '&>',
+      detail: 'Union Child',
+      documentation:
+        'The child operator (>) looks for spans matching {condB} that are direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '&<<',
+      insertText: '&<<',
+      detail: 'Union Ancestor',
+      documentation:
+        'The ancestor operator (<<) looks for spans matching {condB} that are ancestor of a span matching {condA}',
+    },
+    {
+      label: '&<',
+      insertText: '&<',
+      detail: 'Union Parent',
+      documentation:
+        'The parent operator (<) looks for spans matching {condB} that are direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '&~',
+      insertText: '&~',
+      detail: 'Union Sibling',
+      documentation:
+        'The sibling operator (~) looks at spans matching {condB} that have at least one sibling matching {condA}',
+    },
+    // Negated structural operators
+    {
+      label: '!>>',
+      insertText: '!>>',
+      detail: 'Not Descendant',
+      documentation:
+        'The not-descendant operator (!>>) looks for spans matching {condB} that are not descendant spans of a parent matching {condA}',
+    },
+    {
+      label: '!>',
+      insertText: '!>',
+      detail: 'Not Child',
+      documentation:
+        'The not-child operator (!>) looks for spans matching {condB} that are not direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '!<<',
+      insertText: '!<<',
+      detail: 'Not Ancestor',
+      documentation:
+        'The not-ancestor operator (!<<) looks for spans matching {condB} that are not ancestor spans of a child matching {condA}',
+    },
+    {
+      label: '!<',
+      insertText: '!<',
+      detail: 'Not Parent',
+      documentation:
+        'The not-parent operator (!<) looks for spans matching {condB} that are not direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '!~',
+      insertText: '!~',
+      detail: 'Not Sibling',
+      documentation:
+        'The not-sibling operator (!~) looks for spans matching {condB} that do not have at least one sibling matching {condA}',
     },
   ];
 
@@ -223,6 +296,30 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       insertText: 'count_over_time()$0',
       detail: 'Number of spans over time',
       documentation: 'Counts the number of spans over time.',
+    },
+    {
+      label: 'min_over_time',
+      insertText: 'min_over_time()$0',
+      detail: 'Minimum value of attribute over time',
+      documentation: 'Minimum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'max_over_time',
+      insertText: 'max_over_time()$0',
+      detail: 'Maximum value of attribute over time',
+      documentation: 'Maximum value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'avg_over_time',
+      insertText: 'avg_over_time()$0',
+      detail: 'Average value of attribute over time',
+      documentation: 'Average value for the specified attribute across all matching spans over time.',
+    },
+    {
+      label: 'sum_over_time',
+      insertText: 'sum_over_time()$0',
+      detail: 'Summation value of attribute over time',
+      documentation: 'Sum of the values for the specified attribute across all matching spans over time.',
     },
     {
       label: 'histogram_over_time',

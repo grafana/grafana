@@ -630,7 +630,7 @@ func verifyUpdateExternalSessionCommand(token *oauth2.Token) func(*auth.UpdateEx
 		idToken := cmd.Token.Extra("id_token")
 		return cmd.Token.AccessToken == token.AccessToken &&
 			cmd.Token.RefreshToken == token.RefreshToken &&
-			cmd.Token.Expiry == token.Expiry &&
+			cmd.Token.Expiry.Equal(token.Expiry) &&
 			idToken == token.Extra("id_token")
 	}
 }

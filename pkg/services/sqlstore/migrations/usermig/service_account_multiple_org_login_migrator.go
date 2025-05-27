@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -38,12 +38,12 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 	case migrator.Postgres:
 		_, err = p.sess.Exec(`
             UPDATE "user"
-            SET login = 'sa-' || org_id::text || '-' || 
-                CASE 
-                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4) 
-                    ELSE login 
-                END 
-            WHERE login IS NOT NULL 
+            SET login = 'sa-' || org_id::text || '-' ||
+                CASE
+                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4)
+                    ELSE login
+                END
+            WHERE login IS NOT NULL
               AND is_service_account = true
               AND login NOT LIKE 'sa-' || org_id::text || '-%';
         `)
@@ -56,7 +56,7 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
                     ELSE login
                 END
             )
-            WHERE login IS NOT NULL 
+            WHERE login IS NOT NULL
               AND is_service_account = 1
               AND login NOT LIKE CONCAT('sa-', org_id, '-%');
         `)
@@ -68,10 +68,11 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
                     WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
                     ELSE login
                 END
-            WHERE login IS NOT NULL 
+            WHERE login IS NOT NULL
               AND is_service_account = 1
               AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
         `)
+
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
 	}
@@ -96,7 +97,7 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
 		_, err = sess.Exec(`
             UPDATE "user" AS u
             SET login = 'sa-' || org_id::text || SUBSTRING(login FROM LENGTH('sa-' || org_id::text || '-' || org_id::text)+1)
-            WHERE login IS NOT NULL 
+            WHERE login IS NOT NULL
               AND is_service_account = true
               AND login LIKE 'sa-' || org_id::text || '-' || org_id::text || '-%'
               AND NOT EXISTS (
@@ -123,8 +124,8 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                 AND u.is_service_account = 1
                 AND u.login LIKE 'sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT)||'-%'
                 AND NOT EXISTS (
-                    SELECT 1 
-                    FROM  ` + dialect.Quote("user") + `AS u2 
+                    SELECT 1
+                    FROM  ` + dialect.Quote("user") + `AS u2
                     WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
                 );;
         `)

@@ -7,6 +7,7 @@ import {
   commonAnnotationsLoopSnippet,
   commonLabelsLoopSnippet,
   groupLabelsLoopSnippet,
+  jsonSnippet,
   labelsLoopSnippet,
 } from './snippets';
 import { SuggestionDefinition } from './suggestionDefinition';
@@ -28,6 +29,8 @@ export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
     { label: 'CommonLabels', kind, detail: '[]KeyValue' },
     { label: 'CommonAnnotations', kind, detail: '[]KeyValue' },
     { label: 'ExternalURL', kind, detail: 'string' },
+    { label: 'GroupKey', kind, detail: 'string' },
+    { label: 'TruncatedAlerts', kind, detail: 'integer' },
   ];
 }
 
@@ -104,6 +107,12 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       detail: 'string',
       documentation: 'String that contains labels and values of each reduced expression in the alert.',
     },
+    {
+      label: { label: 'OrgID', detail: '(Alert)' },
+      kind,
+      detail: 'integer',
+      documentation: 'The ID of the organization that owns the alert.',
+    },
   ];
 }
 
@@ -169,6 +178,11 @@ export const snippets = {
     description: 'Renders a loop through annotations',
     snippet: annotationsLoopSnippet,
   },
+  json: {
+    label: 'json',
+    description: 'Renders a JSON object',
+    snippet: jsonSnippet,
+  },
 };
 
 // Snippets
@@ -176,7 +190,7 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const snippetKind = monaco.languages.CompletionItemKind.Snippet;
   const snippetInsertRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
 
-  const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations } = snippets;
+  const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations, json } = snippets;
 
   return [
     {
@@ -230,6 +244,13 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
       kind: snippetKind,
       insertText: annotations.snippet,
       insertTextRules: snippetInsertRule,
+    },
+    {
+      label: json.label,
+      documentation: json.description,
+      kind: snippetKind,
+      insertText: json.snippet,
+      insertTextRules: monaco.languages.CompletionItemInsertTextRule.KeepWhitespace,
     },
   ];
 }

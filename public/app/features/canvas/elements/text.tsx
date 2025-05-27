@@ -5,6 +5,7 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -22,13 +23,15 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const scene = context.instanceState?.scene;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
-
+  const { t } = useTranslate();
   if (isEditMode && isSelected) {
     return <TextEdit {...props} />;
   }
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set text'}</span>
+      <span className={styles.span}>
+        {data?.text ? data.text : t('canvas.text-display.double-click-to-set', 'Double click to set text')}
+      </span>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { useTranslate } from '@grafana/i18n';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -53,13 +54,17 @@ const UserListAnonymousDevicesPageUnConnected = ({
   useEffect(() => {
     fetchUsersAnonymousDevices();
   }, [fetchUsersAnonymousDevices]);
+  const { t } = useTranslate();
 
   return (
     <Page.Contents>
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search devices by IP address."
+            placeholder={t(
+              'admin.user-list-anonymous-devices-page-un-connected.placeholder-search-devices-by-ip-address',
+              'Search devices by IP address.'
+            )}
             autoFocus={true}
             value={query}
             onChange={changeAnonQuery}

@@ -41,7 +41,7 @@ __debug_bin*
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
-/devenv/docker/blocks/spanner_tests
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
@@ -68,6 +68,8 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+
 .eslintcache
 .stylelintcache
 
@@ -95,6 +97,9 @@ conf/custom.ini
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
 
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
@@ -113,6 +118,7 @@ profile.cov
 /pkg/extensions/*
 !/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
 !/public/app/extensions/.keep
 
@@ -147,6 +153,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache

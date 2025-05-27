@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
@@ -61,5 +62,18 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.fakeReq("GET", "/?orgId=1").exec()
 
 		require.Equal(t, 404, sc.resp.Code)
+	})
+
+	middlewareScenario(t, "works correctly when grafana is served under a subpath", func(t *testing.T, sc *scenarioContext) {
+		sc.withIdentity(&authn.Identity{})
+
+		sc.m.Get("/", sc.defaultHandler)
+		sc.fakeReq("GET", "/?orgId=3").exec()
+
+		require.Equal(t, 302, sc.resp.Code)
+		require.Equal(t, "/grafana/?orgId=3", sc.resp.Header().Get("Location"))
+	}, func(cfg *setting.Cfg) {
+		cfg.AppURL = "http://localhost:3000/grafana/"
+		cfg.AppSubURL = "/grafana"
 	})
 }

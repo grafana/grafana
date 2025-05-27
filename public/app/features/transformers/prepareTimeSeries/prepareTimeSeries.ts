@@ -209,7 +209,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
     }
 
     type TimeWideRowIndex = {
-      time: any;
+      time: number;
       wideRowIndex: number;
     };
     const sortedTimeRowIndices: TimeWideRowIndex[] = [];
@@ -254,7 +254,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       const { time, wideRowIndex } = timeWideRowIndex;
 
       for (const labelKeys of sortedUniqueLabelKeys) {
-        const rowValues: Record<string, any> = {};
+        const rowValues: Record<string, unknown> = {};
 
         for (const name of uniqueFactorNamesWithWideIndices) {
           rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];

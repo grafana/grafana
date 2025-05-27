@@ -2,6 +2,7 @@ import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
@@ -13,10 +14,10 @@ import {
   TextArea,
   Box,
   Stack,
+  WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -43,6 +44,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
+  const { t } = useTranslate();
   const pageNav = sectionNav.node.parentItem;
 
   const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
@@ -97,7 +99,7 @@ export function GeneralSettingsUnconnected({
     updateTimeZone(timeZone);
   };
 
-  const onWeekStartChange = (weekStart: string) => {
+  const onWeekStartChange = (weekStart?: WeekStart) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
     updateWeekStart(weekStart);

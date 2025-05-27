@@ -76,6 +76,9 @@ export const components = {
       formatSelection: {
         input: 'data-testid format-selection',
       },
+      runQuery: {
+        button: 'data-testid run-query',
+      },
     },
     argsQueryEditor: {
       container: {

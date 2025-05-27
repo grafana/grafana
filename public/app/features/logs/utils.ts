@@ -1,4 +1,7 @@
+import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
+import { MouseEvent } from 'react';
+import { lastValueFrom, map, Observable } from 'rxjs';
 
 import {
   LogLevel,
@@ -15,9 +18,25 @@ import {
   LogsVolumeType,
   NumericLogLevel,
   getFieldDisplayName,
+  getDefaultTimeRange,
+  locationUtil,
+  urlUtil,
+  dateTime,
+  dateTimeFormat,
+  DataTransformerConfig,
+  CustomTransformOperator,
+  transformDataFrame,
+  getTimeField,
+  Field,
+  LogsMetaItem,
 } from '@grafana/data';
+import { getConfig } from 'app/core/config';
+
+import { getLogsExtractFields } from '../explore/Logs/LogsTable';
+import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { getDataframeFields } from './components/logParser';
+import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
 
 /**
  * Returns the log level of a log line.
@@ -170,6 +189,7 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
     return {
       line: log.entry,
       timestamp: log.timeEpochNs,
+      date: dateTime(log.timeEpochMs).toISOString(),
       fields: {
         ...fields,
         ...log.labels,
@@ -303,6 +323,34 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
+export async function handleOpenLogsContextClick(
+  event: MouseEvent<HTMLElement>,
+  row: LogRowModel,
+  getRowContextQuery: GetRowContextQueryFn | undefined,
+  onOpenContext: (row: LogRowModel) => void
+) {
+  // if ctrl or meta key is pressed, open query in new Explore tab
+  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
+    const win = window.open('about:blank');
+    // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
+    const query = await getRowContextQuery(row, undefined, false);
+    if (query && win) {
+      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
+        left: JSON.stringify({
+          datasource: query.datasource,
+          queries: [query],
+          range: getDefaultTimeRange(),
+        }),
+      });
+      win.location = url;
+
+      return;
+    }
+    win?.close();
+  }
+  onOpenContext(row);
+}
+
 export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
@@ -392,3 +440,69 @@ export function enablePopoverMenu() {
 export function isPopoverMenuDisabled() {
   return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
 }
+
+export enum DownloadFormat {
+  Text = 'text',
+  Json = 'json',
+  CSV = 'csv',
+}
+
+export const downloadLogs = async (format: DownloadFormat, logRows: LogRowModel[], meta?: LogsMetaItem[]) => {
+  switch (format) {
+    case DownloadFormat.Text:
+      downloadLogsModelAsTxt({ meta, rows: logRows });
+      break;
+    case DownloadFormat.Json:
+      const jsonLogs = logRowsToReadableJson(logRows);
+      const blob = new Blob([JSON.stringify(jsonLogs)], {
+        type: 'application/json;charset=utf-8',
+      });
+      const fileName = `Logs-${dateTimeFormat(new Date())}.json`;
+      saveAs(blob, fileName);
+      break;
+    case DownloadFormat.CSV:
+      const dataFrameMap = new Map<string, DataFrame>();
+      logRows.forEach((row) => {
+        if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
+          dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+        }
+      });
+      dataFrameMap.forEach(async (dataFrame) => {
+        const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
+        transforms.push(
+          {
+            id: 'organize',
+            options: {
+              excludeByName: {
+                ['labels']: true,
+                ['labelTypes']: true,
+              },
+            },
+          },
+          addISODateTransformation
+        );
+        const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
+      });
+  }
+};
+
+const addISODateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
+  return source.pipe(
+    map((data: DataFrame[]) => {
+      return data.map((frame: DataFrame) => {
+        const timeField = getTimeField(frame);
+        const field: Field = {
+          name: 'Date',
+          values: timeField.timeField ? timeField.timeField?.values.map((v) => dateTime(v).toISOString()) : [],
+          type: FieldType.other,
+          config: {},
+        };
+        return {
+          ...frame,
+          fields: [field, ...frame.fields],
+        };
+      });
+    })
+  );
+};

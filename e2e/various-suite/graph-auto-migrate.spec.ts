@@ -9,32 +9,12 @@ describe('Auto-migrate graph panel', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Graph panel is migrated with `autoMigrateOldPanels` feature toggle', () => {
+  it('Graph panel is auto-migrated', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
     cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('not.exist');
 
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
-
-    cy.get(UPLOT_MAIN_DIV_SELECTOR).should('exist');
-  });
-
-  it('Graph panel is migrated with config `disableAngular` feature toggle', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
-    cy.contains(DASHBOARD_NAME).should('be.visible');
-    cy.get(UPLOT_MAIN_DIV_SELECTOR).should('not.exist');
-
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.disableAngular': true } });
-
-    cy.get(UPLOT_MAIN_DIV_SELECTOR).should('exist');
-  });
-
-  it('Graph panel is migrated with `autoMigrateGraphPanel` feature toggle', () => {
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID });
-    cy.contains(DASHBOARD_NAME).should('be.visible');
-    cy.get(UPLOT_MAIN_DIV_SELECTOR).should('not.exist');
-
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateGraphPanel': true } });
 
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('exist');
   });
@@ -44,7 +24,7 @@ describe('Auto-migrate graph panel', () => {
     cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('not.exist');
 
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateGraphPanel': true } });
+    e2e.flows.openDashboard({ uid: DASHBOARD_ID });
 
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')

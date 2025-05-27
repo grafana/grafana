@@ -20,6 +20,7 @@ export interface StateFilter {
   firing: boolean;
   pending: boolean;
   inactive?: boolean; // backwards compat
+  recovering: boolean;
   noData: boolean;
   normal: boolean;
   error: boolean;
@@ -33,7 +34,7 @@ export interface UnifiedAlertListOptions {
   groupBy: string[];
   alertName: string;
   showInstances: boolean;
-  folder: { id: number; title: string };
+  folder: { uid: string; title: string };
   stateFilter: StateFilter;
   alertInstanceLabelFilter: string;
   datasource: string;

@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PluginExtensionComponentMeta, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import {
-  UsePluginComponentOptions,
-  UsePluginComponentsResult,
-} from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
+  type ComponentTypeWithExtensionMeta,
+  type PluginExtensionComponentMeta,
+  PluginExtensionTypes,
+  usePluginContext,
+} from '@grafana/data';
+import { UsePluginComponentsOptions, UsePluginComponentsResult } from '@grafana/runtime';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -19,7 +21,7 @@ import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './vali
 export function usePluginComponents<Props extends object = {}>({
   limitPerPlugin,
   extensionPointId,
-}: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
+}: UsePluginComponentsOptions): UsePluginComponentsResult<Props> {
   const registry = useAddedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
@@ -28,7 +30,7 @@ export function usePluginComponents<Props extends object = {}>({
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext;
-    const components: Array<React.ComponentType<Props> & { meta: PluginExtensionComponentMeta }> = [];
+    const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
     const pointLog = log.child({
@@ -36,10 +38,12 @@ export function usePluginComponents<Props extends object = {}>({
       extensionPointId,
     });
 
+    // Only log error for an invalid `extensionPointId` in DEV mode
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
       pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
     }
 
+    // Don't show extensions if the extension-point misses meta info (plugin.json) in DEV mode
     if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
@@ -83,11 +87,12 @@ export function usePluginComponents<Props extends object = {}>({
   }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
 }
 
-function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
+export function createComponentWithMeta<Props extends JSX.IntrinsicAttributes>(
   registryItem: AddedComponentRegistryItem<Props>,
   extensionPointId: string
-): React.ComponentType<Props> & { meta: PluginExtensionComponentMeta } {
+): ComponentTypeWithExtensionMeta<Props> {
   const { component: Component, ...config } = registryItem;
+
   function ComponentWithMeta(props: Props) {
     return <Component {...props} />;
   }

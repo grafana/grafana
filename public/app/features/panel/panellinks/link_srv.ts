@@ -252,7 +252,7 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
-    let params: { [key: string]: any } = {};
+    let params: { [key: string]: boolean } = {};
 
     if (link.keepTime) {
       params[`\$${DataLinkBuiltInVars.keepTime}`] = true;

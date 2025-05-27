@@ -51,8 +51,7 @@ describe('Verify i18n', () => {
   // and verifies that the corresponding label is translated correctly
   it('loads all the languages correctly', () => {
     cy.visit('/profile');
-    const LANGUAGE_SELECTOR = '[id="locale-select"]';
-
+    const LANGUAGE_SELECTOR = '[id="language-preference-select"]';
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
       cy.get(LANGUAGE_SELECTOR).should('not.be.disabled');
       cy.get(LANGUAGE_SELECTOR).click();

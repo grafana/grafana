@@ -93,8 +93,8 @@ const defaultPreferences: UserPreferencesDTO = {
   language: '',
 };
 
-const mockPrefsPatch = jest.fn();
-const mockPrefsUpdate = jest.fn();
+const mockPrefsPatch = jest.fn().mockResolvedValue(undefined);
+const mockPrefsUpdate = jest.fn().mockResolvedValue(undefined);
 const mockPrefsLoad = jest.fn().mockResolvedValue(mockPreferences);
 
 jest.mock('app/core/services/PreferencesService', () => ({
@@ -129,9 +129,6 @@ describe('SharedPreferences', () => {
   });
 
   beforeEach(async () => {
-    mockReload.mockReset();
-    mockPrefsUpdate.mockReset();
-
     render(<SharedPreferences {...props} />);
 
     await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
@@ -188,9 +185,9 @@ describe('SharedPreferences', () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Default');
 
     // there's no default option in this dropdown - there's a clear selection button
-    // get the parent container, and find the "select-clear-value" button
+    // get the parent container, and find the "Clear value" button
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'select-clear-value' }));
+    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
 

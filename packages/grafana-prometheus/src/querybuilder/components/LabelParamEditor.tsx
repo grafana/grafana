@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx
 import { useState } from 'react';
 
-import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
+import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { promQueryModeller } from '../PromQueryModeller';
@@ -16,6 +16,7 @@ export function LabelParamEditor({
   value,
   query,
   datasource,
+  timeRange,
 }: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
     options?: SelectableValue[];
@@ -29,7 +30,7 @@ export function LabelParamEditor({
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(query, datasource);
+        const options = await loadGroupByLabels(timeRange, query, datasource);
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
@@ -43,7 +44,11 @@ export function LabelParamEditor({
   );
 }
 
-async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceApi): Promise<SelectableValue[]> {
+async function loadGroupByLabels(
+  timeRange: TimeRange,
+  query: PromVisualQuery,
+  datasource: DataSourceApi
+): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   // This function is used by both Prometheus and Loki and this the only difference.
@@ -52,7 +57,7 @@ async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceA
   }
 
   const expr = promQueryModeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchLabelsWithMatch(expr);
+  const result = await datasource.languageProvider.fetchLabelsWithMatch(timeRange, expr);
 
   return Object.keys(result).map((x) => ({
     label: x,

@@ -20,6 +20,7 @@ type FakeOrgService struct {
 	ExpectedOrgUsers             []*org.OrgUserDTO
 	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
 	ExpectedOrgListResponse      OrgListResponse
+	SearchOrgUsersFn             func(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -98,6 +99,9 @@ func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUs
 }
 
 func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	if f.SearchOrgUsersFn != nil {
+		return f.SearchOrgUsersFn(ctx, query)
+	}
 	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
 

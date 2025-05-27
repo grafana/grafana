@@ -20,16 +20,8 @@ load(
     "lint_backend_pipeline",
 )
 load(
-    "scripts/drone/pipelines/lint_frontend.star",
-    "lint_frontend_pipeline",
-)
-load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
-)
-load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
 )
 load(
     "scripts/drone/pipelines/trigger_downstream.star",
@@ -68,8 +60,6 @@ def main_pipelines():
     # Let's make an effort to reduce the amount of string constants in "depends_on" lists.
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
-        test_frontend(trigger, ver_mode),
-        lint_frontend_pipeline(trigger, ver_mode),
         test_backend(trigger, ver_mode),
         lint_backend_pipeline(trigger, ver_mode),
         verify_storybook(trigger, ver_mode),
@@ -81,7 +71,6 @@ def main_pipelines():
             slack_channel = "grafana-ci-notifications",
             trigger = dict(trigger, status = ["failure"]),
             depends_on = [
-                "main-test-frontend",
                 "main-test-backend",
                 "main-build-e2e-publish",
                 "main-integration-tests",

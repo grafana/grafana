@@ -28,6 +28,14 @@ Annotations:
 {{ end }}
 `;
 
+export const jsonSnippet = `
+{{ coll.Dict
+  "receiver" .Receiver
+  "status" .Status
+  "alerts" ( len .Alerts )
+| data.ToJSONPretty " " }}
+`;
+
 export const groupLabelsLoopSnippet = getKeyValueTemplate('GroupLabels.SortedPairs');
 export const commonLabelsLoopSnippet = getKeyValueTemplate('CommonLabels.SortedPairs');
 export const commonAnnotationsLoopSnippet = getKeyValueTemplate('CommonAnnotations.SortedPairs');

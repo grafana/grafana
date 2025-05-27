@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -70,6 +71,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
+  const { t } = useTranslate();
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -112,7 +114,9 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onClick={openDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add another transformation
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
+            Add another transformation
+          </Trans>
         </Button>
         <Button
           data-testid={selectors.components.Transforms.removeAllTransformationsButton}
@@ -121,12 +125,17 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           variant="secondary"
           onClick={() => setConfirmModalOpen(true)}
         >
-          Delete all transformations
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+            Delete all transformations
+          </Trans>
         </Button>
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
-        title="Delete all transformations?"
+        title={t(
+          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
+          'Delete all transformations?'
+        )}
         body="By deleting all transformations, you will go back to the main selection screen."
         confirmText="Delete all"
         onConfirm={() => {

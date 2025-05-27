@@ -106,6 +106,6 @@ describe('Prometheus config', () => {
   // exemplars tested in exemplar.spec
 });
 
-export function selectOption(option: string) {
-  e2e.components.Select.option().contains(option).should('be.visible').click();
+function selectOption(option: string) {
+  cy.get('[role="option"]').filter(`:contains("${option}")`).should('be.visible').click();
 }

@@ -63,7 +63,7 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
-        const stateManager = getDashboardScenePageStateManager();
+        const stateManager = getDashboardScenePageStateManager('v1');
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
@@ -273,7 +273,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set week start
-    if (dashboard.weekStart !== '') {
+    if (dashboard.weekStart !== '' && dashboard.weekStart !== undefined) {
       setWeekStart(dashboard.weekStart);
     } else {
       setWeekStart(config.bootData.user.weekStart);

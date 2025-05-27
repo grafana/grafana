@@ -100,6 +100,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       refresh_intervals: refreshPicker?.state.intervals,
       hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
+      quick_ranges: controlsState?.timePicker.state.quickRanges,
     },
     defaultTimePickerConfig
   );
@@ -145,7 +146,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     scopeMeta: state.scopeMeta,
   };
 
-  return sortedDeepCloneWithoutNulls(dashboard);
+  return sortedDeepCloneWithoutNulls(dashboard, true);
 }
 
 export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false): Panel {

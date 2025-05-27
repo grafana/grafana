@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -14,7 +15,7 @@ import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-const RuleViewer = (): JSX.Element => {
+const RuleViewer = () => {
   const params = useParams();
   const id = getRuleIdFromPathname(params);
 
@@ -47,11 +48,7 @@ const RuleViewer = (): JSX.Element => {
   }
 
   if (loading) {
-    return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
-        <></>
-      </AlertingPageWrapper>
-    );
+    return <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true} />;
   }
 
   if (rule) {
@@ -63,11 +60,16 @@ const RuleViewer = (): JSX.Element => {
   }
 
   // if we get here assume we can't find the rule
-  return (
-    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
-      <EntityNotFound entity="Rule" />
-    </AlertingPageWrapper>
-  );
+  if (!rule && !loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <EntityNotFound entity="Rule" />
+      </AlertingPageWrapper>
+    );
+  }
+
+  // we should never get to this state
+  return null;
 };
 
 export const defaultPageNav: NavModelItem = {
@@ -80,11 +82,17 @@ interface ErrorMessageProps {
 }
 
 function ErrorMessage({ error }: ErrorMessageProps) {
+  const { t } = useTranslate();
+
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="Rule" />;
   }
 
-  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+  return (
+    <Alert title={t('alerting.rule-viewer.error-loading', 'Something went wrong loading the rule')}>
+      {stringifyErrorLike(error)}
+    </Alert>
+  );
 }
 
 export default withPageErrorBoundary(RuleViewer);

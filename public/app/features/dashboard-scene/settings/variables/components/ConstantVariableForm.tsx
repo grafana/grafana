@@ -1,6 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextField } from './VariableTextField';
@@ -11,13 +12,17 @@ interface ConstantVariableFormProps {
 }
 
 export function ConstantVariableForm({ onChange, constantValue }: ConstantVariableFormProps) {
+  const { t } = useTranslate();
+
   return (
     <>
-      <VariableLegend>Constant options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.constant-variable-form.constant-options">Constant options</Trans>
+      </VariableLegend>
       <VariableTextField
         defaultValue={constantValue}
         name="Value"
-        placeholder="your metric prefix"
+        placeholder={t('dashboard-scene.constant-variable-form.placeholder-your-metric-prefix', 'Your metric prefix')}
         onBlur={onChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2}
         width={30}

@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
 import { VariableCheckboxField } from 'app/features/dashboard-scene/settings/variables/components/VariableCheckboxField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
@@ -26,12 +27,17 @@ export function SelectionOptionsForm({
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
+  const { t } = useTranslate();
+
   return (
     <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField
         value={multi}
         name="Multi-value"
-        description="Enables multiple values to be selected at the same time"
+        description={t(
+          'dashboard-scene.selection-options-form.description-enables-multiple-values-selected',
+          'Enables multiple values to be selected at the same time'
+        )}
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
@@ -39,7 +45,10 @@ export function SelectionOptionsForm({
         <VariableCheckboxField
           value={allowCustomValue ?? true}
           name="Allow custom values"
-          description="Enables users to add custom values to the list"
+          description={t(
+            'dashboard-scene.selection-options-form.description-enables-users-custom-values',
+            'Enables users to add custom values to the list'
+          )}
           onChange={onAllowCustomValueChange}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
         />
@@ -47,7 +56,10 @@ export function SelectionOptionsForm({
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"
-        description="Enables an option to include all variables"
+        description={t(
+          'dashboard-scene.selection-options-form.description-enables-option-include-variables',
+          'Enables an option to include all values'
+        )}
         onChange={onIncludeAllChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
       />
@@ -56,7 +68,6 @@ export function SelectionOptionsForm({
           defaultValue={allValue ?? ''}
           onBlur={onAllValueChange}
           name="Custom all value"
-          placeholder="blank = auto"
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
         />
       )}

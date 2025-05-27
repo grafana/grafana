@@ -3,9 +3,10 @@ import { ReactElement, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
@@ -85,7 +86,9 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        <span>Dashboards</span>
+        <span>
+          <Trans i18nKey="library-panels.folder-link.dashboards">Dashboards</Trans>
+        </span>
       </span>
     );
   }
