@@ -64,7 +64,7 @@ type State struct {
 	Values map[string]float64
 
 	// FiredAt is the time the state first transitions to Alerting.
-	FiredAt time.Time
+	FiredAt *time.Time
 
 	StartsAt time.Time
 	// EndsAt is different from the Prometheus EndsAt as EndsAt is updated for both Normal states
@@ -103,6 +103,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		EndsAt:               result.EvaluatedAt,
 		ResolvedAt:           nil,
 		LastSentAt:           nil,
+		FiredAt:              nil,
 		LastEvaluationString: "",
 		LastEvaluationTime:   result.EvaluatedAt,
 		EvaluationDuration:   result.EvaluationDuration,
@@ -165,7 +166,7 @@ func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time) {
 	a.Error = nil
 
 	// FiredAt is only ever set when the state is set to Alerting.
-	a.FiredAt = startsAt
+	a.FiredAt = &startsAt
 }
 
 // SetPending sets the state to Pending. It changes both the start and end time.
