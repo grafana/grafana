@@ -10,11 +10,6 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID:
-        required: true
-      GRAFANA_DELIVERY_BOT_APP_PEM:
-        required: true
     outputs:
       branch:
         description: The new branch that was created
@@ -27,26 +22,35 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID:
-        required: true
-      GRAFANA_DELIVERY_BOT_APP_PEM:
-        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   main:
     runs-on: ubuntu-latest
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: "[\"grafana\", \"grafana-enterprise\"]"
+          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - name: Create release branch
         id: branch
-        uses: grafana/grafana-github-actions-go/bump-release@main
+        uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]
         with:
           ownerRepo: ${{ inputs.ownerRepo }}
           source: ${{ inputs.source }}

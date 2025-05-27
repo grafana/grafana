@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface GroupStatusProps {
@@ -9,12 +10,12 @@ interface GroupStatusProps {
 
 export function GroupStatus({ status }: GroupStatusProps) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.container}>
       <div className={styles.loader} />
       {status === 'deleting' && (
-        <Tooltip content="The group is being deleted">
+        <Tooltip content={t('alerting.group-status.content-the-group-is-being-deleted', 'The group is being deleted')}>
           <div className={styles.iconWrapper}>
             <Icon name="trash-alt" size="sm" />
           </div>

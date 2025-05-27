@@ -1,33 +1,50 @@
 name: Backport PR Creator
 on:
-  pull_request_target:
+  pull_request:
     types:
       - closed
       - labeled
 
 jobs:
+  # TODO: This workflow won't work for forks because no secrets are available.
+  # This should, at the least, post the comment with manual backport instructions.
   main:
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+      - name: Get vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          persist-credentials: false
-      - name: "Generate token"
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: Generate token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - run: git config --global user.email '132647405+grafana-delivery-bot[bot]@users.noreply.github.com'
-      - run: git config --global user.name 'grafana-delivery-bot[bot]'
-      - name: Set remote URL
-        env:
-          GIT_TOKEN: ${{ steps.generate_token.outputs.token }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+          fetch-tags: false
+          token: ${{ steps.generate_token.outputs.token }}
+          persist-credentials: true
+
+      - name: Configure git user
         run: |
-          git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@d4c452f92ed826d515dccf1f62923e537953acd8 # main
+        uses: grafana/grafana-github-actions-go/backport@main
         with:
           token: ${{ steps.generate_token.outputs.token }}

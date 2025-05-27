@@ -11,6 +11,7 @@ import {
   ActionModel,
   InterpolateFunction,
   FieldType,
+  DataFrameWithValue,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -66,6 +67,7 @@ export type TableCellValue =
   | Date // FieldType.time
   | DataFrame // For nested data
   | DataFrame[] // For nested frames
+  | DataFrameWithValue // For sparklines
   | undefined; // For undefined values
 
 export interface TableRow {
@@ -157,6 +159,7 @@ export interface TableCellNGProps {
   value: TableCellValue;
   rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;
+  replaceVariables?: InterpolateFunction;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
@@ -176,7 +179,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps {
+export interface BarGaugeCellProps extends ActionCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -186,7 +189,7 @@ export interface BarGaugeCellProps {
   timeRange: TimeRange;
 }
 
-export interface ImageCellProps {
+export interface ImageCellProps extends ActionCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
@@ -195,7 +198,7 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
+export interface JSONCellProps extends ActionCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
@@ -223,7 +226,7 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps {
+export interface AutoCellProps extends ActionCellProps {
   value: TableCellValue;
   field: Field;
   justifyContent: Property.JustifyContent;

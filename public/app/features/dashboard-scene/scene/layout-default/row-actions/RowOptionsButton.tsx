@@ -1,6 +1,6 @@
+import { useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Icon, ModalsController } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { OnRowOptionsUpdate } from './RowOptionsForm';
 import { RowOptionsModal } from './RowOptionsModal';
@@ -14,6 +14,8 @@ export interface RowOptionsButtonProps {
 }
 
 export const RowOptionsButton = ({ repeat, title, parent, onUpdate, isUsingDashboardDS }: RowOptionsButtonProps) => {
+  const { t } = useTranslate();
+
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {

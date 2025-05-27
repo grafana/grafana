@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -34,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -71,7 +69,7 @@ type Service struct {
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
-	tracer   tracing.Tracer
+	tracer   trace.Tracer
 }
 
 func ProvideService(
@@ -87,7 +85,7 @@ func ProvideService(
 	publicDashboardService publicdashboards.ServiceWrapper,
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
@@ -126,7 +124,7 @@ func ProvideService(
 			sorter,
 		)
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
@@ -170,10 +168,6 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
-		} else if db.GetDialect().DriverName() == migrator.Spanner {
-			// We may eventually make this migration work with Spanner, but for now don't do anything.
-			// We intend to store dashboards and folders only in unified storage when using spanner.
-			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
@@ -326,15 +320,8 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		return nil, err
 	}
 
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, f, f.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
@@ -353,14 +340,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	return f, err
 }
 
-func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester, forceLegacy bool) (*folder.Folder, error) {
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy bool) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.setFullpath")
 	defer span.End()
-	// #TODO is some kind of intermediate conversion required as is the case with user id where
-	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
-	// part of the parsing?
-	f.CreatedByUID = user.GetUID()
-	f.UpdatedByUID = user.GetUID()
 
 	if f.ParentUID == "" {
 		return f, nil
@@ -386,15 +368,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 	}
 	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
 	// Escape forward slashes in the title
-	escapedSlash := "\\/"
-	title := strings.ReplaceAll(f.Title, "/", escapedSlash)
-	f.Fullpath = title
-	f.FullpathUIDs = f.UID
-	for _, p := range parents {
-		pt := strings.ReplaceAll(p.Title, "/", escapedSlash)
-		f.Fullpath = f.Fullpath + "/" + pt
-		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
-	}
+	f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
 	return f, nil
 }
 
@@ -432,17 +406,13 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 
 	// we only need to check access to the folder
 	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	g, err := guardian.NewByFolderUID(ctx, q.UID, q.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	guardianFunc := g.CanView
+	folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID)
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, folderScope)
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanEdit
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope)
 	}
 
-	hasAccess, err := guardianFunc()
+	hasAccess, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator)
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +543,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
-	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
+	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return dedupAvailableNonRootFolders, nil
 }
@@ -641,7 +611,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference, orgID int64) []*folder.FolderReference {
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference) []*folder.FolderReference {
 	foldersRef := make([]*folder.FolderReference, len(folders))
 	for i, f := range folders {
 		foldersRef[i] = f.ToFolderReference()
@@ -994,12 +964,8 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	guard, err := guardian.NewByFolderUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return err
-	}
-
-	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if canDelete, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !canDelete {
 		if err != nil {
 			return toFolderError(err)
 		}
@@ -1007,7 +973,7 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 	}
 
 	folders := []string{cmd.UID}
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		descendants, err := s.nestedFolderDelete(ctx, cmd)
 
 		if err != nil {
@@ -1415,27 +1381,24 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, err
 	}
 
-	guard, err := getGuardianForSavePermissionCheck(ctx, dash, dto.User)
-	if err != nil {
-		return nil, err
-	}
-
+	var evaluator accesscontrol.Evaluator
+	// Check write permission for existing dashboards, create permission for new dashboards
 	if dash.ID == 0 {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		parentUID := dash.FolderUID
+		if parentUID == "" {
+			parentUID = folder.GeneralFolderUID
 		}
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID))
 	} else {
-		if canSave, err := guard.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, err
-			}
-			return nil, dashboards.ErrDashboardUpdateAccessDenied
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID))
+	}
+
+	if hasAccess, err := s.accessControl.Evaluate(ctx, dto.User, evaluator); err != nil || !hasAccess {
+		if err != nil {
+			return nil, err
 		}
+		return nil, dashboards.ErrDashboardUpdateAccessDenied
 	}
 
 	var userID int64
@@ -1493,34 +1456,6 @@ func SplitFullpath(s string) []string {
 	}
 
 	return result
-}
-
-// getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
-// It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
-	newDashboard := d.ID == 0
-
-	if newDashboard {
-		// if it's a new dashboard/folder check the parent folder permissions
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-			ID:    d.FolderID, // nolint:staticcheck
-			OrgID: d.OrgID,
-		}, d.OrgID, user)
-		if err != nil {
-			return nil, err
-		}
-		return guard, nil
-	}
-	guard, err := guardian.NewByFolder(ctx, &folder.Folder{
-		UID:   d.UID,
-		OrgID: d.OrgID,
-	}, d.OrgID, user)
-	if err != nil {
-		return nil, err
-	}
-	return guard, nil
 }
 
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {

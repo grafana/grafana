@@ -83,7 +83,7 @@ export const Pagination = ({
           // Renders and ellipsis to represent condensed pages
           pagesToRender.push(
             <li key={page} className={styles.item}>
-              <Icon className={styles.ellipsis} name="ellipsis-v" />
+              <Icon className={styles.ellipsis} name="ellipsis-v" data-testid="pagination-ellipsis-icon" />
             </li>
           );
         }
@@ -102,7 +102,7 @@ export const Pagination = ({
   const nextPageLabel = t('grafana-ui.pagination.next-page', 'next page');
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div className={cx(styles.container, className)} role="navigation">
       <ol>
         <li className={styles.item}>
           <Button

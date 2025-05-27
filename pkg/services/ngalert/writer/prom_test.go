@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"reflect"
 	"slices"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -170,6 +172,27 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
 	})
 
+	t.Run("handle connection failures", func(t *testing.T) {
+		dnsErr := &net.DNSError{
+			Err:        "no such host",
+			Name:       "host.example.com",
+			Server:     "10.0.0.1:53",
+			IsTimeout:  false,
+			IsNotFound: true,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, testClientWriteError{
+				statusCode: 0,
+				err:        dnsErr,
+			}
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrConnectionFailure)
+		require.Contains(t, err.Error(), dnsErr.Error())
+	})
+
 	t.Run("writes expected points", func(t *testing.T) {
 		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
 			require.Len(t, tslist, len(series))
@@ -270,6 +293,83 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+}
+
+func TestExtractActualError(t *testing.T) {
+	testCases := []struct {
+		name     string
+		inputErr promremote.WriteError
+		expected string
+	}{
+		{
+			name:     "nil error",
+			inputErr: nil,
+			expected: "",
+		},
+		{
+			name: "non-JSON error message",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("body=non-JSON error"),
+			},
+			expected: "non-JSON error",
+		},
+		{
+			name: "no body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`test message {"message":"some message"}`),
+			},
+			expected: `test message {"message":"some message"}`,
+		},
+		{
+			name: "error message with body= and valid JSON with error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"error":"nested error message"}`),
+			},
+			expected: "nested error message",
+		},
+		{
+			name: "error message with body= and invalid JSON",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusBadRequest,
+				msg:        util.Pointer(`body={"error":"some error`), // Missing closing brace
+			},
+			expected: `{"error":"some error`,
+		},
+		{
+			name: "error message with nothing after body=",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error without body="),
+			},
+			expected: "random error without body=",
+		},
+		{
+			name: "error message with string body",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer("random error body=invalid-json-content"),
+			},
+			expected: "invalid-json-content",
+		},
+		{
+			name: "error message with body and valid JSON without error field",
+			inputErr: testClientWriteError{
+				statusCode: http.StatusInternalServerError,
+				msg:        util.Pointer(`error body={"key":"value"}`),
+			},
+			expected: `{"key":"value"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := extractActualError(tc.inputErr)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }
 
 func extractValue(t *testing.T, frames data.Frames, labels map[string]string, frameType data.FrameType) float64 {
@@ -461,6 +561,7 @@ func (c *testClient) WriteTimeSeries(
 type testClientWriteError struct {
 	statusCode int
 	msg        *string
+	err        error
 }
 
 func (e testClientWriteError) StatusCode() int {
@@ -468,8 +569,11 @@ func (e testClientWriteError) StatusCode() int {
 }
 
 func (e testClientWriteError) Error() string {
-	if e.msg == nil {
-		return "test error"
+	if e.err != nil {
+		return e.err.Error()
 	}
-	return *e.msg
+	if e.msg != nil {
+		return *e.msg
+	}
+	return "test client error"
 }

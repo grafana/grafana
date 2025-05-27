@@ -6,10 +6,10 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
@@ -34,6 +34,8 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
+  const { t } = useTranslate();
+
   const options: Array<SelectableValue<ShowContent>> = useMemo(
     () => [
       {
@@ -61,7 +63,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
         value: ShowContent.DataFrames,
       },
     ],
-    []
+    [t]
   );
   const styles = useStyles2(getPanelInspectorStyles2);
   const jsonOptions = useMemo(() => {
@@ -77,9 +79,9 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   const [text, setText] = useState('');
 
   useAsync(async () => {
-    const v = await getJSONObject(show, panel, data);
+    const v = await getJSONObject(show, t, panel, data);
     setText(getPrettyJSON(v));
-  }, [show, panel, data]);
+  }, [show, panel, data, t]);
 
   const onApplyPanelModel = useCallback(() => {
     if (panel && dashboard && text) {
@@ -165,7 +167,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   );
 }
 
-async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: PanelData) {
+async function getJSONObject(show: ShowContent, t: TFunction, panel?: PanelModel, data?: PanelData) {
   if (show === ShowContent.PanelData) {
     reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
     return data;

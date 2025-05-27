@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { CorrelationExternal } from '@grafana/runtime';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { CorrelationType } from '../types';
@@ -49,7 +49,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <>
       <FieldSet label={t('correlations.target-form.title', 'Setup the target for the correlation (Step 2 of 3)')}>

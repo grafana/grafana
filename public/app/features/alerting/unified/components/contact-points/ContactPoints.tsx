@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -14,7 +15,6 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';
@@ -68,7 +68,7 @@ const ContactPointsTab = () => {
   );
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
-
+  const { t } = useTranslate();
   const search = queryParams.get('search');
 
   if (isLoading) {
@@ -211,6 +211,7 @@ export const ContactPointsPageContents = () => {
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
+  const { t } = useTranslate();
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -256,7 +257,7 @@ interface ContactPointsListProps {
 const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
-
+  const { t } = useTranslate();
   if (pageItems.length === 0) {
     const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
     return <EmptyState variant="not-found" message={emptyMessage} />;

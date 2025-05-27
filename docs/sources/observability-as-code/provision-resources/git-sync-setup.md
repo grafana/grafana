@@ -15,18 +15,12 @@ weight: 100
 
 # Set up Git Sync
 
-{{< admonition type="note" >}}
-Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. Git Sync isn't available in Grafana Cloud.
+{{< admonition type="caution" >}}
+Git Sync is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not publicly available in Grafana Cloud yet. Only the cloud-hosted version of GitHub (GitHub.com) is supported at this time. GitHub Enterprise is not yet compatible.
+
+Sign up for Grafana Cloud Git Sync early access using [this form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+
 {{< /admonition >}}
-
-- [Provision resources and sync dashboards](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/)
-  - [Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/)
-  - [Set up Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
-  - [Set up file provisioning](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/)
-  - [Work with provisioned dashboards](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/provisioned-dashboards/)
-  - [Manage provisioned repositories with Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
-
-<hr />
 
 Git Sync lets you manage Grafana dashboards as code by storing dashboards JSON files and folders in a remote GitHub repository.
 Alternatively, you can configure a local file system instead of using GitHub.
@@ -81,9 +75,6 @@ To enable the required feature toggles, add them to your Grafana configuration f
    [feature_toggles]
    provisioning = true
    kubernetesDashboards = true ; use k8s from browser
-
-   # If you want easy kubectl setup development mode
-   grafanaAPIServerEnsureKubectlAccess = true
    ```
 
 1. Save the changes to the file and restart Grafana.
