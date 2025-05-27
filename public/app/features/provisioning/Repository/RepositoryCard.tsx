@@ -23,6 +23,7 @@ export function RepositoryCard({ repository }: Props) {
 
     if (spec?.type === 'github') {
       const { url = '', branch } = spec.github ?? {};
+      // TODO: how to do this for local repositories?
       const branchUrl = branch ? `${url}/tree/${branch}` : url;
 
       meta.push(
@@ -54,7 +55,15 @@ export function RepositoryCard({ repository }: Props) {
   };
 
   const getRepositoryIcon = (): IconName => {
-    return spec?.type === 'github' ? 'github' : 'database';
+    switch (spec?.type) {
+      case 'github':
+        return 'github';
+      case 'git':
+        // FIXME: should we have a better icon for git repositories?
+        return 'code-branch';
+      default:
+        return 'database';
+    }
   };
 
   return (
