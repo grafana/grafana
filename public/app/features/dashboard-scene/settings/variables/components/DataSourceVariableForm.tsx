@@ -2,7 +2,7 @@ import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -42,7 +42,7 @@ export function DataSourceVariableForm({
   onAllValueChange,
   onAllowCustomValueChange,
 }: DataSourceVariableFormProps) {
-  const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
+  const typeValue = optionTypes.find((o) => o.value === query);
 
   return (
     <>

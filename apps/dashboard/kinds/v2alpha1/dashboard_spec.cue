@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint8]
+	ids: [...uint32]
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -393,7 +393,7 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	options?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -518,21 +518,8 @@ GridLayoutItemKind: {
 	spec: GridLayoutItemSpec
 }
 
-GridLayoutRowKind: {
-	kind: "GridLayoutRow"
-	spec: GridLayoutRowSpec
-}
-
-GridLayoutRowSpec: {
-	y:         int
-	collapsed: bool
-	title:     string
-	elements:  [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	repeat?:   RowRepeatOptions
-}
-
 GridLayoutSpec: {
-	items: [...GridLayoutItemKind | GridLayoutRowKind]
+	items: [...GridLayoutItemKind]
 }
 
 GridLayoutKind: {
@@ -704,6 +691,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+FilterOrigin: "dashboard" | "scope"
+
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
 	label:  string
@@ -743,6 +734,7 @@ QueryVariableSpec: {
 	includeAll:   bool | *false
 	allValue?:    string
 	placeholder?: string
+	allowCustomValue: bool | *true
 }
 
 // Query variable kind
@@ -809,6 +801,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Datasource variable kind
@@ -855,6 +848,7 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Custom variable kind
@@ -867,6 +861,7 @@ CustomVariableKind: {
 GroupByVariableSpec: {
 	name:        string | *""
 	datasource?: DataSourceRef
+	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
 		value: ""
@@ -896,6 +891,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Define the MetricFindValue type
@@ -915,6 +911,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
+	origin?: FilterOrigin
 	// @deprecated
 	condition?: string
 }

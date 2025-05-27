@@ -143,9 +143,9 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	encValueStore := newInMemoryEncryptedValueStorage()
 
 	// Initialize the SQLKeeper
-	sqlKeeper, err := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	sqlKeeper := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
 
-	return sqlKeeper, err
+	return sqlKeeper, nil
 }
 
 // While we don't have the real implementation, use an in-memory one

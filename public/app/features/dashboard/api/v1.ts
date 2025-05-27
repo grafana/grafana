@@ -12,6 +12,10 @@ import {
   AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  AnnoKeyManagerAllowsEdits,
+  ManagerKind,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -21,15 +25,17 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
 
+export const K8S_V1_DASHBOARD_API_CONFIG = {
+  group: 'dashboard.grafana.app',
+  version: 'v1beta1',
+  resource: 'dashboards',
+};
+
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardDataDTO>({
-      group: 'dashboard.grafana.app',
-      version: 'v1beta1',
-      resource: 'dashboards',
-    });
+    this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
@@ -63,6 +69,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -83,7 +91,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     return {
       uid: v.metadata.name,
-      version: v.spec.version ?? 0,
+      version: v.metadata.generation ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
       url,
@@ -123,6 +131,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
         },
       };
+
+      const annotations = dash.metadata.annotations ?? {};
+      const managerKind = annotations[AnnoKeyManagerKind];
+
+      if (managerKind) {
+        result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
+        result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
+      }
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {
         result.dashboard.id = parseInt(dash.metadata.labels[DeprecatedInternalId], 10);

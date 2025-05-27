@@ -60,8 +60,11 @@ func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 
 func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
-		builder.Write(" AND (le.name "+sqlStore.GetDialect().LikeStr()+" ?", "%"+query.SearchString+"%")
-		builder.Write(" OR le.description "+sqlStore.GetDialect().LikeStr()+" ?)", "%"+query.SearchString+"%")
+		sql, param := sqlStore.GetDialect().LikeOperator("le.name", true, query.SearchString, true)
+		builder.Write(" AND ("+sql, param)
+
+		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
+		builder.Write(" OR "+sql+")", param)
 	}
 }
 
@@ -147,7 +150,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQL
 		if !includeGeneral && isGeneralFolder(folderID) {
 			continue
 		}
-		params = append(params, filter)
+		params = append(params, folderID)
 	}
 	if len(params) > 0 {
 		sql.WriteString(` AND le.folder_id IN (?` + strings.Repeat(",?", len(params)-1) + ")")

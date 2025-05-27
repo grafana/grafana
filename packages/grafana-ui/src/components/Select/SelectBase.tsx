@@ -1,5 +1,5 @@
 import { isArray, negate } from 'lodash';
-import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react';
 import * as React from 'react';
 import {
   default as ReactSelect,
@@ -152,15 +152,18 @@ export function SelectBase<T, Rest = {}>({
   isValidNewOption,
   formatOptionLabel,
   hideSelectedOptions,
+  selectRef,
   ...rest
 }: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
-  const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
+  const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
+
+  useImperativeHandle(selectRef, () => reactSelectRef.current!, []);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).

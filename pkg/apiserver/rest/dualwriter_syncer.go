@@ -36,6 +36,7 @@ type SyncerConfig struct {
 	LegacyStorage     Storage
 	Storage           Storage
 	ServerLockService ServerLockService
+	SkipDataSync      bool
 
 	DataSyncerInterval     time.Duration
 	DataSyncerRecordsLimit int

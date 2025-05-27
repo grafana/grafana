@@ -261,6 +261,26 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "should return true for datasources if service has permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "datasources:query",
+					Scope:      "datasources:uid:some_datasource",
+					Kind:       "datasources",
+					Attribute:  "uid",
+					Identifier: "some_datasource",
+				},
+			},
+			check: CheckRequest{
+				Action:   "datasources:query",
+				Group:    "query.grafana.app",
+				Resource: "query",
+				Name:     "some_datasource",
+				Verb:     utils.VerbCreate,
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1496,17 +1516,18 @@ func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
 	fStore := &fakeStore{}
+	tracer := tracing.NewNoopTracerService()
 	return &Service{
 		logger:          logger,
 		mapper:          newMapper(),
-		tracer:          tracing.NewNoopTracerService(),
+		tracer:          tracer,
 		metrics:         newMetrics(nil),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, shortCacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, tracer, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
 		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
