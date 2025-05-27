@@ -236,6 +236,6 @@ func TestScheduler(t *testing.T) {
 			Logger:     log.New("qos.test"),
 		})
 		require.NoError(t, err)
-		require.ErrorIs(t, services.StartAndAwaitRunning(context.Background(), scheduler), ErrQueueNotRunning)
+		require.ErrorContains(t, services.StartAndAwaitRunning(context.Background(), scheduler), "queue is not running")
 	})
 }

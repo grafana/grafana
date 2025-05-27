@@ -23,8 +23,6 @@ const (
 	DefaultMaxRetries = 5
 )
 
-var ErrQueueNotRunning = errors.New("queue is not running")
-
 type WorkQueue interface {
 	services.Service
 
@@ -136,7 +134,7 @@ func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 		workers:    make([]*Worker, 0, config.NumWorkers),
 	}
 
-	s.Service = services.NewBasicService(s.starting, s.running, s.stopping)
+	s.Service = services.NewIdleService(s.starting, s.stopping)
 	return s, nil
 }
 
@@ -144,8 +142,10 @@ func NewScheduler(queue WorkQueue, config *Config) (*Scheduler, error) {
 func (s *Scheduler) starting(ctx context.Context) error {
 	s.logger.Info("scheduler starting", "numWorkers", s.numWorkers)
 
-	if s.queue.State() != services.Running {
-		return ErrQueueNotRunning
+	queueCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := s.queue.AwaitRunning(queueCtx); err != nil {
+		return fmt.Errorf("queue is not running: %w", err)
 	}
 
 	s.workers = make([]*Worker, 0, s.numWorkers)
@@ -164,12 +164,6 @@ func (s *Scheduler) starting(ctx context.Context) error {
 	}
 
 	s.logger.Info("scheduler started")
-	return nil
-}
-
-// running is called by the services.Service lifecycle to check if the scheduler is running.
-func (s *Scheduler) running(ctx context.Context) error {
-	<-ctx.Done()
 	return nil
 }
 
