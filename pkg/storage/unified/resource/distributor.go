@@ -2,16 +2,12 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"hash/fnv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
-	userutils "github.com/grafana/dskit/user"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -22,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
@@ -116,7 +113,7 @@ func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest
 	}
 
 	res, err := client.Read(ctx, r)
-	ds.log.Info("Read result", "err", err, "status")
+	ds.log.Info("Read result", "err", err)
 
 	return res, err
 }
@@ -246,17 +243,12 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	}
 
 	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
-	ctx = userutils.InjectOrgID(ctx, namespace)
-	requester, err := identity.GetRequester(ctx)
-	user, ok := claims.AuthInfoFrom(ctx)
-	fmt.Println("user: ", user)
-	ds.log.Info("from claims.AuthInfoFrom", "user", user, "ok", ok)
-	if err != nil {
-		ds.log.Error("a requester was not found in the context")
-		return ctx, nil, err
-	}
+	md, ok := metadata.FromIncomingContext(ctx)
+    if !ok {
+        md = metadata.New(nil)
+    }
 
-	ctx = identity.WithRequester(ctx, requester)
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	return ctx, client.(*RingClient).Client, nil
 }
