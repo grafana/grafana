@@ -421,13 +421,13 @@ To deepen your understanding of Grafana’s templating, explore the following re
 - [**Notification template reference**](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/): Lists the data available for use in notification templates and explores specific functions.
 - [**Alert rule template reference**](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
 
-## Learn more in [Grafana Alerting Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/)
+## Learn more in [Grafana Alerting Dynamic routing](http://www.grafana.com/tutorials/alerting-get-started-pt5/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
+In [Get started with Grafana Alerting - Dynamic routing](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
 
 {{< /admonition >}}
 
@@ -435,7 +435,7 @@ In [Get started with Grafana Alerting - Part 5](http://www.grafana.com/tutorials
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Part 5](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
+In [Get started with Grafana Alerting - Dynamic routing](http://www.grafana.com/tutorials/alerting-get-started-pt5/) you learn how to dynamically route alerts and link them to dashboards.
 
 {{< /docs/ignore >}}
 
