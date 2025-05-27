@@ -203,6 +203,7 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
+	github.com/grafana/grafana/pkg/build v0.0.0-20250527090426-589046bcdc16 // @grafana/grafana-backend-group
 )
 
 require (
@@ -569,8 +570,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-require github.com/grafana/grafana/pkg/build v0.0.0-20250527090426-589046bcdc16
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
