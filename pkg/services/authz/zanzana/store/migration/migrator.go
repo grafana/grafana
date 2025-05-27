@@ -20,7 +20,10 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 	if err != nil {
 		return fmt.Errorf("failed to create db engine: %w", err)
 	}
-	defer engine.Close()
+	err = engine.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close db engine: %w", err)
+	}
 
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
