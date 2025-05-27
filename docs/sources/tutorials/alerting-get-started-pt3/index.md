@@ -391,7 +391,7 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 Every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
 
-1. In the **Evaluation group and interval**,  enter a name. For example: `Multi-region group`.
+1. In the **Evaluation group and interval**, enter a name. For example: `Multi-region group`.
 1. Choose an **Evaluation interval** (how often the alert are evaluated). Choose `1m`.
 1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration).
 1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.

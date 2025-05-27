@@ -195,7 +195,7 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 1. In the **Alert condition** section:
 
-   - Keep **Random Walk** as the _Scenario_. 
+   - Keep **Random Walk** as the _Scenario_.
    - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 0` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the query.
@@ -219,7 +219,7 @@ The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fun
 
 To set up the evaluation:
 
-1. In the **Evaluation group and interval**, enter a name. For example:  `1m-evaluation`.
+1. In the **Evaluation group and interval**, enter a name. For example: `1m-evaluation`.
 1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
 1. Set the **pending period** to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.

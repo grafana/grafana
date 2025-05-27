@@ -149,15 +149,16 @@ In the provided demo setup, you're monitoring:
 You have a mixture of critical alerts (e.g., CPU usage over `75%`) and warning alerts (e.g., memory usage over `60%`).
 
 This Flask-based Python script simulates a service that:
+
 - Generates random CPU and memory usage values (10% to 100%) every **10 seconds**
 - Exposes them as Prometheus metrics
 - Each metric includes a default instance label based on the scrape target:
-   - `instance="flask-prod:5000"`
-   - `instance="flask-staging:5000"`
+  - `instance="flask-prod:5000"`
+  - `instance="flask-staging:5000"`
 - A custom deployment label added explicitly in the app logic (this serves as an additional example for dynamically routing production instances):
-   - `deployment="prod-us-cs30"`
-   - `deployment="staging-us-cs20"`
- 
+  - `deployment="prod-us-cs30"`
+  - `deployment="staging-us-cs20"`
+
 <!-- INTERACTIVE page step2.md END -->
 
 <!-- INTERACTIVE page step3.md START -->
@@ -252,6 +253,7 @@ In this section we add a [templated label based on query value](https://grafana.
    development
    {{- end -}}
    ```
+
    This template uses a regular expression to extract `prod`, `staging`, or `dev` from the instance label (`$labels.instance`) and maps it to a more readable label (like "production" for "prod").
 
 As result, when alerts exceed a threshold, the template checks the labels, such as `instance="flask-prod:5000"`, `instance="flask-staging:5000"`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of production, staging or development to the custom environment **environment** label.
@@ -286,17 +288,12 @@ Select who should receive a notification when an alert rule fires.
 
 Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using `$labels.instance`. This ensures that the label value will be set to production, staging, or development, depending on the environment.
 
-
 <!-- INTERACTIVE page step5.md END -->
 <!-- INTERACTIVE page step6.md START -->
 
 ## Done! Your alerts are now dynamically routed
 
-Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification policies, which route alerts to the correct contact points.
-
-To see this in action go to **Alerts & IRM > Alerting > Active notifications**
-
-This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
+Based on your query's `instance` label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification policies, which route alerts to the correct contact points.
 
 Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
 
@@ -304,7 +301,11 @@ Feel free to experiment by changing the template to match other labels that cont
 $labels.deployment
 ```
 
-You should be able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
+You should be also able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
+
+To see this in action go to **Alerts & IRM > Alerting > Active notifications**
+
+This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 

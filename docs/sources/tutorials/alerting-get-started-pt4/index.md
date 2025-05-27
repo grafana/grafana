@@ -260,11 +260,10 @@ Now that we've introduced how templating works, let’s move on to the next step
      Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
 
 1. **Set evaluation behaviour** section:
-   - In the **Evaluation group and interval**,  enter a name. For example: `High usage`.
+   - In the **Evaluation group and interval**, enter a name. For example: `High usage`.
    - Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
    - Set the **pending period** to 0s (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration.).
    - Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
-   
 1. **Configure notifications** section:
 
    Select who should receive a notification when an alert rule fires.
