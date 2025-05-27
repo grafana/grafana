@@ -219,19 +219,28 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	ctx, _ = r.logger(ctx, ref)
 	finalPath := safepath.Join(r.config.Spec.Git.Path, filePath)
 
-	// Check if the path represents a directory
-	if safepath.IsDir(filePath) {
-		// For directories, just return FileInfo without data (like GitHub implementation)
-		return &repository.FileInfo{
-			Path: filePath,
-			Ref:  ref,
-		}, nil
-	}
-
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if the path represents a directory
+	if safepath.IsDir(filePath) {
+		tree, err := r.client.GetTreeByPath(ctx, refHash, finalPath)
+		if err != nil {
+			if errors.Is(err, nanogit.ErrRefNotFound) {
+				return nil, repository.ErrFileNotFound
+			}
+
+			return nil, fmt.Errorf("get tree by path: %w", err)
+		}
+
+		return &repository.FileInfo{
+			Path: filePath,
+			Ref:  refHash.String(),
+			Hash: tree.Hash.String(),
+		}, nil
 	}
 
 	// get root hash
