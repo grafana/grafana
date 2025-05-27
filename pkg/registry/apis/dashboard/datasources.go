@@ -3,7 +3,7 @@ package dashboard
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
