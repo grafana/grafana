@@ -109,7 +109,7 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
         1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This should be the same ID you specified in the `azure.workload.identity/client-id` annotation of your Grafana's deployment ServiceAccount.
 
-        1. You must have set `token_url` (env var `GF_AUTH_AZUREAD_TOKEN_URL`) under `[auth.azuread]` under `[auth.azuread]` to `https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/oauth2/v2.0/token`, where `00000000-0000-0000-0000-000000000000` is your Tenant ID, in the Grafana server configuration for this to work.
+        1. You must have set `token_url` (env var `GF_AUTH_AZUREAD_TOKEN_URL`) under `[auth.azuread]` to `https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/token` in the Grafana server configuration for this to work.
 
         {{< admonition type="note" >}}
         Managed identities as federated credentials are only applicable to workloads hosted in Azure.
