@@ -120,3 +120,92 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		})
 	})
 }
+
+func TestHandleSqlInput(t *testing.T) {
+	tests := []struct {
+		name        string
+		frames      data.Frames
+		expectErr   string
+		expectFrame bool
+	}{
+		{
+			name:      "empty input returns error",
+			frames:    data.Frames{},
+			expectErr: "no frames for SQL conversion",
+		},
+		{
+			name: "single frame, no labels, no type → passes through",
+			frames: data.Frames{
+				data.NewFrame("test",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+			},
+			expectFrame: true,
+		},
+		{
+			name: "single frame with labels, but missing FrameMeta.Type → error",
+			frames: data.Frames{
+				data.NewFrame("test",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					func() *data.Field {
+						f := data.NewField("value", nil, []*float64{fp(2)})
+						f.Labels = data.Labels{"foo": "bar"}
+						return f
+					}(),
+				),
+			},
+			expectErr: "frame has labels but frame type is missing or unsupported",
+		},
+		{
+			name: "multiple frames, no type → error",
+			frames: data.Frames{
+				data.NewFrame("frame1",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+				data.NewFrame("frame2",
+					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+					data.NewField("value", nil, []*float64{fp(2)}),
+				),
+			},
+			expectErr: "response has more than one frame but frame type is missing or unsupported",
+		},
+		{
+			name: "supported type (timeseries-multi) triggers ConvertToFullLong",
+			frames: data.Frames{
+				func() *data.Frame {
+					f := data.NewFrame("tsm",
+						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+						func() *data.Field {
+							f := data.NewField("value", nil, []*float64{fp(2)})
+							f.Labels = data.Labels{"host": "a"}
+							return f
+						}(),
+					)
+					f.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+					return f
+				}(),
+			},
+			expectFrame: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			res := handleSqlInput(tc.frames)
+
+			if tc.expectErr != "" {
+				require.Error(t, res.Error)
+				assert.Contains(t, res.Error.Error(), tc.expectErr)
+			} else {
+				require.NoError(t, res.Error)
+				if tc.expectFrame {
+					require.Len(t, res.Values, 1)
+					require.IsType(t, mathexp.TableData{}, res.Values[0])
+					assert.NotNil(t, res.Values[0].(mathexp.TableData).Frame)
+				}
+			}
+		})
+	}
+}

@@ -30,8 +30,8 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}
 
 	if forSqlInput {
-		results, err := handleSqlInput(frames)
-		return "sql input", results, err
+		results := handleSqlInput(frames)
+		return "sql input", results, nil
 	}
 
 	var dt data.FrameType
@@ -126,41 +126,58 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}, nil
 }
 
-// copied from pkg/expr/nodes.go from within the Execute method
-func handleSqlInput(dataFrames data.Frames) (mathexp.Results, error) {
+func handleSqlInput(dataFrames data.Frames) mathexp.Results {
 	var result mathexp.Results
-	var needsConversion bool
-	// Convert it if Multi:
-	if len(dataFrames) > 1 {
-		needsConversion = true
+
+	if len(dataFrames) == 0 {
+		result.Error = fmt.Errorf("no frames for SQL conversion")
+		return result
 	}
 
-	// Convert it if Wide (has labels):
-	if len(dataFrames) == 1 {
-		for _, field := range dataFrames[0].Fields {
+	first := dataFrames[0]
+
+	var metaType data.FrameType
+	if first.Meta != nil {
+		metaType = first.Meta.Type
+	}
+
+	if supportedToLongConversion(metaType) {
+		convertedFrames, err := ConvertToFullLong(dataFrames)
+		if err != nil {
+			result.Error = fmt.Errorf("failed to convert data frames to long format for SQL: %w", err)
+		}
+
+		if len(convertedFrames) == 0 {
+			result.Error = fmt.Errorf("conversion succeeded but returned no frames")
+			return result
+		}
+
+		result.Values = mathexp.Values{
+			mathexp.TableData{Frame: convertedFrames[0]},
+		}
+
+		return result
+	}
+
+	// If Meta.Type is not supported, but there are labels or more than 1 frame, fail fast
+	if len(dataFrames) > 1 {
+		result.Error = fmt.Errorf("response has more than one frame but frame type is missing or unsupported for sql conversion")
+		return result
+	}
+	for _, frame := range dataFrames {
+		for _, field := range frame.Fields {
 			if len(field.Labels) > 0 {
-				needsConversion = true
-				break
+				result.Error = fmt.Errorf("frame has labels but frame type is missing or unsupported for sql conversion")
+				return result
 			}
 		}
 	}
 
-	if needsConversion {
-		convertedFrames, err := ConvertToFullLong(dataFrames)
-		if err != nil {
-			return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
-		}
-		result.Values = mathexp.Values{
-			mathexp.TableData{Frame: convertedFrames[0]},
-		}
-		return result, nil
-	}
-
-	// Otherwise it is already Long format; return as is
+	// Can pass through as table without conversion
 	result.Values = mathexp.Values{
-		mathexp.TableData{Frame: dataFrames[0]},
+		mathexp.TableData{Frame: first},
 	}
-	return result, nil
+	return result
 }
 
 func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
