@@ -1,5 +1,7 @@
 import { zip } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { firstValueFrom, Subject, throwError, timer } from 'rxjs';
+import { filter, first, switchMap, takeUntil, tap, timeout } from 'rxjs/operators';
 
 import {
   CloudRuleIdentifier,
@@ -23,6 +25,13 @@ const CONSISTENCY_CHECK_POOL_INTERVAL = 3 * 1000; // 3 seconds;
 const CONSISTENCY_CHECK_TIMEOUT = 90 * 1000; // 90 seconds
 
 const { setInterval, clearInterval } = window;
+
+class RuleGroupConsistencyTimeoutError extends Error {
+  constructor() {
+    super('Timeout while waiting for rule group consistency');
+    this.name = 'RuleGroupConsistencyTimeoutError';
+  }
+}
 
 function useMatchingPromRuleExists() {
   const [fetchPrometheusNamespaces] = useLazyPrometheusRuleNamespacesQuery();
@@ -155,88 +164,72 @@ export function useRuleGroupConsistencyCheck() {
   const { isGroupInSync } = useRuleGroupIsInSync();
   const [groupConsistent, setGroupConsistent] = useState<boolean | undefined>();
 
-  const apiCheckInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
-  const timeoutInterval = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const consistencyCleanup = useRef(new Subject<void>());
 
   useEffect(() => {
+    const currentCleanup = consistencyCleanup.current;
     return () => {
-      clearTimeoutInterval();
-      clearApiCheckInterval();
+      if (currentCleanup) {
+        currentCleanup.next();
+      }
     };
   }, []);
 
-  function clearTimeoutInterval() {
-    if (timeoutInterval.current) {
-      clearTimeout(timeoutInterval.current);
-      timeoutInterval.current = undefined;
-    }
-  }
-
-  function clearApiCheckInterval() {
-    if (apiCheckInterval.current) {
-      clearTimeout(apiCheckInterval.current);
-      apiCheckInterval.current = undefined;
-    }
-  }
-
   /**
    * Waits for the rule group to be consistent between Prometheus and the Ruler.
-   * It periodically fetches the group from the Prometheus and the Ruler and compares them.
-   * Times out after 90 seconds of waiting.
+   * Uses RxJS to periodically check consistency until it's achieved or timeout occurs.
+   *
+   * How it works:
+   * 1. Creates a timer that emits every 3 seconds
+   * 2. For each timer emission, checks if the group is in sync
+   * 3. Filters out results where group is not in sync (continues checking)
+   * 4. Takes the first result where group IS in sync (completes successfully)
+   * 5. Has a timeout that will throw an error after 90 seconds
    */
   async function waitForGroupConsistency(groupIdentifier: RuleGroupIdentifierV2) {
-    // We can wait only for one rule group at a time
-    clearTimeoutInterval();
-    clearApiCheckInterval();
+    // Mark the start time for performance measurement
+    performance.mark('waitForGroupConsistency:started');
 
-    const timeoutPromise = new Promise<void>((_, reject) => {
-      timeoutInterval.current = setTimeout(() => {
-        clearApiCheckInterval();
-        const error = new Error('Timeout while waiting for rule group consistency');
-        logError(error, { groupOrigin: groupIdentifier.groupOrigin });
-        reject(error);
-      }, CONSISTENCY_CHECK_TIMEOUT);
-    });
-
-    const waitPromise = new Promise<void>((resolve, reject) => {
-      function logWaitingTime() {
-        performance.mark('waitForGroupConsistency:finished');
-        const duration = performance.measure(
-          'waitForGroupConsistency',
-          'waitForGroupConsistency:started',
-          'waitForGroupConsistency:finished'
-        );
-        logMeasurement(
-          'alerting:wait-for-group-consistency',
-          { duration: duration.duration },
-          { groupOrigin: groupIdentifier.groupOrigin }
-        );
-      }
-
-      function checkGroupConsistency() {
-        isGroupInSync(groupIdentifier)
-          .then((inSync) => {
-            setGroupConsistent(inSync);
-            if (inSync) {
-              logWaitingTime();
-              resolve();
-            } else {
-              apiCheckInterval.current = setTimeout(checkGroupConsistency, CONSISTENCY_CHECK_POOL_INTERVAL);
-            }
+    setGroupConsistent(undefined);
+    await firstValueFrom(
+      timer(0, CONSISTENCY_CHECK_POOL_INTERVAL) // Start immediately, then every 3 seconds
+        .pipe(
+          takeUntil(consistencyCleanup.current),
+          // For each timer tick, check if the group is in sync
+          switchMap(async () => {
+            const isSync = await isGroupInSync(groupIdentifier);
+            setGroupConsistent(isSync);
+            return isSync;
+          }),
+          // Only continue with results where the group IS in sync
+          filter((inSync) => inSync === true),
+          // Take the first successful result (this completes the observable)
+          first(),
+          // Add timeout
+          timeout({
+            each: CONSISTENCY_CHECK_TIMEOUT,
+            with: () => {
+              const timeoutError = new RuleGroupConsistencyTimeoutError();
+              logError(timeoutError, { groupOrigin: groupIdentifier.groupOrigin });
+              return throwError(() => timeoutError);
+            },
+          }),
+          // Log the waiting time when successful
+          tap(() => {
+            performance.mark('waitForGroupConsistency:finished');
+            const duration = performance.measure(
+              'waitForGroupConsistency',
+              'waitForGroupConsistency:started',
+              'waitForGroupConsistency:finished'
+            );
+            logMeasurement(
+              'alerting:wait-for-group-consistency',
+              { duration: duration.duration },
+              { groupOrigin: groupIdentifier.groupOrigin }
+            );
           })
-          .catch((error) => {
-            reject(error);
-          })
-          .finally(() => {
-            clearTimeoutInterval();
-          });
-      }
-
-      performance.mark('waitForGroupConsistency:started');
-      checkGroupConsistency();
-    });
-
-    return Promise.race([timeoutPromise, waitPromise]);
+        )
+    );
   }
 
   return { waitForGroupConsistency, groupConsistent };
