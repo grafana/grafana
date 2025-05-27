@@ -65,7 +65,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     accessLevel: css({
       fontFamily: theme.typography.fontFamilyMonospace,
-      background: '#22262B',
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0.25, 0.5),
     }),
