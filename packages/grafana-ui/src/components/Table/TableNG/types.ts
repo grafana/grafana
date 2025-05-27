@@ -51,12 +51,9 @@ export interface TableSummaryRow {
 }
 
 export interface TableColumn extends Column<TableRow, TableSummaryRow> {
-  key: string; // Unique identifier used by DataGrid
-  name: string; // Display name in header
   field: Field; // Grafana field data/config
   width?: number | string; // Column width
   minWidth?: number; // Min width constraint
-  cellClass?: string; // CSS styling
 }
 
 // Possible values for table cells based on field types
