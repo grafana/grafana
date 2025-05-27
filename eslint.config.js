@@ -132,6 +132,8 @@ module.exports = [
             },
             {
               regex: '\\.test$',
+              message:
+                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
             },
           ],
           paths: [
