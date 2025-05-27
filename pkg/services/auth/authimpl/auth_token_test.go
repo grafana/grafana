@@ -702,6 +702,7 @@ func createTestContext(t *testing.T) *testContext {
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
 	sqlstore := db.InitTestDB(t)
+	tracer := tracing.InitializeTracerForTest()
 
 	cfg := &setting.Cfg{
 		LoginMaxInactiveLifetime:     maxInactiveDurationVal,
@@ -709,7 +710,7 @@ func createTestContext(t *testing.T) *testContext {
 		TokenRotationIntervalMinutes: 10,
 	}
 
-	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracing.InitializeTracerForTest())
+	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracer)
 
 	tokenService := &UserAuthTokenService{
 		sqlStore:             sqlstore,
@@ -718,6 +719,7 @@ func createTestContext(t *testing.T) *testContext {
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagRotateTokensInTransaction, featuremgmt.FlagSkipTokenRotationIfRecent),
+		tracer:               tracer,
 	}
 
 	return &testContext{

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -46,6 +48,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 		features:          features,
+		tracer:            tracer,
 	}
 	s.externalSessionStore = provideExternalSessionStore(sqlStore, secretService, tracer)
 
@@ -73,6 +76,7 @@ type UserAuthTokenService struct {
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
 	features             featuremgmt.FeatureToggles
+	tracer               tracing.Tracer
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
@@ -266,6 +270,9 @@ func (s *UserAuthTokenService) UpdateExternalSession(ctx context.Context, extern
 }
 
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+	ctx, span := s.tracer.Start(ctx, "authtoken.RotateToken")
+	defer span.End()
+
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken
 	}
@@ -280,6 +287,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
 			// Rotation happened too recently. Skip new rotation
 			log.Debug("Token was last rotated very recently, skipping rotation")
+			span.SetAttributes(attribute.Bool("skipped", true))
 			return token, nil
 		}
 		log.Debug("Rotating token")
@@ -287,10 +295,13 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
 		if errors.Is(err, errTokenNotRotated) {
+			span.SetAttributes(attribute.Bool("rotated", false))
 			return token, nil
 		}
 
 		if err != nil {
+			span.SetStatus(codes.Error, "token rotation failed")
+			span.RecordError(err)
 			return nil, err
 		}
 
