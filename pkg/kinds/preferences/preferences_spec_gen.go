@@ -67,5 +67,7 @@ type NavbarPreference struct {
 
 // NewNavbarPreference creates a new NavbarPreference object.
 func NewNavbarPreference() *NavbarPreference {
-	return &NavbarPreference{}
+	return &NavbarPreference{
+		BookmarkUrls: []string{},
+	}
 }

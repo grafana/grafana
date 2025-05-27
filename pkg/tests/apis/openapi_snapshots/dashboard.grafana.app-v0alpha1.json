@@ -1427,8 +1427,26 @@
         "additionalProperties": true
       },
       "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
+        "description": "The datasource",
         "type": "object",
-        "additionalProperties": true
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "The apiserver version",
+            "type": "string"
+          },
+          "type": {
+            "description": "The datasource plugin type",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Datasource UID (NOTE: name in k8s)",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
         "type": "object",
