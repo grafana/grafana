@@ -243,7 +243,7 @@ If you installed Grafana using Homebrew, you can reset the admin password using 
 
 #### Reset admin password for Grafana deployed with Grafana Operator and using an external database
 
-If you deploy Grafana with Grafana Operator and configure Grafana to use an external Postgres or MySQL database, you need to specify both the homepath and configuration file in your command:
+If you deploy Grafana with Grafana Operator and configure Grafana to use an external Postgres or MySQL database, specify both the homepath and configuration file in your command:
 
 ```bash
 grafana cli  --homepath /usr/share/grafana --config /etc/grafana/grafana.ini admin reset-admin-password <new password>
