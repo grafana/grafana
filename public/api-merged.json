@@ -13221,38 +13221,6 @@
         }
       }
     },
-    "ApiKeyDTO": {
-      "type": "object",
-      "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
-        "expiration": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lastUsedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
-        }
-      }
-    },
     "ApiRuleNode": {
       "type": "object",
       "properties": {
@@ -24069,15 +24037,6 @@
       "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "getAPIkeyResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/ApiKeyDTO"
-        }
       }
     },
     "getAccessControlStatusResponse": {

@@ -628,19 +628,6 @@
         },
         "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures."
       },
-      "getAPIkeyResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/ApiKeyDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getAccessControlStatusResponse": {
         "content": {
           "application/json": {
@@ -3279,38 +3266,6 @@
           },
           "type": {
             "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ApiKeyDTO": {
-        "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
-          "expiration": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "lastUsedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
             "type": "string"
           }
         },
