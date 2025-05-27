@@ -1,13 +1,14 @@
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { GroupByVariableEditor } from './GroupByVariableEditor';
+import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -86,6 +87,31 @@ describe('GroupByVariableEditor', () => {
     );
 
     expect(variable.state.defaultOptions).toEqual(undefined);
+  });
+
+  it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
+    const variable = new GroupByVariable({
+      name: 'test',
+      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    });
+
+    const result = getGroupByVariableOptions(variable);
+
+    expect(result.length).toBe(1);
+    const descriptor = result[0];
+
+    // Mock the parent property that OptionsPaneItem expects
+    descriptor.parent = new OptionsPaneCategoryDescriptor({
+      id: 'mock-parent-id',
+      title: 'Mock Parent',
+    });
+
+    render(descriptor.render());
+
+    await waitFor(() => {
+      // Check that some part of the component renders
+      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
+    });
   });
 });
 
