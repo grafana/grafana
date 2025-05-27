@@ -21,8 +21,6 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting: Multi-dimensional alerts and how to route them
-
 This tutorial is a continuation of the [Get started with Grafana Alerting - Alert rules](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.

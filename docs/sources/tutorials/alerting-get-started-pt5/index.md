@@ -19,8 +19,6 @@ killercoda:
     imageid: ubuntu
 ---
 
-# Get started with Grafana Alerting - Route alerts using dynamic labels
-
 <!-- INTERACTIVE page intro.md START -->
 
 The Get started with Grafana Alerting - Dynamic routing tutorial is a continuation of the [Get started with Grafana Alerting - Templating](http://www.grafana.com/tutorials/alerting-get-started-pt4/) tutorial.

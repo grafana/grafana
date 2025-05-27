@@ -72,8 +72,6 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Template your alert notifications
-
 This tutorial is a continuation of the [Get started with Grafana Alerting - Grouping notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) tutorial.
 
 In this tutorial, you will learn:
