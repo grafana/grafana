@@ -104,7 +104,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {options.map((action, index) => (
+              {options.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}

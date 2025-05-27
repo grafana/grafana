@@ -60,5 +60,9 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
 	}
 
+	if options.History {
+		return errors.New("history is not yet supported in unified storage")
+	}
+
 	return w.unifiedMigrator.Migrate(ctx, rw, *options, progress)
 }
