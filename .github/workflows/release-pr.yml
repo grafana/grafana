@@ -55,11 +55,12 @@ jobs:
           fi
 
           echo "Fetching workflow run creation date..."
-          created_at=$(gh run view "$GITHUB_RUN_ID" --json createdAt -q .createdAt)
+          created_at=$(gh run view "$GITHUB_RUN_ID" --repo "$GH_REPO" --json createdAt -q .createdAt)
           formatted_date=$(date -d "$created_at" +%Y-%m-%d)
           echo "release_date=$formatted_date" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           DATE: ${{ inputs.release_date }}
 
       - id: set_release_date
