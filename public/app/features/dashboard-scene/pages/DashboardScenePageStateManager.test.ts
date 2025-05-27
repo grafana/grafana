@@ -1,5 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
+import { UrlQueryMap } from '@grafana/data';
 import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
@@ -665,7 +666,7 @@ describe('DashboardScenePageStateManager v2', () => {
         );
 
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-        await loader.reloadDashboard(options);
+        await loader.reloadDashboard(options as unknown as UrlQueryMap);
 
         expect(getDashSpy).toHaveBeenCalledTimes(2);
         expect(loader.state.dashboard?.state.version).toBe(2);
@@ -711,7 +712,7 @@ describe('DashboardScenePageStateManager v2', () => {
         const fetchDashboardSpy = jest.spyOn(loader, 'fetchDashboard').mockResolvedValue(mockDashboard);
 
         const options = { version: 1, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-        await loader.reloadDashboard(options);
+        await loader.reloadDashboard(options as unknown as UrlQueryMap);
 
         expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
         expect(loader.state.dashboard).toBe(initialDashboard);
@@ -762,7 +763,7 @@ describe('DashboardScenePageStateManager v2', () => {
         // current dashboard state whether we should reload or not
         loader.setSceneCache('fake-dash', loader.state.dashboard!.clone({ version: 2 }));
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-        await loader.reloadDashboard(options);
+        await loader.reloadDashboard(options as unknown as UrlQueryMap);
 
         expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
         expect(loader.state.dashboard?.state.version).toBe(2);
@@ -798,7 +799,7 @@ describe('DashboardScenePageStateManager v2', () => {
         loader['dashboardLoader'] = mockLoader as unknown as DashboardLoaderSrvV2;
 
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-        await loader.reloadDashboard(options);
+        await loader.reloadDashboard(options as unknown as UrlQueryMap);
 
         expect(loader.state.loadError).toBeDefined();
         expect(loader.state.loadError?.message).toBe('Failed to load dashboard');
@@ -833,7 +834,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
         const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
 
-        await expect(loader.reloadDashboard(options)).rejects.toThrow(DashboardVersionError);
+        await expect(loader.reloadDashboard(options as unknown as UrlQueryMap)).rejects.toThrow(DashboardVersionError);
       });
     });
   });
@@ -910,7 +911,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         spec: { ...defaultDashboardV2Spec() },
       });
 
-      await manager.reloadDashboard(options);
+      await manager.reloadDashboard(options as unknown as UrlQueryMap);
 
       // Restore the original method
       v2Manager.fetchDashboard = originalFetchDashboard;
@@ -965,7 +966,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       loadDashboardMock.mockClear();
 
       const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-      await manager.reloadDashboard(options);
+      await manager.reloadDashboard(options as unknown as UrlQueryMap);
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
       expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', {
@@ -986,7 +987,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
       try {
-        await manager.reloadDashboard(options);
+        await manager.reloadDashboard(options as unknown as UrlQueryMap);
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
         expect((e as Error).message).toBe('Method not implemented.');
@@ -1025,7 +1026,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       // current dashboard state whether we should reload or not
       manager.setSceneCache('fake-dash', manager.state.dashboard!.clone({ version: 2 }));
       const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
-      await manager.reloadDashboard(options);
+      await manager.reloadDashboard(options as unknown as UrlQueryMap);
 
       expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
       expect(manager.state.dashboard?.state.version).toBe(2);
