@@ -4,11 +4,11 @@ import {
   useMemo,
   useState,
   useLayoutEffect,
-  useCallback,
+  // useCallback,
   useRef,
-  useEffect,
-  Dispatch,
-  SetStateAction,
+  // useEffect,
+  // Dispatch,
+  // SetStateAction,
   RefObject,
 } from 'react';
 import {
@@ -16,34 +16,35 @@ import {
   RenderCellProps,
   RenderRowProps,
   Row,
-  SortColumn,
+  // SortColumn,
   DataGridHandle,
-  Column,
-  CalculatedColumn,
+  // Column,
+  // CalculatedColumn,
+  ColumnOrColumnGroup,
 } from 'react-data-grid';
-import { useMeasure } from 'react-use';
+// import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
   Field,
-  fieldReducers,
+  // fieldReducers,
   FieldType,
-  formattedValueToString,
+  // formattedValueToString,
   getDefaultTimeRange,
   GrafanaTheme2,
-  ReducerID,
+  // ReducerID,
 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
-import { ContextMenu } from '../../ContextMenu/ContextMenu';
-import { MenuItem } from '../../Menu/MenuItem';
-import { Pagination } from '../../Pagination/Pagination';
-import { PanelContext, usePanelContext } from '../../PanelChrome';
-import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { /* t, */ Trans } from '../../../utils/i18n';
+// import { ContextMenu } from '../../ContextMenu/ContextMenu';
+// import { MenuItem } from '../../Menu/MenuItem';
+// import { Pagination } from '../../Pagination/Pagination';
+import { PanelContext /* , usePanelContext */ } from '../../PanelChrome';
+// import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
@@ -51,26 +52,26 @@ import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import {
   TableNGProps,
-  FilterType,
+  // FilterType,
   TableRow,
   TableSummaryRow,
-  ColumnTypes,
+  // ColumnTypes,
   TableColumnResizeActionCallback,
   TableColumn,
   TableFieldOptionsType,
-  ScrollPosition,
+  // ScrollPosition,
   CellColors,
 } from './types';
 import {
   frameToRecords,
   getCellColors,
   getCellHeightCalculator,
-  getComparator,
-  getDefaultRowHeight,
-  getFooterItemNG,
+  // getComparator,
+  // getDefaultRowHeight,
+  // getFooterItemNG,
   getFooterStyles,
   getIsNestedTable,
-  getRowHeight,
+  // getRowHeight,
   getTextAlign,
   handleSort,
   MapFrameToGridOptions,
@@ -85,8 +86,8 @@ export function TableNG(props: TableNGProps) {
 
   const rows = useMemo(() => frameToRecords(props.data), [props.data]);
 
-  const [filts, setFilts] = useState([]);
-  const [sorts, setSorts] = useState([]);
+  const [filts, _setFilts] = useState([]);
+  const [sorts, _setSorts] = useState([]);
 
   const renderedRows = useMemo(() => filterAndSort(rows, filts, sorts), [rows, filts, sorts]);
 
@@ -98,44 +99,37 @@ export function TableNG(props: TableNGProps) {
   // vt scrollbar accounting for column auto-sizing
   const scrollbarWidth = useScrollbarWidth(gridHandle, props, renderedRows);
 
-  const _onColumnResize = useColumnResizeDone(
-    useCallback<OnColResizeDone>(
-      (idx, width) => {
-        onColumnResize?.(data.fields[idx].name, width);
-      },
-      [onColumnResize, data]
-    )
-  );
-
   // TODO: skip hidden
-  const columns = useMemo<TableColumn[]>(() => {
+  const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const { fields } = data;
 
     const widths = computeColWidths(fields, width - scrollbarWidth);
 
-    return fields.map((field, i) => ({
-      field,
-      key: field.name,
-      name: field.name,
-      width: widths[i],
-      headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
-      cellClass:
-        field.type === FieldType.number
-          ? styles.cellRight
-          : () => {
-              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+    return fields.map(
+      (field, i): TableColumn => ({
+        field,
+        key: field.name,
+        name: field.name,
+        width: widths[i],
+        headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
+        cellClass:
+          field.type === FieldType.number
+            ? styles.cellRight
+            : () => {
+                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
-              switch (cellType) {
-                case TableCellDisplayMode.Auto:
-                case TableCellDisplayMode.ColorBackground:
-                case TableCellDisplayMode.ColorBackgroundSolid:
-                case TableCellDisplayMode.ColorText:
-                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
-                default:
-                  return null;
-              }
-            },
-    }));
+                switch (cellType) {
+                  case TableCellDisplayMode.Auto:
+                  case TableCellDisplayMode.ColorBackground:
+                  case TableCellDisplayMode.ColorBackgroundSolid:
+                  case TableCellDisplayMode.ColorText:
+                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
+                  default:
+                    return null;
+                }
+              },
+      })
+    );
   }, [width, scrollbarWidth, data, styles]);
 
   const hasSubTable = false;
@@ -147,7 +141,8 @@ export function TableNG(props: TableNGProps) {
     <DataGrid
       className={styles.grid}
       ref={gridHandle}
-      columns={columns}
+      // TODO: fix these types
+      columns={columns as Array<ColumnOrColumnGroup<NoInfer<TableRow>, unknown>>}
       rows={renderedRows}
       defaultColumnOptions={{
         minWidth: 50,
@@ -155,7 +150,11 @@ export function TableNG(props: TableNGProps) {
         sortable: true,
         // draggable: true,
       }}
-      onColumnResize={_onColumnResize}
+      onColumnWidthsChange={(widths) => {
+        for (const [key, entry] of widths) {
+          onColumnResize?.(key, entry.width);
+        }
+      }}
       rowHeight={rowHeight}
     />
   );
@@ -189,7 +188,7 @@ export function mapFrameToDataGrid({
     ctx,
     onSortByChange,
     rows,
-    sortedRows,
+    // sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -281,7 +280,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values.get(/*sortedRows*/ rows[rowIndex].__index));
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -327,7 +326,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={sortedRows[rowIdx].__index}
+            rowIdx={/*sortedRows*/ rows[rowIdx].__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
@@ -541,133 +540,134 @@ const getStyles2 = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  dataGrid: css({
-    '--rdg-background-color': theme.colors.background.primary,
-    '--rdg-header-background-color': theme.colors.background.primary,
-    '--rdg-border-color': 'transparent',
-    '--rdg-color': theme.colors.text.primary,
-    '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
+// const getStyles = (theme: GrafanaTheme2) => ({
+//   dataGrid: css({
+//     '--rdg-background-color': theme.colors.background.primary,
+//     '--rdg-header-background-color': theme.colors.background.primary,
+//     '--rdg-border-color': 'transparent',
+//     '--rdg-color': theme.colors.text.primary,
+//     '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
 
-    // If we rely solely on borderInlineEnd which is added from data grid, we
-    // get a small gap where the gridCell borders meet the column header borders.
-    // To avoid this, we can unset borderInlineEnd and set borderRight instead.
-    '.rdg-cell': {
-      borderInlineEnd: 'unset',
-      borderRight: `1px solid ${theme.colors.border.medium}`,
+//     // If we rely solely on borderInlineEnd which is added from data grid, we
+//     // get a small gap where the gridCell borders meet the column header borders.
+//     // To avoid this, we can unset borderInlineEnd and set borderRight instead.
+//     '.rdg-cell': {
+//       borderInlineEnd: 'unset',
+//       borderRight: `1px solid ${theme.colors.border.medium}`,
 
-      '&:last-child': {
-        borderRight: 'none',
-      },
-    },
+//       '&:last-child': {
+//         borderRight: 'none',
+//       },
+//     },
 
-    '.rdg-summary-row': {
-      backgroundColor: theme.colors.background.primary,
-      '--rdg-summary-border-color': theme.colors.border.medium,
+//     '.rdg-summary-row': {
+//       backgroundColor: theme.colors.background.primary,
+//       '--rdg-summary-border-color': theme.colors.border.medium,
 
-      '.rdg-cell': {
-        borderRight: 'none',
-      },
-    },
+//       '.rdg-cell': {
+//         borderRight: 'none',
+//       },
+//     },
 
-    // Due to stylistic choices, we do not want borders on the column headers
-    // other than the bottom border.
-    'div[role=columnheader]': {
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-      borderInlineEnd: 'unset',
+//     // Due to stylistic choices, we do not want borders on the column headers
+//     // other than the bottom border.
+//     'div[role=columnheader]': {
+//       borderBottom: `1px solid ${theme.colors.border.medium}`,
+//       borderInlineEnd: 'unset',
 
-      '.r1y6ywlx7-0-0-beta-46': {
-        '&:hover': {
-          borderRight: `3px solid ${theme.colors.text.link}`,
-        },
-      },
-    },
+//       '.r1y6ywlx7-0-0-beta-46': {
+//         '&:hover': {
+//           borderRight: `3px solid ${theme.colors.text.link}`,
+//         },
+//       },
+//     },
 
-    '::-webkit-scrollbar': {
-      width: TABLE.SCROLL_BAR_WIDTH,
-      height: TABLE.SCROLL_BAR_WIDTH,
-    },
-    '::-webkit-scrollbar-thumb': {
-      backgroundColor: 'rgba(204, 204, 220, 0.16)',
-      borderRadius: '4px',
-    },
-    '::-webkit-scrollbar-track': {
-      background: 'transparent',
-    },
-    '::-webkit-scrollbar-corner': {
-      backgroundColor: 'transparent',
-    },
-  }),
-  menuItem: css({
-    maxWidth: '200px',
-  }),
-  cell: css({
-    '--rdg-border-color': theme.colors.border.medium,
-    borderLeft: 'none',
-    whiteSpace: 'nowrap',
-    wordWrap: 'break-word',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+//     '::-webkit-scrollbar': {
+//       width: TABLE.SCROLL_BAR_WIDTH,
+//       height: TABLE.SCROLL_BAR_WIDTH,
+//     },
+//     '::-webkit-scrollbar-thumb': {
+//       backgroundColor: 'rgba(204, 204, 220, 0.16)',
+//       // eslint-disable-next-line @grafana/no-border-radius-literal
+//       borderRadius: '4px',
+//     },
+//     '::-webkit-scrollbar-track': {
+//       background: 'transparent',
+//     },
+//     '::-webkit-scrollbar-corner': {
+//       backgroundColor: 'transparent',
+//     },
+//   }),
+//   menuItem: css({
+//     maxWidth: '200px',
+//   }),
+//   cell: css({
+//     '--rdg-border-color': theme.colors.border.medium,
+//     borderLeft: 'none',
+//     whiteSpace: 'nowrap',
+//     wordWrap: 'break-word',
+//     overflow: 'hidden',
+//     textOverflow: 'ellipsis',
 
-    // Reset default cell styles for custom cell component styling
-    paddingInline: '0',
-  }),
-  cellWrapped: css({
-    '--rdg-border-color': theme.colors.border.medium,
-    borderLeft: 'none',
-    whiteSpace: 'pre-line',
-    wordWrap: 'break-word',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+//     // Reset default cell styles for custom cell component styling
+//     paddingInline: '0',
+//   }),
+//   cellWrapped: css({
+//     '--rdg-border-color': theme.colors.border.medium,
+//     borderLeft: 'none',
+//     whiteSpace: 'pre-line',
+//     wordWrap: 'break-word',
+//     overflow: 'hidden',
+//     textOverflow: 'ellipsis',
 
-    // Reset default cell styles for custom cell component styling
-    paddingInline: '0',
-  }),
-  paginationContainer: css({
-    alignItems: 'center',
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: '8px',
-    width: '100%',
-  }),
-  paginationSummary: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(0, 1, 0, 2),
-  }),
-});
+//     // Reset default cell styles for custom cell component styling
+//     paddingInline: '0',
+//   }),
+//   paginationContainer: css({
+//     alignItems: 'center',
+//     display: 'flex',
+//     justifyContent: 'center',
+//     marginTop: '8px',
+//     width: '100%',
+//   }),
+//   paginationSummary: css({
+//     color: theme.colors.text.secondary,
+//     fontSize: theme.typography.bodySmall.fontSize,
+//     display: 'flex',
+//     justifyContent: 'flex-end',
+//     padding: theme.spacing(0, 1, 0, 2),
+//   }),
+// });
 
-interface ColResizeState {
-  idx: number;
-  width: number;
-}
+// interface ColResizeState {
+//   idx: number;
+//   width: number;
+// }
 
-type OnColResizeDone = (idx: number, width: number) => void;
+// type OnColResizeDone = (idx: number, width: number) => void;
 
-const useColumnResizeDone = (done: OnColResizeDone) => {
-  const colResizeState = useMemo<ColResizeState>(() => ({ idx: -1, width: 0 }), []);
+// const useColumnResizeDone = (done: OnColResizeDone) => {
+//   const colResizeState = useMemo<ColResizeState>(() => ({ idx: -1, width: 0 }), []);
 
-  const finished = useCallback(() => {
-    done(colResizeState.idx, colResizeState.width);
+//   const finished = useCallback(() => {
+//     done(colResizeState.idx, colResizeState.width);
 
-    window.removeEventListener('click', finished, { capture: true });
-    colResizeState.idx = -1;
-    colResizeState.width = 0;
-  }, []);
+//     window.removeEventListener('click', finished, { capture: true });
+//     colResizeState.idx = -1;
+//     colResizeState.width = 0;
+//   }, [colResizeState, done]);
 
-  const onColumnResize = useCallback((col: CalculatedColumn<TableRow>, width: number) => {
-    if (colResizeState.idx === -1) {
-      window.addEventListener('click', finished, { capture: true });
-    }
+//   const onColumnResize = useCallback((idx: number, width: number) => {
+//     if (colResizeState.idx === -1) {
+//       window.addEventListener('click', finished, { capture: true });
+//     }
 
-    colResizeState.idx = col.idx;
-    colResizeState.width = width;
-  }, []);
+//     colResizeState.idx = idx;
+//     colResizeState.width = width;
+//   }, [colResizeState, finished]);
 
-  return onColumnResize;
-};
+//   return onColumnResize;
+// };
 
 // 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
 // 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
