@@ -251,9 +251,9 @@ In this section we add a [templated label based on query value](https://grafana.
    ```
    This template uses a regular expression to extract `prod`, `staging`, or `dev` from the instance label and maps it to a more readable label (like "production" for "prod").
 
-As result, when alerts exceed a threshold, the template checks the labels, such as `flask-prod:5000`, `flask-staging:5000`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of `production`, `staging` or `development` to the custom environment **environment** label.
+As result, when alerts exceed a threshold, the template checks the labels, such as `instance="flask-prod:5000"`, `instance="flask-staging:5000"`, or custom labels like `deployment="prod-us-cs30"`, and assigns a value of `production`, `staging` or `development` to the custom environment **environment** label.
 
-This label is then by the alert notification policy to route alerts to the appropriate team, so that notifications are delivered efficiently, and reducing unnecessary noise or overlap.
+This label is then used by the alert notification policy to route alerts to the appropriate team, so that notifications are delivered efficiently, and reducing unnecessary noise.
 
 ### Set evaluation behaviour
 
@@ -281,7 +281,7 @@ Select who should receive a notification when an alert rule fires.
 1. Query: `flask_app_memory_usage{}`
 1. Link to the same visualization to obtain memory usage annotations whenever the alert rule triggers or resolves.
 
-Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using `$labels.environment`. This ensures that the label value will be set to production, staging, or development, depending on the environment.
+Now that the CPU and memory alert rules are set up, they are linked to the notification policies through the custom label matcher we added. The value of the label dynamically changes based on the environment template, using `$labels.instance`. This ensures that the label value will be set to production, staging, or development, depending on the environment.
 
 <!-- INTERACTIVE page step4.md END -->
 
@@ -289,11 +289,17 @@ Now that the CPU and memory alert rules are set up, they are linked to the notif
 
 ## Done! Your alerts are now dynamically routed
 
-Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification polcicies, which route alerts to the correct contact points.
+Based on your query's instance label values (which contain keywords like _prod_ or _staging_ ), Grafana dynamically assigns the value `production`, `staging` or `development` to the custom **environment** label using the template. This dynamic label then matches the label matchers in your notification policies, which route alerts to the correct contact points.
 
 To see this in action go to **Alerts & IRM > Alerting > Active notifications**
 
 This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
+
+Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
+
+```go
+$labels.deployment
+```
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
