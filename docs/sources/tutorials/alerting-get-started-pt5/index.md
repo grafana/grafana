@@ -159,13 +159,21 @@ This Flask-based Python script simulates a service that:
   - `deployment="prod-us-cs30"`
   - `deployment="staging-us-cs20"`
 
+### Objective
+
+Use templates to dynamically populate a custom label that matches a notification policy, and therefore routes alerts to the correct contact point.
+
+We'll automatically determine the environment associated with each firing alert by inspecting system metrics (e.g., CPU, memory) and extracting keywords using regular expressions with the Go templating language.
+
 <!-- INTERACTIVE page step2.md END -->
 
 <!-- INTERACTIVE page step3.md START -->
 
 ## Step 1: Create Notification Policies
 
-Notification policies route alert instances to contact points via label matchers. Since we know what labels our application returns (i.e., `environment`, `job`, `instance`), we can use these labels to match alert rules.
+Notification policies route alert instances to contact points via label matchers. Since we know what labels our application returns (e.g., `job`, `instance`, `deployment`), we can use them to match alert rules and define appropriate notification routing.
+
+Although our application doesn't explicitly include an `environment` label, we can rely on other labels like `instance` or `deployment`, which may contain keywords (like prod or staging) that indicate the environment.
 
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
 
