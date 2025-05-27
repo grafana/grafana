@@ -22,16 +22,17 @@ export const TimePickerWithHistory = (props: Props) => {
   const { t } = useTranslate();
 
   return (
-    <LocalStorageValueProvider<TimePickerHistoryItem[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
+    <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
-        const history = deserializeHistory(values);
+        const validHistory = getValidHistory(values);
+        const history = deserializeHistory(validHistory);
 
         return (
           <TimeRangePicker
             {...props}
             history={history}
             onChange={(value) => {
-              onAppendToHistory(value, values, onSaveToStore);
+              onAppendToHistory(value, validHistory, onSaveToStore);
               props.onChange(value);
             }}
             onError={(error?: string) =>
@@ -47,10 +48,27 @@ export const TimePickerWithHistory = (props: Props) => {
   );
 };
 
-export function deserializeHistory(values: unknown[]): TimeRange[] {
-  return values
-    .filter(isValidTimePickerHistoryValue) // Filter out invalid values
-    .map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
+function getValidHistory(values: unknown): TimePickerHistoryItem[] {
+  const result: TimePickerHistoryItem[] = [];
+
+  if (!Array.isArray(values)) {
+    return result;
+  }
+  // Check if the values are already in the correct format
+
+  for (let item of values) {
+    const isValid = getValidHistoryItem(item);
+    if (isValid) {
+      // If the item is already in the correct format, add it to the result
+      result.push(item as TimePickerHistoryItem);
+    }
+  }
+
+  return result;
+}
+
+export function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
+  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
 }
 
 function onAppendToHistory(
@@ -85,24 +103,31 @@ function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {
  * Check if the value is a valid TimePickerHistoryItem. If it doesn't match the format exactly, it will return false.
  * @returns true if the value match exactly to TimePickerHistoryItem, false otherwise
  */
-export function isValidTimePickerHistoryValue(value: unknown): value is TimePickerHistoryItem {
+export function getValidHistoryItem(value: unknown): TimePickerHistoryItem | null {
   // First check if it's a valid object
   if (typeof value !== 'object' || value === null) {
-    return false;
+    return null;
   }
 
   // Check if it has exactly two properties
   if (Object.keys(value).length !== 2) {
-    return false;
+    return null;
   }
 
   // Check if it has the required properties
   if (!('from' in value) || !('to' in value)) {
-    return false;
+    return null;
   }
 
+  // Safe type assertion after checking properties exist
+  const item = value as { from: unknown; to: unknown };
+
   // Check if both properties are strings
-  return typeof value.from === 'string' && typeof value.to === 'string';
+  if (typeof item.from === 'string' && typeof item.to === 'string') {
+    return { from: item.from, to: item.to };
+  }
+
+  return null;
 }
 
 function convertToISOString(value: DateTime | string): string {
