@@ -61,10 +61,11 @@ export function buildVisualQueryFromString(expr: string): Omit<Context, 'replace
     labels: [],
     operations: [],
   };
-  const context: Context = {
+  const context: InternalContext = {
     query: visQuery,
     errors: [],
     replacements: replacedVariables,
+    functionCallStack: []
   };
 
   try {
@@ -87,7 +88,10 @@ export function buildVisualQueryFromString(expr: string): Omit<Context, 'replace
   // No need to return replaced variables
   delete context.replacements;
 
-  return context;
+  return {
+    query: visQuery,
+    errors: context.errors,
+  };
 }
 
 interface ParsingError {
@@ -103,6 +107,11 @@ interface Context {
   replacements?: Record<string, string>;
 }
 
+interface InternalContext extends Context {
+  // Stack of function calls/aggregations that are currently being processed.
+  functionCallStack: QueryBuilderOperation[];
+}
+
 /**
  * Handler for default state. It will traverse the tree and call the appropriate handler for each node. The node
  * handled here does not necessarily need to be of type == Expr.
@@ -110,7 +119,7 @@ interface Context {
  * @param node
  * @param context
  */
-function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: InternalContext) {
   const visQuery = context.query;
 
   switch (node.type.id) {
@@ -224,7 +233,7 @@ const rangeFunctions = ['changes', 'rate', 'irate', 'increase', 'delta'];
  * @param node
  * @param context
  */
-function handleFunction(expr: string, node: SyntaxNode, context: Context) {
+function handleFunction(expr: string, node: SyntaxNode, context: InternalContext) {
   const visQuery = context.query;
   const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
@@ -246,7 +255,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   let interval = '';
 
   // This is a bit of a shortcut to get the interval argument. Reasons are
-  // - interval is not part of the function args per promQL grammar but we model it as argument for the function in
+  // - interval is not part of the function args per promQL grammar, but we model it as argument for the function in
   //   the query model.
   // - it is easier to handle template variables this way as template variable is an error for the parser
   if (rangeFunctions.includes(funcName) || funcName.endsWith('_over_time')) {
@@ -261,17 +270,17 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
 
   const op = { id: funcName, params };
   // We unshift operations to keep the more natural order that we want to have in the visual query editor.
-
+  visQuery.operations.unshift(op);
   if (body) {
     if (getString(expr, body) === '([' + interval + '])') {
-      // This is a special case where we have a function with a single argument and it is the interval.
+      // This is a special case where we have a function with a single argument, and it is the interval.
       // This happens when you start adding operations in query builder and did not set a metric yet.
-      visQuery.operations.push(op);
       return;
     }
+    context.functionCallStack.push(op);
     updateFunctionArgs(expr, body, context, op);
+    context.functionCallStack.pop();
   }
-  visQuery.operations.push(op);
 }
 
 /**
@@ -280,7 +289,7 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
  * @param node
  * @param context
  */
-function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
+function handleAggregation(expr: string, node: SyntaxNode, context: InternalContext) {
   const visQuery = context.query;
   const nameNode = node.getChild(AggregateOp);
   let funcName = getString(expr, nameNode);
@@ -305,8 +314,10 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
   const body = node.getChild(FunctionCallBody);
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
+  visQuery.operations.unshift(op);
+  context.functionCallStack.push(op);
   updateFunctionArgs(expr, body, context, op);
-  visQuery.operations.push(op);
+  context.functionCallStack.pop();
   // We add labels after params in the visual query editor.
   op.params.push(...labels);
 }
@@ -322,7 +333,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
  * @param context
  * @param op - We need the operation to add the params to as an additional context.
  */
-function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Context, op: QueryBuilderOperation) {
+function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: InternalContext, op: QueryBuilderOperation) {
   if (!node) {
     return;
   }
@@ -379,12 +390,12 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
- * just operation with scalar or it creates a binaryQuery when it's 2 queries.
+ * just operation with scalar, or it creates a binaryQuery when it's 2 queries.
  * @param expr
  * @param node
  * @param context
  */
-function handleBinary(expr: string, node: SyntaxNode, context: Context) {
+function handleBinary(expr: string, node: SyntaxNode, context: InternalContext) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
@@ -409,7 +420,14 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   }
 
   if (rightNumber) {
-    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    let peek = context.functionCallStack.length > 0 ? context.functionCallStack[context.functionCallStack.length - 1] : null;
+    let idx= visQuery.operations.length;
+    if (peek != null) {
+      idx = visQuery.operations.indexOf(peek);
+    }
+
+    visQuery.operations.splice(idx, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    // visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
@@ -440,6 +458,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
       query: binQuery.query,
       errors: context.errors,
       replacements: context.replacements,
+      functionCallStack: context.functionCallStack,
     });
   }
 }
