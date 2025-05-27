@@ -218,7 +218,7 @@ If specified, the custom time range overrides the time range from the report's d
 
 This option is only displayed if the dashboard has variables.
 
-You can configure report-specific template variables for the dashboard on the report page.
+Configure report-specific template variables for the dashboard.
 The variables that you select override the variables from the dashboard.
 For detailed information about using template variables, refer to [Variables](ref:templates-and-variables).
 
