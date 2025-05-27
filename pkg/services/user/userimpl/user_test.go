@@ -385,3 +385,7 @@ func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
 }
+
+func (f *FakeUserStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
+}

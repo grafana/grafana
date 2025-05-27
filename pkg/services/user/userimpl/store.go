@@ -34,6 +34,7 @@ type store interface {
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 	Count(ctx context.Context) (int64, error)
 	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
+	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type sqlStore struct {
@@ -596,6 +597,10 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		return err
 	})
 	return &result, err
+}
+
+func (ss *sqlStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return ss.db.InTransaction(ctx, fn)
 }
 
 func setOptional[T any](v *T, add func(v T)) {
