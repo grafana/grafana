@@ -1625,6 +1625,8 @@ github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718k
 github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608/go.mod h1:f3JSoxBTPXX5ec4FxxeC19nTBSxoTz+cBgS3cYLMcr0=
 github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw=
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
+github.com/grafana/nanogit v0.0.0-20250527065814-d1a12e1ed9e2 h1:nK6YexXetpHrFRU+huLuychAYC/M+MUXITK6ZZkFJcI=
+github.com/grafana/nanogit v0.0.0-20250527065814-d1a12e1ed9e2/go.mod h1:IWOjCfDefsMjoSNRhIy5tbwSKwqAObDn5w+3KBpkvps=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250417181314-6d0f5436a1fb h1:qkuoMMhrMQ/XdO7qCNSf6uUkoG8rfMBm8D2KBd7YoSE=
@@ -1954,6 +1956,8 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/matttproud/golang_protobuf_extensions v1.0.4 h1:mmDVorXM7PCGKw94cs5zkfA9PSy5pEvNWRP0ET0TIVo=
 github.com/matttproud/golang_protobuf_extensions v1.0.4/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
 github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0/go.mod h1:QUyp042oQthUoa9bqDv0ER0wrtXnBruoNd7aNjkbP+k=
+github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2 h1:yVCLo4+ACVroOEr4iFU1iH46Ldlzz2rTuu18Ra7M8sU=
+github.com/maxbrunsfeld/counterfeiter/v6 v6.11.2/go.mod h1:VzB2VoMh1Y32/QqDfg9ZJYHj99oM4LiGtqPZydTiQSQ=
 github.com/maypok86/otter v1.2.4 h1:HhW1Pq6VdJkmWwcZZq19BlEQkHtI8xgsQzBVXJU0nfc=
 github.com/maypok86/otter v1.2.4/go.mod h1:mKLfoI7v1HOmQMwFgX4QkRk23mX6ge3RDvjdHOWG4R4=
 github.com/mdlayher/socket v0.4.1 h1:eM9y2/jlbs1M615oshPQOHZzj6R6wMT7bX5NPiQvn2U=
@@ -2084,8 +2088,8 @@ github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQ
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.0.1/go.mod h1:BtxoFyWECRxE4U/7sNtV5W15zMzWCbyJoFRP3s7yZA0=
-github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
-github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
+github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
+github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 h1:wEsCZ4oBuu8LfEJ3VXbveXO8uEhCthrxA40WSvxO044=
 github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369/go.mod h1:m74TNgnAAIJ03gfHcx+xaRWnr+IbQy3y/AVNwwCFrC0=
 github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250220223040-ed0cfba54336 h1:pYuYanFfgYrvDoSu/nnThT9P60mw5Yx7PMEI7FYychM=
@@ -2273,6 +2277,8 @@ github.com/samuel/go-zookeeper v0.0.0-20190810000440-0ceca61e4d75/go.mod h1:gi+0
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.30 h1:yoKAVkEVwAqbGbR8n87rHQ1dulL25rKloGadb3vm770=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.30/go.mod h1:sH0u6fq6x4R5M7WxkoQFY/o7UaiItec0o1LinLCJNq8=
+github.com/sclevine/spec v1.4.0 h1:z/Q9idDcay5m5irkZ28M7PtQM4aOISzOpj4bUPkDee8=
+github.com/sclevine/spec v1.4.0/go.mod h1:LvpgJaFyvQzRvc1kaDs0bulYwzC70PbiYjC4QnFHkOM=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/segmentio/asm v1.2.0 h1:9BQrFxC+YOHJlTlHGkTrFWf59nbL3XnCoFLTwDCI7ys=

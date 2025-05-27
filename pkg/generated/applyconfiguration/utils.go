@@ -22,6 +22,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=provisioning.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):
+		return &provisioningv0alpha1.GitRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
 		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("LocalRepositoryConfig"):

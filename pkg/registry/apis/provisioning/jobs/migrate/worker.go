@@ -51,8 +51,8 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	}
 
 	if options.History {
-		if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
-			return errors.New("history is only supported for github repositories")
+		if repo.Config().Spec.Type == provisioning.LocalRepositoryType {
+			return errors.New("history is only supported for git repositories")
 		}
 	}
 

@@ -407,12 +407,28 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		}
 	}
 
+	if r.Spec.Type == provisioning.GitRepositoryType {
+		if r.Spec.Git == nil {
+			return fmt.Errorf("git configuration is required")
+		}
+
+		// Trim trailing slash or .git
+		if len(r.Spec.Git.URL) > 5 {
+			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, ".git")
+			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
+		}
+	}
+
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
 	if err := b.encryptGithubToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+		return fmt.Errorf("failed to encrypt github token: %w", err)
+	}
+
+	if err := b.encryptGitToken(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt git token: %w", err)
 	}
 
 	// Mutate the repository with any extra mutators
@@ -435,6 +451,21 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 			return err
 		}
 		repo.Spec.GitHub.Token = ""
+	}
+
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.Git != nil &&
+		repo.Spec.Git.Token != "" {
+		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.Git.Token = ""
 	}
 
 	return nil

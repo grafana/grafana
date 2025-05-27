@@ -41,6 +41,8 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Local.Path
 			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
+			case GitRepositoryType:
+				target = m.Spec.Git.URL
 			}
 
 			return []interface{}{
