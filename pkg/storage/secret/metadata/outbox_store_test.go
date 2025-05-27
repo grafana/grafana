@@ -120,7 +120,7 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 			Type:            contracts.CreateSecretOutboxMessage,
 			Name:            "name1",
 			Namespace:       "ns1",
-			EncryptedSecret: secretv0alpha1.NewExposedSecureValue("v1"),
+			EncryptedSecret: "v1",
 			KeeperName:      nil,
 			ExternalID:      nil,
 		})
@@ -131,7 +131,7 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 			Type:            contracts.UpdateSecretOutboxMessage,
 			Name:            "name1",
 			Namespace:       "ns1",
-			EncryptedSecret: secretv0alpha1.NewExposedSecureValue("v1"),
+			EncryptedSecret: "v1",
 			KeeperName:      nil,
 			ExternalID:      nil,
 		})
