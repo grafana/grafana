@@ -197,9 +197,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
-          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
+          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
           uid: dashboardId?.toString(),
-          version: 1,
         }),
       ],
       $data: new DashboardDataLayerSet({
