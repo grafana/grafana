@@ -45,6 +45,7 @@ describe('GroupByVariableForm', () => {
     onAllowCustomValueChange: onAllowCustomValueChangeMock,
     onDataSourceChange: onDataSourceChangeMock,
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
+    datasourceSupported: true,
   };
 
   function setup(props?: Partial<GroupByVariableFormProps>) {
