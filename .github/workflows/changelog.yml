@@ -106,13 +106,18 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        if: ${{ inputs.branch != '' }}
-        env:
-          BRANCH: ${{ inputs.branch }}
-        run: git checkout -b $BRANCH
-      - name: "Create branch"
-        if: ${{ inputs.branch == '' }}
-        run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
+        run: |
+          BRANCH=${{ inputs.branch }}
+
+          if [[ $BRANCH == '' ]]; then
+            git switch -c "changelog/${RUN_ID}/${VERSION}"
+            exit 0
+          fi
+
+          # Chekout the changelog branch if exists, otherwise create a new one
+          git show-ref --verify --quiet "refs/remotes/origin/$BRANCH" && \
+            git switch --track "origin/$BRANCH" || \
+            git switch -c "$BRANCH"
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/actions/changelog
