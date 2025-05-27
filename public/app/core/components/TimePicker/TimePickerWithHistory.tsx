@@ -82,8 +82,8 @@ function onAppendToHistory(
 
   // Convert DateTime objects to strings
   const toAppend = {
-    from: typeof newTimeRange.raw.from === 'string' ? newTimeRange.raw.from : convertToISOString(newTimeRange.raw.from),
-    to: typeof newTimeRange.raw.to === 'string' ? newTimeRange.raw.to : convertToISOString(newTimeRange.raw.to),
+    from: convertToISOString(newTimeRange.raw.from),
+    to: convertToISOString(newTimeRange.raw.to),
   };
 
   const toStore = limit([toAppend, ...values]);
