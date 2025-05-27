@@ -259,8 +259,6 @@ If you want to use a specific time zone, save the dashboard with a fixed time zo
 
 Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
-<!-- Review how much of above is true now -->
-
 ### 3. Email settings
 
 At this step, configure the report email:
@@ -363,7 +361,7 @@ To edit a report, follow these steps:
 1. Click **Update report**.
 1. Click the **x** at the top of the drawer to close it.
 
-### Pause or resume reports {#pause-a-report}
+### Pause or resume reports
 
 You can pause and resume sending reports from the report list view.
 To do this, follow these steps:
