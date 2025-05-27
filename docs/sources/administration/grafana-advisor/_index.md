@@ -1,13 +1,14 @@
 ---
 title: Grafana Advisor
 description: Learn more about Grafana Advisor, the app to monitor the health of your Grafana instance
-stage: experimental
+
 weight: 300
 labels:
   products:
     - oss
     - cloud
     - enterprise
+  stage: experimental
 keywords:
   - grafana
   - grafana advisor
