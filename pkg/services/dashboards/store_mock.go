@@ -461,23 +461,23 @@ func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, n
 }
 
 // GetProvisionedDashboardsByName provides a mock function with given fields: ctx, name, orgID
-func (_m *FakeDashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*Dashboard, error) {
+func (_m *FakeDashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*DashboardProvisioningSearchResults, error) {
 	ret := _m.Called(ctx, name, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProvisionedDashboardsByName")
 	}
 
-	var r0 []*Dashboard
+	var r0 []*DashboardProvisioningSearchResults
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) ([]*Dashboard, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) ([]*DashboardProvisioningSearchResults, error)); ok {
 		return rf(ctx, name, orgID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) []*Dashboard); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) []*DashboardProvisioningSearchResults); ok {
 		r0 = rf(ctx, name, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*Dashboard)
+			r0 = ret.Get(0).([]*DashboardProvisioningSearchResults)
 		}
 	}
 

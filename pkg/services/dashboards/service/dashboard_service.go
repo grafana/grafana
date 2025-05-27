@@ -2095,6 +2095,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
+
 	return dashboardsearch.ParseResults(res, 0)
 }
 

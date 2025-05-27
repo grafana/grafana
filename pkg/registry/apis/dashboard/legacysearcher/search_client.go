@@ -231,21 +231,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			query.ManagerIdentity = vals[0]
 		}
 	}
-	searchFields := resource.StandardSearchFields()
-	columns := []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(resource.SEARCH_FIELD_TITLE),
-		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
-		searchFields.Field(resource.SEARCH_FIELD_TAGS),
-		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
-	}
 
-	if sortByField != "" {
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: sortByField,
-			Type: resourcepb.ResourceTableColumnDefinition_INT64,
-		})
-	}
-
+	columns := c.getColumns(sortByField, query)
 	list := &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
 			Columns: columns,
@@ -258,11 +245,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		if query.ManagedBy == utils.ManagerKindUnknown {
 			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
 		}
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: resource.SEARCH_FIELD_MANAGER_KIND,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-		list.Results.Columns = columns
 
 		var dashes []*dashboards.Dashboard
 		if query.ManagedBy == utils.ManagerKindPlugin || len(query.ManagerIdentityNotIn) > 0 {
@@ -279,24 +261,11 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			}
 
 			for _, dashboard := range dashes {
-				cells := [][]byte{
-					[]byte(dashboard.Title),
-					[]byte(dashboard.FolderUID),
-					[]byte("[]"), // no tags retrieved for provisioned dashboards
-					[]byte(strconv.FormatInt(dashboard.ID, 10)),
-					[]byte(query.ManagedBy),
-				}
-
-				// TODO: this is incorrect
-				if sortByField != "" {
-					cells = append(cells, []byte("0"))
-				}
-
 				list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 					Key: getResourceKey(&dashboards.DashboardSearchProjection{
 						UID: dashboard.UID,
 					}, req.Options.Key.Namespace),
-					Cells: cells,
+					Cells: c.createProvisioningCells(dashboard, query),
 				})
 			}
 
@@ -309,47 +278,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		if err != nil {
 			return nil, err
 		}
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: resource.SEARCH_FIELD_MANAGER_ID,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: resource.SEARCH_FIELD_SOURCE_PATH,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-			Name: resource.SEARCH_FIELD_SOURCE_TIME,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-		list.Results.Columns = columns
 
 		for _, dashboard := range provisioningData {
-			cells := [][]byte{
-				[]byte(dashboard.Dashboard.Title),
-				[]byte(dashboard.Dashboard.FolderUID),
-				[]byte("[]"), // no tags retrieved for provisioned dashboards
-				[]byte(strconv.FormatInt(dashboard.DashboardID, 10)),
-				[]byte(query.ManagedBy),
-				[]byte(query.ManagerIdentity),
-				[]byte(dashboard.ExternalID),
-				[]byte(dashboard.CheckSum),
-				[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),
-			}
-
-			// TODO: this is incorrect
-			if sortByField != "" {
-				cells = append(cells, []byte("0"))
-			}
-
 			list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.Dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: cells,
+				Cells: c.createDetailedProvisioningCells(dashboard, query),
 			})
 		}
 
@@ -363,20 +298,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 	}
 
 	for _, dashboard := range res {
-		tags, err := json.Marshal(dashboard.Tags)
+		cells, err := c.createBaseCells(dashboard, sortByField)
 		if err != nil {
 			return nil, err
-		}
-
-		cells := [][]byte{
-			[]byte(dashboard.Title),
-			[]byte(dashboard.FolderUID),
-			tags,
-			[]byte(strconv.FormatInt(dashboard.ID, 10)),
-		}
-
-		if sortByField != "" {
-			cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
 		}
 
 		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
@@ -448,4 +372,94 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resourcepb.Re
 			},
 		},
 	}, nil
+}
+
+func (c *DashboardSearchClient) getColumns(sortByField string, query *dashboards.FindPersistedDashboardsQuery) []*resourcepb.ResourceTableColumnDefinition {
+	searchFields := resource.StandardSearchFields()
+	columns := []*resourcepb.ResourceTableColumnDefinition{
+		searchFields.Field(resource.SEARCH_FIELD_TITLE),
+		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+		searchFields.Field(resource.SEARCH_FIELD_TAGS),
+		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
+	}
+
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: resource.SEARCH_FIELD_MANAGER_KIND,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		})
+
+		if query.ManagedBy != utils.ManagerKindPlugin && len(query.ManagerIdentityNotIn) == 0 {
+			columns = append(columns, []*resourcepb.ResourceTableColumnDefinition{
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_ID,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_PATH,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_TIME,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+			}...)
+		}
+
+		return columns
+	}
+
+	// cannot sort when querying provisioned dashboards
+	if sortByField != "" {
+		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+			Name: sortByField,
+			Type: resourcepb.ResourceTableColumnDefinition_INT64,
+		})
+	}
+
+	return columns
+}
+
+func (c *DashboardSearchClient) createCommonCells(title, folderUID string, id int64, tags []byte) [][]byte {
+	return [][]byte{
+		[]byte(title),
+		[]byte(folderUID),
+		tags,
+		[]byte(strconv.FormatInt(id, 10)),
+	}
+}
+
+func (c *DashboardSearchClient) createBaseCells(dashboard dashboards.DashboardSearchProjection, sortByField string) ([][]byte, error) {
+	tags, err := json.Marshal(dashboard.Tags)
+	if err != nil {
+		return nil, err
+	}
+
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, tags)
+
+	if sortByField != "" {
+		cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
+	}
+
+	return cells, nil
+}
+
+func (c *DashboardSearchClient) createProvisioningCells(dashboard *dashboards.Dashboard, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
+	cells := c.createCommonCells(dashboard.Title, dashboard.FolderUID, dashboard.ID, []byte("[]"))
+	return append(cells, []byte(query.ManagedBy))
+}
+
+func (c *DashboardSearchClient) createDetailedProvisioningCells(dashboard *dashboards.DashboardProvisioningSearchResults, query *dashboards.FindPersistedDashboardsQuery) [][]byte {
+	cells := c.createCommonCells(dashboard.Dashboard.Title, dashboard.Dashboard.FolderUID, dashboard.Dashboard.ID, []byte("[]"))
+	return append(cells,
+		[]byte(query.ManagedBy),
+		[]byte(query.ManagerIdentity),
+		[]byte(dashboard.ExternalID),
+		[]byte(dashboard.CheckSum),
+		[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),
+	)
 }

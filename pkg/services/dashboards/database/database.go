@@ -233,7 +233,7 @@ func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, nam
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
 			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).
-			Select("dashboard.*, dashboard_provisioning.dashboard_id, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
 			Find(&dashes)
 	})
 	if err != nil {
