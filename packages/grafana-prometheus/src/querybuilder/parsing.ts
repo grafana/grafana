@@ -427,7 +427,6 @@ function handleBinary(expr: string, node: SyntaxNode, context: InternalContext) 
     }
 
     visQuery.operations.splice(idx, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
-    // visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
