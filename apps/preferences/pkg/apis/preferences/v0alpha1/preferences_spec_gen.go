@@ -32,7 +32,9 @@ type PreferencesNavbarPreference struct {
 
 // NewPreferencesNavbarPreference creates a new PreferencesNavbarPreference object.
 func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
-	return &PreferencesNavbarPreference{}
+	return &PreferencesNavbarPreference{
+		BookmarkUrls: []string{},
+	}
 }
 
 // +k8s:openapi-gen=true

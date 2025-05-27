@@ -6,8 +6,15 @@
 package apis
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	v0alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
 )
+
+var ()
 
 var appManifestData = app.ManifestData{
 	AppName: "preferences",
@@ -32,4 +39,15 @@ func LocalManifest() app.Manifest {
 
 func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("preferences")
+}
+
+var kindVersionToGoType = map[string]resource.Kind{
+	"Preferences/v0alpha1": v0alpha1.PreferencesKind(),
+}
+
+// ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+// If there is no association for the provided Kind and Version, exists will return false.
+func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
+	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
 }

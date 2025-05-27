@@ -24,5 +24,8 @@ type PreferencesMetadata struct {
 
 // NewPreferencesMetadata creates a new PreferencesMetadata object.
 func NewPreferencesMetadata() *PreferencesMetadata {
-	return &PreferencesMetadata{}
+	return &PreferencesMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

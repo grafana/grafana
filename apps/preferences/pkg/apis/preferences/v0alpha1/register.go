@@ -6,18 +6,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-const (
-	GROUP      = Group
-	VERSION    = Version
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var PreferencesResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 	"preferences", "preferences", "Preferences",
 	func() runtime.Object { return &Preferences{} },
 	func() runtime.Object { return &PreferencesList{} },
@@ -45,7 +38,7 @@ var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
 	AddToScheme        = localSchemeBuilder.AddToScheme
-	schemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+	schemeGroupVersion = GroupVersion
 )
 
 func init() {
