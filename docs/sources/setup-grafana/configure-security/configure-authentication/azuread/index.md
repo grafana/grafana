@@ -93,7 +93,7 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
             Add a new entry under Federated credentials with the following configuration.
 
             - Federated credential scenario: Select **Kubernetes accessing Azure resources**.
-            - Cluster issuer URL: The OIDC issuer URL that your cluster is integrated with. For example: `https://westus3.oic.prod-aks.azure.com/00000000-0000-0000-0000-000000000000/00000000-0000-0000-0000-000000000000/`.
+            - [Cluster issuer URL](https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer#get-the-oidc-issuer-url): The OIDC issuer URL that your cluster is integrated with. For example: `https://{region}.oic.prod-aks.azure.com/{tenant_id}/{uuid}`.
             - Namespace: Namespace of your Grafana deployment. For example: `grafana`.
             - Service account name: Service account name of your Grafana deployment.  For example: `grafana`.
             - Subject identifier: The expected identity (subject claim) from the OIDC token, which Azure uses to validate and authorize token issuance to the requesting workload. For example: `system:serviceaccount:grafana:grafana`.
