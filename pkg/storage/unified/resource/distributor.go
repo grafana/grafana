@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
@@ -246,6 +247,8 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
 	ctx = userutils.InjectOrgID(ctx, namespace)
 	requester, err := identity.GetRequester(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
+	ds.log.Info("from claims.AuthInfoFrom", "user", user, "ok", ok)
 	if err != nil {
 		ds.log.Error("a requester was not found in the context")
 		return ctx, nil, err
