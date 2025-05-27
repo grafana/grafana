@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
 import provisioningSvg from 'img/provisioning/provisioning.svg';

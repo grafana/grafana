@@ -488,24 +488,26 @@ steps:
     token:
       from_secret: drone_token
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+  - go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.24.3 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
-    > packages.txt
+    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3 --tag-format='{{ .version_base
+    }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
+    }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD > packages.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -1772,24 +1774,26 @@ steps:
   image: node:22.11.0-alpine
   name: build-frontend-packages
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
-  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+  - go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.24.3 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
-    > packages.txt
+    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3 --tag-format='{{ .version_base
+    }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
+    }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD > packages.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -3626,9 +3630,12 @@ platform:
 services: []
 steps:
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_main.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3647,7 +3654,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3659,7 +3665,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -3701,9 +3707,12 @@ platform:
 services: []
 steps:
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_tag_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3722,7 +3731,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3734,7 +3742,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -3818,9 +3826,12 @@ platform:
 services: []
 steps:
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_tag_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3839,7 +3850,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -3851,7 +3861,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -4055,9 +4065,12 @@ platform:
 services: []
 steps:
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_build_nightly_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_build_nightly_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4076,7 +4089,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4088,7 +4100,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -4197,9 +4209,12 @@ steps:
   image: google/cloud-sdk:alpine
   name: rgm-copy
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - cd /src && ./scripts/drone_publish_nightly_grafana.sh
+  - ./pkg/build/daggerbuild/scripts/drone_publish_nightly_grafana.sh
   depends_on:
   - rgm-copy
   environment:
@@ -4220,7 +4235,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4232,7 +4246,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-publish
   pull: always
   volumes:
@@ -4324,10 +4338,13 @@ steps:
   - name: github-app
     path: /github-app
 - commands:
+  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
+    | tar zx -C /bin
+  - apk add docker
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
-    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION}
-    --go-version=1.24.3
+  - dagger run --silent go run ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
+    --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --build-id=$${DRONE_BUILD_NUMBER}
+    --version=$${VERSION}
   depends_on:
   - github-app-generate-token
   environment:
@@ -4348,7 +4365,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4360,7 +4376,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: grafana/grafana-build:main
+  image: golang:1.24.3-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -5190,6 +5206,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5f4ce778b0c86c6c2267b9045f6019917983e352c8c62df1f898e6db16c9e935
+hmac: e430c51190ba46dbd426d13f47c13c275f4d05b6b1a26d1d9f67b5a8f09ecb41
 
 ...

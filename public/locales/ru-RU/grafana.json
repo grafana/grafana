@@ -57,7 +57,11 @@
       "aria-label-add": "Добавить",
       "aria-label-delete": "Удалить",
       "placeholder-key": "Ключ",
+      "placeholder-name": "Имя",
       "placeholder-value": "Значение"
+    },
+    "variables-editor": {
+      "placeholder-type": "Тип"
     }
   },
   "admin": {
@@ -739,6 +743,7 @@
       "edit": "Редактировать",
       "export": "Экспорт",
       "export-all": "Экспортировать всё",
+      "learn-more": "Подробнее",
       "loading": "Загрузка…",
       "search-by-matchers": "Поиск по сопоставлению",
       "titles": {
@@ -1084,6 +1089,9 @@
         "button": {
           "label": ""
         }
+      },
+      "view": {
+        "folder": ""
       }
     },
     "folder-selector": {
@@ -1217,15 +1225,6 @@
     },
     "grafana-rules-export-preview": {
       "text-loading": "Загрузка...."
-    },
-    "group-actions": {
-      "actions-trigger": "Действия группы правил",
-      "details": "Подробности",
-      "edit": "Редактировать"
-    },
-    "group-actions-menu": {
-      "group-load-failed": "Не удалось загрузить сведения о группе",
-      "unknown-error": "Неизвестная ошибка"
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "Группа",
@@ -1420,11 +1419,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Новое правило оповещения",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Новое правило записи, управляемое источником данных",
-        "new-grafana-recording-rule": "Новое правило записи, управляемое Grafana",
+        "new-grafana-alerting-rule": "Новое правило оповещения",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Новое правило записи",
-        "provisioning": "Также можно задавать правила посредством подготовки файлов или использования Terraform. <2>Подробнее</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Нет настроенных источников данных Prometheus или Loki",
       "no-rules": "Правила не найдены.",
@@ -2074,6 +2077,7 @@
         "description": "Проверьте конфигурацию источника данных. Поддерживает ли источник данных API Prometheus?",
         "title": "Не удалось загрузить правила из этого источника данных"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -2090,8 +2094,7 @@
       "new-datasource-recording-rule": "Новое правило записи источника данных",
       "new-grafana-recording-rule": "Новое правило записи Grafana",
       "pagination": {
-        "next-page": "следующая страница",
-        "previous-page": "предыдущая страница"
+        "next-page": ""
       },
       "recording-rules": "Правила записи",
       "return-button": {
@@ -3448,6 +3451,13 @@
           "values": "Значения, разделенные запятыми",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Тип",
+          "type-placeholder": ""
+        },
         "description": "Описание",
         "description-placeholder": "Поясняющий текст",
         "label": "Метка",
@@ -3466,8 +3476,8 @@
           "category": "Параметры выбора",
           "custom-all-value": "Пользовательское значение «все»",
           "custom-all-value-description": "Регулярное выражение с подстановочным знаком или другое значение для представления параметра «Все».",
-          "include-all": "Включить параметр «Все»",
-          "include-all-description": "Включает параметр для добавления всех значений",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Многозначное значение"
         },
         "type-category": "Тип параметров: {{type}}"
@@ -5447,10 +5457,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Подтвердить",
         "confirm-action": "Подтвердить действие",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Значение"
       },
+      "close": "Закрыть",
+      "continue": "",
       "inline": {
         "add-action": "Добавить действие",
         "edit-action": "Редактировать действие"
@@ -5461,6 +5475,7 @@
         "action-query-params": "Параметры запроса",
         "action-title": "Название",
         "action-title-placeholder": "Название действия",
+        "action-variables": "Переменные",
         "one-click-description": "Только одна ссылка или действие могут быть активированы одним нажатием за раз"
       }
     },
@@ -6207,6 +6222,7 @@
       "label-wrap-lines": "Переносить строки"
     },
     "log-details": {
+      "close": "",
       "fields": "Поля",
       "links": "Ссылки",
       "log-line": "Строка журнала",
@@ -6226,15 +6242,20 @@
       "log-line": "строка журнала"
     },
     "log-line": {
+      "has-error": "",
+      "is-sampled": "",
       "show-less": "",
-      "show-more": ""
+      "show-more": "",
+      "tooltip-error": ""
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
       "copy-log": "Копировать строку журнала",
+      "hide-details": "",
       "icon-label": "Меню журнала",
       "pin-to-outline": "Закрепить журнал",
       "show-context": "Показать контекст",
+      "show-details": "",
       "unpin-from-outline": "Открепить журнал"
     },
     "log-row-context-modal": {
@@ -6828,7 +6849,8 @@
       "title": "Панели библиотеки"
     },
     "machine-learning": {
-      "title": "Машинное обучение"
+      "subtitle": "",
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Управление дашбордами папок и разрешениями"
@@ -6912,7 +6934,7 @@
       "title": "Служебные учетные записи"
     },
     "setup-guide": {
-      "title": "Руководство по настройке"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Управление дашбордами организации во внешнем совместном использовании",
@@ -8595,7 +8617,7 @@
       "locale-preference-description": "Выберите свой регион, чтобы установить соответствующий формат даты, времени и чисел.",
       "locale-preference-label": "Региональный формат",
       "locale-preference-placeholder": "Выбрать регион",
-      "theme-description": "Нравятся экспериментальные темы? Поделитесь с нами, что вы хотели бы видеть, <2>здесь.</2>",
+      "theme-description": "Нравится экспериментировать? Выразите свои пожелания по поводу темы <2>здесь.</2>",
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
     },
@@ -8793,7 +8815,7 @@
     },
     "content": {
       "empty-recent-list-docs": "Чтобы узнать, как вводить пользовательские временные диапазоны, <0><0>ознакомьтесь с документацией</0><1>.</1></0>",
-      "empty-recent-list-info": "Похоже, вы никогда раньше не использовали этот указатель времени. Как только вы введете некоторые временные интервалы, здесь появятся последние использованные интервалы.",
+      "empty-recent-list-info": "Похоже, вы еще не пользовались этой функцией. Как только вы укажете временные интервалы, здесь отобразятся последние использованные значения.",
       "filter-placeholder": "Поиск быстрых диапазонов"
     },
     "copy-paste": {

@@ -33,7 +33,7 @@ type DashboardAnnotationQuerySpec struct {
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
 	// Catch-all field for datasource-specific properties
-	Options map[string]interface{} `json:"options,omitempty"`
+	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
@@ -688,7 +688,7 @@ func NewDashboardGridLayoutKind() *DashboardGridLayoutKind {
 
 // +k8s:openapi-gen=true
 type DashboardGridLayoutSpec struct {
-	Items []DashboardGridLayoutItemKindOrGridLayoutRowKind `json:"items"`
+	Items []DashboardGridLayoutItemKind `json:"items"`
 }
 
 // NewDashboardGridLayoutSpec creates a new DashboardGridLayoutSpec object.
@@ -757,46 +757,6 @@ func NewDashboardRepeatOptions() *DashboardRepeatOptions {
 // other repeat modes will be added in the future: label, frame
 // +k8s:openapi-gen=true
 const DashboardRepeatMode = "variable"
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutRowKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardGridLayoutRowSpec `json:"spec"`
-}
-
-// NewDashboardGridLayoutRowKind creates a new DashboardGridLayoutRowKind object.
-func NewDashboardGridLayoutRowKind() *DashboardGridLayoutRowKind {
-	return &DashboardGridLayoutRowKind{
-		Kind: "GridLayoutRow",
-		Spec: *NewDashboardGridLayoutRowSpec(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutRowSpec struct {
-	Y         int64  `json:"y"`
-	Collapsed bool   `json:"collapsed"`
-	Title     string `json:"title"`
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	Elements []DashboardGridLayoutItemKind `json:"elements"`
-	Repeat   *DashboardRowRepeatOptions    `json:"repeat,omitempty"`
-}
-
-// NewDashboardGridLayoutRowSpec creates a new DashboardGridLayoutRowSpec object.
-func NewDashboardGridLayoutRowSpec() *DashboardGridLayoutRowSpec {
-	return &DashboardGridLayoutRowSpec{}
-}
-
-// +k8s:openapi-gen=true
-type DashboardRowRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
-}
-
-// NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
-func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
-	return &DashboardRowRepeatOptions{}
-}
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutKind struct {
@@ -952,6 +912,17 @@ type DashboardConditionalRenderingTimeRangeSizeSpec struct {
 // NewDashboardConditionalRenderingTimeRangeSizeSpec creates a new DashboardConditionalRenderingTimeRangeSizeSpec object.
 func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRenderingTimeRangeSizeSpec {
 	return &DashboardConditionalRenderingTimeRangeSizeSpec{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowRepeatOptions struct {
+	Mode  string `json:"mode"`
+	Value string `json:"value"`
+}
+
+// NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
+func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
+	return &DashboardRowRepeatOptions{}
 }
 
 // +k8s:openapi-gen=true
@@ -1223,23 +1194,24 @@ func NewDashboardQueryVariableKind() *DashboardQueryVariableKind {
 // Query variable specification
 // +k8s:openapi-gen=true
 type DashboardQueryVariableSpec struct {
-	Name        string                    `json:"name"`
-	Current     DashboardVariableOption   `json:"current"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Query       DashboardDataQueryKind    `json:"query"`
-	Regex       string                    `json:"regex"`
-	Sort        DashboardVariableSort     `json:"sort"`
-	Definition  *string                   `json:"definition,omitempty"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Placeholder *string                   `json:"placeholder,omitempty"`
+	Name             string                    `json:"name"`
+	Current          DashboardVariableOption   `json:"current"`
+	Label            *string                   `json:"label,omitempty"`
+	Hide             DashboardVariableHide     `json:"hide"`
+	Refresh          DashboardVariableRefresh  `json:"refresh"`
+	SkipUrlSync      bool                      `json:"skipUrlSync"`
+	Description      *string                   `json:"description,omitempty"`
+	Datasource       *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	Query            DashboardDataQueryKind    `json:"query"`
+	Regex            string                    `json:"regex"`
+	Sort             DashboardVariableSort     `json:"sort"`
+	Definition       *string                   `json:"definition,omitempty"`
+	Options          []DashboardVariableOption `json:"options"`
+	Multi            bool                      `json:"multi"`
+	IncludeAll       bool                      `json:"includeAll"`
+	AllValue         *string                   `json:"allValue,omitempty"`
+	Placeholder      *string                   `json:"placeholder,omitempty"`
+	AllowCustomValue bool                      `json:"allowCustomValue"`
 }
 
 // NewDashboardQueryVariableSpec creates a new DashboardQueryVariableSpec object.
@@ -1254,13 +1226,14 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
-		Hide:        DashboardVariableHideDontHide,
-		Refresh:     DashboardVariableRefreshNever,
-		SkipUrlSync: false,
-		Query:       *NewDashboardDataQueryKind(),
-		Regex:       "",
-		Multi:       false,
-		IncludeAll:  false,
+		Hide:             DashboardVariableHideDontHide,
+		Refresh:          DashboardVariableRefreshNever,
+		SkipUrlSync:      false,
+		Query:            *NewDashboardDataQueryKind(),
+		Regex:            "",
+		Multi:            false,
+		IncludeAll:       false,
+		AllowCustomValue: true,
 	}
 }
 
@@ -1442,19 +1415,20 @@ func NewDashboardDatasourceVariableKind() *DashboardDatasourceVariableKind {
 // Datasource variable specification
 // +k8s:openapi-gen=true
 type DashboardDatasourceVariableSpec struct {
-	Name        string                    `json:"name"`
-	PluginId    string                    `json:"pluginId"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
-	Regex       string                    `json:"regex"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name             string                    `json:"name"`
+	PluginId         string                    `json:"pluginId"`
+	Refresh          DashboardVariableRefresh  `json:"refresh"`
+	Regex            string                    `json:"regex"`
+	Current          DashboardVariableOption   `json:"current"`
+	Options          []DashboardVariableOption `json:"options"`
+	Multi            bool                      `json:"multi"`
+	IncludeAll       bool                      `json:"includeAll"`
+	AllValue         *string                   `json:"allValue,omitempty"`
+	Label            *string                   `json:"label,omitempty"`
+	Hide             DashboardVariableHide     `json:"hide"`
+	SkipUrlSync      bool                      `json:"skipUrlSync"`
+	Description      *string                   `json:"description,omitempty"`
+	AllowCustomValue bool                      `json:"allowCustomValue"`
 }
 
 // NewDashboardDatasourceVariableSpec creates a new DashboardDatasourceVariableSpec object.
@@ -1472,10 +1446,11 @@ func NewDashboardDatasourceVariableSpec() *DashboardDatasourceVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
-		Multi:       false,
-		IncludeAll:  false,
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Multi:            false,
+		IncludeAll:       false,
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
 }
 
@@ -1551,29 +1526,31 @@ func NewDashboardCustomVariableKind() *DashboardCustomVariableKind {
 // Custom variable specification
 // +k8s:openapi-gen=true
 type DashboardCustomVariableSpec struct {
-	Name        string                    `json:"name"`
-	Query       string                    `json:"query"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name             string                    `json:"name"`
+	Query            string                    `json:"query"`
+	Current          DashboardVariableOption   `json:"current"`
+	Options          []DashboardVariableOption `json:"options"`
+	Multi            bool                      `json:"multi"`
+	IncludeAll       bool                      `json:"includeAll"`
+	AllValue         *string                   `json:"allValue,omitempty"`
+	Label            *string                   `json:"label,omitempty"`
+	Hide             DashboardVariableHide     `json:"hide"`
+	SkipUrlSync      bool                      `json:"skipUrlSync"`
+	Description      *string                   `json:"description,omitempty"`
+	AllowCustomValue bool                      `json:"allowCustomValue"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.
 func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 	return &DashboardCustomVariableSpec{
-		Name:        "",
-		Query:       "",
-		Current:     *NewDashboardVariableOption(),
-		Multi:       false,
-		IncludeAll:  false,
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Name:             "",
+		Query:            "",
+		Current:          *NewDashboardVariableOption(),
+		Multi:            false,
+		IncludeAll:       false,
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
 }
 
@@ -1595,15 +1572,16 @@ func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
 // GroupBy variable specification
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableSpec struct {
-	Name        string                    `json:"name"`
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name         string                    `json:"name"`
+	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
+	Current      DashboardVariableOption   `json:"current"`
+	Options      []DashboardVariableOption `json:"options"`
+	Multi        bool                      `json:"multi"`
+	Label        *string                   `json:"label,omitempty"`
+	Hide         DashboardVariableHide     `json:"hide"`
+	SkipUrlSync  bool                      `json:"skipUrlSync"`
+	Description  *string                   `json:"description,omitempty"`
 }
 
 // NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
@@ -1642,23 +1620,25 @@ func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
 // Adhoc variable specification
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableSpec struct {
-	Name        string                           `json:"name"`
-	Datasource  *DashboardDataSourceRef          `json:"datasource,omitempty"`
-	BaseFilters []DashboardAdHocFilterWithLabels `json:"baseFilters"`
-	Filters     []DashboardAdHocFilterWithLabels `json:"filters"`
-	DefaultKeys []DashboardMetricFindValue       `json:"defaultKeys"`
-	Label       *string                          `json:"label,omitempty"`
-	Hide        DashboardVariableHide            `json:"hide"`
-	SkipUrlSync bool                             `json:"skipUrlSync"`
-	Description *string                          `json:"description,omitempty"`
+	Name             string                           `json:"name"`
+	Datasource       *DashboardDataSourceRef          `json:"datasource,omitempty"`
+	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
+	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
+	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
+	Label            *string                          `json:"label,omitempty"`
+	Hide             DashboardVariableHide            `json:"hide"`
+	SkipUrlSync      bool                             `json:"skipUrlSync"`
+	Description      *string                          `json:"description,omitempty"`
+	AllowCustomValue bool                             `json:"allowCustomValue"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
 func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 	return &DashboardAdhocVariableSpec{
-		Name:        "",
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Name:             "",
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
 }
 
@@ -2016,67 +1996,6 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 	}
 
 	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutItemKindOrGridLayoutRowKind struct {
-	GridLayoutItemKind *DashboardGridLayoutItemKind `json:"GridLayoutItemKind,omitempty"`
-	GridLayoutRowKind  *DashboardGridLayoutRowKind  `json:"GridLayoutRowKind,omitempty"`
-}
-
-// NewDashboardGridLayoutItemKindOrGridLayoutRowKind creates a new DashboardGridLayoutItemKindOrGridLayoutRowKind object.
-func NewDashboardGridLayoutItemKindOrGridLayoutRowKind() *DashboardGridLayoutItemKindOrGridLayoutRowKind {
-	return &DashboardGridLayoutItemKindOrGridLayoutRowKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutItemKindOrGridLayoutRowKind` as JSON.
-func (resource DashboardGridLayoutItemKindOrGridLayoutRowKind) MarshalJSON() ([]byte, error) {
-	if resource.GridLayoutItemKind != nil {
-		return json.Marshal(resource.GridLayoutItemKind)
-	}
-	if resource.GridLayoutRowKind != nil {
-		return json.Marshal(resource.GridLayoutRowKind)
-	}
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutItemKindOrGridLayoutRowKind` from JSON.
-func (resource *DashboardGridLayoutItemKindOrGridLayoutRowKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
-	}
-
-	switch discriminator {
-	case "GridLayoutItem":
-		var dashboardGridLayoutItemKind DashboardGridLayoutItemKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutItemKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutItemKind = &dashboardGridLayoutItemKind
-		return nil
-	case "GridLayoutRow":
-		var dashboardGridLayoutRowKind DashboardGridLayoutRowKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutRowKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutRowKind = &dashboardGridLayoutRowKind
-		return nil
-	}
-
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
 }
 
 // +k8s:openapi-gen=true

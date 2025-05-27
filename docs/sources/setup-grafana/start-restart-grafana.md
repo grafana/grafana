@@ -128,7 +128,7 @@ services:
     restart: unless-stopped
     environment:
       - TERM=linux
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-polystat-panel
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-polystat-panel
     ports:
       - '3000:3000'
     volumes:
