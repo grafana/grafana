@@ -19,7 +19,6 @@ dagger run --silent go run ./pkg/build/cmd \
   -a docker:enterprise:linux/arm64 \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
-  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=${SOURCE_COMMIT} \
   --grafana-repo="https://github.com/grafana/grafana.git" \
@@ -34,4 +33,4 @@ dagger run --silent go run ./pkg/build/cmd \
 cat assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/main

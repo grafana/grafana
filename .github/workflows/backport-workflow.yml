@@ -1,0 +1,88 @@
+# Runs the actual backport, after being triggered by the backport-trigger.yml workflow.
+
+name: Backport (workflow)
+run-name: "Backport for ${{ github.event.workflow_run.head_branch }} #${{ github.event.workflow_run.run_number }}"
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] backport-trigger.yml does not run any user code
+    workflows: ["Backport (trigger)"]
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  backport:
+    # Only run this job if the triggering workflow was not skipped (and on grafana repo)
+    if: github.repository == 'grafana/grafana' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      actions: read
+    steps:
+      - name: Get vault secrets
+        id: secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          export_env: false
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ fromJSON(steps.secrets.outputs.secrets).APP_PEM }}
+
+      - name: Download PR info artifact
+        uses: actions/download-artifact@v4
+        id: download-pr-info
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: pr_info
+
+      - name: Get PR info
+        id: pr-info
+        env:
+          PR_INFO_FILE: ${{ steps.download-pr-info.outputs.download-path }}/pr_info.json
+        # jq-magic to convert the JSON object into a list of key=value pairs for $GITHUB_OUTPUT
+        run:
+          jq -r 'to_entries[] | select(.value | type != "object") | "\(.key)=\(.value)"' "$PR_INFO_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Print PR info
+        env:
+          PR_ACTION: ${{ steps.pr-info.outputs.action }}
+          PR_LABEL: ${{ steps.pr-info.outputs.label }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+        run: |
+          echo "PR action: $PR_ACTION"
+          echo "PR label: $PR_LABEL"
+          echo "PR number: $PR_NUMBER"
+
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 2
+          fetch-tags: false
+          token: ${{ steps.generate_token.outputs.token }}
+          persist-credentials: true
+
+      - name: Configure git user
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+
+      - name: Run backport
+        uses: grafana/grafana-github-actions-go/backport@dev
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          # If triggered by being labelled, only backport that label.
+          # Otherwise, the action will backport all labels.
+          pr_label: ${{ steps.pr-info.outputs.action == 'labeled' && steps.pr-info.outputs.label || '' }}
+          pr_number: ${{ steps.pr-info.outputs.pr_number }}
+          repo_owner: ${{ github.repository_owner }}
+          repo_name: ${{ github.event.repository.name }}

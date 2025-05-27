@@ -57,7 +57,11 @@
       "aria-label-add": "Ekle",
       "aria-label-delete": "Sil",
       "placeholder-key": "Anahtar",
+      "placeholder-name": "Ad",
       "placeholder-value": "Değer"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tür"
     }
   },
   "admin": {
@@ -3411,6 +3415,13 @@
           "values": "Virgülle ayrılmış değerler",
           "values-placeholder": "1, 10, anahtarım : değerim, değerim, kaçırılmış, değer"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tür",
+          "type-placeholder": ""
+        },
         "description": "Açıklama",
         "description-placeholder": "Açıklayıcı metin",
         "label": "Etiket",
@@ -3429,8 +3440,8 @@
           "category": "Seçim ayarları",
           "custom-all-value": "Özel tüm değer",
           "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
-          "include-all": "Tümünü Dahil Et seçeneği",
-          "include-all-description": "Tüm değerleri dahil etme seçeneğini etkinleştirir",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Çoklu değer"
         },
         "type-category": "{{type}} seçenekleri"
@@ -5404,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Onayla",
         "confirm-action": "İşlemi onayla",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Değer"
       },
+      "close": "Kapat",
+      "continue": "",
       "inline": {
         "add-action": "İşlem ekle",
         "edit-action": "İşlemi düzenle"
@@ -5418,6 +5433,7 @@
         "action-query-params": "Sorgu parametreleri",
         "action-title": "Başlık",
         "action-title-placeholder": "İşlem başlığı",
+        "action-variables": "Değişkenler",
         "one-click-description": "Aynı anda yalnızca bir bağlantı veya işlem için tek tıklama etkinleştirilebilir"
       }
     },
@@ -6866,7 +6882,7 @@
       "title": "Servis hesapları"
     },
     "setup-guide": {
-      "title": "Kurulum kılavuzu"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Kuruluşunuzun haricî olarak paylaşılan panolarını yönetin",
