@@ -5,10 +5,11 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, LoadingBar, Alert, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
@@ -42,6 +43,8 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
+
+  const { t } = useTranslate();
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
