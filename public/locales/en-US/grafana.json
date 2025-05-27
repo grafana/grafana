@@ -6600,10 +6600,6 @@
       "subtitle": "See recently deleted alert rules",
       "title": "Recently deleted"
     },
-    "api-keys": {
-      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-      "title": "API keys"
-    },
     "application": {
       "title": "Application"
     },
