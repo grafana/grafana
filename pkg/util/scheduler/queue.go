@@ -108,11 +108,7 @@ type Queue struct {
 
 type QueueOptions struct {
 	MaxSizePerTenant int
-
-	// Metrics options
 	Registerer       prometheus.Registerer
-	MetricsNamespace string
-	MetricsSubsystem string
 }
 
 // NewQueue creates a new Queue and starts its dispatcher goroutine.
@@ -135,23 +131,17 @@ func NewQueue(opts *QueueOptions) *Queue {
 	}
 
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: opts.MetricsNamespace,
-		Subsystem: opts.MetricsSubsystem,
-		Name:      "queue_length",
-		Help:      "Number of items in the queue",
+		Name: "queue_length",
+		Help: "Number of items in the queue",
 	}, []string{"namespace"})
 	q.discardedRequests = promauto.With(opts.Registerer).NewCounterVec(prometheus.CounterOpts{
-		Namespace: opts.MetricsNamespace,
-		Subsystem: opts.MetricsSubsystem,
-		Name:      "discarded_requests_total",
-		Help:      "Total number of discarded requests",
+		Name: "discarded_requests_total",
+		Help: "Total number of discarded requests",
 	}, []string{"namespace", "reason"})
 	q.enqueueDuration = promauto.With(opts.Registerer).NewHistogram(prometheus.HistogramOpts{
-		Namespace: opts.MetricsNamespace,
-		Subsystem: opts.MetricsSubsystem,
-		Name:      "enqueue_duration_seconds",
-		Help:      "Duration of enqueue operation in seconds",
-		Buckets:   prometheus.DefBuckets,
+		Name:    "enqueue_duration_seconds",
+		Help:    "Duration of enqueue operation in seconds",
+		Buckets: prometheus.DefBuckets,
 	})
 
 	q.Service = services.NewBasicService(nil, q.dispatcherLoop, q.stopping)
