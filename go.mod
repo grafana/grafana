@@ -6,7 +6,6 @@ require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.20.5 // @grafana/grafana-backend-group
-	cloud.google.com/go/spanner v1.75.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/storage v1.50.0 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.17.0 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
@@ -75,7 +74,6 @@ require (
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.6.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
-	github.com/googleapis/go-sql-spanner v1.11.1 // @grafana/grafana-search-and-storage
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250521131632-6e476b0b04c3 // @grafana/alerting-backend
@@ -193,7 +191,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.32.3 // indirect; @grafana/grafana-app-platform-squad
+	k8s.io/api v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.32.3 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.32.3 // @grafana/grafana-app-platform-squad
@@ -202,30 +200,28 @@ require (
 	k8s.io/kube-aggregator v0.32.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
+	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250506052906-7a2fc797fb4a // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250508142345-620260fabcfb // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250506052906-7a2fc797fb4a // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250527064921-326081cdb7a1 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 // @fcjack @matryer
+	github.com/grafana/grafana/apps/playlist v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250516070222-10994220504a // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 )
 
 require (
@@ -252,10 +248,10 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.3.2 // indirect
 	github.com/FZambia/eagle v0.2.0 // indirect
-	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.26.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -421,6 +417,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -569,7 +566,6 @@ require (
 	modernc.org/sqlite v1.37.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
-	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 

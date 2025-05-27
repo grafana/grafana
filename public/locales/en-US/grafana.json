@@ -57,7 +57,11 @@
       "aria-label-add": "Add",
       "aria-label-delete": "Delete",
       "placeholder-key": "Key",
+      "placeholder-name": "Name",
       "placeholder-value": "Value"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -3425,6 +3429,13 @@
           "values": "Values separated by comma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "Name filter",
+          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
+          "name-filter-placeholder": "Example: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choose data source type"
+        },
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "label": "Label",
@@ -3443,8 +3454,8 @@
           "category": "Selection options",
           "custom-all-value": "Custom all value",
           "custom-all-value-description": "A wildcard regex or other value to represent All",
-          "include-all": "Include All option",
-          "include-all-description": "Enables an option to include all values",
+          "include-all": "Include All value",
+          "include-all-description": "Enables a single option that represent all values",
           "multi-value": "Multi-value"
         },
         "type-category": "{{type}} options"
@@ -5418,10 +5429,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "Action variables",
         "confirm": "Confirm",
         "confirm-action": "Confirm action",
-        "style": "Button style"
+        "style": "Button style",
+        "variable-value-placeholder": "Value"
       },
+      "close": "Close",
+      "continue": "Continue",
       "inline": {
         "add-action": "Add action",
         "edit-action": "Edit action"
@@ -5432,6 +5447,7 @@
         "action-query-params": "Query parameters",
         "action-title": "Title",
         "action-title-placeholder": "Action title",
+        "action-variables": "Variables",
         "one-click-description": "Only one link or action can have one click enabled at a time"
       }
     },
@@ -6880,7 +6896,7 @@
       "title": "Service accounts"
     },
     "setup-guide": {
-      "title": "Setup guide"
+      "title": "Getting started guide"
     },
     "shared-dashboard": {
       "subtitle": "Manage your organization's externally shared dashboards",

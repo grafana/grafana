@@ -527,6 +527,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
     },
+    config.featureToggles.restoreDashboards && {
+      path: '/dashboard/recently-deleted',
+      roles: () => ['Admin', 'ServerAdmin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
+      ),
+    },
     {
       // Redirect the /femt dev page to the root
       path: '/femt',

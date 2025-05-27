@@ -23,10 +23,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All option'),
+          title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value'),
           description: t(
             'dashboard.edit-pane.variable.selection-options.include-all-description',
-            'Enables an option to include all values'
+            'Enables a single option that represent all values'
           ),
           render: () => <IncludeAllSwitch variable={variable} />,
         })

@@ -57,7 +57,11 @@
       "aria-label-add": "Dodaj",
       "aria-label-delete": "Usuń",
       "placeholder-key": "Klucz",
+      "placeholder-name": "Imię",
       "placeholder-value": "Wartość"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -739,6 +743,7 @@
       "edit": "Edytuj",
       "export": "Eksport",
       "export-all": "Eksportuj wszystkie",
+      "learn-more": "Dowiedz się więcej",
       "loading": "Ładowanie…",
       "search-by-matchers": "Wyszukaj według dopasowań",
       "titles": {
@@ -1414,11 +1419,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nowa reguła alertu",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nowa reguła rejestracji zarządzana przez źródło danych",
-        "new-grafana-recording-rule": "Nowa reguła rejestracji zarządzana przez usługę Grafana",
+        "new-grafana-alerting-rule": "Nowa reguła alertu",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nowa reguła rejestracji",
-        "provisioning": "Reguły można również definiować za pomocą konfiguracji plików lub przez Terraform. <2>Więcej informacji</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Brak skonfigurowanych źródeł danych Prometheus lub Loki",
       "no-rules": "Nie znaleziono reguł.",
@@ -2068,6 +2077,7 @@
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -3441,6 +3451,13 @@
           "values": "Wartości rozdzielone przecinkami",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Typ",
+          "type-placeholder": ""
+        },
         "description": "Opis",
         "description-placeholder": "Tekst opisowy",
         "label": "Etykieta",
@@ -3459,8 +3476,8 @@
           "category": "Opcje wyboru",
           "custom-all-value": "Niestandardowe – wszystkie wartości",
           "custom-all-value-description": "Symbol wieloznaczny wyrażenia regularnego lub inna wartość reprezentująca „wszystkie”",
-          "include-all": "Opcja Uwzględnij wszystkie",
-          "include-all-description": "Włącza opcję uwzględniania wszystkich wartości",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Wiele wartości"
         },
         "type-category": "Opcje typu {{type}}"
@@ -5440,10 +5457,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Potwierdź",
         "confirm-action": "Potwierdź działanie",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Wartość"
       },
+      "close": "Zamknij",
+      "continue": "",
       "inline": {
         "add-action": "Dodaj działanie",
         "edit-action": "Edytuj działanie"
@@ -5454,6 +5475,7 @@
         "action-query-params": "Parametry zapytania",
         "action-title": "Tytuł",
         "action-title-placeholder": "Tytuł działania",
+        "action-variables": "Zmienne",
         "one-click-description": "Tylko jeden link lub działanie może mieć włączoną opcję jednego kliknięcia"
       }
     },
@@ -6912,7 +6934,7 @@
       "title": "Konta usługi"
     },
     "setup-guide": {
-      "title": "Instrukcja konfiguracji"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Zarządzaj udostępnionymi zewnętrznie pulpitami swojej organizacji",
