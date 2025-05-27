@@ -112,10 +112,12 @@ jobs:
             exit 0
           fi
 
-          # Chekout the changelog branch if exists, otherwise create a new one
-          git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH" && \
-            git switch --track "origin/$WORK_BRANCH" || \
+          # Checkout the changelog branch if exists, otherwise create a new one
+          if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
+            git switch --track "origin/$WORK_BRANCH"
+          else
             git switch -c "$WORK_BRANCH"
+          fi
         env:
           WORK_BRANCH: ${{ inputs.work_branch }}
       - name: "Generate changelog"
