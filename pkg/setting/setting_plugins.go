@@ -145,13 +145,15 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			delete(preinstallPluginsAsync, disabledPlugin)
 			delete(preinstallPluginsSync, disabledPlugin)
 		}
+		for _, plugin := range preinstallPluginsSync {
+			cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
+			// preinstallSync plugin has priority over preinstallAsync
+			delete(preinstallPluginsAsync, plugin.ID)
+		}
 		for _, plugin := range preinstallPluginsAsync {
 			cfg.PreinstallPluginsAsync = append(cfg.PreinstallPluginsAsync, plugin)
 		}
 
-		for _, plugin := range preinstallPluginsSync {
-			cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
-		}
 		installPluginsInAsync := pluginsSection.Key("preinstall_async").MustBool(true)
 		if !installPluginsInAsync {
 			for key, plugin := range preinstallPluginsAsync {

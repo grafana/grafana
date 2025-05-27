@@ -237,6 +237,13 @@ func Test_readPluginSettings(t *testing.T) {
 					return plugins
 				}(),
 			},
+			{
+				name:         "when same plugin is defined in preinstall and preinstall_sync, should be only in preinstallSync",
+				rawInput:     "plugin1",
+				rawInputSync: "plugin1",
+				expected:     defaultPreinstallPluginsList,
+				expectedSync: []InstallPlugin{{ID: "plugin1"}},
+			},
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
