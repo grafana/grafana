@@ -112,7 +112,10 @@ func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest
 		return nil, err
 	}
 
-	return client.Read(ctx, r)
+	res, err := client.Read(ctx, r)
+	ds.log.Info("Read result", "err", err, "status")
+
+	return res, err
 }
 
 func (ds *distributorServer) Create(ctx context.Context, r *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
