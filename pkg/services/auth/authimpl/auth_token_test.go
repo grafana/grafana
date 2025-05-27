@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -716,6 +717,7 @@ func createTestContext(t *testing.T) *testContext {
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagRotateTokensInTransaction, featuremgmt.FlagSkipTokenRotationIfRecent),
 	}
 
 	return &testContext{

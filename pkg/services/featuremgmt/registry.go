@@ -1759,6 +1759,22 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 		},
+		{
+			Name:              "rotateTokensInTransaction",
+			Description:       "Run full token rotation inside a transaction",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "skipTokenRotationIfRecent",
+			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 

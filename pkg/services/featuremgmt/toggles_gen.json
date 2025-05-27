@@ -2894,6 +2894,20 @@
     },
     {
       "metadata": {
+        "name": "rotateTokensInTransaction",
+        "resourceVersion": "1748363453133",
+        "creationTimestamp": "2025-05-27T16:30:53Z"
+      },
+      "spec": {
+        "description": "Run full token rotation inside a transaction",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-27T07:58:25Z"
@@ -2956,6 +2970,20 @@
         "description": "Show warnings when dashboards do not validate against the schema",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "skipTokenRotationIfRecent",
+        "resourceVersion": "1748363453133",
+        "creationTimestamp": "2025-05-27T16:30:53Z"
+      },
+      "spec": {
+        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

@@ -930,4 +930,12 @@ const (
 	// FlagExtensionsReadOnlyProxy
 	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
 	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
+
+	// FlagRotateTokensInTransaction
+	// Run full token rotation inside a transaction
+	FlagRotateTokensInTransaction = "rotateTokensInTransaction"
+
+	// FlagSkipTokenRotationIfRecent
+	// Skip token rotation if it was already rotated less than 5 seconds ago
+	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
 )

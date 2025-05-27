@@ -1023,4 +1023,12 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Run full token rotation inside a transaction
+  */
+  rotateTokensInTransaction?: boolean;
+  /**
+  * Skip token rotation if it was already rotated less than 5 seconds ago
+  */
+  skipTokenRotationIfRecent?: boolean;
 }
