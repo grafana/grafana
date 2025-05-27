@@ -262,6 +262,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			Name: resource.SEARCH_FIELD_MANAGER_KIND,
 			Type: resourcepb.ResourceTableColumnDefinition_STRING,
 		})
+		list.Results.Columns = columns
 
 		var dashes []*dashboards.Dashboard
 		if query.ManagedBy == utils.ManagerKindPlugin || len(query.ManagerIdentityNotIn) > 0 {
@@ -286,6 +287,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 					[]byte(query.ManagedBy),
 				}
 
+				// TODO: this is incorrect
 				if sortByField != "" {
 					cells = append(cells, []byte("0"))
 				}
@@ -330,7 +332,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				[]byte(dashboard.Dashboard.Title),
 				[]byte(dashboard.Dashboard.FolderUID),
 				[]byte("[]"), // no tags retrieved for provisioned dashboards
-				[]byte(strconv.FormatInt(dashboard.Dashboard.ID, 10)),
+				[]byte(strconv.FormatInt(dashboard.DashboardID, 10)),
 				[]byte(query.ManagedBy),
 				[]byte(query.ManagerIdentity),
 				[]byte(dashboard.ExternalID),
@@ -338,6 +340,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),
 			}
 
+			// TODO: this is incorrect
 			if sortByField != "" {
 				cells = append(cells, []byte("0"))
 			}

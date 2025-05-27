@@ -241,6 +241,7 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 
 type DashboardProvisioningSearchResults struct {
 	Dashboard       Dashboard
+	DashboardID     int64  `xorm:"dashboard_id"`
 	Provisioner     string `xorm:"name"`
 	ExternalID      string `xorm:"external_id"`
 	CheckSum        string `xorm:"check_sum"`
