@@ -327,7 +327,10 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 			tracer:        tracer,
 			metrics:       newMetrics(reg),
 		}
-		return a.Authenticate(ctx)
+		ctx, err := a.Authenticate(ctx)
+		fmt.Println("response from authenticate ctx", ctx)
+		fmt.Println("response from authenticate ", err)
+		return ctx, err
 	}
 }
 
