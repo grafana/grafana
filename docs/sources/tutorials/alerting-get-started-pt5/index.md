@@ -297,11 +297,11 @@ Based on your query's `instance` label values (which contain keywords like _prod
 
 To see this in action go to **Alerts & IRM > Alerting > Active notifications**
 
-This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances.
+This page shows grouped alerts that are currently triggering notifications. If you click on any alert group to view its label set, contact point, and number of alert instances. Notice that the **environment** label has been dynamically populated with values like `production`.
 
 {{< figure src="/media/docs/alerting/routing-active-notification-detail.png" max-width="1200px" caption="Expanded alert in Active notifications section" >}}
 
-Finally, you should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, notice that the **environment** label has been dynamically populated with values like `production`.
+Finally, you should receive notifications at the contact point associated with either `prod` or `staging`. Additionally, 
 
 Feel free to experiment by changing the template to match other labels that contain any of the watched keywords. For example, you could reference:
 
@@ -309,7 +309,7 @@ Feel free to experiment by changing the template to match other labels that cont
 $labels.deployment
 ```
 
-You should be also able to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
+The template should be flexible enough to capture the target keywords (e.g., prod, staging) by adjusting which label the[`$labels`](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) is referencing.
 
 <!-- INTERACTIVE page step6.md END -->
 
