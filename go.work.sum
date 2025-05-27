@@ -1196,6 +1196,8 @@ github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d
 github.com/grafana/grafana/apps/investigations v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:pI3xLwHRhaMTYO5pgA34/ros5suc5J1H+HAdRfwlbx4=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:9U44mptAJW8bkvgPgCxsnki58/nz3wKPgDayeyeFWJs=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250527095749-a54312739f13 h1:0m9m6DgFLtc+zluzBYNHcha4outmSODvQqA9j7RUKIw=
+github.com/grafana/grafana/apps/preferences v0.0.0-20250527095749-a54312739f13/go.mod h1:GzIgk/EGgqIQGTXs8ihlWuWsBPz+C0lO5C/7ohVlJfk=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:lR9iC/cP9HjGEuuGdmY12srQWxnJ57apBR3wjs8Nu24=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:3MwgP0ISxGviTy3ZUJZsNz/56NNtHztMlH+gcxDt6Tw=

@@ -212,6 +212,7 @@ require (
 	github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/preferences v0.0.0-20250527095749-a54312739f13 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-operator-experience-squad
