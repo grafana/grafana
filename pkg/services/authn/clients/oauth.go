@@ -147,7 +147,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 		case social.WorkloadIdentity:
 			// Workload Identity logic
-			federatedToken, err := os.ReadFile(c.cfg.Azure.WorkloadIdentitySettings.TokenFile)
+			federatedToken, err := os.ReadFile(oauthCfg.WorkloadIdentityTokenFile)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
 			}

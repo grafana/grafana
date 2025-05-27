@@ -101,7 +101,7 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
             - Description: Grafana OAuth.
             - Audience: The audience value that must appear in the external token. For Public cloud, it would be `api://AzureADTokenExchange`. See mentioned documentation for the full list of available audiences.
 
-        1. You must have set `workload_identity_enable` (env var `GF_AZURE_WORKLOAD_IDENTITY_ENABLED`) under `[auth.azuread]` to `true` in the Grafana server configuration for this to work.
+        1. You must have set `workload_identity_enable` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_ENABLE`) under `[auth.azuread]` to `true` in the Grafana server configuration for this to work.
 
         1. You must have set `client_authentication` (env var `GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION`) under `[auth.azuread]` to `workload_identity` in the Grafana server configuration for this to work.
 
