@@ -8255,6 +8255,121 @@
       "no-data": "No values"
     }
   },
+  "secrets": {
+    "actions": {
+      "create-secret": "Create secret"
+    },
+    "edit-modal": {
+      "form": {
+        "button-create": "Create",
+        "button-update": "Update"
+      },
+      "title": {
+        "create": "Create secret",
+        "edit": "Edit secret {{name}}"
+      }
+    },
+    "empty-state": {
+      "description": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
+      "title": "You don't have any secrets yet."
+    },
+    "form": {
+      "label-name": {
+        "error": {
+          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label name is required",
+          "too-long": "Label name must be less than {{maxLength}} characters",
+          "unique": "Label name must be unique"
+        }
+      },
+      "label-value": {
+        "error": {
+          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label value is required",
+          "too-long": "Label value must be less than {{maxLength}} characters"
+        }
+      }
+    },
+    "item": {
+      "copy-value-aria-label": "Copy \"{{value}}\"",
+      "delete-item-aria-label": "Delete {{name}}",
+      "delete-modal": {
+        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirm-text": "delete",
+        "delete-button": "Delete",
+        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "title": "Delete secret"
+      },
+      "edit-item": "Edit",
+      "edit-item-aria-label": "Edit {{name}}",
+      "label-created": "Created:",
+      "label-decrypters": "Decrypters:",
+      "label-description": "Description:",
+      "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
+      "label-uid": "ID:"
+    },
+    "search-placeholder": "Search secret by name",
+    "search-result": {
+      "clear-filters": "Clear active filter to see all secrets.",
+      "no-results": "No secrets found"
+    },
+    "secret-value-input": {
+      "configured-value": "configured",
+      "reset-button": "<0>Reset</0>"
+    },
+    "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
+  },
+  "secrets-management": {
+    "form": {
+      "btn-cancel": "Cancel",
+      "decrypters": {
+        "description": "Services able to decrypt secret value",
+        "label": "Decrypters",
+        "placeholder": "Choose decrypter(s)"
+      },
+      "description": {
+        "description": "Short description of the purpose of this secret",
+        "error": {
+          "required": "Description is required",
+          "too-long": "Description must be less than {{maxLength}} characters"
+        },
+        "label": "Description"
+      },
+      "label-name": {
+        "placeholder": "name"
+      },
+      "label-value": {
+        "placeholder": "value"
+      },
+      "labels": {
+        "actions": {
+          "add": "Add label",
+          "aria-label-remove": "Remove label"
+        },
+        "description": "Labels to categorize the secret",
+        "error": {
+          "too-many": "Maximum number of labels reached (Max: {{maxLabels}})"
+        },
+        "label": "Labels"
+      },
+      "name": {
+        "description": "The name will be used to reference the secret",
+        "error": {
+          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods",
+          "required": "Name is required",
+          "too-long": "Name must be less than {{maxLength}} characters"
+        },
+        "label": "Name"
+      },
+      "value": {
+        "description": "Secret value",
+        "error": {
+          "required": "Value is required"
+        },
+        "label": "Value"
+      }
+    }
+  },
   "select": {
     "select-menu": {
       "selected-count": "Selected "

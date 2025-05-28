@@ -140,6 +140,10 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
 	}
 
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+		r.Get("/admin/secrets", reqOrgAdmin, hs.Index)
+	}
+
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
