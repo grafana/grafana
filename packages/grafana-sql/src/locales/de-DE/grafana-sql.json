@@ -1,7 +1,0 @@
-{
-  "grafana-sql": {
-    "configuration-editor": {
-      "title-connection-limits": "Die connection limits (but german)"
-    }
-  }
-}

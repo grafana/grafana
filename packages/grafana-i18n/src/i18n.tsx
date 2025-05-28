@@ -16,7 +16,7 @@ async function loadPluginResources(id: string, language: string, loaders?: Resou
     return;
   }
 
-  await Promise.all(
+  return Promise.all(
     loaders.map(async (loader) => {
       try {
         const resources = await loader(language);
