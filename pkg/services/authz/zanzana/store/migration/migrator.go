@@ -2,7 +2,6 @@ package migration
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -65,26 +64,6 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt(),
 	)
-}
-
-var _ migrator.CodeMigration = (*rawMigration)(nil)
-
-type rawMigration struct {
-	stmts []string
-	migrator.MigrationBase
-}
-
-func (m *rawMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	for _, stmt := range m.stmts {
-		if _, err := sess.Exec(stmt); err != nil {
-			return fmt.Errorf("failed to run migration: %w", err)
-		}
-	}
-	return nil
-}
-
-func (m *rawMigration) SQL(dialect migrator.Dialect) string {
-	return strings.Join(m.stmts, "\n")
 }
 
 // constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs
