@@ -23,8 +23,8 @@ interface HeaderCellProps {
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onColumnResize?: TableColumnResizeActionCallback;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
-  crossFilterOrder: React.MutableRefObject<string[]>;
-  crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
+  crossFilterOrder: string[];
+  crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
 }
 
@@ -125,8 +125,8 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           filter={filter}
           setFilter={setFilter}
           field={field}
-          crossFilterOrder={crossFilterOrder.current}
-          crossFilterRows={crossFilterRows.current}
+          crossFilterOrder={crossFilterOrder}
+          crossFilterRows={crossFilterRows}
         />
       )}
     </div>

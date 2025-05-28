@@ -6,7 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
-import { TableRow } from '../types';
+import { FilterType, TableRow } from '../types';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
@@ -14,8 +14,8 @@ import { FilterPopup } from './FilterPopup';
 interface Props {
   name: string;
   rows: any[];
-  filter: any;
-  setFilter: (value: any) => void;
+  filter: FilterType;
+  setFilter: (value: FilterType) => void;
   field?: Field;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
