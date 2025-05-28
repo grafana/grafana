@@ -6,7 +6,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
-import { AutoSizeInput } from '../Input/AutoSizeInput';
+import { AutoSizeInput, getWidthFor } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 
@@ -123,7 +123,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     createCustomValue = false,
     id,
     width,
-    minWidth,
+    minWidth: minWidthProp,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
@@ -329,6 +329,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
+
+  const minWidth = useMemo(() => {
+    if (width === 'auto') {
+      // Set maxWidth to undefined because it doesn't make sense here
+      return getWidthFor(itemToString(selectedItem) ?? placeholderProp, minWidthProp, undefined);
+    }
+    return minWidthProp;
+  }, [minWidthProp, width, placeholderProp, selectedItem]);
 
   const loading = props.loading || asyncLoading;
 
