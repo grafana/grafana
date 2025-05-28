@@ -131,7 +131,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// Read the referenced file
 	fileInfo, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file to write: %w", err)
 	}
 
 	parsed, err := r.parser.Parse(ctx, fileInfo)
@@ -186,7 +186,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, schema.GroupVersionKind, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file to delete: %w", err)
 	}
 
 	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))

@@ -15,10 +15,11 @@ interface Props {
 
 type ConnectUrl = `${typeof CONNECT_URL}/${RepoType}`;
 
-const gitURL: ConnectUrl = `${CONNECT_URL}/github`;
+const githubURL: ConnectUrl = `${CONNECT_URL}/github`;
 const localURL: ConnectUrl = `${CONNECT_URL}/local`;
+const gitURL: ConnectUrl = `${CONNECT_URL}/git`;
 
-export function ConnectRepositoryButton({ items, showDropdown = false }: Props) {
+export function ConnectRepositoryButton({ items }: Props) {
   const state = checkSyncSettings(items);
   const navigate = useNavigate();
   const { t } = useTranslate();
@@ -39,11 +40,17 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
     );
   }
 
-  if (showDropdown) {
     return (
       <Dropdown
         overlay={
           <Menu>
+            <Menu.Item
+              icon="github"
+              label={t('provisioning.connect-repository-button.configure-git-sync', 'Configure Github Sync')}
+              onClick={() => {
+                navigate(githubURL);
+              }}
+            />
             <Menu.Item
               icon="code-branch"
               label={t('provisioning.connect-repository-button.configure-git-sync', 'Configure Git Sync')}
@@ -67,18 +74,6 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
             <Icon name={'angle-down'} />
           </Stack>
         </Button>
-      </Dropdown>
-    );
-  }
-
-  return (
-    <Stack gap={3}>
-      <LinkButton href={gitURL} variant="primary">
-        <Trans i18nKey="provisioning.connect-repository-button.configure-git-sync">Configure Git Sync</Trans>
-      </LinkButton>
-      <LinkButton href={localURL} variant="secondary">
-        <Trans i18nKey="provisioning.connect-repository-button.configure-file">Configure file provisioning</Trans>
-      </LinkButton>
-    </Stack>
+    </Dropdown>
   );
 }

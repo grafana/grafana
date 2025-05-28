@@ -12,11 +12,13 @@ export default function ConnectPage() {
     return null;
   }
 
+  const pageTitle = type === 'github' ? 'Configure Github Sync' : type === 'git' ? 'Configure Git Sync' : 'Configure local file path';
+
   return (
     <Page
       navId="provisioning"
       pageNav={{
-        text: type === 'github' ? 'Configure Git Sync' : 'Configure local file path',
+        text: pageTitle,
         subTitle: 'Connect to an external storage to manage your resources',
       }}
     >

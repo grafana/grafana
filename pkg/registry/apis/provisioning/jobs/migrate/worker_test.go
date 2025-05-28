@@ -90,7 +90,7 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 
 		repo := repository.NewLocal(&provisioning.Repository{}, nil)
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
-		require.EqualError(t, err, "history is only supported for github repositories")
+		require.EqualError(t, err, "history is only supported for git repositories")
 	})
 
 	t.Run("fail unified", func(t *testing.T) {

@@ -21,6 +21,7 @@ export function ConnectStep() {
   const { t } = useTranslate();
   const type = getValues('repository.type');
   const isGithub = type === 'github';
+  const isGit = type === 'git';
 
   return (
     <Stack direction="column">
@@ -112,6 +113,100 @@ export function ConnectStep() {
             description={t(
               'provisioning.connect-step.description-github-path',
               'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
+            )}
+          >
+            <Input {...register('repository.path')} id="repository-path" />
+          </Field>
+        </>
+      )}
+      {isGit && (
+        <>
+          <Field
+            noMargin
+            label={t('provisioning.connect-step.label-access-token', 'Personal access token')}
+            required
+            description={t(
+              'provisioning.connect-step.description-paste-your-git-hub-personal-access-token',
+              'Paste your personal access token'
+            )}
+            error={errors.repository?.token?.message}
+            invalid={!!errors.repository?.token}
+          >
+            <Controller
+              name={'repository.token'}
+              control={control}
+              rules={{ required: t('provisioning.connect-step.error-field-required', 'This field is required.') }}
+              render={({ field: { ref, ...field } }) => {
+                return (
+                  <SecretInput
+                    {...field}
+                    id={'token'}
+                    placeholder={t(
+                      // TODO: improve placeholder
+                      'provisioning.connect-step.placeholder-github-token',
+                      'github_pat_yourTokenHere1234567890abcdEFGHijklMNOP'
+                    )}
+                    isConfigured={tokenConfigured}
+                    onReset={() => {
+                      setValue('repository.token', '');
+                      setTokenConfigured(false);
+                    }}
+                  />
+                );
+              }}
+            />
+          </Field>
+
+          <Field
+            noMargin
+            label={t('provisioning.connect-step.label-repository-url', 'Repository URL')}
+            error={errors.repository?.url?.message}
+            invalid={!!errors.repository?.url}
+            description={t(
+              'provisioning.connect-step.description-repository-url',
+              'Paste the URL of your repository'
+            )}
+            required
+          >
+            <Input
+              {...register('repository.url', {
+                required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
+                pattern: {
+                  value: /^https:\/\/[^/]+\/[^/]+\/[^/]+$/,
+                  message: t(
+                    'provisioning.connect-step.error-invalid-github-url',
+                    'Please enter a valid repository URL starting with https://'
+                  ),
+                },
+              })}
+              id={'repository-url'}
+              // TODO: Fix placeholder
+              placeholder={t('provisioning.connect-step.placeholder-github-url', 'https://github.com/username/repo')}
+            />
+          </Field>
+
+          <Field
+            noMargin
+            label={t('provisioning.connect-step.label-branch', 'Branch name')}
+            description={t('provisioning.connect-step.description-branch', 'Branch to use for the repository')}
+            error={errors.repository?.branch?.message}
+            invalid={!!errors.repository?.branch}
+          >
+            <Input
+              {...register('repository.branch')}
+              id={'repository-branch'}
+              placeholder={t('provisioning.connect-step.placeholder-branch', 'main')}
+            />
+          </Field>
+
+          <Field
+            noMargin
+            label={t('provisioning.connect-step.label-path', 'Path to subdirectory in repository')}
+            error={errors.repository?.path?.message}
+            invalid={!!errors.repository?.path}
+            description={t(
+              'provisioning.connect-step.description-path',
+              'This is the path to a subdirectory in your repository where dashboards will be stored and provisioned from'
             )}
           >
             <Input {...register('repository.path')} id="repository-path" />

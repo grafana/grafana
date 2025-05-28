@@ -43,7 +43,7 @@ type FormData = {
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
-  isGitHub: boolean;
+  isGit: boolean;
   repository?: RepositoryView;
   loadedFromRef?: string;
 }
@@ -56,7 +56,7 @@ export function SaveProvisionedDashboardForm({
   isNew,
   loadedFromRef,
   repository,
-  isGitHub,
+  isGit: isGit,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -263,7 +263,7 @@ export function SaveProvisionedDashboardForm({
           />
         </Field>
 
-        {isGitHub && !readOnly && (
+        {isGit && !readOnly && (
           <>
             <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
               <Controller
@@ -278,6 +278,7 @@ export function SaveProvisionedDashboardForm({
               <Field
                 noMargin
                 label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
+                // TODO: fix translation
                 description={t(
                   'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
                   'Branch name in GitHub'

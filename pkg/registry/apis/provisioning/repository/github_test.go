@@ -212,7 +212,7 @@ func TestIsValidGitBranchName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, isValidGitBranchName(tt.branch))
+			assert.Equal(t, tt.expected, IsValidGitBranchName(tt.branch))
 		})
 	}
 }

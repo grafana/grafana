@@ -113,7 +113,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
-	} else if !isValidGitBranchName(gh.Branch) {
+	} else if !IsValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	// TODO: Use two fields for token
@@ -459,7 +459,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 // it does not cover all cases as positive lookaheads are not supported in Go's regexp
 var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
 
-// isValidGitBranchName checks if a branch name is valid.
+// IsValidGitBranchName checks if a branch name is valid.
 // It uses the following regexp `^[a-zA-Z0-9\-\_\/\.]+$` to validate the branch name with some additional checks that must satisfy the following rules:
 // 1. The branch name must have at least one character and must not be empty.
 // 2. The branch name cannot start with `/` or end with `/`, `.`, or whitespace.
@@ -467,7 +467,7 @@ var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
 // 4. The branch name cannot contain consecutive dots (`..`).
 // 5. The branch name cannot contain `@{`.
 // 6. The branch name cannot include the following characters: `~`, `^`, `:`, `?`, `*`, `[`, `\`, or `]`.
-func isValidGitBranchName(branch string) bool {
+func IsValidGitBranchName(branch string) bool {
 	if !basicGitBranchNameRegex.MatchString(branch) {
 		return false
 	}
@@ -483,7 +483,7 @@ func isValidGitBranchName(branch string) bool {
 }
 
 func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
-	if !isValidGitBranchName(branchName) {
+	if !IsValidGitBranchName(branchName) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusBadRequest,

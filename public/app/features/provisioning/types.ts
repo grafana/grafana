@@ -1,6 +1,7 @@
-import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning';
+import { GitHubRepositoryConfig, GitRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning';
 
 export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local' | 'workflows'> &
+  GitRepositoryConfig &
   GitHubRepositoryConfig &
   LocalRepositoryConfig & {
     readOnly: boolean;

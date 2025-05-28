@@ -32,6 +32,14 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         path: data.path,
       };
       break;
+    case 'git':
+      spec.git = {
+        url: data.url || '',
+        branch: data.branch,
+        token: data.token,
+        path: data.path,
+      };
+      break;
     case 'local':
       spec.local = {
         path: data.path,

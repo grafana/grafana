@@ -59,14 +59,39 @@ type GitHubRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
+type GitRepositoryConfig struct {
+	// The repository URL (e.g. `https://github.com/example/test`).
+	URL string `json:"url,omitempty"`
+
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
+
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
+}
+
 // RepositoryType defines the types of Repository
 // +enum
 type RepositoryType string
 
 // RepositoryType values
 const (
-	LocalRepositoryType  RepositoryType = "local"
+	// LocalRepositoryType is a local repository type
+	LocalRepositoryType RepositoryType = "local"
+	// GitHubRepositoryType is a GitHub repository type
 	GitHubRepositoryType RepositoryType = "github"
+	// GitRepositoryType is a pure git repository type
+	GitRepositoryType RepositoryType = "git"
 )
 
 type RepositorySpec struct {
@@ -93,8 +118,11 @@ type RepositorySpec struct {
 
 	// The repository on GitHub.
 	// Mutually exclusive with local | github.
-	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+
+	// The repository on a git server.
+	// Mutually exclusive with local | github
+	Git *GitRepositoryConfig `json:"git,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve
