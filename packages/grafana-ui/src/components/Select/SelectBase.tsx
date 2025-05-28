@@ -398,6 +398,7 @@ export function SelectBase<T, Rest = {}>({
         }
         styles={selectStyles}
         className={className}
+        autoWidth={width === 'auto'}
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
