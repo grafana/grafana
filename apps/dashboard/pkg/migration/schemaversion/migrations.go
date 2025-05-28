@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	MIN_VERSION    = 36
+	MIN_VERSION    = 35
 	LATEST_VERSION = 41
 )
 
