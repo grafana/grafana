@@ -12,3 +12,4 @@ export * from './slate-plugins';
 
 // Moved to `@grafana/schema`, in Grafana 9, this will be removed
 export * from './schema';
+export { getAvailableIcons } from './types';
