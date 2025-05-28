@@ -1329,6 +1329,7 @@
         "label": "Target folder"
       },
       "yaml": {
+        "description": "Select a Prometheus-compatible YAML file to import",
         "label": "Prometheus YAML file",
         "required-message": "Please select a file",
         "target-datasource": "Target data source",

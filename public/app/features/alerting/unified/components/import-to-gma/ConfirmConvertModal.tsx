@@ -89,7 +89,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
     if (importSource === 'datasource') {
       return filterRulerRulesConfig(rulesToBeImportedFromDatasource, namespace, ruleGroup);
     }
-    // for yaml, we dont filter the rules
+    // for yaml, we don't filter the rules
     return {
       filteredConfig: rulesToBeImportedFromYaml,
       someRulesAreSkipped: false,
@@ -112,7 +112,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
         <Text>
           {t(
             'alerting.import-to-gma.confirm-modal.loading-body',
-            'Preparing data to be imported.This can take a while...'
+            'Preparing data to be imported. This can take a while...'
           )}
         </Text>
       </Modal>
@@ -172,13 +172,13 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
           <Text>
             {importSource === 'yaml'
               ? t(
-                'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
-                'There are no rules to import. Please select a different yaml file.'
-              )
+                  'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
+                  'There are no rules to import. Please select a different yaml file.'
+                )
               : t(
-                'alerting.import-to-gma.confirm-modal.no-rules-body',
-                'There are no rules to import. Please select a different namespace or rule group.'
-              )}
+                  'alerting.import-to-gma.confirm-modal.no-rules-body',
+                  'There are no rules to import. Please select a different namespace or rule group.'
+                )}
           </Text>
         </Stack>
       </Modal>

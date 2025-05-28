@@ -116,6 +116,7 @@ const ImportToGMARules = () => {
                 invalid={!!errors.importSource}
                 error={errors.importSource?.message}
                 htmlFor="import-source"
+                noMargin
               >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
@@ -152,10 +153,12 @@ const ImportToGMARules = () => {
                     </Text>
                   </Box>
 
-                  <TargetFolderField />
-                  {importSource === 'datasource' && (
-                    <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName || undefined} />
-                  )}
+                  <Stack direction="column" gap={2}>
+                    <TargetFolderField />
+                    {importSource === 'datasource' && (
+                      <NamespaceAndGroupFilter rulesSourceName={selectedDatasourceName || undefined} />
+                    )}
+                  </Stack>
                 </Box>
 
                 <Divider />
@@ -245,6 +248,7 @@ function YamlFileUpload() {
       invalid={!!errors.yamlFile}
       error={errors.yamlFile?.message}
       description={t('alerting.import-to-gma.yaml.description', 'Select a Prometheus-compatible YAML file to import')}
+      noMargin
     >
       <Controller<ImportFormValues, 'yamlFile'>
         name="yamlFile"
@@ -289,6 +293,7 @@ function YamlTargetDataSourceField() {
       invalid={!!errors.yamlImportTargetDatasourceUID}
       error={errors.yamlImportTargetDatasourceUID?.message}
       htmlFor="yaml-target-data-source"
+      noMargin
     >
       <Controller<ImportFormValues, 'yamlImportTargetDatasourceUID'>
         name="yamlImportTargetDatasourceUID"
@@ -310,7 +315,10 @@ function YamlTargetDataSourceField() {
           />
         )}
         rules={{
-          required: { value: true, message: 'Please select a target data source' },
+          required: {
+            value: true,
+            message: t('alerting.import-to-gma.yaml.target-datasource-required', 'Please select a target data source'),
+          },
         }}
       />
     </Field>
@@ -336,6 +344,7 @@ function TargetDataSourceForRecordingRulesField() {
       htmlFor="recording-rules-target-data-source"
       error={errors.targetDatasourceUID?.message}
       invalid={!!errors.targetDatasourceUID?.message}
+      noMargin
     >
       <Controller<ImportFormValues, 'targetDatasourceUID'>
         render={({ field: { onChange, ref, ...field } }) => (
@@ -353,7 +362,10 @@ function TargetDataSourceForRecordingRulesField() {
         name="targetDatasourceUID"
         control={control}
         rules={{
-          required: { value: true, message: 'Please select a target data source' },
+          required: {
+            value: true,
+            message: t('alerting.recording-rules.target-data-source-required', 'Please select a target data source'),
+          },
         }}
       />
     </Field>
@@ -371,12 +383,10 @@ function TargetFolderField() {
   return (
     <Field
       label={t('alerting.import-to-gma.target-folder.label', 'Target folder')}
-      description={t(
-        'alerting.import-from-dsrules.description-folder-import-rules',
-        'The folder to import the rules to'
-      )}
-      error={errors.selectedDatasourceName?.message}
+      description={t('alerting.import-to-gma.target-folder.description', 'The folder to import the rules to')}
+      error={errors.targetFolder?.message}
       htmlFor="folder-picker"
+      noMargin
     >
       <Stack gap={2}>
         <Controller<ImportFormValues, 'targetFolder'>
@@ -426,6 +436,7 @@ function DataSourceField() {
       invalid={!!errors.selectedDatasourceName}
       error={errors.selectedDatasourceName?.message}
       htmlFor="datasource-picker"
+      noMargin
     >
       <Controller<ImportFormValues, 'selectedDatasourceName'>
         name="selectedDatasourceName"

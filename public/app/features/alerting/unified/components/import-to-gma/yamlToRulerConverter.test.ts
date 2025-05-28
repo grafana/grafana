@@ -1,6 +1,6 @@
-import { RulerRulesConfigDTO } from "app/types/unified-alerting-dto";
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { parseYamlToRulerRulesConfigDTO } from "./yamlToRulerConverter";
+import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
 describe('parseYamlToRulerRulesConfigDTO', () => {
   it('should parse valid YAML with namespace', () => {
@@ -80,7 +80,9 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
       namespace: test-namespace
       invalid: content
     `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow('Invalid YAML format: missing or invalid groups array');
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array'
+    );
   });
 
   it('should throw error for invalid group format', () => {
@@ -89,7 +91,9 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
       groups:
         - invalid: group
     `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow('Invalid group format: missing name or rules array');
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array at index 0'
+    );
   });
 
   it('should throw error for invalid rule format', () => {
@@ -100,7 +104,9 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
           rules:
             - invalid: rule
     `;
-    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow('Invalid group format: missing name or rules array');
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array at index 0'
+    );
   });
 
   it('should handle multiple groups and rules', () => {

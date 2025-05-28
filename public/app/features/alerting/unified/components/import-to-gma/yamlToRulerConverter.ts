@@ -1,6 +1,11 @@
-import { load } from "js-yaml";
+import { load } from 'js-yaml';
 
-import { RulerRulesConfigDTO } from "app/types/unified-alerting-dto";
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+
+interface PrometheusYamlFile {
+  namespace?: string;
+  groups: Group[];
+}
 
 interface Group {
   name: string;
@@ -15,43 +20,32 @@ interface Rule {
   annotations?: Record<string, string>;
 }
 
-function isValidString(value: unknown): value is string {
-  return typeof value === 'string';
-}
-
 function isValidObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && Boolean(value);
 }
 
-function hasRequiredProperties(obj: Record<string, unknown>, properties: string[]): boolean {
-  return properties.every(prop => prop in obj);
-}
-
-function isRule(obj: unknown): obj is Rule {
-  if (!isValidObject(obj)) {
+function isRule(yamlRule: unknown): yamlRule is Rule {
+  if (!isValidObject(yamlRule)) {
     return false;
   }
 
-  const requiredProps = ['alert', 'expr'];
-  if (!hasRequiredProperties(obj, requiredProps)) {
-    return false;
-  }
+  const alert = 'alert' in yamlRule && typeof yamlRule.alert === 'string' ? yamlRule.alert : undefined;
+  const expr = 'expr' in yamlRule && typeof yamlRule.expr === 'string' ? yamlRule.expr : undefined;
 
-  const rule = obj as unknown as Rule;
-  if (!isValidString(rule.alert) || !isValidString(rule.expr)) {
+  if (!alert || !expr) {
     return false;
   }
 
   // Check optional properties if they exist
-  if ('for' in rule && !isValidString(rule.for)) {
+  if ('for' in yamlRule && typeof yamlRule.for !== 'string') {
     return false;
   }
 
-  if ('labels' in rule && !isValidObject(rule.labels)) {
+  if ('labels' in yamlRule && !isValidObject(yamlRule.labels)) {
     return false;
   }
 
-  if ('annotations' in rule && !isValidObject(rule.annotations)) {
+  if ('annotations' in yamlRule && !isValidObject(yamlRule.annotations)) {
     return false;
   }
 
@@ -63,49 +57,85 @@ function isGroup(obj: unknown): obj is Group {
     return false;
   }
 
-  const requiredProps = ['name', 'rules'];
-  if (!hasRequiredProperties(obj, requiredProps)) {
+  const name = 'name' in obj && typeof obj.name === 'string' ? obj.name : undefined;
+  const rules = 'rules' in obj && Array.isArray(obj.rules) ? obj.rules : undefined;
+
+  if (!name || !rules) {
     return false;
   }
 
-  const group = obj as unknown as Group;
-  if (!isValidString(group.name) || !Array.isArray(group.rules)) {
-    return false;
+  return rules.every(isRule);
+}
+
+type ValidationResult = { isValid: true; data: PrometheusYamlFile } | { isValid: false; error: string };
+
+function validatePrometheusYamlFile(obj: unknown): ValidationResult {
+  if (!isValidObject(obj)) {
+    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
   }
 
-  return group.rules.every(isRule);
+  if (!('groups' in obj) || ('groups' in obj && !Array.isArray(obj.groups))) {
+    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
+  }
+
+  // Check if groups is an array
+  if (!Array.isArray(obj.groups)) {
+    return { isValid: false, error: 'Invalid YAML format: missing or invalid groups array' };
+  }
+
+  // Check optional namespace property if it exists
+  if ('namespace' in obj && typeof obj.namespace !== 'string') {
+    return { isValid: false, error: 'Invalid YAML format: namespace must be a string' };
+  }
+
+  // If we get here, the object is valid - we can safely use it
+  // Since we validated the entire structure above, we know obj conforms to PrometheusYamlFile
+  const validatedGroups: Group[] = obj.groups.map((group, index) => {
+    if (isGroup(group)) {
+      return group;
+    }
+    throw new Error(`Invalid YAML format: missing or invalid groups array at index ${index}`);
+  });
+
+  const prometheusFile: PrometheusYamlFile = {
+    groups: validatedGroups,
+  };
+
+  if ('namespace' in obj && typeof obj.namespace === 'string') {
+    prometheusFile.namespace = obj.namespace;
+  }
+
+  return {
+    isValid: true,
+    data: prometheusFile,
+  };
 }
 
 export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
-
   const obj = load(yamlAsString);
-  if (!obj || typeof obj !== 'object' || !('groups' in obj) || !Array.isArray((obj as { groups: unknown[] }).groups)) {
-    throw new Error('Invalid YAML format: missing or invalid groups array');
+  const validation = validatePrometheusYamlFile(obj);
+
+  if (!validation.isValid) {
+    throw new Error(validation.error);
   }
 
-  const namespace = 'namespace' in obj && isValidString(obj.namespace) ? obj.namespace : defaultNamespace;
+  // TypeScript now knows validation.data exists and is PrometheusYamlFile
+  const prometheusFile = validation.data;
+  const namespace = prometheusFile.namespace ?? defaultNamespace;
 
   const data: RulerRulesConfigDTO = {};
-  data[namespace] = (obj as { groups: unknown[] }).groups.map((group: unknown) => {
-    if (!isGroup(group)) {
-      throw new Error('Invalid group format: missing name or rules array');
-    }
-
+  data[namespace] = prometheusFile.groups.map((group) => {
     return {
       name: group.name,
-      rules: group.rules.map((rule: unknown) => {
-        if (!isRule(rule)) {
-          throw new Error('Invalid rule format: missing alert or expr');
-        }
-
+      rules: group.rules.map((rule) => {
         return {
           alert: rule.alert,
           expr: rule.expr,
           for: rule.for,
           labels: rule.labels,
-          annotations: rule.annotations
+          annotations: rule.annotations,
         };
-      })
+      }),
     };
   });
 
