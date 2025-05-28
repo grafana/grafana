@@ -160,9 +160,6 @@ This Flask-based Python script simulates a service that:
 
 ### Objective
 
-Use case is defined by the demo
-Elaborate a typical simple use case of monitoring sys metrics
-
 <!-- INTERACTIVE page step2.md END -->
 <!-- INTERACTIVE page step3.md START -->
 
@@ -211,9 +208,7 @@ The time-series visualization supports alert rules to provide more context in th
 
    {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-   Both metrics return labels that xxxxxxxxxx
-
-   1. Click **Save dashboard**. Name it: `system-metrics`.
+   1. Click **Save dashboard**. Name it: `cpu-and-memory-metrics`.
 
    We have our time-series panel ready. Feel free to combine metrics with labels such as `instance = “flask-staging:5000”`, or other labels like `deployment="prod-us-cs30"`.
 
@@ -286,6 +281,9 @@ You have successfully linked this alert rule to your visualization!
 
 When the CPU usage exceeds the defined threshold, an annotation will appear on the graph to mark the event. Similarly, when the alert is resolved, another annotation will be added to indicate the moment it returned to normal.
 
+<!-- INTERACTIVE page step5.md END -->
+<!-- INTERACTIVE page step6.md START -->
+
 ## Step 3: Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
@@ -295,6 +293,9 @@ When the CPU usage exceeds the defined threshold, an annotation will appear on t
 
 Check how your dashboard looks now that both alerts have been linked to your dashboard panel.
 
+<!-- INTERACTIVE page step6.md END -->
+<!-- INTERACTIVE page step7.md START -->
+
 ## Visualizing metrics and alert annotations
 
 {{< figure src="/media/docs/alerting/panel-2-queries-and-alerts.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
@@ -303,9 +304,8 @@ After the alert rules are created, they should appear as **health indicators** (
 
 Finally, you should also receive notifications at the contact point associated.
 
+<!-- INTERACTIVE page step7.md END -->
 <!-- INTERACTIVE page finish.md START -->
-
-## Conclusion
 
 ## Learn more in [Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
 
