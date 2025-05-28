@@ -8,7 +8,7 @@ import (
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 )
 
 const (
@@ -16,6 +16,7 @@ const (
 )
 
 type unsignedStep struct {
+	pluginIndex map[string]repo.PluginInfo
 }
 
 func (s *unsignedStep) Title() string {
@@ -34,26 +35,53 @@ func (s *unsignedStep) ID() string {
 	return UnsignedStepID
 }
 
-func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
-	p, ok := i.(pluginstore.Plugin)
+func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
+	pi, ok := it.(*pluginItem)
 	if !ok {
-		return nil, fmt.Errorf("invalid item type %T", i)
+		return nil, fmt.Errorf("invalid item type %T", it)
 	}
 
-	if p.Signature == plugins.SignatureStatusUnsigned ||
-		p.Signature == plugins.SignatureStatusModified ||
-		p.Signature == plugins.SignatureStatusInvalid {
+	p := pi.Plugin
+
+	if p != nil &&
+		(p.Signature == plugins.SignatureStatusUnsigned ||
+			p.Signature == plugins.SignatureStatusModified ||
+			p.Signature == plugins.SignatureStatusInvalid) {
+		// This will only happen in dev mode or if the plugin is in the unsigned allow list
+		links := []advisor.CheckErrorLink{}
+		if _, ok := s.pluginIndex[p.ID]; ok {
+			links = append(links, advisor.CheckErrorLink{
+				Message: "View plugin",
+				Url:     fmt.Sprintf("/plugins/%s", p.ID),
+			})
+		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
-			advisor.CheckReportFailureSeverityHigh,
+			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			p.Name,
 			p.ID,
-			[]advisor.CheckErrorLink{
-				{
-					Message: "View plugin",
-					Url:     fmt.Sprintf("/plugins/%s", p.ID),
-				},
-			},
+			links,
+		)}, nil
+	}
+
+	pluginErr := pi.Err
+	if pluginErr != nil &&
+		(pluginErr.ErrorCode == plugins.ErrorCodeSignatureMissing ||
+			pluginErr.ErrorCode == plugins.ErrorCodeSignatureInvalid ||
+			pluginErr.ErrorCode == plugins.ErrorCodeSignatureModified) {
+		links := []advisor.CheckErrorLink{}
+		if _, ok := s.pluginIndex[pluginErr.PluginID]; ok {
+			links = append(links, advisor.CheckErrorLink{
+				Message: "View plugin",
+				Url:     fmt.Sprintf("/plugins/%s", pluginErr.PluginID),
+			})
+		}
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
+			advisor.CheckReportFailureSeverityHigh,
+			s.ID(),
+			pluginErr.PluginID,
+			pluginErr.PluginID,
+			links,
 		)}, nil
 	}
 

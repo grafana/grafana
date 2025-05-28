@@ -5,6 +5,7 @@ import (
 	sysruntime "runtime"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -18,22 +19,25 @@ func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
 	updateChecker pluginchecker.PluginUpdateChecker,
+	pluginErrorResolver plugins.ErrorResolver,
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		PluginStore:    pluginStore,
-		PluginRepo:     pluginRepo,
-		GrafanaVersion: grafanaVersion,
-		updateChecker:  updateChecker,
+		PluginStore:         pluginStore,
+		PluginRepo:          pluginRepo,
+		GrafanaVersion:      grafanaVersion,
+		updateChecker:       updateChecker,
+		pluginErrorResolver: pluginErrorResolver,
 	}
 }
 
 type check struct {
-	PluginStore    pluginstore.Store
-	PluginRepo     repo.Service
-	updateChecker  pluginchecker.PluginUpdateChecker
-	GrafanaVersion string
-	pluginIndex    map[string]repo.PluginInfo
+	PluginStore         pluginstore.Store
+	PluginRepo          repo.Service
+	updateChecker       pluginchecker.PluginUpdateChecker
+	pluginErrorResolver plugins.ErrorResolver
+	GrafanaVersion      string
+	pluginIndex         map[string]repo.PluginInfo
 }
 
 func (c *check) ID() string {
@@ -44,12 +48,38 @@ func (c *check) Name() string {
 	return "plugin"
 }
 
+type pluginItem struct {
+	Plugin *pluginstore.Plugin
+	Err    *plugins.Error
+}
+
 func (c *check) Items(ctx context.Context) ([]any, error) {
 	ps := c.PluginStore.Plugins(ctx)
-	res := make([]any, len(ps))
-	for i, p := range ps {
-		res[i] = p
+	resMap := map[string]*pluginItem{}
+	for _, p := range ps {
+		resMap[p.ID] = &pluginItem{
+			Plugin: &p,
+			Err:    c.pluginErrorResolver.PluginError(ctx, p.ID),
+		}
 	}
+
+	pluginErrors := c.pluginErrorResolver.PluginErrors(ctx)
+	for _, e := range pluginErrors {
+		if _, exists := resMap[e.PluginID]; exists {
+			resMap[e.PluginID].Err = e
+		} else {
+			resMap[e.PluginID] = &pluginItem{
+				Plugin: nil,
+				Err:    e,
+			}
+		}
+	}
+
+	res := make([]any, 0, len(resMap))
+	for _, p := range resMap {
+		res = append(res, p)
+	}
+
 	return res, nil
 }
 
@@ -58,7 +88,10 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	if !exists {
 		return nil, nil
 	}
-	return p, nil
+	return &pluginItem{
+		Plugin: &p,
+		Err:    c.pluginErrorResolver.PluginError(ctx, p.ID),
+	}, nil
 }
 
 func (c *check) Init(ctx context.Context) error {
@@ -94,6 +127,8 @@ func (c *check) Steps() []checks.Step {
 			updateChecker:  c.updateChecker,
 			pluginIndex:    c.pluginIndex,
 		},
-		&unsignedStep{},
+		&unsignedStep{
+			pluginIndex: c.pluginIndex,
+		},
 	}
 }

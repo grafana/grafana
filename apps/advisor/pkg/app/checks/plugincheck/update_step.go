@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
@@ -38,13 +37,17 @@ func (s *updateStep) ID() string {
 	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
-	p, ok := i.(pluginstore.Plugin)
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
+	pi, ok := it.(*pluginItem)
 	if !ok {
-		return nil, fmt.Errorf("invalid item type %T", i)
+		return nil, fmt.Errorf("invalid item type %T", it)
+	}
+	p := pi.Plugin
+	if p == nil {
+		return nil, nil
 	}
 
-	if !s.updateChecker.IsUpdatable(ctx, p) {
+	if !s.updateChecker.IsUpdatable(ctx, *p) {
 		return nil, nil
 	}
 
