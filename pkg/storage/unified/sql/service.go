@@ -323,7 +323,7 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	return func(ctx context.Context) (context.Context, error) {
 		r, err := identity.GetRequester(ctx)
-		fmt.Println("requester in ctx before authenticating", r)
+		fmt.Println("requester in ctx before authenticating", r, err)
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
 			fallback:      fallback,
