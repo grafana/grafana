@@ -12,6 +12,7 @@ import {
   InterpolateFunction,
   FieldType,
   DataFrameWithValue,
+  SelectableValue,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -39,11 +40,15 @@ export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
-export type FilterType = {
-  [key: string]: {
+export type FilterType = Record<
+  string,
+  {
     filteredSet: Set<string>;
-  };
-};
+    filtered?: Array<SelectableValue<unknown>>;
+    searchFilter?: string;
+    operator?: SelectableValue<string>;
+  }
+>;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {

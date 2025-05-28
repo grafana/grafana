@@ -489,8 +489,8 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 export interface MapFrameToGridOptions extends TableNGProps {
   columnTypes: ColumnTypes;
   columnWidth: number | string;
-  crossFilterOrder: React.MutableRefObject<string[]>;
-  crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
+  crossFilterOrder: string[];
+  crossFilterRows: { [key: string]: TableRow[] };
   defaultLineHeight: number;
   defaultRowHeight: number;
   expandedRows: number[];
@@ -500,6 +500,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
   ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
+  renderedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -595,8 +596,8 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 }
 
 /** Returns true if the DataFrame contains nested frames */
-export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
-  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+export const getIsNestedTable = (fields: Field[]): boolean =>
+  fields.some(({ type }) => type === FieldType.nestedFrames);
 
 /** Processes nested table rows */
 export const processNestedTableRows = (
