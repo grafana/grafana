@@ -797,7 +797,9 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should handle endpoint errors and set empty metadata', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
-      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockRejectedValue(new Error('Endpoint not found'));
+      const queryMetadataSpy = jest
+        .spyOn(provider as any, '_queryMetadata')
+        .mockRejectedValue(new Error('Endpoint not found'));
 
       const result = await provider.queryMetricsMetadata();
 
