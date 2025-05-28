@@ -14,6 +14,7 @@ import {
   Resource,
   ResourceClient,
   ResourceForCreate,
+  ListOptions,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -164,5 +165,15 @@ export class K8sDashboardV2API
       url,
       slug: '',
     };
+  }
+
+  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
+    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
+    // reset the resource version to create a new resource
+    dashboard.metadata.resourceVersion = '0';
+    return this.client.create(dashboard);
   }
 }

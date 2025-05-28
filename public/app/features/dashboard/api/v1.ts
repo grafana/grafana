@@ -39,10 +39,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
   }
 
-  listDashboards(options: ListOptions) {
-    return this.client.list(options); //.then((v) => this.asSaveDashboardResponseDTO(v));
-  }
-
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
     const obj: ResourceForCreate<DashboardDataDTO> = {
@@ -175,5 +171,21 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       throw e;
     }
+  }
+
+  /**
+   * List all soft deleted dashboards
+   */
+  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
+    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  /**
+   * Restore a deleted dashboard by re-creating it
+   */
+  restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
+    // reset the resource version to create a new resource
+    dashboard.metadata.resourceVersion = '0';
+    return this.client.create(dashboard);
   }
 }

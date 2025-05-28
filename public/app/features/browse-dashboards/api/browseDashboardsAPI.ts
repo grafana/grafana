@@ -10,12 +10,16 @@ import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
+import {
+  getDashboardsApiVersion,
+  isDashboardV2Resource,
+  isV1DashboardCommand,
+  isV2DashboardCommand,
+} from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
 import {
-  DashboardDataDTO,
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
@@ -25,8 +29,6 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { getAPIBaseURL } from '../../../api/utils';
-import { Resource, ResourceList } from '../../apiserver/types';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -424,24 +426,25 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      // query: ({ dashboardUID, targetFolderUID }) => ({
-      //   url: `/dashboards/uid/${dashboardUID}/trash`,
-      //   body: {
-      //     folderUid: targetFolderUID,
-      //   },
-      //   method: 'PATCH',
-      // }),
-      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
-        const baseURL = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards`;
-        const dashboards = await getBackendSrv().get<ResourceList<DashboardDataDTO>>(
-          `${baseURL}/?labelSelector=grafana.app/get-trash=true`
-        );
+      queryFn: async ({ dashboardUID }, _api, _extraOptions) => {
+        // if (!['v1', 'v2'].includes(getDashboardsApiVersion())) {
+        //   return { data: undefined };
+        // }
+
+        // if (!('listDeletedDashboards' in api && 'restoreDashboard' in api)) {
+        //   return { data: undefined };
+        // }
+        const version = getDashboardsApiVersion();
+        if (version === 'legacy' || version === 'unified') {
+          return { data: undefined };
+        }
+        const api = getDashboardAPI(version);
+        const dashboards = await api.listDeletedDashboards({});
         const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
         if (dashboard) {
-          dashboard.metadata.resourceVersion = '';
-          const response = await getBackendSrv().post<Resource<DashboardDataDTO>>(baseURL, dashboard);
-
-          const name = response.metadata.name;
+          // const response = await getBackendSrv().post<Resource<DashboardDataDTO>>(baseURL, dashboard);
+          const response = await api.restoreDashboard(dashboard);
+          const name = response.spec.title;
 
           if (name) {
             appEvents.publish({
@@ -498,5 +501,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;

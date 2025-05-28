@@ -1,11 +1,12 @@
 import { Dashboard } from '@grafana/schema/dist/esm/index';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
+import { Resource } from '../../apiserver/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
-import { isV1DashboardCommand, isV2DashboardCommand } from './utils';
+import { isDashboardV2Resource, isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
@@ -46,5 +47,14 @@ export class UnifiedDashboardAPI
   // Delete operation for any version is supported in the v1 client
   async deleteDashboard(uid: string, showSuccessAlert: boolean) {
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
+  }
+
+  async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
+    if (isDashboardV2Resource(dashboard)) {
+      // If the dashboard is in v2 format, we use the v2 client
+      return await this.v2Client.restoreDashboard(dashboard);
+    }
+
+    return await this.v1Client.restoreDashboard(dashboard);
   }
 }

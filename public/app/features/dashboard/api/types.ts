@@ -1,6 +1,6 @@
 import { UrlQueryMap } from '@grafana/data';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
-import { Resource } from 'app/features/apiserver/types';
+import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
 
@@ -13,6 +13,10 @@ export interface DashboardAPI<G, T> {
   saveDashboard(options: SaveDashboardCommand<T>): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
+  /** List all soft deleted dashboards */
+  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>): Promise<ResourceList<T>>;
+  /**  Restore a deleted dashboard by re-creating it */
+  restoreDashboard(dashboard: Resource<T>): Promise<Resource<T>>;
 }
 
 // Implemented using /api/dashboards/*
