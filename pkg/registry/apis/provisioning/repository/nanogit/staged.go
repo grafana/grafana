@@ -11,7 +11,7 @@ import (
 )
 
 // stagedGitRepository implements repository.ClonedRepository by wrapping a gitRepository
-// HACK: this is a hack until we can did the go-git cloned implementation
+// HACK: this is a hack until we can delete the go-git cloned implementation
 // once that happens we could do more magic here.
 type stagedGitRepository struct {
 	*gitRepository
