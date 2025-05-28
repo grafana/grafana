@@ -57,6 +57,7 @@ type RoutingTreeSpec struct {
 func NewRoutingTreeSpec() *RoutingTreeSpec {
 	return &RoutingTreeSpec{
 		Defaults: *NewRoutingTreeRouteDefaults(),
+		Routes:   []RoutingTreeRoute{},
 	}
 }
 

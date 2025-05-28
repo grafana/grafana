@@ -24,5 +24,8 @@ type ReceiverMetadata struct {
 
 // NewReceiverMetadata creates a new ReceiverMetadata object.
 func NewReceiverMetadata() *ReceiverMetadata {
-	return &ReceiverMetadata{}
+	return &ReceiverMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

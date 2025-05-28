@@ -893,6 +893,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the Playlist",
             "default": {},
             "allOf": [
               {
