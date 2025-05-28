@@ -34,7 +34,6 @@ import {
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
-import { UserStorage } from './userStorage';
 
 /**
  * @internal
@@ -122,11 +121,8 @@ class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
-  protected userStorage: UserStorage;
-
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
-    this.userStorage = new UserStorage(instanceSettings.type);
   }
 
   /**
