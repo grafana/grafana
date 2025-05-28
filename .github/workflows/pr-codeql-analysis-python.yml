@@ -30,10 +30,10 @@ jobs:
       run: |
         if [ -z "$(find . -name '*.py' -type f)" ]; then
           echo "No Python files found, skipping analysis"
-          echo "skip=true" >> $GITHUB_OUTPUT
+          echo "skip=true" >> "$GITHUB_OUTPUT"
         else
           echo "Python files found, proceeding with analysis"
-          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "skip=false" >> "$GITHUB_OUTPUT"
         fi
 
     # Initializes the CodeQL tools for scanning.
