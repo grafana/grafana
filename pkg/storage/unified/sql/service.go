@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -321,13 +322,15 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	return func(ctx context.Context) (context.Context, error) {
+		r, err := identity.GetRequester(ctx)
+		fmt.Println("requester in ctx before authenticating", r)
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
 			fallback:      fallback,
 			tracer:        tracer,
 			metrics:       newMetrics(reg),
 		}
-		ctx, err := a.Authenticate(ctx)
+		ctx, err = a.Authenticate(ctx)
 		fmt.Println("response from authenticate ctx", ctx)
 		fmt.Println("response from authenticate ", err)
 		return ctx, err

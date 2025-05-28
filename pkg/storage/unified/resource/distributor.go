@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -107,6 +108,8 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 }
 
 func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	requester, err := identity.GetRequester(ctx)
+	ds.log.Info("requester in ctx before authenticating", "here", requester)
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Read")
 	if err != nil {
 		return nil, err
