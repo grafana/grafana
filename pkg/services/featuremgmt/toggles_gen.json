@@ -2917,7 +2917,8 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-11-14T20:08:03Z"
+        "creationTimestamp": "2024-11-14T20:08:03Z",
+        "deletionTimestamp": "2025-05-28T13:44:54Z"
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
