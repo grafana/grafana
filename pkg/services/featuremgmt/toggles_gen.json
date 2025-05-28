@@ -2954,25 +2954,6 @@
     },
     {
       "metadata": {
-        "name": "rotateTokensInTransaction",
-        "resourceVersion": "1748363818965",
-        "creationTimestamp": "2025-05-27T16:30:53Z",
-        "deletionTimestamp": "2025-05-28T11:24:10Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Run full token rotation inside a transaction",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-27T07:58:25Z"

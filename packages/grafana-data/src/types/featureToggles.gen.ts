@@ -1028,11 +1028,6 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Run full token rotation inside a transaction
-  * @default false
-  */
-  rotateTokensInTransaction?: boolean;
-  /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
   * @default false
   */
