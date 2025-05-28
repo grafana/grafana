@@ -1,5 +1,6 @@
 import { dateTime, TimeRange } from '@grafana/data';
 
+import { PrometheusDatasource } from './datasource';
 import { LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
 
@@ -29,13 +30,12 @@ describe('LabelsApiClient', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    client = new LabelsApiClient(
-      mockRequest,
-      PrometheusCacheLevel.Low,
-      mockGetAdjustedInterval,
-      mockGetTimeRangeParams,
-      mockInterpolateString
-    );
+    client = new LabelsApiClient(mockRequest, {
+      cacheLevel: PrometheusCacheLevel.Low,
+      getAdjustedInterval: mockGetAdjustedInterval,
+      getTimeRangeParams: mockGetTimeRangeParams,
+      interpolateString: mockInterpolateString,
+    } as unknown as PrometheusDatasource);
   });
 
   describe('start', () => {
@@ -139,13 +139,12 @@ describe('SeriesApiClient', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    client = new SeriesApiClient(
-      mockRequest,
-      PrometheusCacheLevel.Low,
-      mockGetAdjustedInterval,
-      mockGetTimeRangeParams,
-      mockInterpolateString
-    );
+    client = new SeriesApiClient(mockRequest, {
+      cacheLevel: PrometheusCacheLevel.Low,
+      getAdjustedInterval: mockGetAdjustedInterval,
+      getTimeRangeParams: mockGetTimeRangeParams,
+      interpolateString: mockInterpolateString,
+    } as unknown as PrometheusDatasource);
   });
 
   describe('start', () => {

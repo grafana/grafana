@@ -1,11 +1,11 @@
-import { ScopedVars, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { getDefaultCacheHeaders } from './caching';
 import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
+import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
-import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support } from './utf8_support';
 
 export interface ResourceApiClient {
@@ -27,10 +27,7 @@ const METRIC_LABEL = '__name__';
 abstract class BaseResourceClient {
   constructor(
     protected readonly request: (url: string, params?: any, options?: Partial<BackendSrvRequest>) => Promise<any>,
-    protected readonly cacheLevel: PrometheusCacheLevel,
-    protected readonly getAdjustedInterval: (timeRange: TimeRange) => { start: string; end: string },
-    protected readonly getTimeRangeParams: (timeRange: TimeRange) => { start: string; end: string },
-    protected readonly interpolateString: (string: string, scopedVars?: ScopedVars) => string
+    protected readonly datasource: PrometheusDatasource
   ) {}
 }
 
@@ -46,7 +43,7 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    this.metrics = await this.queryLabelKeys(timeRange, METRIC_LABEL);
+    this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL);
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
@@ -66,10 +63,10 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     let url = '/api/v1/labels';
-    const timeParams = getRangeSnapInterval(this.cacheLevel, timeRange);
+    const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
 
-    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.cacheLevel));
+    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
       return this.labelKeys.slice();
@@ -93,12 +90,12 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const timeParams = this.getAdjustedInterval(timeRange);
+    const timeParams = this.datasource.getAdjustedInterval(timeRange);
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
-    const interpolatedName = this.interpolateString(labelKey);
+    const interpolatedName = this.datasource.interpolateString(labelKey);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
-    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.cacheLevel));
+    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     return value ?? [];
   };
 }
@@ -121,9 +118,9 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
    * @param {string} limit - Maximum number of series to return
    */
   private _fetchAllSeries = async (timeRange: TimeRange, match: string, limit: string = DEFAULT_SERIES_LIMIT) => {
-    const timeParams = this.getTimeRangeParams(timeRange);
+    const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': match, limit };
-    return await this.request('/api/v1/series', searchParams, getDefaultCacheHeaders(this.cacheLevel));
+    return await this.request('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {

@@ -530,28 +530,13 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient: ResourceApiClient;
 
-  constructor(datasource: PrometheusDatasource) {
+  constructor(public datasource: PrometheusDatasource) {
     super(datasource);
 
-    this.datasource = datasource;
-
-    const { cacheLevel, getAdjustedInterval, getTimeRangeParams, interpolateString } = this.datasource;
     if (this.datasource.hasLabelsMatchAPISupport()) {
-      this._resourceClient = new LabelsApiClient(
-        this.request,
-        cacheLevel,
-        getAdjustedInterval,
-        getTimeRangeParams,
-        interpolateString
-      );
+      this._resourceClient = new LabelsApiClient(this.request, this.datasource);
     } else {
-      this._resourceClient = new SeriesApiClient(
-        this.request,
-        cacheLevel,
-        getAdjustedInterval,
-        getTimeRangeParams,
-        interpolateString
-      );
+      this._resourceClient = new SeriesApiClient(this.request, this.datasource);
     }
   }
 
@@ -565,12 +550,20 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-
     await Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    return this._backwardCompatibleStart(timeRange);
+  };
 
-    // Until we remove old API we need to have backward compatibility
+  /**
+   * This private method exists to make sure the old class will be functional until we remove it.
+   * When we remove old class (PromQlLanguageProvider) we should remove this method too.
+   */
+  private _backwardCompatibleStart = async (timeRange: TimeRange) => {
+    this.metricsMetadata = this.retrieveMetricsMetadata();
     this.metrics = this.retrieveMetrics();
-    return Promise.resolve([]);
+    this.histogramMetrics = this.retrieveHistogramMetrics();
+    this.labelKeys = this.retrieveLabelKeys();
+    return [];
   };
 
   /**
@@ -611,10 +604,6 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
     this._metricsMetadata = await this._queryMetadata();
-
-    // Until we remove old API we need to have backward compatibility
-    this.metricsMetadata = this._metricsMetadata;
-
     return this._metricsMetadata;
   };
 

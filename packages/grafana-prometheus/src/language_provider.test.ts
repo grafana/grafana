@@ -767,7 +767,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(resourceClientStartSpy).toHaveBeenCalled();
       expect(queryMetadataSpy).toHaveBeenCalled();
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
-      expect(provider.metricsMetadata).toEqual(mockMetadata);
+      expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
     });
   });
 
@@ -782,7 +782,6 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(queryMetadataSpy).toHaveBeenCalled();
       expect(result).toEqual(mockMetadata);
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
-      expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
     });
   });
 
