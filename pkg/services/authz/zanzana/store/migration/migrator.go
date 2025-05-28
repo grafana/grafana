@@ -61,10 +61,10 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 	}
 
 	sec := cfg.Raw.Section("database")
-	return m.Start(
-		sec.Key("migration_locking").MustBool(true),
-		sec.Key("locking_attempt_timeout_sec").MustInt(),
-	)
+	lockingEnabled := sec.Key("migration_locking").MustBool(false)
+	lockTimeout := sec.Key("locking_attempt_timeout_sec").MustInt(30)
+
+	return m.Start(lockingEnabled, lockTimeout)
 }
 
 // constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs
