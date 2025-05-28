@@ -85,7 +85,7 @@ The Apps Approach creates the same Resource API endpoints (`/apis/...`) as the R
 
 ### 2.3 Kubernetes API Compatibility
 
-Grafana's Resource APIs adopt many Kubernetes API conventions but is **not strictly conformant** to the official Kubernetes API specification. We diverge from the Kubernetes architecture and Kubernetes API specification when needed for Grafana's own unique requirements or to avoid operational complexity. Each architectural difference can surface as behavioral or wire-level incompatibility with the vanilla Kubernetes API.
+Grafana's Resource APIs adopts many Kubernetes API conventions but is **not strictly conformant** to the official Kubernetes API specification. We diverge from the Kubernetes architecture and Kubernetes API specification when needed for Grafana's own unique requirements or to avoid operational complexity. Each architectural difference can surface as behavioral or wire-level incompatibility with the vanilla Kubernetes API.
 
 In other words, even when the URLs / resources look Kubernetes-like, some API Server guarantees might not hold. We are adopting Kubernetes API patterns, general structure, and declarative style. A strict, byte-for-byte conformance to the API spec is currently not a goal.
 
@@ -237,13 +237,13 @@ graph TB
 
 Both API styles will coexist for a while. How they interact depends on the specific resource and the stage of migration. The migration generally follows these steps per resource type:
 
-1. **Define schema:** Define the resource using CUE (Apps Approach). Introduce an Alpha version (`v0alpha1`).
+1. **Define schema:** Define the resource using CUE (Apps Approach). Introduce an Alpha version (`v1alpha1`).
 2. **Implement handlers:** Create Resource API handlers (CRUD) interacting with legacy storage. The goal for the initial alpha version is to expose the current functionality of the legacy API through the new Resource API structure, using CUE for schema definition, rather than to undertake a full resource/data model redesign.
 3. **Add feature flag:** Create a flag (e.g., `kubernetesClient<Resource>`), initially off.
 4. **Implement routing/translation:** Modify Legacy API handlers to check the flag and delegate calls to the Resource API or storage layer when active.
-5. **Testing & promotion (Beta):** Enable the flag by default after testing. Promote API to Beta (`v0beta1`). Beta APIs aim for stability but may have breaking changes following a deprecation policy.
+5. **Testing & promotion (Beta):** Enable the flag by default after testing. Promote API to Beta (`v1beta1`). Beta APIs aim for stability but may have breaking changes following a deprecation policy.
 6. **Migrate data to Unified Storage:** Under another feature flag, gradually change the source of truth from legacy to unified storage.
-7. **Stabilization (GA):** Promote to GA (`v0`) when stable. GA APIs provide strong stability guarantees.
+7. **Stabilization (GA):** Promote to GA (`v1`) when stable. GA APIs provide strong stability guarantees.
 8. **Deprecate Legacy API:** Officially deprecate the corresponding Legacy API endpoint after the Resource API reaches GA. Communicate deprecation timelines (e.g., deprecated in X, removed in Y).
 9. **Remove Legacy API:** Remove the Legacy API endpoint after the deprecation period.
 
