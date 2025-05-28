@@ -54,15 +54,15 @@ describe('spanAncestorIdsSpy', () => {
     references: [
       {
         span: firstParentSpan,
-        referenceType: 'CHILD_OF',
+        refType: 'CHILD_OF',
       },
       {
         span: secondParentSpan,
-        referenceType: 'CHILD_OF'
+        refType: 'CHILD_OF'
       },
     ],
   };
-  
+
   const expectedAncestorIds = [firstParentSpan.spanID, firstParentSecondGrandparentSpan.spanID, rootSpan.spanID];
 
   it('returns an empty array if given falsy span', () => {
@@ -105,15 +105,17 @@ describe('spanAncestorIdsSpy', () => {
                 span: {
                   ...firstParentSecondGrandparentSpan,
                   references: [
-                    ...firstParentSecondGrandparentSpan.references[0],
-                    span: {
-                      ...rootSpan,
-                      references: [
-                        {
-                          span: span,
-                          refType: 'FOLLOWS_FROM',
-                        },
-                      ],
+                    {
+                      ...firstParentSecondGrandparentSpan.references[0],
+                      span: {
+                        ...rootSpan,
+                        references: [
+                          {
+                            span: span, // This isn't a true infinite loop, but it's good enough to validate the test
+                            refType: 'FOLLOWS_FROM',
+                          },
+                        ],
+                      },
                     },
                   ],
                 },
