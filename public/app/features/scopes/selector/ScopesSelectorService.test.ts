@@ -1,9 +1,9 @@
-import { Scope, ScopeNode } from '@grafana/data';
+import { Scope, ScopeNode, Store } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
-import { ScopesSelectorService } from './ScopesSelectorService';
+import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
 
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
@@ -23,10 +23,25 @@ describe('ScopesSelectorService', () => {
     },
   };
 
+  const mockScope2: Scope = {
+    metadata: {
+      name: 'recent-scope',
+    },
+    spec: {
+      title: 'test-scope',
+      type: 'scope',
+      category: 'scope',
+      description: 'test scope',
+      filters: [],
+    },
+  };
+
   const mockNode: ScopeNode = {
     metadata: { name: 'test-scope-node' },
     spec: { linkId: 'test-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'test-scope-node' },
   };
+
+  let storeValue: Record<string, any> = {};
 
   beforeEach(() => {
     apiClient = {
@@ -47,7 +62,18 @@ describe('ScopesSelectorService', () => {
       fetchDashboards: jest.fn(),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
-    service = new ScopesSelectorService(apiClient, dashboardsService);
+    storeValue = {};
+    const store = {
+      get(key: string) {
+        return storeValue[key];
+      },
+
+      set(key: string, value: string) {
+        storeValue[key] = value;
+      },
+    };
+
+    service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
   });
 
   describe('updateNode', () => {
@@ -159,6 +185,50 @@ describe('ScopesSelectorService', () => {
       await service.apply();
       await service.removeAllScopes();
       expect(service.state.appliedScopes).toEqual([]);
+    });
+  });
+
+  describe('getRecentScopes', () => {
+    it('should parse and filter scopes', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScope2], [mockScope]]);
+
+      const recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([[mockScope2]]);
+    });
+
+    it('should work with old version', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
+        [{ scope: mockScope2, path: [] }],
+        [{ scope: mockScope, path: [] }],
+      ]);
+
+      const recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([[mockScope2]]);
+    });
+
+    it('should return empty on wrong data', async () => {
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([{ scope: mockScope2 }]);
+
+      let recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([]);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(null);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[{ metadata: { noName: 'test' } }]]);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
     });
   });
 });

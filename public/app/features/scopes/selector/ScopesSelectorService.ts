@@ -1,4 +1,4 @@
-import { Scope } from '@grafana/data';
+import { Scope, store as storeImpl } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -15,7 +15,7 @@ import {
 } from './scopesTreeUtils';
 import { NodesMap, ScopesMap, SelectedScope, TreeNode } from './types';
 
-const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
+export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
 export interface ScopesSelectorServiceState {
   // Used to indicate loading of the scopes themselves for example when applying them.
@@ -48,7 +48,8 @@ export interface ScopesSelectorServiceState {
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
   constructor(
     private apiClient: ScopesApiClient,
-    private dashboardsService: ScopesDashboardsService
+    private dashboardsService: ScopesDashboardsService,
+    private store = storeImpl
   ) {
     super({
       loading: false,
@@ -259,30 +260,25 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     const recentScopes = this.getRecentScopes();
     recentScopes.unshift(scopes);
-    localStorage.setItem(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
+    this.store.set(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
   };
 
+  /**
+   * Returns recent scopes from local storage. It is array of array cause each item can represent application of
+   * multiple different scopes.
+   */
   public getRecentScopes = (): Scope[][] => {
-    const content = localStorage.getItem(RECENT_SCOPES_KEY);
-    try {
-      let recentScopes = JSON.parse(content || '[]');
-      if (recentScopes[0]?.[0]?.scope) {
-        // Backward compatibility
-        recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
+    const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
+    const recentScopes = parseScopesFromLocalStorage(content);
+
+    // Filter out the current selection from recent scopes to avoid duplicates
+    return recentScopes.filter((scopes: Scope[]) => {
+      if (scopes.length !== this.state.appliedScopes.length) {
+        return true;
       }
-      // TODO: Make type safe
-      // Filter out the current selection from recent scopes to avoid duplicates
-      return recentScopes.filter((scopes: Scope[]) => {
-        if (scopes.length !== this.state.appliedScopes.length) {
-          return true;
-        }
-        const scopeSet = new Set(scopes.map((s) => s.metadata.name));
-        return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
-      });
-    } catch (e) {
-      console.error('Failed to parse recent scopes', e, content);
-      return [];
-    }
+      const scopeSet = new Set(scopes.map((s) => s.metadata.name));
+      return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
+    });
   };
 
   /**
@@ -336,4 +332,42 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ nodes: newNodes });
     return scopeNodes;
   };
+}
+
+function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
+  return typeof obj === 'object' && obj !== null && 'scope' in obj && isScopeObj(obj['scope']);
+}
+
+function isScopeObj(obj: unknown): obj is Scope {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'metadata' in obj &&
+    typeof obj['metadata'] === 'object' &&
+    obj['metadata'] !== null &&
+    'name' in obj['metadata'] &&
+    'spec' in obj
+  );
+}
+
+function parseScopesFromLocalStorage(content: string | undefined): Scope[][] {
+  let recentScopes;
+  try {
+    recentScopes = JSON.parse(content || '[]');
+  } catch (e) {
+    console.error('Failed to parse recent scopes', e, content);
+    return [];
+  }
+  if (!(Array.isArray(recentScopes) && Array.isArray(recentScopes[0]))) {
+    return [];
+  }
+
+  if (isScopeLocalStorageV1(recentScopes[0]?.[0])) {
+    // Backward compatibility
+    recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
+  } else if (!isScopeObj(recentScopes[0]?.[0])) {
+    return [];
+  }
+
+  return recentScopes;
 }
