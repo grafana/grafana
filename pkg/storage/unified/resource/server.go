@@ -578,7 +578,9 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		res, err = s.create(ctx, user, req)
 	})
 	if runErr != nil {
-		return nil, runErr
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.CreateResponse {
+			return &resourcepb.CreateResponse{Error: e}
+		})
 	}
 
 	return res, err
@@ -630,7 +632,9 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res, err = s.update(ctx, user, req)
 	})
 	if runErr != nil {
-		return nil, runErr
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.UpdateResponse {
+			return &resourcepb.UpdateResponse{Error: e}
+		})
 	}
 
 	return res, err
@@ -696,7 +700,9 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		res, err = s.delete(ctx, user, req)
 	})
 	if runErr != nil {
-		return nil, runErr
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.DeleteResponse {
+			return &resourcepb.DeleteResponse{Error: e}
+		})
 	}
 
 	return res, err
@@ -802,7 +808,9 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res, err = s.read(ctx, user, req)
 	})
 	if runErr != nil {
-		return nil, runErr
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+			return &resourcepb.ReadResponse{Error: e}
+		})
 	}
 
 	return res, err
