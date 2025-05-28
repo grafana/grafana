@@ -61,7 +61,7 @@ const strToValue = (val: string | string[]): SelectableValue[] => {
     // Fallback to parsing it like a non-json string if it is not valid json, instead of crashing.
     try {
       return JSON.parse(val).map((v: string) => ({ label: v, value: v }));
-    } catch { }
+    } catch {}
   }
 
   return val.split(/[\s,]/).map((s) => ({ label: s, value: s }));
