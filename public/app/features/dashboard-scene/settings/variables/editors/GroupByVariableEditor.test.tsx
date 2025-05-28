@@ -7,9 +7,9 @@ import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
+import { getTagKeys } from 'app/plugins/datasource/influxdb/influxql_metadata_query';
 
 import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
-import { getTagKeys } from 'app/plugins/datasource/influxdb/influxql_metadata_query';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -47,7 +47,7 @@ describe('GroupByVariableEditor', () => {
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
     );
-  
+
     const allowCustomValueCheckbox = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
