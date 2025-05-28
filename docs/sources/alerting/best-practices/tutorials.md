@@ -18,8 +18,8 @@ weight: 1800
 
 This section provides step-by-step tutorials to help you learn Grafana Alerting and explore key features through practical, easy-to-follow examples.
 
-
 ## Get started with Grafana Alerting
+
 - [Create and receive your first alert](https://grafana.com/tutorials/alerting-get-started/)
 - [Create multi-dimensional alerts and route them](https://grafana.com/tutorials/alerting-get-started-pt2/)
 - [Group alert notifications](https://grafana.com/tutorials/alerting-get-started-pt3/)
