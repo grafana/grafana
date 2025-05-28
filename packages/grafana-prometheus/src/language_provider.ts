@@ -566,7 +566,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
       return [];
     }
 
-    return Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+
+    // Until we remove old API we need to have backward compatibility
+    this.metrics = this.retrieveMetrics();
+    return Promise.resolve([]);
   };
 
   /**
