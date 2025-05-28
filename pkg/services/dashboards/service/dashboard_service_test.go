@@ -141,7 +141,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -194,7 +194,7 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -214,7 +214,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, "", 1)
 				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
@@ -644,7 +644,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardID(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
@@ -746,7 +746,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardUID(context.Background(), 1, "test")
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)

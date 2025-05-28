@@ -579,7 +579,22 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 		return nil, nil
 	}
 
-	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
+	data, err := dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil {
+		return nil, nil
+	}
+
+	return &dashboards.DashboardProvisioning{
+		DashboardID: data.Dashboard.ID,
+		Name:        data.Provisioner,
+		ExternalID:  data.ExternalID,
+		CheckSum:    data.CheckSum,
+		Updated:     data.ProvisionUpdate,
+	}, nil
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
@@ -606,7 +621,22 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 		return nil, nil
 	}
 
-	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
+	data, err := dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil {
+		return nil, nil
+	}
+
+	return &dashboards.DashboardProvisioning{
+		DashboardID: data.Dashboard.ID,
+		Name:        data.Provisioner,
+		ExternalID:  data.ExternalID,
+		CheckSum:    data.CheckSum,
+		Updated:     data.ProvisionUpdate,
+	}, nil
 }
 
 func (dr *DashboardServiceImpl) ValidateBasicDashboardProperties(title string, uid string, message string) error {

@@ -241,7 +241,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 
 	// if we are querying for provisioning information, we need to use a different
 	// legacy sql query, since legacy search does not support this
-	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 || query.ManagedBy != "" {
 		if query.ManagedBy == utils.ManagerKindUnknown {
 			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
 		}
@@ -273,10 +273,25 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			return list, nil
 		}
 
-		// otherwise managerIdentity is set
-		provisioningData, err := c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
-		if err != nil {
-			return nil, err
+		provisioningData := []*dashboards.DashboardProvisioningSearchResults{}
+		if query.ManagerIdentity == "" {
+			var data *dashboards.DashboardProvisioningSearchResults
+			if len(query.DashboardIds) > 0 {
+				data, err = c.dashboardStore.GetProvisionedDataByDashboardID(ctx, query.DashboardIds[0])
+			} else if len(query.DashboardUIDs) > 0 {
+				data, err = c.dashboardStore.GetProvisionedDataByDashboardUID(ctx, user.GetOrgID(), query.DashboardUIDs[0])
+			}
+			if err != nil {
+				return nil, err
+			}
+			if data != nil {
+				provisioningData = append(provisioningData, data)
+			}
+		} else {
+			provisioningData, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		for _, dashboard := range provisioningData {
@@ -383,7 +398,7 @@ func (c *DashboardSearchClient) getColumns(sortByField string, query *dashboards
 		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 	}
 
-	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 || query.ManagedBy != "" {
 		columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
 			Name: resource.SEARCH_FIELD_MANAGER_KIND,
 			Type: resourcepb.ResourceTableColumnDefinition_STRING,
@@ -457,7 +472,7 @@ func (c *DashboardSearchClient) createDetailedProvisioningCells(dashboard *dashb
 	cells := c.createCommonCells(dashboard.Dashboard.Title, dashboard.Dashboard.FolderUID, dashboard.Dashboard.ID, []byte("[]"))
 	return append(cells,
 		[]byte(query.ManagedBy),
-		[]byte(query.ManagerIdentity),
+		[]byte(dashboard.Provisioner),
 		[]byte(dashboard.ExternalID),
 		[]byte(dashboard.CheckSum),
 		[]byte(strconv.FormatInt(dashboard.ProvisionUpdate, 10)),

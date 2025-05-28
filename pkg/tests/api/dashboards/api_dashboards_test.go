@@ -301,7 +301,6 @@ providers:
 			u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboardUID)
 			req, err := http.NewRequest("DELETE", u, nil)
 			if err != nil {
-				fmt.Println(err)
 				return
 			}
 
