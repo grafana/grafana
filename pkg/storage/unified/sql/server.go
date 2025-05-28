@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
-type QOSEnqueuer interface {
+type QOSEnqueueDequeuer interface {
+	services.Service
 	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
+	Dequeue(ctx context.Context) (func(ctx context.Context), error)
 }
 
 // ResourceServerOptions contains the options for creating a new ResourceServer
@@ -34,7 +37,7 @@ type ResourceServerOptions struct {
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
 	MaxPageSizeBytes int
-	QOSQueue         QOSEnqueuer
+	QOSQueue         QOSEnqueueDequeuer
 }
 
 // Creates a new ResourceServer

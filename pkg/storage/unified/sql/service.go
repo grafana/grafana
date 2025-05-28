@@ -78,7 +78,7 @@ type service struct {
 	storageRing *ring.Ring
 	lifecycler  *ring.BasicLifecycler
 
-	queue     QOSEnqueuer
+	queue     QOSEnqueueDequeuer
 	scheduler *scheduler.Scheduler
 }
 
@@ -163,6 +163,9 @@ func ProvideUnifiedStorageGrpcService(
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
 			Registerer:       reg,
 		})
+		if err := services.StartAndAwaitRunning(context.Background(), queue); err != nil {
+			return nil, fmt.Errorf("failed to start qos queue: %w", err)
+		}
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
 			Logger:     log,
