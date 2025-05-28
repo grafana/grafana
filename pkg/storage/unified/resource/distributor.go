@@ -5,11 +5,9 @@ import (
 	"hash/fnv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -17,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/metadata"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -108,8 +107,6 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 }
 
 func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
-	requester, err := identity.GetRequester(ctx)
-	ds.log.Info("requester in ctx before authenticating", "here", requester, "err", err)
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace, "Read")
 	if err != nil {
 		return nil, err
@@ -246,15 +243,14 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	}
 
 	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
-	user, ok := claims.AuthInfoFrom(ctx)
+
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		ds.log.Error("missing auth")
+		ds.log.Error("no good")
 		return ctx, nil, err
 	}
 
-	ctx = claims.WithAuthInfo(ctx, user)
-
-	return ctx, client.(*RingClient).Client, nil
+	return metadata.NewOutgoingContext(ctx, md), client.(*RingClient).Client, nil
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
