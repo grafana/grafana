@@ -45,6 +45,16 @@ Self-hosted reverse proxy options include but are not limited to:
 - [NGINX](https://docs.nginx.com/nginx/) using their [guide on restricting access with HTTP basic authentication](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)
 - [OAuth2 proxy](https://github.com/oauth2-proxy/oauth2-proxy)
 
+### Configure CORS
+
+If you want to enable CORS for your Grafana instance, run Grafana behind a reverse proxy and configure the CORS headers in the reverse proxy.
+
+For more information, refer to [Run Grafana behind a reverse proxy](https://grafana.com/tutorials/run-grafana-behind-a-proxy/).
+
+{{< admonition type="note" >}}
+Grafana doesn't recommend using wildcard values (`*`) as header values and recommends using a URL instead.
+{{< /admonition >}}
+
 ## Limit Viewer query permissions
 
 Users with the `Viewer role` can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
