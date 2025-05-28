@@ -226,7 +226,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalRead]),
+      roles: () => ['Admin'],
       component: config.featureToggles.alertingMigrationUI
         ? importAlertingComponent(
             () =>
