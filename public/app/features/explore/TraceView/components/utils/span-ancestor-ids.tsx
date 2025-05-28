@@ -34,7 +34,7 @@ export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
   let ref = getFirstAncestor(span);
   while (ref) {
     // Avoid an infinite loop in cases where a span creates a link to its own ancestor
-    if (ancestorIDs.indexOf(ref.spanID) > -1) break;
+    if (ref.spanID == span.spanID) break;
     ancestorIDs.push(ref.spanID);
     ref = getFirstAncestor(ref);
   }
