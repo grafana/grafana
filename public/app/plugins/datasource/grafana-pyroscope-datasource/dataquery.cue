@@ -42,6 +42,8 @@ composableKinds: DataQuery: {
 				// Sets the maximum number of nodes in the flamegraph.
 				maxNodes?:           int64
 				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+        // If set to true, the response will contain annotations
+        annotations?: bool
 			}
 		}]
 		lenses: []
