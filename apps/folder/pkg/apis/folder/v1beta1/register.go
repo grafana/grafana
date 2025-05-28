@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	GROUP         = Group
-	VERSION       = Version
+	GROUP         = APIGroup
+	VERSION       = APIVersion
 	RESOURCE      = "folders"
 	APIVERSION    = GROUP + "/" + VERSION
 	RESOURCEGROUP = RESOURCE + "." + GROUP
