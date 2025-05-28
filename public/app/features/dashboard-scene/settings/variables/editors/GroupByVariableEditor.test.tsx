@@ -7,7 +7,6 @@ import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
-import { getTagKeys } from 'app/plugins/datasource/influxdb/influxql_metadata_query';
 
 import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
 
