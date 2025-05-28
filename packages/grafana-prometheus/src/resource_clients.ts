@@ -24,7 +24,11 @@ export interface ResourceApiClient {
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => Promise<string[]>;
 }
 
-type RequestFn = (url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>) => Promise<unknown>;
+type RequestFn = (
+  url: string,
+  params?: Record<string, unknown>,
+  options?: Partial<BackendSrvRequest>
+) => Promise<unknown>;
 
 const MATCH_ALL_LABELS = '{__name__!=""}';
 const METRIC_LABEL = '__name__';
@@ -35,12 +39,20 @@ abstract class BaseResourceClient {
     protected readonly datasource: PrometheusDatasource
   ) {}
 
-  protected async requestLabels(url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>): Promise<PrometheusLabelsResponse> {
+  protected async requestLabels(
+    url: string,
+    params?: Record<string, unknown>,
+    options?: Partial<BackendSrvRequest>
+  ): Promise<PrometheusLabelsResponse> {
     const response = await this.request(url, params, options);
     return Array.isArray(response) ? response : [];
   }
 
-  protected async requestSeries(url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>): Promise<PrometheusSeriesResponse> {
+  protected async requestSeries(
+    url: string,
+    params?: Record<string, unknown>,
+    options?: Partial<BackendSrvRequest>
+  ): Promise<PrometheusSeriesResponse> {
     const response = await this.request(url, params, options);
     return Array.isArray(response) ? response : [];
   }
