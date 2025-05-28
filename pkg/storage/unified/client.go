@@ -88,6 +88,7 @@ func newClient(opts options.StorageOptions,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
+
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
@@ -170,12 +171,12 @@ func newClient(opts options.StorageOptions,
 		}
 
 		if cfg.QOSEnabled {
-			queueOptions := &scheduler.QueueOptions{
+			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
+			queue := scheduler.NewQueue(&scheduler.QueueOptions{
 				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       reg,
-			}
-
-			queue := scheduler.NewQueue(queueOptions)
+				Registerer:       qosReg,
+				Logger:           cfg.Logger,
+			})
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}

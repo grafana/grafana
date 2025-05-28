@@ -159,9 +159,10 @@ func ProvideUnifiedStorageGrpcService(
 	}
 
 	if cfg.QOSEnabled {
+		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       reg,
+			Registerer:       qosReg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
