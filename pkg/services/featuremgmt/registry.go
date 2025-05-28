@@ -1304,13 +1304,6 @@ var (
 			Owner:        grafanaOSSBigTent,
 		},
 		{
-			Name:         "prometheusResourceClient",
-			Description:  "Uses new resource api which has automatic feature detection and performance improvements",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
-		},
-		{
 			Name:            "enableExtensionsAdminPage",
 			Description:     "Enables the extension admin page regardless of development mode",
 			Stage:           FeatureStageExperimental,

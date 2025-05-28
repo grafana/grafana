@@ -761,10 +761,6 @@ export interface FeatureToggles {
   */
   prometheusSpecialCharsInLabelValues?: boolean;
   /**
-  * Uses new resource api which has automatic feature detection and performance improvements
-  */
-  prometheusResourceClient?: boolean;
-  /**
   * Enables the extension admin page regardless of development mode
   */
   enableExtensionsAdminPage?: boolean;
