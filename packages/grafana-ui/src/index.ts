@@ -209,7 +209,21 @@ export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
 export { ReactUtils };
 
-export * from './themes';
+export { ThemeContext } from '@grafana/data';
+export {
+  withTheme,
+  withTheme2,
+  useTheme,
+  useTheme2,
+  useStyles,
+  useStyles2,
+  mockThemeContext,
+} from './themes/ThemeContext';
+export { getTheme, mockTheme } from './themes/getTheme';
+export { stylesFactory } from './themes/stylesFactory';
+export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
+export * as styleMixins from './themes/mixins';
+
 export * from './options';
 export * from './slate-plugins';
 
