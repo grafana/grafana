@@ -39,8 +39,6 @@ export const getSectionFields = (): Section => {
           'clientSecret',
           'managedIdentityClientId',
           'federatedCredentialAudience',
-          'workloadIdentityEnabled',
-          'workloadIdentityTokenFile',
           'scopes',
           'authUrl',
           'tokenUrl',
@@ -68,6 +66,7 @@ export const getSectionFields = (): Section => {
           'tlsClientCert',
           'tlsClientKey',
           'tlsClientCa',
+          'workloadIdentityTokenFile',
         ],
       },
     ],
@@ -305,11 +304,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
   const groupsAttributePathLabel = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
   const teamIDsLabel = t('auth-config.fields.team-ids-label', 'Team IDs');
   const allowedDomainsLabel = t('auth-config.fields.allowed-domains-label', 'Allowed domains');
-  const workflowIdentityEnabledLabel = t(
-    'auth-config.fields.workload-identity-enabled',
-    '{{ workloadIdentityLabel }} enabled',
-    { workloadIdentityLabel }
-  );
 
   return {
     clientAuthentication: {
@@ -365,31 +359,25 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'The audience of the federated identity credential of your OAuth2 app.'
       ),
     },
-    workloadIdentityEnabled: {
-      label: workflowIdentityEnabledLabel,
-      type: 'switch',
-      description:
-        'If enabled, Grafana will use the federated identity credential to authenticate to the OAuth2 provider.',
-    },
     workloadIdentityTokenFile: {
-      label: t('auth-config.fields.workload-identity-token-file', '{{ workloadIdentityLabel }} token file', {
+      label: t('auth-config.fields.workload-identity-token-file-label', '{{ workloadIdentityLabel }} token file', {
         workloadIdentityLabel,
       }),
       type: 'text',
-      description:
-        'The file path to the token file used to authenticate to the OAuth2 provider. \n' +
-        'This is only required if workload identity is enabled.',
+      description: t(
+        'auth-config.fields.workload-identity-token-file-description',
+        'The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to "workload_identity". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.'
+      ),
       validation: {
         validate: (value, formValues) => {
-          if (formValues.workloadIdentityEnabled) {
+          if (formValues.clientAuthentication === 'workload_identity') {
             return !!value;
           }
           return true;
         },
         message: t(
           'auth-config.fields.workload-identity-token-file-required',
-          'This field must be set when "{{ workflowIdentityEnabledLabel }}" is set.',
-          { workflowIdentityEnabledLabel }
+          'This field must be set when client authentication is set to "workload_identity".'
         ),
       },
     },

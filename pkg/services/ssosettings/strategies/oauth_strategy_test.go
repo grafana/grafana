@@ -24,7 +24,6 @@ var (
 	client_secret = test_client_secret
 	managed_identity_client_id = test_managed_identity_client_id
 	federated_credential_audience = test_federated_credential_audience
-	workload_identity_enabled = true
 	workload_identity_token_file = test_workload_identity_token_file
 	scopes = openid, profile, email
 	empty_scopes = false
@@ -72,7 +71,6 @@ var (
 		"client_secret":                 "test_client_secret",
 		"managed_identity_client_id":    "test_managed_identity_client_id",
 		"federated_credential_audience": "test_federated_credential_audience",
-		"workload_identity_enabled":     true,
 		"workload_identity_token_file":  "test_workload_identity_token_file",
 		"scopes":                        "openid, profile, email",
 		"empty_scopes":                  false,
@@ -129,7 +127,6 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	[auth.azuread]
 	force_use_graph_api = true
 	allowed_organizations = org1, org2
-	workload_identity_enabled = true
 	workload_identity_token_file = azuread_token_file
 
 	[auth.github]
@@ -165,7 +162,6 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 
 		require.Equal(t, true, result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
-		require.Equal(t, true, result["workload_identity_enabled"])
 		require.Equal(t, "azuread_token_file", result["workload_identity_token_file"])
 	})
 

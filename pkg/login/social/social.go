@@ -73,7 +73,6 @@ type OAuthInfo struct {
 	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
 	ClientSecret                string            `mapstructure:"client_secret" toml:"-"`
 	ManagedIdentityClientID     string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
-	WorkloadIdentityEnabled     bool              `mapstructure:"workload_identity_enabled" toml:"workload_identity_enabled"`
 	WorkloadIdentityTokenFile   string            `mapstructure:"workload_identity_token_file" toml:"workload_identity_token_file"`
 	FederatedCredentialAudience string            `mapstructure:"federated_credential_audience" toml:"federated_credential_audience"`
 	EmailAttributeName          string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
