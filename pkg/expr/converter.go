@@ -129,20 +129,18 @@ func (c *ResultConverter) Convert(ctx context.Context,
 // handleSqlInput normalizes input DataFrames into a single dataframe with no labels for use with SQL expressions.
 //
 // It handles three cases:
-//   1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
-//   2. If the input is a single frame (no labels, no declared type), it passes through as-is.
-//   3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
+//  1. If the input declares a supported time series or numeric kind in the wide or multi format (via FrameMeta.Type), it converts to a full-long formatted table using ConvertToFullLong.
+//  2. If the input is a single frame (no labels, no declared type), it passes through as-is.
+//  3. If the input has multiple frames or label metadata but lacks a supported type, it returns an error.
 func handleSqlInput(dataFrames data.Frames) mathexp.Results {
 	var result mathexp.Results
 
-	if len(dataFrames) == 0 {
-		result.Error = fmt.Errorf("no frames for SQL conversion")
-		return result
-	}
-
+	// dataframes len > 0 is checked in the caller -- Convert
 	first := dataFrames[0]
 
 	// Single Frame no data case
+	// Note: In the case of a support Frame Type, we may want to return the matching schema
+	// with no rows (e.g. include the `__value__` column). But not sure about this at this time.
 	if len(dataFrames) == 1 && len(first.Fields) == 0 {
 		result.Values = mathexp.Values{
 			mathexp.TableData{Frame: first},

@@ -129,11 +129,6 @@ func TestHandleSqlInput(t *testing.T) {
 		expectFrame bool
 	}{
 		{
-			name:      "empty input returns error",
-			frames:    data.Frames{},
-			expectErr: "no frames for SQL conversion",
-		},
-		{
 			name:        "single frame with no fields and no type is passed through",
 			frames:      data.Frames{data.NewFrame("")},
 			expectFrame: true,
