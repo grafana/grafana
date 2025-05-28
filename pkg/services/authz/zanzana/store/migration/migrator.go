@@ -6,11 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/openfga/openfga/pkg/storage/migrate"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
 func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, logger log.Logger) error {
@@ -65,11 +65,6 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt(),
 	)
-}
-
-type migration struct {
-	name      string
-	migration migrator.Migration
 }
 
 var _ migrator.CodeMigration = (*rawMigration)(nil)
