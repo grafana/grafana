@@ -81,6 +81,8 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
         1. You must have set `client_authentication` under `[auth.azuread]` to `managed_identity` in the Grafana server configuration for this to work.
 
+        1. You may optionally set `workload_identity_token_file` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration. This setting defaults to `/var/run/secrets/azure/tokens/azure-identity-token`.
+
         {{< admonition type="note" >}}
         Managed identities as federated credentials are only applicable to workloads hosted in Azure.
 
@@ -115,13 +117,11 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
         1. You must have set `federated_credential_audience` (env var `GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE`) under `[auth.azuread]` to `api://AzureADTokenExchange` in the Grafana server configuration for this to work.
 
-        {{< admonition type="note" >}}
-        Managed identities as federated credentials are only applicable to workloads hosted in Azure.
+     {{< admonition type="note" >}}
+     Managed identities as federated credentials are only applicable to workloads hosted in Azure.
 
-        You can only add user-assigned managed identities as federated credentials on Entra ID applications.
-        {{< /admonition >}}
-
-
+     You can only add user-assigned managed identities as federated credentials on Entra ID applications.
+     {{< /admonition >}}
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
