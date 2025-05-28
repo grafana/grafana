@@ -380,9 +380,3 @@ func validServiceAccountTokenID(tokenID int64) error {
 	}
 	return nil
 }
-func validAPIKeyID(apiKeyID int64) error {
-	if apiKeyID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID.Errorf("invalid API key ID 0 has been specified")
-	}
-	return nil
-}
