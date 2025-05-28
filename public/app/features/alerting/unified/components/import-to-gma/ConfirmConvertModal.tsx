@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
 import { Trans, useTranslate } from '@grafana/i18n';
@@ -48,34 +47,8 @@ const AlertSomeRulesSkipped = () => {
 const emptyObject = {};
 
 export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: ModalProps) => {
-  // const { watch } = useFormContext<ImportFormValues>();
   const styles = useStyles2(getStyles);
 
-  // const [
-  //   targetFolder,
-  //   selectedDatasourceName,
-  //   selectedDatasourceUID,
-  //   pauseRecordingRules,
-  //   pauseAlertingRules,
-  //   namespace,
-  //   ruleGroup,
-  //   targetDatasourceUID,
-  //   yamlFile,
-  //   importSource,
-  //   yamlImportTargetDatasourceUID,
-  // ] = watch([
-  //   'targetFolder',
-  //   'selectedDatasourceName',
-  //   'selectedDatasourceUID',
-  //   'pauseRecordingRules',
-  //   'pauseAlertingRules',
-  //   'namespace',
-  //   'ruleGroup',
-  //   'targetDatasourceUID',
-  //   'yamlFile',
-  //   'importSource',
-  //   'yamlImportTargetDatasourceUID',
-  // ]);
   const {
     importSource,
     selectedDatasourceName,
@@ -199,13 +172,13 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
           <Text>
             {importSource === 'yaml'
               ? t(
-                  'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
-                  'There are no rules to import. Please select a different yaml file.'
-                )
+                'alerting.import-to-gma.confirm-modal.no-rules-body-yaml',
+                'There are no rules to import. Please select a different yaml file.'
+              )
               : t(
-                  'alerting.import-to-gma.confirm-modal.no-rules-body',
-                  'There are no rules to import. Please select a different namespace or rule group.'
-                )}
+                'alerting.import-to-gma.confirm-modal.no-rules-body',
+                'There are no rules to import. Please select a different namespace or rule group.'
+              )}
           </Text>
         </Stack>
       </Modal>
