@@ -1339,8 +1339,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 });
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-export type FilterOrigin = "dashboard" | "scope";
+export type FilterOrigin = "dashboard" | string;
 
 export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
 
