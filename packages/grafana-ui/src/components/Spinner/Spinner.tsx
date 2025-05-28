@@ -96,6 +96,7 @@ export const Spinner = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   inline: css({
     display: 'inline-block',
+    lineHeight: 0,
   }),
   spin: css({
     [theme.transitions.handleMotion('no-preference')]: {
