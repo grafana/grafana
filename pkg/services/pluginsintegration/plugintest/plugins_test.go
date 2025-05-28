@@ -158,9 +158,8 @@ apps:
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableLog:                  true,
-		AnonymousUserRole:          org.RoleAdmin,
-		EnableInitialAdminCreation: true,
+		EnableLog:         true,
+		AnonymousUserRole: org.RoleAdmin,
 	})
 
 	err = fs.CopyRecursive(provisioningFile, filepath.Join(dir, "conf", "provisioning", "plugins", "apps.yaml"))
