@@ -84,7 +84,13 @@ export function TableNG(props: TableNGProps) {
   const { data, onColumnResize, width } = props;
   const gridHandle = useRef<DataGridHandle>(null);
 
-  const rows = useMemo(() => frameToRecords(props.data), [props.data]);
+  // the data passed into this component is always a new reference after column resizing,
+  // which leads to the memos in this component failing to work properly. we sinfully
+  // memoize based on the array length here.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedData = useMemo(() => data, [data.length]);
+
+  const rows = useMemo(() => frameToRecords(memoizedData), [memoizedData]);
 
   const [filts, _setFilts] = useState([]);
   const [sorts, _setSorts] = useState([]);
@@ -101,11 +107,9 @@ export function TableNG(props: TableNGProps) {
 
   // TODO: skip hidden
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
-    const { fields } = data;
+    const widths = computeColWidths(memoizedData.fields, width - scrollbarWidth);
 
-    const widths = computeColWidths(fields, width - scrollbarWidth);
-
-    return fields.map(
+    return memoizedData.fields.map(
       (field, i): TableColumn => ({
         field,
         key: field.name,
@@ -130,12 +134,12 @@ export function TableNG(props: TableNGProps) {
               },
       })
     );
-  }, [width, scrollbarWidth, data, styles]);
+  }, [width, scrollbarWidth, memoizedData, styles]);
 
   const hasSubTable = false;
 
   // todo: don't re-init this on each data change, only schema/config changes
-  const rowHeight = useRowHeight(columns, data, hasSubTable);
+  const rowHeight = useRowHeight(columns, memoizedData, hasSubTable);
 
   return (
     <DataGrid
