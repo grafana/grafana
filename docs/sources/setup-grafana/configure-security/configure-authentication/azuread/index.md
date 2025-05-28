@@ -101,15 +101,19 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
             - Description: Grafana OAuth.
             - Audience: The audience value that must appear in the external token. For Public cloud, it would be `api://AzureADTokenExchange`. See mentioned documentation for the full list of available audiences.
 
-        1. You must have set `workload_identity_enable` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_ENABLE`) under `[auth.azuread]` to `true` in the Grafana server configuration for this to work.
+        1. You must have set `workload_identity_enable` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_ENABLED`) under `[auth.azuread]` to `true` in the Grafana server configuration for this to work.
 
         1. You must have set `client_authentication` (env var `GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION`) under `[auth.azuread]` to `workload_identity` in the Grafana server configuration for this to work.
 
-        1. You must have set `workload_identity_token_file` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration for this to work.
+        1. You may have set `workload_identity_token_file` (env var `GF_AUTH_AZUREAD_WORKLOAD_IDENTITY_TOKEN_FILE`) under `[auth.azuread]` to `/var/run/secrets/azure/tokens/azure-identity-token` in the Grafana server configuration for this to work. (Optional, defaults to `/var/run/secrets/azure/tokens/azure-identity-token`)
 
-        1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This should be the same ID you specified in the `azure.workload.identity/client-id` annotation of your Grafana's deployment ServiceAccount.
+        1. You must have set `client_id` (env var `GF_AUTH_AZUREAD_CLIENT_ID`) under `[auth.azuread]` in the Grafana server configuration for this to work. This must match the Entra ID/Azure AD App Registration Application (client) ID.
 
         1. You must have set `token_url` (env var `GF_AUTH_AZUREAD_TOKEN_URL`) under `[auth.azuread]` to `https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/token` in the Grafana server configuration for this to work.
+
+        1. You must have set `auth_url` (env var `GF_AUTH_AZUREAD_AUTH_URL`) under `[auth.azuread]` to `https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/authorize` in the Grafana server configuration for this to work.
+
+        1. You must have set `federated_credential_audience` (env var `GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE`) under `[auth.azuread]` to `api://AzureADTokenExchange` in the Grafana server configuration for this to work.
 
         {{< admonition type="note" >}}
         Managed identities as federated credentials are only applicable to workloads hosted in Azure.
