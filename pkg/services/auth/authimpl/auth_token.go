@@ -284,8 +284,8 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		}
 		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
+		// Avoid multiple instances in HA mode rotating at the same time.
 		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
-			// Rotation happened too recently. Skip new rotation
 			log.Debug("Token was last rotated very recently, skipping rotation")
 			span.SetAttributes(attribute.Bool("skipped", true))
 			return token, nil
