@@ -170,6 +170,7 @@ playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
+prometheusResourceClient,experimental,@grafana/oss-big-tent,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true

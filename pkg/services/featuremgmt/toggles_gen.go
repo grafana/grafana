@@ -691,6 +691,10 @@ const (
 	// Adds support for quotes and special characters in label values for Prometheus queries
 	FlagPrometheusSpecialCharsInLabelValues = "prometheusSpecialCharsInLabelValues"
 
+	// FlagPrometheusResourceClient
+	// Uses new resource api which has automatic feature detection and performance improvements
+	FlagPrometheusResourceClient = "prometheusResourceClient"
+
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
