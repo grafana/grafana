@@ -65,25 +65,21 @@ const getPermissionActionButton = (
 ) => {
   const { t } = useTranslate();
   if (item.isManaged) {
-    return <Button
-      size="sm"
-      icon="times"
-      variant="destructive"
-      disabled={!canSet}
-      onClick={() => onRemove(item)}
-      aria-label={t(
-        'access-control.permission-list-item.remove-aria-label',
-        'Remove permission for {{identifier}}',
-        {
+    return (
+      <Button
+        size="sm"
+        icon="times"
+        variant="destructive"
+        disabled={!canSet}
+        onClick={() => onRemove(item)}
+        aria-label={t('access-control.permission-list-item.remove-aria-label', 'Remove permission for {{identifier}}', {
           identifier: getName(item),
-        }
-      )}
-    />;
+        })}
+      />
+    );
   } else if (item.isInherited) {
     return (
-      <Tooltip
-        content={t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')}
-      >
+      <Tooltip content={t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')}>
         <Button
           size="sm"
           icon="lock"
@@ -104,7 +100,7 @@ const getPermissionActionButton = (
       </Tooltip>
     );
   }
-}
+};
 
 const getAvatar = (item: ResourcePermission) => {
   if (item.teamId) {
