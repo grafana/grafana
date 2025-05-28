@@ -152,14 +152,10 @@ This Flask-based Python script simulates a service that:
 
 - Generates random CPU and memory usage values (10% to 100%) every **10 seconds**
 - Exposes them as Prometheus metrics
-- Each metric includes a default instance label based on the scrape target:
-  - `instance="flask-prod:5000"`
-  - `instance="flask-staging:5000"`
-- A custom deployment label added explicitly in the app logic (this serves as an additional example for dynamically routing production instances):
-  - `deployment="prod-us-cs30"`
-  - `deployment="staging-us-cs20"`
 
 ### Objective
+
+You'll build a time series visualization to monitor CPU and memory usage, define alert rules with threshold-based conditions, and link those alerts to your dashboards to display real-time annotations when thresholds are breached.
 
 <!-- INTERACTIVE page step2.md END -->
 <!-- INTERACTIVE page step3.md START -->
