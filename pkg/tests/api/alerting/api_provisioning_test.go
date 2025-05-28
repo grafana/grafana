@@ -88,7 +88,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -98,11 +98,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -575,7 +570,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -585,11 +580,6 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -724,13 +714,7 @@ func TestMuteTimings(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -1008,16 +992,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning alert rules from files", func(t *testing.T) {
 		// add file provisioned alert rules
@@ -1103,16 +1080,9 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning mixed set of alerting configurations from files", func(t *testing.T) {
 		// add file provisioned mixed set of alerting configurations
@@ -1156,15 +1126,9 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
 
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning contact points from files", func(t *testing.T) {
