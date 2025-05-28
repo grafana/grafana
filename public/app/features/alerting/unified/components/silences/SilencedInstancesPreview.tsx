@@ -4,7 +4,6 @@ import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
@@ -149,6 +148,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 };
 
 function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return [
