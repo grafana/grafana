@@ -3415,6 +3415,13 @@
           "values": "Valores separados por vírgulas",
           "values-placeholder": "1, 10, minhachave : meuvalor, meu;valor, ignorado\\,valor"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descrição",
         "description-placeholder": "Texto descritivo",
         "label": "Etiqueta",
@@ -3433,8 +3440,8 @@
           "category": "Opções de seleção",
           "custom-all-value": "Personalizar todos os valores",
           "custom-all-value-description": "Um regex de carácter universal ou outro valor para representar Tudo",
-          "include-all": "Incluir a opção Tudo",
-          "include-all-description": "Ativa uma opção para incluir todos os valores",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Valor múltiplo"
         },
         "type-category": "Opções de {{type}}"

@@ -255,7 +255,12 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
                   repoName={repoName ?? ''}
                 />
               )}
-              {activeStep === 'synchronize' && <SynchronizeStep requiresMigration={requiresMigration} />}
+              {activeStep === 'synchronize' && (
+                <SynchronizeStep
+                  requiresMigration={requiresMigration}
+                  isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
+                />
+              )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

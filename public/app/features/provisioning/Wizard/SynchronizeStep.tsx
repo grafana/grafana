@@ -12,18 +12,17 @@ import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
   requiresMigration: boolean;
+  isLegacyStorage?: boolean;
 }
 
-export function SynchronizeStep({ requiresMigration }: SynchronizeStepProps) {
-  const [job, setJob] = useState<Job>();
-
+export function SynchronizeStep({ requiresMigration, isLegacyStorage }: SynchronizeStepProps) {
   const { setStepStatusInfo } = useStepStatus();
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const repoType = watch('repository.type');
+  const supportsHistory = repoType === 'github' && isLegacyStorage;
+  const [job, setJob] = useState<Job>();
   const { t } = useTranslate();
-
-  const supportsHistory = requiresMigration && repoType === 'github';
 
   const startSynchronization = async () => {
     const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
@@ -121,9 +120,10 @@ export function SynchronizeStep({ requiresMigration }: SynchronizeStepProps) {
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>
           </Text>
-          <Field>
+          <Field noMargin>
             <Checkbox
               {...register('migrate.history')}
+              id="migrate-history"
               label={t('provisioning.wizard.sync-option-history', 'History')}
               description={
                 <Trans i18nKey="provisioning.synchronize-step.synchronization-description">
