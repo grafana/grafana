@@ -41,7 +41,7 @@ describe('ScopesSelectorService', () => {
     spec: { linkId: 'test-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'test-scope-node' },
   };
 
-  let storeValue: Record<string, any> = {};
+  let storeValue: Record<string, unknown> = {};
 
   beforeEach(() => {
     apiClient = {
