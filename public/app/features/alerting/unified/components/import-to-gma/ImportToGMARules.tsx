@@ -13,6 +13,7 @@ import {
   Field,
   FileUpload,
   InlineField,
+  InlineFieldRow,
   InlineSwitch,
   LinkButton,
   RadioButtonList,
@@ -186,19 +187,16 @@ const ImportToGMARules = () => {
                     <Text variant="h5">{t('alerting.import-to-gma.recording-rules', 'Recording rules')}</Text>
                   </Box>
 
-                  <InlineField
-                    transparent={true}
-                    label={t('alerting.import-to-gma.pause-recording.label', 'Pause imported recording rules')}
-                    labelWidth={30}
-                    htmlFor="pause-recording-rules"
-                  >
-                    <InlineSwitch
-                      transparent
-                      id="pause-recording-rules"
-                      {...register('pauseRecordingRules')}
-                      showLabel={false}
-                    />
-                  </InlineField>
+                  <InlineFieldRow>
+                    <InlineField
+                      transparent={true}
+                      label={t('alerting.import-to-gma.pause-recording.label', 'Pause imported recording rules')}
+                      labelWidth={30}
+                      htmlFor="pause-recording-rules"
+                    >
+                      <InlineSwitch transparent id="pause-recording-rules" {...register('pauseRecordingRules')} />
+                    </InlineField>
+                  </InlineFieldRow>
 
                   <Box marginLeft={1} width={50}>
                     <TargetDataSourceForRecordingRulesField />
@@ -246,9 +244,9 @@ function YamlFileUpload() {
       label={t('alerting.import-to-gma.yaml.label', 'Prometheus YAML file')}
       invalid={!!errors.yamlFile}
       error={errors.yamlFile?.message}
-      htmlFor="yamlFile"
+      description={t('alerting.import-to-gma.yaml.description', 'Select a Prometheus-compatible YAML file to import')}
     >
-      <Controller
+      <Controller<ImportFormValues, 'yamlFile'>
         name="yamlFile"
         render={({ field: { onChange, ref, ...field } }) => (
           <FileUpload
@@ -292,7 +290,7 @@ function YamlTargetDataSourceField() {
       error={errors.yamlImportTargetDatasourceUID?.message}
       htmlFor="yaml-target-data-source"
     >
-      <Controller
+      <Controller<ImportFormValues, 'yamlImportTargetDatasourceUID'>
         name="yamlImportTargetDatasourceUID"
         render={({ field: { onChange, ref, value, ...field } }) => (
           <DataSourcePicker
@@ -339,7 +337,7 @@ function TargetDataSourceForRecordingRulesField() {
       error={errors.targetDatasourceUID?.message}
       invalid={!!errors.targetDatasourceUID?.message}
     >
-      <Controller
+      <Controller<ImportFormValues, 'targetDatasourceUID'>
         render={({ field: { onChange, ref, ...field } }) => (
           <DataSourcePicker
             {...field}
@@ -381,7 +379,8 @@ function TargetFolderField() {
       htmlFor="folder-picker"
     >
       <Stack gap={2}>
-        <Controller
+        <Controller<ImportFormValues, 'targetFolder'>
+          name="targetFolder"
           render={({ field: { onChange, ref, ...field } }) => (
             <Stack width={42}>
               <NestedFolderPicker
@@ -400,7 +399,6 @@ function TargetFolderField() {
               />
             </Stack>
           )}
-          name="targetFolder"
           control={control}
         />
         <CreateNewFolder
@@ -429,7 +427,8 @@ function DataSourceField() {
       error={errors.selectedDatasourceName?.message}
       htmlFor="datasource-picker"
     >
-      <Controller
+      <Controller<ImportFormValues, 'selectedDatasourceName'>
+        name="selectedDatasourceName"
         render={({ field: { onChange, ref, ...field } }) => (
           <CloudRulesSourcePicker
             {...field}
@@ -448,14 +447,13 @@ function DataSourceField() {
             }}
           />
         )}
-        name="selectedDatasourceName"
+        control={control}
         rules={{
           required: {
             value: true,
             message: t('alerting.import-to-gma.datasource.required-message', 'Please select a data source'),
           },
         }}
-        control={control}
       />
     </Field>
   );

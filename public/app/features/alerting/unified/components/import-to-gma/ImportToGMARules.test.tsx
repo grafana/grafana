@@ -26,17 +26,20 @@ const ui = {
     mimirDsOption: byRole('button', { name: /Mimir Prometheus$/ }),
   },
   yamlImport: {
-    fileUpload: byLabelText('Prometheus YAML file'),
-    targetDataSource: byLabelText('Target data source'),
+    fileUpload: byLabelText('Upload file'),
+    targetDataSource: byLabelText(/Target data source/, { selector: '#yaml-target-data-source' }),
   },
   additionalSettings: {
-    collapseButton: byRole('button', { name: /Additional settings/ }),
     targetFolder: byRole('button', { name: /Select folder/ }),
     namespaceFilter: byRole('combobox', { name: /^Namespace/ }),
     ruleGroupFilter: byRole('combobox', { name: /^Group/ }),
-    pauseAlertingRules: byLabelText('Pause imported alerting rules'),
-    pauseRecordingRules: byLabelText('Pause imported recording rules'),
-    targetDataSourceForRecording: byLabelText(/Target data source/),
+    // There is a bug affecting using byRole selector. The bug has been fixed but we use older version of the library.
+    // https://github.com/testing-library/dom-testing-library/issues/1101#issuecomment-2001928377
+    pauseAlertingRules: byLabelText('Pause imported alerting rules', { selector: '#pause-alerting-rules' }),
+    pauseRecordingRules: byLabelText('Pause imported recording rules', { selector: '#pause-recording-rules' }),
+    targetDataSourceForRecording: byLabelText(/Target data source/, {
+      selector: '#recording-rules-target-data-source',
+    }),
   },
 };
 
@@ -68,15 +71,16 @@ describe('ImportToGMARules', () => {
 
       // Test that all additional option fields are visible
       expect(await ui.additionalSettings.targetFolder.find()).toBeInTheDocument();
-      expect(await ui.additionalSettings.namespaceFilter.find()).toBeDisabled();
-      expect(await ui.additionalSettings.ruleGroupFilter.find()).toBeDisabled();
-      // expect(await ui.additionalSettings.pauseAlertingRules.find()).toBeInTheDocument();
-      // expect(await ui.additionalSettings.pauseRecordingRules.find()).toBeInTheDocument();
-      expect(await ui.additionalSettings.targetDataSourceForRecording.find()).toBeInTheDocument();
+      expect(ui.additionalSettings.namespaceFilter.get()).toBeDisabled();
+      expect(ui.additionalSettings.ruleGroupFilter.get()).toBeDisabled();
+      expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeInTheDocument();
 
       // // Test default values for pause switches (both should be checked by default)
       expect(ui.additionalSettings.pauseAlertingRules.get()).toBeChecked();
       expect(ui.additionalSettings.pauseRecordingRules.get()).toBeChecked();
+
+      expect(ui.yamlImport.fileUpload.query()).not.toBeInTheDocument();
+      expect(ui.yamlImport.targetDataSource.query()).not.toBeInTheDocument();
     });
   });
 
@@ -88,8 +92,12 @@ describe('ImportToGMARules', () => {
       await user.click(ui.importSource.yaml.get());
 
       // Test that YAML-specific fields are visible
-      expect(ui.yamlImport.fileUpload.get()).toBeInTheDocument();
+      expect(await ui.yamlImport.fileUpload.find()).toBeInTheDocument();
       expect(ui.yamlImport.targetDataSource.get()).toBeInTheDocument();
+
+      // Test that pause switches are checked by default
+      expect(ui.additionalSettings.pauseAlertingRules.get()).toBeChecked();
+      expect(ui.additionalSettings.pauseRecordingRules.get()).toBeChecked();
 
       // Test that datasource-specific field is not visible
       expect(ui.dsImport.dsPicker.query()).not.toBeInTheDocument();
