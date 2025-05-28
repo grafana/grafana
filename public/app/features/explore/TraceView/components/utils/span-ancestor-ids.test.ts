@@ -17,59 +17,53 @@ import { TraceSpan } from '../types';
 import spanAncestorIdsSpy from './span-ancestor-ids';
 
 describe('spanAncestorIdsSpy', () => {
-  const ownSpanID = 'ownSpanID';
-  const firstParentSpanID = 'firstParentSpanID';
-  const firstParentFirstGrandparentSpanID = 'firstParentFirstGrandparentSpanID';
-  const firstParentSecondGrandparentSpanID = 'firstParentSecondGrandparentSpanID';
-  const secondParentSpanID = 'secondParentSpanID';
-  const rootSpanID = 'rootSpanID';
-  const span = {
+  const rootSpan = { spanID: 'rootSpanID' };
+  const firstParentFirstGrandparentSpan = {
+    spanID: 'firstParentFirstGrandparentSpanID',
     references: [
       {
-        span: {
-          spanID: firstParentSpanID,
-          references: [
-            {
-              span: {
-                spanID: firstParentFirstGrandparentSpanID,
-                references: [
-                  {
-                    span: {
-                      spanID: rootSpanID,
-                    },
-                  },
-                ],
-              },
-              refType: 'not an ancestor ref type',
-            },
-            {
-              span: {
-                spanID: firstParentSecondGrandparentSpanID,
-                references: [
-                  {
-                    span: {
-                      spanID: rootSpanID,
-                    },
-                    refType: 'FOLLOWS_FROM',
-                  },
-                ],
-              },
-              refType: 'CHILD_OF',
-            },
-          ],
-        },
-        refType: 'CHILD_OF',
+        span: rootSpan,
+      }
+    ],
+  };
+  const firstParentSecondGrandparentSpan = {
+    spanID: 'firstParentSecondGrandparentSpanID',
+    references: [
+      {
+        span: rootSpan,
+        refType: 'FOLLOWS_FROM',
+      },
+    ],
+  };
+  const firstParentSpan = {
+    spanID: 'firstParentSpanID',
+    references: [
+      {
+        span: firstParentFirstGrandparentSpan,
+        refType: 'not an ancestor ref type',
       },
       {
-        span: {
-          spanID: secondParentSpanID,
-        },
+        span: firstParentSecondGrandparentSpan,
         refType: 'CHILD_OF',
       },
     ],
-    spanID: ownSpanID,
   };
-  const expectedAncestorIds = [firstParentSpanID, firstParentSecondGrandparentSpanID, rootSpanID];
+  const secondParentSpan = { spanID: 'secondParentSpanID' };
+  const span = {
+    spanID: 'ownSpanID',
+    references: [
+      {
+        span: firstParentSpan,
+        referenceType: 'CHILD_OF',
+      },
+      {
+        span: secondParentSpan,
+        referenceType: 'CHILD_OF'
+      },
+    ],
+  };
+  
+  const expectedAncestorIds = [firstParentSpan.spanID, firstParentSecondGrandparentSpan.spanID, rootSpan.spanID];
 
   it('returns an empty array if given falsy span', () => {
     expect(spanAncestorIdsSpy(null)).toEqual([]);
@@ -96,36 +90,39 @@ describe('spanAncestorIdsSpy', () => {
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
   });
 
-  it('breaks when an infinite loop is detected', () => {
+  it('does not infinitely loop', () => {
     const spanWithLoopedReference = {
-      ...span, //ownSpan
+      ...span,
       references: [
         {
-          ...span.references[0], //firstParentSpan
-          references: [
-            {
-              ...span.references[0].references[0], //firstParentFirstGrandparent
-              references: [
-                {
-                  ...span.references[0].references[0].references[0], //rootSpan
+          ...span.references[0],
+          span: {
+            ...firstParentSpan,
+            references: [
+              firstParentSpan.references[0], //firstParentFirstGrandparentSpan
+              {
+                ...firstParentSpan.references[1],
+                span: {
+                  ...firstParentSecondGrandparentSpan,
                   references: [
-                    {
-                      span: {
-                        spanID: ownSpanID
-                      },
-                      refType: 'FOLLOWS_FROM',
+                    ...firstParentSecondGrandparentSpan.references[0],
+                    span: {
+                      ...rootSpan,
+                      references: [
+                        {
+                          span: span,
+                          refType: 'FOLLOWS_FROM',
+                        },
+                      ],
                     },
-                    ...span.references[0].references[0].references.slice(1),
                   ],
                 },
-              ],
-            },
-            ...span.references[0].references.slice(1),
-          ],
-        }, 
-        ...span.references.slice(1),
+              },
+            ],
+          },
+        },
       ],
     };
     expect(spanAncestorIdsSpy(spanWithLoopedReference as TraceSpan)).toEqual(expectedAncestorIds);
-  })
+  });
 });
