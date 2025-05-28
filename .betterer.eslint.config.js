@@ -122,11 +122,11 @@ module.exports = [
         'error',
         {
           selector: 'Identifier[name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. Use `Store` from @grafana/data instead.',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
         },
         {
           selector: 'MemberExpression[object.name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. Use `Store` from @grafana/data instead.',
+          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
         },
         {
           selector:

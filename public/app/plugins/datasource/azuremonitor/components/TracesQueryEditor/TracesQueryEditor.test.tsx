@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
+import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 
 import TracesQueryEditor from './TracesQueryEditor';
 

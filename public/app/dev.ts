@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { potentiallySetupMockApi } from './mock-api-utils';
+import { potentiallySetupMockApi } from './dev-utils';
 
 export async function initDevFeatures() {
   // if why-render is in url enable why did you render react extension

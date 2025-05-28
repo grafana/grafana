@@ -42,6 +42,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
       this._variableDependency = new VariableDependencyConfig(this, {
         onAnyVariableChanged: this.reloadDashboard,
+        dependsOnScopes: true,
       });
 
       this._subs.add(

@@ -133,7 +133,6 @@ func (c *K8sTestHelper) loadAPIGroups() {
 		rsp := DoRequest(c, RequestParams{
 			User: c.Org1.Viewer,
 			Path: "/apis",
-			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
 		}, &metav1.APIGroupList{})
 
 		if rsp.Response.StatusCode == http.StatusOK {
@@ -536,7 +535,7 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
@@ -707,7 +706,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	disco := c.NewDiscoveryClient()
 	req := disco.RESTClient().Get().
 		Prefix("apis").
-		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json")
 
 	result := req.Do(context.Background())
 	require.NoError(c.t, result.Error())
@@ -736,7 +735,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		}
 	}
 
-	require.Fail(c.t, "could not find discovery info for: ", group)
+	require.Failf(c.t, "could not find discovery info for: %s", group)
 	return ""
 }
 

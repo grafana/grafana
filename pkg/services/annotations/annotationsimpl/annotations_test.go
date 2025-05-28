@@ -203,10 +203,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
 	orgID := int64(1)
 	permissions := []accesscontrol.Permission{
 		{

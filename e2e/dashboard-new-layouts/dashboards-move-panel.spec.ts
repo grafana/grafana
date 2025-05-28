@@ -8,7 +8,6 @@ describe('Dashboard', () => {
   });
 
   it('can drag and drop panels', () => {
-    e2e.pages.Dashboards.visit();
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
     e2e.flows.scenes.toggleEditMode();

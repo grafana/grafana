@@ -57,7 +57,11 @@
       "aria-label-add": "Aggiungi",
       "aria-label-delete": "Elimina",
       "placeholder-key": "Codice",
+      "placeholder-name": "Nome",
       "placeholder-value": "Valore"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tipo"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Modifica",
       "export": "Esporta",
       "export-all": "Esporta tutto",
+      "learn-more": "Scopri di più",
       "loading": "Caricamento in corso...",
       "search-by-matchers": "Cerca per corrispondenze",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nuova regola di avviso",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nuova regola di registrazione gestita dall'origine dati",
-        "new-grafana-recording-rule": "Nuova regola di registrazione gestita da Grafana",
+        "new-grafana-alerting-rule": "Nuova regola di avviso",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nuova regola di registrazione",
-        "provisioning": "È inoltre possibile definire regole tramite il provisioning dei file o Terraform. <2>Ulteriori informazioni</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Non sono presenti origini di dati Prometheus o Loki configurate",
       "no-rules": "Nessuna regola trovata.",
@@ -2048,6 +2057,7 @@
         "description": "Controlla la configurazione dell'origine dati. L'origine dati supporta l'API di Prometheus?",
         "title": "Impossibile caricare le regole da questa origine dati"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Annulla ricerca",
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
@@ -3405,6 +3415,13 @@
           "values": "Valori separati da virgola",
           "values-placeholder": "1, 10, mykey: myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tipo",
+          "type-placeholder": ""
+        },
         "description": "Descrizione",
         "description-placeholder": "Testo descrittivo",
         "label": "Etichetta",
@@ -3423,8 +3440,8 @@
           "category": "Seleziona opzioni",
           "custom-all-value": "Personalizza tutti i valori",
           "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
-          "include-all": "Includi opzione Tutti",
-          "include-all-description": "Abilita un'opzione per includere tutti i valori",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Valori multipli"
         },
         "type-category": "Opzioni di {{type}}"
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Conferma",
         "confirm-action": "Conferma azione",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valore"
       },
+      "close": "Chiudi",
+      "continue": "",
       "inline": {
         "add-action": "Aggiungi azione",
         "edit-action": "Modifica azione"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Parametri delle query",
         "action-title": "Titolo",
         "action-title-placeholder": "Titolo azione",
+        "action-variables": "Variabili",
         "one-click-description": "Solo un link o un'azione possono avere un clic abilitato alla volta"
       }
     },
@@ -6860,7 +6882,7 @@
       "title": "Account di servizio"
     },
     "setup-guide": {
-      "title": "Guida alle impostazioni"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gestisci i dashboard condivisi esternamente della tua organizzazione",

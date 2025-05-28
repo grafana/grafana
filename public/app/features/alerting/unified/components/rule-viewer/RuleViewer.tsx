@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, isEmpty, truncate } from 'lodash';
+import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -40,6 +40,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import {
@@ -188,7 +189,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   const hasDashboardAndPanel = dashboardUID && panelID;
   const hasDashboard = dashboardUID;
-  const hasLabels = !isEmpty(labels);
+  const hasLabels = labelsSize(labels) > 0;
 
   const interval = group.interval;
   const styles = useStyles2(getStyles);

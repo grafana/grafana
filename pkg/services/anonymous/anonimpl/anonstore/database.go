@@ -146,13 +146,10 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 	}
 
 	// If CreatedAt time is not set (i.e. it's zero), and we end up creating the device, use current time as creation time.
-	// Spanner converts zero time to NULL, but CreatedAt is not nullable, so this helps to fix that problem too.
+	// If database converts zero time to NULL, but CreatedAt is not nullable, this helps to fix that problem too.
 	created := device.CreatedAt
 	if created.IsZero() {
 		created = time.Now()
-	}
-	if s.sqlStore.GetDBType() == migrator.Spanner {
-		return s.insertIntoSpanner(ctx, device, created)
 	}
 
 	args := []any{device.DeviceID, device.ClientIP, device.UserAgent, created.UTC(), device.UpdatedAt.UTC()}
@@ -190,30 +187,6 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 	})
 
 	return err
-}
-
-// In Spanner INSERT OR UPDATE only works when conflict is on primary key. However here we expect conflict on non-PK
-// column "device_id", so we need to use a transaction instead.
-func (s *AnonDBStore) insertIntoSpanner(ctx context.Context, dev *Device, created time.Time) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		prev := &Device{DeviceID: dev.DeviceID}
-		ok, err := dbSession.Table(tableName).Get(prev)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			// Don't call Insert(dev) directly, because successful Insert modifies dev.DeviceID,
-			// but we don't do the same for other databases. That's why we create a copy.
-			devCopy := *dev
-			devCopy.CreatedAt = created
-			_, err = dbSession.Table(tableName).Insert(devCopy)
-			return err
-		}
-
-		// Include all columns in the update, even when empty (it's what inserts for other databases do too).
-		_, err = dbSession.Table(tableName).Where("device_id=?", dev.DeviceID).MustCols("client_ip", "user_agent", "created_at", "updated_at").Update(dev)
-		return err
-	})
 }
 
 func (s *AnonDBStore) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {

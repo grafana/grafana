@@ -13,7 +13,9 @@ type ReceiverIntegration struct {
 
 // NewReceiverIntegration creates a new ReceiverIntegration object.
 func NewReceiverIntegration() *ReceiverIntegration {
-	return &ReceiverIntegration{}
+	return &ReceiverIntegration{
+		Settings: map[string]interface{}{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -24,5 +26,7 @@ type ReceiverSpec struct {
 
 // NewReceiverSpec creates a new ReceiverSpec object.
 func NewReceiverSpec() *ReceiverSpec {
-	return &ReceiverSpec{}
+	return &ReceiverSpec{
+		Integrations: []ReceiverIntegration{},
+	}
 }

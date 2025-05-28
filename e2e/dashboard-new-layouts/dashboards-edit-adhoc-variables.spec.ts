@@ -11,8 +11,6 @@ describe('Dashboard edit - Ad hoc variables', () => {
   });
 
   it('can add a new adhoc variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 

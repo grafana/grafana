@@ -1,13 +1,42 @@
 import { cx } from '@emotion/css';
-import { Component, ReactNode } from 'react';
+import { isEqual } from 'lodash';
+import { Component, createRef, ReactNode } from 'react';
+import { ValueContainerProps as BaseValueContainerProps, type GroupBase } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 
 import { getSelectStyles } from './getSelectStyles';
+import type { CustomComponentProps } from './types';
 
-class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
+type ValueContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>> = BaseValueContainerProps<
+  Option,
+  isMulti,
+  Group
+> &
+  CustomComponentProps<Option, isMulti, Group>;
+
+class UnthemedValueContainer<Option, isMulti extends boolean, Group extends GroupBase<Option>> extends Component<
+  ValueContainerProps<Option, isMulti, Group> & { theme: GrafanaTheme2 }
+> {
+  private ref = createRef<HTMLDivElement>();
+
+  componentDidUpdate(prevProps: ValueContainerProps<Option, isMulti, Group>) {
+    if (
+      this.ref.current &&
+      this.props.selectProps.autoWidth &&
+      !isEqual(prevProps.selectProps.value, this.props.selectProps.value)
+    ) {
+      // Reset in order to measure the new width
+      this.ref.current.style.minWidth = '0px';
+
+      const width = this.ref.current.offsetWidth;
+
+      this.ref.current.style.minWidth = `${width}px`;
+    }
+  }
+
   render() {
     const { children } = this.props;
     const { selectProps } = this.props;
@@ -39,7 +68,7 @@ class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
     });
 
     return (
-      <div data-testid={dataTestid} className={className}>
+      <div ref={this.ref} data-testid={dataTestid} className={className}>
         {children}
       </div>
     );

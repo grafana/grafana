@@ -49,8 +49,9 @@ func schema_pkg_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallback) co
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec"),
+							Description: "Spec is the spec of the Playlist",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec"),
 						},
 					},
 					"status": {

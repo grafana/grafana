@@ -78,6 +78,18 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
 	})
 
+	t.Run("Should be able to override via plugins.preinstall with GF_INSTALL_PLUGINS env var when GF_PLUGINS_PREINSTALL and cfg.plugins.preinstall are not set", func(t *testing.T) {
+		t.Setenv("GF_INSTALL_PLUGINS", "https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
+		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
+		require.Equal(t, cfg.PreinstallPluginsSync, []InstallPlugin{{ID: "grafana-piechart-panel", Version: "", URL: "https://grafana.com/grafana/plugins/grafana-piechart-panel/"}})
+	})
+
 	t.Run("Should be able to expand parameter from environment variables", func(t *testing.T) {
 		t.Setenv("DEFAULT_IDP_URL", "grafana.com")
 		t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTH_URL", "${DEFAULT_IDP_URL}/auth")

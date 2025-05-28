@@ -57,7 +57,11 @@
       "aria-label-add": "Ajouter",
       "aria-label-delete": "Supprimer",
       "placeholder-key": "Clé",
+      "placeholder-name": "Nom",
       "placeholder-value": "Valeur"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Modifier",
       "export": "Exporter",
       "export-all": "Tout exporter",
+      "learn-more": "En savoir plus",
       "loading": "Chargement en cours...",
       "search-by-matchers": "Rechercher par correspondance",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nouvelle règle d'alerte",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nouvelle règle d'enregistrement gérée par la source de données",
-        "new-grafana-recording-rule": "Nouvelle règle d'enregistrement gérée par Grafana",
+        "new-grafana-alerting-rule": "Nouvelle règle d'alerte",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nouvelle règle d'enregistrement",
-        "provisioning": "Vous pouvez également définir des règles via la mise en service de fichiers ou Terraform. <2>En savoir plus</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Il n’y a pas de sources de données Prometheus ou Loki configurées",
       "no-rules": "Aucune règle n’a été trouvée.",
@@ -2048,6 +2057,7 @@
         "description": "Vérifiez la configuration de la source de données. La source de données prend-elle en charge l'API Prometheus ?",
         "title": "Impossible de charger les règles à partir de cette source de données"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -3405,6 +3415,13 @@
           "values": "Valeurs séparées par une virgule",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Type",
+          "type-placeholder": ""
+        },
         "description": "Description",
         "description-placeholder": "Texte de description",
         "label": "Étiquette",
@@ -3423,8 +3440,8 @@
           "category": "Options de sélection",
           "custom-all-value": "Personnaliser toutes les valeurs",
           "custom-all-value-description": "Un caractère générique regex ou une autre valeur pour représenter Tout",
-          "include-all": "Inclure l’option Tout",
-          "include-all-description": "Active une option pour inclure toutes les valeurs",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multi-valeur"
         },
         "type-category": "{{type}} options"
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Confirmer",
         "confirm-action": "Confirmer l'action",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Valeur"
       },
+      "close": "Fermer",
+      "continue": "",
       "inline": {
         "add-action": "Ajouter l'action",
         "edit-action": "Modifier l'action"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Paramètres de requête",
         "action-title": "Titre",
         "action-title-placeholder": "Titre de l'action",
+        "action-variables": "Variables",
         "one-click-description": "Un seul lien ou une seule action peut avoir un clic activé à la fois"
       }
     },
@@ -6807,7 +6829,7 @@
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
-      "title": "Listes de lecture"
+      "title": "Playlists"
     },
     "plugins": {
       "subtitle": "Prolonger l'expérience Grafana avec des plug-ins",
@@ -6860,7 +6882,7 @@
       "title": "Comptes de service"
     },
     "setup-guide": {
-      "title": "Guide de configuration"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Gérez les tableaux de bord partagés en externe de votre organisation",
@@ -8731,7 +8753,7 @@
     },
     "content": {
       "empty-recent-list-docs": "<0><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></0>",
-      "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
+      "empty-recent-list-info": "Il semble que vous n'avez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "copy-paste": {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -39,6 +39,37 @@ const queryTypes: Array<{ value: string; label: string }> = [
   ...(config.featureToggles.cloudWatchCrossAccountQuerying
     ? [{ value: VariableQueryType.Accounts, label: 'Accounts' }]
     : []),
+];
+
+const attributeNames: string[] = [
+  'AmiLaunchIndex',
+  'Architecture',
+  'ClientToken',
+  'EbsOptimized',
+  'EnaSupport',
+  'Hypervisor',
+  'IamInstanceProfile',
+  'ImageId',
+  'InstanceId',
+  'InstanceLifecycle',
+  'InstanceType',
+  'KernelId',
+  'KeyName',
+  'LaunchTime',
+  'Platform',
+  'PrivateDnsName',
+  'PrivateIpAddress',
+  'PublicDnsName',
+  'PublicIpAddress',
+  'RamdiskId',
+  'RootDeviceName',
+  'RootDeviceType',
+  'SourceDestCheck',
+  'SpotInstanceRequestId',
+  'SriovNetSupport',
+  'SubnetId',
+  'VirtualizationType',
+  'VpcId',
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -98,6 +129,10 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     }
     return { ...query, metricName, dimensionKey, dimensionFilters };
   };
+  const allAttributeNames = attributeNames.includes(parsedQuery.attributeName)
+    ? attributeNames
+    : [...attributeNames, parsedQuery.attributeName];
+  const attributeOptions = allAttributeNames.map(toOption);
 
   const hasRegionField = [
     VariableQueryType.Metrics,
@@ -211,10 +246,13 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {parsedQuery.queryType === VariableQueryType.EC2InstanceAttributes && (
         <>
-          <VariableTextField
+          <VariableQueryField
             value={parsedQuery.attributeName}
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
+            options={attributeOptions}
+            onChange={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute name"
+            inputId={`variable-query-instance-attribute-${query.refId}`}
+            allowCustomValue
             interactive={true}
             tooltip={
               <>

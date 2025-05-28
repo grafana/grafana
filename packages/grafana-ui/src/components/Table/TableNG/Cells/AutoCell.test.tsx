@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import AutoCell from './AutoCell';
@@ -32,7 +34,7 @@ describe('AutoCell', () => {
       };
     };
 
-    it('shows multiple datalinks in a context menu behind a button', () => {
+    it('shows multiple datalinks in the tooltip', async () => {
       const linksForField = [
         { href: 'http://asdasd.com', title: 'Test Title' } as LinkModel,
         { href: 'http://asdasd2.com', title: 'Test Title2' } as LinkModel,
@@ -53,11 +55,17 @@ describe('AutoCell', () => {
           cellOptions={{ type: TableCellDisplayMode.Auto }}
         />
       );
-      const submitButton = screen.getByRole('button');
-      expect(submitButton).toBeInTheDocument();
+
+      const cell = screen.getByTestId(selectors.components.TablePanel.autoCell);
+      await userEvent.click(cell);
+
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText('Test Title')).toBeInTheDocument();
+      expect(screen.getByText('Test Title2')).toBeInTheDocument();
     });
 
-    it('does not show button for menu for multiple links if one is invalid', () => {
+    it('does not show tooltip for multiple links if one is invalid', async () => {
       const linksForField = [
         { href: 'http://asdasd.com', title: 'Test Title' } as LinkModel,
         { title: 'Test Title2' } as LinkModel,
@@ -78,8 +86,11 @@ describe('AutoCell', () => {
           cellOptions={{ type: TableCellDisplayMode.Auto }}
         />
       );
-      const submitButton = screen.queryByRole('button');
-      expect(submitButton).not.toBeInTheDocument();
+
+      const cell = screen.getByTestId(selectors.components.TablePanel.autoCell);
+      await userEvent.click(cell);
+
+      expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
     });
   });
 });

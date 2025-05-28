@@ -6,9 +6,9 @@ import { dateTime, LoadingState } from '@grafana/data';
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { ResultFormat } from '../../dataquery.gen';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
 import LogsQueryEditor from './LogsQueryEditor';
+import { createMockResourcePickerData } from './mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

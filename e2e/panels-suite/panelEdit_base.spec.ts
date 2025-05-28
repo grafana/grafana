@@ -16,9 +16,16 @@ describe('Panel edit tests', () => {
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     cy.wait('@query');
 
+    e2e.components.Panels.Panel.title('Lines 500 data points')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Panel.loadingBar().should('not.exist');
+        cy.get('[data-testid="uplot-main-div"]').first().should('be.visible');
+      });
+
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
-    // // New panel editor opens when navigating from Panel menu
+    // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');
 
     // Queries tab is rendered and open by default
@@ -31,7 +38,6 @@ describe('Panel edit tests', () => {
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Queries1'); // there's already a query so therefore Query + 1
         });
-        // cy.get('[data-testid]="query-editor-rows"').should('be.visible');
         cy.get(`[data-testid="${selectors.components.QueryTab.content}"]`).should('be.visible');
         e2e.components.TransformTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');

@@ -15,8 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -420,10 +421,6 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
 		buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement))
-	}
-
-	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
-		buf.WriteString(" THEN RETURN " + session.engine.Quote(table.AutoIncrement))
 	}
 
 	sqlStr := buf.String()

@@ -9,7 +9,7 @@ import { extractFieldsTransformer } from 'app/features/transformers/extractField
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
-import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');

@@ -85,44 +85,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
       },
     },
-    "panel-2": {
-      "kind": "Panel",
-      "spec": {
-        "data": {
-          "kind": "QueryGroup",
-          "spec": {
-            "queries": [],
-            "queryOptions": {},
-            "transformations": [],
-          },
-        },
-        "description": "Test Description 2",
-        "id": 2,
-        "links": [
-          {
-            "targetBlank": true,
-            "title": "Test Link 1",
-            "url": "http://test1.com",
-          },
-          {
-            "title": "Test Link 2",
-            "url": "http://test2.com",
-          },
-        ],
-        "title": "Test Panel 2",
-        "vizConfig": {
-          "kind": "graph",
-          "spec": {
-            "fieldConfig": {
-              "defaults": {},
-              "overrides": [],
-            },
-            "options": {},
-            "pluginVersion": "7.0.0",
-          },
-        },
-      },
-    },
   },
   "layout": {
     "kind": "GridLayout",
@@ -139,33 +101,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
             "width": 0,
             "x": 0,
             "y": 0,
-          },
-        },
-        {
-          "kind": "GridLayoutRow",
-          "spec": {
-            "collapsed": false,
-            "elements": [
-              {
-                "kind": "GridLayoutItem",
-                "spec": {
-                  "element": {
-                    "kind": "ElementReference",
-                    "name": "panel-2",
-                  },
-                  "height": 0,
-                  "width": 0,
-                  "x": 0,
-                  "y": 0,
-                },
-              },
-            ],
-            "repeat": {
-              "mode": "variable",
-              "value": "customVar",
-            },
-            "title": "Test Row",
-            "y": 10,
           },
         },
       ],

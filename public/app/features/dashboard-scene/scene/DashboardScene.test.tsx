@@ -1,5 +1,5 @@
 import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -15,6 +15,7 @@ import {
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
@@ -795,6 +796,82 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
+    it('should return true if the dashboard is managed', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.isManaged()).toBe(true);
+    });
+
+    it('dashboard should be editable if managed by repo', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: kubectl', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Kubectl,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: terraform', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: plugin', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should be editable if not managed', () => {
+      const scene = buildTestScene();
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
     });
   });
 });

@@ -44,8 +44,8 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db", // should set type based off of key
 			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
-			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Tags: []string{"term"}},
+			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2", Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
@@ -121,7 +121,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50), Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
@@ -186,7 +186,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2), Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{

@@ -177,6 +177,7 @@
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/datapro
+/pkg/tests/apis/secret/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
@@ -485,7 +486,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-/public/app/mock-api-utils.ts @grafana/grafana-frontend-platform
+/public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/features/admin/ @grafana/identity-access-team
@@ -773,7 +774,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/backend-code-checks.yml @grafana/grafana-backend-group
 /.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
-/.github/workflows/backport.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/backport-trigger.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/backport-workflow.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/bump-version.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-pr.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-comms.yml @grafana/grafana-developer-enablement-squad

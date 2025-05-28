@@ -1,28 +1,16 @@
 package folders
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-openapi-client-go/models"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-const orgID = 1
 
 func TestIntegrationUpdateFolder(t *testing.T) {
 	if testing.Short() {
@@ -45,14 +33,7 @@ func testUpdateFolder(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 	resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
@@ -93,14 +74,7 @@ func testCreateFolder(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 
@@ -142,14 +116,7 @@ func testNestedFoldersOn(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 
@@ -227,24 +194,4 @@ func testNestedFoldersOn(t *testing.T, featureToggles []string) {
 			})
 		})
 	})
-}
-
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = orgID
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
 }

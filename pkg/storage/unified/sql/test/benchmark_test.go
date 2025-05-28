@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -15,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
-	"github.com/stretchr/testify/require"
 )
 
 func newTestBackend(b testing.TB) resource.StorageBackend {
@@ -40,9 +41,6 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("Skipping benchmark on Spanner")
-	}
 	opts := test.DefaultBenchmarkOptions()
 	if db.IsTestDbSQLite() {
 		opts.Concurrency = 1 // to avoid SQLite database is locked error
@@ -53,9 +51,6 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
-	}
-	if db.IsTestDBSpanner() {
-		t.Skip("Skipping benchmark on Spanner")
 	}
 
 	ctx := context.Background()

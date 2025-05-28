@@ -423,7 +423,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
     }
   }
 
-  return links;
+  return links.filter((link) => link.href || link.onClick != null);
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */

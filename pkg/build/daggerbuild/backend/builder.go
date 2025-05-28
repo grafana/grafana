@@ -93,14 +93,14 @@ func GolangContainer(
 
 	container := golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
-		WithExec([]string{"wget", "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"}).
+		WithExec([]string{"wget", "https://dl.grafana.com/ci/zig-linux-x86_64-0.11.0.tar.xz"}).
 		WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
 		WithExec([]string{"mv", "/zig", "/bin/zig"}).
 		// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
 		WithExec([]string{"mkdir", "/toolchain"}).
-		WithExec([]string{"wget", "http://musl.cc/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
+		WithExec([]string{"wget", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
 		WithExec([]string{"tar", "-xvf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "https://musl.cc/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
+		WithExec([]string{"wget", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
 		WithExec([]string{"tar", "-xvf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
 
 	return WithGoEnv(log, container, distro, opts)
@@ -158,7 +158,7 @@ func Builder(
 
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
@@ -184,7 +184,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).

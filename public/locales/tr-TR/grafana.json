@@ -57,7 +57,11 @@
       "aria-label-add": "Ekle",
       "aria-label-delete": "Sil",
       "placeholder-key": "Anahtar",
+      "placeholder-name": "Ad",
       "placeholder-value": "Değer"
+    },
+    "variables-editor": {
+      "placeholder-type": "Tür"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Düzenle",
       "export": "Dışa aktar",
       "export-all": "Tümünü dışa aktar",
+      "learn-more": "Daha fazla bilgi edinin",
       "loading": "Yükleniyor...",
       "search-by-matchers": "Eşleşenlerle ara",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Yeni uyarı kuralı",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Yeni veri kaynağı tarafından yönetilen kayıt kuralı",
-        "new-grafana-recording-rule": "Grafana tarafından yönetilen yeni kayıt kuralı",
+        "new-grafana-alerting-rule": "Yeni uyarı kuralı",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Yeni kayıt kuralı",
-        "provisioning": "Kuralları dosya sağlama veya Terraform aracılığıyla da tanımlayabilirsiniz. <2>Daha fazla bilgi edinin</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Yapılandırılmış Prometheus veya Loki veri kaynağı yok",
       "no-rules": "Kural bulunamadı.",
@@ -2048,6 +2057,7 @@
         "description": "Veri kaynağı yapılandırmasını kontrol edin. Veri kaynağı Prometheus API'yi destekliyor mu?",
         "title": "Bu veri kaynağından kurallar yüklenemedi"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -3405,6 +3415,13 @@
           "values": "Virgülle ayrılmış değerler",
           "values-placeholder": "1, 10, anahtarım : değerim, değerim, kaçırılmış, değer"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Tür",
+          "type-placeholder": ""
+        },
         "description": "Açıklama",
         "description-placeholder": "Açıklayıcı metin",
         "label": "Etiket",
@@ -3423,8 +3440,8 @@
           "category": "Seçim ayarları",
           "custom-all-value": "Özel tüm değer",
           "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
-          "include-all": "Tümünü Dahil Et seçeneği",
-          "include-all-description": "Tüm değerleri dahil etme seçeneğini etkinleştirir",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Çoklu değer"
         },
         "type-category": "{{type}} seçenekleri"
@@ -5036,7 +5053,7 @@
       "displaying-partial-queries": "{{ count }} sorgu gösteriliyor",
       "displaying-queries": "{{ count }} sorgu",
       "filter-aria-label": "Veri kaynakları için sorguları filtreleyin",
-      "filter-history": "Geçmişi filtreleyin",
+      "filter-history": "Geçmişi filtrele",
       "filter-placeholder": "Veri kaynakları için sorguları filtreleyin",
       "history-local": "Geçmiş tarayıcınızda yerel olarak barındırılır ve başkalarıyla paylaşılmaz.",
       "loading": "Yükleniyor...",
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Onayla",
         "confirm-action": "İşlemi onayla",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Değer"
       },
+      "close": "Kapat",
+      "continue": "",
       "inline": {
         "add-action": "İşlem ekle",
         "edit-action": "İşlemi düzenle"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Sorgu parametreleri",
         "action-title": "Başlık",
         "action-title-placeholder": "İşlem başlığı",
+        "action-variables": "Değişkenler",
         "one-click-description": "Aynı anda yalnızca bir bağlantı veya işlem için tek tıklama etkinleştirilebilir"
       }
     },
@@ -6860,7 +6882,7 @@
       "title": "Servis hesapları"
     },
     "setup-guide": {
-      "title": "Kurulum kılavuzu"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Kuruluşunuzun haricî olarak paylaşılan panolarını yönetin",
@@ -8351,8 +8373,8 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "JSON olarak dışa aktar",
-      "share-externally-title": "Haricî olarak paylaşın",
-      "share-internally-title": "Dâhilî olarak paylaşın",
+      "share-externally-title": "Haricî olarak paylaş",
+      "share-internally-title": "Dâhilî olarak paylaş",
       "share-snapshot-title": "Anlık görüntüyü paylaş"
     },
     "share-button": "Paylaş",
@@ -8446,13 +8468,13 @@
   "share-panel": {
     "drawer": {
       "new-library-panel-title": "Yeni kütüphane paneli",
-      "share-embed-title": "Eklemeyi paylaşın",
+      "share-embed-title": "Eklemeyi paylaş",
       "share-link-title": "Bağlantı ayarları"
     },
     "menu": {
       "new-library-panel-title": "Yeni kütüphane paneli",
-      "share-embed-title": "Eklemeyi paylaşın",
-      "share-link-title": "Bağlantıyı paylaşın",
+      "share-embed-title": "Eklemeyi paylaş",
+      "share-link-title": "Bağlantıyı paylaş",
       "share-snapshot-title": "Anlık görüntüyü paylaşın"
     },
     "new-library-panel": {

@@ -12,7 +12,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'home':
       return t('nav.home.title', 'Home');
     case 'home-setup-guide':
-      return t('nav.setup-guide.title', 'Setup guide');
+      return t('nav.setup-guide.title', 'Getting started guide');
     case 'new':
       return t('nav.new.title', 'New');
     case 'create':

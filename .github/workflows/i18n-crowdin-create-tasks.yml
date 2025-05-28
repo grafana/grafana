@@ -3,8 +3,9 @@ name: Crowdin automatic task management
 on:
   workflow_dispatch:
   # once a week on Sunday at midnight
-  schedule:
-    - cron: "0 0 * * 0"
+  # TODO enable once we're ready to create tasks automatically
+  # schedule:
+  #   - cron: "0 0 * * 0"
 
 jobs:
   create-tasks-in-crowdin:

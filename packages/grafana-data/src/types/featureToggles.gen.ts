@@ -679,10 +679,6 @@ export interface FeatureToggles {
   */
   exploreLogsLimitedTimeRange?: boolean;
   /**
-  * Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-  */
-  homeSetupGuide?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -845,19 +841,13 @@ export interface FeatureToggles {
   */
   teamHttpHeadersMimir?: boolean;
   /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
+  * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   */
-  ABTestFeatureToggleA?: boolean;
+  teamHttpHeadersTempo?: boolean;
   /**
   * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
-  /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleB?: boolean;
   /**
   * Enables Advisor app
   */
@@ -1003,6 +993,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -1028,4 +1022,9 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Enables restore deleted dashboards feature
+  * @default false
+  */
+  restoreDashboards?: boolean;
 }

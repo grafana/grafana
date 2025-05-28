@@ -57,7 +57,11 @@
       "aria-label-add": "Lägg till",
       "aria-label-delete": "Ta bort",
       "placeholder-key": "Nyckel",
+      "placeholder-name": "Namn",
       "placeholder-value": "Värde"
+    },
+    "variables-editor": {
+      "placeholder-type": "Typ"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Redigera",
       "export": "Exportera",
       "export-all": "Exportera alla",
+      "learn-more": "Läs mer",
       "loading": "Laddar …",
       "search-by-matchers": "Sök efter matchningar",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Ny varningsregel",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Ny inspelningsregel hanterad av datakälla",
-        "new-grafana-recording-rule": "Ny inspelningsregel hanterad av Grafana",
+        "new-grafana-alerting-rule": "Ny varningsregel",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Ny inspelningsregel",
-        "provisioning": "Du kan även definiera regler genom filbaserad konfigurering eller Terraform. <2>Läs mer</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Det finns inga Prometheus- eller Loki-datakällor konfigurerade",
       "no-rules": "Inga regler hittades.",
@@ -2048,6 +2057,7 @@
         "description": "Kontrollera datakällans konfiguration. Har datakällan stöd för Prometheus API?",
         "title": "Det gick inte att ladda reglerna från den här datakällan"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -3405,6 +3415,13 @@
           "values": "Värden åtskilda med kommatecken",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Typ",
+          "type-placeholder": ""
+        },
         "description": "Beskrivning",
         "description-placeholder": "Beskrivande text",
         "label": "Etikett",
@@ -3423,8 +3440,8 @@
           "category": "Urvalsalternativ",
           "custom-all-value": "Anpassa allt värde",
           "custom-all-value-description": "Ett reguljärt jokertecken eller annat värde som representerar alla",
-          "include-all": "Alternativet Inkludera alla",
-          "include-all-description": "Aktiverar ett alternativ för att inkludera alla värden",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Multivärde"
         },
         "type-category": "{{type}}-alternativ"
@@ -4997,7 +5014,7 @@
       "datasource-z-a": "Datakälla Ö–A",
       "newest-first": "Nyaste först",
       "oldest-first": "Äldsta först",
-      "query-history": "SQL-frågehistorik",
+      "query-history": "Frågehistorik",
       "settings": "Inställningar",
       "starred": "Stjärnmärkt"
     },
@@ -5104,8 +5121,8 @@
       "add-from-query-library": "Lägg till fråga från biblioteket",
       "query-add-button": "Lägg till fråga",
       "query-add-button-aria-label": "Lägg till fråga",
-      "query-history-button": "SQL-frågehistorik",
-      "query-history-button-aria-label": "SQL-frågehistorik",
+      "query-history-button": "Frågehistorik",
+      "query-history-button-aria-label": "Frågehistorik",
       "query-inspector-button": "Frågeinspektör",
       "query-inspector-button-aria-label": "Frågeinspektör"
     },
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bekräfta",
         "confirm-action": "Bekräfta åtgärd",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Värde"
       },
+      "close": "Stäng",
+      "continue": "",
       "inline": {
         "add-action": "Lägg till åtgärd",
         "edit-action": "Redigera åtgärd"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Frågeparametrar",
         "action-title": "Titel",
         "action-title-placeholder": "Åtgärdstitel",
+        "action-variables": "Variabler",
         "one-click-description": "Endast en länk eller en åtgärd kan ha en aktiverad klickning åt gången"
       }
     },
@@ -6811,7 +6833,7 @@
     },
     "plugins": {
       "subtitle": "Förbättra Grafana-upplevelsen med tilläggsprogram",
-      "title": "tilläggsprogram"
+      "title": "Tilläggsprogram"
     },
     "private-data-source-connections": {
       "subtitle": "Fråga efter data som bor inom ett säkert nätverk utan att öppna nätverket för inkommande trafik från Grafana Cloud. Läs mer i våra dokument.",
@@ -6860,7 +6882,7 @@
       "title": "Servicekonton"
     },
     "setup-guide": {
-      "title": "Installationsguide"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Hantera din organisations externt delade instrumentpaneler",
@@ -6894,7 +6916,7 @@
       "title": "Supportpaket"
     },
     "synthetics": {
-      "title": "Syntetiskt"
+      "title": "Syntetisk övervakning"
     },
     "teams": {
       "subtitle": "Grupper av användare som har gemensamma instrumentpaneler och behörighetsbehov",
@@ -6902,7 +6924,7 @@
     },
     "testing-and-synthetics": {
       "subtitle": "Optimera prestanda med K6 och insikter från syntetisk övervakning",
-      "title": "Testning och syntetiskt"
+      "title": "Testning och övervakning"
     },
     "upgrading": {
       "title": "Statistik och licens"

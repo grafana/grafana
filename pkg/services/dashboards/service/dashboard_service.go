@@ -1650,55 +1650,44 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
 	hitList := make([]*model.Hit, 0)
-	hits := make(map[string]*model.Hit)
 
 	for _, item := range res {
-		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
-		hit, exists := hits[key]
-		if !exists {
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-			hit = &model.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				OrgID:       item.OrgID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
-				Type:        getHitType(item),
-				FolderID:    item.FolderID, // nolint:staticcheck
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			// when searching through unified storage, the dashboard will come as one
-			// item, when searching through legacy, the dashboard will come multiple times
-			// per tag. So we need to add the array here for unified, and the term below for legacy.
-			if item.Tags != nil {
-				hit.Tags = item.Tags
-			}
-
-			// nolint:staticcheck
-			if item.FolderID > 0 || item.FolderUID != "" {
-				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			hitList = append(hitList, hit)
-			hits[key] = hit
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		hit := &model.Hit{
+			ID:          item.ID,
+			UID:         item.UID,
+			OrgID:       item.OrgID,
+			Title:       item.Title,
+			URI:         "db/" + item.Slug,
+			URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
+			Type:        getHitType(item),
+			FolderID:    item.FolderID, // nolint:staticcheck
+			FolderUID:   item.FolderUID,
+			FolderTitle: item.FolderTitle,
+			Tags:        []string{},
 		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
+
+		if item.Tags != nil {
+			hit.Tags = item.Tags
 		}
+
+		// nolint:staticcheck
+		if item.FolderID > 0 || item.FolderUID != "" {
+			hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
+		}
+
+		if query.Sort.MetaName != "" {
+			hit.SortMeta = item.SortMeta
+			hit.SortMetaName = query.Sort.MetaName
+		}
+
 		if item.Deleted != nil {
 			deletedDate := (*item.Deleted).Add(daysInTrash)
 			hit.IsDeleted = true
 			hit.PermanentlyDeleteDate = &deletedDate
 		}
+
+		hitList = append(hitList, hit)
 	}
 	return hitList
 }

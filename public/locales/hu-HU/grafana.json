@@ -57,7 +57,11 @@
       "aria-label-add": "Hozzáadás",
       "aria-label-delete": "Törlés",
       "placeholder-key": "Kulcs",
+      "placeholder-name": "Név",
       "placeholder-value": "Érték"
+    },
+    "variables-editor": {
+      "placeholder-type": "Típus"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Szerkesztés",
       "export": "Exportálás",
       "export-all": "Összes exportálása",
+      "learn-more": "További információk",
       "loading": "Betöltés...",
       "search-by-matchers": "Keresés egyezések alapján",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Új riasztási szabály",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Új, adatforrás által kezelt felvételkészítési szabály",
-        "new-grafana-recording-rule": "Új, Grafana által kezelt felvételkészítési szabály",
+        "new-grafana-alerting-rule": "Új riasztási szabály",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Új felvételi szabály",
-        "provisioning": "Szabályokat fájlkiépítésen vagy Terraformon keresztül is meghatározhat. <2>További információ</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Nincsenek konfigurálva Prometheus- vagy Loki-adatforrások",
       "no-rules": "Nem található szabály.",
@@ -2048,6 +2057,7 @@
         "description": "Ellenőrizze az adatforrás konfigurációját. Támogatja az adatforrás a Prometheus API-t?",
         "title": "Nem lehet betölteni a szabályokat ebből az adatforrásból"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -3405,6 +3415,13 @@
           "values": "Értékek vesszővel elválasztva",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Típus",
+          "type-placeholder": ""
+        },
         "description": "Leírás",
         "description-placeholder": "Leírószöveg",
         "label": "Címke",
@@ -3423,8 +3440,8 @@
           "category": "Kijelölés beállításai",
           "custom-all-value": "Összes egyedi érték",
           "custom-all-value-description": "Helyettesítő karakteres reguláris kifejezés vagy más érték, amely az összeset jelöli",
-          "include-all": "Összes belefoglalása lehetőség",
-          "include-all-description": "Lehetővé teszi az összes érték belefoglalását",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Többértékű"
         },
         "type-category": "{{type}}-beállítások"
@@ -5201,7 +5218,7 @@
       "copy-shortened-link-label": "Megosztás",
       "copy-shortened-link-menu": "Hivatkozás másolási beállításainak megnyitása",
       "refresh-picker-cancel": "Mégse",
-      "refresh-picker-run": "Lekérdezés futtatása",
+      "refresh-picker-run": "Lekérdezés",
       "split-close": " Bezárás ",
       "split-close-tooltip": "Osztott ablaktábla bezárása",
       "split-narrow": "Keskeny ablaktábla",
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Megerősítés",
         "confirm-action": "Művelet megerősítése",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Érték"
       },
+      "close": "Bezárás",
+      "continue": "",
       "inline": {
         "add-action": "Művelet hozzáadása",
         "edit-action": "Művelet szerkesztése"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Lekérdezési paraméterek",
         "action-title": "Cím",
         "action-title-placeholder": "Művelet címe",
+        "action-variables": "Változók",
         "one-click-description": "Egyszerre csak egy hivatkozáshoz vagy művelethez lehet egy kattintás engedélyezve"
       }
     },
@@ -6860,7 +6882,7 @@
       "title": "Szolgáltatási fiókok"
     },
     "setup-guide": {
-      "title": "Beállítási útmutató"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "Szervezete külső megosztott irányítópultjainak kezelése",

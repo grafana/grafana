@@ -57,7 +57,11 @@
       "aria-label-add": "新增",
       "aria-label-delete": "刪除",
       "placeholder-key": "鍵",
+      "placeholder-name": "名稱（名字）",
       "placeholder-value": "數值"
+    },
+    "variables-editor": {
+      "placeholder-type": "類型"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "編輯",
       "export": "匯出",
       "export-all": "匯出全部",
+      "learn-more": "了解詳情",
       "loading": "正在載入…",
       "search-by-matchers": "依匹配搜尋",
       "titles": {
@@ -1396,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新的警報規則",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新的資料來源管理錄製規則",
-        "new-grafana-recording-rule": "新的 Grafana 管理錄製規則",
+        "new-grafana-alerting-rule": "新的警報規則",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新的錄製規則",
-        "provisioning": "您也可以透過檔案佈建或 Terraform 來定義規則。<2>了解更多</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "尚未設定 Prometheus 或 Loki 資料來源",
       "no-rules": "沒有找到規則。",
@@ -2038,6 +2047,7 @@
         "description": "檢查資料來源設定。資料來源是否支援 Prometheus API？",
         "title": "無法從此資料來源載入規則"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -3387,6 +3397,13 @@
           "values": "以逗號分隔的值",
           "values-placeholder": "1、10、mykey：myvalue、myvalue、轉義、值"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "類型",
+          "type-placeholder": ""
+        },
         "description": "說明",
         "description-placeholder": "描述性文字",
         "label": "標籤",
@@ -3405,8 +3422,8 @@
           "category": "選擇選項",
           "custom-all-value": "自訂所有數值",
           "custom-all-value-description": "一個通配符正則表達式或其他表示「所有」的值",
-          "include-all": "包含所有選項",
-          "include-all-description": "啟用選項以包含所有值",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "多值"
         },
         "type-category": "{{type}}選項"
@@ -5377,10 +5394,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "確認",
         "confirm-action": "確認動作",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "數值"
       },
+      "close": "關閉",
+      "continue": "",
       "inline": {
         "add-action": "新增動作",
         "edit-action": "編輯動作"
@@ -5391,6 +5412,7 @@
         "action-query-params": "查詢參數",
         "action-title": "標題",
         "action-title-placeholder": "動作標題",
+        "action-variables": "變數",
         "one-click-description": "一次只能啟用一個連結或動作的點擊"
       }
     },
@@ -6621,7 +6643,7 @@
       "title": "收集器"
     },
     "config": {
-      "title": "管理部"
+      "title": "管理"
     },
     "config-access": {
       "subtitle": "設定個人使用者、團隊和服務帳戶的存取權限",
@@ -6834,7 +6856,7 @@
       "title": "服務帳戶"
     },
     "setup-guide": {
-      "title": "快速安裝指南"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "管理組織的外部共用儀表板",

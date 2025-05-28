@@ -57,7 +57,11 @@
       "aria-label-add": "追加",
       "aria-label-delete": "削除",
       "placeholder-key": "キー",
+      "placeholder-name": "名前",
       "placeholder-value": "値"
+    },
+    "variables-editor": {
+      "placeholder-type": "種類"
     }
   },
   "admin": {
@@ -727,6 +731,7 @@
       "edit": "編集",
       "export": "エクスポート",
       "export-all": "すべてをエクスポート",
+      "learn-more": "詳細を見る",
       "loading": "読み込み中...",
       "search-by-matchers": "マッチャーで検索",
       "titles": {
@@ -1396,11 +1401,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "新しいアラートルール",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "新しいデータソース管理の記録ルール",
-        "new-grafana-recording-rule": "新しいGrafana管理の記録ルール",
+        "new-grafana-alerting-rule": "新しいアラートルール",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "新しい記録ルール",
-        "provisioning": "ファイルプロビジョニングまたはTerraformを通じてルールを定義することもできます。<2>詳細はこちら</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "PrometheusまたはLokiデータソースが設定されていません",
       "no-rules": "ルールが見つかりません。",
@@ -2038,6 +2047,7 @@
         "description": "データソースの設定を確認してください。データソースはPrometheus APIをサポートしていますか？",
         "title": "このデータソースからルールを読み込めません"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -3387,6 +3397,13 @@
           "values": "カンマで区切った値",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "種類",
+          "type-placeholder": ""
+        },
         "description": "説明",
         "description-placeholder": "説明用のテキスト",
         "label": "ラベル",
@@ -3405,8 +3422,8 @@
           "category": "選択オプション",
           "custom-all-value": "「すべて」を表すカスタム値",
           "custom-all-value-description": "「すべて」を表すワイルドカードの正規表現またはその他の値",
-          "include-all": "「すべて」オプションを含める",
-          "include-all-description": "すべての値を含めるオプションを有効にします",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "複数値"
         },
         "type-category": "{{type}}オプション"
@@ -5377,10 +5394,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "確定",
         "confirm-action": "操作を確認",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "値"
       },
+      "close": "閉じる",
+      "continue": "",
       "inline": {
         "add-action": "操作を追加",
         "edit-action": "操作を編集"
@@ -5391,6 +5412,7 @@
         "action-query-params": "クエリのパラメータ",
         "action-title": "タイトル",
         "action-title-placeholder": "操作のタイトル",
+        "action-variables": "変数",
         "one-click-description": "一度に1つのクリックを有効にできるリンクまたは操作は1つだけです"
       }
     },
@@ -6632,7 +6654,7 @@
       "title": "一般"
     },
     "config-plugins": {
-      "subtitle": "プラグインをインストールし、データ間の関係を定義します",
+      "subtitle": "プラグインをインストールし、データ間の関係を定義する",
       "title": "プラグインとデータ"
     },
     "connect-data": {
@@ -6834,7 +6856,7 @@
       "title": "サービスアカウント"
     },
     "setup-guide": {
-      "title": "セットアップガイド"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "組織の外部共有ダッシュボードを管理する",

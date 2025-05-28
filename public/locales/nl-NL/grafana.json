@@ -57,7 +57,11 @@
       "aria-label-add": "Toevoegen",
       "aria-label-delete": "Verwijderen",
       "placeholder-key": "Sleutel",
+      "placeholder-name": "Naam",
       "placeholder-value": "Waarde"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -731,6 +735,7 @@
       "edit": "Bewerken",
       "export": "Exporteren",
       "export-all": "Alles exporteren",
+      "learn-more": "Meer informatie",
       "loading": "Bezig met laden ...",
       "search-by-matchers": "Op matchers zoeken",
       "titles": {
@@ -1402,11 +1407,15 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "",
         "new-alert-rule": "Nieuwe waarschuwingsregel",
+        "new-ds-managed-alerting-rule": "",
         "new-ds-managed-recording-rule": "Nieuwe regel voor door gegevensbron beheerde opnamen",
-        "new-grafana-recording-rule": "Nieuwe door Grafana beheerde opnameregel",
+        "new-grafana-alerting-rule": "Nieuwe waarschuwingsregel",
+        "new-grafana-recording-rule": "",
         "new-recording-rule": "Nieuwe opnameregel",
-        "provisioning": "Je kunt ook regels definiëren via file provisioning of Terraform. <2>Meer informatie</2>"
+        "no-rules-created": "",
+        "provisioning": ""
       },
       "no-prom-or-loki-rules": "Er zijn geen Prometheus- of Loki-gegevensbronnen geconfigureerd",
       "no-rules": "Geen regels gevonden.",
@@ -2048,6 +2057,7 @@
         "description": "Controleer de configuratie van de gegevensbron. Ondersteunt de gegevensbron Prometheus API?",
         "title": "Kan regels uit deze gegevensbron niet laden"
       },
+      "empty-data-source": "",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -3405,6 +3415,13 @@
           "values": "Waarden gescheiden door komma",
           "values-placeholder": "1, 10, mijnsleutel : mijnwaarde, mijnwaarde, escaped,waarde"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Type",
+          "type-placeholder": ""
+        },
         "description": "Beschrijving",
         "description-placeholder": "Omschrijving",
         "label": "Label",
@@ -3423,8 +3440,8 @@
           "category": "Selectiemogelijkheden",
           "custom-all-value": "Alle aangepaste waarde",
           "custom-all-value-description": "Een wildcard regex of een andere waarde om Alles weer te geven",
-          "include-all": "Optie Alles opnemen",
-          "include-all-description": "Schakelt een optie in om alle waarden op te nemen",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Meerdere waarden"
         },
         "type-category": "Opties voor {{type}}"
@@ -4547,7 +4564,7 @@
   "data-source-picker": {
     "add-new-data-source": "Een nieuwe gegevensbron configureren",
     "built-in-list": {
-      "description-dashboard": "Gebruik queryresultaten van andere visualisaties opnieuw",
+      "description-dashboard": "Hergebruik queryresultaten van andere visualisaties",
       "description-grafana": "Ontdek visualisaties met behulp van proefgegevens",
       "description-mixed": "Gebruik meerdere gegevensbronnen"
     },
@@ -4555,7 +4572,7 @@
       "no-data-source-message": "Geen gegevensbronnen gevonden"
     },
     "modal": {
-      "configure-new-data-source": "Een nieuw tabblad openen en een gegevensbron configureren",
+      "configure-new-data-source": "Nieuw tabblad openen en een gegevensbron configureren",
       "input-placeholder": "Gegevensbron selecteren",
       "title": "Gegevensbron selecteren"
     },
@@ -5398,10 +5415,14 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "",
         "confirm": "Bevestigen",
         "confirm-action": "Actie bevestigen",
-        "style": ""
+        "style": "",
+        "variable-value-placeholder": "Waarde"
       },
+      "close": "Sluiten",
+      "continue": "",
       "inline": {
         "add-action": "Actie toevoegen",
         "edit-action": "Actie bewerken"
@@ -5412,6 +5433,7 @@
         "action-query-params": "Query-parameters",
         "action-title": "Titel",
         "action-title-placeholder": "Actietitel",
+        "action-variables": "Variabelen",
         "one-click-description": "Slechts één link of actie kan tegelijk de één-klik-functionaliteit hebben ingeschakeld"
       }
     },
@@ -6860,7 +6882,7 @@
       "title": "Serviceaccounts"
     },
     "setup-guide": {
-      "title": "Installatiehandleiding"
+      "title": ""
     },
     "shared-dashboard": {
       "subtitle": "De extern gedeelde dashboards van je organisatie beheren",
@@ -8201,7 +8223,7 @@
       "remove-datasource-filter": "Gegevensbron: {{datasource}}",
       "sort-placeholder": "Sorteren",
       "starred": "Favorieten",
-      "view-as-folders": "Weergeven op mappen",
+      "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
     },
     "dashboard-actions": {
