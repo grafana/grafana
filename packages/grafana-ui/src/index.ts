@@ -24,7 +24,10 @@ export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/L
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';
 export { ColorPicker, SeriesColorPicker } from './components/ColorPicker/ColorPicker';
 export { ColorPickerInput } from './components/ColorPicker/ColorPickerInput';
-export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './components/ColorPicker/SeriesColorPickerPopover';
+export {
+  SeriesColorPickerPopover,
+  SeriesColorPickerPopoverWithTheme,
+} from './components/ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './components/EmptySearchResult/EmptySearchResult';
 export { EmptyState } from './components/EmptyState/EmptyState';
 export { UnitPicker } from './components/UnitPicker/UnitPicker';
@@ -36,12 +39,24 @@ export { TimePickerTooltip } from './components/DateTimePickers/TimeRangePicker'
 export { TimeRangeLabel } from './components/DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './components/DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './components/DateTimePickers/TimeZonePicker';
-export { WeekStartPicker, getWeekStart, type WeekStart, isWeekStart } from './components/DateTimePickers/WeekStartPicker';
+export {
+  WeekStartPicker,
+  getWeekStart,
+  type WeekStart,
+  isWeekStart,
+} from './components/DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './components/DateTimePickers/DatePicker/DatePicker';
-export { DatePickerWithInput, type DatePickerWithInputProps } from './components/DateTimePickers/DatePickerWithInput/DatePickerWithInput';
+export {
+  DatePickerWithInput,
+  type DatePickerWithInputProps,
+} from './components/DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './components/List/List';
-export { InteractiveTable, type FetchDataArgs, type FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
+export {
+  InteractiveTable,
+  type FetchDataArgs,
+  type FetchDataFunc,
+} from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';
 export { Pagination } from './components/Pagination/Pagination';
@@ -52,7 +67,14 @@ export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
-export { type Monaco, type monacoTypes, type MonacoEditor, type MonacoOptions as CodeEditorMonacoOptions, type CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './components/Monaco/types';
+export {
+  type Monaco,
+  type monacoTypes,
+  type MonacoEditor,
+  type MonacoOptions as CodeEditorMonacoOptions,
+  type CodeEditorSuggestionItem,
+  CodeEditorSuggestionItemKind,
+} from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';
 export { Modal, type Props as ModalProps } from './components/Modal/Modal';
 export { ModalHeader } from './components/Modal/ModalHeader';
@@ -63,7 +85,21 @@ export { PageToolbar } from './components/PageLayout/PageToolbar';
 export { SetInterval } from './components/SetInterval/SetInterval';
 export { Table } from './components/Table/Table';
 export { TableCellInspector, TableCellInspectorMode } from './components/Table/TableCellInspector';
-export { type TableCustomCellOptions, type CustomCellRendererProps, type TableFieldOptions, type TableSortByFieldState, type TableFooterCalc, type AdHocFilterItem, type TableAutoCellOptions, type TableSparklineCellOptions, type TableBarGaugeCellOptions, type TableColoredBackgroundCellOptions, type TableColorTextCellOptions, type TableImageCellOptions, type TableJsonViewCellOptions } from './components/Table/types';
+export {
+  type TableCustomCellOptions,
+  type CustomCellRendererProps,
+  type TableFieldOptions,
+  type TableSortByFieldState,
+  type TableFooterCalc,
+  type AdHocFilterItem,
+  type TableAutoCellOptions,
+  type TableSparklineCellOptions,
+  type TableBarGaugeCellOptions,
+  type TableColoredBackgroundCellOptions,
+  type TableColorTextCellOptions,
+  type TableImageCellOptions,
+  type TableJsonViewCellOptions,
+} from './components/Table/types';
 export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
@@ -71,14 +107,43 @@ export { VerticalTab } from './components/Tabs/VerticalTab';
 export { TabContent } from './components/Tabs/TabContent';
 export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
-export { BigValue, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from './components/BigValue/BigValue';
+export {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+} from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
 export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
-export { VizTooltip, VizTooltipContainer, SeriesTable, type SeriesTableProps, SeriesTableRow, type SeriesTableRowProps } from './components/VizTooltip';
+export {
+  VizTooltip,
+  VizTooltipContainer,
+  SeriesTable,
+  type SeriesTableProps,
+  SeriesTableRow,
+  type SeriesTableRowProps,
+} from './components/VizTooltip';
 export { VizRepeater, type VizRepeaterRenderValueProps } from './components/VizRepeater/VizRepeater';
-export { PanelChrome, type PanelChromeProps, type PanelPadding, type PanelChromeType, PanelChromeLoadingIndicator, type PanelChromeLoadingIndicatorProps, PanelContextProvider, type PanelContext, PanelContextRoot, usePanelContext } from './components/PanelChrome';
-export { VizLayout, type VizLayoutComponentType, type VizLayoutLegendProps, type VizLayoutProps } from './components/VizLayout/VizLayout';
+export {
+  PanelChrome,
+  type PanelChromeProps,
+  type PanelPadding,
+  type PanelChromeType,
+  PanelChromeLoadingIndicator,
+  type PanelChromeLoadingIndicatorProps,
+  PanelContextProvider,
+  type PanelContext,
+  PanelContextRoot,
+  usePanelContext,
+} from './components/PanelChrome';
+export {
+  VizLayout,
+  type VizLayoutComponentType,
+  type VizLayoutLegendProps,
+  type VizLayoutProps,
+} from './components/VizLayout/VizLayout';
 export { type VizLegendItem, SeriesVisibilityChangeBehavior } from './components/VizLegend/types';
 export { VizLegend } from './components/VizLegend/VizLegend';
 export { VizLegendListItem } from './components/VizLegend/VizLegendListItem';
@@ -93,7 +158,16 @@ export { ClickOutsideWrapper } from './components/ClickOutsideWrapper/ClickOutsi
 
 export type { Themeable, Themeable2 } from './types/theme';
 export type { ValidationRule, ValidationEvents } from './types/input';
-export type { SearchFunction, CompletionItemGroup, CompletionItemKind, HighlightPart, CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from './types/completion';
+export type {
+  SearchFunction,
+  CompletionItemGroup,
+  CompletionItemKind,
+  HighlightPart,
+  CompletionItem,
+  TypeaheadOutput,
+  TypeaheadInput,
+  SuggestionsState,
+} from './types/completion';
 export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
 export type { IconName, IconType, IconSize } from './types/icon';
 export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTypeIconName } from './types/icon';
@@ -101,6 +175,39 @@ export type { ActionMeta } from './types/select';
 export type { ComponentSize } from './types/size';
 export type { Column } from './types/interactiveTable';
 export type { CellProps, SortByFn } from 'react-table';
+
+import * as DOMUtil from './utils/dom';
+import * as ReactUtils from './utils/reactUtils';
+
+export {
+  DEFAULT_ANNOTATION_COLOR,
+  OK_COLOR,
+  ALERTING_COLOR,
+  NO_DATA_COLOR,
+  PENDING_COLOR,
+  REGION_FILL_ALPHA,
+  colors,
+  getTextColorForBackground,
+  getTextColorForAlphaBackground,
+  sortedColors,
+} from './utils/colors';
+export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
+export { SCHEMA, makeFragment, makeValue } from './utils/slate';
+export { linkModelToContextMenuItems } from './utils/dataLinks';
+export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
+export { getScrollbarWidth } from './utils/scrollbar';
+export { getCellLinks } from './utils/table';
+export { getCanvasContext, measureText, calculateFontSize } from './utils/measureText';
+export { createPointerDistance, usePointerDistance } from './utils/usePointerDistance';
+export { useForceUpdate } from './utils/useForceUpdate';
+export { SearchFunctionType } from './utils/searchFunctions';
+export { DOMUtil };
+export { createLogger } from './utils/logger';
+export { attachDebugger } from './utils/debug';
+export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
+export { fuzzyMatch } from './utils/fuzzy';
+export { logOptions } from './utils/logOptions';
+export { ReactUtils };
 
 export * from './themes';
 export * from './options';
