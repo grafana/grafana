@@ -26,6 +26,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { Folder } from '../../types/rule-form';
 import { DataSourceType } from '../../utils/datasource';
+import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
@@ -34,7 +35,6 @@ import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
 import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
-import { stringifyErrorLike } from '../../utils/misc';
 
 export interface ImportFormValues {
   importSource: 'datasource' | 'yaml';
