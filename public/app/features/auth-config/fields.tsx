@@ -39,6 +39,7 @@ export const getSectionFields = (): Section => {
           'clientSecret',
           'managedIdentityClientId',
           'federatedCredentialAudience',
+          'workloadIdentityEnabled',
           'scopes',
           'authUrl',
           'tokenUrl',
@@ -53,7 +54,7 @@ export const getSectionFields = (): Section => {
         fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
       },
       {
-        name: 'Extra security measures',
+        name: extraSecurityLabel,
         id: 'extra',
         fields: [
           'allowedOrganizations',
@@ -66,6 +67,7 @@ export const getSectionFields = (): Section => {
           'tlsClientCert',
           'tlsClientKey',
           'tlsClientCa',
+          'workloadIdentityTokenFile',
         ],
       },
     ],
@@ -356,6 +358,19 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'auth-config.fields.federated-credential-audience-description',
         'The audience of the federated identity credential of your OAuth2 app.'
       ),
+    },
+    workloadIdentityEnabled: {
+      label: 'Workload identity enabled',
+      type: 'switch',
+      description:
+        'If enabled, Grafana will use the federated identity credential to authenticate to the OAuth2 provider.',
+    },
+    workloadIdentityTokenFile: {
+      label: 'Workload identity token file',
+      type: 'text',
+      description:
+        'The file path to the token file used to authenticate to the OAuth2 provider. \n' +
+        'This is only required if workload identity is enabled.',
     },
     allowedOrganizations: {
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
@@ -890,6 +905,7 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
         { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
         { value: 'client_secret_post', label: 'Client secret' },
         { value: 'managed_identity', label: 'Managed identity' },
+        { value: 'workload_identity', label: 'Workload identity' },
       ];
     // Other providers ...
     default:
