@@ -1041,7 +1041,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Preferences"
+              "$ref": "#/components/schemas/PreferencesSpec"
             }
           }
         },
@@ -8777,6 +8777,76 @@
         },
         "type": "object"
       },
+      "PreferencesCookiePreferences": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "analytics": {},
+          "functional": {},
+          "performance": {}
+        },
+        "type": "object"
+      },
+      "PreferencesNavbarPreference": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "bookmarkUrls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PreferencesQueryHistoryPreference": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "homeTab": {
+            "description": "one of: '' | 'query' | 'starred';",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PreferencesSpec": {
+        "description": "+k8s:openapi-gen=true",
+        "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/PreferencesCookiePreferences"
+          },
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "locale": {
+            "description": "Selected locale (beta)",
+            "type": "string"
+          },
+          "navbar": {
+            "$ref": "#/components/schemas/PreferencesNavbarPreference"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/PreferencesQueryHistoryPreference"
+          },
+          "theme": {
+            "description": "light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PrometheusNamespace": {
         "properties": {
           "Body": {
@@ -9322,7 +9392,6 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
-            "description": "one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
