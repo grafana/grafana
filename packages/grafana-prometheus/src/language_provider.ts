@@ -166,6 +166,7 @@ export interface PrometheusLegacyLanguageProvider {
 }
 
 /**
+ * Old implementation of prometheus language provider.
  * @deprecated Use PrometheusLanguageProviderInterface and PrometheusLanguageProvider class instead.
  */
 export default class PromQlLanguageProvider extends LanguageProvider implements PrometheusLegacyLanguageProvider {
@@ -202,6 +203,9 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     return undefined;
   };
 
+  /**
+   * Overridden by PrometheusLanguageProvider
+   */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
@@ -526,7 +530,10 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient: ResourceApiClient;
 
-  constructor(datasource: PrometheusDatasource) {
+  constructor(
+    datasource: PrometheusDatasource,
+    private enableClientApi?: boolean
+  ) {
     super(datasource);
 
     this.datasource = datasource;
@@ -551,12 +558,24 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     }
   }
 
+  /**
+   * Same start logic but it checks first if it's ok to use new clients.
+   * If not it fallbacks to old logic.
+   *
+   * @param timeRange
+   */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
     }
 
-    return Promise.all([this._resourceClient.start(timeRange), this._queryMetadata()]);
+    if (this.enableClientApi) {
+      return Promise.all([this._resourceClient.start(timeRange), this._queryMetadata()]);
+    }
+
+    this.metrics = (await this.fetchLabelValues(timeRange, '__name__')) || [];
+    this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
+    return Promise.all([this.loadMetricsMetadata(), this.fetchLabels(timeRange)]);
   };
 
   /**
@@ -597,6 +616,10 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
     this._metricsMetadata = await this._queryMetadata();
+
+    // Until we remove old API we need to have backward compatibility
+    this.metricsMetadata = this._metricsMetadata;
+
     return this._metricsMetadata;
   };
 
