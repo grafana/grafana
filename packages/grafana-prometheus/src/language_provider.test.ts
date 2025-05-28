@@ -757,14 +757,13 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should use resource client start when feature toggle is enabled', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource, true);
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
-      
+
       // Mock the resource client's start method
       const resourceClientStartSpy = jest.spyOn(provider['_resourceClient'], 'start');
-      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata')
-        .mockResolvedValue(mockMetadata);
-      
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
+
       await provider.start();
-      
+
       expect(resourceClientStartSpy).toHaveBeenCalled();
       expect(queryMetadataSpy).toHaveBeenCalled();
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
@@ -773,17 +772,14 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should use legacy API path when feature toggle is disabled', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource, false);
       const metrics = ['metric1', 'metric2'];
-      
+
       // Mock the legacy methods
-      const fetchLabelValuesSpy = jest.spyOn(provider, 'fetchLabelValues')
-        .mockResolvedValue(metrics);
-      const loadMetricsMetadataSpy = jest.spyOn(provider, 'loadMetricsMetadata')
-        .mockResolvedValue();
-      const fetchLabelsSpy = jest.spyOn(provider, 'fetchLabels')
-        .mockResolvedValue(['label1', 'label2']);
-      
+      const fetchLabelValuesSpy = jest.spyOn(provider, 'fetchLabelValues').mockResolvedValue(metrics);
+      const loadMetricsMetadataSpy = jest.spyOn(provider, 'loadMetricsMetadata').mockResolvedValue();
+      const fetchLabelsSpy = jest.spyOn(provider, 'fetchLabels').mockResolvedValue(['label1', 'label2']);
+
       await provider.start();
-      
+
       expect(fetchLabelValuesSpy).toHaveBeenCalledWith(expect.any(Object), '__name__');
       expect(loadMetricsMetadataSpy).toHaveBeenCalled();
       expect(fetchLabelsSpy).toHaveBeenCalled();
@@ -796,8 +792,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should fetch and store metadata', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource, true);
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
-      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata')
-        .mockResolvedValue(mockMetadata);
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
 
       const result = await provider.queryMetricsMetadata();
 
@@ -813,7 +808,8 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelKeys', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource, true);
-      const resourceClientSpy = jest.spyOn(provider['_resourceClient'], 'queryLabelKeys')
+      const resourceClientSpy = jest
+        .spyOn(provider['_resourceClient'], 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
 
       const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
@@ -824,7 +820,8 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource, true);
-      const resourceClientSpy = jest.spyOn(provider['_resourceClient'], 'queryLabelValues')
+      const resourceClientSpy = jest
+        .spyOn(provider['_resourceClient'], 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
 
       const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
@@ -842,7 +839,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         metrics: ['metric1', 'metric2'],
         labelKeys: ['label1', 'label2'],
       };
-      
+
       // Mock the resource client properties
       Object.defineProperty(provider, '_resourceClient', {
         value: mockResourceClient,

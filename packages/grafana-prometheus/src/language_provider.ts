@@ -530,10 +530,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient: ResourceApiClient;
 
-  constructor(
-    datasource: PrometheusDatasource,
-    private enableClientApi?: boolean
-  ) {
+  constructor(datasource: PrometheusDatasource) {
     super(datasource);
 
     this.datasource = datasource;
@@ -569,13 +566,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
       return [];
     }
 
-    if (this.enableClientApi) {
-      return Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
-    }
-
-    this.metrics = (await this.fetchLabelValues(timeRange, '__name__')) || [];
-    this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
-    return Promise.all([this.loadMetricsMetadata(), this.fetchLabels(timeRange)]);
+    return Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
   };
 
   /**
