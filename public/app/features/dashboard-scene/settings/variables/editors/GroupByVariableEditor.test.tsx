@@ -36,7 +36,6 @@ jest.mock('@grafana/runtime', () => ({
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
-    getTagKeys: () => [],
   }),
 }));
 
