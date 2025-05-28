@@ -28,27 +28,29 @@ export function ScopesRow({ selectedScopes, isDirty, apply, deselectScope, scope
         <span className={styles.scopesText}>
           <Trans i18nKey={'command-palette.scopes.selected-scopes-label'}>Scopes: </Trans>
         </span>
-        {selectedScopes?.map((scope) => {
-          // We need to load scope data when an item is selected, so there may be a delay until we have it. We fallback
-          // to node.title if we have it and if not, show just a scopeId. node.title and scope.title should probably be
-          // the same, but it's not guaranteed
-          const label =
-            scopes[scope.scopeId]?.spec.title ||
-            (scope.scopeNodeId && nodes[scope.scopeNodeId]?.spec.title) ||
-            scope.scopeId;
+        <Stack wrap={'wrap'}>
+          {selectedScopes?.map((scope) => {
+            // We need to load scope data when an item is selected, so there may be a delay until we have it. We fallback
+            // to node.title if we have it and if not, show just a scopeId. node.title and scope.title should probably be
+            // the same, but it's not guaranteed
+            const label =
+              scopes[scope.scopeId]?.spec.title ||
+              (scope.scopeNodeId && nodes[scope.scopeNodeId]?.spec.title) ||
+              scope.scopeId;
 
-          return (
-            <FilterPill
-              key={scope.scopeId}
-              selected={true}
-              icon={'times'}
-              label={label}
-              onClick={() => {
-                deselectScope(scope.scopeNodeId || scope.scopeId);
-              }}
-            />
-          );
-        })}
+            return (
+              <FilterPill
+                key={scope.scopeId}
+                selected={true}
+                icon={'times'}
+                label={label}
+                onClick={() => {
+                  deselectScope(scope.scopeNodeId || scope.scopeId);
+                }}
+              />
+            );
+          })}
+        </Stack>
       </Stack>
       {isDirty && (
         <Button
