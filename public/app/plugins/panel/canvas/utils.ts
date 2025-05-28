@@ -207,25 +207,14 @@ export const calculateCoordinates = (
 };
 
 export const calculateCoordinates2 = (source: ElementState, target: ElementState, info: CanvasConnection) => {
-  const sourceDiv = source.div;
-  const { left, top, width, height } = getElementTransformAndDimensions(sourceDiv!);
-  const sourceHorizontalCenter = left + width / 2;
-  const sourceVerticalCenter = top + height / 2;
-  const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
-  const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
+  const { x: x1, y: y1 } = getRotatedConnectionPoint(source.div!, info.source.x, info.source.y);
 
   let x2 = 0;
   let y2 = 0;
   const targetDiv = target.div;
   if (info.targetName && targetDiv) {
-    // calculate closed connection x2, y2
-    const { left, top, width, height } = getElementTransformAndDimensions(targetDiv);
-    const targetHorizontalCenter = left + width / 2;
-    const targetVerticalCenter = top + height / 2;
-    x2 = targetHorizontalCenter + (info.target.x * width) / 2;
-    y2 = targetVerticalCenter - (info.target.y * height) / 2;
+    ({ x: x2, y: y2 } = getRotatedConnectionPoint(targetDiv, info.target.x, info.target.y));
   } else {
-    // calculate open connection x2, y2
     x2 = info.target.x;
     y2 = info.target.y;
   }
@@ -238,9 +227,9 @@ export const getElementTransformAndDimensions = (element: Element) => {
 
   const transform = style.transform;
 
-  // Initialize x and y
   let x = 0;
   let y = 0;
+  let rotation = 0;
 
   if (transform !== 'none') {
     // Use DOMMatrix to parse the transform string
@@ -249,6 +238,10 @@ export const getElementTransformAndDimensions = (element: Element) => {
     // Extract x and y values
     x = matrix.m41;
     y = matrix.m42;
+
+    // Extract rotation in radians and convert to degrees
+    // For 2D transforms, rotation = atan2(m21, m11)
+    rotation = -Math.atan2(matrix.m21, matrix.m11) * (180 / Math.PI);
   }
 
   // Get the width and height of the element
@@ -256,7 +249,55 @@ export const getElementTransformAndDimensions = (element: Element) => {
   const width = parseFloat(style.width);
   const height = parseFloat(style.height);
 
-  return { left: x, top: y, width, height, x, y };
+  return { left: x, top: y, width, height, x, y, rotation };
+};
+
+export const getNormalizedRotatedOffset = (div: HTMLDivElement, x: number, y: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
+  // Calculate center of source element
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+
+  // Calculate the offset from the center to the connection start point
+  let dx = x - centerX;
+  let dy = y - centerY;
+
+  // Adjust for rotation
+  const rad = rotation * (Math.PI / 180);
+  const cos = Math.cos(-rad);
+  const sin = Math.sin(-rad);
+  // Rotate the delta by the negative of the element's rotation
+  const rotatedDx = dx * cos - dy * sin;
+  const rotatedDy = dx * sin + dy * cos;
+
+  // Convert to normalized coordinates
+  const normalizedX = rotatedDx / (width / 2);
+  const normalizedY = -rotatedDy / (height / 2);
+
+  return { x: normalizedX, y: normalizedY };
+};
+
+export const getRotatedConnectionPoint = (div: HTMLDivElement, normalizedX: number, normalizedY: number) => {
+  const { left, top, width, height, rotation } = getElementTransformAndDimensions(div);
+  const centerX = left + width / 2;
+  const centerY = top + height / 2;
+
+  // Calculate offset from center before rotation
+  const offsetX = (normalizedX * width) / 2;
+  const offsetY = -(normalizedY * height) / 2;
+
+  // Convert rotation to radians
+  const rad = rotation * (Math.PI / 180);
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  // Apply rotation to offset
+  const rotatedOffsetX = offsetX * cos - offsetY * sin;
+  const rotatedOffsetY = offsetX * sin + offsetY * cos;
+
+  const x = centerX + rotatedOffsetX;
+  const y = centerY + rotatedOffsetY;
+
+  return { x, y };
 };
 
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {

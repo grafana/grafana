@@ -304,59 +304,6 @@ export class ElementState implements LayerElement {
       //   : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
-    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
-    // TODO: Fix behavior for top+bottom, left+right, center, and scale constraints
-    let rotationTopOffset = 0;
-    let rotationLeftOffset = 0;
-    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
-      const rotationDegrees = this.options.placement.rotation;
-      const rotationRadians = (Math.PI / 180) * rotationDegrees;
-      let rotationOffset = rotationRadians;
-
-      switch (true) {
-        case rotationDegrees >= 0 && rotationDegrees < 90:
-          // no-op
-          break;
-        case rotationDegrees >= 90 && rotationDegrees < 180:
-          rotationOffset = Math.PI - rotationRadians;
-          break;
-        case rotationDegrees >= 180 && rotationDegrees < 270:
-          rotationOffset = Math.PI + rotationRadians;
-          break;
-        case rotationDegrees >= 270:
-          rotationOffset = -rotationRadians;
-          break;
-      }
-
-      const calculateDelta = (dimension1: number, dimension2: number) =>
-        (dimension1 / 2) * Math.sin(rotationOffset) + (dimension2 / 2) * (Math.cos(rotationOffset) - 1);
-
-      rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
-      rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
-    }
-    console.log({ rotationTopOffset, rotationLeftOffset });
-
-    // const relativeTop =
-    //   elementContainer && parentContainer
-    //     ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + rotationTopOffset) /
-    //       transformScale
-    //     : 0;
-    // const relativeBottom =
-    //   elementContainer && parentContainer
-    //     ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + rotationTopOffset) /
-    //       transformScale
-    //     : 0;
-    // const relativeLeft =
-    //   elementContainer && parentContainer
-    //     ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + rotationLeftOffset) /
-    //       transformScale
-    //     : 0;
-    // const relativeRight =
-    //   elementContainer && parentContainer
-    //     ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + rotationLeftOffset) /
-    //       transformScale
-    //     : 0;
-
     const relativeTop = Math.round(elSize.top);
     const relativeBottom = Math.round(scene.height - elSize.top - elSize.height);
     const relativeLeft = Math.round(elSize.left);
