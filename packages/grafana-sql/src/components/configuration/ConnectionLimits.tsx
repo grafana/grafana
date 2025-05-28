@@ -1,8 +1,8 @@
 import { DataSourceSettings } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
-import { useTranslate } from '@grafana/i18n';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
