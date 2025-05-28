@@ -40,6 +40,7 @@ export const getSectionFields = (): Section => {
           'managedIdentityClientId',
           'federatedCredentialAudience',
           'workloadIdentityEnabled',
+          'workloadIdentityTokenFile',
           'scopes',
           'authUrl',
           'tokenUrl',
@@ -67,7 +68,6 @@ export const getSectionFields = (): Section => {
           'tlsClientCert',
           'tlsClientKey',
           'tlsClientCa',
-          'workloadIdentityTokenFile',
         ],
       },
     ],
@@ -286,6 +286,7 @@ const authURLLabel = 'Auth URL';
 const tokenURLLabel = 'Token URL';
 const apiURLLabel = 'API URL';
 const jmesPathLabel = 'JMESPath';
+const workloadIdentityLabel = 'Workload identity';
 
 /**
  * List all the fields that can be used in the form
@@ -304,6 +305,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
   const groupsAttributePathLabel = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
   const teamIDsLabel = t('auth-config.fields.team-ids-label', 'Team IDs');
   const allowedDomainsLabel = t('auth-config.fields.allowed-domains-label', 'Allowed domains');
+  const workflowIdentityEnabledLabel = t(
+    'auth-config.fields.workload-identity-enabled',
+    '{{ workloadIdentityLabel }} enabled',
+    { workloadIdentityLabel }
+  );
 
   return {
     clientAuthentication: {
@@ -360,17 +366,32 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
     },
     workloadIdentityEnabled: {
-      label: 'Workload identity enabled',
+      label: workflowIdentityEnabledLabel,
       type: 'switch',
       description:
         'If enabled, Grafana will use the federated identity credential to authenticate to the OAuth2 provider.',
     },
     workloadIdentityTokenFile: {
-      label: 'Workload identity token file',
+      label: t('auth-config.fields.workload-identity-token-file', '{{ workloadIdentityLabel }} token file', {
+        workloadIdentityLabel,
+      }),
       type: 'text',
       description:
         'The file path to the token file used to authenticate to the OAuth2 provider. \n' +
         'This is only required if workload identity is enabled.',
+      validation: {
+        validate: (value, formValues) => {
+          if (formValues.workloadIdentityEnabled) {
+            return !!value;
+          }
+          return true;
+        },
+        message: t(
+          'auth-config.fields.workload-identity-token-file-required',
+          'This field must be set when "{{ workflowIdentityEnabledLabel }}" is set.',
+          { workflowIdentityEnabledLabel }
+        ),
+      },
     },
     allowedOrganizations: {
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
