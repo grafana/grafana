@@ -4,6 +4,8 @@ import { PrometheusDatasource } from './datasource';
 import { LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
 
+type MockDatasource = Pick<PrometheusDatasource, 'cacheLevel' | 'getAdjustedInterval' | 'getTimeRangeParams' | 'interpolateString'>;
+
 const mockTimeRange: TimeRange = {
   from: dateTime(1681300292392),
   to: dateTime(1681300293392),
@@ -13,7 +15,7 @@ const mockTimeRange: TimeRange = {
   },
 };
 
-const mockRequest = jest.fn();
+const mockRequest = jest.fn().mockResolvedValue([]);
 const mockGetAdjustedInterval = jest.fn().mockReturnValue({
   start: '1681300260',
   end: '1681300320',

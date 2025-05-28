@@ -8,6 +8,9 @@ import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
 import { escapeForUtf8Support } from './utf8_support';
 
+type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
+type PrometheusLabelsResponse = string[];
+
 export interface ResourceApiClient {
   metrics: string[];
   histogramMetrics: string[];
@@ -21,14 +24,26 @@ export interface ResourceApiClient {
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => Promise<string[]>;
 }
 
+type RequestFn = (url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>) => Promise<unknown>;
+
 const MATCH_ALL_LABELS = '{__name__!=""}';
 const METRIC_LABEL = '__name__';
 
 abstract class BaseResourceClient {
   constructor(
-    protected readonly request: (url: string, params?: any, options?: Partial<BackendSrvRequest>) => Promise<any>,
+    protected readonly request: RequestFn,
     protected readonly datasource: PrometheusDatasource
   ) {}
+
+  protected async requestLabels(url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>): Promise<PrometheusLabelsResponse> {
+    const response = await this.request(url, params, options);
+    return Array.isArray(response) ? response : [];
+  }
+
+  protected async requestSeries(url: string, params?: Record<string, unknown>, options?: Partial<BackendSrvRequest>): Promise<PrometheusSeriesResponse> {
+    const response = await this.request(url, params, options);
+    return Array.isArray(response) ? response : [];
+  }
 }
 
 export class LabelsApiClient extends BaseResourceClient implements ResourceApiClient {
@@ -66,7 +81,7 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
 
-    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const res = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
       return this.labelKeys.slice();
@@ -95,7 +110,7 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     const interpolatedName = this.datasource.interpolateString(labelKey);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
-    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     return value ?? [];
   };
 }
@@ -120,7 +135,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
   private _fetchAllSeries = async (timeRange: TimeRange, match: string, limit: string = DEFAULT_SERIES_LIMIT) => {
     const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': match, limit };
-    return await this.request('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    return await this.requestSeries('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
