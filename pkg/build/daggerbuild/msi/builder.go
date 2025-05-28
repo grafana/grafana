@@ -7,7 +7,7 @@ import (
 
 func Builder(d *dagger.Client) (*dagger.Container, error) {
 	nssm := d.Container().From("busybox").
-		WithExec([]string{"wget", "https://nssm.cc/release/nssm-2.24.zip"}).
+		WithExec([]string{"wget", "https://dl.grafana.com/ci/nssm-2.24.zip"}).
 		WithExec([]string{"unzip", "nssm-2.24.zip"}).
 		Directory("nssm-2.24")
 
