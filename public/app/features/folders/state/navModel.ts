@@ -69,7 +69,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     updatedBy: '',
     id: 1,
     uid: 'loading',
-    title: 'Loading',
+    title: t('folders.get-loading-nav.main.title.loading', 'Loading'),
     url: 'url',
     canSave: true,
     canEdit: true,

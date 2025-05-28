@@ -85,7 +85,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
   onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete row',
+        title: t('dashboard.unthemed-dashboard-row.title.delete-row', 'Delete row'),
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',

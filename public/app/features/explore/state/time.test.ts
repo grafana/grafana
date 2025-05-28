@@ -4,7 +4,7 @@ import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreItemState } from 'app/types';
 
-import { createDefaultInitialState } from './helpers';
+import { createDefaultInitialState } from './testHelpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';
 
 const mockTimeSrv = {

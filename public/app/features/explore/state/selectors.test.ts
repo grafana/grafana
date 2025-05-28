@@ -3,8 +3,8 @@ import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState, ThunkDispatch } from 'app/types';
 
-import { createDefaultInitialState } from './helpers';
 import { selectExploreDSMaps } from './selectors';
+import { createDefaultInitialState } from './testHelpers';
 
 const { defaultInitialState } = createDefaultInitialState();
 

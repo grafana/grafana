@@ -149,6 +149,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
   }
 
   if (annotationsCount > 0) {
+    const DEBUG_DASHBOARD_TITLE_DO_NOT_TRANSLATE = 'Annotations';
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -158,7 +159,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
         y: 20,
       },
       type: 'table',
-      title: 'Annotations',
+      title: DEBUG_DASHBOARD_TITLE_DO_NOT_TRANSLATE,
       datasource: {
         type: 'datasource',
         uid: '-- Dashboard --',

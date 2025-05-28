@@ -59,9 +59,19 @@ const StateHistory = ({ ruleUID }: Props) => {
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
-    { id: 'state', label: 'State', size: 'max-content', renderCell: renderStateCell },
+    {
+      id: 'state',
+      label: t('alerting.state-history.columns.label.state', 'State'),
+      size: 'max-content',
+      renderCell: renderStateCell,
+    },
     { id: 'value', label: '', size: 'auto', renderCell: renderValueCell },
-    { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
+    {
+      id: 'timestamp',
+      label: t('alerting.state-history.columns.label.time', 'Time'),
+      size: 'max-content',
+      renderCell: renderTimestampCell,
+    },
   ];
 
   // group the state history list by unique set of labels

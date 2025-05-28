@@ -116,8 +116,8 @@ export function GeneralSettingsUnconnected({
   };
 
   const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.editable', 'Editable'), value: true },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.readonly', 'Read-only'), value: false },
   ];
 
   return (

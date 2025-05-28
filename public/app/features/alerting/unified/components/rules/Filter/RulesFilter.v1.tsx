@@ -259,8 +259,8 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}

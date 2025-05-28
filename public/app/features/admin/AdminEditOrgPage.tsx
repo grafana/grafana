@@ -86,7 +86,10 @@ const AdminEditOrgPage = () => {
   const pageNav: NavModelItem = {
     text: orgState?.value?.name ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings and user roles for an organization.',
+    subTitle: t(
+      'admin.admin-edit-org-page.page-nav.subTitle.manage-settings-roles-organization',
+      'Manage settings and user roles for an organization.'
+    ),
   };
 
   return (

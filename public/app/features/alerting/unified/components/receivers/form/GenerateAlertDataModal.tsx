@@ -82,10 +82,10 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   };
   const alertOptions: AlertOption[] = [
     {
-      label: 'Firing',
+      label: t('alerting.generate-alert-data-modal.alert-options.label.firing', 'Firing'),
       value: 'firing',
     },
-    { label: 'Resolved', value: 'resolved' },
+    { label: t('alerting.generate-alert-data-modal.alert-options.label.resolved', 'Resolved'), value: 'resolved' },
   ];
 
   return (
