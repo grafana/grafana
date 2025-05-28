@@ -188,7 +188,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/monitoring',
-      component: () => <NavLandingPage navId="monitoring" />,
+      component: () => <Navigate replace to="/observability" />,
+    },
+    {
+      path: '/observability',
+      component: () => <NavLandingPage navId="observability" />,
     },
     {
       path: '/infrastructure',
@@ -525,6 +529,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/bookmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
+    },
+    config.featureToggles.restoreDashboards && {
+      path: '/dashboard/recently-deleted',
+      roles: () => ['Admin', 'ServerAdmin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
     {

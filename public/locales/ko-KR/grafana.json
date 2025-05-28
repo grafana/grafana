@@ -3397,6 +3397,13 @@
           "values": "쉼표로 구분된 값",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped, value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "유형",
+          "type-placeholder": ""
+        },
         "description": "설명",
         "description-placeholder": "설명 텍스트",
         "label": "라벨",
@@ -3415,8 +3422,8 @@
           "category": "선택 옵션",
           "custom-all-value": "모든 값 사용자 지정",
           "custom-all-value-description": "전체를 나타내기 위한 와일드카드 정규 표현식 또는 기타 값",
-          "include-all": "모든 옵션 포함",
-          "include-all-description": "모든 값을 포함하는 옵션 활성화",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "다중-값"
         },
         "type-category": "{{type}} 옵션"

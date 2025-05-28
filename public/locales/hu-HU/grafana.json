@@ -3415,6 +3415,13 @@
           "values": "Értékek vesszővel elválasztva",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
         },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "Típus",
+          "type-placeholder": ""
+        },
         "description": "Leírás",
         "description-placeholder": "Leírószöveg",
         "label": "Címke",
@@ -3433,8 +3440,8 @@
           "category": "Kijelölés beállításai",
           "custom-all-value": "Összes egyedi érték",
           "custom-all-value-description": "Helyettesítő karakteres reguláris kifejezés vagy más érték, amely az összeset jelöli",
-          "include-all": "Összes belefoglalása lehetőség",
-          "include-all-description": "Lehetővé teszi az összes érték belefoglalását",
+          "include-all": "",
+          "include-all-description": "",
           "multi-value": "Többértékű"
         },
         "type-category": "{{type}}-beállítások"
