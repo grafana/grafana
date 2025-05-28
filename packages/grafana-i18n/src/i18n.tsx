@@ -6,32 +6,66 @@ import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
-import { TFunction, TransProps, TransType } from './types';
+import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './types';
 
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
-export async function initPluginTranslations(id: string) {
+// exported for testing
+export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
+  if (!loaders?.length) {
+    return;
+  }
+
+  return Promise.all(
+    loaders.map(async (loader) => {
+      try {
+        const resources = await loader(language);
+        addResourceBundle(language, id, resources);
+      } catch (error) {
+        console.error(`Error loading resources for plugin ${id} and language: ${language}`, error);
+      }
+    })
+  );
+}
+
+// exported for testing
+export async function initDefaultI18nInstance() {
   // If the resources are not an object, we need to initialize the plugin translations
-  if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
-    await getI18nInstance().use(initReactI18next).init({
-      resources: {},
-      returnEmptyString: false,
-      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
-    });
+  if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
+    return;
   }
 
+  await getI18nInstance().use(initReactI18next).init({
+    resources: {},
+    returnEmptyString: false,
+    lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+  });
+}
+
+// exported for testing
+export function initDefaultReactI18nInstance() {
   // If the initReactI18next is not set, we need to set them
-  if (!getI18n()?.options?.react) {
-    const options: ReactOptions = {};
-    setDefaults(options);
-    setI18n(getI18nInstance());
+  if (getI18n()?.options?.react) {
+    return;
   }
 
+  const options: ReactOptions = {};
+  setDefaults(options);
+  setI18n(getI18nInstance());
+}
+
+export async function initPluginTranslations(id: string, loaders?: ResourceLoader[]) {
+  await initDefaultI18nInstance();
+  initDefaultReactI18nInstance();
+
+  const language = getResolvedLanguage();
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
 
-  return { language: getI18nInstance().resolvedLanguage };
+  await loadPluginResources(id, language, loaders);
+
+  return { language };
 }
 
 export function getI18nInstance() {
@@ -103,7 +137,7 @@ async function initTranslations({
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 
   return {
-    language: getI18nInstance().resolvedLanguage,
+    language: getResolvedLanguage(),
   };
 }
 
@@ -132,12 +166,8 @@ export async function initializeI18n(
   return initTranslations({ language, ns, module });
 }
 
-type ResourceKey = string;
-type ResourceLanguage = Record<string, ResourceKey>;
-type ResourceType = Record<string, ResourceLanguage>;
-
-export function addResourceBundle(language: string, namespace: string, resource: ResourceType) {
-  getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
+export function addResourceBundle(language: string, namespace: string, resources: Resources) {
+  getI18nInstance().addResourceBundle(language, namespace, resources, true, false);
 }
 
 export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
