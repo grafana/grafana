@@ -115,7 +115,7 @@ describe('GroupByVariableEditor', () => {
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[], datasourceSupported?: boolean) {
+async function setup(defaultOptions?: MetricFindValue[]) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',
