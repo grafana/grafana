@@ -709,8 +709,7 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
-// Only accept `dashboard`-(filter originated from dashboard) values in the model
-FilterOrigin: "dashboard"
+FilterOrigin: "dashboard" | string
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {

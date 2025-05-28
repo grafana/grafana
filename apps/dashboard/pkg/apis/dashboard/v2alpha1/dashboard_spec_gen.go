@@ -1674,14 +1674,14 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 // Define the AdHocFilterWithLabels type
 // +k8s:openapi-gen=true
 type DashboardAdHocFilterWithLabels struct {
-	Key         string   `json:"key"`
-	Operator    string   `json:"operator"`
-	Value       string   `json:"value"`
-	Values      []string `json:"values,omitempty"`
-	KeyLabel    *string  `json:"keyLabel,omitempty"`
-	ValueLabels []string `json:"valueLabels,omitempty"`
-	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Key         string                 `json:"key"`
+	Operator    string                 `json:"operator"`
+	Value       string                 `json:"value"`
+	Values      []string               `json:"values,omitempty"`
+	KeyLabel    *string                `json:"keyLabel,omitempty"`
+	ValueLabels []string               `json:"valueLabels,omitempty"`
+	ForceEdit   *bool                  `json:"forceEdit,omitempty"`
+	Origin      *DashboardFilterOrigin `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
@@ -1692,9 +1692,8 @@ func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 }
 
 // Determine the origin of the adhoc variable filter
-// Only accept `dashboard`-(filter originated from dashboard) values in the model
 // +k8s:openapi-gen=true
-const DashboardFilterOrigin = "dashboard"
+type DashboardFilterOrigin string
 
 // Define the MetricFindValue type
 // +k8s:openapi-gen=true
