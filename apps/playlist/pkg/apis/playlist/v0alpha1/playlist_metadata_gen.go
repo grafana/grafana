@@ -24,5 +24,8 @@ type PlaylistMetadata struct {
 
 // NewPlaylistMetadata creates a new PlaylistMetadata object.
 func NewPlaylistMetadata() *PlaylistMetadata {
-	return &PlaylistMetadata{}
+	return &PlaylistMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

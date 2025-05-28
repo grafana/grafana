@@ -29,7 +29,9 @@ type ResourcePermissionspecPermission struct {
 
 // NewResourcePermissionspecPermission creates a new ResourcePermissionspecPermission object.
 func NewResourcePermissionspecPermission() *ResourcePermissionspecPermission {
-	return &ResourcePermissionspecPermission{}
+	return &ResourcePermissionspecPermission{
+		Verbs: []string{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -41,7 +43,8 @@ type ResourcePermissionSpec struct {
 // NewResourcePermissionSpec creates a new ResourcePermissionSpec object.
 func NewResourcePermissionSpec() *ResourcePermissionSpec {
 	return &ResourcePermissionSpec{
-		Resource: *NewResourcePermissionspecResource(),
+		Resource:    *NewResourcePermissionspecResource(),
+		Permissions: []ResourcePermissionspecPermission{},
 	}
 }
 

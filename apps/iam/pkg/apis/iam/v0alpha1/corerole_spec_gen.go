@@ -30,5 +30,7 @@ type CoreRoleSpec struct {
 
 // NewCoreRoleSpec creates a new CoreRoleSpec object.
 func NewCoreRoleSpec() *CoreRoleSpec {
-	return &CoreRoleSpec{}
+	return &CoreRoleSpec{
+		Permissions: []CoreRolespecPermission{},
+	}
 }
