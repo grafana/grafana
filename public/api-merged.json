@@ -14055,14 +14055,6 @@
         }
       }
     },
-    "CookiePreferences": {
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
-      }
-    },
     "CookieType": {
       "type": "string"
     },
@@ -18759,45 +18751,6 @@
           "additionalProperties": {
             "type": "string"
           }
-        }
-      }
-    },
-    "Preferences": {
-      "description": "Spec defines user, team or org Grafana preferences",
-      "type": "object",
-      "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
-        "homeDashboardUID": {
-          "description": "UID for the home dashboard",
-          "type": "string"
-        },
-        "language": {
-          "description": "Selected language (beta)",
-          "type": "string"
-        },
-        "locale": {
-          "description": "Selected locale (beta)",
-          "type": "string"
-        },
-        "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "description": "light, dark, empty is default",
-          "type": "string"
-        },
-        "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-          "type": "string"
-        },
-        "weekStart": {
-          "description": "day of the week (sunday, monday, etc)",
-          "type": "string"
         }
       }
     },
