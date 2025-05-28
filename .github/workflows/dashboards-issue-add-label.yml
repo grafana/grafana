@@ -56,7 +56,7 @@ jobs:
                   }
                 }
               }
-            }' -f org="$ORGANIZATION" -f repo="$REPO" -f issueNumber="$ISSUE_NUMBER" > projects_data.json
+            }' -f org="$ORGANIZATION" -f repo="$REPO" -F issueNumber="$ISSUE_NUMBER" > projects_data.json
 
             {
               echo "IN_TARGET_PROJ=$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json)"
