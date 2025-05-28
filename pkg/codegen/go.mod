@@ -10,7 +10,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
-	golang.org/x/tools v0.31.0
+	golang.org/x/tools v0.33.0
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
-	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.9.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
