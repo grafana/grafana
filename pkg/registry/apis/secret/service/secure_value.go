@@ -11,8 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-// TODO: find a better name
-type SecretService struct {
+type SecureValueService struct {
 	accessClient               claims.AccessClient
 	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -20,13 +19,14 @@ type SecretService struct {
 	encryptionManager          contracts.EncryptionManager
 }
 
-func ProvideSecretService(
+func ProvideSecureValueService(
 	accessClient claims.AccessClient,
 	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
-	encryptionManager contracts.EncryptionManager) *SecretService {
-	return &SecretService{
+	encryptionManager contracts.EncryptionManager,
+) *SecureValueService {
+	return &SecureValueService{
 		accessClient:               accessClient,
 		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -35,7 +35,7 @@ func ProvideSecretService(
 	}
 }
 
-func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Creating secure value"}
 
 	var out *secretv0alpha1.SecureValue
@@ -71,12 +71,12 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 	return out, nil
 }
 
-func (s *SecretService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	// TODO: readopts
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 }
 
-func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
+func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -113,7 +113,7 @@ func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*s
 	}, nil
 }
 
-func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
 	// True when the effects of an update can be seen immediately.
 	// Never true in this case since updating a secure value is async.
 	const updateIsSync = false
@@ -180,7 +180,7 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 	return out, updateIsSync, nil
 }
 
-func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	// Set inside of the transaction callback
 	var out *secretv0alpha1.SecureValue
 

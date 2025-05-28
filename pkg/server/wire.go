@@ -45,7 +45,7 @@ import (
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	secretservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -430,7 +430,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretmetadata.ProvideOutboxQueue,
-	secretservice.ProvideSecretService,
+	secretsecurevalueservice.ProvideSecureValueService,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
