@@ -30,9 +30,21 @@ export const PermissionList = ({ title, items, compareKey, permissionLevels, can
         continue;
       }
 
-      // If the same permission has been inherited and applied directly, keep the one that is applied directly
-      if (item.actions.length === keep[key].actions.length && !item.isInherited) {
-        keep[key] = item;
+      // Determine which permission to keep for display
+      // If the same permission has been applied more than once (i.e. one copy is ready kept)
+      if (item.actions.length === keep[key].actions.length) {
+        // If we've already kept a provisioned permission, move on
+        if (keep[key].isProvisioned) {
+          continue;
+        }
+        // Always keep provisioned items
+        if (item.isProvisioned) {
+          keep[key] = item;
+        }
+        // If the same permission has been inherited and applied directly, keep the one that is applied directly
+        else if (!item.isInherited) {
+          keep[key] = item;
+        }
       }
     }
     return Object.keys(keep).map((k) => keep[k]);
