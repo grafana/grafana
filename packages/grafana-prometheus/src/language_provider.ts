@@ -541,24 +541,22 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   }
 
   /**
-   * Same start logic but it checks first if it's ok to use new clients.
-   * If not it fallbacks to old logic.
-   *
-   * @param timeRange
+   * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
+   * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
    */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
     }
     await Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
-    return this._backwardCompatibleStart(timeRange);
+    return this._backwardCompatibleStart();
   };
 
   /**
    * This private method exists to make sure the old class will be functional until we remove it.
    * When we remove old class (PromQlLanguageProvider) we should remove this method too.
    */
-  private _backwardCompatibleStart = async (timeRange: TimeRange) => {
+  private _backwardCompatibleStart = async () => {
     this.metricsMetadata = this.retrieveMetricsMetadata();
     this.metrics = this.retrieveMetrics();
     this.histogramMetrics = this.retrieveHistogramMetrics();
