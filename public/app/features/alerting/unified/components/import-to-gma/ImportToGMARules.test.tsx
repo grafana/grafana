@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -41,6 +41,8 @@ const ui = {
       selector: '#recording-rules-target-data-source',
     }),
   },
+  importButton: byRole('button', { name: /Import/ }),
+  confirmationModal: byRole('dialog', { name: /Confirm import/ }),
 };
 
 alertingFactory.dataSource.mimir().build({ meta: { alerting: true } });
@@ -82,6 +84,20 @@ describe('ImportToGMARules', () => {
       expect(ui.yamlImport.fileUpload.query()).not.toBeInTheDocument();
       expect(ui.yamlImport.targetDataSource.query()).not.toBeInTheDocument();
     });
+
+    it('should show confirmation dialog when importing from data source', async () => {
+      const { user } = render(<ImportToGMARules />);
+
+      // Select a data source
+      await user.click(ui.dsImport.dsPicker.get());
+      await user.click(await ui.dsImport.mimirDsOption.find());
+
+      // Click the import button
+      await user.click(ui.importButton.get());
+
+      // Verify confirmation dialog appears
+      expect(await ui.confirmationModal.find()).toBeInTheDocument();
+    });
   });
 
   describe('yaml import', () => {
@@ -101,6 +117,42 @@ describe('ImportToGMARules', () => {
 
       // Test that datasource-specific field is not visible
       expect(ui.dsImport.dsPicker.query()).not.toBeInTheDocument();
+    });
+
+    it('should show confirmation dialog when importing YAML file', async () => {
+      const { user } = render(<ImportToGMARules />);
+
+      // Select YAML import option
+      await user.click(ui.importSource.yaml.get());
+
+      // Create a simple YAML file
+      const yamlContent = `
+groups:
+  - name: example
+    rules:
+      - alert: HighRequestLatency
+        expr: http_request_duration_seconds > 0.5
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: High request latency
+`;
+      const file = new File([yamlContent], 'test-rules.yaml', { type: 'application/x-yaml' });
+
+      // Upload the file
+      const fileInput = ui.yamlImport.fileUpload.get();
+      await user.upload(fileInput, file);
+
+      // Select target data source
+      await user.click(ui.yamlImport.targetDataSource.get());
+      await user.click(await ui.dsImport.mimirDsOption.find());
+
+      // Click the import button
+      await user.click(ui.importButton.get());
+
+      // Verify confirmation dialog appears
+      expect(await ui.confirmationModal.find()).toBeInTheDocument();
     });
   });
 });
