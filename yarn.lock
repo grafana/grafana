@@ -3672,7 +3672,7 @@ __metadata:
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
-    react-data-grid: "npm:7.0.0-beta.46"
+    react-data-grid: "grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
     react-highlight-words: "npm:0.21.0"
@@ -25932,15 +25932,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@npm:7.0.0-beta.46":
-  version: 7.0.0-beta.46
-  resolution: "react-data-grid@npm:7.0.0-beta.46"
+"react-data-grid@grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5":
+  version: 7.0.0-beta.55
+  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
   dependencies:
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^18.0 || ^19.0
     react-dom: ^18.0 || ^19.0
-  checksum: 10/d8a679b5e22a07293923894591adcac5ad57b8bd28dcc93f7438563384f6acc2287f14394a3ef360bc1dc901defa00b4030aa9af37c70cf53cf121437e0882bc
+  checksum: 10/9fe309924a7b22d0a62f0df69bdc7b9e0df62c5624e96125f2d729500dfe103037cfbe654fa63294d89fc9b5fea618a540160e2e12e7de4c7052049827df3687
   languageName: node
   linkType: hard
 
