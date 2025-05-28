@@ -91,12 +91,20 @@ export { FieldLinkList } from './components/DataLinks/FieldLinkList';
 export { FullWidthButtonContainer } from './components/Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './components/ClickOutsideWrapper/ClickOutsideWrapper';
 
-export * from './types';
-export * from './utils';
+export type { Themeable, Themeable2 } from './types/theme';
+export type { ValidationRule, ValidationEvents } from './types/input';
+export type { SearchFunction, CompletionItemGroup, CompletionItemKind, HighlightPart, CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from './types/completion';
+export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
+export type { IconName, IconType, IconSize } from './types/icon';
+export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTypeIconName } from './types/icon';
+export type { ActionMeta } from './types/select';
+export type { ComponentSize } from './types/size';
+export type { Column } from './types/interactiveTable';
+export type { CellProps, SortByFn } from 'react-table';
+
 export * from './themes';
 export * from './options';
 export * from './slate-plugins';
 
 // Moved to `@grafana/schema`, in Grafana 9, this will be removed
 export * from './schema';
-export { getAvailableIcons } from './types';
