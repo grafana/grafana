@@ -172,6 +172,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       bottom: 0,
       overflow: 'auto',
       scrollbarWidth: 'thin',
+      scrollbarGutter: 'stable',
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
