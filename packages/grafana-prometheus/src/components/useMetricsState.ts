@@ -25,7 +25,7 @@ export function useMetricsState(
   syntaxLoaded: boolean
 ) {
   return useMemo(() => {
-    const hasMetrics = languageProvider.metrics.length > 0;
+    const hasMetrics = languageProvider.retrieveMetrics().length > 0;
     const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, hasMetrics);
     const buttonDisabled = !(syntaxLoaded && hasMetrics);
 
@@ -34,5 +34,5 @@ export function useMetricsState(
       chooserText,
       buttonDisabled,
     };
-  }, [languageProvider.metrics, datasource.lookupsDisabled, syntaxLoaded]);
+  }, [languageProvider, datasource.lookupsDisabled, syntaxLoaded]);
 }
