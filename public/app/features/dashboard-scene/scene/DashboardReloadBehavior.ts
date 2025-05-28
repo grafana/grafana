@@ -23,7 +23,7 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _timeRange: SceneTimeRangeLike | undefined;
   private _dashboardScene: DashboardScene | undefined;
-  private _prevState?: UrlQueryMap;
+  private _prevState: UrlQueryMap = {};
 
   constructor(state: DashboardReloadBehaviorState) {
     super(state);
@@ -39,7 +39,6 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
         return;
       }
 
-      this._timeRange = sceneGraph.getTimeRange(this);
       this._dashboardScene = sceneGraph.getAncestor(this, DashboardScene);
 
       this._variableDependency = new VariableDependencyConfig(this, {
@@ -52,12 +51,10 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
       // Record initial state, this will be missing scope names
       this._prevState = this.getCurrentState();
-
-      this._subs.add(this._timeRange.subscribeToState(() => this.reloadDashboard()));
     });
   }
 
-  private getCurrentState() {
+  private getCurrentState(): UrlQueryMap {
     const scopes = sceneGraph.getScopes(this) ?? [];
 
     return {
@@ -84,6 +81,10 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     const newState = this.getCurrentState();
+    // Ignore time range changes
+    this._prevState.from = newState.from;
+    this._prevState.to = newState.to;
+
     const stateChanged = !isEqual(newState, this._prevState);
 
     console.log(
