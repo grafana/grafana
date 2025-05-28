@@ -37,8 +37,14 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   }
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
+    const isEdit = new URLSearchParams(window.location.href).get('editPanel') === '1';
+
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
       const ds = await getDataSourceSrv().get(query.datasource);
+
+      if (isEdit) {
+        query.settings = { ...query.settings, editMode: true };
+      }
 
       if (!ds.interpolateVariablesInQueries) {
         return query;

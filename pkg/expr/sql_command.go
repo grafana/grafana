@@ -37,10 +37,12 @@ type SQLCommand struct {
 	inputLimit  int64
 	outputLimit int64
 	timeout     time.Duration
+
+	editMode	bool
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
+func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration, editMode bool) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, ErrMissingSQLQuery
 	}
@@ -72,6 +74,7 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 		outputLimit: outputLimit,
 		timeout:     timeout,
 		format:      format,
+		editMode:    editMode,
 	}, nil
 }
 
@@ -94,9 +97,25 @@ func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
 	}
 
 	formatRaw := rn.Query["format"]
+
+	settings, ok := rn.Query["settings"]
+	editMode := false
+
+	if ok {
+		switch s := settings.(type) {
+		case map[string]any:
+			mode, ok := s["editMode"].(bool)
+			if ok && mode {
+				editMode = true
+			}
+		default:
+			return nil, fmt.Errorf("field settings must be an object, got %T for refId %v", s, rn.RefID)
+		}
+	}
+
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
+	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout, editMode)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies

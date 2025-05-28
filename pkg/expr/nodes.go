@@ -48,6 +48,32 @@ type rawNode struct {
 	idx int64
 }
 
+
+// SQLExprInputType indicates if the query is needed for a SQL expression
+type SQLExprInputType int
+
+const (
+	// Not needed for a SQL expression
+	NotSQLInput SQLExprInputType = iota
+	// Needed for a SQL expression, should return intermediate formatting steps
+	SQLInputEditMode
+	// Needed for a SQL expression, return final step only
+	SQLInput
+)
+
+// ParseSQLExprInputType returns a SQLExprInputType from its string representation.
+func ParseSQLExprInputType(s string) (SQLExprInputType) {
+	switch s {
+	case "sqlInputEditMode":
+		return SQLInputEditMode
+	case "sqlInput":
+		return SQLInput
+	default:
+		return NotSQLInput
+	}
+}
+
+
 func getExpressionCommandTypeString(rawQuery map[string]any) (string, error) {
 	rawType, ok := rawQuery["type"]
 	if !ok {
@@ -193,7 +219,7 @@ type DSNode struct {
 	maxDP      int64
 	request    Request
 
-	isInputToSQLExpr bool
+	isInputToSQLExpr SQLExprInputType
 }
 
 func (dn *DSNode) String() string {

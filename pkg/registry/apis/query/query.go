@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
@@ -400,9 +401,9 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					_, isSqlInput := req.SqlInputs[refId]
+					//_, isSqlInput := req.SqlInputs[refId] TODO, fix this
 
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, expr.ParseSQLExprInputType("sqlInput"))
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
@@ -449,7 +450,7 @@ func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req data
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, expr.ParseSQLExprInputType("notSQLExpr"))
 	if err != nil {
 		b.log.Error("issue converting query from alerting", "err", err)
 		results.Error = err

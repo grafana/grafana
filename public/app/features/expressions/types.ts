@@ -162,6 +162,7 @@ export interface ThresholdExpressionQuery extends ExpressionQuery {
 export interface ExpressionQuerySettings {
   mode?: ReducerMode;
   replaceWithValue?: number;
+  editMode?: boolean;
 }
 
 export interface ClassicCondition {

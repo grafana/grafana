@@ -340,9 +340,13 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			}
 
 			// If the input is SQL, conversion is handled differently
-			if _, ok := cmdNode.Command.(*SQLCommand); ok {
+			if command, ok := cmdNode.Command.(*SQLCommand); ok {
 				if dsNode, ok := neededNode.(*DSNode); ok {
-					dsNode.isInputToSQLExpr = true
+					if command.editMode {
+						dsNode.isInputToSQLExpr = ParseSQLExprInputType("sqlInputEditMode")
+					} else {
+						dsNode.isInputToSQLExpr = ParseSQLExprInputType("sqlInput")
+					}
 				} else {
 					// Only allow data source nodes as SQL expression inputs for now
 					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())

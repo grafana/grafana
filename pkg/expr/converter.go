@@ -23,14 +23,18 @@ type ResultConverter struct {
 func (c *ResultConverter) Convert(ctx context.Context,
 	datasourceType string,
 	frames data.Frames,
-	forSqlInput bool,
+	forSqlInput SQLExprInputType,
 ) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 
-	if forSqlInput {
-		results, err := handleSqlInput(frames)
+	if forSqlInput != ParseSQLExprInputType("NotSQLInput") {
+		editMode := false
+		if forSqlInput == ParseSQLExprInputType("sqlInputEditMode") {
+			editMode = true
+		}
+		results, err := handleSqlInput(frames, editMode)
 		return "sql input", results, err
 	}
 
@@ -127,7 +131,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 }
 
 // copied from pkg/expr/nodes.go from within the Execute method
-func handleSqlInput(dataFrames data.Frames) (mathexp.Results, error) {
+func handleSqlInput(dataFrames data.Frames, isEditMode bool) (mathexp.Results, error) {
 	var result mathexp.Results
 	var needsConversion bool
 	// Convert it if Multi:
