@@ -310,7 +310,7 @@ function useColumns(
     });
 
     return columns;
-  }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isRulerLoading]);
+  }, [t, showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
 }
 
 function RuleStateCell({ rule }: { rule: CombinedRule }) {
