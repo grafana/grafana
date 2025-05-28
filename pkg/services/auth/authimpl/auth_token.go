@@ -309,7 +309,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 	}
 
 	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
-		if s.features.IsEnabled(ctx, featuremgmt.FlagRotateTokensInTransaction) {
+		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
 			var token *auth.UserToken
 			err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 				var err error
@@ -355,7 +355,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 	now := getTime()
 	var affected int64
 	withDbSession := s.sqlStore.WithDbSession
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagRotateTokensInTransaction) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
 		withDbSession = s.sqlStore.WithTransactionalDbSession
 	}
 	err = withDbSession(ctx, func(dbSession *db.Session) error {

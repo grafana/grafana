@@ -2957,6 +2957,7 @@
         "name": "rotateTokensInTransaction",
         "resourceVersion": "1748363818965",
         "creationTimestamp": "2025-05-27T16:30:53Z",
+        "deletionTimestamp": "2025-05-28T11:24:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
         }

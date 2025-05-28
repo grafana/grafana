@@ -718,7 +718,7 @@ func createTestContext(t *testing.T) *testContext {
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
-		features:             featuremgmt.WithFeatures(featuremgmt.FlagRotateTokensInTransaction, featuremgmt.FlagSkipTokenRotationIfRecent),
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagSkipTokenRotationIfRecent),
 		tracer:               tracer,
 	}
 
