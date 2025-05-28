@@ -1,5 +1,3 @@
-import { SortColumn } from 'react-data-grid';
-
 import {
   createDataFrame,
   createTheme,
@@ -39,7 +37,6 @@ import {
   getFooterStyles,
   getIsNestedTable,
   getTextAlign,
-  handleSort,
   isTextCell,
   migrateTableDisplayModeToCellOptions,
 } from './utils';
@@ -100,6 +97,7 @@ const crossFilterRows = { current: {} };
 const sortColumnsRef = { current: [] };
 
 const mockOptions = {
+  nestedTableSortColumns: {},
   ctx: null as unknown as CanvasRenderingContext2D,
   textWraps: {},
   rows: [],
@@ -151,7 +149,12 @@ describe('TableNG utils', () => {
         frame: data,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -203,7 +206,12 @@ describe('TableNG utils', () => {
         frame: data,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -223,7 +231,12 @@ describe('TableNG utils', () => {
         frame: data,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -240,7 +253,12 @@ describe('TableNG utils', () => {
         frame: data,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -258,7 +276,12 @@ describe('TableNG utils', () => {
         frame: data,
         calcsRef: { current: ['3', '', ''] },
         options,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -327,7 +350,12 @@ describe('TableNG utils', () => {
         frame: nestedData,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -345,7 +373,12 @@ describe('TableNG utils', () => {
         frame: nestedData,
         calcsRef,
         options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -363,7 +396,12 @@ describe('TableNG utils', () => {
         frame: nestedData,
         calcsRef,
         options: { ...mockOptions, expandedRows },
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
+        handlers: {
+          onCellExpand: () => {},
+          onColumnResize: () => {},
+          onSort: () => {},
+          handleNestedTableSort: () => {},
+        },
         availableWidth: mockOptions.width,
       });
 
@@ -714,56 +752,6 @@ describe('TableNG utils', () => {
         time: 1,
         value: 10,
       });
-    });
-  });
-
-  describe('handleSort', () => {
-    const setSortColumns = jest.fn();
-    const sortColumnsRef: { current: SortColumn[] } = { current: [] };
-
-    beforeEach(() => {
-      setSortColumns.mockClear();
-      sortColumnsRef.current = [];
-    });
-
-    it('should set initial sort', () => {
-      handleSort('Value', 'ASC', false, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'ASC' }]);
-    });
-
-    it('should toggle sort direction on same column', () => {
-      // Initial sort
-      sortColumnsRef.current = [{ columnKey: 'Value', direction: 'ASC' }] as const;
-
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'DESC' }]);
-    });
-
-    it('should handle multi-sort with shift key', () => {
-      // Initial sort
-      sortColumnsRef.current = [{ columnKey: 'Time', direction: 'ASC' }] as const;
-
-      handleSort('Value', 'ASC', true, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([
-        { columnKey: 'Time', direction: 'ASC' },
-        { columnKey: 'Value', direction: 'ASC' },
-      ]);
-    });
-
-    it('should remove sort when toggling through all states', () => {
-      // Initial ASC sort
-      sortColumnsRef.current = [{ columnKey: 'Value', direction: 'ASC' }] as const;
-
-      // Toggle to DESC
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'DESC' }]);
-
-      // Toggle to no sort
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-      expect(setSortColumns).toHaveBeenCalledWith([]);
     });
   });
 
