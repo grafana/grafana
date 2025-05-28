@@ -287,7 +287,7 @@ You can generate and save PDF files of any dashboard.
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 6.7 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 {{< admonition type="tip">}}
-You can enable the `newPDFRendering` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/), availble in public preview, to improve PDF generation performance.
+You can enable the `newPDFRendering` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/), available in public preview, to improve PDF generation performance.
 {{< /admonition >}}
 
 1. In the dashboard that you want to export as PDF, click the **Share** button.
