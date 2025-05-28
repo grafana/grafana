@@ -134,9 +134,19 @@ func TestHandleSqlInput(t *testing.T) {
 			expectErr: "no frames for SQL conversion",
 		},
 		{
+			name:        "single frame with no fields and no type is passed through",
+			frames:      data.Frames{data.NewFrame("")},
+			expectFrame: true,
+		},
+		{
+			name:        "single frame with no fields but type timeseries-multi is passed through",
+			frames:      data.Frames{data.NewFrame("").SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})},
+			expectFrame: true,
+		},
+		{
 			name: "single frame, no labels, no type → passes through",
 			frames: data.Frames{
-				data.NewFrame("test",
+				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 					data.NewField("value", nil, []*float64{fp(2)}),
 				),
@@ -146,7 +156,7 @@ func TestHandleSqlInput(t *testing.T) {
 		{
 			name: "single frame with labels, but missing FrameMeta.Type → error",
 			frames: data.Frames{
-				data.NewFrame("test",
+				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 					data.NewField("value", data.Labels{"foo": "bar"}, []*float64{fp(2)}),
 				),
@@ -156,11 +166,11 @@ func TestHandleSqlInput(t *testing.T) {
 		{
 			name: "multiple frames, no type → error",
 			frames: data.Frames{
-				data.NewFrame("frame1",
+				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 					data.NewField("value", nil, []*float64{fp(2)}),
 				),
-				data.NewFrame("frame2",
+				data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 					data.NewField("value", nil, []*float64{fp(2)}),
 				),
