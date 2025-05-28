@@ -117,12 +117,13 @@ You can quickly experiment with multi-dimensional alerts using the [**TestData**
 1. Select **TestData** as the data source.
 1. Configure the TestData scenario
 
-   1. Scenario: **Random Walk**
-   1. Series count: 3
-   1. Start value: 70, Max: 100
-   1. Labels: `cpu=cpu-$seriesIndex`
+   - Scenario: **Random Walk**
+   - Labels: `cpu=cpu-$seriesIndex`
+   - Series count: 3
+   - Min: 70, Max: 100
+   - Spread: 2
 
-   {{< figure src="/media/docs/alerting/testdata-random-series.png" max-width="750px" alt="Generating random time series data using the TestData data source" >}}
+   {{< figure src="/media/docs/alerting/testdata-random-series-v2.png" max-width="750px" alt="Generating random time series data using the TestData data source" >}}
 
 ## Reduce time series data for comparison
 
@@ -145,6 +146,8 @@ For demo purposes, this example uses the **Advanced mode** with a **Reduce** exp
 1. Click **Preview** to evaluate the alert rule.
 
    {{< figure src="/media/docs/alerting/using-expressions-with-multiple-series.png" max-width="750px" caption="The alert condition evaluates the reduced value for each alert instance and shows whether each instance is Firing or Normal." alt="Alert preview using a Reduce expression and a threshold condition" >}}
+
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/cemqwfn334npce/view" >}}
 
 ## Learn more
 
