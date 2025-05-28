@@ -136,7 +136,7 @@ func GetError(res *resourcepb.ErrorResult) error {
 }
 
 func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
-	if err == scheduler.ErrTenantQueueFull {
+	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
 	}
 	return nil, err
