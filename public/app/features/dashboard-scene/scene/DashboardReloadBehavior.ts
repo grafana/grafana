@@ -21,7 +21,6 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 }
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
-  private _timeRange: SceneTimeRangeLike | undefined;
   private _dashboardScene: DashboardScene | undefined;
   private _prevState: UrlQueryMap = {};
 
@@ -56,10 +55,12 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
   private getCurrentState(): UrlQueryMap {
     const scopes = sceneGraph.getScopes(this) ?? [];
+    const timeRange = sceneGraph.getTimeRange(this).state.value;
 
     return {
       scopes: scopes.map((scope) => scope.metadata.name),
-      ...sceneUtils.getUrlState(this._dashboardScene?.state.$timeRange!),
+      from: timeRange.from.toISOString(),
+      to: timeRange.to.toISOString(),
       ...sceneUtils.getUrlState(this._dashboardScene?.state.$variables!),
       version: this._dashboardScene?.state.version,
     };
@@ -81,6 +82,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     const newState = this.getCurrentState();
+
     // Ignore time range changes
     this._prevState.from = newState.from;
     this._prevState.to = newState.to;
