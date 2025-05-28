@@ -19,16 +19,17 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 	if err != nil {
 		return fmt.Errorf("failed to create db engine: %w", err)
 	}
-	err = engine.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close db engine: %w", err)
-	}
 
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
 
 	if err := RunWithMigrator(m, cfg); err != nil {
 		return err
+	}
+
+	// Close the engine after Grafana migrations are complete
+	if err := engine.Close(); err != nil {
+		logger.Warn("failed to close db engine", "error", err)
 	}
 
 	// running openfga migrations
