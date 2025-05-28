@@ -10,7 +10,7 @@ import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
 import { AzureQueryType, ResultFormat } from '../../types';
 import { selectOptionInTest } from '../../utils/testUtils';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
+import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 
 import QueryEditor from './QueryEditor';
 

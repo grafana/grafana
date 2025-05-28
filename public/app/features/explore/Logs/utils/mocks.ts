@@ -179,13 +179,3 @@ export const getMockElasticFrame = (override?: Partial<DataFrame>, timestamp = 1
   };
   return { ...testDataFrame, ...override };
 };
-
-it('should return a frame', () => {
-  expect(
-    getMockLokiFrame({
-      name: 'test',
-    })
-  ).toMatchObject({
-    name: 'test',
-  });
-});
