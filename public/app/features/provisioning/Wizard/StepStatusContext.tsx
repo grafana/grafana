@@ -18,20 +18,12 @@ interface StepStatusContextData {
 
 const StepStatusContext = createContext<StepStatusContextData | undefined>(undefined);
 
-interface StepStatusProviderProps {
-  onStepStatusChange?: (status: StepStatusInfo) => void;
-}
-
-export const StepStatusProvider = ({ children, onStepStatusChange }: PropsWithChildren<StepStatusProviderProps>) => {
+export const StepStatusProvider = ({ children }: PropsWithChildren) => {
   const [stepStatusInfo, setStepStatusInfoState] = useState<StepStatusInfo>({ status: 'idle' });
 
-  const setStepStatusInfo = useCallback(
-    (info: StepStatusInfo) => {
-      setStepStatusInfoState(info);
-      onStepStatusChange?.(info);
-    },
-    [onStepStatusChange]
-  );
+  const setStepStatusInfo = useCallback((info: StepStatusInfo) => {
+    setStepStatusInfoState(info);
+  }, []);
 
   const value: StepStatusContextData = {
     stepStatusInfo,

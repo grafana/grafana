@@ -2,7 +2,6 @@ import { render, screen, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 
 import { StepStatusProvider, useStepStatus } from './StepStatusContext';
-import { StepStatusInfo } from './types';
 
 function MockComponent() {
   const { stepStatusInfo, setStepStatusInfo, hasStepError, isStepRunning, isStepSuccess, isStepIdle } = useStepStatus();
@@ -31,14 +30,8 @@ function MockComponent() {
   );
 }
 
-function TestWrapper({
-  children,
-  onStepStatusChange,
-}: {
-  children: ReactNode;
-  onStepStatusChange?: (status: StepStatusInfo) => void;
-}) {
-  return <StepStatusProvider onStepStatusChange={onStepStatusChange}>{children}</StepStatusProvider>;
+function TestWrapper({ children }: { children: ReactNode }) {
+  return <StepStatusProvider>{children}</StepStatusProvider>;
 }
 
 describe('StepStatusContext', () => {
@@ -119,28 +112,6 @@ describe('StepStatusContext', () => {
       expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
       expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
       expect(screen.getByTestId('isStepIdle')).toHaveTextContent('false');
-    });
-
-    it('should call onStepStatusChange callback when status changes', () => {
-      const mockCallback = jest.fn();
-
-      render(
-        <TestWrapper onStepStatusChange={mockCallback}>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      act(() => {
-        screen.getByTestId('set-running').click();
-      });
-
-      expect(mockCallback).toHaveBeenCalledWith({ status: 'running' });
-
-      act(() => {
-        screen.getByTestId('set-error').click();
-      });
-
-      expect(mockCallback).toHaveBeenCalledWith({ status: 'error', error: 'Test error' });
     });
   });
 
@@ -263,35 +234,6 @@ describe('StepStatusContext', () => {
         screen.getByTestId('set-idle').click();
       });
       expect(screen.getByTestId('isStepIdle')).toHaveTextContent('true');
-    });
-  });
-
-  describe('callback behavior', () => {
-    it('should call callback multiple times for multiple status changes', () => {
-      const mockCallback = jest.fn();
-
-      render(
-        <TestWrapper onStepStatusChange={mockCallback}>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      act(() => {
-        screen.getByTestId('set-running').click();
-      });
-
-      act(() => {
-        screen.getByTestId('set-success').click();
-      });
-
-      act(() => {
-        screen.getByTestId('set-error').click();
-      });
-
-      expect(mockCallback).toHaveBeenCalledTimes(3);
-      expect(mockCallback).toHaveBeenNthCalledWith(1, { status: 'running' });
-      expect(mockCallback).toHaveBeenNthCalledWith(2, { status: 'success' });
-      expect(mockCallback).toHaveBeenNthCalledWith(3, { status: 'error', error: 'Test error' });
     });
   });
 });
