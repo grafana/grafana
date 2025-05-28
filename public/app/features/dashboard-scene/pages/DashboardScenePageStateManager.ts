@@ -804,6 +804,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     return this.activeManager.getSceneFromCache(key);
   }
 
+  public setSceneCache(cacheKey: string, scene: DashboardScene): void {
+    this.activeManager.setSceneCache(cacheKey, scene);
+  }
+
   public getCache() {
     return this.activeManager.getCache();
   }

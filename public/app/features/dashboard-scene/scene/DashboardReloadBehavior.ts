@@ -50,6 +50,9 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
         dependsOnScopes: true,
       });
 
+      // Record initial state, this will be missing scope names
+      this._initialState = this.getCurrentState();
+
       this._subs.add(this._timeRange.subscribeToState(() => this.reloadDashboard()));
     });
   }
@@ -77,13 +80,6 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
   private reloadDashboard() {
     if (this.isEditing() || this.isWaitingForVariables()) {
       console.log('DashboardReloadBehavior reloadDashboard isEditing or waiting for variables, skipping reload');
-      return;
-    }
-
-    // If we have not captured an initial state yet it means variables where still loading (probably means scopes are loading)
-    if (!this._initialState) {
-      this._initialState = this.getCurrentState();
-      console.log('DashboardReloadBehavior saving initial state after variables completed', this._initialState);
       return;
     }
 
