@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
-import { ToolbarButton, useTheme2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
@@ -10,14 +11,18 @@ interface ToolbarItemButtonProps {
   onClick?: () => void;
 }
 
-export function ExtensionToolbarItemButton({ isOpen, title, onClick }: ToolbarItemButtonProps) {
-  const styles = getStyles(useTheme2());
+function ExtensionToolbarItemButtonComponent(
+  { isOpen, title, onClick }: ToolbarItemButtonProps,
+  ref: React.ForwardedRef<HTMLButtonElement>
+) {
+  const styles = useStyles2(getStyles);
   const { t } = useTranslate();
 
   if (isOpen) {
     // render button to close the sidebar
     return (
       <ToolbarButton
+        ref={ref}
         className={cx(styles.button, styles.buttonActive)}
         icon="ai-sparkle"
         data-testid="extension-toolbar-button-close"
@@ -34,6 +39,7 @@ export function ExtensionToolbarItemButton({ isOpen, title, onClick }: ToolbarIt
   }
   return (
     <ToolbarButton
+      ref={ref}
       className={cx(styles.button)}
       icon="ai-sparkle"
       data-testid="extension-toolbar-button-open"
@@ -43,6 +49,12 @@ export function ExtensionToolbarItemButton({ isOpen, title, onClick }: ToolbarIt
     />
   );
 }
+
+// Wrapped the component with React.forwardRef to enable ref forwarding, which is required
+// for proper integration with the Dropdown component from @grafana/ui
+export const ExtensionToolbarItemButton = React.forwardRef<HTMLButtonElement, ToolbarItemButtonProps>(
+  ExtensionToolbarItemButtonComponent
+);
 
 function getStyles(theme: GrafanaTheme2) {
   return {

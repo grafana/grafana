@@ -38,7 +38,7 @@ export function ExtensionToolbarItem() {
     return (
       <>
         <ExtensionToolbarItemButton
-          isOpen
+          isOpen={isOpen}
           title={components[0].title}
           onClick={() => {
             if (isOpen) {
@@ -88,7 +88,7 @@ export function ExtensionToolbarItem() {
         />
       ) : (
         <Dropdown overlay={MenuItems} placement="bottom-end">
-          <ExtensionToolbarItemButton isOpen />
+          <ExtensionToolbarItemButton isOpen={false} />
         </Dropdown>
       )}
       <NavToolbarSeparator />
