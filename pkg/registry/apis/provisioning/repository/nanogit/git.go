@@ -31,8 +31,6 @@ type gitRepository struct {
 
 	url    string
 	branch string
-
-	cloneFn repository.CloneFn
 }
 
 // GitRepository is an interface that combines all repository capabilities
@@ -51,7 +49,6 @@ func NewGitRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	secrets secrets.Service,
-	cloneFn repository.CloneFn,
 ) (GitRepository, error) {
 	gitURL := config.Spec.Git.URL
 	branch := config.Spec.Git.Branch
@@ -82,7 +79,6 @@ func NewGitRepository(
 		secrets: secrets,
 		url:     gitURL,
 		branch:  branch,
-		cloneFn: cloneFn,
 	}, nil
 }
 
@@ -316,12 +312,24 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		ref = r.branch
 	}
 	ctx, _ = r.logger(ctx, ref)
-
 	branchRef, err := r.ensureBranchExists(ctx, ref)
 	if err != nil {
 		return err
 	}
 
+	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	if err != nil {
+		return fmt.Errorf("create staged writer: %w", err)
+	}
+
+	if err := r.create(ctx, path, data, writer); err != nil {
+		return err
+	}
+
+	return r.commitAndPush(ctx, writer, comment)
+}
+
+func (r *gitRepository) create(ctx context.Context, path string, data []byte, writer nanogit.StagedWriter) error {
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
 	// Create .keep file if it is a directory
 	if safepath.IsDir(finalPath) {
@@ -333,13 +341,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		data = []byte{}
 	}
 
-	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
-	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
-	}
-
-	if _, err = writer.CreateBlob(ctx, finalPath, data); err != nil {
+	if _, err := writer.CreateBlob(ctx, finalPath, data); err != nil {
 		// TODO: in library, ErrAlreadyExists
 		// if errors.Is(err, nanogit.ErrBlobExists) {
 		// 	return &apierrors.StatusError{
@@ -351,18 +353,6 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		// }
 
 		return fmt.Errorf("create blob: %w", err)
-	}
-
-	// Commit the changes
-	author, committer := r.createSignature(ctx)
-
-	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
-		return fmt.Errorf("commit changes: %w", err)
-	}
-
-	// Push the changes
-	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", err)
 	}
 
 	return nil
@@ -383,32 +373,33 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	if err != nil {
 		return err
 	}
-
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", err)
 	}
 
+	if err := r.update(ctx, path, data, writer); err != nil {
+		return err
+	}
+
+	return r.commitAndPush(ctx, writer, comment)
+}
+
+func (r *gitRepository) update(ctx context.Context, path string, data []byte, writer nanogit.StagedWriter) error {
+	// Check if trying to update a directory
+	if safepath.IsDir(path) {
+		return apierrors.NewBadRequest("cannot update a directory")
+	}
+
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
-	if _, err = writer.UpdateBlob(ctx, finalPath, data); err != nil {
+	if _, err := writer.UpdateBlob(ctx, finalPath, data); err != nil {
 		// TODO: improve nanogit library to have a better error type
 		if errors.Is(err, nanogit.ErrRefNotFound) {
 			return repository.ErrFileNotFound
 		}
 
 		return fmt.Errorf("update blob: %w", err)
-	}
-
-	// Commit the changes
-	author, committer := r.createSignature(ctx)
-	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
-		return fmt.Errorf("commit changes: %w", err)
-	}
-
-	// Push the changes
-	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", err)
 	}
 
 	return nil
@@ -441,42 +432,36 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	if err != nil {
 		return err
 	}
-
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
-
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", err)
 	}
 
+	if err := r.delete(ctx, path, writer); err != nil {
+		return err
+	}
+
+	return r.commitAndPush(ctx, writer, comment)
+}
+
+func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.StagedWriter) error {
+	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
 	if safepath.IsDir(path) {
-		if _, err = writer.DeleteTree(ctx, finalPath); err != nil {
+		if _, err := writer.DeleteTree(ctx, finalPath); err != nil {
 			if errors.Is(err, nanogit.ErrRefNotFound) {
 				return repository.ErrFileNotFound
 			}
 			return fmt.Errorf("delete tree: %w", err)
 		}
 	} else {
-		if _, err = writer.DeleteBlob(ctx, finalPath); err != nil {
+		if _, err := writer.DeleteBlob(ctx, finalPath); err != nil {
 			if errors.Is(err, nanogit.ErrRefNotFound) {
 				return repository.ErrFileNotFound
 			}
 			return fmt.Errorf("delete blob: %w", err)
 		}
-	}
-
-	// Commit the changes
-	author, committer := r.createSignature(ctx)
-
-	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
-		return fmt.Errorf("commit changes: %w", err)
-	}
-
-	// Push the changes
-	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", err)
 	}
 
 	return nil
@@ -651,7 +636,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 }
 
 func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	return r.cloneFn(ctx, opts)
+	return NewStagedGitRepository(ctx, r, opts)
 }
 
 // resolveRefToHash resolves a ref (branch name or commit hash) to a commit hash
@@ -756,6 +741,26 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 	}
 
 	return author, committer
+}
+
+func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
+	author, committer := r.createSignature(ctx)
+	if _, err := writer.Commit(ctx, comment, author, committer); err != nil {
+		return fmt.Errorf("commit changes: %w", err)
+	}
+	return nil
+}
+
+func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.StagedWriter, comment string) error {
+	if err := r.commit(ctx, writer, comment); err != nil {
+		return err
+	}
+
+	if err := writer.Push(ctx); err != nil {
+		return fmt.Errorf("push changes: %w", err)
+	}
+
+	return nil
 }
 
 func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

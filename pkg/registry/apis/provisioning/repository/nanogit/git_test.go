@@ -191,10 +191,7 @@ func TestNewGit(t *testing.T) {
 
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGitRepository(ctx, config, mockSecrets, func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-		return nil, nil
-	})
-
+	gitRepo, err := NewGitRepository(ctx, config, mockSecrets)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
