@@ -9,7 +9,6 @@ describe('Dashboard panels', () => {
   });
 
   it('can add a new panel', () => {
-    e2e.pages.Dashboards.visit();
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 

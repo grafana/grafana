@@ -11,8 +11,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new custom variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -41,8 +39,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new constant variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -73,8 +69,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new textbox variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -109,8 +103,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new interval variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
