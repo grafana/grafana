@@ -43,6 +43,7 @@ export async function initDefaultI18nInstance() {
   });
 }
 
+// exported for testing
 export function initDefaultReactI18nInstance() {
   // If the initReactI18next is not set, we need to set them
   if (getI18n()?.options?.react) {
