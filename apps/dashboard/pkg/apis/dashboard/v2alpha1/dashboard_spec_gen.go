@@ -5,7 +5,6 @@ package v2alpha1
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 // +k8s:openapi-gen=true
@@ -73,6 +72,7 @@ type DashboardAnnotationPanelFilter struct {
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
+		Ids:     []uint32{},
 	}
 }
 
@@ -126,6 +126,7 @@ type DashboardPanelSpec struct {
 // NewDashboardPanelSpec creates a new DashboardPanelSpec object.
 func NewDashboardPanelSpec() *DashboardPanelSpec {
 	return &DashboardPanelSpec{
+		Links:     []DashboardDataLink{},
 		Data:      *NewDashboardQueryGroupKind(),
 		VizConfig: *NewDashboardVizConfigKind(),
 	}
@@ -167,7 +168,9 @@ type DashboardQueryGroupSpec struct {
 // NewDashboardQueryGroupSpec creates a new DashboardQueryGroupSpec object.
 func NewDashboardQueryGroupSpec() *DashboardQueryGroupSpec {
 	return &DashboardQueryGroupSpec{
-		QueryOptions: *NewDashboardQueryOptionsSpec(),
+		Queries:         []DashboardPanelQueryKind{},
+		Transformations: []DashboardTransformationKind{},
+		QueryOptions:    *NewDashboardQueryOptionsSpec(),
 	}
 }
 
@@ -305,6 +308,7 @@ type DashboardVizConfigSpec struct {
 // NewDashboardVizConfigSpec creates a new DashboardVizConfigSpec object.
 func NewDashboardVizConfigSpec() *DashboardVizConfigSpec {
 	return &DashboardVizConfigSpec{
+		Options:     map[string]interface{}{},
 		FieldConfig: *NewDashboardFieldConfigSource(),
 	}
 }
@@ -323,7 +327,8 @@ type DashboardFieldConfigSource struct {
 // NewDashboardFieldConfigSource creates a new DashboardFieldConfigSource object.
 func NewDashboardFieldConfigSource() *DashboardFieldConfigSource {
 	return &DashboardFieldConfigSource{
-		Defaults: *NewDashboardFieldConfig(),
+		Defaults:  *NewDashboardFieldConfig(),
+		Overrides: []DashboardV2alpha1FieldConfigSourceOverrides{},
 	}
 }
 
@@ -409,7 +414,8 @@ type DashboardValueMap struct {
 // NewDashboardValueMap creates a new DashboardValueMap object.
 func NewDashboardValueMap() *DashboardValueMap {
 	return &DashboardValueMap{
-		Type: DashboardMappingTypeValue,
+		Type:    DashboardMappingTypeValue,
+		Options: map[string]DashboardValueMappingResult{},
 	}
 }
 
@@ -518,7 +524,9 @@ type DashboardThresholdsConfig struct {
 
 // NewDashboardThresholdsConfig creates a new DashboardThresholdsConfig object.
 func NewDashboardThresholdsConfig() *DashboardThresholdsConfig {
-	return &DashboardThresholdsConfig{}
+	return &DashboardThresholdsConfig{
+		Steps: []DashboardThreshold{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -685,7 +693,9 @@ type DashboardGridLayoutSpec struct {
 
 // NewDashboardGridLayoutSpec creates a new DashboardGridLayoutSpec object.
 func NewDashboardGridLayoutSpec() *DashboardGridLayoutSpec {
-	return &DashboardGridLayoutSpec{}
+	return &DashboardGridLayoutSpec{
+		Items: []DashboardGridLayoutItemKind{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -771,7 +781,9 @@ type DashboardRowsLayoutSpec struct {
 
 // NewDashboardRowsLayoutSpec creates a new DashboardRowsLayoutSpec object.
 func NewDashboardRowsLayoutSpec() *DashboardRowsLayoutSpec {
-	return &DashboardRowsLayoutSpec{}
+	return &DashboardRowsLayoutSpec{
+		Rows: []DashboardRowsLayoutRowKind{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -829,7 +841,9 @@ type DashboardConditionalRenderingGroupSpec struct {
 
 // NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
 func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
-	return &DashboardConditionalRenderingGroupSpec{}
+	return &DashboardConditionalRenderingGroupSpec{
+		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -947,6 +961,7 @@ func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
 	return &DashboardAutoGridLayoutSpec{
 		MaxColumnCount: (func(input float64) *float64 { return &input })(3),
 		FillScreen:     (func(input bool) *bool { return &input })(false),
+		Items:          []DashboardAutoGridLayoutItemKind{},
 	}
 }
 
@@ -1010,7 +1025,9 @@ type DashboardTabsLayoutSpec struct {
 
 // NewDashboardTabsLayoutSpec creates a new DashboardTabsLayoutSpec object.
 func NewDashboardTabsLayoutSpec() *DashboardTabsLayoutSpec {
-	return &DashboardTabsLayoutSpec{}
+	return &DashboardTabsLayoutSpec{
+		Tabs: []DashboardTabsLayoutTabKind{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1082,6 +1099,7 @@ type DashboardDashboardLink struct {
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
 func NewDashboardDashboardLink() *DashboardDashboardLink {
 	return &DashboardDashboardLink{
+		Tags:        []string{},
 		AsDropdown:  false,
 		TargetBlank: false,
 		IncludeVars: false,
@@ -1222,6 +1240,7 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 		SkipUrlSync:      false,
 		Query:            *NewDashboardDataQueryKind(),
 		Regex:            "",
+		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
 		AllowCustomValue: true,
@@ -1437,6 +1456,7 @@ func NewDashboardDatasourceVariableSpec() *DashboardDatasourceVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
+		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
 		Hide:             DashboardVariableHideDontHide,
@@ -1490,6 +1510,7 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
+		Options:     []DashboardVariableOption{},
 		Auto:        false,
 		AutoMin:     "",
 		AutoCount:   0,
@@ -1537,6 +1558,7 @@ func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 		Name:             "",
 		Query:            "",
 		Current:          *NewDashboardVariableOption(),
+		Options:          []DashboardVariableOption{},
 		Multi:            false,
 		IncludeAll:       false,
 		Hide:             DashboardVariableHideDontHide,
@@ -1587,6 +1609,7 @@ func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
+		Options:     []DashboardVariableOption{},
 		Multi:       false,
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
@@ -1642,6 +1665,9 @@ type DashboardAdhocVariableSpec struct {
 func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 	return &DashboardAdhocVariableSpec{
 		Name:             "",
+		BaseFilters:      []DashboardAdHocFilterWithLabels{},
+		Filters:          []DashboardAdHocFilterWithLabels{},
+		DefaultKeys:      []DashboardMetricFindValue{},
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
@@ -1729,11 +1755,16 @@ type DashboardSpec struct {
 // NewDashboardSpec creates a new DashboardSpec object.
 func NewDashboardSpec() *DashboardSpec {
 	return &DashboardSpec{
+		Annotations:  []DashboardAnnotationQueryKind{},
 		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
+		Elements:     map[string]DashboardElement{},
 		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
+		Links:        []DashboardDashboardLink{},
 		Preload:      false,
+		Tags:         []string{},
 		TimeSettings: *NewDashboardTimeSettingsSpec(),
+		Variables:    []DashboardVariableKind{},
 	}
 }
 
@@ -1756,7 +1787,8 @@ type DashboardV2alpha1FieldConfigSourceOverrides struct {
 // NewDashboardV2alpha1FieldConfigSourceOverrides creates a new DashboardV2alpha1FieldConfigSourceOverrides object.
 func NewDashboardV2alpha1FieldConfigSourceOverrides() *DashboardV2alpha1FieldConfigSourceOverrides {
 	return &DashboardV2alpha1FieldConfigSourceOverrides{
-		Matcher: *NewDashboardMatcherConfig(),
+		Matcher:    *NewDashboardMatcherConfig(),
+		Properties: []DashboardDynamicConfigValue{},
 	}
 }
 
@@ -1887,6 +1919,7 @@ func (resource DashboardPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, erro
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -1904,7 +1937,7 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1926,7 +1959,7 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
@@ -1956,6 +1989,7 @@ func (resource DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJS
 	if resource.SpecialValueMap != nil {
 		return json.Marshal(resource.SpecialValueMap)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -1973,7 +2007,7 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2011,7 +2045,7 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
@@ -2041,6 +2075,7 @@ func (resource DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRows
 	if resource.RowsLayoutKind != nil {
 		return json.Marshal(resource.RowsLayoutKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -2058,7 +2093,7 @@ func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRow
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2096,7 +2131,7 @@ func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRow
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
@@ -2122,6 +2157,7 @@ func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDa
 	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
 		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -2139,7 +2175,7 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2169,7 +2205,7 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
@@ -2199,6 +2235,7 @@ func (resource DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabs
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -2216,7 +2253,7 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTab
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2254,7 +2291,7 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTab
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
@@ -2300,6 +2337,7 @@ func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKin
 	if resource.AdhocVariableKind != nil {
 		return json.Marshal(resource.AdhocVariableKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -2317,7 +2355,7 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2387,7 +2425,7 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 // +k8s:openapi-gen=true
