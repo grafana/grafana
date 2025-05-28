@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 import { useSelector } from 'app/types';
@@ -14,6 +15,7 @@ export interface Props {
 }
 
 export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
+  const { t } = useTranslate();
   const variables = useSelector((state) => {
     return getVariablesByKey(getLastKey(state), state);
   });
@@ -25,18 +27,21 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
@@ -51,6 +56,7 @@ interface Props2 {
 }
 
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
+  const { t } = useTranslate();
   const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
 
@@ -62,18 +68,21 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 

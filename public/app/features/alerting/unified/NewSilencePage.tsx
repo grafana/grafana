@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { useTranslate } from '@grafana/i18n';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
@@ -37,10 +38,14 @@ const SilencesEditorComponent = () => {
 };
 
 function NewSilencePage() {
+  const { t } = useTranslate();
   const pageNav = {
     id: 'silence-new',
-    text: 'Silence alert rule',
-    subTitle: 'Configure silences to stop notifications from a particular alert rule',
+    text: t('alerting.new-silence-page.page-nav.text.silence-alert-rule', 'Silence alert rule'),
+    subTitle: t(
+      'alerting.new-silence-page.page-nav.subTitle.configure-silences-notifications-particular-alert',
+      'Configure silences to stop notifications from a particular alert rule'
+    ),
   };
   return (
     <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">

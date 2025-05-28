@@ -13,12 +13,12 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   const alertingEnabled = dataSourceInfo.alertingSupported;
 
   info.push({
-    label: 'Type',
+    label: t('datasources.use-data-source-info.label.type', 'Type'),
     value: dataSourceInfo.dataSourcePluginName,
   });
 
   info.push({
-    label: 'Alerting',
+    label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
     value: (
       <Badge
         color={alertingEnabled ? 'green' : 'red'}

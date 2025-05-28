@@ -12,7 +12,11 @@ export function DashboardPageError({ error, type }: { error: unknown; type?: str
   const entity = type === 'snapshot' ? 'Snapshot' : 'Dashboard';
 
   return (
-    <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
+    <Page
+      navId="dashboards/browse"
+      layout={PageLayoutType.Canvas}
+      pageNav={{ text: t('dashboard.dashboard-page-error.text.not-found', 'Not found') }}
+    >
       <Box paddingY={4} display="flex" direction="column" alignItems="center">
         {status === 404 ? (
           <EntityNotFound entity={entity} />

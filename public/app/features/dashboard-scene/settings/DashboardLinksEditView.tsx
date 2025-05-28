@@ -1,4 +1,5 @@
 import { NavModel, NavModelItem, PageLayoutType, arrayUtils } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Page } from 'app/core/components/Page/Page';
@@ -119,8 +120,9 @@ interface EditLinkViewProps {
 }
 
 function EditLinkView({ pageNav, link, navModel, dashboard, onChange, onGoBack }: EditLinkViewProps) {
+  const { t } = useTranslate();
   const editLinkPageNav = {
-    text: 'Edit link',
+    text: t('dashboard-scene.edit-link-view.edit-link-page-nav.text.edit-link', 'Edit link'),
     parentItem: pageNav,
   };
 

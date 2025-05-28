@@ -870,14 +870,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   className={styles.visualisationTypeRadio}
                   options={[
                     {
-                      label: 'Logs',
+                      label: t('explore.unthemed-logs.label.logs', 'Logs'),
                       value: 'logs',
-                      description: 'Show results in logs visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-logs-visualisation',
+                        'Show results in logs visualisation'
+                      ),
                     },
                     {
-                      label: 'Table',
+                      label: t('explore.unthemed-logs.label.table', 'Table'),
                       value: 'table',
-                      description: 'Show results in table visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-table-visualisation',
+                        'Show results in table visualisation'
+                      ),
                     },
                   ]}
                   size="sm"
@@ -976,14 +982,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     <RadioButtonGroup
                       options={[
                         {
-                          label: 'Newest first',
+                          label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
                           value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-newest-to-oldest',
+                            'Show results newest to oldest'
+                          ),
                         },
                         {
-                          label: 'Oldest first',
+                          label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
                           value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-oldest-to-newest',
+                            'Show results oldest to newest'
+                          ),
                         },
                       ]}
                       value={logsSortOrder}

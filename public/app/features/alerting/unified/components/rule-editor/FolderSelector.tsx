@@ -69,7 +69,10 @@ export function FolderSelector() {
               )}
               name="folder"
               rules={{
-                required: { value: true, message: 'Select a folder' },
+                required: {
+                  value: true,
+                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
+                },
               }}
             />
             <CreateNewFolder onCreate={handleFolderCreation} />

@@ -313,7 +313,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: clientAuthenticationOptions(provider),
-      defaultValue: { value: 'none', label: 'None' },
+      defaultValue: { value: 'none', label: t('auth-config.field-map.label.none', 'None') },
       validation: {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
@@ -405,11 +405,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: [
+        /* eslint-disable @grafana/no-untranslated-strings */
         { value: 'AutoDetect', label: 'AutoDetect' },
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
       ],
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
+      /* eslint-enable @grafana/no-untranslated-strings */
     },
     tokenUrl: {
       label: tokenURLLabel,
@@ -884,6 +886,7 @@ function orgMappingDescription(provider: string): string {
 
 function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
   // Other options are purposefully not translated
+  /* eslint-disable @grafana/no-untranslated-strings */
   switch (provider) {
     case 'azuread':
       return [
@@ -898,4 +901,5 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
         { value: 'client_secret_post', label: 'Client secret' },
       ];
   }
+  /* eslint-enable @grafana/no-untranslated-strings */
 }

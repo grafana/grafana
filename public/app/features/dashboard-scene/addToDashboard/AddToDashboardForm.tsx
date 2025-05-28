@@ -66,14 +66,14 @@ export function AddToDashboardForm<TOptions = undefined>({
 
   if (canCreateDashboard) {
     saveTargets.push({
-      label: 'New dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.new-dashboard', 'New dashboard'),
       value: SaveTarget.NewDashboard,
     });
   }
 
   if (canWriteDashboard) {
     saveTargets.push({
-      label: 'Existing dashboard',
+      label: t('dashboard-scene.add-to-dashboard-form.label.existing-dashboard', 'Existing dashboard'),
       value: SaveTarget.ExistingDashboard,
     });
   }
@@ -154,7 +154,15 @@ export function AddToDashboardForm<TOptions = undefined>({
               control={control}
               name="dashboardUid"
               shouldUnregister
-              rules={{ required: { value: true, message: 'This field is required.' } }}
+              rules={{
+                required: {
+                  value: true,
+                  message: t(
+                    'dashboard-scene.add-to-dashboard-form.message.this-field-is-required',
+                    'This field is required.'
+                  ),
+                },
+              }}
             />
           );
         })()}

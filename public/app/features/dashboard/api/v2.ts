@@ -1,4 +1,5 @@
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -91,7 +92,7 @@ export class K8sDashboardV2API
     return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
-      title: 'deleted',
+      title: t('dashboard.k8s-dashboard-v2api.title.deleted', 'deleted'),
     }));
   }
 

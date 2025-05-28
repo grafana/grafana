@@ -38,8 +38,14 @@ export const ConvertFieldTypeTransformerEditor = ({
 
   // Format timezone options
   const tzs = getTimeZones();
-  timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-  timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+  timeZoneOptions.push({
+    label: t('transformers.convert-field-type-transformer-editor.label.browser', 'Browser'),
+    value: 'browser',
+  });
+  timeZoneOptions.push({
+    label: t('transformers.convert-field-type-transformer-editor.label.utc', 'UTC'),
+    value: 'utc',
+  });
   for (const tz of tzs) {
     timeZoneOptions.push({ label: tz, value: tz });
   }

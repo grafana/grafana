@@ -40,6 +40,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { SIPrefix } from '@grafana/data/internal';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
@@ -535,7 +536,7 @@ export function logSeriesToLogsModel(
   if (totalBytes > 0) {
     const { text, suffix } = SIPrefix('B')(totalBytes);
     meta.push({
-      label: 'Total bytes processed',
+      label: t('logs.log-series-to-logs-model.label.total-bytes-processed', 'Total bytes processed'),
       value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
     });

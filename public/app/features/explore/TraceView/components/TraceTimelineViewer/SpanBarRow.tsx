@@ -39,7 +39,6 @@ const nameColumnClassName = 'nameColumn';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
   const animations = {
-    label: 'flash',
     flash: keyframes`
     from {
       background-color: ${autoColor(theme, '#68b9ff')};

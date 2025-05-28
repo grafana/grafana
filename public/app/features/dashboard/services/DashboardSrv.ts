@@ -56,7 +56,7 @@ export class DashboardSrv {
     return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
-      message: 'Edit Dashboard JSON',
+      message: t('dashboard.dashboard-srv.message.edit-dashboard-json', 'Edit Dashboard JSON'),
       k8s: this.dashboard?.meta.k8s,
     });
   }

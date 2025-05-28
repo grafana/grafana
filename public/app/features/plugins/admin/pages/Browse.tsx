@@ -45,9 +45,9 @@ export default function Browse() {
   );
 
   const filterByOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'installed', label: 'Installed' },
-    { value: 'has-update', label: 'New Updates' },
+    { value: 'all', label: t('plugins.browse.filter-by-options.label.all', 'All') },
+    { value: 'installed', label: t('plugins.browse.filter-by-options.label.installed', 'Installed') },
+    { value: 'has-update', label: t('plugins.browse.filter-by-options.label.new-updates', 'New Updates') },
   ];
 
   const { isLoading: areUpdatesLoading, updatablePlugins } = useGetUpdatable();
@@ -110,10 +110,10 @@ export default function Browse() {
                 onChange={onFilterByTypeChange}
                 width={18}
                 options={[
-                  { value: 'all', label: 'All' },
-                  { value: 'datasource', label: 'Data sources' },
-                  { value: 'panel', label: 'Panels' },
-                  { value: 'app', label: 'Applications' },
+                  { value: 'all', label: t('plugins.browse.label.all', 'All') },
+                  { value: 'datasource', label: t('plugins.browse.label.data-sources', 'Data sources') },
+                  { value: 'panel', label: t('plugins.browse.label.panels', 'Panels') },
+                  { value: 'app', label: t('plugins.browse.label.applications', 'Applications') },
                 ]}
               />
             </Field>

@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/no-untranslated-strings */
 import { PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
 import { AppPluginConfig, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';

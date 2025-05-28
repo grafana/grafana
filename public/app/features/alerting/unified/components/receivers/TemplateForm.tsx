@@ -202,7 +202,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                 >
                   <Input
                     {...register('title', {
-                      required: { value: true, message: 'Required.' },
+                      required: { value: true, message: t('alerting.template-form.message.required', 'Required.') },
                       validate: { titleIsUnique },
                     })}
                     placeholder={t(

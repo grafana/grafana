@@ -51,10 +51,38 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   };
 
   const mappingTypes: Array<SelectableValue<MappingType>> = [
-    { label: 'Value', value: MappingType.ValueToText, description: 'Match a specific text value' },
-    { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
-    { label: 'Regex', value: MappingType.RegexToText, description: 'Match a regular expression with replacement' },
-    { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.value', 'Value'),
+      value: MappingType.ValueToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-specific-text-value',
+        'Match a specific text value'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.range', 'Range'),
+      value: MappingType.RangeToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-numerical-range-of-values',
+        'Match a numerical range of values'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.regex', 'Regex'),
+      value: MappingType.RegexToText,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-a-regular-expression-with-replacement',
+        'Match a regular expression with replacement'
+      ),
+    },
+    {
+      label: t('dimensions.value-mappings-editor-modal.mapping-types.label.special', 'Special'),
+      value: MappingType.SpecialValue,
+      description: t(
+        'dimensions.value-mappings-editor-modal.mapping-types.description.match-boolean-empty-values',
+        'Match on null, NaN, boolean and empty values'
+      ),
+    },
   ];
 
   const onAddValueMapping = (value: SelectableValue<MappingType>) => {

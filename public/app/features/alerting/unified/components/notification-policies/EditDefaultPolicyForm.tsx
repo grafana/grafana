@@ -70,7 +70,9 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
             )}
             control={control}
             name="receiver"
-            rules={{ required: { value: true, message: 'Required.' } }}
+            rules={{
+              required: { value: true, message: t('alerting.am-root-route-form.message.required', 'Required.') },
+            }}
           />
           <span>
             <Trans i18nKey="alerting.am-root-route-form.or">or</Trans>
