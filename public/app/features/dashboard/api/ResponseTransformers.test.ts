@@ -921,13 +921,13 @@ describe('ResponseTransformers', () => {
       expect(dashboard.links).toEqual(dashboardV2.spec.links);
       // variables
       validateVariablesV1ToV2(dashboardV2.spec.variables[0], dashboard.templating?.list?.[0]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[1], dashboard.templating?.list?.[1]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[2], dashboard.templating?.list?.[2]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[3], dashboard.templating?.list?.[3]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[4], dashboard.templating?.list?.[4]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[5], dashboard.templating?.list?.[5]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[6], dashboard.templating?.list?.[6]);
-      // validateVariablesV1ToV2(dashboardV2.spec.variables[7], dashboard.templating?.list?.[7]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[1], dashboard.templating?.list?.[1]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[2], dashboard.templating?.list?.[2]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[3], dashboard.templating?.list?.[3]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[4], dashboard.templating?.list?.[4]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[5], dashboard.templating?.list?.[5]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[6], dashboard.templating?.list?.[6]);
+      validateVariablesV1ToV2(dashboardV2.spec.variables[7], dashboard.templating?.list?.[7]);
       // annotations
       validateAnnotation(dashboard.annotations!.list![0], dashboardV2.spec.annotations[0]);
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
