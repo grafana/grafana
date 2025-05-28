@@ -84,7 +84,15 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	return r.commit(ctx, r.writer, message)
+	if err := r.commit(ctx, r.writer, message); err != nil {
+		return err
+	}
+
+	if r.opts.PushOnWrites {
+		return r.Push(ctx, repository.PushOptions{})
+	}
+
+	return nil
 }
 
 func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
@@ -94,10 +102,24 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 
 	// TODO: from writer check if path exists
 	if true {
-		return r.update(ctx, path, data, r.writer)
+		if err := r.create(ctx, path, data, r.writer); err != nil {
+			return err
+		}
 	} else {
-		return r.create(ctx, path, data, r.writer)
+		if err := r.update(ctx, path, data, r.writer); err != nil {
+			return err
+		}
 	}
+
+	if err := r.commit(ctx, r.writer, message); err != nil {
+		return err
+	}
+
+	if r.opts.PushOnWrites {
+		return r.Push(ctx, repository.PushOptions{})
+	}
+
+	return nil
 }
 
 func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) error {
@@ -113,7 +135,15 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	return r.commit(ctx, r.writer, message)
+	if err := r.commit(ctx, r.writer, message); err != nil {
+		return err
+	}
+
+	if r.opts.PushOnWrites {
+		return r.Push(ctx, repository.PushOptions{})
+	}
+
+	return nil
 }
 
 func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) error {
@@ -125,7 +155,15 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 		return err
 	}
 
-	return r.commit(ctx, r.writer, message)
+	if err := r.commit(ctx, r.writer, message); err != nil {
+		return err
+	}
+
+	if r.opts.PushOnWrites {
+		return r.Push(ctx, repository.PushOptions{})
+	}
+
+	return nil
 }
 
 func (r *stagedGitRepository) Push(ctx context.Context, opts repository.PushOptions) error {
@@ -141,6 +179,7 @@ func (r *stagedGitRepository) Push(ctx context.Context, opts repository.PushOpti
 		defer cancel()
 	}
 
+	// TODO: improve push to not do anything if everything was pushed already
 	return r.writer.Push(ctx)
 }
 
