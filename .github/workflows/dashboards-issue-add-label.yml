@@ -26,8 +26,8 @@ jobs:
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GH_APP_ID=grafana_pr_automation_app:app_id
+            GH_APP_PEM=grafana_pr_automation_app:app_pem
 
       - name: "Generate token"
         id: generate_token
