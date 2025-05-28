@@ -299,7 +299,7 @@ func (s *service) stopping(_ error) error {
 	if s.hasSubservices {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
 		if err != nil {
-			return fmt.Errorf("scheduler: failed to stop subservices: %w", err)
+			return fmt.Errorf("failed to stop subservices: %w", err)
 		}
 	}
 	return nil
