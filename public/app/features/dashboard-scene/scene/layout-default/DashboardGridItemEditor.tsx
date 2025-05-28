@@ -1,5 +1,4 @@
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
@@ -55,7 +54,6 @@ interface OptionComponentProps {
 
 function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
   const { repeatDirection } = gridItem.useState();
-  const { t } = useTranslate();
   const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
     { label: t('dashboard.default-layout.item-options.repeat.direction.horizontal', 'Horizontal'), value: 'h' },
     { label: t('dashboard.default-layout.item-options.repeat.direction.vertical', 'Vertical'), value: 'v' },
