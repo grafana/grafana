@@ -729,7 +729,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
   describe('constructor', () => {
     it('should initialize with SeriesApiClient when labels match API is not supported', () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       expect(provider).toBeInstanceOf(PrometheusLanguageProvider);
     });
 
@@ -738,7 +738,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => true,
       } as unknown as PrometheusDatasource;
-      const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI, true);
+      const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI);
       expect(provider).toBeInstanceOf(PrometheusLanguageProvider);
     });
   });
@@ -749,13 +749,13 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         ...defaultDatasource,
         lookupsDisabled: true,
       } as unknown as PrometheusDatasource;
-      const provider = new PrometheusLanguageProvider(datasourceWithLookupsDisabled, true);
+      const provider = new PrometheusLanguageProvider(datasourceWithLookupsDisabled);
       const result = await provider.start();
       expect(result).toEqual([]);
     });
 
-    it('should use resource client start when feature toggle is enabled', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+    it('should use resource client and metricsMetadata is available', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
 
       // Mock the resource client's start method
@@ -767,30 +767,13 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(resourceClientStartSpy).toHaveBeenCalled();
       expect(queryMetadataSpy).toHaveBeenCalled();
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
-    });
-
-    it('should use legacy API path when feature toggle is disabled', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, false);
-      const metrics = ['metric1', 'metric2'];
-
-      // Mock the legacy methods
-      const fetchLabelValuesSpy = jest.spyOn(provider, 'fetchLabelValues').mockResolvedValue(metrics);
-      const loadMetricsMetadataSpy = jest.spyOn(provider, 'loadMetricsMetadata').mockResolvedValue();
-      const fetchLabelsSpy = jest.spyOn(provider, 'fetchLabels').mockResolvedValue(['label1', 'label2']);
-
-      await provider.start();
-
-      expect(fetchLabelValuesSpy).toHaveBeenCalledWith(expect.any(Object), '__name__');
-      expect(loadMetricsMetadataSpy).toHaveBeenCalled();
-      expect(fetchLabelsSpy).toHaveBeenCalled();
-      expect(provider.metrics).toEqual(metrics);
-      expect(provider.histogramMetrics).toEqual(metrics);
+      expect(provider.metricsMetadata).toEqual(mockMetadata);
     });
   });
 
   describe('queryMetricsMetadata', () => {
     it('should fetch and store metadata', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
       const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
 
@@ -807,7 +790,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     const timeRange = getMockTimeRange();
 
     it('should delegate to resource client queryLabelKeys', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
         .spyOn(provider['_resourceClient'], 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
@@ -819,7 +802,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     });
 
     it('should delegate to resource client queryLabelValues', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
         .spyOn(provider['_resourceClient'], 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
@@ -833,7 +816,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
   describe('retrieveMethods', () => {
     it('should delegate to resource client for metrics and labels', () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
       const mockResourceClient = {
         histogramMetrics: ['histogram1', 'histogram2'],
         metrics: ['metric1', 'metric2'],
