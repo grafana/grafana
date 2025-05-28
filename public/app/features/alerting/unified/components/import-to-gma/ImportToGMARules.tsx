@@ -33,6 +33,8 @@ import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
+import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
+import { stringifyErrorLike } from '../../utils/misc';
 
 export interface ImportFormValues {
   importSource: 'datasource' | 'yaml';
@@ -268,6 +270,20 @@ function YamlFileUpload() {
           required: {
             value: true,
             message: t('alerting.import-to-gma.yaml.required-message', 'Please select a file'),
+          },
+          validate: async (value) => {
+            if (!value) {
+              return t('alerting.import-to-gma.yaml.required-message', 'Please select a file');
+            }
+            try {
+              const yamlContent = await value.text();
+              parseYamlToRulerRulesConfigDTO(yamlContent, value.name);
+              return true;
+            } catch (error) {
+              return t('alerting.import-to-gma.yaml-error', 'Failed to parse YAML file: {{error}}', {
+                error: stringifyErrorLike(error),
+              });
+            }
           },
         }}
       />

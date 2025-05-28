@@ -1274,9 +1274,6 @@
       "label-insights": "Insights",
       "title-alerting": "Alerting"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "The folder to import the rules to"
-    },
     "import-to-gma": {
       "action-button": "Import",
       "additional-settings": "Additional settings",
@@ -1284,7 +1281,7 @@
       "confirm-modal": {
         "confirm": "Import",
         "loading": "Loading...",
-        "loading-body": "Preparing data to be imported.This can take a while...",
+        "loading-body": "Preparing data to be imported. This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
@@ -1326,6 +1323,7 @@
       },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
+        "description": "The folder to import the rules to",
         "label": "Target folder"
       },
       "yaml": {
@@ -1333,8 +1331,10 @@
         "label": "Prometheus YAML file",
         "required-message": "Please select a file",
         "target-datasource": "Target data source",
-        "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source."
-      }
+        "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "target-datasource-required": "Please select a target data source"
+      },
+      "yaml-error": "Failed to parse YAML file: {{error}}"
     },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
@@ -1854,7 +1854,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
-      "label-target-data-source": "Target data source"
+      "label-target-data-source": "Target data source",
+      "target-data-source-required": "Please select a target data source"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",

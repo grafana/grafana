@@ -47,6 +47,7 @@ const AlertSomeRulesSkipped = () => {
 const emptyObject = {};
 
 export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: ModalProps) => {
+  const appNotification = useAppNotification();
   const styles = useStyles2(getStyles);
 
   const {
@@ -79,7 +80,11 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
       const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(await yamlFile.text(), yamlFile.name);
       return rulerConfigFromYAML;
     } catch (error) {
-      console.error('Error parsing YAML file:', error);
+      appNotification.error(
+        t('alerting.import-to-gma.yaml-error', 'Failed to parse YAML file: {{error}}', {
+          error: stringifyErrorLike(error),
+        })
+      );
       return emptyObject;
     }
   }, [importSource, yamlFile]);
