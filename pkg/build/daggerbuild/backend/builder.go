@@ -158,7 +158,7 @@ func Builder(
 
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
@@ -184,7 +184,7 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 	return withCue(golang.Container(d, platform, goVersion), src).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
-			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
+			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
 		WithDirectory("/src/pkg", src.Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
