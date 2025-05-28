@@ -21,7 +21,7 @@ keywords:
 
 ## Overview
 
-Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
+Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs regular health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
 
 {{< admonition type="note" >}}
 Currently, Grafana Advisor only performs health checks on data sources, plugins, and your SSO settings, but we're planning to expand its capabilities in future releases to cover more aspects of your Grafana environment.
