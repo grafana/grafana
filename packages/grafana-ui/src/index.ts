@@ -224,8 +224,56 @@ export { stylesFactory } from './themes/stylesFactory';
 export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
 export * as styleMixins from './themes/mixins';
 
-export * from './options';
-export * from './slate-plugins';
+export * as commonOptionsBuilder from './options/builder';
 
-// Moved to `@grafana/schema`, in Grafana 9, this will be removed
-export * from './schema';
+export { BracesPlugin } from './slate-plugins/braces';
+export { ClearPlugin } from './slate-plugins/clear';
+export { ClipboardPlugin } from './slate-plugins/clipboard';
+export { IndentationPlugin } from './slate-plugins/indentation';
+export { NewlinePlugin } from './slate-plugins/newline';
+export { RunnerPlugin } from './slate-plugins/runner';
+export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
+export { SlatePrism, type Token } from './slate-plugins/slate-prism';
+export { SuggestionsPlugin } from './slate-plugins/suggestions';
+
+// @deprecated import from @grafana/schema
+export {
+  // Styles that changed
+  GraphDrawStyle as DrawStyle,
+  // All exports
+  AxisPlacement,
+  VisibilityMode as PointVisibility,
+  LineInterpolation,
+  ScaleDistribution,
+  GraphGradientMode,
+  type LineStyle,
+  type PointsConfig,
+  type ScaleDistributionConfig,
+  type HideSeriesConfig,
+  BarAlignment,
+  VisibilityMode as BarValueVisibility,
+  ScaleOrientation,
+  ScaleDirection,
+  type LineConfig,
+  type BarConfig,
+  type FillConfig,
+  type AxisConfig,
+  type HideableFieldConfig,
+  StackingMode,
+  type StackingConfig,
+  type StackableFieldConfig,
+  GraphThresholdsStyleMode,
+  type GraphThresholdsStyleConfig,
+  type GraphFieldConfig,
+  type LegendPlacement,
+  LegendDisplayMode,
+  type VizLegendOptions,
+  type OptionsWithLegend,
+  TableCellDisplayMode,
+  type FieldTextAlignment,
+  type VizTextDisplayOptions,
+  type OptionsWithTextFormatting,
+  TooltipDisplayMode,
+  type VizTooltipOptions,
+  type OptionsWithTooltip,
+} from '@grafana/schema';
