@@ -27,8 +27,9 @@ The Get started with Grafana Alerting - Dynamic routing tutorial is a continuati
 
 In this tutorial you will learn how to:
 
-- link alerts to time-series panel
-- monitor alert activity from alert list viz
+- Link alert rules to time series panels for better visualization
+- View alert annotations directly on dashboards for better context and traceability
+- Monitor CPU and memory usage using Prometheus queries.
 
 <!-- INTERACTIVE page intro.md END -->
 <!-- INTERACTIVE page step1.md START -->
