@@ -8,7 +8,6 @@ interface StepStatusContextData {
 
   // Status setters
   setStepStatusInfo: (info: StepStatusInfo) => void;
-  setStepError: (error: string) => void;
 
   // Computed status checks
   hasStepError: boolean;
@@ -34,17 +33,9 @@ export const StepStatusProvider = ({ children, onStepStatusChange }: PropsWithCh
     [onStepStatusChange]
   );
 
-  const setStepError = useCallback(
-    (error: string) => {
-      setStepStatusInfo({ status: 'error', error });
-    },
-    [setStepStatusInfo]
-  );
-
   const value: StepStatusContextData = {
     stepStatusInfo,
     setStepStatusInfo,
-    setStepError,
     hasStepError: stepStatusInfo.status === 'error',
     isStepRunning: stepStatusInfo.status === 'running',
     isStepSuccess: stepStatusInfo.status === 'success',
