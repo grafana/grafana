@@ -1,17 +1,14 @@
 import { DataSourcePlugin } from '@grafana/data';
 import { initPluginTranslations } from '@grafana/i18n';
-import { SQLQuery, SqlQueryEditorLazy } from '@grafana/sql';
+import { SQLQuery, SqlQueryEditorLazy, loadResources } from '@grafana/sql';
 
 import { CheatSheet } from './CheatSheet';
 import { ConfigurationEditor } from './configuration/ConfigurationEditor';
 import { MssqlDatasource } from './datasource';
 import pluginJson from './plugin.json';
 import { MssqlOptions } from './types';
-import { initTranslations } from '@grafana/sql';
 
-await initPluginTranslations(pluginJson.id);
-
-await initTranslations(pluginJson.id);
+await initPluginTranslations(pluginJson.id, [loadResources]);
 
 export const plugin = new DataSourcePlugin<MssqlDatasource, SQLQuery, MssqlOptions>(MssqlDatasource)
   .setQueryEditor(SqlQueryEditorLazy)

@@ -23,5 +23,4 @@ export { createSelectClause, haveColumns } from './utils/sql.utils';
 export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';
 export { QueryEditorExpressionType } from './expressions';
-
-export { initTranslations } from './initTranslations';
+export { loadResources } from './loadResources';

@@ -6,12 +6,12 @@ import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
-import { TransProps, TransType } from './types';
+import { ResourceLoader, Resources, TransProps, TransType } from './types';
 
 let tFunc: TFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
-export async function initPluginTranslations(id: string) {
+export async function initPluginTranslations(id: string, loaders?: ResourceLoader[]) {
   // If the resources are not an object, we need to initialize the plugin translations
   if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
     await getI18nInstance().use(initReactI18next).init({
@@ -28,11 +28,20 @@ export async function initPluginTranslations(id: string) {
     setI18n(getI18nInstance());
   }
 
-  console.log('initPluginTranslations with namespace', id);
+  const language = getResolvedLanguage();
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
 
-  return { language: getI18nInstance().resolvedLanguage };
+  if (loaders?.length) {
+    await Promise.all(
+      loaders.map(async (loader) => {
+        const resources = await loader(language);
+        addResourceBundle(language, id, resources);
+      })
+    );
+  }
+
+  return { language };
 }
 
 export function getI18nInstance() {
@@ -104,7 +113,7 @@ async function initTranslations({
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 
   return {
-    language: getI18nInstance().resolvedLanguage,
+    language: getResolvedLanguage(),
   };
 }
 
@@ -133,12 +142,8 @@ export async function initializeI18n(
   return initTranslations({ language, ns, module });
 }
 
-type ResourceKey = string;
-type ResourceLanguage = Record<string, ResourceKey>;
-type ResourceType = Record<string, ResourceLanguage>;
-
-export function addResourceBundle(language: string, namespace: string, resource: ResourceType) {
-  getI18nInstance().addResourceBundle(language, namespace, resource, true, false);
+export function addResourceBundle(language: string, namespace: string, resources: Resources) {
+  getI18nInstance().addResourceBundle(language, namespace, resources, true, false);
 }
 
 export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {

@@ -60,4 +60,7 @@ declare function Trans(props: TransProps): React.ReactElement;
  */
 type TransType = typeof Trans;
 
-export type { UseTranslateHook, TransProps, TransType };
+interface Resources extends Record<string, string | Resources | unknown> {}
+type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
+
+export type { ResourceLoader, Resources, TransProps, TransType, UseTranslateHook };
