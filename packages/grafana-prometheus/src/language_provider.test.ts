@@ -783,6 +783,28 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(result).toEqual(mockMetadata);
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
     });
+
+    it('should handle undefined metadata response', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(undefined);
+
+      const result = await provider.queryMetricsMetadata();
+
+      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(result).toEqual({});
+      expect(provider.retrieveMetricsMetadata()).toEqual({});
+    });
+
+    it('should handle endpoint errors and set empty metadata', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockRejectedValue(new Error('Endpoint not found'));
+
+      const result = await provider.queryMetricsMetadata();
+
+      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(result).toEqual({});
+      expect(provider.retrieveMetricsMetadata()).toEqual({});
+    });
   });
 
   describe('queryLabelKeys and queryLabelValues', () => {

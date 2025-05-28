@@ -601,7 +601,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   };
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
-    this._metricsMetadata = (await this._queryMetadata()) ?? {};
+    try {
+      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+    } catch (error) {
+      this._metricsMetadata = {};
+    }
     return this._metricsMetadata;
   };
 
