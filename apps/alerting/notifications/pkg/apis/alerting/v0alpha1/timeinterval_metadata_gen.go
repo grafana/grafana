@@ -24,5 +24,8 @@ type TimeIntervalMetadata struct {
 
 // NewTimeIntervalMetadata creates a new TimeIntervalMetadata object.
 func NewTimeIntervalMetadata() *TimeIntervalMetadata {
-	return &TimeIntervalMetadata{}
+	return &TimeIntervalMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }
