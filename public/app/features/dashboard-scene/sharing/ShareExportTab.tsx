@@ -12,6 +12,7 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';
+import { ResponseTransformers, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
@@ -74,7 +75,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       exportMode,
     });
 
-    if (exportMode === ExportMode.Classic) {
+    if (exportMode === ExportMode.Classic || exportMode === ExportMode.V2TransformedToV1) {
       this.setState({
         isViewingYAML: false,
       });
@@ -112,7 +113,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
     const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
-    if (isDashboardV2Spec(origDashboard) && 'elements' in exportable && initialSaveModelVersion === 'v2') {
+    if (
+      isDashboardV2Spec(origDashboard) &&
+      'elements' in exportable &&
+      initialSaveModelVersion === 'v2' &&
+      exportMode !== ExportMode.V2TransformedToV1
+    ) {
       this.setState({
         exportMode: ExportMode.V2Resource,
       });
@@ -127,6 +133,30 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         },
         initialSaveModelVersion,
         hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
+      };
+    }
+
+    if (exportMode === ExportMode.V2TransformedToV1) {
+      const spec = transformSceneToSaveModelSchemaV2(scene);
+      // transform now to v1
+      const metadata = getMetadata(scene, Boolean(isSharingExternally));
+      const spec1 = transformDashboardV2SpecToV1(spec, {
+        name: metadata.name ?? '',
+        generation: metadata.generation ?? 0,
+        resourceVersion: metadata.resourceVersion ?? '0',
+        creationTimestamp: metadata.creationTimestamp ?? '',
+      });
+
+      const oldModel = new DashboardModel(spec1, undefined, {
+        getVariablesFromState: () => {
+          return getVariablesCompatibility(window.__grafanaSceneContext);
+        },
+      });
+      const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : spec1;
+      return {
+        json: exportableV1,
+        hasLibraryPanels: undefined,
+        initialSaveModelVersion,
       };
     }
 

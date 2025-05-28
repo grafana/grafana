@@ -12,6 +12,7 @@ export enum ExportMode {
   Classic = 'classic',
   V1Resource = 'v1-resource',
   V2Resource = 'v2-resource',
+  V2TransformedToV1 = 'v2-transformed-to-v1',
 }
 
 interface Props {
@@ -69,17 +70,34 @@ export function ResourceExport({
           </Stack>
         )}
         {exportMode !== ExportMode.Classic && (
-          <Stack gap={1} alignItems="center">
-            <Label>{switchExportFormatLabel}</Label>
-            <RadioButtonGroup
-              options={[
-                { label: 'JSON', value: 'json' },
-                { label: 'YAML', value: 'yaml' },
-              ]}
-              value={isViewingYAML ? 'yaml' : 'json'}
-              onChange={onViewYAML}
-            />
-          </Stack>
+          <>
+            <Stack alignItems="center">
+              <Label>{switchExportModeLabel}</Label>
+              <RadioButtonGroup
+                options={[
+                  { label: 'V2 Resource', value: ExportMode.V2Resource },
+                  {
+                    label: 'Transform V2 to Classic(V1)',
+                    value: ExportMode.V2TransformedToV1,
+                  },
+                ]}
+                value={exportMode}
+                onChange={(value) => onExportModeChange(value)}
+              />
+            </Stack>
+
+            <Stack gap={1} alignItems="center">
+              <Label>{switchExportFormatLabel}</Label>
+              <RadioButtonGroup
+                options={[
+                  { label: 'JSON', value: 'json' },
+                  { label: 'YAML', value: 'yaml' },
+                ]}
+                value={isViewingYAML ? 'yaml' : 'json'}
+                onChange={onViewYAML}
+              />
+            </Stack>
+          </>
         )}
         {(isV2Dashboard || exportMode === ExportMode.Classic) && (
           <Stack gap={1} alignItems="start">
