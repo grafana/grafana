@@ -27,6 +27,20 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 		return err
 	}
 
+	// Check if OpenFGA tables already exist before running migrations
+	// This prevents conflicts in test environments where multiple tests run concurrently
+	exists, err := engine.IsTableExist("store")
+	if err != nil {
+		logger.Warn("failed to check if OpenFGA tables exist", "error", err)
+	} else if exists {
+		logger.Debug("OpenFGA tables already exist, skipping migration")
+		// Close the engine and return early
+		if err := engine.Close(); err != nil {
+			logger.Warn("failed to close db engine", "error", err)
+		}
+		return nil
+	}
+
 	// Close the engine after Grafana migrations are complete
 	if err := engine.Close(); err != nil {
 		logger.Warn("failed to close db engine", "error", err)
