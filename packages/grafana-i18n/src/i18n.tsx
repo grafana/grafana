@@ -11,7 +11,8 @@ import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './t
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
-async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
+// exported for testing
+export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
     return;
   }
@@ -28,22 +29,34 @@ async function loadPluginResources(id: string, language: string, loaders?: Resou
   );
 }
 
-export async function initPluginTranslations(id: string, loaders?: ResourceLoader[]) {
+// exported for testing
+export async function initDefaultI18nInstance() {
   // If the resources are not an object, we need to initialize the plugin translations
-  if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
-    await getI18nInstance().use(initReactI18next).init({
-      resources: {},
-      returnEmptyString: false,
-      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
-    });
+  if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
+    return;
   }
 
+  await getI18nInstance().use(initReactI18next).init({
+    resources: {},
+    returnEmptyString: false,
+    lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+  });
+}
+
+export function initDefaultReactI18nInstance() {
   // If the initReactI18next is not set, we need to set them
-  if (!getI18n()?.options?.react) {
-    const options: ReactOptions = {};
-    setDefaults(options);
-    setI18n(getI18nInstance());
+  if (getI18n()?.options?.react) {
+    return;
   }
+
+  const options: ReactOptions = {};
+  setDefaults(options);
+  setI18n(getI18nInstance());
+}
+
+export async function initPluginTranslations(id: string, loaders?: ResourceLoader[]) {
+  await initDefaultI18nInstance();
+  initDefaultReactI18nInstance();
 
   const language = getResolvedLanguage();
   tFunc = getI18nInstance().getFixedT(null, id);
