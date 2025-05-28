@@ -6,7 +6,7 @@ import { filterRulerRulesConfig } from './ConfirmConvertModal';
 
 describe('filterRulerRulesConfig', () => {
   const mockRulesConfig: RulerRulesConfigDTO = {
-    'namespace1': [
+    namespace1: [
       {
         name: 'group1',
         rules: [
@@ -36,7 +36,7 @@ describe('filterRulerRulesConfig', () => {
         ],
       },
     ],
-    'namespace2': [
+    namespace2: [
       {
         name: 'group3',
         rules: [
@@ -53,7 +53,7 @@ describe('filterRulerRulesConfig', () => {
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig, 'namespace1');
 
     expect(filteredConfig).toEqual({
-      'namespace1': [
+      namespace1: [
         {
           name: 'group1',
           rules: [
@@ -84,7 +84,7 @@ describe('filterRulerRulesConfig', () => {
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig, 'namespace1', 'group1');
 
     expect(filteredConfig).toEqual({
-      'namespace1': [
+      namespace1: [
         {
           name: 'group1',
           rules: [
@@ -106,7 +106,7 @@ describe('filterRulerRulesConfig', () => {
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig);
 
     expect(filteredConfig).toEqual({
-      'namespace1': [
+      namespace1: [
         {
           name: 'group1',
           rules: [
@@ -129,7 +129,7 @@ describe('filterRulerRulesConfig', () => {
           ],
         },
       ],
-      'namespace2': [
+      namespace2: [
         {
           name: 'group3',
           rules: [
@@ -160,7 +160,7 @@ describe('filterRulerRulesConfig', () => {
 
   it('should handle empty groups', () => {
     const emptyGroupsConfig: RulerRulesConfigDTO = {
-      'namespace1': [],
+      namespace1: [],
     };
 
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(emptyGroupsConfig);
@@ -171,7 +171,7 @@ describe('filterRulerRulesConfig', () => {
 
   it('should handle empty rules array', () => {
     const emptyRulesConfig: RulerRulesConfigDTO = {
-      'namespace1': [
+      namespace1: [
         {
           name: 'group1',
           rules: [],

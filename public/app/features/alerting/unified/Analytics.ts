@@ -229,19 +229,11 @@ export const trackDeletedRuleRestoreFail = async () => {
   reportInteraction('grafana_alerting_deleted_rule_restore_error');
 };
 
-export const trackImportToGMASuccess = async (
-  payload: {
-    importSource: 'yaml' | 'datasource',
-  }
-) => {
+export const trackImportToGMASuccess = async (payload: { importSource: 'yaml' | 'datasource' }) => {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
-export const trackImportToGMAError = async (
-  payload: {
-    importSource: 'yaml' | 'datasource',
-  }
-) => {
+export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 
