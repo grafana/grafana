@@ -1,6 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
 import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
+jest.mock('./language_utils', () => ({
+  ...jest.requireActual('./language_utils'),
+  processHistogramMetrics: (metrics: string[]) => metrics,
+  getPrometheusTime: jest.requireActual('./language_utils').getPrometheusTime,
+  getRangeSnapInterval: jest.requireActual('./language_utils').getRangeSnapInterval,
+}));
+
 import { getCacheDurationInMinutes } from './caching';
 import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
@@ -704,5 +711,147 @@ describe('removeQuotesIfExist', () => {
     const input = '"12345"';
     const result = removeQuotesIfExist(input);
     expect(result).toBe('12345');
+  });
+});
+
+describe('PrometheusLanguageProvider with feature toggle', () => {
+  const defaultDatasource: PrometheusDatasource = {
+    metadataRequest: () => ({ data: { data: [] } }),
+    getTimeRangeParams: getTimeRangeParams,
+    interpolateString: (string: string) => string,
+    hasLabelsMatchAPISupport: () => false,
+    getDaysToCacheMetadata: () => 1,
+    getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
+    cacheLevel: PrometheusCacheLevel.None,
+    getIntervalVars: () => ({}),
+    getRangeScopedVars: () => ({}),
+  } as unknown as PrometheusDatasource;
+
+  describe('constructor', () => {
+    it('should initialize with SeriesApiClient when labels match API is not supported', () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      expect(provider).toBeInstanceOf(PrometheusLanguageProvider);
+    });
+
+    it('should initialize with LabelsApiClient when labels match API is supported', () => {
+      const datasourceWithLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+      } as unknown as PrometheusDatasource;
+      const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI, true);
+      expect(provider).toBeInstanceOf(PrometheusLanguageProvider);
+    });
+  });
+
+  describe('start', () => {
+    it('should not start when lookups are disabled', async () => {
+      const datasourceWithLookupsDisabled = {
+        ...defaultDatasource,
+        lookupsDisabled: true,
+      } as unknown as PrometheusDatasource;
+      const provider = new PrometheusLanguageProvider(datasourceWithLookupsDisabled, true);
+      const result = await provider.start();
+      expect(result).toEqual([]);
+    });
+
+    it('should use resource client start when feature toggle is enabled', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+      
+      // Mock the resource client's start method
+      const resourceClientStartSpy = jest.spyOn(provider['_resourceClient'], 'start');
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata')
+        .mockResolvedValue(mockMetadata);
+      
+      await provider.start();
+      
+      expect(resourceClientStartSpy).toHaveBeenCalled();
+      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
+    });
+
+    it('should use legacy API path when feature toggle is disabled', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, false);
+      const metrics = ['metric1', 'metric2'];
+      
+      // Mock the legacy methods
+      const fetchLabelValuesSpy = jest.spyOn(provider, 'fetchLabelValues')
+        .mockResolvedValue(metrics);
+      const loadMetricsMetadataSpy = jest.spyOn(provider, 'loadMetricsMetadata')
+        .mockResolvedValue();
+      const fetchLabelsSpy = jest.spyOn(provider, 'fetchLabels')
+        .mockResolvedValue(['label1', 'label2']);
+      
+      await provider.start();
+      
+      expect(fetchLabelValuesSpy).toHaveBeenCalledWith(expect.any(Object), '__name__');
+      expect(loadMetricsMetadataSpy).toHaveBeenCalled();
+      expect(fetchLabelsSpy).toHaveBeenCalled();
+      expect(provider.metrics).toEqual(metrics);
+      expect(provider.histogramMetrics).toEqual(metrics);
+    });
+  });
+
+  describe('queryMetricsMetadata', () => {
+    it('should fetch and store metadata', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata')
+        .mockResolvedValue(mockMetadata);
+
+      const result = await provider.queryMetricsMetadata();
+
+      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(result).toEqual(mockMetadata);
+      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
+      expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
+    });
+  });
+
+  describe('queryLabelKeys and queryLabelValues', () => {
+    const timeRange = getMockTimeRange();
+
+    it('should delegate to resource client queryLabelKeys', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const resourceClientSpy = jest.spyOn(provider['_resourceClient'], 'queryLabelKeys')
+        .mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, '{job="grafana"}', undefined);
+      expect(result).toEqual(['label1', 'label2']);
+    });
+
+    it('should delegate to resource client queryLabelValues', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const resourceClientSpy = jest.spyOn(provider['_resourceClient'], 'queryLabelValues')
+        .mockResolvedValue(['value1', 'value2']);
+
+      const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, 'job', '{job="grafana"}', undefined);
+      expect(result).toEqual(['value1', 'value2']);
+    });
+  });
+
+  describe('retrieveMethods', () => {
+    it('should delegate to resource client for metrics and labels', () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource, true);
+      const mockResourceClient = {
+        histogramMetrics: ['histogram1', 'histogram2'],
+        metrics: ['metric1', 'metric2'],
+        labelKeys: ['label1', 'label2'],
+      };
+      
+      // Mock the resource client properties
+      Object.defineProperty(provider, '_resourceClient', {
+        value: mockResourceClient,
+        writable: true,
+      });
+
+      expect(provider.retrieveHistogramMetrics()).toEqual(['histogram1', 'histogram2']);
+      expect(provider.retrieveMetrics()).toEqual(['metric1', 'metric2']);
+      expect(provider.retrieveLabelKeys()).toEqual(['label1', 'label2']);
+    });
   });
 });

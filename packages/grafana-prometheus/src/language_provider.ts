@@ -570,7 +570,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     }
 
     if (this.enableClientApi) {
-      return Promise.all([this._resourceClient.start(timeRange), this._queryMetadata()]);
+      return Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
     }
 
     this.metrics = (await this.fetchLabelValues(timeRange, '__name__')) || [];
