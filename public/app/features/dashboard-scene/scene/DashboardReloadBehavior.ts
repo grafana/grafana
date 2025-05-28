@@ -23,7 +23,7 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _timeRange: SceneTimeRangeLike | undefined;
   private _dashboardScene: DashboardScene | undefined;
-  private _initialState?: UrlQueryMap;
+  private _prevState?: UrlQueryMap;
 
   constructor(state: DashboardReloadBehaviorState) {
     super(state);
@@ -51,7 +51,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
       });
 
       // Record initial state, this will be missing scope names
-      this._initialState = this.getCurrentState();
+      this._prevState = this.getCurrentState();
 
       this._subs.add(this._timeRange.subscribeToState(() => this.reloadDashboard()));
     });
@@ -84,17 +84,19 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     const newState = this.getCurrentState();
-    const stateChanged = !isEqual(newState, this._initialState);
+    const stateChanged = !isEqual(newState, this._prevState);
 
     console.log(
       `DashboardReloadBehavior reloadDashboard stateChanged ${stateChanged ? 'true' : 'false'}`,
-      this._initialState,
+      this._prevState,
       newState
     );
 
     if (!stateChanged) {
       return;
     }
+
+    this._prevState = newState;
 
     // This is wrapped in setTimeout in order to allow variables and scopes to be set in the URL before actually reloading the dashboard
     setTimeout(() => {
