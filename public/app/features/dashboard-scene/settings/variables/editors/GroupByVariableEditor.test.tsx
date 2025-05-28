@@ -9,6 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
+import { getTagKeys } from 'app/plugins/datasource/influxdb/influxql_metadata_query';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -32,9 +33,11 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
+      getTagKeys: () => [],
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
+    getTagKeys: () => [],
   }),
 }));
 
@@ -44,8 +47,8 @@ describe('GroupByVariableEditor', () => {
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
     );
-    const infoText = renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText);
-    const allowCustomValueCheckbox = renderer.getByTestId(
+  
+    const allowCustomValueCheckbox = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
@@ -53,8 +56,6 @@ describe('GroupByVariableEditor', () => {
     expect(allowCustomValueCheckbox).toBeChecked();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
-    expect(infoText).toBeInTheDocument();
-    expect(infoText).toHaveTextContent('This data source does not support group by variable yet.');
   });
 
   it('should update the variable data source when data source picker is changed', async () => {
@@ -115,7 +116,7 @@ describe('GroupByVariableEditor', () => {
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[]) {
+async function setup(defaultOptions?: MetricFindValue[], datasourceSupported?: boolean) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',

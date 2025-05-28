@@ -23,7 +23,8 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     return await getDataSourceSrv().get(datasourceRef);
   }, [variable.state]);
 
-  const message = datasource?.getTagKeys
+  const supported = datasource?.getTagKeys !== undefined;
+  const message = supported
     ? 'Group by dimensions are applied automatically to all queries that target this data source'
     : 'This data source does not support group by variable yet.';
 
@@ -53,7 +54,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
       inline={inline}
-      datasourceSupported={datasource?.getTagKeys ? true : false}
+      datasourceSupported={supported}
     />
   );
 }
