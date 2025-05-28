@@ -10,12 +10,7 @@ import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import {
-  getDashboardsApiVersion,
-  isDashboardV2Resource,
-  isV1DashboardCommand,
-  isV2DashboardCommand,
-} from 'app/features/dashboard/api/utils';
+import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
@@ -427,18 +422,7 @@ export const browseDashboardsAPI = createApi({
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       queryFn: async ({ dashboardUID }, _api, _extraOptions) => {
-        // if (!['v1', 'v2'].includes(getDashboardsApiVersion())) {
-        //   return { data: undefined };
-        // }
-
-        // if (!('listDeletedDashboards' in api && 'restoreDashboard' in api)) {
-        //   return { data: undefined };
-        // }
-        const version = getDashboardsApiVersion();
-        if (version === 'legacy' || version === 'unified') {
-          return { data: undefined };
-        }
-        const api = getDashboardAPI(version);
+        const api = getDashboardAPI();
         const dashboards = await api.listDeletedDashboards({});
         const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
         if (dashboard) {

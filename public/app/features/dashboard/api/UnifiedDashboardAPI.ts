@@ -2,11 +2,11 @@ import { Dashboard } from '@grafana/schema/dist/esm/index';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { Resource } from '../../apiserver/types';
+import { Resource, ListOptions, ResourceList } from '../../apiserver/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
-import { isDashboardV2Resource, isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand } from './utils';
+import { isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
@@ -49,12 +49,26 @@ export class UnifiedDashboardAPI
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
   }
 
+  async listDeletedDashboards(
+    options: Omit<ListOptions, 'labelSelector'>
+  ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
+    try {
+      return await this.v1Client.listDeletedDashboards(options);
+    } catch (error) {
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+        return await this.v2Client.listDeletedDashboards(options);
+      }
+      throw error;
+    }
+  }
+
   async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
-    if (isDashboardV2Resource(dashboard)) {
-      // If the dashboard is in v2 format, we use the v2 client
+    if (isDashboardV2Spec(dashboard.spec)) {
+      // @ts-expect-error - TypeScript cannot narrow Resource<Union> types properly
       return await this.v2Client.restoreDashboard(dashboard);
     }
 
+    // @ts-expect-error - TypeScript cannot narrow Resource<Union> types properly
     return await this.v1Client.restoreDashboard(dashboard);
   }
 }
