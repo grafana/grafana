@@ -516,7 +516,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
 export interface PrometheusLanguageProviderInterface
   extends PrometheusBaseLanguageProvider,
     PrometheusLegacyLanguageProvider {
-  retrieveMetricsMetadata: () => PromMetricsMetadata | undefined;
+  retrieveMetricsMetadata: () => PromMetricsMetadata;
   retrieveHistogramMetrics: () => string[];
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
@@ -584,8 +584,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     return fixSummariesMetadata(metadata);
   };
 
-  public retrieveMetricsMetadata = (): PromMetricsMetadata | undefined => {
-    return this._metricsMetadata;
+  public retrieveMetricsMetadata = (): PromMetricsMetadata => {
+    return this._metricsMetadata ?? {};
   };
 
   public retrieveHistogramMetrics = (): string[] => {
@@ -601,7 +601,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   };
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
-    this._metricsMetadata = await this._queryMetadata();
+    this._metricsMetadata = (await this._queryMetadata()) ?? {};
     return this._metricsMetadata;
   };
 
