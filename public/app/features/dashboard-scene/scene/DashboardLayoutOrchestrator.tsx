@@ -102,7 +102,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _getDropTargetUnderMouse(evt: MouseEvent): DashboardDropTarget | null {
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
-    let cursorIsInSourceTarget = elementsUnderPoint.some(
+    const cursorIsInSourceTarget = elementsUnderPoint.some(
       (el) => el.getAttribute('data-dashboard-drop-target-key') === this._sourceDropTarget?.state.key
     );
 
