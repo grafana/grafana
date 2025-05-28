@@ -16,7 +16,7 @@ type pinnedVersionStep struct {
 }
 
 func (s *pinnedVersionStep) Title() string {
-	return "Pinned version"
+	return "Grafana version check"
 }
 
 func (s *pinnedVersionStep) Description() string {
