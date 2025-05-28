@@ -55,13 +55,9 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 }
 
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
-	migrations, err := getMigrations()
-	if err != nil {
-		return err
-	}
-
-	for _, mig := range migrations {
-		m.AddMigration(mig.name, mig.migration)
+	openfgaTables := []string{"tuple", "authorization_model", "store", "assertion", "changelog"}
+	for _, table := range openfgaTables {
+		m.AddMigration(fmt.Sprintf("Drop existing openfga table %s", table), migrator.NewDropTableMigration(table))
 	}
 
 	sec := cfg.Raw.Section("database")
@@ -74,24 +70,6 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 type migration struct {
 	name      string
 	migration migrator.Migration
-}
-
-func getMigrations() ([]migration, error) {
-	// create the drop migrations
-	data := `DROP TABLE IF EXISTS tuple;
-	DROP TABLE IF EXISTS authorization_model;
-	DROP TABLE IF EXISTS store;
-	DROP TABLE IF EXISTS assertion;
-	DROP TABLE IF EXISTS changelog;`
-
-	migrations := []migration{
-		{
-			name:      "zanzana_removal_grafana_migrations_to_openfga_migrations.sql",
-			migration: &rawMigration{stmts: []string{data}},
-		},
-	}
-
-	return migrations, nil
 }
 
 var _ migrator.CodeMigration = (*rawMigration)(nil)
