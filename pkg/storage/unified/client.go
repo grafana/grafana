@@ -176,7 +176,7 @@ func newClient(opts options.StorageOptions,
 			}
 
 			queue := scheduler.NewQueue(queueOptions)
-			if err := queue.AwaitRunning(ctx); err != nil {
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
 			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
