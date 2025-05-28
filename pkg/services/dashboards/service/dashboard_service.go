@@ -583,7 +583,6 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 	if err != nil {
 		return nil, err
 	}
-
 	if data == nil {
 		return nil, nil
 	}
@@ -625,7 +624,6 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 	if err != nil {
 		return nil, err
 	}
-
 	if data == nil {
 		return nil, nil
 	}

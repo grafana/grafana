@@ -246,8 +246,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
 		}
 
-		var dashes []*dashboards.Dashboard
+		// for plugin and orphaned dashboards, we will only return the manager kind alongside the regular search response
 		if query.ManagedBy == utils.ManagerKindPlugin || len(query.ManagerIdentityNotIn) > 0 {
+			var dashes []*dashboards.Dashboard
 			if query.ManagedBy == utils.ManagerKindPlugin {
 				dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
 					PluginID: query.ManagerIdentity,
@@ -273,6 +274,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			return list, nil
 		}
 
+		// for classic FP, we will return the regular search response alongside all the data in the dashboard_provisioning table
 		provisioningData := []*dashboards.DashboardProvisioningSearchResults{}
 		if query.ManagerIdentity == "" {
 			var data *dashboards.DashboardProvisioningSearchResults
