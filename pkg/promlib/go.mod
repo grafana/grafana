@@ -13,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	k8s.io/apimachinery v0.32.1
 )
 
@@ -90,8 +90,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/procfs v0.16.0 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
@@ -122,12 +123,12 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/tools v0.31.0 // indirect
+	golang.org/x/tools v0.33.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect
-	google.golang.org/grpc v1.72.0 // indirect
+	google.golang.org/grpc v1.72.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
