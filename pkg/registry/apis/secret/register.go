@@ -45,7 +45,7 @@ var (
 
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
-	secretService              *service.SecretService
+	secureValueService         *service.SecureValueService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	secretsOutboxQueue         contracts.OutboxQueue
@@ -58,7 +58,7 @@ type SecretAPIBuilder struct {
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	secretService *service.SecretService,
+	secureValueService *service.SecureValueService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
@@ -85,7 +85,7 @@ func NewSecretAPIBuilder(
 	}
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
-		secretService:              secretService,
+		secureValueService:         secureValueService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		secretsOutboxQueue:         secretsOutboxQueue,
@@ -104,7 +104,7 @@ func RegisterAPIService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
-	secretService *service.SecretService,
+	secureValueService *service.SecureValueService,
 	database contracts.Database,
 	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
@@ -132,7 +132,7 @@ func RegisterAPIService(
 	builder, err := NewSecretAPIBuilder(
 		tracer,
 		secureValueMetadataStorage,
-		secretService,
+		secureValueService,
 		keeperMetadataStorage,
 		outboxQueue,
 		database,
@@ -195,7 +195,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secretService, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
