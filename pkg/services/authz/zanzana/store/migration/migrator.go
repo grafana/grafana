@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/xorm"
-	"github.com/openfga/openfga/pkg/storage/migrate"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
 func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, logger log.Logger) error {
@@ -27,25 +26,6 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 		return err
 	}
 
-	// Check if OpenFGA tables already exist before running migrations
-	// This prevents conflicts in test environments where multiple tests run concurrently
-	exists, err := engine.IsTableExist("store")
-	if err != nil {
-		logger.Warn("failed to check if OpenFGA tables exist", "error", err)
-	} else if exists {
-		logger.Debug("OpenFGA tables already exist, skipping migration")
-		// Close the engine and return early
-		if err := engine.Close(); err != nil {
-			logger.Warn("failed to close db engine", "error", err)
-		}
-		return nil
-	}
-
-	// Close the engine after Grafana migrations are complete
-	if err := engine.Close(); err != nil {
-		logger.Warn("failed to close db engine", "error", err)
-	}
-
 	// running openfga migrations
 	switch dbType {
 	case migrator.SQLite:
@@ -56,13 +36,17 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfg)
 	}
 
-	migrationErr := migrate.RunMigrations(migrate.MigrationConfig{
+	migrationConfig := migrate.MigrationConfig{
 		URI:    connStr,
 		Engine: dbType,
-	})
-	if migrationErr != nil {
-		logger.Error("failed to run migrations", "error", migrationErr)
-		return fmt.Errorf("failed to run migrations: %w", migrationErr)
+	}
+
+	if err := migrate.RunMigrations(migrationConfig); err != nil {
+		return fmt.Errorf("failed to run openfga migrations: %w", err)
+	}
+
+	if err := engine.Close(); err != nil {
+		logger.Warn("failed to close db engine", "error", err)
 	}
 
 	return nil

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -50,15 +51,20 @@ func TestIntegrationServer(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	testDB, cfg := db.InitTestDBWithCfg(t)
+	// Create a test-specific config to avoid migration conflicts
+	cfg := setting.NewCfg()
+
+	// Use a test-specific database to avoid migration conflicts
+	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+
 	// Hack to skip these tests on mysql 5.7
-	if testDB.GetDialect().DriverName() == migrator.MySQL {
-		if supported, err := testDB.RecursiveQueriesAreSupported(); !supported || err != nil {
+	if testStore.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
 			t.Skip("skipping integration test")
 		}
 	}
 
-	srv := setup(t, testDB, cfg)
+	srv := setup(t, testStore, cfg)
 	t.Run("test check", func(t *testing.T) {
 		testCheck(t, srv)
 	})
