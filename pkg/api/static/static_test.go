@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -153,8 +153,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 	return contexthandler.ProvideService(
 		cfg,
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: "0", Type: claims.TypeAnonymous, SessionToken: &usertoken.UserToken{}}},
+		tracing.InitializeTracerForTest(),
 		featuremgmt.WithFeatures(),
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.AnonymousNamespaceID, SessionToken: &usertoken.UserToken{}}},
 	)
 }
 
