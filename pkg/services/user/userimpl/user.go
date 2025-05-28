@@ -32,6 +32,7 @@ type Service struct {
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
+	db           db.DB
 }
 
 func ProvideService(
@@ -50,6 +51,7 @@ func ProvideService(
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
+		db:           db,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -172,7 +174,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 	}
 
-	err = s.store.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
 			return err

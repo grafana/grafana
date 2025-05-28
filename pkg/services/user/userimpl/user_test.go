@@ -29,6 +29,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
+		db:           db.InitTestDB(t),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -292,6 +293,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 			teamService:  &teamtest.FakeService{},
 			tracer:       tracing.InitializeTracerForTest(),
 			cfg:          setting.NewCfg(),
+			db:           db.InitTestDB(t),
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "email",
@@ -384,8 +386,4 @@ func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 
 func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
-}
-
-func (f *FakeUserStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
 }
