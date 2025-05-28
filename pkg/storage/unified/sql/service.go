@@ -163,9 +163,6 @@ func ProvideUnifiedStorageGrpcService(
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
 			Registerer:       reg,
 		})
-		if err := services.StartAndAwaitRunning(context.Background(), queue); err != nil {
-			return nil, fmt.Errorf("failed to start qos queue: %w", err)
-		}
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
 			Logger:     log,
@@ -176,7 +173,7 @@ func ProvideUnifiedStorageGrpcService(
 
 		s.queue = queue
 		s.scheduler = scheduler
-		subservices = append(subservices, s.scheduler)
+		subservices = append(subservices, s.queue, s.scheduler)
 	}
 
 	if len(subservices) > 0 {
