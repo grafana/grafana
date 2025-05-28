@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 
-import { v1Tags, v2Tags } from './SearchTraceQLEditor/utils.test';
+import { v1Tags, v2Tags } from './SearchTraceQLEditor/mocks';
 import { TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import TempoLanguageProvider from './language_provider';

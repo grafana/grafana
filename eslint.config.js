@@ -130,6 +130,11 @@ module.exports = [
               importNames: ['Trans'],
               message: 'Please import from @grafana/i18n instead',
             },
+            {
+              regex: '\\.test$',
+              message:
+                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+            },
           ],
           paths: [
             {

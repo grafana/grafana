@@ -27,7 +27,7 @@ import { makeExplorePaneState } from '../state/utils';
 
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
-import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({

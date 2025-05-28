@@ -6,6 +6,8 @@ import { TimeRange } from '@grafana/data';
 
 import { configureStore } from '../../../store/configureStore';
 
+// TODO: rebase after https://github.com/grafana/grafana/pull/105711, as this is already fixed
+// eslint-disable-next-line no-restricted-imports
 import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
 

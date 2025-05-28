@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { createTheme } from '@grafana/data';
 
 import { defaultFilters } from '../../../useSearch';
-import { trace } from '../TracePageHeader.test';
+import { trace } from '../mocks';
 
 import NextPrevResult, { getStyles } from './NextPrevResult';
 
