@@ -4,37 +4,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
-type mockDataSourceInfoProvider struct{}
-
-func (m *mockDataSourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
-	return []schemaversion.DataSourceInfo{
-		{
-			Default:    true,
-			UID:        "default-ds",
-			Type:       "prometheus",
-			APIVersion: "v1",
-			Name:       "Default",
-			ID:         1,
-		},
-		{
-			Default:    false,
-			UID:        "other-ds",
-			Type:       "elasticsearch",
-			APIVersion: "v2",
-			Name:       "Elasticsearch",
-			ID:         2,
-		},
-	}
-}
-
 func TestV36(t *testing.T) {
-	// Create a mock DataSourceInfoProvider
-	mockDsProvider := &mockDataSourceInfoProvider{}
-
 	// Pass the mock provider to V36
-	migration := schemaversion.V36(mockDsProvider)
+	migration := schemaversion.V36(testutil.GetTestProvider())
 
 	tests := []migrationTestCase{
 		{
