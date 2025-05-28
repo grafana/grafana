@@ -3,6 +3,7 @@ package checkregistry
 import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -33,13 +34,14 @@ type Service struct {
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
 	GrafanaVersion        string
+	cfg                   *setting.Cfg
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, settings *setting.Cfg,
+	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg *setting.Cfg,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -52,7 +54,8 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		managedPlugins:        managedPlugins,
 		provisionedPlugins:    provisionedPlugins,
 		ssoSettingsSvc:        ssoSettingsSvc,
-		GrafanaVersion:        settings.BuildVersion,
+		GrafanaVersion:        cfg.BuildVersion,
+		cfg:                   cfg,
 	}
 }
 
@@ -73,6 +76,7 @@ func (s *Service) Checks() []checks.Check {
 			s.GrafanaVersion,
 		),
 		authchecks.New(s.ssoSettingsSvc),
+		configchecks.New(s.cfg),
 	}
 }
 
