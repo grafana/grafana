@@ -56,7 +56,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.EnableSharding = section.Key("enable_sharding").MustBool(false)
-	cfg.QOSEnabled = section.Key("qos_enable").MustBool(false)
+	cfg.QOSEnabled = section.Key("qos_enabled").MustBool(false)
 	cfg.QOSNumberWorker = section.Key("qos_num_worker").MustInt(4)
 	cfg.QOSMaxSizePerTenant = section.Key("qos_max_size_per_tenant").MustInt(100)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
