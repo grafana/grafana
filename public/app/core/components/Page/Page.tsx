@@ -122,10 +122,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
-      padding: theme.spacing(2),
-
+      padding: theme.spacing(1),
       [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(4),
+        padding: theme.spacing(4, 2, 2, 2),
       },
     }),
     canvasContent: css({
