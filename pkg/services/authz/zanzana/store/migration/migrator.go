@@ -72,7 +72,7 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 func constructPostgresConnStrForOpenFGA(grafanaDBCfg *sqlstore.DatabaseConfig) string {
 	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s/%s", grafanaDBCfg.User, grafanaDBCfg.Pwd, grafanaDBCfg.Host, grafanaDBCfg.Name)
 
-	sslParams := fmt.Sprintf("?sslmode=%s&sslcert=%s&sslkey=%s&sslrootcert=%s", grafanaDBCfg.SslMode, grafanaDBCfg.ClientCertPath, grafanaDBCfg.ClientKeyPath, grafanaDBCfg.CaCertPath)
+	sslParams := fmt.Sprintf("?sslmode=%s&sslcert=%s&sslkey=%s&sslrootcert=%s&lock_timeout=2s&statement_timeout=10s", grafanaDBCfg.SslMode, grafanaDBCfg.ClientCertPath, grafanaDBCfg.ClientKeyPath, grafanaDBCfg.CaCertPath)
 
 	return connectionStr + sslParams
 }
