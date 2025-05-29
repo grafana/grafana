@@ -2734,9 +2734,9 @@
       "use-refresh-token-label": "Use refresh token",
       "validate-hosted-domain-description": "If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the \"{{ allowedDomainsLabel }}\" list specified by the user.",
       "validate-hosted-domain-label": "Validate hosted domain",
-      "workload-identity-enabled": "{{ workloadIdentityLabel }} enabled",
-      "workload-identity-token-file": "{{ workloadIdentityLabel }} token file",
-      "workload-identity-token-file-required": "This field must be set when \"{{ workflowIdentityEnabledLabel }}\" is set."
+      "workload-identity-token-file-description": "The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to \"workload_identity\". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.",
+      "workload-identity-token-file-label": "{{ workloadIdentityLabel }} token file",
+      "workload-identity-token-file-required": "This field must be set when client authentication is set to \"Workload identity\"."
     },
     "provider-card": {
       "text-badge-enabled": "Enabled",

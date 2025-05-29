@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
-import { isSelectableValue } from './utils/guards';
+import { isSelectableValue, isSelectableValueArray } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
 type Section = Record<
@@ -370,14 +370,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       validation: {
         validate: (value, formValues) => {
-          if (formValues.clientAuthentication === 'workload_identity') {
+          let clientAuth = formValues.clientAuthentication;
+          if (isSelectableValue<string>(clientAuth)) {
+            clientAuth = clientAuth.value;
+          }
+          if (clientAuth === 'workload_identity') {
             return !!value;
           }
           return true;
         },
         message: t(
           'auth-config.fields.workload-identity-token-file-required',
-          'This field must be set when client authentication is set to "workload_identity".'
+          'This field must be set when client authentication is set to "Workload identity".'
         ),
       },
     },
@@ -487,7 +491,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return uuidValidate(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && uuidValidate(v.value));
                 }
                 return true;
@@ -831,7 +835,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return isNumeric(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && isNumeric(v.value));
                 }
                 return true;
