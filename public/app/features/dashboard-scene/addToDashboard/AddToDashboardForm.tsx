@@ -81,8 +81,6 @@ export function AddToDashboardForm<TOptions = undefined>({
   const onSubmit = (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
 
-    console.log('AddToDashboardForm');
-
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
     const panel = buildPanel(options);
 

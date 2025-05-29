@@ -63,8 +63,6 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       description: data.description,
     });
 
-    console.log('SaveDashboardAsForm');
-
     if (result.status === 'success') {
       dashboard.closeModal();
     } else {
