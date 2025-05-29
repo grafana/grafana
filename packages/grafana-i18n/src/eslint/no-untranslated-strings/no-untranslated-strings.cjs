@@ -12,7 +12,8 @@ const {
   canBeFixed,
   elementIsTrans,
   shouldBeFixed,
-  isStringNonAlphanumeric,
+  stringShouldBeTranslated,
+  nodeHasTransAncestor,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -34,6 +35,7 @@ const propertiesToCheck = [
   'description',
   'placeholder',
   'aria-label',
+  'ariaLabel',
   'title',
   'subTitle',
   'text',
@@ -123,18 +125,19 @@ const noUntranslatedStrings = createRule({
       },
 
       JSXAttribute(node) {
-        if (!propsToCheck.includes(String(node.name.name)) || !node.value) {
+        if (
+          !node.value ||
+          // We handle JSXExpressionContainer separately
+          node.value.type === AST_NODE_TYPES.JSXExpressionContainer ||
+          !propsToCheck.includes(String(node.name.name))
+        ) {
           return;
         }
 
         const nodeValue = getNodeValue(node);
-        const isAlphaNumeric = !isStringNonAlphanumeric(nodeValue);
-        const isTemplateLiteral =
-          node.value.type === AST_NODE_TYPES.JSXExpressionContainer && node.value.expression.type === 'TemplateLiteral';
+        const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
 
-        const isUntranslatedProp = (nodeValue.trim() && isAlphaNumeric) || isTemplateLiteral;
-
-        if (isUntranslatedProp) {
+        if (shouldBeTranslated) {
           const errorShouldBeFixed = shouldBeFixed(context);
           const errorCanBeFixed = canBeFixed(node, context);
           return context.report({
@@ -153,48 +156,94 @@ const noUntranslatedStrings = createRule({
         }
       },
       JSXExpressionContainer(node) {
-        const parent = node.parent;
-        const parentType = parent.type;
+        const { parent, expression } = node;
+        const { type: parentType } = parent;
 
-        const isNotInAttributeOrElement =
-          parentType !== AST_NODE_TYPES.JSXAttribute && parentType !== AST_NODE_TYPES.JSXElement;
-        const isUnsupportedAttribute =
-          parentType === AST_NODE_TYPES.JSXAttribute && !propsToCheck.includes(String(parent.name.name));
+        const isInAttribute = parentType === AST_NODE_TYPES.JSXAttribute;
+        const isInElement = parentType === AST_NODE_TYPES.JSXElement;
+        const isUnsupportedAttribute = isInAttribute && !propsToCheck.includes(String(parent.name.name));
 
-        if (isNotInAttributeOrElement || isUnsupportedAttribute) {
+        if (isUnsupportedAttribute || (!isInAttribute && !isInElement)) {
           return;
         }
 
-        const { expression } = node;
+        const isConditional = expression.type === AST_NODE_TYPES.ConditionalExpression;
+        const isLogical = expression.type === AST_NODE_TYPES.LogicalExpression;
+        const isTemplateLiteral = expression.type === AST_NODE_TYPES.TemplateLiteral;
+        const isStringLiteral = expression.type === AST_NODE_TYPES.Literal && typeof expression.value === 'string';
+
+        if (!isConditional && !isLogical && !isTemplateLiteral && !isStringLiteral) {
+          return;
+        }
+
+        const hasTransAncestor = nodeHasTransAncestor(node, context);
+
+        const messageId =
+          parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
 
         /**
          * @param {Node} expr
          */
         const isExpressionUntranslated = (expr) => {
-          return expr.type === AST_NODE_TYPES.Literal && typeof expr.value === 'string' && Boolean(expr.value);
+          return (
+            (expr.type === AST_NODE_TYPES.Literal &&
+              typeof expr.value === 'string' &&
+              stringShouldBeTranslated(expr.value)) ||
+            expr.type === AST_NODE_TYPES.TemplateLiteral
+          );
         };
 
-        if (expression.type === AST_NODE_TYPES.ConditionalExpression) {
-          const alternateIsString = isExpressionUntranslated(expression.alternate);
-          const consequentIsString = isExpressionUntranslated(expression.consequent);
-          const untranslatedExpressions = [
-            alternateIsString ? expression.alternate : undefined,
-            consequentIsString ? expression.consequent : undefined,
-          ].filter((node) => !!node);
+        const untranslatedExpressions = [
+          isConditional && expression.alternate,
+          isConditional && expression.consequent,
+          isLogical && expression.left,
+          isLogical && expression.right,
+        ]
+          .filter((node) => !!node)
+          .filter(isExpressionUntranslated);
 
-          if (untranslatedExpressions.length) {
-            const messageId =
-              parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
-
-            untranslatedExpressions.forEach((nodeToReport) => {
-              context.report({
-                node: nodeToReport,
-                messageId,
-              });
+        if (untranslatedExpressions.length && !hasTransAncestor) {
+          untranslatedExpressions.forEach((untranslatedNode) => {
+            const errorCanBeFixed = canBeFixed(untranslatedNode, context);
+            const errorShouldBeFixed = shouldBeFixed(context);
+            context.report({
+              node: untranslatedNode,
+              messageId,
+              fix: errorCanBeFixed && errorShouldBeFixed ? getTFixers(untranslatedNode, context) : undefined,
+              suggest: errorCanBeFixed
+                ? [
+                    {
+                      messageId: 'wrapWithT',
+                      fix: getTFixers(untranslatedNode, context),
+                    },
+                  ]
+                : undefined,
             });
-          }
+          });
+        }
+
+        const nodeValue = getNodeValue(node);
+        const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
+        if (!isTemplateLiteral && (!nodeValue || !shouldBeTranslated)) {
+          return;
+        }
+        if (isTemplateLiteral || (shouldBeTranslated && !hasTransAncestor)) {
+          const errorCanBeFixed = canBeFixed(node, context);
+          context.report({
+            node,
+            messageId: 'noUntranslatedStrings',
+            suggest: errorCanBeFixed
+              ? [
+                  {
+                    messageId: 'wrapWithT',
+                    fix: getTFixers(node.expression, context),
+                  },
+                ]
+              : undefined,
+          });
         }
       },
+
       /**
        * @param {JSXElement|JSXFragment} node
        */
@@ -204,7 +253,8 @@ const noUntranslatedStrings = createRule({
         const untranslatedTextNodes = children.filter((child) => {
           if (child.type === AST_NODE_TYPES.JSXText) {
             const nodeValue = child.value.trim();
-            if (!nodeValue || isStringNonAlphanumeric(nodeValue)) {
+            const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
+            if (!nodeValue || !shouldBeTranslated) {
               return false;
             }
             const ancestors = context.sourceCode.getAncestors(node);
@@ -225,8 +275,8 @@ const noUntranslatedStrings = createRule({
         // as we'd end up doing it twice. This makes it awkward for us to auto fix
         const parentHasText = parentHasChildren
           ? parent.children.some((child) => {
-              const childValue = getNodeValue(child).trim();
-              return child.type === AST_NODE_TYPES.JSXText && childValue && !isStringNonAlphanumeric(childValue);
+              const childValue = getNodeValue(child);
+              return child.type === AST_NODE_TYPES.JSXText && stringShouldBeTranslated(childValue);
             })
           : false;
 
@@ -259,7 +309,7 @@ const noUntranslatedStrings = createRule({
       description: 'Check untranslated strings',
     },
     messages: {
-      noUntranslatedStrings: 'No untranslated strings. Wrap text with <Trans />',
+      noUntranslatedStrings: 'No untranslated strings. Wrap text with <Trans /> or use t()',
       noUntranslatedStringsProp: `No untranslated strings in text props. Wrap text with <Trans /> or use t()`,
       noUntranslatedStringsProperties: `No untranslated strings in object properties. Wrap text with t()`,
       wrapWithTrans: 'Wrap text with <Trans /> for manual key assignment',
