@@ -169,9 +169,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		fmt.Println("Initializing doc builders for ", s.cfg.InstanceID)
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
-		fmt.Println("done Initializing doc builders for ", s.cfg.InstanceID, err)
 		if err != nil {
 			return nil, err
 		}

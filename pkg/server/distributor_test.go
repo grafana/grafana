@@ -61,12 +61,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	baselineServer := createBaselineServer(t, dbType, db.ConnStr, testNamespaces)
 
-	var (
-		mu       sync.Mutex
-		runErrs  []error
-		stopErrs []error
-	)
-
+	runErrs := make(map[string]error)
 	testServers := make([]testModuleServer, 0, 2)
 	distributorServer := initDistributorServerForTest(t)
 
@@ -77,36 +72,34 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	go func() {
 		if err := distributorServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-			mu.Lock()
-			runErrs = append(runErrs, err)
-			mu.Unlock()
+			runErrs[distributorServer.id] = err
 		}
 	}()
 
 	require.Eventually(t, func() bool {
+		if _, ok := runErrs[distributorServer.id]; ok {
+			// so we can fail the test immediately
+			return true
+		}
 		res, err := distributorServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
 			return false
 		}
 		return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
 	}, 20*time.Second, 2*time.Second)
+	require.NoError(t, runErrs[distributorServer.id], "failed to start distributor")
 
 	for _, testServer := range testServers {
-		fmt.Println("Starting ", testServer.id)
 		go func(s testModuleServer) {
 			if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-				mu.Lock()
-				runErrs = append(runErrs, err)
-				mu.Unlock()
+				runErrs[testServer.id] = err
 			}
 		}(testServer)
 
 		require.Eventually(t, func() bool {
-			// TODO improve this
-			if len(runErrs) > 0 {
-				for _, err := range runErrs {
-					fmt.Println("err running server: ", err)
-				}
+			if _, ok := runErrs[testServer.id]; ok {
+				// so we can fail the test immediately
+				return true
 			}
 			res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 			if err != nil {
@@ -114,6 +107,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			}
 			return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
 		}, 20*time.Second, 2*time.Second, "server failed to start up or is too slow: "+testServer.id)
+		require.NoError(t, runErrs[testServer.id], "failed to start server "+testServer.id)
 	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
@@ -276,6 +270,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	})
 
+	stopErrs := make(map[string]error)
 	stopServers := func(done chan error) {
 		var wg sync.WaitGroup
 		for _, testServer := range testServers {
@@ -285,9 +280,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
-					mu.Lock()
-					stopErrs = append(stopErrs, err)
-					mu.Unlock()
+					stopErrs[testServer.id] = err
 				}
 			}(testServer)
 		}
@@ -296,9 +289,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := distributorServer.server.Shutdown(ctx, "tests are done"); err != nil {
-			mu.Lock()
-			stopErrs = append(stopErrs, err)
-			mu.Unlock()
+			stopErrs[distributorServer.id] = err
 		}
 		done <- nil
 	}
@@ -311,16 +302,12 @@ func TestIntegrationDistributor(t *testing.T) {
 		t.Fatal("timeout waiting for servers to shutdown")
 	}
 
-	for _, runErr := range runErrs {
-		if runErr != nil {
-			t.Fatalf("unexpected run error from module server: %v", runErr)
-		}
+	for server, runErr := range runErrs {
+		t.Fatalf("unexpected run error from module server %s: %v", server, runErr)
 	}
 
-	for _, stopErr := range stopErrs {
-		if stopErr != nil {
-			t.Fatalf("unexpected stop error from module server: %v", stopErr)
-		}
+	for server, stopErr := range stopErrs {
+		t.Fatalf("unexpected stop error from module server %s: %v", server, stopErr)
 	}
 }
 
@@ -336,8 +323,6 @@ func initDistributorServerForTest(t *testing.T) testModuleServer {
 	cfg.HTTPPort = "13000"
 	cfg.GRPCServer.Network = "tcp"
 	cfg.GRPCServer.Address = "127.0.0.1:20000"
-	// cfg.GRPCServer.Network = "unix"
-	// cfg.GRPCServer.Address = socket
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
 	cfg.MemberlistJoinMember = "127.0.0.1:17946"
