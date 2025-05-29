@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { trimFileName } from '../../utils/file';
 import { t, Trans } from '../../utils/i18n';
 import { Button } from '../Button';

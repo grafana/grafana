@@ -7,7 +7,7 @@ import { FormEvent, useCallback, useRef, useState } from 'react';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';

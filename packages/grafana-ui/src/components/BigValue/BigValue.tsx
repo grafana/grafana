@@ -5,7 +5,7 @@ import * as React from 'react';
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
 import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 import { clearButtonStyles } from '../Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 

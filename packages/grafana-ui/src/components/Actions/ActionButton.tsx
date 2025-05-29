@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { ActionModel, Field, ActionVariableInput } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { Button, ButtonProps } from '../Button';
 import { ConfirmModal } from '../ConfirmModal/ConfirmModal';

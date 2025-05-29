@@ -5,7 +5,7 @@ import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzo
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';

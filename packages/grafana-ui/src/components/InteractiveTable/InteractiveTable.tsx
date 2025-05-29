@@ -15,7 +15,7 @@ import {
 
 import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
 import { PopoverContent, Tooltip } from '../Tooltip';
