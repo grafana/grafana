@@ -3,6 +3,19 @@
  *
  * @packageDocumentation
  */
+
+import { FormField } from './components/FormField/FormField';
+import { Input, LegacyInputStatus } from './components/Forms/Legacy/Input/Input';
+import { IndicatorsContainer } from './components/Forms/Legacy/Select/IndicatorsContainer';
+import { NoOptionsMessage } from './components/Forms/Legacy/Select/NoOptionsMessage';
+import { AsyncSelect, Select } from './components/Forms/Legacy/Select/Select';
+import { Switch } from './components/Forms/Legacy/Switch/Switch';
+import { SecretFormField } from './components/SecretFormField/SecretFormField';
+import * as commonOptionsBuilder from './options/builder';
+import * as styleMixins from './themes/mixins';
+import * as DOMUtil from './utils/dom';
+import * as ReactUtils from './utils/reactUtils';
+
 export { Icon } from './components/Icon/Icon';
 export { IconButton, type IconButtonVariant } from './components/IconButton/IconButton';
 export { ConfirmButton } from './components/ConfirmButton/ConfirmButton';
@@ -63,6 +76,7 @@ export { Pagination } from './components/Pagination/Pagination';
 export { Tag, type OnTagClick } from './components/Tags/Tag';
 export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
+
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
@@ -76,12 +90,16 @@ export {
   CodeEditorSuggestionItemKind,
 } from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';
+
+// TODO: namespace
 export { Modal, type Props as ModalProps } from './components/Modal/Modal';
 export { ModalHeader } from './components/Modal/ModalHeader';
 export { ModalTabsHeader } from './components/Modal/ModalTabsHeader';
 export { ModalTabContent } from './components/Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController, ModalsContext } from './components/Modal/ModalsContext';
 export { PageToolbar } from './components/PageLayout/PageToolbar';
+
+// Renderless
 export { SetInterval } from './components/SetInterval/SetInterval';
 export { Table } from './components/Table/Table';
 export { TableCellInspector, TableCellInspectorMode } from './components/Table/TableCellInspector';
@@ -100,6 +118,7 @@ export {
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
 } from './components/Table/types';
+
 export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
@@ -107,6 +126,8 @@ export { VerticalTab } from './components/Tabs/VerticalTab';
 export { TabContent } from './components/Tabs/TabContent';
 export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
+
+// Visualizations
 export {
   BigValue,
   BigValueColorMode,
@@ -115,6 +136,7 @@ export {
   BigValueTextMode,
 } from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
+
 export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
@@ -147,14 +169,203 @@ export {
 export { type VizLegendItem, SeriesVisibilityChangeBehavior } from './components/VizLegend/types';
 export { VizLegend } from './components/VizLegend/VizLegend';
 export { VizLegendListItem } from './components/VizLegend/VizLegendListItem';
+
 export { Alert, type AlertVariant } from './components/Alert/Alert';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './components/Collapse/Collapse';
 export { CollapsableSection } from './components/Collapse/CollapsableSection';
 export { DataLinkButton } from './components/DataLinks/DataLinkButton';
 export { FieldLinkList } from './components/DataLinks/FieldLinkList';
+// Panel editors
 export { FullWidthButtonContainer } from './components/Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './components/ClickOutsideWrapper/ClickOutsideWrapper';
+export * from './components/SingleStatShared/index';
+export { CallToActionCard } from './components/CallToActionCard/CallToActionCard';
+export { ContextMenu, type ContextMenuProps } from './components/ContextMenu/ContextMenu';
+export { Menu, type MenuProps } from './components/Menu/Menu';
+export { MenuGroup, type MenuItemsGroup, type MenuGroupProps } from './components/Menu/MenuGroup';
+export { MenuItem, type MenuItemProps } from './components/Menu/MenuItem';
+export { WithContextMenu } from './components/ContextMenu/WithContextMenu';
+export { DataLinksInlineEditor } from './components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
+export {
+  DataLinksInlineEditorBase,
+  type DataLinksInlineEditorBaseProps,
+} from './components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
+export { DataLinkInput } from './components/DataLinks/DataLinkInput';
+export {
+  DataLinksContextMenu,
+  type DataLinksContextMenuProps,
+  type DataLinksContextMenuApi,
+} from './components/DataLinks/DataLinksContextMenu';
+export { SeriesIcon } from './components/VizLegend/SeriesIcon';
+export { InfoBox } from './components/InfoBox/InfoBox';
+export { FeatureInfoBox } from './components/InfoBox/FeatureInfoBox';
+export { FeatureBadge } from './components/FeatureBadge/FeatureBadge';
+
+export { JSONFormatter } from './components/JSONFormatter/JSONFormatter';
+export { JsonExplorer } from './components/JSONFormatter/json_explorer/json_explorer';
+export {
+  ErrorBoundary,
+  ErrorBoundaryAlert,
+  type ErrorBoundaryAlertProps,
+  withErrorBoundary,
+} from './components/ErrorBoundary/ErrorBoundary';
+export { ErrorWithStack } from './components/ErrorBoundary/ErrorWithStack';
+export { DataSourceHttpSettings } from './components/DataSourceSettings/DataSourceHttpSettings';
+export { CustomHeadersSettings } from './components/DataSourceSettings/CustomHeadersSettings';
+export { AlertingSettings } from './components/DataSourceSettings/AlertingSettings';
+export { SecureSocksProxySettings } from './components/DataSourceSettings/SecureSocksProxySettings';
+export { TLSAuthSettings } from './components/DataSourceSettings/TLSAuthSettings';
+export { CertificationKey } from './components/DataSourceSettings/CertificationKey';
+export { Spinner } from './components/Spinner/Spinner';
+export { FadeTransition } from './components/transitions/FadeTransition';
+export { SlideOutTransition } from './components/transitions/SlideOutTransition';
+export { Segment, SegmentAsync, SegmentInput, SegmentSelect, SegmentSection } from './components/Segment/';
+export { Drawer } from './components/Drawer/Drawer';
+export { Slider } from './components/Slider/Slider';
+export { RangeSlider } from './components/Slider/RangeSlider';
+
+// Next-gen forms
+export { Form } from './components/Forms/Form';
+export { sharedInputStyle } from './components/Forms/commonStyles';
+export { InputControl } from './components/InputControl';
+export {
+  Button,
+  LinkButton,
+  type ButtonVariant,
+  ButtonGroup,
+  type ButtonProps,
+  clearButtonStyles,
+} from './components/Button';
+export { ToolbarButton, ToolbarButtonRow } from './components/ToolbarButton';
+export { ValuePicker } from './components/ValuePicker/ValuePicker';
+export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export { Link } from './components/Link/Link';
+export { TextLink } from './components/Link/TextLink';
+export { Text } from './components/Text/Text';
+export { Box } from './components/Layout/Box/Box';
+export { Stack } from './components/Layout/Stack/Stack';
+export { Grid } from './components/Layout/Grid/Grid';
+export { Space } from './components/Layout/Space';
+export { ScrollContainer } from './components/ScrollContainer/ScrollContainer';
+
+export { Label } from './components/Forms/Label';
+export { Field, type FieldProps } from './components/Forms/Field';
+export { Legend } from './components/Forms/Legend';
+export { FieldSet } from './components/Forms/FieldSet';
+export { FieldValidationMessage } from './components/Forms/FieldValidationMessage';
+export { InlineField } from './components/Forms/InlineField';
+export { InlineSegmentGroup } from './components/Forms/InlineSegmentGroup';
+export { InlineLabel } from './components/Forms/InlineLabel';
+export { InlineFieldRow } from './components/Forms/InlineFieldRow';
+export { FieldArray } from './components/Forms/FieldArray';
+
+// Select
+// Note - Select is nearly deprecated in favor of Combobox
+export { default as resetSelectStyles } from './components/Select/resetSelectStyles';
+export * from './components/Select/Select';
+export { SelectMenuOptions } from './components/Select/SelectMenu';
+export { getSelectStyles } from './components/Select/getSelectStyles';
+export * from './components/Select/types';
+
+export { Combobox } from './components/Combobox/Combobox';
+export { MultiCombobox } from './components/Combobox/MultiCombobox';
+export { type ComboboxOption } from './components/Combobox/types';
+
+export { HorizontalGroup, VerticalGroup, Container } from './components/Layout/Layout';
+export { Badge, type BadgeColor, type BadgeProps } from './components/Badge/Badge';
+export { RadioButtonGroup } from './components/Forms/RadioButtonGroup/RadioButtonGroup';
+export { RadioButtonDot } from './components/Forms/RadioButtonList/RadioButtonDot';
+export { RadioButtonList } from './components/Forms/RadioButtonList/RadioButtonList';
+
+export { Input, getInputStyles } from './components/Input/Input';
+export { AutoSizeInput } from './components/Input/AutoSizeInput';
+export { FilterInput } from './components/FilterInput/FilterInput';
+export type { FormInputSize } from './components/Forms/types';
+export * from './components/SecretInput';
+export * from './components/SecretTextArea';
+
+export { Switch, InlineSwitch } from './components/Switch/Switch';
+export { Checkbox } from './components/Forms/Checkbox';
+
+export { TextArea } from './components/TextArea/TextArea';
+export { FileUpload } from './components/FileUpload/FileUpload';
+export * from './components/FileDropzone';
+export { TimeRangeInput } from './components/DateTimePickers/TimeRangeInput';
+export { RelativeTimeRangePicker } from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
+export { Card, type Props as CardProps, getCardStyles } from './components/Card/Card';
+export { CardContainer, type CardContainerProps } from './components/Card/CardContainer';
+export { FormattedValueDisplay } from './components/FormattedValueDisplay/FormattedValueDisplay';
+export { ButtonSelect } from './components/Dropdown/ButtonSelect';
+export { Dropdown } from './components/Dropdown/Dropdown';
+export {
+  PluginSignatureBadge,
+  type PluginSignatureBadgeProps,
+} from './components/PluginSignatureBadge/PluginSignatureBadge';
+export { UserIcon, type UserIconProps } from './components/UsersIndicator/UserIcon';
+export { UsersIndicator, type UsersIndicatorProps } from './components/UsersIndicator/UsersIndicator';
+export { type UserView } from './components/UsersIndicator/types';
+export { Avatar } from './components/UsersIndicator/Avatar';
+// Export this until we've figured out a good approach to inline form styles.
+export { InlineFormLabel } from './components/FormLabel/FormLabel';
+export { Divider } from './components/Divider/Divider';
+export { getDragStyles, type DragHandlePosition } from './components/DragHandle/DragHandle';
+export { useSplitter } from './components/Splitter/useSplitter';
+
+/** @deprecated Please use non-legacy versions of these components */
+const LegacyForms = {
+  SecretFormField,
+  FormField,
+  Select,
+  AsyncSelect,
+  IndicatorsContainer,
+  NoOptionsMessage,
+  Input,
+  Switch,
+};
+export { LegacyForms, LegacyInputStatus };
+
+// WIP, need renames and exports cleanup
+export { graphFieldOptions } from './components/uPlot/config';
+export { UPlotConfigBuilder } from './components/uPlot/config/UPlotConfigBuilder';
+export { UPLOT_AXIS_FONT_SIZE } from './components/uPlot/config/UPlotAxisBuilder';
+export { UPlotChart } from './components/uPlot/Plot';
+export { PlotLegend } from './components/uPlot/PlotLegend';
+export * from './components/uPlot/geometries';
+export * from './components/uPlot/plugins';
+export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './components/uPlot/types';
+export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBuilder';
+export * from './components/PanelChrome/types';
+export { Label as BrowserLabel } from './components/BrowserLabel/Label';
+export { PanelContainer } from './components/PanelContainer/PanelContainer';
+
+// -----------------------------------------------------
+// Graveyard: exported, but no longer used internally
+// These will be removed in the future
+// -----------------------------------------------------
+
+export { Graph } from './graveyard/Graph/Graph';
+export { GraphWithLegend } from './graveyard/Graph/GraphWithLegend';
+export { GraphContextMenu, GraphContextMenuHeader } from './graveyard/Graph/GraphContextMenu';
+export { graphTimeFormat, graphTickFormatter } from './graveyard/Graph/utils';
+export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
+
+export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
+export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from './graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from './graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from './graveyard/GraphNG/types';
+
+export { ZoomPlugin } from './graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from './graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+  type ElementSelectionContextItem,
+  type ElementSelectionOnSelectOptions,
+  type UseElementSelectionResult,
+} from './components/ElementSelectionContext/ElementSelectionContext';
 
 export type { Themeable, Themeable2 } from './types/theme';
 export type { ValidationRule, ValidationEvents } from './types/input';
@@ -175,9 +386,6 @@ export type { ActionMeta } from './types/select';
 export type { ComponentSize } from './types/size';
 export type { Column } from './types/interactiveTable';
 export type { CellProps, SortByFn } from 'react-table';
-
-import * as DOMUtil from './utils/dom';
-import * as ReactUtils from './utils/reactUtils';
 
 export {
   DEFAULT_ANNOTATION_COLOR,
@@ -201,13 +409,13 @@ export { getCanvasContext, measureText, calculateFontSize } from './utils/measur
 export { createPointerDistance, usePointerDistance } from './utils/usePointerDistance';
 export { useForceUpdate } from './utils/useForceUpdate';
 export { SearchFunctionType } from './utils/searchFunctions';
-export { DOMUtil };
 export { createLogger } from './utils/logger';
 export { attachDebugger } from './utils/debug';
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
-export { ReactUtils };
+
+export { DOMUtil, ReactUtils };
 
 export { ThemeContext } from '@grafana/data';
 export {
@@ -222,9 +430,8 @@ export {
 export { getTheme, mockTheme } from './themes/getTheme';
 export { stylesFactory } from './themes/stylesFactory';
 export { GlobalStyles } from './themes/GlobalStyles/GlobalStyles';
-export * as styleMixins from './themes/mixins';
 
-export * as commonOptionsBuilder from './options/builder';
+export { styleMixins, commonOptionsBuilder };
 
 export { BracesPlugin } from './slate-plugins/braces';
 export { ClearPlugin } from './slate-plugins/clear';
@@ -246,6 +453,7 @@ export {
   LineInterpolation,
   ScaleDistribution,
   GraphGradientMode,
+  BarGaugeDisplayMode,
   type LineStyle,
   type PointsConfig,
   type ScaleDistributionConfig,
