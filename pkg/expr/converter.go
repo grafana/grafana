@@ -154,8 +154,17 @@ func handleSqlInput(dataFrames data.Frames, isEditMode bool) (mathexp.Results, e
 		if err != nil {
 			return result, fmt.Errorf("failed to convert data frames to long format for sql: %w", err)
 		}
-		result.Values = mathexp.Values{
-			mathexp.TableData{Frame: convertedFrames[0]},
+		if isEditMode {
+			convertedFrames[0].Name = dataFrames[0].RefID + " : Converted to tabular format for SQL Expression"
+			dataFrames[0].Name =  dataFrames[0].RefID + " : Original format"
+			result.Values = mathexp.Values{
+				mathexp.TableData{Frame: convertedFrames[0]},
+				mathexp.TableData{Frame: dataFrames[0]},
+			}
+		} else {
+			result.Values = mathexp.Values{
+				mathexp.TableData{Frame: convertedFrames[0]},
+			}
 		}
 		return result, nil
 	}
