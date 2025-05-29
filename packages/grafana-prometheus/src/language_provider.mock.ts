@@ -1,12 +1,14 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.mock.ts
-import { TimeRange } from '@grafana/data';
-
 export class EmptyLanguageProviderMock {
   metrics = [];
 
   constructor() {}
 
-  start = (timeRange?: TimeRange): Promise<any[]> => Promise.resolve([]);
+  start() {
+    return new Promise((resolve) => {
+      resolve('');
+    });
+  }
 
   getLabelKeys = jest.fn().mockReturnValue([]);
   getLabelValues = jest.fn().mockReturnValue([]);
