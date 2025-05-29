@@ -525,17 +525,13 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 // At the end we return the missing states so that later they can be sent
 // to the alertmanager if needed.
 func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int) {
-	// Build a set of states for series we saw in this evaluation
-	present := make(map[data.Fingerprint]struct{}, len(evalTransitions))
-	for _, tr := range evalTransitions {
-		present[tr.CacheID] = struct{}{}
-	}
-
 	missingTransitions := []StateTransition{}
 	var staleCacheIDs []data.Fingerprint
 
 	st.cache.forRuleState(alertRule.OrgID, alertRule.UID, func(s *State) {
-		if _, ok := present[s.CacheID]; ok {
+		// We need only states that are not present in the current evaluation, so
+		// skip the state if it was just evaluated.
+		if s.LastEvaluationTime.Equal(evaluatedAt) {
 			return
 		}
 		// After this point, we know that the state is not in the current evaluation.
