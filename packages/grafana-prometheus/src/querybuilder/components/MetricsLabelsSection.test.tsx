@@ -363,7 +363,6 @@ describe('MetricsLabelsSection', () => {
   it('should load metrics metadata if not present', async () => {
     const onChange = jest.fn();
     const datasource = createMockDatasource();
-    datasource.languageProvider.metricsMetadata = undefined;
 
     render(
       <MetricsLabelsSection
