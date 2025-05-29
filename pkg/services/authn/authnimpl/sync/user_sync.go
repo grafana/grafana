@@ -171,7 +171,27 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 
 	// Reject non-provisioned users
 	log.Error("Failed to access user, user is not provisioned")
-	return errUserNotProvisioned.Errorf("user is not provisioned")
+}
+
+func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID, "id", currentIdentity.ID)
+
+	if !s.isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation")
+		return true
+	}
+
+	if s.allowNonProvisionedUsers {
+		log.Debug("Non-provisioned users are allowed, skipping validation")
+		return true
+	}
+
+	if currentIdentity.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return true
+	}
+
+	return false
 }
 
 // SyncUserHook syncs a user with the database
