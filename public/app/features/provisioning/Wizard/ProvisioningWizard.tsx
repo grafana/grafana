@@ -4,8 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
@@ -259,7 +258,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
                 />
               )}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepStatusUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
+                <SynchronizeStep
+                  onStepStatusUpdate={setStepStatusInfo}
+                  requiresMigration={requiresMigration}
+                  isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
+                />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
