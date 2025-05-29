@@ -2,8 +2,6 @@ import { RuleTester } from 'eslint';
 
 import noTranslationTopLevel from './no-translation-top-level.cjs';
 
-const expectedErrorMessage = 'Do not use the t() function outside of a component or function';
-
 const ruleTester = new RuleTester({
   languageOptions: {
     ecmaVersion: 2018,
@@ -20,6 +18,7 @@ const ruleTester = new RuleTester({
 ruleTester.run('eslint no-translation-top-level', noTranslationTopLevel, {
   valid: [
     {
+      name: 'invocation inside component',
       code: `
 function Component() {
   return <div>{t('some.key', 'Some text')}</div>;
@@ -27,31 +26,37 @@ function Component() {
       `,
     },
     {
+      name: 'invocation inside function',
       code: `const foo = () => t('some.key', 'Some text');`,
     },
     {
-      code: `const foo = ttt('some.key', 'Some text');`,
+      name: 'invocation inside class component',
+      code: `class Component {
+        render() {
+          return t('some.key', 'Some text');
+          }
+        }`,
     },
     {
-      code: `class Component {
-render() {
-  return t('some.key', 'Some text');
-}
-}`,
+      name: 'invocation of something not named t at top level',
+      code: `const foo = ttt('some.key', 'Some text');`,
     },
   ],
   invalid: [
     {
+      name: 'invocation at top level',
       code: `const thing = t('some.key', 'Some text');`,
-      errors: [{ message: expectedErrorMessage }],
+      errors: 1,
     },
     {
+      name: 'invocation in array',
       code: `const things = [t('some.key', 'Some text')];`,
-      errors: [{ message: expectedErrorMessage }],
+      errors: 1,
     },
     {
+      name: 'invocation in object',
       code: `const objectThings = [{foo: t('some.key', 'Some text')}];`,
-      errors: [{ message: expectedErrorMessage }],
+      errors: 1,
     },
   ],
 });

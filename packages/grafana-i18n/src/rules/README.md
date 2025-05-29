@@ -144,7 +144,6 @@ Ensure that `t()` translation method is not used at the top level of a file, out
 This is to prevent calling the translation method before it's been instantiated.
 
 This does not cause an error if a file is lazily loaded, but refactors can cause errors, and it can cause problems in tests.
-Fix the
 
 ```tsx
 // Bad ❌
@@ -172,9 +171,9 @@ const SomeComponent = () => {
 };
 
 // Good ✅
-const someConfigThatHasToBeShared = () => [{ foo: t('some.key', 'Some text') }];
+const getSomeConfigThatHasToBeShared = () => [{ foo: t('some.key', 'Some text') }];
 const SomeComponent = () => {
-  const configs = someConfigThatHasToBeShared();
+  const configs = getSomeConfigThatHasToBeShared();
   return (
     <div>
       {configs.map((cfg) => {
