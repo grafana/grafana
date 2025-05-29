@@ -287,7 +287,7 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer, runErrs map[
 
 		conn, err := net.DialTimeout("tcp", testServer.grpcAddress, 1*time.Second)
 		if err == nil {
-			conn.Close()
+			_ = conn.Close()
 			break
 		}
 
