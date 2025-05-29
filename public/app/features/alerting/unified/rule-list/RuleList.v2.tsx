@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Trans, useTranslate } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -9,6 +10,7 @@ import { SupportedView } from '../components/rules/Filter/RulesViewModeSelector'
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
+import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -30,13 +32,16 @@ function RuleList() {
 }
 
 export function RuleListActions() {
+  const { t } = useTranslate();
+
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-  const { t } = useTranslate();
+
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
+  const canImportRulesToGMA = isAdmin() && config.featureToggles.alertingMigrationUI;
 
   const moreActionsMenu = useMemo(
     () => (
@@ -47,6 +52,13 @@ export function RuleListActions() {
             icon="file-export"
             url="/alerting/export-new-rule"
           />
+          {canImportRulesToGMA && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
+              icon="import"
+              url="/alerting/import-datasource-managed-rules"
+            />
+          )}
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
           {canCreateGrafanaRules && (
@@ -66,7 +78,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, t]
+    [t, canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
   );
 
   return (

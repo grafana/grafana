@@ -948,9 +948,6 @@
       "title-search-panel": "Search panel",
       "title-select-dashboard-and-panel": "Select dashboard and panel"
     },
-    "data-source-section": {
-      "import-to-grafana": "Import to Grafana rules"
-    },
     "datasource-not-found": {
       "card-description": "The datasource for this query was not found, it was either removed or is not installed correctly.",
       "remove-query": "Remove query",
@@ -1509,12 +1506,6 @@
       "label-insights": "Insights",
       "title-alerting": "Alerting"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "The folder to import the rules to",
-      "message": {
-        "please-select-a-target-data-source": "Please select a target data source"
-      }
-    },
     "import-to-gma": {
       "action-button": "Import",
       "additional-settings": "Additional settings",
@@ -1522,8 +1513,9 @@
       "confirm-modal": {
         "confirm": "Import",
         "loading": "Loading...",
-        "loading-body": "Preparing data to be imported.This can take a while...",
+        "loading-body": "Preparing data to be imported. This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
@@ -1542,11 +1534,12 @@
         "label": "Group"
       },
       "import-location-and-filters": "Import location and filters",
+      "import-source": "Import source",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
+      "pageTitle": "Import alert rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
@@ -1554,10 +1547,26 @@
         "label": "Pause imported recording rules"
       },
       "recording-rules": "Recording rules",
+      "source": {
+        "datasource": "Existing data source-managed rules",
+        "datasource-description": "Import rules from existing data sources",
+        "yaml": "Prometheus YAML file",
+        "yaml-description": "Import rules from a Prometheus YAML file."
+      },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
+        "description": "The folder to import the rules to",
         "label": "Target folder"
-      }
+      },
+      "yaml": {
+        "description": "Select a Prometheus-compatible YAML file to import",
+        "label": "Prometheus YAML file",
+        "required-message": "Please select a file",
+        "target-datasource": "Target data source",
+        "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "target-datasource-required": "Please select a target data source"
+      },
+      "yaml-error": "Failed to parse YAML file: {{error}}"
     },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
@@ -2137,7 +2146,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
-      "label-target-data-source": "Target data source"
+      "label-target-data-source": "Target data source",
+      "target-data-source-required": "Please select a target data source"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
@@ -2397,6 +2407,9 @@
     "rule-list-v1": {
       "collapse-all": "Collapse all",
       "expand-all": "Expand all"
+    },
+    "rule-list-v2": {
+      "import-to-gma": "Import alert rules"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
