@@ -7,12 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/openfga/openfga/pkg/storage/migrate"
 )
 
-func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfig, logger log.Logger) error {
-	connStr := grafanaDBConfg.ConnectionString
+func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
+	connStr := grafanaDBConfig.ConnectionString
 	// running grafana migrations
 	engine, err := xorm.NewEngine(dbType, connStr)
 	if err != nil {
@@ -33,7 +34,7 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfg *sqlstore.DatabaseConfi
 		dbType = "sqlite"
 	case migrator.Postgres:
 		// Parse and transform the connection string to the format OpenFGA expects
-		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfg)
+		connStr = constructPostgresConnStrForOpenFGA(grafanaDBConfig)
 	}
 
 	migrationConfig := migrate.MigrationConfig{
@@ -68,11 +69,32 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 
 // constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs
 // parses into a format like
-// postgresql://grafana:password@127.0.0.1:5432/grafana?sslmode=disable&sslcert=&sslkey=&sslrootcert=
+// postgresql://grafana:password@127.0.0.1:5432/grafana?sslmode=disable&lock_timeout=2s&statement_timeout=10s
 func constructPostgresConnStrForOpenFGA(grafanaDBCfg *sqlstore.DatabaseConfig) string {
-	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s/%s", grafanaDBCfg.User, grafanaDBCfg.Pwd, grafanaDBCfg.Host, grafanaDBCfg.Name)
+	// Parse host and port from the Host field (which might contain both)
+	addr, err := util.SplitHostPortDefault(grafanaDBCfg.Host, "127.0.0.1", "5432")
+	if err != nil {
+		// If parsing fails, use the host as-is and assume default port
+		addr = util.NetworkAddress{Host: grafanaDBCfg.Host, Port: "5432"}
+	}
 
-	sslParams := fmt.Sprintf("?sslmode=%s&sslcert=%s&sslkey=%s&sslrootcert=%s&lock_timeout=2s&statement_timeout=10s", grafanaDBCfg.SslMode, grafanaDBCfg.ClientCertPath, grafanaDBCfg.ClientKeyPath, grafanaDBCfg.CaCertPath)
+	// Construct the connection string with proper host:port format
+	connectionStr := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+		grafanaDBCfg.User, grafanaDBCfg.Pwd, addr.Host, addr.Port, grafanaDBCfg.Name)
 
-	return connectionStr + sslParams
+	// Build query parameters - always include sslmode and timeouts
+	queryParams := fmt.Sprintf("sslmode=%s&lock_timeout=2s&statement_timeout=10s", grafanaDBCfg.SslMode)
+
+	// Only add SSL certificate parameters if they are not empty
+	if grafanaDBCfg.ClientCertPath != "" {
+		queryParams += fmt.Sprintf("&sslcert=%s", grafanaDBCfg.ClientCertPath)
+	}
+	if grafanaDBCfg.ClientKeyPath != "" {
+		queryParams += fmt.Sprintf("&sslkey=%s", grafanaDBCfg.ClientKeyPath)
+	}
+	if grafanaDBCfg.CaCertPath != "" {
+		queryParams += fmt.Sprintf("&sslrootcert=%s", grafanaDBCfg.CaCertPath)
+	}
+
+	return connectionStr + "?" + queryParams
 }
