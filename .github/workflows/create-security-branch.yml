@@ -9,7 +9,8 @@ on:
       security_branch_number:
         type: string
         description: 'The security branch number (e.g., 01)'
-        required: true
+        required: false
+        default: '01'
       repository:
         type: string
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
@@ -27,7 +28,8 @@ on:
       security_branch_number:
         type: string
         description: 'The security branch number (e.g., 01)'
-        required: true
+        required: false
+        default: '01'
       repository:
         type: string
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
@@ -67,9 +69,11 @@ jobs:
 
       - name: Create security branch
         id: branch
-        uses: grafana/grafana-github-actions-go/create-security-branch@main
-        with:
-          release_branch: ${{ inputs.release_branch }}
-          security_branch_number: ${{ inputs.security_branch_number }}
-          repository: ${{ inputs.repository }}
-          token: ${{ steps.generate_token.outputs.token }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          INPUT_RELEASE_BRANCH: ${{ inputs.release_branch }}
+          INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
+          INPUT_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          chmod +x .github/scripts/create-security-branch.sh
+          .github/scripts/create-security-branch.sh
