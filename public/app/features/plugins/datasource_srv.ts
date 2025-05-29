@@ -205,7 +205,10 @@ export class DatasourceSrv implements DataSourceService {
       const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
-      instance.userStorage = new UserStorage(instanceSettings.type);
+      if (!instance.userStorage) {
+        // DatasourceApi does not instantiate a userStorage property, but DataSourceWithBackend does
+        instance.userStorage = new UserStorage(instanceSettings.type);
+      }
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
