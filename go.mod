@@ -567,7 +567,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250529190941-0a104cc0ed59
+require github.com/grafana/grafana/pkg/build v0.0.0-20250529190941-0a104cc0ed59 // @grafana/grafana-developer-enablement-squad
 
 require (
 	github.com/hashicorp/go-msgpack/v2 v2.1.1 // indirect
