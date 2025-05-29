@@ -24,7 +24,8 @@ describe('SharePanelInternally', () => {
     config.rendererAvailable = false;
     buildAndRenderScenario();
 
-    expect(await screen.findByTestId(selector.preview)).toBeInTheDocument();
+    const previewElements = await screen.findAllByTestId(selector.preview);
+    expect(previewElements.length).toBeGreaterThan(0);
     [
       selector.widthInput,
       selector.heightInput,
@@ -40,7 +41,8 @@ describe('SharePanelInternally', () => {
     config.rendererAvailable = true;
     buildAndRenderScenario();
 
-    expect(await screen.findByTestId(selector.preview)).toBeInTheDocument();
+    const previewElements = await screen.findAllByTestId(selector.preview);
+    expect(previewElements.length).toBeGreaterThan(0);
     [selector.widthInput, selector.heightInput, selector.scaleFactorInput].forEach((selector) => {
       expect(screen.getByTestId(selector)).toBeEnabled();
     });

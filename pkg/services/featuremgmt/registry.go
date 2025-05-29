@@ -1758,6 +1758,14 @@ var (
 			HideFromAdminPage: true,
 			Expression:        "false",
 		},
+		{
+			Name:         "sharingDashboardImage",
+			Description:  "Enables image sharing functionality for dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			HideFromDocs: true,
+			FrontendOnly: true,
+		},
 	}
 )
 

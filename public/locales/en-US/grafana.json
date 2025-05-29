@@ -7305,9 +7305,7 @@
     "share-panel": {
       "config-description": "Create a personalized, direct link to share your panel within your organization, with the following customization settings:",
       "download-image": "Download image",
-      "render-image": "Generate image",
-      "render-image-error": "Failed to render panel image",
-      "render-image-error-description": "An error occurred when generating the image"
+      "render-image": "Generate image"
     }
   },
   "live": {
@@ -9734,6 +9732,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
@@ -9769,6 +9768,16 @@
       "view-button": "View JSON",
       "view-button-yaml": "View YAML"
     },
+    "image": {
+      "cancel-button": "Cancel",
+      "download-button": "Download image",
+      "error-title": "Failed to generate image",
+      "generate-button": "Generate image",
+      "info-text": "Save this dashboard as an image",
+      "preview": "Preview",
+      "preview-aria": "Generated image preview",
+      "title": "Export as image"
+    },
     "library": {
       "info": "Create library panel."
     },
@@ -9777,7 +9786,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render an image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -9845,6 +9854,7 @@
     }
   },
   "share-panel-image": {
+    "error-title": "Failed to generate image",
     "preview": {
       "title": "Panel preview"
     },
