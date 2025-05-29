@@ -439,6 +439,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -461,6 +462,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -470,6 +472,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels2"],
 					ResultFingerprint:  labels2.Fingerprint(),
 					State:              eval.Alerting,
@@ -495,6 +498,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -519,6 +523,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Alerting,
@@ -551,6 +556,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Alerting,
@@ -577,6 +583,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -607,6 +614,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -640,6 +648,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 4,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Pending,
@@ -676,6 +685,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3, // Normal -> Pending, Pending -> NoData, NoData -> Pending
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Pending,
@@ -707,6 +717,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.NoData,
@@ -733,6 +744,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:    baseRule.Title,
 					Labels:            labels["system + rule + labels1"],
 					ResultFingerprint: labels1.Fingerprint(),
 
@@ -758,6 +770,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Pending,
@@ -782,6 +795,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.NoData,
@@ -807,6 +821,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -816,6 +831,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule"],
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.NoData,
@@ -842,6 +858,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -851,6 +868,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels2"],
 					ResultFingerprint:  labels2.Fingerprint(),
 					State:              eval.Normal,
@@ -860,6 +878,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule"],
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.NoData,
@@ -888,6 +907,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -897,6 +917,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t3,
 				},
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + no-data"],
 					ResultFingerprint:  noDataLabels.Fingerprint(),
 					State:              eval.NoData,
@@ -922,6 +943,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Pending,
@@ -958,6 +980,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Alerting,
@@ -990,6 +1013,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle: baseRule.Title,
 					Labels: mergeLabels(systemLabels, data.Labels{
 						"cluster":   "us-central-1",
 						"namespace": "prod",
@@ -1029,6 +1053,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule"],
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.Alerting,
@@ -1058,6 +1083,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:    baseRule.Title,
 					Labels:            labels["system + rule"],
 					ResultFingerprint: data.Labels{}.Fingerprint(),
 					State:             eval.Alerting,
@@ -1094,6 +1120,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:    baseRule.Title,
 					Labels:            labels["system + rule"],
 					ResultFingerprint: data.Labels{}.Fingerprint(),
 					State:             eval.Alerting,
@@ -1130,6 +1157,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Recovering,
@@ -1165,6 +1193,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Normal,
@@ -1204,6 +1233,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 4,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Recovering,
@@ -1239,6 +1269,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 4,
 			expectedStates: []*state.State{
 				{
+					AlertRuleTitle:     baseRule.Title,
 					Labels:             labels["system + rule + labels1"],
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Alerting,
@@ -1542,11 +1573,12 @@ func TestStaleResultsHandler(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					AlertRuleUID: rule.UID,
-					OrgID:        1,
-					Labels:       data.Labels(labels1),
-					Values:       make(map[string]float64),
-					State:        eval.Normal,
+					AlertRuleUID:   rule.UID,
+					AlertRuleTitle: rule.Title,
+					OrgID:          1,
+					Labels:         data.Labels(labels1),
+					Values:         make(map[string]float64),
+					State:          eval.Normal,
 					LatestResult: &state.Evaluation{
 						EvaluationTime:  evaluationTime,
 						EvaluationState: eval.Normal,
