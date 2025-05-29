@@ -86,6 +86,7 @@ func TestIntegrationServer(t *testing.T) {
 
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
+
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
 	require.NoError(t, err)
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store, log.NewNopLogger())
@@ -128,6 +129,26 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 		t.Log(w.String())
 	}
 
+	// First, try to delete any existing tuples to avoid conflicts
+	deletes := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(writes.TupleKeys))
+	for _, tupleKey := range writes.TupleKeys {
+		deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
+			User:     tupleKey.User,
+			Relation: tupleKey.Relation,
+			Object:   tupleKey.Object,
+		})
+	}
+
+	// Try to delete existing tuples (ignore errors if they don't exist)
+	_, _ = openfga.Write(context.Background(), &openfgav1.WriteRequest{
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: deletes,
+		},
+	})
+
+	// Now write the new tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
