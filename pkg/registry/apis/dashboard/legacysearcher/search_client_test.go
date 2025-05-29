@@ -420,8 +420,12 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
-		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.Dashboard{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{
+			{
+				Dashboard:   dashboards.Dashboard{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+				ExternalID:  "test",
+				Provisioner: string(utils.ManagerKindClassicFP), // nolint:staticcheck
+			},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
