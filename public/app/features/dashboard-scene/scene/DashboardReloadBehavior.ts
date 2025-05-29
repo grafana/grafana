@@ -5,7 +5,6 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneTimeRangeLike,
   sceneUtils,
   SceneVariable,
   VariableDependencyConfig,
@@ -22,7 +21,7 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _dashboardScene: DashboardScene | undefined;
-  private _prevState: UrlQueryMap = {};
+  private _prevState?: UrlQueryMap;
 
   constructor(state: DashboardReloadBehaviorState) {
     super(state);
@@ -47,9 +46,6 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
         },
         dependsOnScopes: true,
       });
-
-      // Record initial state, this will be missing scope names
-      this._prevState = this.getCurrentState();
     });
   }
 
@@ -82,10 +78,11 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     }
 
     const newState = this.getCurrentState();
+    const prevState = this._prevState ?? {};
 
-    // Ignore time range changes
-    this._prevState.from = newState.from;
-    this._prevState.to = newState.to;
+    // Ignore time range changes for now
+    prevState.from = newState.from;
+    prevState.to = newState.to;
 
     const stateChanged = !isEqual(newState, this._prevState);
 
