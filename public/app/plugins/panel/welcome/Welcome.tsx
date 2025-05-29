@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 const helpOptions = [
@@ -15,9 +16,13 @@ export const WelcomeBanner = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Welcome to Grafana</h1>
+      <h1 className={styles.title}>
+        <Trans i18nKey="welcome.welcome-banner.welcome-to-grafana">Welcome to Grafana</Trans>
+      </h1>
       <div className={styles.help}>
-        <h3 className={styles.helpText}>Need help?</h3>
+        <h3 className={styles.helpText}>
+          <Trans i18nKey="welcome.welcome-banner.need-help">Need help?</Trans>
+        </h3>
         <div className={styles.helpLinks}>
           {helpOptions.map((option, index) => {
             return (

@@ -3,6 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -59,6 +60,7 @@ export const UserAdminPage = ({
   revokeAllSessions,
   syncLdapUser,
 }: Props) => {
+  const { t } = useTranslate();
   const { id = '' } = useParams();
   useEffect(() => {
     loadAdminUserPage(id);
@@ -123,7 +125,10 @@ export const UserAdminPage = ({
   const pageNav: NavModelItem = {
     text: user?.login ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings for an individual user.',
+    subTitle: t(
+      'admin.user-admin-page.page-nav.subTitle.manage-settings-for-an-individual-user',
+      'Manage settings for an individual user.'
+    ),
   };
 
   return (

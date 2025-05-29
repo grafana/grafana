@@ -37,6 +37,7 @@ export const intervalVariableSlice = createSlice({
         // add auto option if missing
         if (options.length && options[0].text !== 'auto') {
           options.unshift({
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             text: 'auto',
             value: '$__auto_interval_' + instanceState.name,
             selected: false,

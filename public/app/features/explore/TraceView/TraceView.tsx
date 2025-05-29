@@ -16,6 +16,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -283,7 +284,10 @@ function useFocusSpanLink(options: {
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
     const link: DataLink = {
-      title: 'Deep link to this span',
+      title: t(
+        'explore.use-focus-span-link.create-focus-span-link.link.title.deep-link-to-this-span',
+        'Deep link to this span'
+      ),
       url: '',
       internal: {
         datasourceUid: options.datasource?.uid!,

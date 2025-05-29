@@ -136,7 +136,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                 fill="outline"
                 onClick={() => {
                   showModal(ConfirmModal, {
-                    title: 'Delete variable',
+                    title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
                     body: `Are you sure you want to delete: ${name}?`,
                     confirmText: 'Delete variable',
                     onConfirm: onDeleteVariable(hideModal),

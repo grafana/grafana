@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -14,7 +15,7 @@ export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPan
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: 'Column options',
+      title: t('dashboard-scene.get-edit-options.title.column-options', 'Column options'),
       skipField: true,
       render: () => <GridLayoutColumns layoutManager={layoutManager} />,
     })
@@ -22,7 +23,7 @@ export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPan
 
   options.push(
     new OptionsPaneItemDescriptor({
-      title: 'Row height options',
+      title: t('dashboard-scene.get-edit-options.title.row-height-options', 'Row height options'),
       skipField: true,
       render: () => <GridLayoutRows layoutManager={layoutManager} />,
     })

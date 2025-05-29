@@ -219,28 +219,29 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
+  const { t } = useTranslate();
   const { timeZone } = props;
   let overviewItems = [
     {
       key: 'svc',
-      label: 'Service:',
+      label: t('explore.span-detail.overview-items.label.service', 'Service:'),
       value: process.serviceName,
     },
     {
       key: 'duration',
-      label: 'Duration:',
+      label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
       value: formatDuration(duration),
     },
     {
       key: 'start',
-      label: 'Start Time:',
+      label: t('explore.span-detail.overview-items.label.start-time', 'Start Time:'),
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
     },
     ...(span.childSpanCount > 0
       ? [
           {
             key: 'child_count',
-            label: 'Child Count:',
+            label: t('explore.span-detail.overview-items.label.child-count', 'Child Count:'),
             value: span.childSpanCount,
           },
         ]
@@ -248,46 +249,45 @@ export default function SpanDetail(props: SpanDetailProps) {
   ];
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
   if (span.kind) {
     overviewItems.push({
       key: KIND,
-      label: 'Kind:',
+      label: t('explore.span-detail.label.kind', 'Kind:'),
       value: span.kind,
     });
   }
   if (span.statusCode !== undefined) {
     overviewItems.push({
       key: STATUS,
-      label: 'Status:',
+      label: t('explore.span-detail.label.status', 'Status:'),
       value: SpanStatusCode[span.statusCode].toLowerCase(),
     });
   }
   if (span.statusMessage) {
     overviewItems.push({
       key: STATUS_MESSAGE,
-      label: 'Status Message:',
+      label: t('explore.span-detail.label.status-message', 'Status Message:'),
       value: span.statusMessage,
     });
   }
   if (span.instrumentationLibraryName) {
     overviewItems.push({
       key: LIBRARY_NAME,
-      label: 'Library Name:',
+      label: t('explore.span-detail.label.library-name', 'Library Name:'),
       value: span.instrumentationLibraryName,
     });
   }
   if (span.instrumentationLibraryVersion) {
     overviewItems.push({
       key: LIBRARY_VERSION,
-      label: 'Library Version:',
+      label: t('explore.span-detail.label.library-version', 'Library Version:'),
       value: span.instrumentationLibraryVersion,
     });
   }
   if (span.traceState) {
     overviewItems.push({
       key: TRACE_STATE,
-      label: 'Trace State:',
+      label: t('explore.span-detail.label.trace-state', 'Trace State:'),
       value: span.traceState,
     });
   }

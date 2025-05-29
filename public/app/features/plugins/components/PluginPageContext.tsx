@@ -13,7 +13,9 @@ PluginPageContext.displayName = 'PluginPageContext';
 function getInitialPluginPageContext(): PluginPageContextType {
   return {
     sectionNav: {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       main: { text: 'Plugin page' },
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       node: { text: 'Plugin page' },
     },
   };

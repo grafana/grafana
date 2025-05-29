@@ -59,9 +59,15 @@ export function ResourceExport({
             <Label>{switchExportModeLabel}</Label>
             <RadioButtonGroup
               options={[
-                { label: 'Classic', value: ExportMode.Classic },
-                { label: 'V1 Resource', value: ExportMode.V1Resource },
-                { label: 'V2 Resource', value: ExportMode.V2Resource },
+                { label: t('dashboard-scene.resource-export.label.classic', 'Classic'), value: ExportMode.Classic },
+                {
+                  label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
+                  value: ExportMode.V1Resource,
+                },
+                {
+                  label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
+                  value: ExportMode.V2Resource,
+                },
               ]}
               value={exportMode}
               onChange={(value) => onExportModeChange(value)}
@@ -73,8 +79,8 @@ export function ResourceExport({
             <Label>{switchExportFormatLabel}</Label>
             <RadioButtonGroup
               options={[
-                { label: 'JSON', value: 'json' },
-                { label: 'YAML', value: 'yaml' },
+                { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
+                { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
               ]}
               value={isViewingYAML ? 'yaml' : 'json'}
               onChange={onViewYAML}

@@ -24,14 +24,14 @@ export const BorderRadiusContainer = ({
   return (
     <Stack direction="column" alignItems="center" gap={4}>
       <Stack alignItems="center">
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Text variant="code">getInternalRadius</Text>
         <div className={styles.baseForInternal}>
           <div className={styles.internalContainer} />
         </div>
       </Stack>
       <Stack alignItems="center">
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Text variant="code">getExternalRadius</Text>
         <div className={styles.externalContainer}>
           <div className={styles.baseForExternal} />

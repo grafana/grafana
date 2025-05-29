@@ -62,6 +62,7 @@ export function useGetRulesToBeImported(skip: boolean, selectedDatasourceName: s
 
   return { rulesToBeImported, isloadingCloudRules };
 }
+
 function useFilterRulesThatMightBeOverwritten(
   targetNestedFolders: FolderDTO[],
   rulesToBeImported: RulerRulesConfigDTO,

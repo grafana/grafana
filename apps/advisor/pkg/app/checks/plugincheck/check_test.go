@@ -23,6 +23,7 @@ func TestRun(t *testing.T) {
 		pluginPreinstalled []string
 		pluginManaged      []string
 		pluginProvisioned  []string
+		pluginErrors       []*plugins.Error
 		expectedFailures   []advisor.CheckReportFailure
 	}{
 		{
@@ -119,6 +120,69 @@ func TestRun(t *testing.T) {
 			pluginProvisioned: []string{"plugin5"},
 			expectedFailures:  []advisor.CheckReportFailure{},
 		},
+		{
+			name: "Invalid signatures",
+			plugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin6", Name: "Plugin 6", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusInvalid},
+				{JSONData: plugins.JSONData{ID: "plugin7", Name: "Plugin 7", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusModified},
+				{JSONData: plugins.JSONData{ID: "plugin8", Name: "Plugin 8", Info: plugins.Info{Version: "1.0.0"}}, Signature: plugins.SignatureStatusUnsigned},
+			},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "active", Slug: "plugin6", Version: "1.0.0"},
+				{Status: "active", Slug: "plugin7", Version: "1.0.0"},
+				{Status: "active", Slug: "plugin8", Version: "1.0.0"},
+			},
+			pluginErrors: []*plugins.Error{
+				{PluginID: "plugin9", ErrorCode: plugins.ErrorCodeSignatureInvalid},
+				{PluginID: "plugin10", ErrorCode: plugins.ErrorCodeSignatureModified},
+				{PluginID: "plugin11", ErrorCode: plugins.ErrorCodeSignatureMissing},
+				{PluginID: "plugin12", ErrorCode: plugins.ErrorCodeFailedBackendStart}, // This should be ignored atm
+			},
+			expectedFailures: []advisor.CheckReportFailure{
+				{
+					Severity: advisor.CheckReportFailureSeverityLow,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 6",
+					ItemID:   "plugin6",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin"}},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityLow,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 7",
+					ItemID:   "plugin7",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin"}},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityLow,
+					StepID:   UnsignedStepID,
+					Item:     "Plugin 8",
+					ItemID:   "plugin8",
+					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin"}},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "plugin9",
+					ItemID:   "plugin9",
+					Links:    []advisor.CheckErrorLink{},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "plugin10",
+					ItemID:   "plugin10",
+					Links:    []advisor.CheckErrorLink{},
+				},
+				{
+					Severity: advisor.CheckReportFailureSeverityHigh,
+					StepID:   UnsignedStepID,
+					Item:     "plugin11",
+					ItemID:   "plugin11",
+					Links:    []advisor.CheckErrorLink{},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -131,7 +195,8 @@ func TestRun(t *testing.T) {
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
 			updateChecker := pluginchecker.ProvideService(managedPlugins, provisionedPlugins, pluginPreinstall)
-			check := New(pluginStore, pluginRepo, updateChecker, "12.0.0")
+			pluginErrorResolver := &mockPluginErrorResolver{pluginErrors: tt.pluginErrors}
+			check := New(pluginStore, pluginRepo, updateChecker, pluginErrorResolver, "12.0.0")
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
@@ -148,8 +213,8 @@ func TestRun(t *testing.T) {
 				}
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, len(tt.plugins), len(items))
-			assert.Equal(t, tt.expectedFailures, failures)
+			assert.Equal(t, len(tt.plugins)+len(tt.pluginErrors), len(items))
+			assert.ElementsMatch(t, tt.expectedFailures, failures)
 		})
 	}
 }
@@ -221,4 +286,22 @@ type mockProvisionedPlugins struct {
 
 func (m *mockProvisionedPlugins) ProvisionedPlugins(ctx context.Context) ([]string, error) {
 	return m.provisioned, nil
+}
+
+type mockPluginErrorResolver struct {
+	plugins.ErrorResolver
+	pluginErrors []*plugins.Error
+}
+
+func (m *mockPluginErrorResolver) PluginErrors(ctx context.Context) []*plugins.Error {
+	return m.pluginErrors
+}
+
+func (m *mockPluginErrorResolver) PluginError(ctx context.Context, id string) *plugins.Error {
+	for _, err := range m.pluginErrors {
+		if err.PluginID == id {
+			return err
+		}
+	}
+	return nil
 }

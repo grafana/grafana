@@ -385,6 +385,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		return nil
 
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
+		}
+		return nil
+
 	case social.ClientSecretPost, "":
 		if info.ClientSecret == "" {
 			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")

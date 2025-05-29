@@ -2,5 +2,5 @@
 # the name `lefthook`, as expected by the lefthook pre-commit scripts
 
 lefthook () {
-  GOWORK=off go tool -n -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook
+  GOWORK=off go tool -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook "$@"
 }

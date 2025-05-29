@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
-	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -528,33 +526,19 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 		}
 
 		results := []*dashboards.DashboardProvisioning{}
-		var mu sync.Mutex
-		g, ctx := errgroup.WithContext(ctx)
-		g.SetLimit(provisioningConcurrencyLimit)
 		for _, org := range orgs {
-			func(orgID int64) {
-				g.Go(func() error {
-					res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-						ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
-						ManagerIdentity: name,
-						OrgId:           orgID,
-					})
-					if err != nil {
-						return err
-					}
+			res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+				ManagedBy:       utils.ManagerKindClassicFP, // nolint:staticcheck
+				ManagerIdentity: name,
+				OrgId:           org.ID,
+			})
+			if err != nil {
+				return nil, err
+			}
 
-					mu.Lock()
-					for _, r := range res {
-						results = append(results, &r.DashboardProvisioning)
-					}
-					mu.Unlock()
-					return nil
-				})
-			}(org.ID)
-		}
-
-		if err := g.Wait(); err != nil {
-			return nil, err
+			for _, r := range res {
+				results = append(results, &r.DashboardProvisioning)
+			}
 		}
 
 		return results, nil
@@ -595,7 +579,21 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 		return nil, nil
 	}
 
-	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
+	data, err := dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		return nil, nil
+	}
+
+	return &dashboards.DashboardProvisioning{
+		DashboardID: data.Dashboard.ID,
+		Name:        data.Provisioner,
+		ExternalID:  data.ExternalID,
+		CheckSum:    data.CheckSum,
+		Updated:     data.ProvisionUpdate,
+	}, nil
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
@@ -622,7 +620,21 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 		return nil, nil
 	}
 
-	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
+	data, err := dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		return nil, nil
+	}
+
+	return &dashboards.DashboardProvisioning{
+		DashboardID: data.Dashboard.ID,
+		Name:        data.Provisioner,
+		ExternalID:  data.ExternalID,
+		CheckSum:    data.CheckSum,
+		Updated:     data.ProvisionUpdate,
+	}, nil
 }
 
 func (dr *DashboardServiceImpl) ValidateBasicDashboardProperties(title string, uid string, message string) error {
@@ -2040,8 +2052,6 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"
-		// if using query, you need to specify the fields you want
-		request.Fields = dashboardsearch.IncludeFields
 	}
 
 	if len(query.Tags) > 0 {
@@ -2072,6 +2082,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	request.Limit = query.Limit
 	request.Page = query.Page
 	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
+	request.Fields = dashboardsearch.IncludeFields
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
@@ -2140,60 +2151,23 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	span.SetAttributes(attribute.Int("hits", len(searchResults.Hits)))
 
-	// loop through all hits concurrently to get the repo information (if set due to file provisioning)
 	dashs := make([]*dashboardProvisioningWithUID, 0)
-	var mu sync.Mutex
-	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(provisioningConcurrencyLimit)
-	for _, h := range searchResults.Hits {
-		func(hit dashboardv0.DashboardHit) {
-			g.Go(func() error {
-				out, err := dr.k8sclient.Get(ctx, hit.Name, query.OrgId, v1.GetOptions{})
-				if err != nil {
-					return err
-				} else if out == nil {
-					return dashboards.ErrDashboardNotFound
-				}
+	for _, hit := range searchResults.Hits {
+		if utils.ParseManagerKindString(hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND)) != utils.ManagerKindClassicFP { // nolint:staticcheck
+			continue
+		}
 
-				meta, err := utils.MetaAccessor(out)
-				if err != nil {
-					return err
-				}
-
-				m, ok := meta.GetManagerProperties()
-				if !ok || m.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
-					return nil
-				}
-
-				source, ok := meta.GetSourceProperties()
-				if !ok {
-					return nil
-				}
-
-				provisioning := &dashboardProvisioningWithUID{
-					DashboardProvisioning: dashboards.DashboardProvisioning{
-						Name:        m.Identity,
-						ExternalID:  source.Path,
-						CheckSum:    source.Checksum,
-						DashboardID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
-					},
-					DashboardUID: hit.Name,
-				}
-				if source.TimestampMillis > 0 {
-					provisioning.Updated = time.UnixMilli(source.TimestampMillis).Unix()
-				}
-
-				mu.Lock()
-				dashs = append(dashs, provisioning)
-				mu.Unlock()
-
-				return nil
-			})
-		}(h)
-	}
-
-	if err := g.Wait(); err != nil {
-		return nil, err
+		provisioning := &dashboardProvisioningWithUID{
+			DashboardProvisioning: dashboards.DashboardProvisioning{
+				Name:        hit.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_ID),
+				ExternalID:  hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_PATH),
+				CheckSum:    hit.Field.GetNestedString(resource.SEARCH_FIELD_SOURCE_CHECKSUM),
+				Updated:     hit.Field.GetNestedInt64(resource.SEARCH_FIELD_SOURCE_TIME),
+				DashboardID: hit.Field.GetNestedInt64(utils.LabelKeyDeprecatedInternalID), // nolint:staticcheck
+			},
+			DashboardUID: hit.Name,
+		}
+		dashs = append(dashs, provisioning)
 	}
 
 	return dashs, nil

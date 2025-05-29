@@ -76,7 +76,7 @@ export const ConfigureCorrelationSourceForm = () => {
           <span className={styles.variable} key={i}>
             {name}
             {i < variables.length - 1
-              ? // eslint-disable-next-line @grafana/no-untranslated-strings
+              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 ', '
               : ''}
           </span>

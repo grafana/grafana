@@ -12,6 +12,7 @@ import {
   DataQueryError,
 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -129,7 +130,7 @@ function getErrors(data: PanelData | undefined): DataQueryError[] {
   if (!errors.length && data?.state === LoadingState.Error) {
     return [
       {
-        message: 'Error loading data',
+        message: t('dashboard.get-errors.message.error-loading-data', 'Error loading data'),
       },
     ];
   }

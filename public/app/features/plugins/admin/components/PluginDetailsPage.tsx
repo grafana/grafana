@@ -37,13 +37,18 @@ export function PluginDetailsPage({
   pluginId,
   navId = 'plugins',
   notFoundComponent = <NotFoundPlugin />,
-  notFoundNavModel = {
-    text: 'Unknown plugin',
-    subTitle: 'The requested ID does not belong to any plugin',
-    active: true,
-  },
+  notFoundNavModel,
 }: Props) {
+  const { t } = useTranslate();
   const location = useLocation();
+  const notFoundModel = notFoundNavModel ?? {
+    text: t('plugins.plugin-details-page.not-found-model.text.unknown-plugin', 'Unknown plugin'),
+    subTitle: t(
+      'plugins.plugin-details-page.not-found-model.subTitle.requested-belong-plugin',
+      'The requested ID does not belong to any plugin'
+    ),
+    active: true,
+  };
   const queryParams = new URLSearchParams(location.search);
   const plugin = useGetSingle(pluginId); // fetches the plugin settings for this Grafana instance
   const isNarrowScreen = useMedia('(max-width: 600px)');
@@ -73,7 +78,7 @@ export function PluginDetailsPage({
 
   if (!plugin) {
     return (
-      <Page navId={navId} pageNav={notFoundNavModel}>
+      <Page navId={navId} pageNav={notFoundModel}>
         {notFoundComponent}
       </Page>
     );

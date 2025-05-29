@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
@@ -79,8 +80,10 @@ const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
   };
   const tooltipContent = (
     <span>
-      Created by:
-      <br /> {email}
+      <Trans i18nKey="annolist.annotation-list-item.tooltip-created-by">
+        Created by:
+        <br /> {{ email }}
+      </Trans>
     </span>
   );
 

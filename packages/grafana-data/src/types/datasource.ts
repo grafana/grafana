@@ -19,6 +19,7 @@ import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
+import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<
@@ -237,6 +238,11 @@ abstract class DataSourceApi<
    *  min interval range
    */
   interval?: string;
+
+  /**
+   * Initialized in datasource_srv.ts
+   */
+  userStorage?: UserStorage;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;

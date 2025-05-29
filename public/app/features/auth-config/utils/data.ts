@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { fieldMap, getSectionFields } from '../fields';
 import { FieldData, SSOProvider, SSOProviderDTO } from '../types';
 
-import { isSelectableValue } from './guards';
+import { isSelectableValueArray } from './guards';
 
 export const emptySettings: SSOProviderDTO = {
   allowAssignGrafanaAdmin: false,
@@ -20,6 +20,7 @@ export const emptySettings: SSOProviderDTO = {
   clientSecret: '',
   managedIdentityClientId: '',
   federatedCredentialAudience: '',
+  workloadIdentityTokenFile: '',
   emailAttributeName: '',
   emailAttributePath: '',
   emptyScopes: false,
@@ -118,10 +119,10 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
   for (const field of arrayFields) {
     const value = current[field];
     if (value) {
-      if (isSelectableValue(value)) {
+      if (isSelectableValueArray(value)) {
         //@ts-expect-error
         settings[field] = valuesToString(value);
-      } else if (isSelectableValue([value])) {
+      } else if (isSelectableValueArray([value])) {
         //@ts-expect-error
         settings[field] = value.value;
       }

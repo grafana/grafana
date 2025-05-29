@@ -30,6 +30,7 @@ import {
   LoadingState,
   rangeUtil,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -454,7 +455,9 @@ export const LogsPanel = ({
 
   const renderCommonLabels = () => (
     <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
-      <span className={style.label}>Common labels:</span>
+      <span className={style.label}>
+        <Trans i18nKey="logs.logs-panel.render-common-labels.common-labels">Common labels:</Trans>
+      </span>
       <LogLabels
         labels={typeof commonLabels?.value === 'object' ? commonLabels?.value : noCommonLabels}
         emptyMessage="(no common labels)"

@@ -61,7 +61,7 @@ const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: Custom
       <FormField
         label={t('grafana-ui.data-source-settings.custom-headers-header', 'Header')}
         name="name"
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="X-Custom-Header"
         labelWidth={5}
         value={header.name || ''}

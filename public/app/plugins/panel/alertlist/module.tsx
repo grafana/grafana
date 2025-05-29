@@ -1,4 +1,5 @@
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -127,7 +128,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
               }}
             />
             <Button variant="secondary" onClick={() => props.onChange(null)}>
-              Clear
+              <Trans i18nKey="alertlist.unified-alert-list.clear">Clear</Trans>
             </Button>
           </Stack>
         );

@@ -53,7 +53,13 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             name="dataSourceName"
             control={control}
             rules={{
-              required: { value: true, message: 'Please select a data source' },
+              required: {
+                value: true,
+                message: t(
+                  'alerting.cloud-data-source-selector.message.please-select-a-data-source',
+                  'Please select a data source'
+                ),
+              },
             }}
           />
         </Field>

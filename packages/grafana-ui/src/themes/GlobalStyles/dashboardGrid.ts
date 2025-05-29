@@ -95,8 +95,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       opacity: 0.5,
       transition: theme.transitions.create('opacity'),
       filter: `grayscale(100%)`,
-
-      '&:hover': {
+      '&:hover,:focus-within': {
         opacity: 1,
         filter: 'unset',
       },

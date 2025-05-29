@@ -578,6 +578,7 @@ export const versionedComponents = {
     },
 
     measureButton: {
+      '12.1.0': 'data-testid panel-editor-measure-button',
       '9.2.0': 'show measure tools',
     },
 
