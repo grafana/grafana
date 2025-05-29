@@ -17,8 +17,7 @@ import { createListFilterLink } from '../../utils/navigation';
 
 import { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
-import { readFileAsText } from './readFileAsText';
-import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
+import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
@@ -78,8 +77,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
       return emptyObject;
     }
     try {
-      const fileContent = await readFileAsText(yamlFile);
-      const rulerConfigFromYAML = parseYamlToRulerRulesConfigDTO(fileContent, yamlFile.name);
+      const rulerConfigFromYAML = await parseYamlFileToRulerRulesConfigDTO(yamlFile, yamlFile.name);
       return rulerConfigFromYAML;
     } catch (error) {
       appNotification.error(

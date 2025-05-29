@@ -2,9 +2,11 @@ import { load } from 'js-yaml';
 
 import { RulerCloudRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { readFileAsText } from './readFileAsText';
+
 interface PrometheusYamlFile {
   namespace?: string;
-  groups: RulerRuleGroupDTO<RulerCloudRuleDTO>[];
+  groups: Array<RulerRuleGroupDTO<RulerCloudRuleDTO>>;
 }
 
 function isValidObject(value: unknown): value is Record<string, unknown> {
@@ -108,6 +110,7 @@ function validatePrometheusYamlFile(obj: unknown): ValidationResult {
   };
 }
 
+// only use this function directly for testing purposes, use parseYamlFileToRulerRulesConfigDTO instead
 export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultNamespace: string): RulerRulesConfigDTO {
   const obj = load(yamlAsString);
   const validation = validatePrometheusYamlFile(obj);
@@ -123,4 +126,12 @@ export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultName
   return {
     [namespace]: prometheusFile.groups,
   };
+}
+
+export async function parseYamlFileToRulerRulesConfigDTO(
+  file: File,
+  defaultNamespace: string
+): Promise<RulerRulesConfigDTO> {
+  const yamlContent = await readFileAsText(file);
+  return parseYamlToRulerRulesConfigDTO(yamlContent, defaultNamespace);
 }
