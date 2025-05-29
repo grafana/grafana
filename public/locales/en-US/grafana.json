@@ -4964,6 +4964,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
