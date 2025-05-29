@@ -167,20 +167,22 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (c *cache) delete(ruleKey ngModels.AlertRuleKey, cacheIDs ...data.Fingerprint) {
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) {
+	for id, state := range rs.states {
+		if predicate(state) {
+			delete(rs.states, id)
+		}
+	}
+}
+
+// deleteRuleStates iterates over all states for the given rule and deletes those where predicate returns true.
+// The predicate function is called once for each state and should return true if the state should be deleted.
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
-
-	orgRules, ok := c.states[ruleKey.OrgID]
-	if !ok {
-		return
-	}
-
-	ruleStates, ok := orgRules[ruleKey.UID]
+	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		for _, cacheID := range cacheIDs {
-			delete(ruleStates.states, cacheID)
-		}
+		ruleStates.deleteStates(predicate)
 	}
 }
 
@@ -247,25 +249,6 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 		result = append(result, state)
 	}
 	return result
-}
-
-func (c *cache) forRuleState(orgID int64, alertRuleUID string, fn func(*State)) {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
-
-	orgRules, ok := c.states[orgID]
-	if !ok {
-		return
-	}
-
-	rs, ok := orgRules[alertRuleUID]
-	if !ok {
-		return
-	}
-
-	for _, state := range rs.states {
-		fn(state)
-	}
 }
 
 // removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states

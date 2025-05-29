@@ -355,7 +355,7 @@ func (st *Manager) ProcessEvalResults(
 	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, states, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int64("state_transitions", int64(len(states))),
-		attribute.Int("stale_states", staleCount),
+		attribute.Int64("stale_states", staleCount),
 	))
 
 	allChanges := StateTransitions(append(states, missingSeriesStates...))
@@ -524,15 +524,15 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 // For each missing state, we check if it is stale, and if so, we resolve it.
 // At the end we return the missing states so that later they can be sent
 // to the alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int) {
+func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, evalTransitions []StateTransition, takeImageFn takeImageFn) ([]StateTransition, int64) {
 	missingTransitions := []StateTransition{}
-	var staleCacheIDs []data.Fingerprint
+	var staleStatesCount int64 = 0
 
-	st.cache.forRuleState(alertRule.OrgID, alertRule.UID, func(s *State) {
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		// We need only states that are not present in the current evaluation, so
 		// skip the state if it was just evaluated.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
-			return
+			return false
 		}
 		// After this point, we know that the state is not in the current evaluation.
 		// Now we need check if it's stale, and if so, we need to resolve it.
@@ -542,7 +542,6 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 
 		if isStale {
 			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
-			staleCacheIDs = append(staleCacheIDs, s.CacheID)
 
 			s.State = eval.Normal
 			s.StateReason = ngModels.StateReasonMissingSeries
@@ -557,6 +556,8 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 					s.Image = image
 				}
 			}
+
+			staleStatesCount++
 		}
 
 		record := StateTransition{
@@ -565,12 +566,11 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			PreviousStateReason: oldReason,
 		}
 		missingTransitions = append(missingTransitions, record)
+
+		return isStale
 	})
 
-	// Delete stale states after iteration to avoid modifying map while iterating
-	st.cache.delete(alertRule.GetKey(), staleCacheIDs...)
-
-	return missingTransitions, len(staleCacheIDs)
+	return missingTransitions, staleStatesCount
 }
 
 // stateIsStale determines whether the evaluation state is considered stale.
