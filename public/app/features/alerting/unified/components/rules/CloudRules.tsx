@@ -14,6 +14,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { isAdmin } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -48,13 +49,8 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [viewExternalRuleSupported, viewExternalRuleAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
   const { t } = useTranslate();
-  const canViewCloudRules = viewExternalRuleSupported && viewExternalRuleAllowed;
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
-  const canMigrateToGMA =
-    hasDataSourcesConfigured && canCreateGrafanaRules && canViewCloudRules && config.featureToggles.alertingMigrationUI;
+  const canMigrateToGMA = hasDataSourcesConfigured && isAdmin() && config.featureToggles.alertingMigrationUI;
 
   return (
     <section className={styles.wrapper}>
