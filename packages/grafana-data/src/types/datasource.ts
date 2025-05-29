@@ -240,12 +240,9 @@ abstract class DataSourceApi<
   interval?: string;
 
   /**
-   * Set in datasource_srv.ts but must be initialized in constructor
+   * Initialized in datasource_srv.ts
    */
-  userStorage: UserStorage = {
-    getItem: async (key: string) => null,
-    setItem: async (key: string, value: string) => {},
-  };
+  userStorage?: UserStorage;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
