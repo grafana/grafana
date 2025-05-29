@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 function getStyles() {
@@ -26,6 +27,7 @@ interface Props<Config> {
  * Control buttons for zoom but also some layout config inputs mainly for debugging.
  */
 export function ViewControls<Config extends Record<string, any>>(props: Props<Config>) {
+  const { t } = useTranslate();
   const { config, onConfigChange, onPlus, onMinus, disableZoomOut, disableZoomIn } = props;
   const [showConfig, setShowConfig] = useState(false);
 
@@ -41,7 +43,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             icon={'plus-circle'}
             onClick={onPlus}
             size={'md'}
-            title={'Zoom in'}
+            title={t('nodeGraph.view-controls.title-zoom-in', 'Zoom in')}
             variant="secondary"
             disabled={disableZoomIn}
           />
@@ -49,7 +51,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             icon={'minus-circle'}
             onClick={onMinus}
             size={'md'}
-            title={'Zoom out'}
+            title={t('nodeGraph.view-controls.title-zoom-out', 'Zoom out')}
             variant="secondary"
             disabled={disableZoomOut}
           />
@@ -58,7 +60,9 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
       {allowConfiguration && (
         <Button size={'xs'} fill="text" onClick={() => setShowConfig((showConfig) => !showConfig)}>
-          {showConfig ? 'Hide config' : 'Show config'}
+          {showConfig
+            ? t('nodeGraph.view-controls.hide-config', 'Hide config')
+            : t('nodeGraph.view-controls.show-config', 'Show config')}
         </Button>
       )}
 

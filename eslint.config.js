@@ -20,7 +20,11 @@ const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
-const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor', 'public/app/plugins/datasource/mssql'];
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/mssql',
+];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}

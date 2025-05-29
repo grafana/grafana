@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -79,8 +80,10 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          Too many points to visualize properly. <br />
-          Update the query to return fewer points. <br />({paginatedFrames[0].length} points received)
+          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+            Too many points to visualize properly. <br />
+            Update the query to return fewer points. <br />({'{{count}}'} points received)
+          </Trans>
         </p>
       </div>
     );
