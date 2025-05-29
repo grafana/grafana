@@ -2,8 +2,6 @@ import { load } from 'js-yaml';
 
 import { RulerCloudRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { readFileAsText } from './readFileAsText';
-
 interface PrometheusYamlFile {
   namespace?: string;
   groups: Array<RulerRuleGroupDTO<RulerCloudRuleDTO>>;
@@ -132,6 +130,6 @@ export async function parseYamlFileToRulerRulesConfigDTO(
   file: File,
   defaultNamespace: string
 ): Promise<RulerRulesConfigDTO> {
-  const yamlContent = await readFileAsText(file);
+  const yamlContent = await file.text();
   return parseYamlToRulerRulesConfigDTO(yamlContent, defaultNamespace);
 }
