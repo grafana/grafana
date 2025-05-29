@@ -15,6 +15,7 @@ export interface Props {
 }
 
 export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
+  const { t } = useTranslate();
   const variables = useSelector((state) => {
     return getVariablesByKey(getLastKey(state), state);
   });
@@ -26,18 +27,21 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
@@ -63,12 +67,12 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     }));
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
       value: '',
     });
 
     return options;
-  }, [variables]);
+  }, [variables, t]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
@@ -83,8 +87,11 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
       disabled={isDisabled}
       placeholder={
         isDisabled
-          ? t('repeat-row-selector.disabled-placeholder', 'No template variables found')
-          : t('repeat-row-selector.placeholder', 'Choose')
+          ? t(
+              'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
+              'No template variables found'
+            )
+          : t('dashboard.repeat-row-select2.placeholder', 'Choose')
       }
     />
   );
