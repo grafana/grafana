@@ -65,6 +65,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </button>
 
         <div className={styles.suffix}>
+          {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
           <Text variant="bodySmall">{`${modKey}+k`}</Text>
         </div>
       </div>
