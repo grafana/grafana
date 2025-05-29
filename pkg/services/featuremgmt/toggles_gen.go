@@ -139,6 +139,10 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
+
 	// FlagLokiPredefinedOperations
 	// Adds predefined query operations to Loki query editor
 	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
@@ -499,6 +503,10 @@ const (
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
 
+	// FlagGrafanaManagedRecordingRules
+	// Enables Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
+
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
@@ -607,10 +615,6 @@ const (
 	// Used in Logs Drilldown to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
-	// FlagHomeSetupGuide
-	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
-	FlagHomeSetupGuide = "homeSetupGuide"
-
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
@@ -703,10 +707,6 @@ const (
 	// Enables querying the Jaeger data source without the proxy
 	FlagJaegerBackendMigration = "jaegerBackendMigration"
 
-	// FlagReportingUseRawTimeRange
-	// Uses the original report or dashboard time range instead of making an absolute transformation
-	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -759,17 +759,13 @@ const (
 	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
 	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
 
-	// FlagABTestFeatureToggleA
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+	// FlagTeamHttpHeadersTempo
+	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
+	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
 
 	// FlagTemplateVariablesUsesCombobox
 	// Use new **Combobox** component for template variables
 	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
-
-	// FlagABTestFeatureToggleB
-	// Test feature toggle to see how cohorts could be set up AB testing
-	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -847,6 +843,10 @@ const (
 	// Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
 
+	// FlagAlertingImportYAMLUI
+	// Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
+	FlagAlertingImportYAMLUI = "alertingImportYAMLUI"
+
 	// FlagUnifiedStorageHistoryPruner
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
@@ -899,6 +899,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagPostgresDSUsePGX
+	// Enables using PGX instead of libpq for PostgreSQL datasource
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
@@ -922,4 +926,8 @@ const (
 	// FlagExtensionsReadOnlyProxy
 	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
 	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
+
+	// FlagRestoreDashboards
+	// Enables restore deleted dashboards feature
+	FlagRestoreDashboards = "restoreDashboards"
 )

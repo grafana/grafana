@@ -26,6 +26,10 @@
     "./internal": {
       "import": "./src/internal/index.ts",
       "require": "./src/internal/index.ts"
+    },
+    "./eslint-plugin": {
+      "import": "./src/eslint/index.cjs",
+      "require": "./src/eslint/index.cjs"
     }
   },
   "publishConfig": {

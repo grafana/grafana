@@ -11,6 +11,7 @@ import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
+import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
@@ -114,6 +115,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       name={group.name}
       href={groups.detailsPageLink(rulesSourceIdentifier.uid, namespaceName, group.name)}
       isOpen={false}
+      metaRight={<GroupIntervalIndicator seconds={group.interval} />}
     >
       <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>
