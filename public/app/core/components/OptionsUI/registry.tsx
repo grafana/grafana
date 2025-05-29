@@ -275,22 +275,6 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const timeCompare: FieldConfigPropertyItem<FieldConfig, boolean, BooleanFieldSettings> = {
-    id: 'timeCompare',
-    path: 'timeCompare',
-    name: 'Time Comparison',
-    description: 'Enable time comparison control',
-
-    editor: standardEditorsRegistry.get('boolean').editor,
-    override: standardEditorsRegistry.get('boolean').editor,
-    process: booleanOverrideProcessor,
-
-    shouldApply: () => true,
-    category,
-    defaultValue: false,
-    hideFromDefaults: true,
-  };
-
   const min: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
@@ -470,7 +454,6 @@ export const getAllStandardFieldConfigs = () => {
     displayName,
     color,
     noValue,
-    timeCompare,
     links,
     actions,
     mappings,
