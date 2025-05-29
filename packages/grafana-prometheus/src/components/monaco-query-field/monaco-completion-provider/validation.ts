@@ -37,7 +37,7 @@ export function validateQuery(
 ): { errors: ParserIssueBoundary[], warnings: ParserIssueBoundary[] } {
   if (!query) {
     return { errors: [], warnings: [] };
-  }  
+  }
 
   /**
    * To provide support to variable interpolation in query validation, we run the parser in the interpolated
@@ -61,7 +61,7 @@ export function validateQuery(
 
   const errorBoundaries = parseErrors.map((parseError) => findIssueBoundary(query, queryLines, parseError, 'error')).filter(isValidIssueBoundary);
   const warningBoundaries = parseWarnings.map((parseWarning) => findIssueBoundary(query, queryLines, parseWarning, 'warning')).filter(isValidIssueBoundary);
-  
+
   return {
     errors: errorBoundaries || [],
     warnings: warningBoundaries || [],
