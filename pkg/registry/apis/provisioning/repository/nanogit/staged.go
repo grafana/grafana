@@ -60,7 +60,7 @@ func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repo
 
 	// TODO: the read in the cloned is simplied used to check if a folder exists,
 	// We should fix the usage and the interface so that it's not needed to load the entire blob
-	return r.Read(ctx, path, ref)
+	return r.gitRepository.Read(ctx, path, ref)
 }
 
 func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
@@ -72,16 +72,12 @@ func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repos
 	// TODO: I think we don't need this for cloned repository currently.
 	// we should probably remove it from the interface or construct this tree from the writer itself
 
-	return r.ReadTree(ctx, ref)
+	return r.gitRepository.ReadTree(ctx, ref)
 }
 
 func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) error {
 	if ref != "" && ref != r.branch {
 		return errors.New("ref is not supported for staged repository")
-	}
-
-	if safepath.IsDir(path) {
-		return errors.New("cannot create a directory in a staged repository")
 	}
 
 	if err := r.create(ctx, path, data, r.writer); err != nil {

@@ -77,7 +77,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	if result.Error != nil {
 		logger.Error("job resource operation failed", "err", result.Error)
 		if len(r.errors) < 20 {
-			r.errors = append(r.errors, result.Error.Error())
+			r.errors = append(r.errors, fmt.Sprintf("%s: %s (%s)", result.Path, result.Error.Error(), result.Resource))
 		}
 		r.errorCount++
 	} else {
