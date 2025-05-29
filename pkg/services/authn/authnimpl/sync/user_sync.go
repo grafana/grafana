@@ -117,14 +117,10 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	defer span.End()
 
 	// Default isUserProvisioningEnabled to false. It will be set by metadata if provided and valid.
-	// If metadata is missing or invalid, it remains false, effectively disabling provisioning for the request
-	// unless explicitly enabled via metadata.
-	isUserProvisioningEnabled := false   // Default to false
-	configSource := "hook_default_false" // Source if metadata not found or invalid
-	// allowNonProvisionedUsers still uses its static config from UserSync struct initialization.
+	isUserProvisioningEnabled := false
+	configSource := "hook_default_false"
 	allowNonProvisionedUsers := s.allowNonProvisionedUsers
 
-	// Check for effective user_sync_enabled from request metadata (set by SCIMSettingsAuthExtender)
 	const metaKeyEffectiveSCIMUserSyncEnabled = "scim_effective_user_sync_enabled"
 	if r != nil {
 		metadataStr := r.GetMeta(metaKeyEffectiveSCIMUserSyncEnabled)
@@ -137,12 +133,10 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 				log.Debug("Applied effective SCIM setting for user_sync_enabled from metadata", "value", isUserProvisioningEnabled)
 			} else {
 				log.Warn("Failed to parse effective SCIM setting for user_sync_enabled from request meta, defaulting to false for this request.", "value", metadataStr, "error", parseErr)
-				// isUserProvisioningEnabled remains false (the initialized default)
 				configSource = "metadata_parse_error_default_false"
 			}
 		} else {
 			log.Debug("Metadata key for effective SCIM user_sync_enabled not found, defaulting to false for this request.", "key", metaKeyEffectiveSCIMUserSyncEnabled)
-			// isUserProvisioningEnabled remains false (the initialized default)
 			configSource = "metadata_missing_default_false"
 		}
 	}
