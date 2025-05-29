@@ -411,8 +411,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
     headerActions:
-      // TODO define this type properly
-      (panel.options as any)?.timeCompare && isTimeCompareSupported(panel.type)
+      panel.options?.timeCompare && isTimeCompareSupported(panel.type)
         ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
         : undefined,
   };
