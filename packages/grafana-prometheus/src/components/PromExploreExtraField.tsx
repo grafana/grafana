@@ -7,6 +7,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { InlineFormLabel, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -132,16 +133,16 @@ PromExploreExtraField.displayName = 'PromExploreExtraField';
 
 export function getQueryTypeOptions(includeBoth: boolean) {
   const rangeOptions = [
-    { value: 'range', label: 'Range', description: 'Run query over a range of time' },
+    { value: 'range', label: t("components.get-query-type-options.range-options.label.range", "Range"), description: t("components.get-query-type-options.range-options.description.query-range", "Run query over a range of time") },
     {
       value: 'instant',
-      label: 'Instant',
+      label: t("components.get-query-type-options.range-options.label.instant", "Instant"),
       description: 'Run query against a single point in time. For this query, the "To" time is used',
     },
   ];
 
   if (includeBoth) {
-    rangeOptions.push({ value: 'both', label: 'Both', description: 'Run an Instant query and a Range query' });
+    rangeOptions.push({ value: 'both', label: t("components.get-query-type-options.label.both", "Both"), description: t("components.get-query-type-options.description.instant-query-range", "Run an Instant query and a Range query") });
   }
 
   return rangeOptions;

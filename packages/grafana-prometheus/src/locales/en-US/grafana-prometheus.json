@@ -13,6 +13,23 @@
       "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <2>{{intervalVar}}</2> and <4>{{rateIntervalVar}}</4> variables.",
       "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "The unit of timestamp is milliseconds. If the unit of the series value is seconds, multiply its range vector by 1000."
     },
+    "get-query-type-options": {
+      "description": {
+        "instant-query-range": "Run an Instant query and a Range query"
+      },
+      "label": {
+        "both": "Both"
+      },
+      "range-options": {
+        "description": {
+          "query-range": "Run query over a range of time"
+        },
+        "label": {
+          "instant": "Instant",
+          "range": "Range"
+        }
+      }
+    },
     "label-selector": {
       "aria-label-filter-expression-for-label": "Filter expression for label",
       "description-select-labels": "Once label values are selected, only possible label combinations are shown.",
@@ -182,6 +199,11 @@
       "give-feedback": "Give feedback",
       "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
     },
+    "handle-function": {
+      "text": {
+        "query-parsing-is-ambiguous": "Query parsing is ambiguous."
+      }
+    },
     "label-filter-item": {
       "aria-label-remove": "Remove {{name}}",
       "placeholder-select-label": "Select label",
@@ -214,6 +236,10 @@
       "title-metrics-explorer": "Metrics explorer"
     },
     "nested-query": {
+      "label": {
+        "ignoring": "Ignoring",
+        "on": "On"
+      },
       "operator": "Operator",
       "tooltip-remove-match": "Remove match",
       "vector-matches": "Vector matches"
@@ -302,6 +328,11 @@
       "name": "Name",
       "select": "Select",
       "type": "Type"
+    },
+    "update-function-args": {
+      "text": {
+        "query-parsing-is-ambiguous": "Query parsing is ambiguous."
+      }
     }
   }
 }

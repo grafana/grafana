@@ -54,8 +54,8 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
             value={nestedQuery.vectorMatchesType || 'on'}
             allowCustomValue
             options={[
-              { value: 'on', label: 'on' },
-              { value: 'ignoring', label: 'ignoring' },
+              { value: 'on', label: t("querybuilder.nested-query.label.on", "On") },
+              { value: 'ignoring', label: t("querybuilder.nested-query.label.ignoring", "Ignoring") },
             ]}
             onChange={(val) => {
               onChange(index, {
