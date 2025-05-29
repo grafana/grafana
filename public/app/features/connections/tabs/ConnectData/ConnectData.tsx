@@ -69,9 +69,12 @@ export function AddNewConnection() {
   );
   const { t } = useTranslate();
   const filterByOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'installed', label: 'Installed' },
-    { value: 'has-update', label: 'New Updates' },
+    { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
+    { value: 'installed', label: t('connections.add-new-connection.filter-by-options.label.installed', 'Installed') },
+    {
+      value: 'has-update',
+      label: t('connections.add-new-connection.filter-by-options.label.new-updates', 'New Updates'),
+    },
   ];
 
   const onClickCardGridItem = (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
@@ -160,11 +163,17 @@ export function AddNewConnection() {
               value={sortBy?.toString()}
               onChange={onSortByChange}
               options={[
-                { value: 'nameAsc', label: 'By name (A-Z)' },
-                { value: 'nameDesc', label: 'By name (Z-A)' },
-                { value: 'updated', label: 'By updated date' },
-                { value: 'published', label: 'By published date' },
-                { value: 'downloads', label: 'By downloads' },
+                { value: 'nameAsc', label: t('connections.add-new-connection.label.by-name-az', 'By name (A-Z)') },
+                { value: 'nameDesc', label: t('connections.add-new-connection.label.by-name-za', 'By name (Z-A)') },
+                {
+                  value: 'updated',
+                  label: t('connections.add-new-connection.label.by-updated-date', 'By updated date'),
+                },
+                {
+                  value: 'published',
+                  label: t('connections.add-new-connection.label.by-published-date', 'By published date'),
+                },
+                { value: 'downloads', label: t('connections.add-new-connection.label.by-downloads', 'By downloads') },
               ]}
             />
           </Field>
