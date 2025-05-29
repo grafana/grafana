@@ -7,10 +7,10 @@ import { useStyles2 } from '@grafana/ui';
 import { useHasClonedParents } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
-import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();

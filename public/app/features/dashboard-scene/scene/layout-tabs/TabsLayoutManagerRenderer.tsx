@@ -9,10 +9,10 @@ import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabsLayoutManager } from './TabsLayoutManager';
-import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);

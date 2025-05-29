@@ -43,6 +43,7 @@ import {
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -50,7 +51,6 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
-import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
