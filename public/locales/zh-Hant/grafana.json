@@ -72,6 +72,11 @@
     },
     "admin-edit-org-page": {
       "label-name": "名稱",
+      "page-nav": {
+        "subTitle": {
+          "manage-settings-roles-organization": ""
+        }
+      },
       "render-missing-permission-message": {
         "title-access-denied": "拒絕存取"
       }
@@ -233,6 +238,13 @@
     "upgrade-info": {
       "title": "企業版授權"
     },
+    "user-admin-page": {
+      "page-nav": {
+        "subTitle": {
+          "manage-settings-for-an-individual-user": ""
+        }
+      }
+    },
     "user-create-page": {
       "label-email": "電子郵件",
       "label-name": "名稱",
@@ -243,9 +255,16 @@
       "label-ldap": "LDAP"
     },
     "user-list-admin-page-un-connected": {
+      "label": {
+        "active-last-days": "",
+        "all-users": "所有使用者"
+      },
       "placeholder-search-login-email": "按登入、電子郵件或名稱搜尋使用者。"
     },
     "user-list-anonymous-devices-page-un-connected": {
+      "label": {
+        "active-last-days": ""
+      },
       "placeholder-search-devices-by-ip-address": "按 IP 位址搜尋裝置。"
     },
     "user-list-page": {
@@ -364,6 +383,12 @@
       "no-grouping": "未分組"
     },
     "alert-group-alerts-table": {
+      "columns": {
+        "label": {
+          "instance-labels": "",
+          "notification-state": "通知狀態"
+        }
+      },
       "duration": "用於 {{time}}"
     },
     "alert-group-filter": {
@@ -439,6 +464,11 @@
       "description-section": "輸入名稱以識別您的「{{entityName}}」。",
       "label-metric": "指標",
       "label-name": "名稱（名字）",
+      "message": {
+        "must-enter-a-metric-name": "",
+        "must-enter-a-name": "",
+        "please-select-a-data-source": "請選擇一個資料來源"
+      },
       "metric-aria-label-metric": "指標",
       "metric-placeholder-recorded-metric": "提供新紀錄指標的名稱",
       "placeholder-name": "為您的{{namePlaceholder}}命名",
@@ -491,6 +521,9 @@
     "alertmanager-config": {
       "gma-manual-configuration-description": "無法手動變更內部 Grafana Alertmanager 設定。若要變更此設定，請透過使用者介面編輯個別資源。",
       "gma-manual-configuration-is-not-supported": "不支援手動設定變更",
+      "message": {
+        "configuration-cannot-be-empty": ""
+      },
       "reset": "重設",
       "reset-confirmation": "確定要重設「{{alertmanagerName}}」的設定嗎？聯絡點和通知政策將重設為其預設值。",
       "resetting-configuration-might-while": "重設設定，這可能需要一段時間。",
@@ -580,6 +613,9 @@
       "create-a-contact-point": "建立聯絡點",
       "label-default-contact-point": "預設聯絡點",
       "label-timing-options": "計時選項",
+      "message": {
+        "required": ""
+      },
       "or": "或"
     },
     "am-routes-expanded-form": {
@@ -601,10 +637,18 @@
       "label-override-grouping": "覆寫分組",
       "label-value": "數值",
       "matching-labels": "匹配標籤",
+      "message": {
+        "required": ""
+      },
       "placeholder-label": "標籤",
       "placeholder-value": "值",
       "remove": "移除",
       "tooltip-remove-matcher": "移除匹配器"
+    },
+    "annotation-header-field": {
+      "message": {
+        "required": ""
+      }
     },
     "annotations": {
       "dashboard-annotation-field": {
@@ -677,6 +721,25 @@
         "title": "無法顯示所有事件"
       }
     },
+    "central-alert-history-scene": {
+      "scene": {
+        "labels-filter-variable": {
+          "label": {
+            "labels": ""
+          }
+        },
+        "transitions-from-filter-variable": {
+          "label": {
+            "start-state": ""
+          }
+        },
+        "transitions-to-filter-variable": {
+          "label": {
+            "end-state": ""
+          }
+        }
+      }
+    },
     "channel-sub-form": {
       "delete": "刪除",
       "duplicate": "重複",
@@ -713,11 +776,17 @@
     },
     "cloud-data-source-selector": {
       "label": "選擇資料來源",
-      "label-disabled": "資料來源"
+      "label-disabled": "資料來源",
+      "message": {
+        "please-select-a-data-source": "請選擇一個資料來源"
+      }
     },
     "cloud-evaluation-behavior": {
       "description-pending-period": "必須滿足閾值條件才能觸發警報的期間。選擇「無」表示條件一旦符合，即可觸發警報。",
       "label-pending-period": "待處理期間",
+      "message": {
+        "must-be-a-positive-integer": ""
+      },
       "title-set-evaluation-behavior": "設定評估行為"
     },
     "cloud-receiver-form": {
@@ -758,6 +827,9 @@
     "contact-point-selector": {
       "aria-label-refresh-contact-points": "重新整理聯絡點",
       "contact-point-picker-label-contact-point": "聯絡點",
+      "message": {
+        "contact-point-is-required": ""
+      },
       "title-failed-to-fetch-contact-points": "無法擷取聯絡點",
       "tooltip-refresh-contact-points-list": "重新整理聯絡點清單"
     },
@@ -822,6 +894,14 @@
     },
     "copy-to-clipboard": "將「{{label}}」複製到剪貼簿",
     "create-metadata": {
+      "label": {
+        "dashboard": "儀表板",
+        "dashboard-and-panel": "",
+        "evaluation-interval": "評估間隔",
+        "labels": "標籤",
+        "metric-name": "",
+        "runbook-url": ""
+      },
       "view-dashboard": "檢視儀表板",
       "view-panel": "檢視面板"
     },
@@ -946,6 +1026,11 @@
       "text-loading-template": "正在載入範本…",
       "title-failed-to-fetch-notification-template": "無法擷取通知範本"
     },
+    "edit-mute-timing-page": {
+      "text": {
+        "edit-time-interval": ""
+      }
+    },
     "editor": {
       "edit-alert-rule": "",
       "edit-recording-rule": "",
@@ -958,6 +1043,11 @@
     },
     "error-summary-button": {
       "content-show-all-errors": ""
+    },
+    "evaluate-every-validation-options": {
+      "message": {
+        "required": ""
+      }
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -976,6 +1066,9 @@
     "evaluation-group-creation-modal": {
       "description-group-name": "群組會在相同的評估間隔內評估其所有規則。",
       "description-often-rules-group-evaluated": "評估的群組中所有規則的頻率。",
+      "message": {
+        "required": ""
+      },
       "placeholder-enter-a-name": "輸入名稱",
       "title-new-evaluation-group": "新的評估群組"
     },
@@ -998,10 +1091,22 @@
       "title-permission-editrecreate-silence": "您沒有編輯/重新建立此靜音的權限",
       "title-silence-not-found": "未找到現有的靜音「{{silenceId}}」"
     },
+    "existing-silence-editor-page": {
+      "page-nav": {
+        "text": {
+          "edit-silence": ""
+        }
+      }
+    },
     "export": {
       "subtitle": {
         "formats": "選擇格式並下載檔案，或將內容複製到剪貼簿",
         "one-format": "下載檔案或將內容複製到剪貼簿"
+      }
+    },
+    "export-new-grafana-rule-page": {
+      "text": {
+        "export-new-grafana-rule": ""
       }
     },
     "export-new-rule-button": {
@@ -1029,6 +1134,16 @@
       "no-data": "沒有資料",
       "page-counter": ""
     },
+    "feature-toggle-page": {
+      "nav-model": {
+        "subTitle": {
+          "enable-alerting-grafana-config": ""
+        },
+        "text": {
+          "alerting-is-not-enabled": ""
+        }
+      }
+    },
     "federated-rule-warning": {
       "experimental": "聯合規則群組目前是一項實驗功能。",
       "read-documentation": "閱讀文件",
@@ -1036,12 +1151,33 @@
     },
     "file-export-inline-documentation": {
       "api-provisioning": "{{name}}格式僅適用於 API 佈建。<3>請至文件中閱讀更多資訊。</3>",
+      "export-inline-doc": {
+        "title": {
+          "apiprovisioning-format": "",
+          "fileprovisioning-format": "",
+          "terraformprovisioning-format": ""
+        }
+      },
       "file-provisioning": "{{name}}格式僅適用於檔案佈建。<3>請至文件中閱讀更多資訊。</3>",
       "terraform-provisioning": "{{name}}格式僅適用於 Terraform 佈建。<3>請至文件中閱讀更多資訊。</3>"
     },
     "file-export-preview": {
       "copy-code": "複製代碼",
       "download": "下載"
+    },
+    "filter-options": {
+      "label": {
+        "alert-rule": "警報規則",
+        "all": "全部",
+        "error": "錯誤",
+        "firing": "",
+        "no-data": "沒有資料",
+        "normal": "一般",
+        "ok": "確定",
+        "pending": "待處理",
+        "recording-rule": "錄製規則",
+        "recovering": "正在還原"
+      }
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
@@ -1077,7 +1213,10 @@
       }
     },
     "folder-selector": {
-      "description-select-folder": "選擇資料夾以儲存您的規則。"
+      "description-select-folder": "選擇資料夾以儲存您的規則。",
+      "message": {
+        "select-a-folder": ""
+      }
     },
     "folderAndGroup": {
       "evaluation": {
@@ -1092,14 +1231,87 @@
     "for-input": {
       "description-pending": "必須滿足閾值條件才能觸發警報的期間。選擇「無」表示條件一旦符合，即可觸發警報。"
     },
+    "for-validation-options": {
+      "message": {
+        "required": ""
+      }
+    },
     "generate-alert-data-modal": {
       "add-alert-data": "新增警報資料",
       "add-alert-data-to-payload": "將警報資料新增至負載",
+      "alert-options": {
+        "label": {
+          "firing": "",
+          "resolved": ""
+        }
+      },
       "review-alert-payload": "檢閱要新增至負載的警報資料：",
       "title-add-custom-alerts": "新增自訂警報"
     },
+    "get-alert-suggestions": {
+      "documentation": {
+        "annotations-attached-alert": "",
+        "fingerprint-identify-alert": "",
+        "grafana-external-alertmanager": "",
+        "organization-alert": "",
+        "time-the-alert-started-firing": ""
+      },
+      "value": {
+        "labels-attached-alert": "",
+        "status-alert-firing-resolved": ""
+      }
+    },
+    "get-cloud-scenes": {
+      "title": {
+        "mimir-alertmanager": ""
+      }
+    },
+    "get-global-suggestions": {
+      "value": {
+        "an-array-containing-all-alerts": ""
+      }
+    },
+    "get-grafana-alertmanager-scenes": {
+      "title": {
+        "grafana-alertmanager": ""
+      }
+    },
+    "get-grafana-managed-scenes": {
+      "title": {
+        "grafanamanaged-alert-rules": "Grafana 管理的警報規則"
+      }
+    },
+    "get-mimir-managed-rules-per-group-scenes": {
+      "rule-group-handler": {
+        "label": {
+          "rule-group": ""
+        }
+      },
+      "title": {
+        "mimirmanaged-alert-rules-per-rule-group": ""
+      }
+    },
+    "get-mimir-managed-rules-scenes": {
+      "title": {
+        "mimirmanaged-alert-rules": ""
+      }
+    },
     "get-preview-results": {
       "title-error": "錯誤"
+    },
+    "get-state-display-model": {
+      "text": {
+        "alerting": "",
+        "error": "",
+        "firing": "",
+        "inactive": "",
+        "no-data": "",
+        "ok": "確定",
+        "paused": "",
+        "pending": "",
+        "recovering": "",
+        "unknown": ""
+      }
     },
     "getting-stared": {
       "learn-more": "如需手動操作介紹，請參閱我們的<2>教學課程，開始使用 Grafana 警報</2>"
@@ -1142,6 +1354,10 @@
       "label-disable-resolved-message": "停用已解決的訊息"
     },
     "grafana-evaluation-behavior-step": {
+      "message": {
+        "must-be-a-positive-integer": "",
+        "must-enter-a-group-name": ""
+      },
       "missing-series-resolve-placeholder": "預設值：2",
       "or": "或",
       "placeholder-select-an-evaluation-group": "選取評估群組…",
@@ -1157,6 +1373,11 @@
     "grafana-modify-export": {
       "body-invalid-rule-id": "頁面網址中的規則 UID 無效。請檢查網址，然後再試一次。",
       "title-invalid-rule-id": "無效的規則 ID"
+    },
+    "grafana-modify-export-page": {
+      "text": {
+        "modify-export": ""
+      }
     },
     "grafana-mute-timing-exporter-preview": {
       "text-loading": "正在載入..."
@@ -1210,6 +1431,9 @@
     },
     "group-and-namespace-fields": {
       "group-picker-label-group": "群組",
+      "message": {
+        "required": ""
+      },
       "namespace-picker-label-namespace": "命名空間"
     },
     "group-by": {
@@ -1266,13 +1490,24 @@
     "header": {
       "tooltip-remove": "移除表達式「{{refId}}」"
     },
+    "history-apidatasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": "成功"
+      }
+    },
     "home": {
       "label-get-started": "開始使用",
       "label-insights": "深入分析",
       "title-alerting": "警報"
     },
     "import-from-dsrules": {
-      "description-folder-import-rules": "需匯入規則的資料夾"
+      "description-folder-import-rules": "需匯入規則的資料夾",
+      "message": {
+        "please-select-a-target-data-source": ""
+      }
     },
     "import-to-gma": {
       "action-button": "匯入",
@@ -1392,6 +1627,9 @@
       "text-loading-existing-labels": "正在載入現有標籤"
     },
     "labels-without-suggestions": {
+      "message": {
+        "required": ""
+      },
       "placeholder-key": "key",
       "placeholder-value": "值"
     },
@@ -1430,6 +1668,24 @@
     "log-record-viewer-by-timestamp": {
       "aria-label-state-history-by-timestamp": "按時間戳記顯示狀態歷史紀錄"
     },
+    "log-timeline-viewer": {
+      "label": {
+        "firing": "",
+        "mixed": "",
+        "no-data": "",
+        "normal": "一般",
+        "pending": "待處理",
+        "recovering": "正在還原"
+      }
+    },
+    "loki-apidatasource": {
+      "message": {
+        "data-source-is-working": ""
+      },
+      "title": {
+        "success": "成功"
+      }
+    },
     "loki-state-history": {
       "clear-filters": "清除篩選",
       "common-labels": "通用標籤",
@@ -1441,6 +1697,14 @@
     "manage-permissions": {
       "button": "管理權限",
       "title": "管理權限"
+    },
+    "manual-and-automatic-routing": {
+      "routing-options": {
+        "label": {
+          "select-contact-point": "",
+          "use-notification-policy": ""
+        }
+      }
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "使用不含大括號的標籤查詢來篩選警報，例如：",
@@ -1459,6 +1723,9 @@
       "label-operator": "運算子",
       "label-refine-affected-alerts": "縮小受影響警報的範圍",
       "label-value": "數值",
+      "message": {
+        "required": ""
+      },
       "placeholder-label": "標籤",
       "placeholder-value": "值",
       "remove": "移除",
@@ -1489,6 +1756,16 @@
     "more-button": {
       "aria-label": "更多",
       "button-text": "更多"
+    },
+    "multiple-data-source-picker": {
+      "get-data-source-options": {
+        "grouped-options": {
+          "label": {
+            "data-sources-with-configured-alert-rules": "",
+            "other-data-sources": ""
+          }
+        }
+      }
     },
     "mute-timing-actions-buttons": {
       "text-disabled": "已停用",
@@ -1553,10 +1830,25 @@
       "read-more": "閱讀通知政策。",
       "title-notification-routing": "通知路由"
     },
+    "new-mute-timing-page": {
+      "text": {
+        "add-time-interval": ""
+      }
+    },
     "new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "由於未找到對支援警報資料來源的查詢內容，因此無法從此面板建立警報。",
       "new-alert-rule": "新的警報規則",
       "title-no-alerting-capable-query-found": "找不到警報功能的查詢"
+    },
+    "new-silence-page": {
+      "page-nav": {
+        "subTitle": {
+          "configure-silences-notifications-particular-alert": ""
+        },
+        "text": {
+          "silence-alert-rule": "靜音警報規則"
+        }
+      }
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "我們找不到任何外部的 Alertmanager，您可能沒有內建 Grafana Alertmanager 的存取權限。",
@@ -1782,6 +2074,9 @@
       "expressions": "表達式",
       "loading-data-sources": "正在載入資料來源…",
       "manipulate-returned-queries-other-operations": "使用數學和其他運算來處理查詢返回的資料。",
+      "message": {
+        "a-valid-expression-is-required": ""
+      },
       "no-compatible-sources": "您似乎沒有相容的資料來源",
       "title-deactivate-advanced-options": "停用進階選項",
       "title-queries-expressions-configured": "未設定任何查詢或表達式"
@@ -2167,6 +2462,10 @@
         "label-saved-searches": "搜尋紀錄"
       },
       "health": "使用情況",
+      "label": {
+        "hide": "隱藏",
+        "show": "顯示"
+      },
       "manage-alerts": "在這些資料來源中，您可以選擇透過警報 UI 管理警報，以便在 Grafana UI 以及在其設定的資料來源中管理這些警報規則。",
       "placeholder-all-data-sources": "所有資料來源",
       "plugin-rules": "外掛程式規則",
@@ -2263,6 +2562,9 @@
       "label-comment": "評論",
       "label-created-by": "建立者",
       "label-duration": "持續時間",
+      "message": {
+        "required": ""
+      },
       "placeholder-whos-creating-the-silence": "靜音建立者",
       "save-silence": "儲存靜音",
       "saving": "正在儲存…"
@@ -2301,6 +2603,12 @@
       "title-alert-rule-types": "警報規則類型"
     },
     "state-history": {
+      "columns": {
+        "label": {
+          "state": "狀態",
+          "time": "時間"
+        }
+      },
       "filter-group": "篩選群組",
       "filter-group-tooltip": "透過完全匹配或正規表達式篩選每個狀態歷史紀錄組，例如：",
       "placeholder-search": "搜尋",
@@ -2340,6 +2648,9 @@
       "label-examples-documentation": "範例文件",
       "label-template-group": "範本群組",
       "label-template-group-name": "範本群組名稱",
+      "message": {
+        "required": ""
+      },
       "new-template-name-placeholder-give-your-template-group-a-name": "為您的範本群組命名",
       "title-error-saving-template": "儲存範本時發生錯誤",
       "title-templating-cheat-sheet": "範本備忘錄"
@@ -2362,6 +2673,11 @@
       "existing-templates-selector-aria-label-choose-notification-template": "選擇通知範本",
       "existing-templates-selector-placeholder-choose-notification-template": "選擇通知範本",
       "loading": "正在載入…",
+      "template-options": {
+        "label": {
+          "select-notification-template": ""
+        }
+      },
       "tooltip-copy": "將選定的通知範本複製到剪貼簿。您可以在自訂分頁中使用。"
     },
     "templates": {
@@ -2464,9 +2780,38 @@
       }
     },
     "use-columns": {
+      "columns": {
+        "label": {
+          "alert-rule-targeted": "",
+          "alerts-silenced": "",
+          "health": "使用情況",
+          "matching-labels": "匹配標籤",
+          "name": "名稱（名字）",
+          "schedule": "排程",
+          "state": "狀態",
+          "time-range": "時間範圍"
+        }
+      },
+      "label": {
+        "actions": "動作",
+        "created": "已建立",
+        "group": "群組",
+        "labels": "標籤",
+        "next-evaluation": "下一個評估",
+        "state": "狀態",
+        "summary": "摘要"
+      },
       "title-edit": "編輯",
       "title-recreate": "重新建立",
       "title-unsilence": "取消靜音"
+    },
+    "use-combined-labels": {
+      "grouped-options": {
+        "label": {
+          "from-alerts": "",
+          "from-system": ""
+        }
+      }
     },
     "use-create-dropdown-menu-actions": {
       "label-delete": "刪除",
@@ -2499,6 +2844,17 @@
     "use-edit-policy-modal": {
       "modal-element": {
         "title-edit-notification-policy": "編輯通知政策"
+      }
+    },
+    "use-page-nav": {
+      "page-nav": {
+        "text": {
+          "details": "詳細資訊",
+          "history": "歷史紀錄",
+          "instances": "執行個體",
+          "query-and-conditions": "",
+          "versions": "版本"
+        }
       }
     },
     "use-state-history-modal": {
@@ -2617,6 +2973,11 @@
       "configuration-required": "必要設定",
       "refer-documentation-configure-authentication": "請參閱如何設定驗證的文件"
     },
+    "field-map": {
+      "label": {
+        "none": "無"
+      }
+    },
     "fields": {
       "allow-assign-grafana-admin-description": "",
       "allow-assign-grafana-admin-label": "",
@@ -2721,6 +3082,14 @@
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
       "validate-hosted-domain-label": ""
+    },
+    "get-page-nav": {
+      "subTitle": {
+        "configure-authentication-providers": ""
+      },
+      "text": {
+        "authentication": "身分驗證"
+      }
     },
     "provider-card": {
       "text-badge-enabled": "已啟用",
@@ -2879,11 +3248,112 @@
     "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。"
   },
   "canvas": {
+    "button-item": {
+      "label": {
+        "center": "",
+        "left": "",
+        "right": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
+    "cloud-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
+    "ellipse-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
+    "metric-value-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
     "not-found-display": {
       "not-found": "<0>未找到：<config /></0>"
     },
+    "parallelogram-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
+    "rectangle-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
     "text-display": {
       "double-click-to-set": "按兩下以設定文字"
+    },
+    "text-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
+    },
+    "triangle-item": {
+      "label": {
+        "bottom": "",
+        "center": "",
+        "left": "",
+        "middle": "",
+        "right": "",
+        "top": ""
+      },
+      "placeholder": {
+        "auto": "自動"
+      }
     }
   },
   "carousel": {
@@ -2963,6 +3433,22 @@
     }
   },
   "connections": {
+    "add-new-connection": {
+      "filter-by-options": {
+        "label": {
+          "all": "全部",
+          "installed": "已安裝",
+          "new-updates": ""
+        }
+      },
+      "label": {
+        "by-downloads": "",
+        "by-name-az": "",
+        "by-name-za": "",
+        "by-published-date": "",
+        "by-updated-date": ""
+      }
+    },
     "advisor-redirect-notice": {
       "aria-label-link-to-advisor": "連結到 Advisor",
       "body": "試試新的 Advisor，以便發現資料來源和外掛程式的潛在問題。",
@@ -2979,6 +3465,22 @@
       "body": "資料來源有新的位置！您可以在「連線」頁面中探索新的資料來源或管理現有的資料來源，該頁面可從主選單存取。",
       "go-to-connections": "前往連線"
     },
+    "data-source-details-page": {
+      "subTitle": {
+        "datasource-could-found": ""
+      },
+      "text": {
+        "unknown-datasource": ""
+      }
+    },
+    "new-data-source-page": {
+      "subTitle": {
+        "choose-a-data-source-type": ""
+      },
+      "text": {
+        "add-data-source": "新增資料來源"
+      }
+    },
     "no-access-modal": {
       "connection-contact-grafana-admin": "若要新增連線，請聯絡您的 Grafana 管理員。",
       "editor-warning": "編輯者無法新增連線。您可以檢查是否已在<2>資料來源</2>中進行設定。",
@@ -2991,6 +3493,18 @@
     "search": {
       "aria-label-search-all": "搜尋所有",
       "placeholder": "搜尋所有"
+    },
+    "use-data-source-settings-nav": {
+      "node": {
+        "subTitle": {
+          "data-source-error": ""
+        }
+      },
+      "page-nav": {
+        "text": {
+          "data-source-nav-node": ""
+        }
+      }
     }
   },
   "core": {
@@ -3286,6 +3800,11 @@
       "title-plugin-dashboard": "外掛程式儀表板"
     },
     "dash-nav": {
+      "on-open-snapshot-original": {
+        "title": {
+          "proceed-to-external-site": ""
+        }
+      },
       "render-left-actions": {
         "text-public": "公共",
         "tooltip-view-as-scene": "以場景形式檢視"
@@ -3297,9 +3816,24 @@
     "dashboard-loading": {
       "cancel-loading-dashboard": "取消載入儀表板"
     },
+    "dashboard-page-error": {
+      "text": {
+        "not-found": "無結果"
+      }
+    },
     "dashboard-settings": {
       "actions": {
         "close": "關閉"
+      }
+    },
+    "dashboard-slice": {
+      "title": {
+        "dashboard-init-failed": ""
+      }
+    },
+    "dashboard-srv": {
+      "message": {
+        "edit-dashboard-json": ""
       }
     },
     "dashboard-validation": {
@@ -3449,14 +3983,97 @@
     "errors": {
       "failed-to-load": "無法載入儀表板"
     },
+    "fetch-dashboard": {
+      "message": {
+        "failed-to-fetch-dashboard": ""
+      }
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "傳送自訂意見回饋",
       "footer-text": "此內容是使用 <2>Grafana LLM 外掛程式</2> AI 所產生",
       "placeholder-tell-ai-what-to-do-next": "告訴 AI 下一步該怎麼做…"
     },
+    "general-settings-unconnected": {
+      "editable-options": {
+        "label": {
+          "editable": "可编辑",
+          "readonly": ""
+        }
+      }
+    },
+    "get-debug-dashboard": {
+      "title": {
+        "annotations": "註釋"
+      }
+    },
+    "get-errors": {
+      "message": {
+        "error-loading-data": ""
+      }
+    },
     "get-field-override-categories": {
       "label-add-field-override": "新增欄位覆寫",
-      "label-add-override-property": "新增覆寫屬性"
+      "label-add-override-property": "新增覆寫屬性",
+      "title": {
+        "add-button": ""
+      }
+    },
+    "get-library-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": ""
+        }
+      },
+      "title": {
+        "information": "資訊",
+        "name": "名稱（名字）"
+      }
+    },
+    "get-library-viz-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": ""
+        }
+      },
+      "title": {
+        "information": "資訊",
+        "name": "名稱（名字）"
+      }
+    },
+    "get-panel-editor-tabs": {
+      "text": {
+        "alert": "",
+        "query": "查詢",
+        "transform-data": ""
+      }
+    },
+    "get-panel-frame-category": {
+      "descriptor": {
+        "title": {
+          "panel-options": "面板選項"
+        }
+      },
+      "direction-options": {
+        "label": {
+          "horizontal": "橫向",
+          "vertical": "縱向"
+        }
+      },
+      "title": {
+        "description": "說明",
+        "max-per-row": "每列最大值",
+        "panel-links": "面板連結",
+        "repeat-by-variable": "按變數重複",
+        "repeat-direction": "重複方向",
+        "repeat-options": "重複選項",
+        "title": "標題",
+        "transparent-background": "透明背景"
+      }
+    },
+    "get-panel-menu": {
+      "text": {
+        "extensions": ""
+      }
     },
     "help-wizard": {
       "copy-to-clipboard": "複製至剪貼簿",
@@ -3469,9 +4086,20 @@
       "randomize-field-names-label-field-names": "欄位名稱",
       "randomize-labels-label-labels": "標籤",
       "randomize-string-values-label-string-values": "字串值",
+      "tabs": {
+        "label": {
+          "data": "資料",
+          "snapshot": "快照"
+        }
+      },
       "title-complete-git-hub-comment-clipboard": "將完整的 GitHub 評論複製到剪貼簿",
       "title-get-help-with-this-panel": "取得此面板的相關說明",
       "troubleshooting-docs": "疑難排解文件"
+    },
+    "init-dashboard": {
+      "message": {
+        "failed-create-dashboard-model": ""
+      }
     },
     "inspect": {
       "data-tab": "資料",
@@ -3525,6 +4153,16 @@
       "rows": "總列數",
       "table-title": "統計資料"
     },
+    "k8s-dashboard-api": {
+      "title": {
+        "deleted": ""
+      }
+    },
+    "k8s-dashboard-v2api": {
+      "title": {
+        "deleted": ""
+      }
+    },
     "layout": {
       "common": {
         "copy": "複製",
@@ -3535,6 +4173,13 @@
         "group-layout-disabled": "此層級上不存在群組",
         "panel-layout": "面板版面配置",
         "panel-layout-disabled": "選擇一列或分頁以變更面板版面配置選項"
+      }
+    },
+    "legacy-dashboard-api": {
+      "fetch-error": {
+        "message": {
+          "dashboard-not-found": ""
+        }
       }
     },
     "make-editable": {
@@ -3556,6 +4201,20 @@
       "menu-use-library-panel": "使用資料庫面板"
     },
     "new-panel-title": "新的面板",
+    "on-create-new-row": {
+      "new-row": {
+        "title": {
+          "row-title": ""
+        }
+      }
+    },
+    "on-create-new-widget-panel": {
+      "new-panel": {
+        "title": {
+          "widget-title": ""
+        }
+      }
+    },
     "options": {
       "description": "說明",
       "title-option": "標題"
@@ -3613,6 +4272,30 @@
       "does-not-exist": "您嘗試存取的儀表板不存在",
       "paused": "管理員已暫停此儀表板",
       "try-again-later": "稍後再試"
+    },
+    "remove-panel": {
+      "text": {
+        "remove-panel": ""
+      },
+      "title": {
+        "remove-panel": ""
+      }
+    },
+    "repeat-row-select": {
+      "variable-options": {
+        "label": {
+          "disable-repeating": "",
+          "no-template-variables-found": ""
+        }
+      }
+    },
+    "repeat-row-select2": {
+      "variable-options": {
+        "label": {
+          "disable-repeating": "",
+          "no-template-variables-found": ""
+        }
+      }
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -3726,6 +4409,18 @@
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": "範本變數"
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": ""
+      },
+      "label": {
+        "git-hub-comment": "",
+        "panel-support-snapshot": ""
+      },
+      "title": {
+        "copy-to-clipboard-failed": ""
+      }
     },
     "tabs-layout": {
       "delete-tab-text": "刪除此分頁也會移除所有面板。確定要繼續嗎？",
@@ -3932,7 +4627,10 @@
     },
     "unthemed-dashboard-row": {
       "aria-label-delete-row": "刪除行",
-      "learn-more": "了解更多資訊"
+      "learn-more": "了解更多資訊",
+      "title": {
+        "delete-row": "刪除行"
+      }
     },
     "validation": {
       "invalid-dashboard-id": "沒有找到有效的 Grafana.com ID",
@@ -3967,6 +4665,16 @@
     },
     "visualization-select-pane": {
       "placeholder-search-for": "搜尋…",
+      "radio-options": {
+        "description": {
+          "reusable-panels-share-between-multiple-dashboards": ""
+        },
+        "label": {
+          "library-panels": "資料庫面板",
+          "suggestions": "",
+          "visualizations": ""
+        }
+      },
       "title-close": "關閉"
     },
     "viz-panel": {
@@ -4017,12 +4725,25 @@
       "label-data-source": "資料來源",
       "label-use-static-key-dimensions": "使用靜態金鑰維度"
     },
+    "add-to-dashboard": {
+      "message": {
+        "could-navigate-selected-dashboard-please-again": "",
+        "could-panel-dashboard-please-again": ""
+      }
+    },
     "add-to-dashboard-form": {
       "cancel": "取消",
       "description-choose-where-to-add-the-panel": "選擇要新增面板的位置。",
       "description-select-which-dashboard-panel-created": "選擇要在其中建立面板的儀表板。",
+      "label": {
+        "existing-dashboard": "現有儀表板",
+        "new-dashboard": "新儀表板"
+      },
       "label-dashboard": "儀表板",
       "label-target-dashboard": "目標儀表板",
+      "message": {
+        "this-field-is-required": "此為必填欄位。"
+      },
       "open-dashboard": "打開儀表板",
       "open-in-new-tab": "在新的分頁中開啟",
       "title-error-adding-the-panel": "新增面板時發生錯誤"
@@ -4059,6 +4780,25 @@
       "invalid-branch-name": "分支名稱無效。",
       "it-cannot-contain-or": "不能包含「//」或「..」。",
       "least-valid-character": "必須至少有一個有效字元。"
+    },
+    "build-new-dashboard-save-model": {
+      "data": {
+        "title": {
+          "new-dashboard": "新儀表板"
+        }
+      }
+    },
+    "build-new-dashboard-save-model-v2": {
+      "data": {
+        "title": {
+          "new-dashboard": "新儀表板"
+        }
+      }
+    },
+    "config-public-dashboard": {
+      "title": {
+        "revoke-public-url": "撤銷公共網址"
+      }
     },
     "constant-variable-form": {
       "constant-options": "常數選項",
@@ -4107,20 +4847,86 @@
       "value-not-saved": "該數值尚未儲存在 Grafana 資料庫中",
       "view-pull-request-in-git-hub": "在 GitHub 中檢視拉取請求"
     },
+    "dashboard-scene": {
+      "text": {
+        "edit-panel": "",
+        "view-panel": "檢視面板"
+      },
+      "title": {
+        "dashboard": "儀表板",
+        "discard-changes-to-dashboard": ""
+      }
+    },
+    "dashboard-scene-page-state-manager": {
+      "message": {
+        "dashboard-not-found": ""
+      }
+    },
+    "dashboard-scene-page-state-manager-v2": {
+      "message": {
+        "dashboard-not-found": ""
+      }
+    },
     "data-source-variable-form": {
       "data-source-options": "資料來源選項",
       "description-instance-name-filter": "在變數值清單中選擇資料來源執行個體的正規表達式篩選器。全部留空。",
       "example-instance-name-filter": "範例：<codeExample />",
       "selection-options": "選擇選項"
     },
+    "default-grid-layout-manager": {
+      "row": {
+        "title": {
+          "row-title": ""
+        }
+      }
+    },
     "description-label": {
       "description": "說明"
+    },
+    "edit-link-view": {
+      "edit-link-page-nav": {
+        "text": {
+          "edit-link": "編輯連結"
+        }
+      }
     },
     "email-list": {
       "aria-label-emailmenu": "切換電子郵件選單"
     },
+    "embedded-dashboard-test-page": {
+      "subTitle": {
+        "showing-dashboard-panel-tests-pie-chart": ""
+      },
+      "text": {
+        "embedding-dashboard": ""
+      }
+    },
     "empty-transformations-message": {
       "add-transformation": "新增轉換"
+    },
+    "get-edit-options": {
+      "title": {
+        "column-options": "",
+        "row-height-options": ""
+      }
+    },
+    "get-panel-frame-options": {
+      "descriptor": {
+        "title": {
+          "panel-options": "面板選項"
+        }
+      },
+      "title": {
+        "description": "說明",
+        "panel-links": "面板連結",
+        "title": "標題",
+        "transparent-background": "透明背景"
+      }
+    },
+    "get-workflow-options": {
+      "label": {
+        "push-to-a-new-branch": ""
+      }
     },
     "group-by-variable-form": {
       "description-enables-users-custom-values": "使用者能夠將自訂值新增至清單",
@@ -4141,6 +4947,12 @@
       "randomize-field-names-label-field-names": "欄位名稱",
       "randomize-labels-label-labels": "標籤",
       "randomize-string-values-label-string-values": "字串值",
+      "tabs": {
+        "label": {
+          "data": "資料",
+          "snapshot": "快照"
+        }
+      },
       "title-complete-git-hub-comment-clipboard": "將完整的 GitHub 評論複製到剪貼簿",
       "title-get-help-with-this-panel": "取得此面板的相關說明",
       "troubleshooting-docs": "疑難排解文件",
@@ -4182,6 +4994,14 @@
       "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
       "title-name-already-exists": "名稱已存在"
     },
+    "on-remove-panel": {
+      "text": {
+        "remove-panel": ""
+      },
+      "title": {
+        "remove-panel": ""
+      }
+    },
     "panel-data-alerting-tab-rendered": {
       "alert": {
         "title-errors-loading-rules": "載入規則時發生錯誤"
@@ -4203,6 +5023,11 @@
       "table-view-aria-label-toggletableview": "切換表格檢視",
       "table-view-label-table-view": "表格檢視"
     },
+    "panel-editor": {
+      "text": {
+        "edit-panel": ""
+      }
+    },
     "panel-editor-renderer": {
       "aria-label-open-options-pane": "開啟選項窗格",
       "tooltip-open-options-pane": "開啟選項窗格"
@@ -4211,8 +5036,22 @@
       "body-panel-plugin-not-loaded": "請確認您要檢查的面板在開啟檢查之前為可見且已顯示。",
       "title-panel-plugin-not-loaded": "未載入面板外掛程式"
     },
+    "panel-menu-behavior": {
+      "async-func": {
+        "text": {
+          "extensions": "",
+          "metrics-drilldown": ""
+        }
+      }
+    },
     "panel-viz-type-picker": {
       "placeholder-search-for": "搜尋…",
+      "radio-options": {
+        "label": {
+          "suggestions": "",
+          "visualizations": ""
+        }
+      },
       "title-close": "關閉"
     },
     "provisioned-delete-modal": {
@@ -4238,6 +5077,15 @@
       "label-target-data-source": "目標資料來源",
       "query-options": "查詢選項",
       "selection-options": "選擇選項"
+    },
+    "resource-export": {
+      "label": {
+        "classic": "",
+        "json": "JSON",
+        "v1-resource": "",
+        "v2-resource": "",
+        "yaml": ""
+      }
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -4346,6 +5194,18 @@
     "solo-panel-page": {
       "loading": "正在載入"
     },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": ""
+      },
+      "label": {
+        "git-hub-comment": "",
+        "panel-support-snapshot": ""
+      },
+      "title": {
+        "copy-to-clipboard-failed": ""
+      }
+    },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "（選填）",
       "text-options": "文字選項"
@@ -4355,6 +5215,13 @@
     },
     "title-field-label": {
       "title": "標題"
+    },
+    "transform-usages-to-network": {
+      "result": {
+        "label": {
+          "dashboard": ""
+        }
+      }
     },
     "transformations-drawer": {
       "search-box-suffix": {
@@ -4370,6 +5237,13 @@
       "discard": "捨棄",
       "save-dashboard": "儲存儀表板",
       "title-unsaved-changes": "未儲存變更"
+    },
+    "use-dashboard-edit-page-nav": {
+      "page-nav": {
+        "text": {
+          "settings": "設定"
+        }
+      }
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "此變數未被任何變數或儀表板參照使用。",
@@ -4387,7 +5261,10 @@
       "placeholder-descriptive-text": "描述性文字",
       "placeholder-label-name": "標籤名稱",
       "placeholder-variable-name": "變數名稱",
-      "text-running-query": "正在執行查詢…"
+      "text-running-query": "正在執行查詢…",
+      "title": {
+        "delete-variable": "刪除變數"
+      }
     },
     "variable-editor-list": {
       "definition": "定義",
@@ -4590,6 +5467,46 @@
       "label-default": "預設值",
       "label-name": "名稱（名字）"
     },
+    "build-categories": {
+      "categories": {
+        "title": {
+          "cloud": "",
+          "distributed-tracing": "",
+          "enterprise-plugins": "企業外掛程式",
+          "industrial-io-t": "",
+          "logging-document-databases": "",
+          "others": "",
+          "profiling": "",
+          "sql": "",
+          "time-series-databases": ""
+        }
+      }
+    },
+    "build-nav-model": {
+      "analytics": {
+        "text": {
+          "insights": "深入分析"
+        }
+      },
+      "caching": {
+        "text": {
+          "cache": ""
+        }
+      },
+      "ds-permissions": {
+        "text": {
+          "permissions": "權限"
+        }
+      },
+      "nav-model": {
+        "text": {
+          "settings": "設定"
+        }
+      },
+      "text": {
+        "dashboards": "儀表板"
+      }
+    },
     "button-row": {
       "delete": "刪除",
       "save-and-test": "儲存並測試",
@@ -4625,6 +5542,11 @@
     "data-source-read-only-message": {
       "title-provisioned-data-source": "已設定的資料來源"
     },
+    "data-source-settings-reducer": {
+      "message": {
+        "testing-could-couple-minutes": ""
+      }
+    },
     "data-source-type-card": {
       "aria-label-learn-more": "{{dataSourcePluginName}}，了解更多。"
     },
@@ -4642,13 +5564,68 @@
     "footer": {
       "add-csv-or-spreadsheet": "新增 CSV 或試算表"
     },
+    "get-enterprise-phantom-plugins": {
+      "description": {
+        "adobe-analytics-datasource": "",
+        "app-dynamics-integration-and-data-source": "",
+        "atlassian-statuspage-datasource": "",
+        "aurora-data-source": "",
+        "azure-cosmos-db-datasource": "",
+        "azure-devops-datasource": "",
+        "catchpoint-datasource": "",
+        "cloudflare-datasource": "",
+        "cockroach-db-datasource": "",
+        "data-dog-integration-and-data-source": "",
+        "drone-datasource": "",
+        "git-lab-integration-and-datasource": "",
+        "honeycomb-integration-and-datasource": "",
+        "jira-integration-and-datasource": "",
+        "logic-monitor-devices-datasource": "",
+        "mongo-db-integration-and-data-source": "",
+        "netlify-datasource": "",
+        "new-relic-integration-and-data-source": "",
+        "pager-duty-datasource": "",
+        "salesforce-integration-and-datasource": "",
+        "sap-hana-integration-and-data-source": "",
+        "service-now-integration-and-data-source": "",
+        "signal-fx-integration-and-datasource": "",
+        "snowflake-integration-and-data-source": "",
+        "sumo-logic-integration-and-datasource": "",
+        "visualize-and-explore-dynatrace-data": "",
+        "visualize-and-explore-oracle-sql": "",
+        "visualize-and-explore-splunk-logs": "",
+        "wavefront-integration-and-data-source": "",
+        "zendesk-datasource": ""
+      }
+    },
+    "get-grafana-cloud-phantom-plugin": {
+      "description": {
+        "hosted-graphite-prometheus-and-loki": ""
+      }
+    },
     "new-data-source-view": {
       "cancel": "取消",
       "placeholder-filter-by-name-or-type": "按名稱或類型篩選"
     },
+    "update-data-source": {
+      "error-info": {
+        "message": {
+          "an-unexpected-error-occurred": ""
+        }
+      }
+    },
     "use-data-source-info": {
       "badge-text-not-supported": "不支援",
-      "badge-text-supported": "支援"
+      "badge-text-supported": "支援",
+      "label": {
+        "alerting": "警報",
+        "type": "類型"
+      }
+    },
+    "use-delete-loaded-data-source": {
+      "title": {
+        "delete": "刪除"
+      }
     }
   },
   "dimensions": {
@@ -4717,6 +5694,19 @@
       "remove-value-mapping-aria-label-delete-value-mapping": "刪除值對應",
       "remove-value-mapping-tooltip-delete": "刪除",
       "set-color": "設定顏色",
+      "special-match-options": {
+        "description": {
+          "boolean-false-values": "",
+          "boolean-true-values": "",
+          "empty-string": "",
+          "matches-against-number-na-n-not-a-number": "",
+          "matches-null-and-undefined-values": "",
+          "matches-null-undefined-and-na-n": ""
+        },
+        "label": {
+          "empty": "空"
+        }
+      },
       "tooltip-remove-color": "移除顏色",
       "tooltip-remove-icon": "移除圖示"
     },
@@ -4732,6 +5722,20 @@
       "display-text": "顯示文字",
       "icon": "圖示",
       "label-add-a-new-mapping": "新增對應",
+      "mapping-types": {
+        "description": {
+          "match-a-numerical-range-of-values": "",
+          "match-a-regular-expression-with-replacement": "",
+          "match-a-specific-text-value": "",
+          "match-boolean-empty-values": ""
+        },
+        "label": {
+          "range": "",
+          "regex": "",
+          "special": "",
+          "value": "數值"
+        }
+      },
       "update": "更新"
     }
   },
@@ -4765,6 +5769,11 @@
     "add-to-dashboard": "新增至儀表板",
     "basic-extensions": {
       "aria-label-add": "新增"
+    },
+    "build-dashboard-panel-from-explore-state": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "clear": "清除",
     "confirm-navigation-modal": {
@@ -4852,6 +5861,33 @@
       "title-table": "表格",
       "title-traces": "追蹤"
     },
+    "explore-query-inspector": {
+      "data-tab": {
+        "label": {
+          "data": "資料"
+        }
+      },
+      "error-tab": {
+        "label": {
+          "error": "錯誤"
+        }
+      },
+      "json-tab": {
+        "label": {
+          "json": "JSON"
+        }
+      },
+      "query-tab": {
+        "label": {
+          "query": "查詢"
+        }
+      },
+      "stats-tab": {
+        "label": {
+          "stats": "統計資料"
+        }
+      }
+    },
     "explore-run-query-button": {
       "run-button": {
         "aria-label-run-query-options": "執行查詢選項"
@@ -4865,10 +5901,23 @@
       "description-explore-disabled": "若要啟用「探索」，請在 Grafana 設定中啟用：",
       "title-explore-disabled": "「探索」已停用"
     },
+    "get-field-links-for-explore": {
+      "text": {
+        "data": "資料",
+        "raw-value": ""
+      }
+    },
     "get-matches-metadata": {
       "matches": "0 個匹配"
     },
     "legacy-create-span-link-factory": {
+      "text": {
+        "tags": "標籤"
+      },
+      "title": {
+        "related-logs": "",
+        "session-for-this-span": "此範圍的工作階段"
+      },
       "title-explore-metrics-for-this-span": "探索此範圍的指標",
       "title-explore-split": "在分割檢視中探索此紀錄",
       "title-session-for-this-span": "此範圍的工作階段"
@@ -4909,6 +5958,10 @@
     },
     "logs-meta-row": {
       "download": "下載",
+      "label": {
+        "deduplication-count": "",
+        "showing-only-selected-fields": ""
+      },
       "show-original-line": "顯示原始行"
     },
     "logs-sample-panel": {
@@ -5090,6 +6143,21 @@
       "run-query-button": "執行查詢",
       "switch-datasource-button": "切換資料來源並執行查詢"
     },
+    "scoped-vars-from-span": {
+      "text": {
+        "span": ""
+      }
+    },
+    "scoped-vars-from-tags": {
+      "text": {
+        "tags": "標籤"
+      }
+    },
+    "scoped-vars-from-trace": {
+      "text": {
+        "trace": "追蹤"
+      }
+    },
     "search-bar-input": {
       "placeholder-find": "尋找…",
       "suffix": {
@@ -5124,9 +6192,25 @@
       "tooltip-tag-key": "將用於取得標記值的標記鍵。將搜尋範圍的屬性和資源以取得標記鍵"
     },
     "span-detail": {
+      "label": {
+        "kind": "",
+        "library-name": "",
+        "library-version": "",
+        "status": "狀態：",
+        "status-message": "",
+        "trace-state": ""
+      },
       "label-resource-attributes": "資源屬性",
       "label-span-attributes": "範圍屬性",
       "label-stack-trace": "堆疊追蹤",
+      "overview-items": {
+        "label": {
+          "child-count": "",
+          "duration": "",
+          "service": "",
+          "start-time": ""
+        }
+      },
       "warnings": "警告"
     },
     "span-filters": {
@@ -5233,6 +6317,18 @@
       "title-node-graph": "節點圖表"
     },
     "unthemed-logs": {
+      "description": {
+        "show-results-in-logs-visualisation": "",
+        "show-results-in-table-visualisation": "",
+        "show-results-newest-to-oldest": "",
+        "show-results-oldest-to-newest": ""
+      },
+      "label": {
+        "logs": "紀錄",
+        "newest-first": "最新排前",
+        "oldest-first": "最舊排前",
+        "table": "表格"
+      },
       "label-deduplication": "重複資料",
       "label-display-results": "顯示結果",
       "label-prettify-json": "美化 JSON",
@@ -5248,6 +6344,15 @@
     },
     "unthemed-virtualized-trace-view": {
       "title-scroll-to-top": "捲動回頂部"
+    },
+    "use-focus-span-link": {
+      "create-focus-span-link": {
+        "link": {
+          "title": {
+            "deep-link-to-this-span": ""
+          }
+        }
+      }
     }
   },
   "export": {
@@ -5333,6 +6438,15 @@
   "folder-repo": {
     "badge-text": "已佈建"
   },
+  "folders": {
+    "get-loading-nav": {
+      "main": {
+        "title": {
+          "loading": "正在載入"
+        }
+      }
+    }
+  },
   "forgot-password": {
     "back-button": "回到登入",
     "change-password": {
@@ -5382,6 +6496,74 @@
     },
     "progress-status": {
       "your-progress": "您的進度"
+    },
+    "use-get-configuration-for-ui": {
+      "get-connect-data-source-configuration": {
+        "title": {
+          "connect-data-source": ""
+        }
+      },
+      "title": {
+        "essentials": "必需品"
+      }
+    },
+    "use-get-essentials-configuration": {
+      "essential-content": {
+        "description": {
+          "configure-grafana-alerting": "",
+          "create-integration-alerting-contact-point": "",
+          "initialize-incident-plugin-declare-manage-incidents": "",
+          "practice-solving-an-incident": "",
+          "receive-alerts-oncall-notifications-within-environment": "",
+          "select-chat-ops-channels-to-route-notifications": ""
+        },
+        "label": {
+          "add": "新增",
+          "connect": "連接",
+          "initialize": "",
+          "select-integration": "",
+          "start-drill": ""
+        },
+        "title": {
+          "add-slack-notifications-to-irm-integrations": "",
+          "connect-alerting-to-irm": "",
+          "connect-irm-to-your-slack-workspace": "",
+          "connect-your-messaging-workspace-to-incident": "",
+          "connect-your-messaging-workspace-to-on-call": "",
+          "create-incident-drill": "",
+          "detect": "偵測",
+          "initialize-incident-plugin": "",
+          "messaging-workspace-channel-on-call-integration": "",
+          "respond": "",
+          "test-your-configuration": ""
+        }
+      },
+      "get-grafana-alerting-config-steps": {
+        "description": {
+          "create-alert-monitor-system": "",
+          "create-on-call-integration-alerting-contact-point": "",
+          "create-slos-to-monitor-your-service": ""
+        },
+        "label": {
+          "connect": "連接",
+          "create": "建立",
+          "enable": "啟用"
+        },
+        "steps": {
+          "label": {
+            "edit": "編輯"
+          },
+          "title": {
+            "update-default-contact-point": ""
+          }
+        },
+        "title": {
+          "connect-alerting-to-on-call": "",
+          "create-alert-rule": "",
+          "create-slo": "",
+          "enable-slo-alerting": ""
+        }
+      }
     }
   },
   "grafana": {
@@ -5748,14 +6930,18 @@
       "duplicate-panel": "複製面板",
       "exit-edit/setting-views": "結束編輯／設定檢視",
       "expand-all-rows": "展開所有列",
+      "explore-panel": "",
       "go-to-dashboards": "前往儀表板",
       "go-to-explore": "前往「探索」",
       "go-to-home-dashboard": "前往首頁儀表板",
       "go-to-profile": "前往個人資料",
+      "inspect-panel": "",
       "make-time-range-permanent": "將時間範圍設為絕對／永久",
       "move-time-range-back": "將時間範圍向後移動",
       "move-time-range-forward": "將時間範圍向前移動",
       "open-search": "開啟搜尋",
+      "open-share-embed-drawer": "",
+      "open-share-link-drawer": "",
       "open-shared-modal": "分享面板快照",
       "paste-time-range": "貼上時間範圍",
       "refresh-all-panels": "重新整理所有面板",
@@ -5828,6 +7014,9 @@
       "label-name": "名稱（名字）",
       "label-password": "密碼",
       "label-username": "使用者名稱",
+      "message": {
+        "email-is-invalid": ""
+      },
       "placeholder-name-optional": "名稱（可選）",
       "placeholder-password": "密碼",
       "placeholder-username": "使用者名稱",
@@ -6132,6 +7321,13 @@
     }
   },
   "logs": {
+    "get-dataframe-fields": {
+      "vars": {
+        "text": {
+          "labels": "標籤"
+        }
+      }
+    },
     "infinite-scroll": {
       "end-of-range": "所選時間範圍的結束。",
       "load-more": "滾動以載入更多內容",
@@ -6210,6 +7406,11 @@
       },
       "disable-popover-message": {
         "shortcut": "alt + 選取以再次啟用"
+      }
+    },
+    "log-series-to-logs-model": {
+      "label": {
+        "total-bytes-processed": ""
       }
     },
     "logs-controls": {
@@ -6302,6 +7503,14 @@
     },
     "snapshot-list-table": {
       "title-delete": "刪除"
+    },
+    "unthemed-dashboard-import": {
+      "subTitle": {
+        "import-dashboard-from-file-or-grafanacom": ""
+      },
+      "text": {
+        "import-dashboard": "匯入儀表板"
+      }
     }
   },
   "migrate-to-cloud": {
@@ -7002,6 +8211,11 @@
       "label-organization-name": "組織名稱",
       "placeholder-org-name": "組織名稱"
     },
+    "org-details-page": {
+      "title": {
+        "confirm-preferences-update": ""
+      }
+    },
     "org-profile": {
       "label-organization-name": "組織名稱",
       "label-organization-profile": "組織設定檔",
@@ -7021,7 +8235,10 @@
       "tooltip": "您現在可以選擇「無基本角色」選項，並根據您的自訂需求新增權限。您可以在<1>我們的文件</1>中找到更多資訊。"
     },
     "user-invite-page": {
-      "sub-title": "傳送邀請或將現有 Grafana 使用者新增至組織。<1>{{orgName}}</1>"
+      "sub-title": "傳送邀請或將現有 Grafana 使用者新增至組織。<1>{{orgName}}</1>",
+      "text": {
+        "invite-user": ""
+      }
     }
   },
   "org-picker": {
@@ -7033,6 +8250,38 @@
     }
   },
   "panel": {
+    "get-calculation-value-data-links-variable-suggestions": {
+      "value-calc-var": {
+        "label": {
+          "calculation-name": ""
+        }
+      }
+    },
+    "get-data-links-variable-suggestions": {
+      "value-time-var": {
+        "label": {
+          "time": "時間"
+        }
+      }
+    },
+    "get-field-links-supplier": {
+      "text": {
+        "data": "資料",
+        "field": "欄位",
+        "series": "",
+        "value": "數值"
+      }
+    },
+    "get-field-vars": {
+      "label": {
+        "name": "名稱（名字）"
+      }
+    },
+    "get-panel-links-variable-suggestions": {
+      "label": {
+        "all-variables": ""
+      }
+    },
     "header-menu": {
       "copy": "複製",
       "create-library-panel": "建立資料庫面板",
@@ -7093,6 +8342,13 @@
     "select-placeholder": "按類型篩選"
   },
   "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "新播放清單"
+        }
+      }
+    },
     "playlist-table-rows": {
       "aria-label-playlist-item": "播放清單項目，{{itemType}}，{{itemValue}}",
       "multiple-dashboards-found": "找到多個項目：{{items}}",
@@ -7109,6 +8365,12 @@
       "label-mode": "模式",
       "label-time-and-refresh": "時間與重新整理",
       "label-variables": "變數",
+      "modes": {
+        "label": {
+          "kiosk": "資訊站",
+          "normal": "一般"
+        }
+      },
       "title-start-playlist": "開始播放清單"
     }
   },
@@ -7175,6 +8437,19 @@
     },
     "browse": {
       "aria-label-plugin-type-filter": "外掛程式類型篩選器",
+      "filter-by-options": {
+        "label": {
+          "all": "全部",
+          "installed": "已安裝",
+          "new-updates": ""
+        }
+      },
+      "label": {
+        "all": "全部",
+        "applications": "",
+        "data-sources": "資料來源",
+        "panels": "面板"
+      },
       "label-search": "搜尋",
       "label-state": "狀態",
       "label-type": "類型",
@@ -7256,11 +8531,23 @@
     "empty-state": {
       "message": "未找到外掛程式"
     },
+    "extensions-log-data-source": {
+      "message": {
+        "ok": "確定"
+      }
+    },
     "filter": {
       "disabled": "此篩選器已被停用，因為 Grafana 伺服器無法存取 grafana.com",
       "sort": "排序",
       "sort-list": "排序外掛程式清單",
       "state": "狀態"
+    },
+    "get-feature-state-info": {
+      "text": {
+        "alpha": "",
+        "beta": "Beta",
+        "deprecated": "已取代"
+      }
     },
     "get-started-with-app": {
       "disable": "停用",
@@ -7318,6 +8605,16 @@
     "plugin-details-header-dependencies": {
       "grafana-dependency": "Grafana {{grafanaDependency}}"
     },
+    "plugin-details-page": {
+      "not-found-model": {
+        "subTitle": {
+          "requested-belong-plugin": ""
+        },
+        "text": {
+          "unknown-plugin": ""
+        }
+      }
+    },
     "plugin-details-signature": {
       "body-invalid-plugin-signature": "Grafana Labs 檢查每個外掛程式，以驗證其是否具有有效的數位簽章。外掛程式簽章驗證是我們安全措施的一部分，以確保外掛程式安全且值得信賴。Grafana Labs 無法保證此未簽署外掛程式的完整性。請讓外掛程式作者要求簽署。",
       "read-more-about-plugins-signing": "閱讀更多關於外掛程式簽署的資訊。",
@@ -7362,6 +8659,13 @@
     },
     "search-field": {
       "placeholder-search-grafana-plugins": "搜尋 Grafana 外掛程式"
+    },
+    "use-plugin-details-tabs": {
+      "nav-model-children": {
+        "text": {
+          "dashboards": "儀表板"
+        }
+      }
     },
     "version-install-button": {
       "text-installed": "已安裝"
@@ -7479,6 +8783,11 @@
       "label-git-hub-features": "GitHub 功能",
       "label-realtime-feedback": "即時意見回饋"
     },
+    "connect-page": {
+      "subTitle": {
+        "connect-external-storage-manage-resources": ""
+      }
+    },
     "connect-repository-button": {
       "configure": "設定",
       "configure-file": "設定檔案佈建",
@@ -7512,7 +8821,13 @@
     },
     "edit-repository-page": {
       "back-to-repositories": "返回至儲存庫",
-      "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。"
+      "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
+      "subTitle": {
+        "configure-repository-storing-resources": ""
+      },
+      "text": {
+        "configure-repository": ""
+      }
     },
     "empty-state": {
       "no-jobs": "沒有作業…"
@@ -7574,6 +8889,11 @@
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
       "placeholder-search": "搜尋"
+    },
+    "get-default-values": {
+      "title": {
+        "repository": "存放庫"
+      }
     },
     "getting-started": {
       "alert-temporary-outage": "連接整個執行個體時，在執行移轉時將無法使用儀表板。建議您在開始此流程前通知使用者。",
@@ -7719,7 +9039,18 @@
       "dashboard-preview": "儀表板預覽",
       "existing-dashboard": "現有儀表板",
       "history": "歷史紀錄",
+      "message": {
+        "removed-from-repo-test-ui": "",
+        "updated-from-repo-test-ui": ""
+      },
       "repository": "存放庫",
+      "tab-info": {
+        "label": {
+          "dry-run-result-after-apply": "",
+          "existing-from-grafana": "",
+          "file-from-repository": ""
+        }
+      },
       "title-error-saving-file": "儲存檔案時發生錯誤"
     },
     "setup-modal": {
@@ -8128,14 +9459,6 @@
     "reload-button": "重新載入",
     "title": "無法找到應用程式檔案"
   },
-  "sandbox": {
-    "test-stuff-page": {
-      "application-notifications-toasts-testing": "應用程式通知（快顯通知）測試",
-      "error": "錯誤",
-      "success": "成功",
-      "warning": "警告"
-    }
-  },
   "save-dashboards": {
     "message-length": {
       "info": "訊息為 {{messageLength}} 個字元，超過 500 個字元的最大長度。請在儲存前縮短。",
@@ -8195,6 +9518,14 @@
       "view-as-folders": "依資料夾檢視",
       "view-as-list": "以清單形式檢視"
     },
+    "bluge-searcher": {
+      "opts": {
+        "label": {
+          "alphabetically-az": "",
+          "alphabetically-za": ""
+        }
+      }
+    },
     "dashboard-actions": {
       "import": "匯入",
       "new": "新",
@@ -8222,6 +9553,14 @@
     "search-results-table": {
       "aria-label-search-results-table": "搜尋結果表格",
       "no-data": "沒有數值"
+    },
+    "unified-searcher": {
+      "opts": {
+        "label": {
+          "alphabetically-az": "",
+          "alphabetically-za": ""
+        }
+      }
     }
   },
   "select": {
@@ -8293,6 +9632,11 @@
       "delete-service-account": "刪除服務帳戶",
       "disable-service-account": "停用服務帳戶",
       "enable-service-account": "啟用服務帳戶",
+      "page-nav": {
+        "subTitle": {
+          "manage-settings-individual-service-account": ""
+        }
+      },
       "title-delete-service-account": "刪除服務帳戶",
       "title-disable-service-account": "停用服務帳戶",
       "tokens": "權杖",
@@ -8616,7 +9960,10 @@
     "support-bundles-create-unconnected": {
       "cancel": "取消",
       "create": "建立",
-      "sub-title": "選擇支援套件的組件。支援套件將在建立後 3 天內可用。"
+      "sub-title": "選擇支援套件的組件。支援套件將在建立後 3 天內可用。",
+      "text": {
+        "create-support-bundle": ""
+      }
     },
     "support-bundles-unconnected": {
       "created-on": "建立時間",
@@ -8650,6 +9997,24 @@
     "select-placeholder": "選擇團隊"
   },
   "teams": {
+    "build-nav-model": {
+      "nav-model": {
+        "subTitle": {
+          "manage-members-and-settings": ""
+        },
+        "text": {
+          "settings": "設定"
+        }
+      },
+      "team-group-sync": {
+        "text": {
+          "external-group-sync": "外部群組同步"
+        }
+      },
+      "text": {
+        "members": "會員"
+      }
+    },
     "create-team": {
       "create": "建立",
       "description-email": "這是可選項目，主要用於允許自訂團隊頭像",
@@ -8671,6 +10036,9 @@
       "external-group-sync": "外部群組同步",
       "label-add-external-group": "新增外部群組",
       "team-sync-upgrade": "在試用 Grafana 專業版期間，新增群組以免費啟用團隊同步功能",
+      "text": {
+        "add-group": "新增群組"
+      },
       "title-there-external-groups": "沒有可同步的外部群組",
       "tooltip-add-external-group": "LDAP 群組範例：{{example}}"
     },
@@ -8808,6 +10176,10 @@
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "新增轉換欄位類型轉換器",
       "aria-label-remove-convert-field-type-transformer": "移除轉換欄位類型轉換器",
+      "label": {
+        "browser": "瀏覽器",
+        "utc": ""
+      },
       "label-as": "作為",
       "label-date-format": "日期格式",
       "label-field": "欄位",
@@ -8894,10 +10266,31 @@
       "tooltip-format": "指定為 <2>Moment.js 格式字串</2>的欄位輸出格式。",
       "tooltip-timezone-manually": "手動設定日期的時區"
     },
+    "get-timezone-options": {
+      "label": {
+        "browser": "瀏覽器",
+        "utc": ""
+      }
+    },
     "get-tooltips": {
       "description": "json 對象的有效路徑。",
       "json-value": "JSON 值：",
+      "map-valid-paths": {
+        "description": {
+          "extract-fields-from-object": "",
+          "extract-value": "",
+          "extract-value-first-element": "",
+          "extract-value-second-element": ""
+        }
+      },
       "valid-paths": "有效路徑："
+    },
+    "get-transformer-option-pane": {
+      "root": {
+        "title": {
+          "root": ""
+        }
+      }
     },
     "group-by-field-configuration": {
       "placeholder-ignored": "已略過",
@@ -8915,7 +10308,23 @@
       "label-cell-value": "儲存格數值",
       "label-column": "欄位",
       "label-empty-value": "空白數值",
-      "label-row": "列"
+      "label-row": "列",
+      "special-value-options": {
+        "description": {
+          "boolean-false-value": "",
+          "boolean-true-value": "",
+          "empty-string": "",
+          "null-value": "",
+          "number-value": ""
+        },
+        "label": {
+          "empty": "空",
+          "false": "",
+          "null": "",
+          "true": "",
+          "zero": ""
+        }
+      }
     },
     "histogram-transformer-editor": {
       "placeholder-auto": "自動",
@@ -8978,10 +10387,22 @@
       "tooltip-naming": "設定所選欄位名稱的顯示方式。因為框架名稱通常更適合表格資料"
     },
     "partition-by-values-editor": {
+      "keep-fields-options": {
+        "label": {
+          "no": "否",
+          "yes": "是"
+        }
+      },
       "label-field": "欄位",
       "label-keep-fields": "保留欄位",
       "label-naming": "命名",
       "label-select-field": "選擇欄位",
+      "naming-modes-options": {
+        "label": {
+          "as-frame-name": "",
+          "as-label": ""
+        }
+      },
       "partition-values-works-single-frame": "按值分割僅適用於單個框架。",
       "tooltip-keeps-partition-fields-frames": "在框架中保留分割欄位"
     },
@@ -9003,6 +10424,16 @@
       "label-include-time": "包含時間",
       "label-labels-to-fields": "欄位標籤",
       "label-mode": "模式",
+      "modes": {
+        "description": {
+          "collapse-field-single-value": "",
+          "create-table-series-value": ""
+        },
+        "label": {
+          "reduce-fields": "",
+          "series-to-rows": ""
+        }
+      },
       "placeholder-choose-stat": "選擇統計資料"
     },
     "regex-matcher-editor": {
@@ -9010,11 +10441,23 @@
       "variable-regex-documentation": ""
     },
     "regression-transformer-editor": {
+      "label": {
+        "cubic": "",
+        "quadratic": "",
+        "quartic": "",
+        "quintic": ""
+      },
       "label-degree": "度",
       "label-model-type": "模型類型",
       "label-predicted-points": "預測點",
       "label-x-field": "X 欄位",
       "label-y-field": "Y 欄位",
+      "model-type-options": {
+        "label": {
+          "linear": "",
+          "polynomial": ""
+        }
+      },
       "tooltip-number-of-xy-points-to-predict": "要預測的 X、Y 點數"
     },
     "rename-by-regex-transformer-editor": {
@@ -9031,6 +10474,23 @@
       "label-field": "欄位",
       "label-reverse": "反向",
       "placeholder-select-field": "選擇欄位"
+    },
+    "supplier": {
+      "description": {
+        "apply-spatial-operations-to-the-geometry": "",
+        "create-a-line-between-two-points": "",
+        "geometry-define-field-headingdistancearea": ""
+      },
+      "label": {
+        "area": "",
+        "as-line": "",
+        "calculate-value": "",
+        "distance": "",
+        "heading": "",
+        "line-builder": "",
+        "prepare-spatial-field": "",
+        "transform": ""
+      }
     },
     "time-series-table-transform-editor": {
       "label-stat": "統計資料",
@@ -9065,7 +10525,19 @@
       "placeholder-auto": "自動",
       "placeholder-field": "欄位",
       "tooltip-window-size": "視窗大小",
-      "tooltip-window-size-percent": "將視窗大小設定為總資料的百分比"
+      "tooltip-window-size-percent": "將視窗大小設定為總資料的百分比",
+      "type-options": {
+        "label": {
+          "centered": "",
+          "trailing": ""
+        }
+      },
+      "window-size-mode-options": {
+        "label": {
+          "fixed": "",
+          "percentage": ""
+        }
+      }
     }
   },
   "upgrade-box": {
@@ -9122,6 +10594,11 @@
     },
     "users-action-bar-unconnected": {
       "invite": "邀請",
+      "options": {
+        "label": {
+          "users": "使用者"
+        }
+      },
       "placeholder-search-login-email": "按登入、電子郵件或名稱搜尋使用者"
     }
   },
@@ -9165,6 +10642,32 @@
     "confirm-delete-modal": {
       "title-delete-variable": "刪除變數"
     },
+    "create-ad-hoc-variable-adapter": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": ""
+      }
+    },
+    "create-custom-variable-adapter": {
+      "description": {
+        "define-variable-values-manually": ""
+      }
+    },
+    "create-interval-variable-adapter": {
+      "description": {
+        "define-timespan-interval": ""
+      }
+    },
+    "create-query-variable-adapter": {
+      "description": {
+        "variable-values-fetched-datasource-query": ""
+      }
+    },
+    "data-source-variable-slice": {
+      "text": {
+        "default": "",
+        "no-data-sources-found": "沒有找到資料來源"
+      }
+    },
     "empty-state": {
       "button-title": "新增變數",
       "info-box-content": "變數可啟用更具互動性和動態的儀表板。您可以使用變數來代替在指標查詢中對伺服器或感應器名稱等進行硬編碼。變數顯示為儀表板頂部的清單方塊。這些下拉式清單可讓您輕鬆變更儀表板中顯示的資料。",
@@ -9190,6 +10693,13 @@
     "text-box-variable-editor": {
       "placeholder-default-value-if-any": "預設值（如有）",
       "text-options": "文字選項"
+    },
+    "transform-usages-to-network": {
+      "result": {
+        "label": {
+          "dashboard": ""
+        }
+      }
     },
     "unknown-table": {
       "loading": "正在載入…",
