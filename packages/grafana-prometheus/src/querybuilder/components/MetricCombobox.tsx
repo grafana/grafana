@@ -124,6 +124,7 @@ export function MetricCombobox({
           query={query}
           onChange={onChange}
           initialMetrics={loadMetricsExplorerMetrics}
+          timeRange={timeRange}
         />
       )}
       {variableEditor ? (
