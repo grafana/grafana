@@ -17,7 +17,8 @@ import { Messages } from './PerconaUpdateVersion.constants';
 import { getStyles } from './PerconaUpdateVersion.styles';
 
 const PerconaUpdateVersion = () => {
-  const { updateAvailable, installed, latest, changeLogs, showUpdateModal } = useSelector(getUpdatesInfo);
+  const { updateAvailable, installed, latest, changeLogs, showUpdateModal, latestNewsUrl } =
+    useSelector(getUpdatesInfo);
   const { result: settings } = useSelector(getPerconaSettings);
   const { updatesEnabled } = settings!;
   const { snoozedPmmVersion } = useSelector(getPerconaUser);
@@ -59,13 +60,17 @@ const PerconaUpdateVersion = () => {
       <Modal
         onDismiss={onDismiss}
         title={Messages.titleOneUpdate}
-        isOpen={showUpdateModal && changeLogs && changeLogs?.updates?.length === 1}
+        isOpen={showUpdateModal && (changeLogs?.updates?.length || 0) <= 1}
         className={styles.updateVersionModal}
       >
         <div data-testid="one-update-modal">
           <h5 className={styles.version}>{latest?.version || ''}</h5>
           <p className={styles.releaseNotesText}>
-            <a target="_blank" rel="noopener noreferrer" href={changeLogs?.updates[0]?.releaseNotesUrl || ''}>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={changeLogs?.updates[0]?.releaseNotesUrl || latestNewsUrl}
+            >
               {Messages.fullReleaseNotes}
             </a>
           </p>
