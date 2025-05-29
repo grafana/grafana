@@ -50,6 +50,7 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -589,12 +590,7 @@ function getStyles(theme: GrafanaTheme2) {
         flexGrow: `0 !important`,
         minHeight: '250px',
       },
-      '&:hover': {
-        '.dashboard-canvas-add-button': {
-          opacity: 1,
-          filter: 'unset',
-        },
-      },
+      ...dashboardCanvasAddButtonHoverStyles,
     }),
     actionsWrapper: css({
       position: 'relative',

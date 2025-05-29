@@ -12,6 +12,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabsLayoutManager } from './TabsLayoutManager';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
@@ -102,14 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: '1 1 auto',
   }),
-  tabsBar: css({
-    '&:hover': {
-      '.dashboard-canvas-add-button': {
-        filter: 'unset',
-        opacity: 1,
-      },
-    },
-  }),
+  tabsBar: css(dashboardCanvasAddButtonHoverStyles),
   tabsRow: css({
     display: 'flex',
     width: '100%',

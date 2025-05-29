@@ -10,6 +10,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, isLazy } = model.useState();
@@ -68,12 +69,7 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
         }
       : undefined,
     // Show add action when hovering over the grid
-    '&:hover': {
-      '.dashboard-canvas-add-button': {
-        opacity: 1,
-        filter: 'unset',
-      },
-    },
+    ...dashboardCanvasAddButtonHoverStyles,
   }),
   containerFillScreen: css({
     flexGrow: 1,
