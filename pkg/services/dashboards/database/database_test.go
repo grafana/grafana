@@ -297,15 +297,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, res[0], provisioningData)
 
 		// get dashboards within the provisioner
-		dashs, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 1)
+		provisionedDashes, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 1)
 		require.NoError(t, err)
-		require.Len(t, dashs, 1)
-		dashs, err = dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 2)
+		require.Len(t, provisionedDashes, 1)
+		provisionedDashes, err = dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 2)
 		require.NoError(t, err)
-		require.Len(t, dashs, 0)
+		require.Len(t, provisionedDashes, 0)
 
 		// find dashboards not within that provisioner
-		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 1)
+		dashs, err := dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 1)
 		require.NoError(t, err)
 		require.Len(t, dashs, 1)
 		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 2)
@@ -841,7 +841,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	require.NoError(t, err)
 
 	orgID := int64(1)
-	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
+	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false, []string{"tag1", "tag2"})
 
 	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -869,7 +869,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, 0, f0.UID, false)
+	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, 0, f0.UID, false, []string{"tag3"})
 
 	subfolder, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -1244,43 +1244,35 @@ func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDas
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
 	hitList := make([]*model.Hit, 0)
-	hits := make(map[int64]*model.Hit)
 
 	for _, item := range res {
-		hit, exists := hits[item.ID]
-		if !exists {
-			hitType := model.DashHitDB
-			if item.IsFolder {
-				hitType = model.DashHitFolder
-			}
-
-			hit = &model.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
-				Type:        hitType,
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-				Tags:        []string{},
-			}
-
-			if item.FolderUID != "" {
-				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			hitList = append(hitList, hit)
-			hits[item.ID] = hit
+		hitType := model.DashHitDB
+		if item.IsFolder {
+			hitType = model.DashHitFolder
 		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
+
+		hit := &model.Hit{
+			ID:          item.ID,
+			UID:         item.UID,
+			Title:       item.Title,
+			URI:         "db/" + item.Slug,
+			URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
+			Type:        hitType,
+			FolderUID:   item.FolderUID,
+			FolderTitle: item.FolderTitle,
+			Tags:        item.Tags,
 		}
+
+		if item.FolderUID != "" {
+			hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
+		}
+
+		if query.Sort.MetaName != "" {
+			hit.SortMeta = item.SortMeta
+			hit.SortMetaName = query.Sort.MetaName
+		}
+
+		hitList = append(hitList, hit)
 	}
 	return hitList
 }

@@ -11,8 +11,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new custom variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -34,11 +32,13 @@ describe('Dashboard edit - variables', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
     const values = variable.value.split(',');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(values[0]).should('be.visible');
+
+    // check that variable deletion works
+    e2e.components.EditPaneHeader.deleteButton().click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('not.exist');
   });
 
   it('can add a new constant variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -69,8 +69,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new textbox variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -105,8 +103,6 @@ describe('Dashboard edit - variables', () => {
   });
 
   it('can add a new interval variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 

@@ -7,7 +7,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleA",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -21,7 +22,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleB",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -775,6 +777,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1747744953711",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "deletionTimestamp": "2025-04-03T07:52:54Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
       }
     },
     {
@@ -2558,6 +2575,18 @@
     },
     {
       "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1745320933872",
+        "creationTimestamp": "2025-04-22T11:22:13Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-07T12:14:25Z"
@@ -2888,13 +2917,28 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-11-14T20:08:03Z"
+        "creationTimestamp": "2024-11-14T20:08:03Z",
+        "deletionTimestamp": "2025-05-28T13:44:54Z"
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "restoreDashboards",
+        "resourceVersion": "1748002635285",
+        "creationTimestamp": "2025-05-23T12:17:15Z"
+      },
+      "spec": {
+        "description": "Enables restore deleted dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
       }
     },
     {
@@ -3107,6 +3151,21 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersTempo",
+        "resourceVersion": "1747930192816",
+        "creationTimestamp": "2025-05-20T14:50:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-22 16:09:52.816517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {
