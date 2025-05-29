@@ -225,7 +225,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	if safepath.IsDir(filePath) {
 		tree, err := r.client.GetTreeByPath(ctx, refHash, finalPath)
 		if err != nil {
-			if errors.Is(err, nanogit.ErrRefNotFound) {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return nil, repository.ErrFileNotFound
 			}
 
@@ -247,7 +247,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 
 	blob, err := r.client.GetBlobByPath(ctx, root.Hash, finalPath)
 	if err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, repository.ErrFileNotFound
 		}
 
@@ -274,7 +274,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	// Get flat tree using nanogit's GetFlatTree
 	tree, err := r.client.GetFlatTree(ctx, refHash)
 	if err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, repository.ErrRefNotFound
 		}
 		return nil, fmt.Errorf("get flat tree: %w", err)
@@ -342,15 +342,9 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 	}
 
 	if _, err := writer.CreateBlob(ctx, finalPath, data); err != nil {
-		// TODO: in library, ErrAlreadyExists
-		// if errors.Is(err, nanogit.ErrBlobExists) {
-		// 	return &apierrors.StatusError{
-		// 		ErrStatus: metav1.Status{
-		// 			Message: "file already exists",
-		// 			Code:    http.StatusConflict,
-		// 		},
-		// 	}
-		// }
+		if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
+			return repository.ErrFileAlreadyExists
+		}
 
 		return fmt.Errorf("create blob: %w", err)
 	}
@@ -394,8 +388,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 
 	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
 	if _, err := writer.UpdateBlob(ctx, finalPath, data); err != nil {
-		// TODO: improve nanogit library to have a better error type
-		if errors.Is(err, nanogit.ErrRefNotFound) {
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return repository.ErrFileNotFound
 		}
 
@@ -450,14 +443,14 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
 	if safepath.IsDir(path) {
 		if _, err := writer.DeleteTree(ctx, finalPath); err != nil {
-			if errors.Is(err, nanogit.ErrRefNotFound) {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
 			return fmt.Errorf("delete tree: %w", err)
 		}
 	} else {
 		if _, err := writer.DeleteBlob(ctx, finalPath); err != nil {
-			if errors.Is(err, nanogit.ErrRefNotFound) {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
 			return fmt.Errorf("delete blob: %w", err)
@@ -656,7 +649,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
 	if err != nil {
-		if errors.Is(err, nanogit.ErrRefNotFound) {
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
 		return nil, fmt.Errorf("get ref %s: %w", ref, err)
@@ -686,7 +679,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	}
 
 	// If error is not "ref not found", return the error
-	if !errors.Is(err, nanogit.ErrRefNotFound) {
+	if !errors.Is(err, nanogit.ErrObjectNotFound) {
 		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", err)
 	}
 

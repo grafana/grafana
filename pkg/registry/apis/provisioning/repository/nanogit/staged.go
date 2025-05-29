@@ -54,25 +54,29 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 }
 
 func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
-	if ref != "" {
+	if ref != "" && ref != r.branch {
 		return nil, errors.New("ref is not supported for staged repository")
 	}
 
-	// TODO: read from writer if there
+	// TODO: the read in the cloned is simplied used to check if a folder exists,
+	// We should fix the usage and the interface so that it's not needed to load the entire blob
 	return r.Read(ctx, path, ref)
 }
 
 func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	if ref != "" {
+	if ref != "" || ref != r.branch {
 		return nil, errors.New("ref is not supported for staged repository")
 	}
 
-	// TODO: this one should be in the writer itself, it has the tree
+	ref = ""
+	// TODO: I think we don't need this for cloned repository currently.
+	// we should probably remove it from the interface or construct this tree from the writer itself
+
 	return r.ReadTree(ctx, ref)
 }
 
 func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" {
+	if ref != "" && ref != r.branch {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -96,12 +100,16 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 }
 
 func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" {
+	if ref != "" && ref != r.branch {
 		return errors.New("ref is not supported for staged repository")
 	}
 
-	// TODO: from writer check if path exists
-	if true {
+	ok, err := r.writer.BlobExists(ctx, path)
+	if err != nil {
+		return fmt.Errorf("check if file exists: %w", err)
+	}
+
+	if !ok {
 		if err := r.create(ctx, path, data, r.writer); err != nil {
 			return err
 		}
@@ -123,7 +131,7 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 }
 
 func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" {
+	if ref != "" && ref != r.branch {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -147,7 +155,7 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 }
 
 func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) error {
-	if ref != "" {
+	if ref != "" && ref != r.branch {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -179,7 +187,6 @@ func (r *stagedGitRepository) Push(ctx context.Context, opts repository.PushOpti
 		defer cancel()
 	}
 
-	// TODO: improve push to not do anything if everything was pushed already
 	return r.writer.Push(ctx)
 }
 
