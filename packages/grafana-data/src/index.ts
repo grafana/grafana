@@ -877,3 +877,5 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
+
+export { type UserStorage } from './types/userStorage';
