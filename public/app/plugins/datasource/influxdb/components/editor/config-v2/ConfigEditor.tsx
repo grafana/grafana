@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { Alert, Box, ScrollContainer, Stack, TextLink } from '@grafana/ui';
+import { Alert, Box, Stack, TextLink } from '@grafana/ui';
 
 import { InfluxOptions } from '../../../types';
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
@@ -17,32 +17,23 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
       <LeftSideBar />
     </Box>
     <Box width="60%">
-      <ScrollContainer
-        scrollbarWidth="none"
-        overflowY="auto"
-        margin={2}
-        minHeight={0}
-        maxHeight="100vh"
-        maxWidth="1440px"
-        minWidth="400px"
-      >
-        <Stack direction="column">
-          <Alert severity="info" title="">
-            <>
-              You are viewing a new design for InfluxDB configuration settings.{' '}
-              <TextLink
-                href="https://github.com/grafana/grafana/issues"
-                external
-                onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
-              >
-                Submit feedback.
-              </TextLink>
-            </>
-          </Alert>
-          <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
-          <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
-        </Stack>
-      </ScrollContainer>
+      <Stack direction="column">
+        <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings.">
+          <>
+            If something isn't working correctly, you can revert to the original configuration page design by disabling
+            the <code>newInfluxDSConfigPageDesign</code> feature flag.{' '}
+            <TextLink
+              href="https://github.com/grafana/grafana/issues"
+              external
+              onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
+            >
+              Submit feedback.
+            </TextLink>
+          </>
+        </Alert>
+        <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />
+        <DatabaseConnectionSection options={options} onOptionsChange={onOptionsChange} />
+      </Stack>
     </Box>
     <Box width="20%">{/* TODO: Right sidebar */}</Box>
   </Stack>
