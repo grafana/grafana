@@ -34,6 +34,7 @@ import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
+import { readFileAsText } from './readFileAsText';
 import { parseYamlToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
 export interface ImportFormValues {
@@ -260,6 +261,8 @@ function YamlFileUpload() {
             onFileUpload={(event) => {
               const yamlFile = event.currentTarget.files?.item(0);
               onChange(yamlFile);
+              // Crucial for allowing re-selection of the same file after external edits
+              event.currentTarget.value = '';
             }}
             size="sm"
             showFileName
@@ -276,7 +279,7 @@ function YamlFileUpload() {
               return t('alerting.import-to-gma.yaml.required-message', 'Please select a file');
             }
             try {
-              const yamlContent = await value.text();
+              const yamlContent = await readFileAsText(value);
               parseYamlToRulerRulesConfigDTO(yamlContent, value.name);
               return true;
             } catch (error) {
