@@ -84,49 +84,79 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
-		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
-		userService:               userService,
-		authInfoService:           authInfoService,
-		userProtectionService:     userProtectionService,
-		quotaService:              quotaService,
-		log:                       log.New("user.sync"),
-		tracer:                    tracer,
-		features:                  features,
-		lastSeenSF:                &singleflight.Group{},
+		allowNonProvisionedUsers: scimSection.Key("allow_non_provisioned_users").MustBool(false),
+		userService:              userService,
+		authInfoService:          authInfoService,
+		userProtectionService:    userProtectionService,
+		quotaService:             quotaService,
+		log:                      log.New("user.sync"),
+		tracer:                   tracer,
+		features:                 features,
+		lastSeenSF:               &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	allowNonProvisionedUsers  bool
-	isUserProvisioningEnabled bool
-	userService               user.Service
-	authInfoService           login.AuthInfoService
-	userProtectionService     login.UserProtectionService
-	quotaService              quota.Service
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	features                  featuremgmt.FeatureToggles
-	lastSeenSF                *singleflight.Group
+	allowNonProvisionedUsers bool
+	userService              user.Service
+	authInfoService          login.AuthInfoService
+	userProtectionService    login.UserProtectionService
+	quotaService             quota.Service
+	log                      log.Logger
+	tracer                   tracing.Tracer
+	features                 featuremgmt.FeatureToggles
+	lastSeenSF               *singleflight.Group
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
-func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
 	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
+	// Default isUserProvisioningEnabled to false. It will be set by metadata if provided and valid.
+	// If metadata is missing or invalid, it remains false, effectively disabling provisioning for the request
+	// unless explicitly enabled via metadata.
+	isUserProvisioningEnabled := false   // Default to false
+	configSource := "hook_default_false" // Source if metadata not found or invalid
+	// allowNonProvisionedUsers still uses its static config from UserSync struct initialization.
+	allowNonProvisionedUsers := s.allowNonProvisionedUsers
+
+	// Check for effective user_sync_enabled from request metadata (set by SCIMSettingsAuthExtender)
+	const metaKeyEffectiveSCIMUserSyncEnabled = "scim_effective_user_sync_enabled"
+	if r != nil {
+		metadataStr := r.GetMeta(metaKeyEffectiveSCIMUserSyncEnabled)
+		if metadataStr != "" {
+			log.Debug("Found effective SCIM user_sync_enabled setting in request meta", "key", metaKeyEffectiveSCIMUserSyncEnabled, "value", metadataStr)
+			parsedValue, parseErr := strconv.ParseBool(metadataStr)
+			if parseErr == nil {
+				isUserProvisioningEnabled = parsedValue
+				configSource = "metadata_provided"
+				log.Debug("Applied effective SCIM setting for user_sync_enabled from metadata", "value", isUserProvisioningEnabled)
+			} else {
+				log.Warn("Failed to parse effective SCIM setting for user_sync_enabled from request meta, defaulting to false for this request.", "value", metadataStr, "error", parseErr)
+				// isUserProvisioningEnabled remains false (the initialized default)
+				configSource = "metadata_parse_error_default_false"
+			}
+		} else {
+			log.Debug("Metadata key for effective SCIM user_sync_enabled not found, defaulting to false for this request.", "key", metaKeyEffectiveSCIMUserSyncEnabled)
+			// isUserProvisioningEnabled remains false (the initialized default)
+			configSource = "metadata_missing_default_false"
+		}
+	}
+
 	// Skip validation if user provisioning is disabled
-	if !s.isUserProvisioningEnabled {
-		log.Debug("User provisioning is disabled, skipping validation")
+	if !isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation", "source", configSource)
 		return nil
 	}
 
 	// Skip validation if non-provisioned users are allowed
-	if s.allowNonProvisionedUsers {
-		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+	// allowNonProvisionedUsers remains based on static config as per investigation
+	if allowNonProvisionedUsers {
+		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation", "userProvisioningEnabledSource", configSource)
 		return nil
 	}
 
