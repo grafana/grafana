@@ -25,6 +25,7 @@ composableKinds: PanelCfg: lineage: {
 			Options: common.OptionsWithTimezones & {
 				legend:       common.VizLegendOptions
 				tooltip:      common.VizTooltipOptions
+				timeCompare?: common.TimeCompareOptions
 				orientation?: common.VizOrientation
 			} @cuetsy(kind="interface")
 

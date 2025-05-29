@@ -67,9 +67,6 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
       },
-      [FieldConfigProperty.TimeCompare]: {
-        hideFromDefaults: false,
-      },
     },
     useCustomConfig: (builder) => {
       builder
