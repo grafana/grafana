@@ -23,7 +23,7 @@ refs:
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Mimir, Loki, and Prometheus alert rules as Grafana-managed alert rules. 
+Grafana provides an internal tool in Alerting which allows you to import Mimir, Loki, and Prometheus alert rules as Grafana-managed alert rules.
 
 ## Before you begin
 
@@ -66,11 +66,11 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
 1. Navigate to the Data source-managed alert rules section and click **Import to Grafana-managed rules**.
 
-   Alternately, you can click **More > Import alert rules** to open the import rules page. 
+   Alternately, you can click **More > Import alert rules** to open the import rules page.
 
-1. Select from the input source whether you want to import rules from and existing Loki or Mimir data source or from a Prometheus YAML file. 
+1. Select from the input source whether you want to import rules from and existing Loki or Mimir data source or from a Prometheus YAML file.
 
-   If you choose to import a Prometheus data source rule from a YAML file, an, **Upload file** button appears. Click this to upload your YAML file. 
+   If you choose to import a Prometheus data source rule from a YAML file, an, **Upload file** button appears. Click this to upload your YAML file.
 
 1. In the Data source dropdown, select the data source of the alert rules.
 
