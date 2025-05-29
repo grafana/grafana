@@ -196,6 +196,23 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       }`,
       filename,
     },
+
+    {
+      name: 'Template literal with all-non-alphanumeric quasis',
+      code: `const Foo = () => {
+        const someVar = 'foo'
+        return (
+          <div label={\`(\${someVar})\`} />
+          )
+        }`,
+      filename,
+    },
+
+    {
+      name: 'LogicalExpression with template literal with all-non-alphanumeric quasis',
+      code: `<div label={foo ? \`\${someVar} - (\${count\})\` : \`?\`} />`,
+      filename,
+    },
   ],
   invalid: [
     {

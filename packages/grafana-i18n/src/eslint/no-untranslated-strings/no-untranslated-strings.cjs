@@ -14,6 +14,7 @@ const {
   shouldBeFixed,
   stringShouldBeTranslated,
   nodeHasTransAncestor,
+  templateLiteralShouldBeTranslated,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -94,11 +95,7 @@ const noUntranslatedStrings = createRule({
         const isOnlySymbols = !/[a-zA-Z0-9]/.test(nodeValue);
         const isNumeric = !/[a-zA-Z]/.test(nodeValue);
 
-        const isUntranslated =
-          ((value.type === AST_NODE_TYPES.Literal && nodeValue !== '') ||
-            value.type === AST_NODE_TYPES.TemplateLiteral) &&
-          !isOnlySymbols &&
-          !isNumeric;
+        const isUntranslated = stringShouldBeTranslated(nodeValue);
 
         const errorCanBeFixed = canBeFixed(node, context);
         const errorShouldBeFixed = shouldBeFixed(context);
@@ -189,7 +186,7 @@ const noUntranslatedStrings = createRule({
             (expr.type === AST_NODE_TYPES.Literal &&
               typeof expr.value === 'string' &&
               stringShouldBeTranslated(expr.value)) ||
-            expr.type === AST_NODE_TYPES.TemplateLiteral
+            (expr.type === AST_NODE_TYPES.TemplateLiteral && templateLiteralShouldBeTranslated(expr))
           );
         };
 
@@ -200,7 +197,13 @@ const noUntranslatedStrings = createRule({
           isLogical && expression.right,
         ]
           .filter((node) => !!node)
-          .filter(isExpressionUntranslated);
+          .filter((node) => node.type === AST_NODE_TYPES.Literal || node.type === AST_NODE_TYPES.TemplateLiteral)
+          .filter((node) => {
+            const templateLiterals =
+              node.type === AST_NODE_TYPES.TemplateLiteral && templateLiteralShouldBeTranslated(node);
+            const shouldBe = isExpressionUntranslated(node) || templateLiterals;
+            return shouldBe;
+          });
 
         if (untranslatedExpressions.length && !hasTransAncestor) {
           untranslatedExpressions.forEach((untranslatedNode) => {
@@ -224,6 +227,12 @@ const noUntranslatedStrings = createRule({
 
         const nodeValue = getNodeValue(node);
         const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
+        if (isTemplateLiteral) {
+          const anyTemplateLiteralsShouldBeTranslated = templateLiteralShouldBeTranslated(expression);
+          if (!anyTemplateLiteralsShouldBeTranslated) {
+            return;
+          }
+        }
         if (!isTemplateLiteral && (!nodeValue || !shouldBeTranslated)) {
           return;
         }
