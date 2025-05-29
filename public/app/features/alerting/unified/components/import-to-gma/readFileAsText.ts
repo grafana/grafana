@@ -1,4 +1,3 @@
-
 /**
  * Helper function to read a File object as text using FileReader.
  * This can be more robust in certain scenarios compared to File.text(),
