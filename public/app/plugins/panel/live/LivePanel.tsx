@@ -132,7 +132,7 @@ export class LivePanel extends PureComponent<Props, State> {
           <Trans i18nKey="live.live-panel.grafana-requires-feature">Grafana live requires a feature flag to run</Trans>
         </p>
 
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <b>custom.ini:</b>
         <pre>{preformatted}</pre>
       </Alert>

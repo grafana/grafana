@@ -68,9 +68,9 @@ export class CursorView extends Component<Props, State> {
     const { type, payload, origin } = event;
     return (
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <h3>event.origin: {(origin as any)?.path}</h3>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <span>event.type: {type}</span>
         {Boolean(payload) && (
           <>
