@@ -112,7 +112,7 @@ export const SignupInvitedPage = () => {
                     required: 'Email is required',
                     pattern: {
                       value: w3cStandardEmailValidator,
-                      message: 'Email is invalid',
+                      message: t('invites.signup-invited-page.message.email-is-invalid', 'Email is invalid'),
                     },
                   })}
                 />

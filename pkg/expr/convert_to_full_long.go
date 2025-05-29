@@ -30,10 +30,6 @@ func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("input frame missing FrameMeta.Type")
 	}
 
-	if !supportedToLongConversion(inputType) {
-		return nil, fmt.Errorf("unsupported input dataframe type %s for full long conversion", inputType)
-	}
-
 	switch inputType {
 	case data.FrameTypeNumericMulti:
 		return convertNumericMultiToFullLong(frames)
