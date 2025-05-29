@@ -7591,7 +7591,8 @@
       "error": "Error",
       "grafana-requires-feature": "Grafana live requires a feature flag to run",
       "panel-editor-channel": "Use the panel editor to pick a channel",
-      "title-grafana-live": "Grafana Live"
+      "title-grafana-live": "Grafana Live",
+      "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
       "publish": "Publish"

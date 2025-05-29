@@ -146,7 +146,9 @@ export class LivePanel extends PureComponent<Props, State> {
     if (!message) {
       return (
         <div>
-          <h4>Waiting for data:</h4>
+          <h4>
+            <Trans i18nKey="live.live-panel.waiting-for-data">Waiting for data:</Trans>
+          </h4>
           {options.channel?.scope}/{options.channel?.namespace}/{options.channel?.path}
         </div>
       );
