@@ -63,6 +63,8 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 		}
 	}
 
+	// Plugins with errors are not added to the plugin store but
+	// we still want to show them in the check results so we add them to the map
 	pluginErrors := c.pluginErrorResolver.PluginErrors(ctx)
 	for _, e := range pluginErrors {
 		if _, exists := resMap[e.PluginID]; exists {

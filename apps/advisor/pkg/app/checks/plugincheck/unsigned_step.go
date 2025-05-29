@@ -3,6 +3,7 @@ package plugincheck
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -28,7 +29,8 @@ func (s *unsignedStep) Description() string {
 }
 
 func (s *unsignedStep) Resolution() string {
-	return "Delete the plugin and install it from the Grafana plugin catalog."
+	return "For security, we recommend only installing plugins from the catalog. " +
+		"Review the plugin's status and verify your allowlist if appropriate."
 }
 
 func (s *unsignedStep) ID() string {
@@ -42,11 +44,12 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 	}
 
 	p := pi.Plugin
-
-	if p != nil &&
-		(p.Signature == plugins.SignatureStatusUnsigned ||
-			p.Signature == plugins.SignatureStatusModified ||
-			p.Signature == plugins.SignatureStatusInvalid) {
+	invalidSignatureTypes := []plugins.SignatureStatus{
+		plugins.SignatureStatusUnsigned,
+		plugins.SignatureStatusModified,
+		plugins.SignatureStatusInvalid,
+	}
+	if p != nil && slices.Contains(invalidSignatureTypes, p.Signature) {
 		// This will only happen in dev mode or if the plugin is in the unsigned allow list
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[p.ID]; ok {
@@ -65,10 +68,12 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 	}
 
 	pluginErr := pi.Err
-	if pluginErr != nil &&
-		(pluginErr.ErrorCode == plugins.ErrorCodeSignatureMissing ||
-			pluginErr.ErrorCode == plugins.ErrorCodeSignatureInvalid ||
-			pluginErr.ErrorCode == plugins.ErrorCodeSignatureModified) {
+	invalidErrorCodeTypes := []plugins.ErrorCode{
+		plugins.ErrorCodeSignatureMissing,
+		plugins.ErrorCodeSignatureInvalid,
+		plugins.ErrorCodeSignatureModified,
+	}
+	if pluginErr != nil && slices.Contains(invalidErrorCodeTypes, pluginErr.ErrorCode) {
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[pluginErr.PluginID]; ok {
 			links = append(links, advisor.CheckErrorLink{

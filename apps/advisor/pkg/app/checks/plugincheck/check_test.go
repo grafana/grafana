@@ -136,6 +136,7 @@ func TestRun(t *testing.T) {
 				{PluginID: "plugin9", ErrorCode: plugins.ErrorCodeSignatureInvalid},
 				{PluginID: "plugin10", ErrorCode: plugins.ErrorCodeSignatureModified},
 				{PluginID: "plugin11", ErrorCode: plugins.ErrorCodeSignatureMissing},
+				{PluginID: "plugin12", ErrorCode: plugins.ErrorCodeFailedBackendStart}, // This should be ignored atm
 			},
 			expectedFailures: []advisor.CheckReportFailure{
 				{
