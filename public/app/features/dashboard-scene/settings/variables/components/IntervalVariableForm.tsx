@@ -52,7 +52,7 @@ export function IntervalVariableForm({
       <VariableTextField
         defaultValue={intervals}
         name="Values"
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1m,10m,1h,6h,1d,7d"
         onBlur={onIntervalsChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
@@ -91,7 +91,7 @@ export function IntervalVariableForm({
               'dashboard-scene.interval-variable-form.description-calculated-value-below-threshold',
               'The calculated value will not go below this threshold'
             )}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="10s"
             onChange={onAutoMinIntervalChanged}
             width={11}

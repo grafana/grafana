@@ -36,7 +36,7 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
       {limitReached && (
         <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' }, lastActiveAt: '' }} showTooltip={false}>
           {tooManyUsers
-            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               '...'
             : `+${extraUsers}`}
         </UserIcon>

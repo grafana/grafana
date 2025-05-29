@@ -106,7 +106,7 @@ export const SignupInvitedPage = () => {
                 label={t('invites.signup-invited-page.label-email', 'Email')}
               >
                 <Input
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="email@example.com"
                   {...register('email', {
                     required: 'Email is required',

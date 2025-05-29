@@ -182,7 +182,7 @@ const AnnotationsStep = () => {
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                               'https://'
                             : (annotationField.key &&
                                 t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {

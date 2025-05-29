@@ -80,7 +80,6 @@ function VariableList({ set }: { set: SceneVariableSet }) {
         // TODO fix keyboard a11y here
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
         <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           <Text>${variable.state.name}</Text>
           <Stack direction="row" gap={1} alignItems="center">
             <Button variant="primary" size="sm" fill="outline">

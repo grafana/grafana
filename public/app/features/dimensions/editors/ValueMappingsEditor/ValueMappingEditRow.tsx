@@ -123,7 +123,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'Null',
       value: SpecialValueMatch.Null,
       description: t(
@@ -132,7 +132,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'NaN',
       value: SpecialValueMatch.NaN,
       description: t(
@@ -141,7 +141,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'Null + NaN',
       value: SpecialValueMatch.NullAndNaN,
       description: t(
@@ -150,7 +150,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'True',
       value: SpecialValueMatch.True,
       description: t(
@@ -159,7 +159,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'False',
       value: SpecialValueMatch.False,
       description: t(

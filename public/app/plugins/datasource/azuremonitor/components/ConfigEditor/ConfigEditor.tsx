@@ -154,7 +154,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={options.jsonData.timeout}
                 type="number"
                 className="width-15"
-                // eslint-disable-next-line @grafana/no-untranslated-strings
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="30"
                 onChange={onTimeoutChange}
               />

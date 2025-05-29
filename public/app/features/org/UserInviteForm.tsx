@@ -79,7 +79,7 @@ export const UserInviteForm = () => {
                 error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
                 label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
               >
-                {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
               <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>

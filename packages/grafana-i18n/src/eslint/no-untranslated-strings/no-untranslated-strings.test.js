@@ -1,8 +1,17 @@
 import { RuleTester } from 'eslint';
 
-import noUntranslatedStrings from '../rules/no-untranslated-strings.cjs';
+import noUntranslatedStrings from './no-untranslated-strings.cjs';
 
-RuleTester.setDefaultConfig({
+const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
+
+const packageName = '@grafana/i18n';
+
+const TRANS_IMPORT = `import { Trans } from '${packageName}';`;
+const T_IMPORT = `import { t } from '${packageName}/internal';`;
+const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${packageName}';`;
+const TRANS_AND_USE_TRANSLATE_IMPORT = `import { Trans, useTranslate } from '${packageName}';`;
+
+const ruleTester = new RuleTester({
   languageOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
@@ -14,17 +23,7 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
-
-const packageName = '@grafana/i18n';
-
-const TRANS_IMPORT = `import { Trans } from '${packageName}';`;
-const T_IMPORT = `import { t } from '${packageName}/internal';`;
-const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${packageName}';`;
-const TRANS_AND_USE_TRANSLATE_IMPORT = `import { Trans, useTranslate } from '${packageName}';`;
-
-const ruleTester = new RuleTester();
-
+//@ts-ignore
 ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
   test: [],
   valid: [
@@ -210,6 +209,24 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
           ],
         },
       ],
+    },
+
+    {
+      name: 'non-alphanumeric characters outside child element',
+      code: `
+const Foo = () => {
+  return (
+      <>
+        <div>
+          something untranslated but i'm a naughty dev and
+          I put a bunch of non-alphanumeric characters outside of the div
+        </div>
+        .?!;
+      </>
+  )
+}`,
+      filename,
+      errors: 1,
     },
 
     {

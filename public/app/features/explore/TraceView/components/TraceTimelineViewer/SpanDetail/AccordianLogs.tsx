@@ -108,7 +108,11 @@ export default function AccordianLogs({
   return (
     <div className={styles.AccordianLogs}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
-        {arrow} <strong>Events</strong> ({logs.length})
+        {arrow}{' '}
+        <strong>
+          <Trans i18nKey="explore.accordian-logs.events">Events</Trans>
+        </strong>{' '}
+        ({logs.length})
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>
