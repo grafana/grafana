@@ -2,7 +2,9 @@ package configchecks
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/go-github/v70/github"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +30,11 @@ func (c *check) Name() string {
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
-	return []any{"security.secret_key"}, nil
+	return []any{
+		"security.secret_key", // security config check
+		pinnedVersion,         // pinned version check
+		outOfSupportVersion,   // out of support version check
+	}, nil
 }
 
 func (c *check) Item(ctx context.Context, id string) (any, error) {
@@ -40,13 +46,27 @@ func (c *check) Init(ctx context.Context) error {
 }
 
 func (c *check) Steps() []checks.Step {
-	return []checks.Step{
+	steps := []checks.Step{
 		&securityConfigStep{
 			securitySection: c.cfg.SectionWithEnvOverrides("security"),
 		},
-		&pinnedVersionStep{
+	}
+
+	// If running in cloud, we need to check if the version is pinned
+	if c.cfg.StackID != "" {
+		steps = append(steps, &pinnedVersionStep{
 			StackID:     c.cfg.StackID,
 			BuildBranch: c.cfg.BuildBranch,
-		},
+		})
+	} else {
+		// If running in self-managed, we need to check if the version is out of support
+		steps = append(steps, &outOfSupportVersionStep{
+			StackID:        c.cfg.StackID,
+			GrafanaVersion: c.cfg.BuildVersion,
+			BuildDate:      time.Unix(c.cfg.BuildStamp, 0).UTC(),
+			ghClient:       github.NewClient(nil).Repositories,
+		})
 	}
+
+	return steps
 }

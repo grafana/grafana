@@ -2,6 +2,7 @@ package configchecks
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -10,13 +11,17 @@ import (
 
 var _ checks.Step = &pinnedVersionStep{}
 
+const (
+	pinnedVersion = "pinned_version"
+)
+
 type pinnedVersionStep struct {
 	StackID     string
 	BuildBranch string
 }
 
 func (s *pinnedVersionStep) Title() string {
-	return "Grafana version check"
+	return "Grafana Cloud version check"
 }
 
 func (s *pinnedVersionStep) Description() string {
@@ -28,10 +33,19 @@ func (s *pinnedVersionStep) Resolution() string {
 }
 
 func (s *pinnedVersionStep) ID() string {
-	return "pinned_version"
+	return pinnedVersion
 }
 
 func (s *pinnedVersionStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
+	item, ok := it.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid item type %T", it)
+	}
+	if item != pinnedVersion {
+		// Not interested in this item
+		return nil, nil
+	}
+
 	if s.StackID == "" || s.BuildBranch == "HEAD" {
 		// Not running in cloud or not a pinned version
 		// Pinned versions have a custom build branch name
