@@ -88,7 +88,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         <Input
           aria-label={t('components.app-registration-credentials.aria-label-tenant-id', 'Tenant ID')}
           className="width-30"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
           value={credentials.tenantId || ''}
           onChange={onTenantIdChange}
@@ -106,7 +106,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         <Input
           className="width-30"
           aria-label={t('components.app-registration-credentials.aria-label-client-id', 'Client ID')}
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
           value={credentials.clientId || ''}
           onChange={onClientIdChange}
@@ -150,7 +150,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
             <Input
               className="width-30"
               aria-label={t('components.app-registration-credentials.aria-label-client-secret', 'Client Secret')}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientSecret || ''}
               onChange={onClientSecretChange}
