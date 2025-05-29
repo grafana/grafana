@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { textUtil } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
+import { t as internalT } from '@grafana/i18n/internal';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
@@ -33,7 +34,10 @@ const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
         new ShowModalReactEvent({
           component: ConfirmModal,
           props: {
-            title: 'Proceed to external site?',
+            title: internalT(
+              'dashboard-scene.on-open-snapshot-original-dashboard.title.proceed-to-external-site',
+              'Proceed to external site?'
+            ),
             modalClass: css({
               width: 'max-content',
               maxWidth: '80vw',
