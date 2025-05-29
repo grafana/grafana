@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { LineStyle } from '@grafana/schema';
 import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -55,6 +56,7 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const { t } = useTranslate();
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
@@ -108,12 +110,15 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
           <div>
             &nbsp;
             <a
-              title="The input expects a segment list"
+              title={t(
+                'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
+                'The input expects a segment list'
+              )}
               href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
               target="_blank"
               rel="noreferrer"
             >
-              <IconButton name="question-circle" tooltip="Help" />
+              <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
             </a>
           </div>
         </>

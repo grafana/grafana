@@ -67,6 +67,7 @@ export class EventBusLoggerPanel extends PureComponent<Props, State> {
     return (
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {this.history.map((v, idx) => (
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           <div key={v.key}>
             {JSON.stringify(v.path)} {v.type} / X:{JSON.stringify(v.payload.x)} / Y:{JSON.stringify(v.payload.y)}
           </div>

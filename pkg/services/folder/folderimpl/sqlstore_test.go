@@ -1002,10 +1002,10 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	requester := &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: map[string][]string{
+			1: {
 				accesscontrol.ActionOrgsDelete: {"*"},
 			},
-			2: map[string][]string{
+			2: {
 				accesscontrol.ActionOrgsDelete: {"*"},
 			},
 		},
