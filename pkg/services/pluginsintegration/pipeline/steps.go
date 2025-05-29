@@ -139,6 +139,33 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 	return p, nil
 }
 
+type reportLoadingMetricsStep struct {
+	cfg *config.PluginManagementCfg
+}
+
+func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+	var method string
+	switch p.Class {
+	case plugins.ClassCDN:
+		method = "cdn"
+	case plugins.ClassExternal:
+		method = "fs"
+	case plugins.ClassCore:
+		method = "core"
+	}
+	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, string(p.CloudProvisioningMethod), method)
+	return p, nil
+}
+
+func ReportLoadingMetricsStep(cfg *config.PluginManagementCfg) initialization.InitializeFunc {
+	step := &reportLoadingMetricsStep{cfg: cfg}
+	return step.initialize
+}
+
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
 type SignatureValidation struct {
 	signatureValidator signature.Validator
