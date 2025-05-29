@@ -141,7 +141,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
-		authnSvc.RegisterPostLoginHook(userSync.ValidateUserProvisioningHook, 30)
+		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
