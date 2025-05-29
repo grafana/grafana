@@ -82,7 +82,7 @@ var (
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 ) *UserSync {
-	scimSection := cfg.Raw.Section("auth.scim")
+	scimSection := cfg.Raw.Section("auth.scim") // TODO: resolve the configurations of SCIM from the app platform service
 	return &UserSync{
 		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
 		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
@@ -111,66 +111,50 @@ type UserSync struct {
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
-func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIdentity *authn.Identity, _ *authn.Request, err error) {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID)
 
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
-	// Skip validation if user provisioning is disabled
-	if !s.isUserProvisioningEnabled {
-		log.Debug("User provisioning is disabled, skipping validation")
-		return nil
-	}
-
-	// Skip validation if non-provisioned users are allowed
-	if s.allowNonProvisionedUsers {
-		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
-		return nil
-	}
-
-	// Skip validation if the auth module is GrafanaComAuthModule
-	if id.AuthenticatedBy == login.GrafanaComAuthModule {
-		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
-		return nil
+	if s.skipProvisioningValidation(ctx, currentIdentity) {
+		log.Debug("Skipping user provisioning validation")
+		return
 	}
 
 	// In order to guarantee the provisioned user is the same as the identity,
 	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
 
 	// Retrieve user and authinfo from database
-	usr, authInfo, err := s.getUser(ctx, id)
+	usr, authInfo, err := s.getUser(ctx, currentIdentity)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return nil
+			return
 		}
 		log.Error("Failed to fetch user for validation", "error", err)
-		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
+		err = errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
 	}
 
 	if usr == nil {
 		log.Error("Failed to fetch user for validation", "error", err)
-		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
+		err = errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
+		return
 	}
 
-	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
-		// Allow non-SAML requests for SAML-provisioned users to proceed if incoming ExternalUID is empty (e.g. session access).
-		if authInfo.AuthModule == login.SAMLAuthModule && id.AuthenticatedBy != login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
-			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
-			return nil
-		}
-		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != currentIdentity.ExternalUID {
 			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
-			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+			err = errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, access granted")
-		return nil
+		return
 	}
 
 	// Reject non-provisioned users
 	log.Error("Failed to access user, user is not provisioned")
+	err = errUserNotProvisioned.Errorf("user is not provisioned")
+	return
 }
 
 func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
