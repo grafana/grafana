@@ -2,9 +2,10 @@ import { Box, InlineField, LinkButton, Space, Stack, Text } from '@grafana/ui';
 
 import { CONFIG_SECTION_HEADERS } from './constants';
 
-export const LeftSideBar = () => {
-  const generateSectionHeaders = () => {
-    return (
+export const LeftSideBar = () => (
+  <Stack>
+    <Box flex={1} marginY={5}>
+      <Text element="h4">InfluxDB</Text>
       <Box paddingTop={2} width="100%">
         {CONFIG_SECTION_HEADERS.map((header, index) => (
           <div key={index}>
@@ -27,15 +28,6 @@ export const LeftSideBar = () => {
           </div>
         ))}
       </Box>
-    );
-  };
-
-  return (
-    <Stack>
-      <Box flex={1} marginY={5}>
-        <Text element="h4">InfluxDB</Text>
-        {generateSectionHeaders()}
-      </Box>
-    </Stack>
-  );
-};
+    </Box>
+  </Stack>
+);

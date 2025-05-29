@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
 import { InlineFieldRow, InlineField, Combobox, InlineSwitch, Input, Space, useStyles2 } from '@grafana/ui';
 
 import { InfluxOptions, InfluxVersion } from '../../../types';
@@ -16,7 +16,8 @@ import {
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
-export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props) => {
+export const AdvancedDbConnectionSettings = (props: Props) => {
+  const { options, onOptionsChange } = props;
   const styles = useStyles2(getInlineLabelStyles);
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
@@ -49,9 +50,7 @@ export const AdvancedDbConnectionSettings = ({ options, onOptionsChange }: Props
                     width={30}
                     value={HTTP_MODES.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
                     options={HTTP_MODES}
-                    onChange={(e) =>
-                      onOptionsChange({ ...options, jsonData: { ...options.jsonData, httpMode: e.label } })
-                    }
+                    onChange={onUpdateDatasourceJsonDataOptionSelect(props, 'httpMode')}
                     onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked}
                   />
                 </InlineField>

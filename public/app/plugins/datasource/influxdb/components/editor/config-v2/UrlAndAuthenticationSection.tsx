@@ -33,11 +33,16 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 };
 
 export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props) => {
-  const onProductChange = ({ value }: ComboboxOption) =>
-    onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value } });
-
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
+
+  // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
+  const requiresDrbpMapping =
+    (options.jsonData.product && options.jsonData.product === 'InfluxDB OSS 1.x') ||
+    options.jsonData.product === 'InfluxDB OSS 2.x';
+
+  const onProductChange = ({ value }: ComboboxOption) =>
+    onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });
 
   const onQueryLanguageChange = ({ value }: ComboboxOption) => {
     if (isInfluxVersion(value)) {
@@ -52,14 +57,8 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
     onOptionsChange({
       ...options,
       url: event.currentTarget.value,
-      jsonData: { ...options.jsonData, version: undefined, product: '' },
     });
   };
-
-  // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
-  const requiresDrbpMapping =
-    (options.jsonData.product && options.jsonData.product === 'InfluxDB OSS 1.x') ||
-    options.jsonData.product === 'InfluxDB OSS 2.x';
 
   return (
     <>
@@ -78,7 +77,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
             .
           </Text>
           <Box direction="column" gap={2} marginTop={3}>
-            <Field label={<div style={{ paddingBottom: '5px' }}>URL</div>} noMargin>
+            <Field label={<div style={{ marginBottom: '5px' }}>URL</div>} noMargin>
               <Input
                 placeholder="http://localhost:3000/"
                 onChange={onUrlChange}
@@ -89,7 +88,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
             <Box marginTop={2}>
               <Stack direction="row" gap={2}>
                 <Box flex={1}>
-                  <Field label={<div style={{ paddingBottom: '5px' }}>Product</div>} noMargin>
+                  <Field label={<div style={{ marginBottom: '5px' }}>Product</div>} noMargin>
                     <Combobox
                       value={options.jsonData.product}
                       options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
@@ -99,7 +98,7 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
                   </Field>
                 </Box>
                 <Box flex={1}>
-                  <Field label={<div style={{ paddingBottom: '5px' }}>Query language</div>} noMargin>
+                  <Field label={<div style={{ marginBottom: '5px' }}>Query language</div>} noMargin>
                     <Combobox
                       value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                       options={getQueryLanguageOptions(options.jsonData.product || '')}
