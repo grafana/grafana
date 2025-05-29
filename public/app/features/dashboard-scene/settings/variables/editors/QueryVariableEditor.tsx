@@ -246,7 +246,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
             </Trans>
           </div>
         }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}

@@ -268,7 +268,7 @@ function useColumns(
             nextEvalInfo && (
               <Tooltip
                 placement="top"
-                // eslint-disable-next-line @grafana/no-untranslated-strings
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 content={`${nextEvalInfo?.fullDate}`}
                 theme="info"
               >

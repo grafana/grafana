@@ -165,7 +165,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     const styles = importStyles(this.props.theme);
 
     const GcomDashboardsLink = () => (
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
         grafana.com/dashboards
       </TextLink>

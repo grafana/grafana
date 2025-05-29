@@ -147,7 +147,6 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                 {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
                   <ValuePicker
                     icon="plus"
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
                     label={''}
                     options={info.addOptions}
                     onChange={addJoin}

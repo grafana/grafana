@@ -59,7 +59,7 @@ export const SilencesFilter = () => {
                       </Trans>
                     </div>
 
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+                    {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                     <pre>severity=critical, env=production</pre>
                   </>
                 }

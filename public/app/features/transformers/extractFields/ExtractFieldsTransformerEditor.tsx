@@ -118,7 +118,7 @@ export const extractFieldsTransformerEditor = ({
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
           <InlineField
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             label="RegExp"
             labelWidth={16}
             interactive={true}
@@ -127,7 +127,7 @@ export const extractFieldsTransformerEditor = ({
             })}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/(?<NewField>.*)/"
               value={options.regExp}
               onChange={onRegexpChange}

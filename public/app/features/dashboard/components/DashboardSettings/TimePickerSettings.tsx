@@ -106,7 +106,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           <Input
             id="now-delay-input"
             invalid={!this.state.isNowDelayValid}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="0m"
             onChange={this.onNowDelayChange}
             defaultValue={this.props.nowDelay}

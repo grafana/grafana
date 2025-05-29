@@ -174,7 +174,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                 >
                   <Input
                     value={c.dateFormat}
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                     placeholder={'e.g. YYYY-MM-DD'}
                     onChange={onInputFormat(idx)}
                     width={24}
@@ -193,7 +193,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                     >
                       <Input
                         value={c.joinWith}
-                        // eslint-disable-next-line @grafana/no-untranslated-strings
+                        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                         placeholder={'JSON'}
                         onChange={onJoinWithChange(idx)}
                         width={16}
@@ -211,7 +211,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                       >
                         <Input
                           value={c.dateFormat}
-                          // eslint-disable-next-line @grafana/no-untranslated-strings
+                          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                           placeholder={'e.g. YYYY-MM-DD'}
                           onChange={onInputFormat(idx)}
                           width={24}

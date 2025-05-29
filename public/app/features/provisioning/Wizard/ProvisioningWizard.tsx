@@ -237,7 +237,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
           <Stack direction="column">
             <Box marginBottom={2}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text element="h2">
                 {currentStepIndex + 1}. {currentStepConfig?.title}
               </Text>

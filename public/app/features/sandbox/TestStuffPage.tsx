@@ -1,4 +1,4 @@
-/* eslint-disable @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { NavModelItem } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { Button, LinkButton, Stack, Text } from '@grafana/ui';

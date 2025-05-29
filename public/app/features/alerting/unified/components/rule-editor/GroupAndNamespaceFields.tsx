@@ -49,7 +49,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         label={t('alerting.group-and-namespace-fields.namespace-picker-label-namespace', 'Namespace')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description="Type to search for an existing namespace or create a new one"
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
@@ -82,7 +82,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description="Type to search for an existing group or create a new one"
         error={errors.group?.message}
         invalid={!!errors.group?.message}

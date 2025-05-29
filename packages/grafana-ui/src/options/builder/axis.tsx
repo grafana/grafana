@@ -179,7 +179,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
       {type === ScaleDistribution.Symlog && (
         <Field label={t('grafana-ui.axis-builder.linear-threshold', 'Linear threshold')} style={{ marginBottom: 0 }}>
           <Input
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
             value={value?.linearThreshold}
             onChange={(v) => {

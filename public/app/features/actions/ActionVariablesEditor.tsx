@@ -56,7 +56,7 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
 
   const variableTypeOptions: ComboboxOption[] = [
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'string',
       value: ActionVariableType.String,
     },
