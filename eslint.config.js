@@ -13,7 +13,7 @@ const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
-const grafanaI18nPlugin = require('@grafana/i18n/eslint-config');
+const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const bettererConfig = require('./.betterer.eslint.config');
 const getEnvConfig = require('./scripts/webpack/env-util');

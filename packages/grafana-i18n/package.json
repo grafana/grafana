@@ -27,9 +27,9 @@
       "import": "./src/internal/index.ts",
       "require": "./src/internal/index.ts"
     },
-    "./eslint-config": {
-      "import": "./src/rules/index.cjs",
-      "require": "./src/rules/index.cjs"
+    "./eslint-plugin": {
+      "import": "./src/eslint/index.cjs",
+      "require": "./src/eslint/index.cjs"
     }
   },
   "publishConfig": {
