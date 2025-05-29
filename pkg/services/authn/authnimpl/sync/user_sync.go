@@ -82,7 +82,7 @@ var (
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 ) *UserSync {
-	scimSection := cfg.Raw.Section("auth.scim") // TODO: resolve the configurations of SCIM from the app platform service
+	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
 		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
 		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),

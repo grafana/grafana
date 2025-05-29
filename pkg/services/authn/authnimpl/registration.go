@@ -140,7 +140,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
-	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) { // add a isScimEnabled here
+	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
 		authnSvc.RegisterPostLoginHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
