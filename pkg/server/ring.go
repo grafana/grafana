@@ -111,9 +111,9 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 		Help:    "Time spent executing requests to resource server.",
 		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{"operation", "status_code"})
-
 	factory := ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
-		opts, err := clientCfg.DialOption(grpcclient.Instrument(factoryRequestDuration))
+		unaryInterceptors, streamInterceptors := grpcclient.Instrument(factoryRequestDuration)
+		opts, err := clientCfg.DialOption(unaryInterceptors, streamInterceptors, nil)
 		if err != nil {
 			return nil, err
 		}
