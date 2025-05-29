@@ -52,7 +52,6 @@ func TestIntegrationDistributor(t *testing.T) {
 	}
 
 	db, err := sqlutil.GetTestDB(dbType)
-	fmt.Println("testdb: ", db.ConnStr)
 	require.NoError(t, err)
 
 	testNamespaces := make([]string, 0, namespaceCount)
@@ -90,7 +89,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			return false
 		}
 		return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-	}, 10*time.Second, 2*time.Second)
+	}, 20*time.Second, 2*time.Second)
 
 	for _, testServer := range testServers {
 		fmt.Println("Starting ", testServer.id)
@@ -103,18 +102,23 @@ func TestIntegrationDistributor(t *testing.T) {
 		}(testServer)
 
 		require.Eventually(t, func() bool {
+			// TODO improve this
+			if len(runErrs) > 0 {
+				for _, err := range runErrs {
+					fmt.Println("err running server: ", err)
+				}
+			}
 			res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
 			if err != nil {
 				return false
 			}
-			fmt.Println("got: ", res)
 			return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
 		}, 20*time.Second, 2*time.Second, "server failed to start up or is too slow: "+testServer.id)
 	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
 		client := http.Client{}
-		res, err := client.Get("http://localhost:3001/ring")
+		res, err := client.Get("http://localhost:13000/ring")
 		require.NoError(t, err)
 
 		require.Equal(t, res.StatusCode, http.StatusOK)
@@ -123,7 +127,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	t.Run("should expose memberlist endpoint", func(t *testing.T) {
 		client := http.Client{}
-		res, err := client.Get("http://localhost:3001/memberlist")
+		res, err := client.Get("http://localhost:13000/memberlist")
 		require.NoError(t, err)
 
 		require.Equal(t, res.StatusCode, http.StatusOK)
@@ -329,13 +333,16 @@ type testModuleServer struct {
 
 func initDistributorServerForTest(t *testing.T) testModuleServer {
 	cfg := setting.NewCfg()
-	cfg.HTTPPort = "3001"
+	cfg.HTTPPort = "13000"
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:10000"
+	cfg.GRPCServer.Address = "127.0.0.1:20000"
+	// cfg.GRPCServer.Network = "unix"
+	// cfg.GRPCServer.Address = socket
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
-	cfg.MemberlistJoinMember = "127.0.0.1:7946"
+	cfg.MemberlistJoinMember = "127.0.0.1:17946"
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
+	cfg.MemberlistAdvertisePort = 17946
 	cfg.Target = []string{modules.Distributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
@@ -362,14 +369,14 @@ func createStorageServerApi(t *testing.T, instanceId, bindAddr, dbType, dbConnSt
 	_, err = section.NewKey("connection_string", dbConnStr)
 	require.NoError(t, err)
 
-	cfg.HTTPPort = "3001"
-	cfg.HTTPAddr = bindAddr
+	cfg.HTTPPort = "13001"
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = bindAddr + ":10000"
+	cfg.GRPCServer.Address = "127.0.0.1:20001"
 	cfg.EnableSharding = true
-	cfg.MemberlistBindAddr = bindAddr
-	cfg.MemberlistJoinMember = "127.0.0.1:7946"
-	cfg.MemberlistAdvertiseAddr = bindAddr
+	cfg.MemberlistBindAddr = "127.0.0.1"
+	cfg.MemberlistJoinMember = "127.0.0.1:17946"
+	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
+	cfg.MemberlistAdvertisePort = 17947
 	cfg.InstanceID = instanceId
 	cfg.IndexPath = "/tmp/grafana-test-index-path/" + instanceId
 	cfg.IndexFileThreshold = testIndexFileThreshold
