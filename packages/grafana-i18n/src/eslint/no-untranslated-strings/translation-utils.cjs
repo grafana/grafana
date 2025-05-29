@@ -7,6 +7,7 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXExpressionContainer} JSXExpressionContainer */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Literal} Literal */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.TemplateLiteral} TemplateLiteral */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
@@ -95,6 +96,17 @@ const stringShouldBeTranslated = (string) => {
     return false;
   }
   return string.trim() && stringIsAlphanumeric(string);
+};
+
+/**
+ * @param {TemplateLiteral} node
+ * @returns {boolean}
+ */
+const templateLiteralShouldBeTranslated = (node) => {
+  const { quasis } = node;
+  return quasis.some((quasi) => {
+    return stringShouldBeTranslated(getNodeValue(quasi));
+  });
 };
 
 /**
@@ -520,6 +532,10 @@ function getNodeValue(node) {
     return String(node.value);
   }
 
+  if (node.type === AST_NODE_TYPES.TemplateElement) {
+    return node.value.raw;
+  }
+
   if (node.type === AST_NODE_TYPES.JSXText) {
     // Return the raw value if we can, so we can work out if there are any HTML entities
     return node.raw;
@@ -553,4 +569,5 @@ module.exports = {
   elementIsTrans,
   stringShouldBeTranslated,
   nodeHasTransAncestor,
+  templateLiteralShouldBeTranslated,
 };
