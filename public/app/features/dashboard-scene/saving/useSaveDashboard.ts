@@ -94,6 +94,9 @@ export function useSaveDashboard(isCopy = false) {
           );
         }
 
+        console.log({ result });
+        console.log({ resultData });
+
         return result.data;
       }
     },
