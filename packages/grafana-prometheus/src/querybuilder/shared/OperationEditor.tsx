@@ -10,7 +10,7 @@ import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { getOperationParamId } from '../shared/param-utils';
 
 import { OperationHeader } from './OperationHeader';
-import { getOperationParamEditor } from './OperationParamEditor';
+import { getOperationParamEditor } from './OperationParamEditorRegistry';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -95,16 +95,16 @@ export function OperationEditor({
         <div className={styles.paramValue}>
           <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
-              index={paramIndex}
               paramDef={paramDef}
               value={operation.params[paramIndex]}
-              operation={operation}
-              operationId={id}
-              onChange={onParamValueChanged}
-              onRunQuery={onRunQuery}
+              index={paramIndex}
+              operationId={operation.id}
               query={query}
               datasource={datasource}
               timeRange={timeRange}
+              onChange={onParamValueChanged}
+              onRunQuery={onRunQuery}
+              queryModeller={queryModeller}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button

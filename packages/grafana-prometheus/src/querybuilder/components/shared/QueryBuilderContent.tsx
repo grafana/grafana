@@ -7,7 +7,7 @@ import { EditorRow } from '@grafana/plugin-ui';
 
 import promqlGrammar from '../../../promql';
 import { getInitHints } from '../../../query_hints';
-import { promQueryModeller } from '../../context';
+import { promQueryModeller } from '../../shared/modeller-instance';
 import { buildVisualQueryFromString } from '../../parsing';
 import { OperationExplainedBox } from '../../shared/OperationExplainedBox';
 import { OperationList } from '../../shared/OperationList';
@@ -75,7 +75,7 @@ export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
           timeRange={data?.timeRange ?? getDefaultTimeRange()}
         />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
-          <QueryBuilderHints<PromVisualQuery>
+          <QueryBuilderHints
             datasource={datasource}
             query={query}
             onChange={onChange}

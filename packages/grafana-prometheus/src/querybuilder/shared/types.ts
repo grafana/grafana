@@ -5,6 +5,7 @@
 import { ComponentType } from 'react';
 
 import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
+import { PromVisualQuery } from '../types';
 
 export interface QueryBuilderLabelFilter {
   label: string;
@@ -69,7 +70,7 @@ export interface QueryBuilderOperationParamDef {
   placeholder?: string;
   description?: string;
   minWidth?: number;
-  editor?: ComponentType<QueryBuilderOperationParamEditorProps>;
+  editor?: ComponentType<QueryBuilderOperationParamEditorProps> | string;
   runQueryOnEnter?: boolean;
 }
 
@@ -84,17 +85,17 @@ export interface QueryBuilderOperationEditorProps {
 }
 
 export interface QueryBuilderOperationParamEditorProps {
-  value?: QueryBuilderOperationParamValue;
-  paramDef: QueryBuilderOperationParamDef;
-  /** Parameter index */
-  index: number;
-  operation: QueryBuilderOperation;
-  operationId: string;
-  query: any;
-  datasource: DataSourceApi;
-  timeRange: TimeRange;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
+  /** Parameter index */
+  index: number;
+  operationId: string;
+  query: PromVisualQuery;
+  datasource: DataSourceApi;
+  timeRange: TimeRange;
+  paramDef: QueryBuilderOperationParamDef;
+  queryModeller: VisualQueryModeller;
+  value?: QueryBuilderOperationParamValue;
 }
 
 export enum QueryEditorMode {

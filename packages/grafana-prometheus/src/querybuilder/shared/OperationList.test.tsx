@@ -9,7 +9,7 @@ import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 import { PromOptions } from '../../types';
-import { promQueryModeller } from '../context';
+import { promQueryModeller } from './modeller-instance';
 import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
 

@@ -4,7 +4,6 @@ import pluralize from 'pluralize';
 
 import { SelectableValue } from '@grafana/data';
 
-import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -185,7 +184,7 @@ export function createAggregationOperation(
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
+          editor: 'LabelParamEditor',
         },
       ],
       defaultParams: [''],
@@ -207,7 +206,7 @@ export function createAggregationOperation(
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
+          editor: 'LabelParamEditor',
         },
       ],
       defaultParams: [''],
@@ -242,7 +241,7 @@ export function createAggregationOperationWithParam(
   return operations;
 }
 
-function getAggregationByRenderer(aggregation: string) {
+export function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
   };

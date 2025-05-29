@@ -4,16 +4,15 @@ import { useState } from 'react';
 import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { getModeller } from '../shared/interfaces';
 import { getOperationParamId } from '../shared/param-utils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery, PromQueryModellerInterface } from '../types';
 
-interface Props extends QueryBuilderOperationParamEditorProps {
-  queryModeller: PromQueryModellerInterface;
-}
-
-function LabelParamEditorInternal({
+/**
+ * Editor for label parameters that requires a modeller instance.
+ * This is used by the OperationParamEditorWrapper which ensures the modeller is always provided.
+ */
+export function LabelParamEditor({
   onChange,
   index,
   operationId,
@@ -22,7 +21,7 @@ function LabelParamEditorInternal({
   datasource,
   timeRange,
   queryModeller,
-}: Props) {
+}: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
     options?: SelectableValue[];
     isLoading?: boolean;
@@ -35,7 +34,12 @@ function LabelParamEditorInternal({
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(timeRange, query, datasource, queryModeller);
+        const options = await loadGroupByLabels(
+          timeRange,
+          query,
+          datasource,
+          queryModeller as PromQueryModellerInterface
+        );
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
@@ -48,11 +52,6 @@ function LabelParamEditorInternal({
     />
   );
 }
-
-// Public component that injects queryModeller
-export const LabelParamEditor = (props: QueryBuilderOperationParamEditorProps) => {
-  return <LabelParamEditorInternal {...props} queryModeller={getModeller()} />;
-};
 
 async function loadGroupByLabels(
   timeRange: TimeRange,

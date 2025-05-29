@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { Stack } from '@grafana/ui';
 
 import promqlGrammar from '../../promql';
-import { promQueryModeller } from '../context';
+import { promQueryModeller } from '../shared/modeller-instance';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationListExplained } from '../shared/OperationListExplained';
