@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash';
 
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
@@ -93,8 +94,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
   // TODO: Implement this correctly
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
-      { value: '-name_sort', label: 'Alphabetically (Z-A)' },
+      {
+        value: folderViewSort,
+        label: t('search.unified-searcher.opts.label.alphabetically-az', 'Alphabetically (A-Z)'),
+      },
+      { value: '-name_sort', label: t('search.unified-searcher.opts.label.alphabetically-za', 'Alphabetically (Z-A)') },
     ];
 
     if (config.licenseInfo.enabledFeatures.analytics) {
