@@ -9,7 +9,15 @@ import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '
 import { PromVisualQuery, PromQueryModellerInterface } from '../types';
 
 /**
- * Editor for label parameters that requires a modeller instance.
+ * Props for the LabelParamEditor component.
+ * This editor specifically requires a Prometheus query modeller instance.
+ */
+export interface LabelParamEditorProps extends Omit<QueryBuilderOperationParamEditorProps, 'queryModeller'> {
+  queryModeller: PromQueryModellerInterface;
+}
+
+/**
+ * Editor for label parameters that requires a Prometheus query modeller instance.
  * This is used by the OperationParamEditorWrapper which ensures the modeller is always provided.
  */
 export function LabelParamEditor({
@@ -21,7 +29,7 @@ export function LabelParamEditor({
   datasource,
   timeRange,
   queryModeller,
-}: QueryBuilderOperationParamEditorProps) {
+}: LabelParamEditorProps) {
   const [state, setState] = useState<{
     options?: SelectableValue[];
     isLoading?: boolean;
@@ -34,12 +42,7 @@ export function LabelParamEditor({
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(
-          timeRange,
-          query,
-          datasource,
-          queryModeller as PromQueryModellerInterface
-        );
+        const options = await loadGroupByLabels(timeRange, query, datasource, queryModeller);
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
