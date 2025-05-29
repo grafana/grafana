@@ -7,7 +7,6 @@ import { EditorRow } from '@grafana/plugin-ui';
 
 import promqlGrammar from '../../../promql';
 import { getInitHints } from '../../../query_hints';
-import { promQueryModeller } from '../../shared/modeller-instance';
 import { buildVisualQueryFromString } from '../../parsing';
 import { OperationExplainedBox } from '../../shared/OperationExplainedBox';
 import { OperationList } from '../../shared/OperationList';
@@ -15,6 +14,7 @@ import { OperationListExplained } from '../../shared/OperationListExplained';
 import { OperationsEditorRow } from '../../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../../shared/QueryBuilderHints';
 import { RawQuery } from '../../shared/RawQuery';
+import { promQueryModeller } from '../../shared/modeller-instance';
 import { QueryBuilderOperation } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 import { MetricsLabelsSection } from '../MetricsLabelsSection';

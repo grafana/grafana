@@ -1,8 +1,7 @@
 import { capitalize } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 
-import { QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
-import { PromVisualQueryOperationCategory } from './types';
 import {
   functionRendererLeft,
   getOnLabelAddedHandler,
@@ -11,6 +10,8 @@ import {
   getAggregationByRenderer,
   getLastLabelRemovedHandler,
 } from './operationUtils';
+import { QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
+import { PromVisualQueryOperationCategory } from './types';
 
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
   const options: Array<SelectableValue<string>> = [

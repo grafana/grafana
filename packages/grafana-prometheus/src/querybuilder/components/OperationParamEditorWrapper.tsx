@@ -1,9 +1,10 @@
 import { ComponentType } from 'react';
 
-import { LabelParamEditor } from './LabelParamEditor';
-import { QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { promQueryModeller } from '../shared/modeller-instance';
+import { QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromQueryModellerInterface } from '../types';
+
+import { LabelParamEditor } from './LabelParamEditor';
 
 /**
  * Maps string keys to editor components with the modeller instance injected.

@@ -5,6 +5,7 @@
 import { ComponentType } from 'react';
 
 import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
+
 import { PromVisualQuery } from '../types';
 
 export interface QueryBuilderLabelFilter {
