@@ -1,9 +1,9 @@
 import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { isResourceList } from 'app/features/apiserver/guards';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardDataDTO, PermissionLevelString } from 'app/types';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
@@ -151,9 +151,9 @@ export class SQLSearcher implements GrafanaSearcher {
     let rsp: DashboardSearchHit[];
 
     if (query.deleted) {
-      // Make call to k8s API for deleted dashboards
-      const deletedUri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
-      const deletedResponse = await backendSrv.get(deletedUri);
+      // Make a call to k8s API for deleted dashboards
+      const api = getDashboardAPI();
+      const deletedResponse = await api.listDeletedDashboards({});
 
       if (isResourceList<DashboardDataDTO>(deletedResponse)) {
         const searchHits = resourceToSearchResult(deletedResponse);
