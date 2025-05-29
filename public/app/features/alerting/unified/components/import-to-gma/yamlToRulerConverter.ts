@@ -1,38 +1,35 @@
 import { load } from 'js-yaml';
 
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerCloudRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 interface PrometheusYamlFile {
   namespace?: string;
-  groups: Group[];
-}
-
-interface Group {
-  name: string;
-  rules: Rule[];
-}
-
-interface Rule {
-  alert: string;
-  expr: string;
-  for?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
+  groups: RulerRuleGroupDTO<RulerCloudRuleDTO>[];
 }
 
 function isValidObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && Boolean(value);
 }
 
-function isRule(yamlRule: unknown): yamlRule is Rule {
+function isRule(yamlRule: unknown): yamlRule is RulerCloudRuleDTO {
   if (!isValidObject(yamlRule)) {
     return false;
   }
 
   const alert = 'alert' in yamlRule && typeof yamlRule.alert === 'string' ? yamlRule.alert : undefined;
+  const record = 'record' in yamlRule && typeof yamlRule.record === 'string' ? yamlRule.record : undefined;
   const expr = 'expr' in yamlRule && typeof yamlRule.expr === 'string' ? yamlRule.expr : undefined;
 
-  if (!alert || !expr) {
+  if (!expr) {
+    return false;
+  }
+
+  if (!alert && !record) {
+    return false;
+  }
+
+  // If both are specified we don't know which one to use
+  if (alert && record) {
     return false;
   }
 
@@ -52,7 +49,7 @@ function isRule(yamlRule: unknown): yamlRule is Rule {
   return true;
 }
 
-function isGroup(obj: unknown): obj is Group {
+function isGroup(obj: unknown): obj is RulerRuleGroupDTO<RulerCloudRuleDTO> {
   if (!isValidObject(obj)) {
     return false;
   }
@@ -90,7 +87,7 @@ function validatePrometheusYamlFile(obj: unknown): ValidationResult {
 
   // If we get here, the object is valid - we can safely use it
   // Since we validated the entire structure above, we know obj conforms to PrometheusYamlFile
-  const validatedGroups: Group[] = obj.groups.map((group, index) => {
+  const validatedGroups = obj.groups.map((group, index) => {
     if (isGroup(group)) {
       return group;
     }
@@ -123,21 +120,7 @@ export function parseYamlToRulerRulesConfigDTO(yamlAsString: string, defaultName
   const prometheusFile = validation.data;
   const namespace = prometheusFile.namespace ?? defaultNamespace;
 
-  const data: RulerRulesConfigDTO = {};
-  data[namespace] = prometheusFile.groups.map((group) => {
-    return {
-      name: group.name,
-      rules: group.rules.map((rule) => {
-        return {
-          alert: rule.alert,
-          expr: rule.expr,
-          for: rule.for,
-          labels: rule.labels,
-          annotations: rule.annotations,
-        };
-      }),
-    };
-  });
-
-  return data;
+  return {
+    [namespace]: prometheusFile.groups,
+  };
 }

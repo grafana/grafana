@@ -70,6 +70,31 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
     expect(result).toEqual(expected);
   });
 
+  it('should parse recording rules', () => {
+    const yaml = `
+      groups:
+        - name: test-group
+          rules:
+            - record: test:rate5m
+              expr: rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+    `;
+    const expected: RulerRulesConfigDTO = {
+      'default-namespace': [
+        {
+          name: 'test-group',
+          rules: [
+            {
+              record: 'test:rate5m',
+              expr: 'rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])',
+            },
+          ],
+        },
+      ],
+    };
+    const result = parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace');
+    expect(result).toEqual(expected);
+  });
+
   it('should throw error for invalid YAML format', () => {
     const invalidYaml = 'invalid: yaml: content';
     expect(() => parseYamlToRulerRulesConfigDTO(invalidYaml, 'default-namespace')).toThrow();
@@ -103,6 +128,61 @@ describe('parseYamlToRulerRulesConfigDTO', () => {
         - name: test-group
           rules:
             - invalid: rule
+    `;
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array at index 0'
+    );
+  });
+
+  it('should throw error for empty YAML string', () => {
+    const emptyYaml = '';
+    expect(() => parseYamlToRulerRulesConfigDTO(emptyYaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array'
+    );
+  });
+
+  it('should throw error for rule missing expr field', () => {
+    const yaml = `
+      namespace: test-namespace
+      groups:
+        - name: test-group
+          rules:
+            - alert: TestAlert
+              for: 5m
+              labels:
+                severity: warning
+    `;
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array at index 0'
+    );
+  });
+
+  it('should throw error for rule with expr but missing both alert and record fields', () => {
+    const yaml = `
+      namespace: test-namespace
+      groups:
+        - name: test-group
+          rules:
+            - expr: up == 0
+              for: 5m
+              labels:
+                severity: warning
+    `;
+    expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
+      'Invalid YAML format: missing or invalid groups array at index 0'
+    );
+  });
+
+  it('should throw error for rule with both alert and record fields', () => {
+    const yaml = `
+      namespace: test-namespace
+      groups:
+        - name: test-group
+          rules:
+            - alert: TestAlert
+              record: test:rate5m
+              expr: up == 0
+              for: 5m
     `;
     expect(() => parseYamlToRulerRulesConfigDTO(yaml, 'default-namespace')).toThrow(
       'Invalid YAML format: missing or invalid groups array at index 0'
