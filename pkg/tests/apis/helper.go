@@ -535,7 +535,7 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}

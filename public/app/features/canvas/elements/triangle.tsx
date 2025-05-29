@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -154,9 +155,9 @@ export const triangleItem: CanvasElementItem = {
         name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.triangle-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.triangle-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.triangle-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -167,9 +168,9 @@ export const triangleItem: CanvasElementItem = {
         name: 'Vertical align',
         settings: {
           options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
+            { value: VAlign.Top, label: t('canvas.triangle-item.label.top', 'Top') },
+            { value: VAlign.Middle, label: t('canvas.triangle-item.label.middle', 'Middle') },
+            { value: VAlign.Bottom, label: t('canvas.triangle-item.label.bottom', 'Bottom') },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -179,7 +180,7 @@ export const triangleItem: CanvasElementItem = {
         path: 'config.size',
         name: 'Text size',
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.triangle-item.placeholder.auto', 'Auto'),
         },
       });
   },
