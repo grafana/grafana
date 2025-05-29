@@ -41,7 +41,7 @@ func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboa
 func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 	// we need to use a service identity to delete dashboards from the dashboard service (because the currently signed in user
 	// has to be signed into a different org to delete another org, and so this will fail the namespace check). While we already
-	// do auth checks on the /api layer, since this is availble on the service, adding a check here as well to be safe, in case any additional
+	// do auth checks on the /api layer, since this is available on the service, adding a check here as well to be safe, in case any additional
 	// usage is added internally.
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
