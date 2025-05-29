@@ -293,7 +293,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 			teamService:  &teamtest.FakeService{},
 			tracer:       tracing.InitializeTracerForTest(),
 			cfg:          setting.NewCfg(),
-			db:           db.InitTestDB(t),
+			db:           ss,
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "email",
