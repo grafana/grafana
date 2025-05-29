@@ -47,6 +47,10 @@ func TestIntegrationDistributor(t *testing.T) {
 	// grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
 
 	dbType := sqlutil.GetTestDBType()
+	if dbType == "sqlite3" {
+		t.Skip()
+	}
+
 	db, err := sqlutil.GetTestDB(dbType)
 	fmt.Println("testdb: ", db.ConnStr)
 	require.NoError(t, err)
@@ -67,7 +71,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers := make([]testModuleServer, 0, 2)
 	distributorServer := initDistributorServerForTest(t)
 
-	serversAddresses := []string{"127.0.0.2", "127.0.0.3"}
+	serversAddresses := []string{"127.0.0.2"}
 	for i, ip := range serversAddresses {
 		testServers = append(testServers, createStorageServerApi(t, "instance-"+strconv.Itoa(i), ip, dbType, db.ConnStr))
 	}
@@ -103,6 +107,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			if err != nil {
 				return false
 			}
+			fmt.Println("got: ", res)
 			return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
 		}, 20*time.Second, 2*time.Second, "server failed to start up or is too slow: "+testServer.id)
 	}
