@@ -9,6 +9,7 @@ import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -102,14 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: '1 1 auto',
   }),
-  tabsBar: css({
-    '&:hover': {
-      '.dashboard-canvas-add-button': {
-        filter: 'unset',
-        opacity: 1,
-      },
-    },
-  }),
+  tabsBar: css(dashboardCanvasAddButtonHoverStyles),
   tabsRow: css({
     display: 'flex',
     width: '100%',
