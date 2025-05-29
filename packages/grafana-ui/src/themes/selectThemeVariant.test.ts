@@ -3,7 +3,6 @@ import { GrafanaThemeType } from '@grafana/data';
 import { mockTheme } from './getTheme';
 import { selectThemeVariant } from './selectThemeVariant';
 
-
 const lightThemeMock = {
   color: {
     red: '#ff0000',
