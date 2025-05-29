@@ -5,9 +5,12 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXExpressionContainer} JSXExpressionContainer */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.Literal} Literal */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
+
 const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 /**
@@ -26,9 +29,18 @@ const elementIsTrans = (node) => {
  * @param {Node} node
  * @param {RuleContextWithOptions} context
  */
-const getParentMethod = (node, context) => {
+const nodeHasTransAncestor = (node, context) => {
   const ancestors = context.sourceCode.getAncestors(node);
-  return ancestors.find((anc) => {
+  return ancestors.some((anc) => elementIsTrans(anc));
+};
+
+/**
+ * @param {Node} node
+ * @param {RuleContextWithOptions} context
+ */
+const getParentMethods = (node, context) => {
+  const ancestors = context.sourceCode.getAncestors(node);
+  return ancestors.filter((anc) => {
     return (
       anc.type === AST_NODE_TYPES.ArrowFunctionExpression ||
       anc.type === AST_NODE_TYPES.FunctionDeclaration ||
@@ -40,9 +52,16 @@ const getParentMethod = (node, context) => {
 
 /**
  * @param {Node} node
+ * @param {RuleContextWithOptions} context
  */
-const isStringLiteral = (node) => {
-  return node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string';
+const getParentJsxAttribute = (node, context) => {
+  if (node.type === AST_NODE_TYPES.JSXAttribute) {
+    return node;
+  }
+  const ancestors = context.sourceCode.getAncestors(node);
+  return ancestors.find((anc) => {
+    return anc.type === AST_NODE_TYPES.JSXAttribute;
+  });
 };
 
 /**
@@ -58,13 +77,26 @@ function toKebabCase(str) {
 }
 
 /**
- * Checks if a string is non-alphanumeric
+ * Checks if a string is alphanumeric (because we likely don't want to translate numbers or symbols)
  * @param {string} str The string to check
  * @returns {boolean}
  */
-function isStringNonAlphanumeric(str) {
-  return !/[a-zA-Z0-9]/.test(str);
+function stringIsAlphanumeric(str) {
+  return /[a-zA-Z0-9]/.test(str);
 }
+
+/**
+ * Checks if a string should be translated
+ * @param {string} string
+ */
+const stringShouldBeTranslated = (string) => {
+  const specialCases = ['null', 'nan'];
+  if (specialCases.includes(string.toLowerCase())) {
+    return false;
+  }
+  return string.trim() && stringIsAlphanumeric(string);
+};
+
 /**
  * Checks if we _should_ fix an error automatically
  * @param {RuleContextWithOptions} context
@@ -77,7 +109,7 @@ function shouldBeFixed(context) {
 
 /**
  * Checks if a node can be fixed automatically
- * @param {JSXAttribute|JSXElement|JSXFragment|Property} node The node to check
+ * @param {Node} node The node to check
  * @param {RuleContextWithOptions} context
  * @returns {boolean} Whether the node can be fixed
  */
@@ -86,36 +118,48 @@ function canBeFixed(node, context) {
     return false;
   }
 
-  const parentMethod = getParentMethod(node, context);
+  const parentMethods = getParentMethods(node, context);
   const isAttribute = node.type === AST_NODE_TYPES.JSXAttribute;
   const isProperty = node.type === AST_NODE_TYPES.Property;
+  const isTemplateLiteral =
+    node.type === AST_NODE_TYPES.TemplateLiteral ||
+    (node.type === AST_NODE_TYPES.JSXExpressionContainer && node.expression.type === AST_NODE_TYPES.TemplateLiteral);
   const isPropertyOrAttribute = isAttribute || isProperty;
 
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
-  if (isPropertyOrAttribute && !parentMethod) {
+  // We also can't easily fix template literals
+  if ((isPropertyOrAttribute && !parentMethods.length) || isTemplateLiteral) {
     return false;
   }
 
   // If we're going to try and fix using `t`, and it already exists in the scope,
   // but not from `useTranslate`, then we can't fix/provide a suggestion
-  if (isPropertyOrAttribute && parentMethod) {
-    const hasTDeclaration = getTDeclaration(parentMethod, context);
-    const hasUseTranslateDeclaration = methodHasUseTranslate(parentMethod, context);
+  if (isPropertyOrAttribute && parentMethods) {
+    // todo fix recursively find t
+    const hasTDeclaration = getTVariable(parentMethods[0], context);
+    const hasUseTranslateDeclaration = methodHasUseTranslate(parentMethods[0], context);
     if (hasTDeclaration && !hasUseTranslateDeclaration) {
       return false;
     }
   }
-  if (isAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-    return isStringLiteral(node.value.expression);
+
+  const isJsxElementOrFragment = node.type === AST_NODE_TYPES.JSXElement || node.type === AST_NODE_TYPES.JSXFragment;
+
+  if (isJsxElementOrFragment) {
+    const hasJsxSibling = node.children.some(
+      (child) => child.type === AST_NODE_TYPES.JSXElement || child.type === AST_NODE_TYPES.JSXExpressionContainer
+    );
+    if (hasJsxSibling) {
+      return false;
+    }
   }
 
-  const values =
-    node.type === AST_NODE_TYPES.JSXElement || node.type === AST_NODE_TYPES.JSXFragment
-      ? node.children.map((child) => {
-          return getNodeValue(child);
-        })
-      : [getNodeValue(node)];
+  const values = isJsxElementOrFragment
+    ? node.children.map((child) => {
+        return getNodeValue(child);
+      })
+    : [getNodeValue(node)];
 
   const stringIsTooLong = values.some((value) => value.trim().split(' ').length > 10);
   // If we have more than 10 words,
@@ -124,7 +168,7 @@ function canBeFixed(node, context) {
   if (stringIsTooLong) {
     return false;
   }
-  const stringIsNonAlphanumeric = values.some((value) => !/[a-zA-Z0-9]/.test(value));
+  const stringIsNonAlphanumeric = values.some((value) => value.trim() && !stringIsAlphanumeric(value));
   const stringContainsHTMLEntities = values.some((value) => /(&[a-zA-Z0-9]+;)/.test(value));
   // If node only contains non-alphanumeric characters,
   // or contains HTML character entities, then we don't want to autofix
@@ -142,7 +186,7 @@ function canBeFixed(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/features\/(.+?)\//);
+  const match = filename.match(/public\/app\/(?:features)\/(.+?)\//);
   if (match) {
     return match[1];
   }
@@ -151,7 +195,7 @@ function getTranslationPrefix(context) {
 
 /**
  * Gets the i18n key for a node
- * @param {JSXAttribute|JSXText|Property} node The node
+ * @param {Node} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string} The i18n key
  */
@@ -182,20 +226,20 @@ const getI18nKey = (node, context) => {
 
   let kebabString = toKebabCase(uniqueWords.join(' '));
 
-  if (node.type === AST_NODE_TYPES.JSXAttribute) {
-    const propName = node.name.name;
-    const attribute = node.parent?.attributes.find(
-      (attr) =>
-        attr.type === AST_NODE_TYPES.JSXAttribute &&
-        attr.name.type === AST_NODE_TYPES.JSXIdentifier &&
-        attr &&
-        ['id', 'data-testid'].includes(attr.name?.name)
-    );
+  // Recursively find the parent JSX attribute, as we might be dealing with a literal or
+  // expression inside an attribute
+  const parentJsxAttribute = getParentJsxAttribute(node, context);
+
+  if (parentJsxAttribute) {
+    const propName = toKebabCase(String(parentJsxAttribute.name.name));
+    const attribute = parentJsxAttribute.parent?.attributes
+      .filter((attr) => attr.type === AST_NODE_TYPES.JSXAttribute)
+      .find(
+        (attr) =>
+          attr.name.type === AST_NODE_TYPES.JSXIdentifier && attr && ['id', 'data-testid'].includes(attr.name?.name)
+      );
     const potentialId =
-      attribute &&
-      attribute.type === AST_NODE_TYPES.JSXAttribute &&
-      attribute.value &&
-      attribute.value.type === AST_NODE_TYPES.Literal
+      attribute && attribute.value && attribute.value.type === AST_NODE_TYPES.Literal
         ? attribute.value.value
         : undefined;
     kebabString = [potentialId, propName, kebabString].filter(Boolean).join('-');
@@ -208,7 +252,7 @@ const getI18nKey = (node, context) => {
 
 /**
  * Gets component names from ancestors
- * @param {JSXAttribute|JSXText|Property} node The node
+ * @param {Node} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string[]} The component names
  */
@@ -223,6 +267,9 @@ function getComponentNames(node, context) {
       ancestor.type === AST_NODE_TYPES.ClassDeclaration
     ) {
       const name = ancestor.id?.type === AST_NODE_TYPES.Identifier ? ancestor.id.name : '';
+      if (!name) {
+        continue;
+      }
       // Remove the word "component" from the name, as this is a bit
       // redundant in a translation key
       const sanitizedName = name.replace(/component/gi, '');
@@ -238,7 +285,7 @@ function getComponentNames(node, context) {
  * @param {Node} node
  * @param {RuleContextWithOptions} context
  */
-function getTDeclaration(node, context) {
+function getTVariable(node, context) {
   return context.sourceCode.getScope(node).variables.find((v) => v.name === 't');
 }
 
@@ -249,10 +296,16 @@ function getTDeclaration(node, context) {
  * @param {RuleContextWithOptions} context
  */
 function methodHasUseTranslate(node, context) {
-  const tDeclaration = getTDeclaration(node, context);
-  return (
-    tDeclaration &&
-    tDeclaration.defs.find((definition) => {
+  const tVariable = getTVariable(node, context);
+  if (!tVariable) {
+    return false;
+  }
+
+  const { defs } = tVariable;
+
+  return defs
+    .filter((def) => def.node.type === AST_NODE_TYPES.VariableDeclarator)
+    .find((definition) => {
       const isVariableDeclaration = definition.node.type === AST_NODE_TYPES.VariableDeclarator;
       const declarationInit = isVariableDeclaration ? definition.node.init : null;
       return (
@@ -262,13 +315,12 @@ function methodHasUseTranslate(node, context) {
         declarationInit.callee.type === AST_NODE_TYPES.Identifier &&
         declarationInit.callee.name === 'useTranslate'
       );
-    })
-  );
+    });
 }
 
 /**
  * Gets the import fixer for a node
- * @param {JSXElement|JSXFragment|JSXAttribute|Property} node
+ * @param {Node} node
  * @param {RuleFixer} fixer The fixer
  * @param {'Trans'|'t'|'useTranslate'} importName The member to import from either `@grafana/i18n` or `@grafana/i18n/internal`
  * @param {RuleContextWithOptions} context
@@ -284,13 +336,13 @@ function getImportsFixer(node, fixer, importName, context) {
     t: '@grafana/i18n/internal',
   };
 
-  const parentMethod = getParentMethod(node, context);
+  const parentMethod = getParentMethods(node, context);
 
   if (importName === 't') {
     // If we're trying to import `t`,
     // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
     // do nothing
-    const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod, context) : false;
+    const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod[0], context) : false;
     if (declarationFromUseTranslate) {
       return;
     }
@@ -298,33 +350,28 @@ function getImportsFixer(node, fixer, importName, context) {
 
   const expectedImport = importPackage[importName];
 
-  const existingAppCoreI18n = body.find(
-    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === importPackage[importName]
-  );
+  const existingAppCoreI18n = body
+    .filter((node) => node.type === AST_NODE_TYPES.ImportDeclaration)
+    .find((node) => node.source.value === importPackage[importName]);
 
   // If there's no existing import at all, add it
   if (!existingAppCoreI18n) {
     return fixer.insertTextBefore(body[0], `import { ${importName} } from '${expectedImport}';\n`);
   }
 
-  // To keep the typechecker happy - we have to explicitly check the type
-  // so we can infer it further down
-  if (existingAppCoreI18n.type !== AST_NODE_TYPES.ImportDeclaration) {
+  const existingSpecifier = existingAppCoreI18n.specifiers.some((s) => {
+    return (
+      s.type === AST_NODE_TYPES.ImportSpecifier &&
+      s.imported.type === AST_NODE_TYPES.Identifier &&
+      s.imported.name === importName
+    );
+  });
+
+  // If there's an existing import, and it already has the importName, do nothing
+  if (existingSpecifier) {
     return;
   }
 
-  // If there's an existing import, and it already has the importName, do nothing
-  if (
-    existingAppCoreI18n.specifiers.some((s) => {
-      return (
-        s.type === AST_NODE_TYPES.ImportSpecifier &&
-        s.imported.type === AST_NODE_TYPES.Identifier &&
-        s.imported.name === importName
-      );
-    })
-  ) {
-    return;
-  }
   const lastSpecifier = existingAppCoreI18n.specifiers[existingAppCoreI18n.specifiers.length - 1];
   /** @type {[number, number]} */
   const range = [lastSpecifier.range[1], lastSpecifier.range[1]];
@@ -362,33 +409,36 @@ const firstCharIsUpper = (str) => {
 };
 
 /**
- * @param {JSXAttribute|Property} node
+ * @param {Node} node
  * @param {RuleFixer} fixer
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
 const getUseTranslateFixer = (node, fixer, context) => {
-  const parentMethod = getParentMethod(node, context);
+  const [parentMethod] = getParentMethods(node, context);
+  if (!parentMethod || parentMethod.body.type !== AST_NODE_TYPES.BlockStatement) {
+    return;
+  }
+  const parentMethodName = (() => {
+    if (parentMethod.type === AST_NODE_TYPES.FunctionDeclaration && parentMethod.id) {
+      return parentMethod.id.name;
+    }
+    if (
+      parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
+      parentMethod.parent.id.type === AST_NODE_TYPES.Identifier
+    ) {
+      return parentMethod.parent.id.name;
+    }
+    return null;
+  })();
 
-  const functionIsNotUpperCase =
-    parentMethod &&
-    parentMethod.type === AST_NODE_TYPES.FunctionDeclaration &&
-    (!parentMethod.id || !firstCharIsUpper(parentMethod.id.name));
-
-  const variableDeclaratorIsNotUpperCase =
-    parentMethod &&
-    parentMethod.parent.type === AST_NODE_TYPES.VariableDeclarator &&
-    parentMethod.parent.id.type === AST_NODE_TYPES.Identifier &&
-    !firstCharIsUpper(parentMethod.parent.id.name);
+  const nameIsNotUpperCase = parentMethodName && !firstCharIsUpper(parentMethodName);
+  const nameStartsWithUse = parentMethodName && parentMethodName.startsWith('use');
 
   // If the node is not within a function, or the parent method does not start with an uppercase letter,
+  // and does not start with `use` (i.e. it's not a React hook),
   // then we can't reliably add `useTranslate`, as this may not be a React component
-  if (
-    !parentMethod ||
-    functionIsNotUpperCase ||
-    variableDeclaratorIsNotUpperCase ||
-    parentMethod.body.type !== AST_NODE_TYPES.BlockStatement
-  ) {
+  if (nameIsNotUpperCase && !nameStartsWithUse) {
     return;
   }
 
@@ -402,10 +452,10 @@ const getUseTranslateFixer = (node, fixer, context) => {
     (returnStatement.argument.type === AST_NODE_TYPES.JSXElement ||
       returnStatement.argument.type === AST_NODE_TYPES.JSXFragment);
 
-  if (!returnStatementIsJsx) {
+  if (!returnStatementIsJsx && !nameStartsWithUse) {
     return;
   }
-  const tDeclarationExists = getTDeclaration(parentMethod, context);
+  const tDeclarationExists = getTVariable(parentMethod, context);
   const useTranslateExists = methodHasUseTranslate(parentMethod, context);
 
   if (tDeclarationExists && useTranslateExists) {
@@ -422,7 +472,7 @@ const getUseTranslateFixer = (node, fixer, context) => {
 };
 
 /**
- * @param {JSXAttribute|Property} node
+ * @param {Node} node
  * @param {RuleContextWithOptions} context
  * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
  */
@@ -434,7 +484,11 @@ const getTFixers = (node, context) => (fixer) => {
 
   if (node.type === AST_NODE_TYPES.Property) {
     fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
-  } else {
+  }
+  if (node.type === AST_NODE_TYPES.Literal) {
+    fixes.push(fixer.replaceText(node, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+  }
+  if (node.type === AST_NODE_TYPES.JSXAttribute) {
     fixes.push(
       fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
     );
@@ -458,14 +512,26 @@ const getTFixers = (node, context) => (fixer) => {
 
 /**
  * Gets the value of a node
- * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild|Property} node The node
+ * @param {Node} node The node
  * @returns {string} The node value
  */
 function getNodeValue(node) {
-  if (
-    (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property) &&
-    node.value?.type === AST_NODE_TYPES.Literal
-  ) {
+  if (node.type === AST_NODE_TYPES.Literal) {
+    return String(node.value);
+  }
+
+  if (node.type === AST_NODE_TYPES.JSXText) {
+    // Return the raw value if we can, so we can work out if there are any HTML entities
+    return node.raw;
+  }
+
+  if (node.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    return getNodeValue(node.expression);
+  }
+
+  const isAttributeOrProperty = node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property;
+
+  if (isAttributeOrProperty && node.value?.type === AST_NODE_TYPES.Literal) {
     // TODO: Update this to return bool/number values and handle the type issues elsewhere
     // For now, we'll just return an empty string so we consider any numbers or booleans as not being issues
     if (typeof node.value.value === 'boolean' || typeof node.value.value === 'number') {
@@ -473,17 +539,7 @@ function getNodeValue(node) {
     }
     return String(node.value.value) || '';
   }
-  if (node.type === AST_NODE_TYPES.JSXText) {
-    // Return the raw value if we can, so we can work out if there are any HTML entities
-    return node.raw;
-  }
-  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-    // this condition is basically `isStringLiteral`, but we can't use the function
-    // else it doesn't narrow the type correctly :(
-    if (node.value.expression.type === AST_NODE_TYPES.Literal && typeof node.value.expression.value === 'string') {
-      return node.value.expression.value;
-    }
-  }
+
   return '';
 }
 
@@ -495,5 +551,6 @@ module.exports = {
   canBeFixed,
   shouldBeFixed,
   elementIsTrans,
-  isStringNonAlphanumeric,
+  stringShouldBeTranslated,
+  nodeHasTransAncestor,
 };

@@ -101,7 +101,7 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       filename,
     },
     {
-      name: "Ternary in an attribute we don't care about",
+      name: "Ternaries in an attribute we don't care about",
       code: `<div icon={isAThing ? 'Foo' : 'Bar'} />`,
       filename,
     },
@@ -154,7 +154,7 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       filename,
     },
     {
-      name: 'Label reference inside `css` call',
+      name: 'Object property using calleesToIgnore options',
       code: `const getThing = () => {
         const thing = css({
           label: 'red',
@@ -183,8 +183,79 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `const Foo = ({ foobar = {label: 'test'} }) => <div>{foobar.label}</div>`,
       filename,
     },
+
+    {
+      name: 'Special case values are not reported',
+      code: `const Foo = () => {
+        return (
+          <>
+            <div>Null</div>
+            <div>NaN</div>
+          </>
+        )
+      }`,
+      filename,
+    },
   ],
   invalid: [
+    {
+      name: 'JSXExpressionContainer - ternary with nonalphanumeric',
+      code: `
+const Foo = () => <div>{foo ? 'hello' : '?'}</div>`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div>{foo ? t("some-feature.foo.hello", "hello") : '?'}</div>`,
+            },
+          ],
+        },
+      ],
+      filename,
+    },
+    {
+      name: 'JSXExpressionContainer - || conditional',
+      code: `
+const Foo = () => <div>{foo || 'a'}</div>`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div>{foo || t("some-feature.foo.a", "a")}</div>`,
+            },
+          ],
+        },
+      ],
+      filename,
+    },
+    {
+      name: 'JSXExpressionContainer - && conditional',
+      code: `
+const Foo = () => <div>{foo && 'a'}</div>`,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div>{foo && t("some-feature.foo.a", "a")}</div>`,
+            },
+          ],
+        },
+      ],
+      filename,
+    },
+
     /**
      * FIXABLE CASES
      */
@@ -222,6 +293,21 @@ const Foo = () => {
           I put a bunch of non-alphanumeric characters outside of the div
         </div>
         .?!;
+      </>
+  )
+}`,
+      filename,
+      errors: 1,
+    },
+    {
+      name: 'sibling element that is jsx expression',
+      code: `
+const Foo = () => {
+  return (
+      <>
+        <div>
+          something untranslated {foo ? 1 : 2}
+        </div>
       </>
   )
 }`,
@@ -322,7 +408,7 @@ const Foo = () => <div><TestingComponent someProp={<>Test</>} /></div>`,
               messageId: 'wrapWithTrans',
               output: `
 ${TRANS_IMPORT}
-const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-feature.foo.test">Test</Trans></>} /></div>`,
+const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-feature.foo.some-prop-test">Test</Trans></>} /></div>`,
             },
           ],
         },
@@ -405,6 +491,41 @@ const foo = function() {
 ${T_IMPORT}
 const foo = function() {
   return <div title={t("some-feature.foo.title-foo", "foo")} />;
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Object pattern component names',
+      code: `
+const { someProp } = function() {
+  return { someProp: <div title="foo" /> };
+}`,
+      filename,
+      errors: 1,
+    },
+
+    {
+      name: 'Fixes using useTranslate when inside something named like a React hook',
+      code: `
+const useFoo = () => {
+  return { label: 'foo' };
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const useFoo = () => {
+  const { t } = useTranslate();
+return { label: t("some-feature.use-foo.label.foo", "foo") };
 }`,
             },
           ],
@@ -578,7 +699,7 @@ const Foo = () => {
       filename,
       errors: [
         {
-          messageId: 'noUntranslatedStringsProp',
+          messageId: 'noUntranslatedStrings',
           suggestions: [
             {
               messageId: 'wrapWithT',
@@ -701,7 +822,7 @@ const Foo = () => <div title={"foo"} />`,
       filename,
       errors: [
         {
-          messageId: 'noUntranslatedStringsProp',
+          messageId: 'noUntranslatedStrings',
           suggestions: [
             {
               messageId: 'wrapWithT',
@@ -770,7 +891,7 @@ const Foo = () => {
     },
 
     {
-      name: 'Untranslated object property',
+      name: 'Fixes untranslated object property',
       code: `
 const Foo = () => {
   const thing = {
@@ -803,7 +924,7 @@ const thing = {
     },
 
     {
-      name: 'Untranslated object property with existing import',
+      name: 'Fixes untranslated object property with existing import',
       code: `
 ${T_IMPORT}
 const Foo = () => {
@@ -832,7 +953,7 @@ const Foo = () => {
     },
 
     {
-      name: 'Untranslated object property with calleesToIgnore',
+      name: 'Fixes untranslated object property with calleesToIgnore',
       code: `
 const Foo = () => {
   const thing = doAThing({
@@ -853,6 +974,78 @@ const Foo = () => {
   const thing = doAThing({
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
   })
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes ternary with string literals - both',
+      code: `
+const Foo = () => <div>{isAThing ? 'Foo' : 'Bar'}</div>`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div>{isAThing ? t("some-feature.foo.foo", "Foo") : 'Bar'}</div>`,
+            },
+          ],
+        },
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div>{isAThing ? 'Foo' : t("some-feature.foo.bar", "Bar")}</div>`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes ternary with string literals - prop',
+      code: `
+const Foo = () => {
+  return <div title={isAThing ? 'Foo' : 'Bar'} />
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+return <div title={isAThing ? t("some-feature.foo.title-foo", "Foo") : 'Bar'} />
+}`,
+            },
+          ],
+        },
+        {
+          messageId: 'noUntranslatedStringsProp',
+
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${USE_TRANSLATE_IMPORT}
+const Foo = () => {
+  const { t } = useTranslate();
+return <div title={isAThing ? 'Foo' : t("some-feature.foo.title-bar", "Bar")} />
 }`,
             },
           ],
@@ -1015,7 +1208,7 @@ const Foo = () => {
     },
 
     {
-      name: 'JSXAttribute not in a function',
+      name: 'Cannot fixJSXAttribute not in a function',
       code: `<div title="foo" />`,
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }],
@@ -1025,7 +1218,7 @@ const Foo = () => {
       name: 'Cannot fix JSXExpression in attribute if it is template literal',
       code: `const Foo = () => <div title={\`foo\`} />`,
       filename,
-      errors: [{ messageId: 'noUntranslatedStringsProp' }],
+      errors: [{ messageId: 'noUntranslatedStrings' }],
     },
 
     {
@@ -1033,25 +1226,6 @@ const Foo = () => {
       code: `const Foo = () => <div>Untranslated text</div>`,
       filename: 'public/something-else/foo/SomeOtherFile.tsx',
       errors: [{ messageId: 'noUntranslatedStrings' }],
-    },
-
-    {
-      name: 'Invalid when ternary with string literals - both',
-      code: `const Foo = () => <div>{isAThing ? 'Foo' : 'Bar'}</div>`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }, { messageId: 'noUntranslatedStrings' }],
-    },
-    {
-      name: 'Invalid when ternary with string literals - alternate',
-      code: `const Foo = () => <div>{isAThing ? 'Foo' : 1}</div>`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }],
-    },
-    {
-      name: 'Invalid when ternary with string literals - prop',
-      code: `const Foo = () => <div title={isAThing ? 'Foo' : 'Bar'} />`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
 
     {
