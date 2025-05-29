@@ -170,12 +170,13 @@ jobs:
           if gh pr view &>/dev/null; then
             echo "Changelog pr has already been created"
           else
+
             gh pr create \
               --dry-run="${DRY_RUN}" \
               --label "no-backport" \
               --label "no-changelog" \
               -B "${TARGET}" \
-              --title "Release: update changelog" \
+              --title "Release: update changelog for ${TARGET}" \
               --body "Changelog changes for release versions:"
           fi
         env:
