@@ -146,6 +146,7 @@ export function MetricsLabelsSection({
         metricLookupDisabled={datasource.lookupsDisabled}
         onBlur={onBlur ? onBlur : () => {}}
         variableEditor={variableEditor}
+        timeRange={timeRange}
       />
       <LabelFilters
         debounceDuration={getDebounceTimeInMilliseconds(datasource.cacheLevel)}
