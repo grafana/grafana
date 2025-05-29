@@ -31,8 +31,8 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
   // Add necessary alias options for time series format
   // when that format has been selected
   if (query.format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
-    timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
+    timeSeriesAliasOpts.push({ label: t("components.select-row.label.time", "time"), value: 'time' });
+    timeSeriesAliasOpts.push({ label: t("components.select-row.label.value", "value"), value: 'value' });
   }
 
   const onAggregationChange = useCallback(
@@ -94,8 +94,8 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
 
   const aggregateOptions = () => {
     const options: Array<SelectableValue<string>> = [
-      { label: 'Aggregations', options: [] },
-      { label: 'Macros', options: [] },
+      { label: t("components.select-row.aggregate-options.options.label.aggregations", "Aggregations"), options: [] },
+      { label: t("components.select-row.aggregate-options.options.label.macros", "Macros"), options: [] },
     ];
     for (const func of db.functions()) {
       // Create groups for macros

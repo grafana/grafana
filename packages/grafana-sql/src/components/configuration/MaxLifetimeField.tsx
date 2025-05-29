@@ -1,3 +1,4 @@
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 
@@ -16,12 +17,14 @@ export function MaxLifetimeField({ labelWidth, onMaxLifetimeChanged, jsonData }:
       label={
         <Label>
           <Stack gap={0.5}>
-            <span>Max lifetime</span>
+            <span><Trans i18nKey="components.max-lifetime-field.max-lifetime">Max lifetime</Trans></span>
             <Tooltip
               content={
                 <span>
-                  The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused
-                  forever.
+                  <Trans i18nKey="components.max-lifetime-field.content-max-lifetime">
+                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused
+                    forever.
+                  </Trans>
                 </span>
               }
             >

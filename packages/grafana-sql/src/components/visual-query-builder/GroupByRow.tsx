@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { useTranslate } from '@grafana/i18n';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
@@ -43,6 +43,7 @@ function makeRenderColumn({ options }: { options?: Array<SelectableValue<string>
     onChangeItem: (item: QueryEditorGroupByExpression) => void,
     onDeleteItem: () => void
   ) {
+    const { t } = useTranslate();
     return (
       <InputGroup>
         <Select

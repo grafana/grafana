@@ -87,7 +87,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const labelWidth = 40;
 
   return (
-    <ConfigSubSection title="Connection limits">
+    <ConfigSubSection title={t("components.connection-limits.title-connection-limits", "Connection limits")}>
       <MaxOpenConnectionsField
         labelWidth={labelWidth}
         onMaxConnectionsChanged={onMaxConnectionsChanged}

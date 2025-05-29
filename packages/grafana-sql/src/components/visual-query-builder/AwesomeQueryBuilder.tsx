@@ -249,6 +249,7 @@ const noop = () => '';
 
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
+  const { t } = useTranslate();
 
   // IN operator expects array, override IN formatter for multi-value variables
   const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp?.bind(config.ctx) || noop;
@@ -309,7 +310,7 @@ function getCustomOperators(config: BasicConfig) {
       sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {
-      label: 'Macros',
+      label: t("components.get-custom-operators.custom-operators.label.macros", "Macros"),
       sqlFormatOp: (field: string, _operator: string, value: string | string[] | ImmutableList<string>) => {
         if (value === TIME_FILTER) {
           return `$__timeFilter(${field})`;
