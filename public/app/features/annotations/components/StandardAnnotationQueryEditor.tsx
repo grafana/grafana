@@ -163,7 +163,15 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       );
     }
     if (panelData?.error) {
-      return <p>{panelData.error.message ?? 'There was an error fetching data'}</p>;
+      return (
+        <p>
+          {panelData.error.message ??
+            t(
+              'annotations.standard-annotation-query-editor.there-was-an-error-fetching-data',
+              'There was an error fetching data'
+            )}
+        </p>
+      );
     }
 
     if (!events?.length) {

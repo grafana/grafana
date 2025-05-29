@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuItem, Icon, ContextMenu } from '@grafana/ui';
 
@@ -25,7 +26,7 @@ const renderMenuItems = (
   return links.map((link, i) => (
     <MenuItem
       key={i}
-      label={link.title || 'Link'}
+      label={link.title || t('explore.render-menu-items.label-link', 'Link')}
       onClick={
         link.onClick
           ? (event) => {

@@ -145,7 +145,9 @@ const RuleViewer = () => {
               topSpacing={2}
             >
               <pre style={{ marginBottom: 0 }}>
-                <code>{rule.promRule?.lastError ?? 'No error message'}</code>
+                <code>
+                  {rule.promRule?.lastError ?? t('alerting.rule-viewer.sub-title-no-error-message', 'No error message')}
+                </code>
               </pre>
             </Alert>
           )}

@@ -111,7 +111,7 @@ const ServiceAccountListItemComponent = memo(
               <span>
                 <Icon name="key-skeleton-alt"></Icon>
               </span>
-              {serviceAccount.tokens || 'No tokens'}
+              {serviceAccount.tokens || t('serviceaccounts.service-account-list-item.no-tokens', 'No tokens')}
             </div>
           </a>
         </td>

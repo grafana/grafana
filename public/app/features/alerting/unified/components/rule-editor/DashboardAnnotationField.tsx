@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 import { DashboardDataDTO } from 'app/types';
 
@@ -24,6 +24,7 @@ const DashboardAnnotationField = ({
   onEditClick: () => void;
   onDeleteClick: () => void;
 }) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const dashboardLink = makeDashboardLink(dashboard?.uid || dashboardUid);
@@ -52,7 +53,8 @@ const DashboardAnnotationField = ({
 
       {panel && (
         <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer" data-testid="panel-annotation">
-          {panel.title || '<No title>'} <Icon name={'external-link-alt'} />
+          {panel.title || t('alerting.dashboard-annotation-field.no-title', '<No title>')}{' '}
+          <Icon name={'external-link-alt'} />
         </a>
       )}
 

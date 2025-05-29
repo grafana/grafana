@@ -162,7 +162,7 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onPinLine && onPinLine(row)}
-                tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
+                tooltip={pinLineButtonTooltipTitle ?? t('logs.log-row-menu-cell.tooltip-pin-line', 'Pin line')}
                 tooltipPlacement="top"
                 aria-label={t('logs.log-row-menu-cell.aria-label-pin-line', 'Pin line')}
                 tabIndex={0}

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
@@ -118,6 +118,7 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
 }
 
 function FolderInfo({ data }: { data: ResourceTableItem }) {
+  const { t } = useTranslate();
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
@@ -148,7 +149,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   return (
     <>
       <span>{folderName}</span>
-      <Text color="secondary">{folderParentName ?? 'Dashboards'}</Text>
+      <Text color="secondary">{folderParentName ?? t('migrate-to-cloud.folder-info.dashboards', 'Dashboards')}</Text>
     </>
   );
 }

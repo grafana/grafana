@@ -126,7 +126,8 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       >
         <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {dashboard.folderTitle ?? 'Dashboards'}
+          <Icon name="folder" />{' '}
+          {dashboard.folderTitle ?? t('alerting.dashboard-picker.dashboard-row.dashboards', 'Dashboards')}
         </div>
       </button>
     );

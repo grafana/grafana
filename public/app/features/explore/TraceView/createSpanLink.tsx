@@ -110,7 +110,12 @@ export function createSpanLinkFactory({
             title: link.title,
             href: link.href,
             onClick: link.onClick,
-            content: <Icon name="link" title={link.title || 'Link'} />,
+            content: (
+              <Icon
+                name="link"
+                title={link.title || t('explore.create-span-link-factory.new-span-links.title-link', 'Link')}
+              />
+            ),
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
             target: link.target,

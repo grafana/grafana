@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule } from 'app/types/unified-alerting';
 
@@ -12,11 +12,17 @@ interface Prom {
 }
 
 export const RuleHealth = ({ rule }: Prom) => {
+  const { t } = useTranslate();
   const style = useStyles2(getStyle);
 
   if (isErrorHealth(rule.health)) {
     return (
-      <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
+      <Tooltip
+        theme="error"
+        content={
+          rule.lastError || t('alerting.rule-health.content-no-error-message-provided', 'No error message provided.')
+        }
+      >
         <div className={style.warn}>
           <Icon name="exclamation-triangle" />
           <span>

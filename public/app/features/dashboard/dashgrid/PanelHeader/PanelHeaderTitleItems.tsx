@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { AlertState, DataLink, GrafanaTheme2, LinkModel, PanelData, PanelModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelLinks } from '../PanelLinks';
@@ -22,12 +23,15 @@ export interface Props {
 }
 
 export function PanelHeaderTitleItems(props: Props) {
+  const { t } = useTranslate();
   const { alertState, data, panelId, onShowPanelLinks, panelLinks } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
   const alertStateItem = (
-    <Tooltip content={alertState ?? 'unknown'}>
+    <Tooltip
+      content={alertState ?? t('dashboard.panel-header-title-items.alert-state-item.content-unknown', 'unknown')}
+    >
       <PanelChrome.TitleItem
         className={cx({
           [styles.ok]: alertState === AlertState.OK,
