@@ -28,6 +28,7 @@ type Service struct {
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
+	pluginErrorResolver   plugins.ErrorResolver
 	updateChecker         pluginchecker.PluginUpdateChecker
 	pluginPreinstall      pluginchecker.Preinstall
 	managedPlugins        managedplugins.Manager
@@ -42,6 +43,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
 	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg *setting.Cfg,
+	pluginErrorResolver plugins.ErrorResolver,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -49,6 +51,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		pluginContextProvider: pluginContextProvider,
 		pluginClient:          pluginClient,
 		pluginRepo:            pluginRepo,
+		pluginErrorResolver:   pluginErrorResolver,
 		updateChecker:         updateChecker,
 		pluginPreinstall:      pluginPreinstall,
 		managedPlugins:        managedPlugins,
@@ -73,6 +76,7 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginStore,
 			s.pluginRepo,
 			s.updateChecker,
+			s.pluginErrorResolver,
 			s.GrafanaVersion,
 		),
 		authchecks.New(s.ssoSettingsSvc),
