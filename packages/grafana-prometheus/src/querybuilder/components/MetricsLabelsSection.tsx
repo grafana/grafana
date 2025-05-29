@@ -69,7 +69,7 @@ export function MetricsLabelsSection({
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     // eslint-disable-next-line @grafana/no-untranslated-strings
-    labelsToConsider.push({ label: "__name__", op: '=', value: query.metric });
+    labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
     let labelsIndex: Record<string, string[]> = await datasource.languageProvider.fetchLabelsWithMatch(timeRange, expr);
@@ -93,7 +93,7 @@ export function MetricsLabelsSection({
     labelsToConsider.push(forLabel);
     if (query.metric) {
       // eslint-disable-next-line @grafana/no-untranslated-strings
-      labelsToConsider.push({ label: "__name__", op: '=', value: query.metric });
+      labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
       ...labelObject,
@@ -176,7 +176,7 @@ export function MetricsLabelsSection({
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     // eslint-disable-next-line @grafana/no-untranslated-strings
-    labelsToConsider.push({ label: "__name__", op: '=', value: query.metric });
+    labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
 
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
       ...labelObject,

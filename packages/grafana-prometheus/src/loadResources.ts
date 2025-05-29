@@ -1,16 +1,11 @@
 import { LANGUAGES, ResourceLoader, Resources } from '@grafana/i18n';
 
 const resources = LANGUAGES.reduce<Record<string, () => Promise<{ default: Resources }>>>((acc, lang) => {
-  acc[lang.code] = async () => await import(`./locales/${lang.code}/grafana-sql.json`);
+  acc[lang.code] = async () => await import(`./locales/${lang.code}/grafana-prometheus.json`);
   return acc;
 }, {});
 
 export const loadResources: ResourceLoader = async (resolvedLanguage: string) => {
-  if (!resources[resolvedLanguage]) {
-    console.warn(`No translation found for language: ${resolvedLanguage}`);
-    return {};
-  }
-
   const translation = await resources[resolvedLanguage]();
   return translation.default;
 };

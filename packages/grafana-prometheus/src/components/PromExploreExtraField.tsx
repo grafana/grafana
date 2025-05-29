@@ -133,16 +133,30 @@ PromExploreExtraField.displayName = 'PromExploreExtraField';
 
 export function getQueryTypeOptions(includeBoth: boolean) {
   const rangeOptions = [
-    { value: 'range', label: t("components.get-query-type-options.range-options.label.range", "Range"), description: t("components.get-query-type-options.range-options.description.query-range", "Run query over a range of time") },
+    {
+      value: 'range',
+      label: t('components.get-query-type-options.range-options.label.range', 'Range'),
+      description: t(
+        'components.get-query-type-options.range-options.description.query-range',
+        'Run query over a range of time'
+      ),
+    },
     {
       value: 'instant',
-      label: t("components.get-query-type-options.range-options.label.instant", "Instant"),
+      label: t('components.get-query-type-options.range-options.label.instant', 'Instant'),
       description: 'Run query against a single point in time. For this query, the "To" time is used',
     },
   ];
 
   if (includeBoth) {
-    rangeOptions.push({ value: 'both', label: t("components.get-query-type-options.label.both", "Both"), description: t("components.get-query-type-options.description.instant-query-range", "Run an Instant query and a Range query") });
+    rangeOptions.push({
+      value: 'both',
+      label: t('components.get-query-type-options.label.both', 'Both'),
+      description: t(
+        'components.get-query-type-options.description.instant-query-range',
+        'Run an Instant query and a Range query'
+      ),
+    });
   }
 
   return rangeOptions;
