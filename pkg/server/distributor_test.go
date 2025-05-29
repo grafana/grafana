@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -280,18 +281,26 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer, runErrs map[
 		}
 	}()
 
-	require.Eventually(t, func() bool {
-		if _, ok := runErrs[testServer.id]; ok {
-			// so we can fail the test immediately
-			return true
+	deadline := time.Now().Add(20 * time.Second)
+	for {
+		require.NoError(t, runErrs[testServer.id], "failed to start "+testServer.id)
+
+		conn, err := net.DialTimeout("tcp", testServer.grpcAddress, 1*time.Second)
+		if err == nil {
+			conn.Close()
+			break
 		}
-		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-		if err != nil {
-			return false
+
+		if time.Now().After(deadline) {
+			t.Fatal("server failed to become ready: ", testServer.id)
 		}
-		return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-	}, 20*time.Second, 2*time.Second, "timeout waiting for server to become healthy: " + testServer.id)
-	require.NoError(t, runErrs[testServer.id], "failed to start " + testServer.id)
+
+		time.Sleep(1 * time.Second)
+	}
+
+	res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+	require.NoError(t, err)
+	require.Equal(t, res.Status, grpc_health_v1.HealthCheckResponse_SERVING)
 }
 
 type testModuleServer struct {
@@ -299,6 +308,7 @@ type testModuleServer struct {
 	healthClient   grpc_health_v1.HealthClient
 	resourceClient resource.ResourceClient
 	id             string
+	grpcAddress    string
 }
 
 func initDistributorServerForTest(t *testing.T) testModuleServer {
@@ -369,7 +379,7 @@ func initModuleServerForTest(
 
 	healthClient := grpc_health_v1.NewHealthClient(conn)
 
-	return testModuleServer{server: ms, healthClient: healthClient, id: cfg.InstanceID}
+	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, healthClient: healthClient, id: cfg.InstanceID}
 }
 
 func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
