@@ -209,7 +209,8 @@ export const NotificationPoliciesList = () => {
             'Error loading Alertmanager config'
           )}
         >
-          {stringifyErrorLike(fetchPoliciesError) || 'Unknown error.'}
+          {stringifyErrorLike(fetchPoliciesError) ||
+            t('alerting.notification-policies-list.unknown-error', 'Unknown error.')}
         </Alert>
       )}
       {/* show when there is an update error */}

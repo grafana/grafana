@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
+import { useTranslate } from '@grafana/i18n';
 import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -80,6 +81,7 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
 };
 
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
+  const { t } = useTranslate();
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
   const isFiringState = state !== PromAlertingRuleState.Firing;
@@ -89,7 +91,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
     <ListSection
       title={
         <Stack alignItems="center" gap={0}>
-          {STATE_TITLES[state] ?? 'Unknown'}
+          {STATE_TITLES[state] ?? t('alerting.rules-by-state.title-unknown', 'Unknown')}
           <Counter value={rules.length} />
         </Stack>
       }

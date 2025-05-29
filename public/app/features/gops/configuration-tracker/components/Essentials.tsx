@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -178,7 +179,9 @@ function StepButton({
           </Dropdown>
         );
       } else {
-        return <Text>{stepNotAvailableText ?? 'No options available'} </Text>;
+        return (
+          <Text>{stepNotAvailableText ?? t('gops.step-button.no-options-available', 'No options available')} </Text>
+        );
       }
   }
 }

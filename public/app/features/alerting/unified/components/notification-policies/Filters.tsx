@@ -127,7 +127,8 @@ const NotificationPoliciesFilter = ({
             <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
           <Text variant="bodySmall" color="secondary">
-            {matchingCount === 0 && 'No policies matching filters.'}
+            {matchingCount === 0 &&
+              t('alerting.notification-policies-filter.no-policies-matching-filters', 'No policies matching filters.')}
             {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
             {matchingCount > 1 && `${matchingCount} policies match the filters.`}
           </Text>

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Avatar,
   CellProps,
@@ -143,7 +144,7 @@ const getCellContent = (
         <Stack alignItems="center">
           <Icon name="key-skeleton-alt" />
           <TextLink href={href} aria-label={ariaLabel} color="primary" inline={false}>
-            {value || 'No tokens'}
+            {value || t('serviceaccounts.get-cell-content.no-tokens', 'No tokens')}
           </TextLink>
         </Stack>
       );

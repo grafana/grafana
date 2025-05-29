@@ -66,7 +66,7 @@ const AlertGroups = () => {
           title={t('alerting.alert-groups.title-error-loading-notifications', 'Error loading notifications')}
           severity={'error'}
         >
-          {error.message || 'Unknown error'}
+          {error.message || t('alerting.alert-groups.unknown-error', 'Unknown error')}
         </Alert>
       )}
 

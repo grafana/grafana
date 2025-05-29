@@ -113,7 +113,10 @@ export const ResourceDimensionEditor = (
           onClear={onClear}
           value={value?.fixed}
           src={srcPath}
-          placeholder={item.settings?.placeholderText ?? 'Select a value'}
+          placeholder={
+            item.settings?.placeholderText ??
+            t('dimensions.resource-dimension-editor.placeholder-select-a-value', 'Select a value')
+          }
           name={niceName(value?.fixed) ?? ''}
           mediaType={mediaType}
           folderName={folderName}
