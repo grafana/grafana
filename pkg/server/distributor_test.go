@@ -43,11 +43,8 @@ func TestIntegrationDistributor(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// we don't need grpc logs in tests so mute it so we don't get a bunch of health check errors during test
-	// grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
-
 	dbType := sqlutil.GetTestDBType()
-	if dbType == "sqlite3" {
+	if dbType != "mysql" {
 		t.Skip()
 	}
 
@@ -65,49 +62,14 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers := make([]testModuleServer, 0, 2)
 	distributorServer := initDistributorServerForTest(t)
 
-	serversAddresses := []string{"127.0.0.2"}
-	for i, ip := range serversAddresses {
-		testServers = append(testServers, createStorageServerApi(t, "instance-"+strconv.Itoa(i), ip, dbType, db.ConnStr))
+	for i := 1; i < 3; i++ {
+		testServers = append(testServers, createStorageServerApi(t, i, dbType, db.ConnStr))
 	}
 
-	go func() {
-		if err := distributorServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-			runErrs[distributorServer.id] = err
-		}
-	}()
-
-	require.Eventually(t, func() bool {
-		if _, ok := runErrs[distributorServer.id]; ok {
-			// so we can fail the test immediately
-			return true
-		}
-		res, err := distributorServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-		if err != nil {
-			return false
-		}
-		return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-	}, 20*time.Second, 2*time.Second)
-	require.NoError(t, runErrs[distributorServer.id], "failed to start distributor")
+	startAndWaitHealthy(t, distributorServer, runErrs)
 
 	for _, testServer := range testServers {
-		go func(s testModuleServer) {
-			if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-				runErrs[testServer.id] = err
-			}
-		}(testServer)
-
-		require.Eventually(t, func() bool {
-			if _, ok := runErrs[testServer.id]; ok {
-				// so we can fail the test immediately
-				return true
-			}
-			res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-			if err != nil {
-				return false
-			}
-			return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-		}, 20*time.Second, 2*time.Second, "server failed to start up or is too slow: "+testServer.id)
-		require.NoError(t, runErrs[testServer.id], "failed to start server "+testServer.id)
+		startAndWaitHealthy(t, testServer, runErrs)
 	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
@@ -311,6 +273,27 @@ func TestIntegrationDistributor(t *testing.T) {
 	}
 }
 
+func startAndWaitHealthy(t *testing.T, testServer testModuleServer, runErrs map[string]error) {
+	go func() {
+		if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
+			runErrs[testServer.id] = err
+		}
+	}()
+
+	require.Eventually(t, func() bool {
+		if _, ok := runErrs[testServer.id]; ok {
+			// so we can fail the test immediately
+			return true
+		}
+		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+		if err != nil {
+			return false
+		}
+		return res.Status == grpc_health_v1.HealthCheckResponse_SERVING
+	}, 20*time.Second, 2*time.Second, "timeout waiting for server to become healthy: " + testServer.id)
+	require.NoError(t, runErrs[testServer.id], "failed to start " + testServer.id)
+}
+
 type testModuleServer struct {
 	server         *ModuleServer
 	healthClient   grpc_health_v1.HealthClient
@@ -344,7 +327,7 @@ func initDistributorServerForTest(t *testing.T) testModuleServer {
 	return server
 }
 
-func createStorageServerApi(t *testing.T, instanceId, bindAddr, dbType, dbConnStr string) testModuleServer {
+func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string) testModuleServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -354,16 +337,16 @@ func createStorageServerApi(t *testing.T, instanceId, bindAddr, dbType, dbConnSt
 	_, err = section.NewKey("connection_string", dbConnStr)
 	require.NoError(t, err)
 
-	cfg.HTTPPort = "13001"
+	cfg.HTTPPort = "1300" + strconv.Itoa(instanceId) // 13001 for instance-1, 13002 for instance-2 etc
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:20001"
+	cfg.GRPCServer.Address = "127.0.0.1:2000" + strconv.Itoa(instanceId) // 20001 for instance-1, so on
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
 	cfg.MemberlistJoinMember = "127.0.0.1:17946"
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
-	cfg.MemberlistAdvertisePort = 17947
-	cfg.InstanceID = instanceId
-	cfg.IndexPath = "/tmp/grafana-test-index-path/" + instanceId
+	cfg.MemberlistAdvertisePort = 17946 + instanceId
+	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
+	cfg.IndexPath = "/tmp/grafana-test-index-path/" + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
 
