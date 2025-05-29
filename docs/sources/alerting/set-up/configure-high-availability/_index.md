@@ -67,8 +67,13 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 ## Enable alerting high availability using Redis
 
-As an alternative to Memberlist, you can use Redis for high availability. This is useful if you want to have a central
-database for HA and cannot support the meshing of all Grafana servers.
+As an alternative to Memberlist, you can configure Redis to enable high availability. Only **Redis Server** and **Redis Cluster** modes are supported.
+
+{{% admonition type="note" %}}
+
+Memberlist is the preferred option for high availability. Use Redis only in environments where direct communication between Grafana servers is not possible, such as when TCP or UDP ports are blocked.
+
+{{% /admonition %}}
 
 1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
