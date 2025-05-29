@@ -310,7 +310,7 @@ function getCustomOperators(config: BasicConfig) {
       sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {
-      label: t("components.get-custom-operators.custom-operators.label.macros", "Macros"),
+      label: t('components.get-custom-operators.custom-operators.label.macros', 'Macros'),
       sqlFormatOp: (field: string, _operator: string, value: string | string[] | ImmutableList<string>) => {
         if (value === TIME_FILTER) {
           return `$__timeFilter(${field})`;

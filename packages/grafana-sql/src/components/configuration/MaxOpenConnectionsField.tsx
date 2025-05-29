@@ -18,15 +18,17 @@ export function MaxOpenConnectionsField({ labelWidth, onMaxConnectionsChanged, j
       label={
         <Label>
           <Stack gap={0.5}>
-            <span><Trans i18nKey="components.max-open-connections-field.max-open">Max open</Trans></span>
+            <span>
+              <Trans i18nKey="components.max-open-connections-field.max-open">Max open</Trans>
+            </span>
             <Tooltip
               content={
                 <span>
                   <Trans i18nKey="components.max-open-connections-field.content-max-open">
-                    The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than
-                    0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
-                    <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set to
-                    0, there is no limit on the number of open connections.
+                    The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
+                    than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
+                    <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
+                    to 0, there is no limit on the number of open connections.
                   </Trans>
                 </span>
               }

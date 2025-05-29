@@ -17,13 +17,15 @@ export function MaxLifetimeField({ labelWidth, onMaxLifetimeChanged, jsonData }:
       label={
         <Label>
           <Stack gap={0.5}>
-            <span><Trans i18nKey="components.max-lifetime-field.max-lifetime">Max lifetime</Trans></span>
+            <span>
+              <Trans i18nKey="components.max-lifetime-field.max-lifetime">Max lifetime</Trans>
+            </span>
             <Tooltip
               content={
                 <span>
                   <Trans i18nKey="components.max-lifetime-field.content-max-lifetime">
-                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused
-                    forever.
+                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                    reused forever.
                   </Trans>
                 </span>
               }

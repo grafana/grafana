@@ -16,7 +16,7 @@ type SQLOrderByRowProps = {
 
 export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRowProps) {
   const { t } = useTranslate();
-const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
+  const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
   let columnsWithIndices: SelectableValue[] = [];
 
   if (fields) {
@@ -30,7 +30,7 @@ const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
     columnsWithIndices = [
       {
         value: '',
-        label: t("components.sqlorder-by-row.label.selected-columns", "Selected columns"),
+        label: t('components.sqlorder-by-row.label.selected-columns', 'Selected columns'),
         options,
         expanded: true,
       },
