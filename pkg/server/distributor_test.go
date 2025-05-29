@@ -62,10 +62,8 @@ func TestIntegrationDistributor(t *testing.T) {
 	runErrs := make(map[string]error)
 	testServers := make([]testModuleServer, 0, 2)
 	distributorServer := initDistributorServerForTest(t)
-
-	for i := 1; i < 3; i++ {
-		testServers = append(testServers, createStorageServerApi(t, i, dbType, db.ConnStr))
-	}
+	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr))
+	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr))
 
 	startAndWaitHealthy(t, distributorServer, runErrs)
 
