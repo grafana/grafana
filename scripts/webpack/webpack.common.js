@@ -4,6 +4,8 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
+const publicAssetsToCopy = ['fonts', 'img'];
+
 module.exports = {
   target: 'web',
   entry: {
@@ -70,12 +72,10 @@ module.exports = {
       Buffer: ['buffer', 'Buffer'],
     }),
     new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: 'public/img',
-          to: 'img',
-        },
-      ],
+      patterns: publicAssetsToCopy.map((asset) => ({
+        from: `public/${asset}`,
+        to: asset,
+      })),
     }),
   ],
   module: {
@@ -88,9 +88,14 @@ module.exports = {
         },
       },
       {
-        test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
+        test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|cur|ani|pdf)(\?.*)?$/,
         type: 'asset/resource',
         generator: { filename: 'static/img/[name].[hash:8][ext]' },
+      },
+      {
+        test: /\.(ttf|woff|woff2)(\?.*)?$/,
+        type: 'asset/resource',
+        generator: { filename: 'static/fonts/[name].[hash:8][ext]' },
       },
       {
         // Required for msagl library (used in Nodegraph panel) to work
