@@ -179,15 +179,16 @@ export function getLogLineSize(
 
   let textToMeasure = '';
   const gap = gridSize * FIELD_GAP_MULTIPLIER;
+  const iconsGap = gridSize * 0.5;
   let optionsWidth = 0;
   if (showDuplicates) {
-    optionsWidth += gridSize * 4.5 + gap;
+    optionsWidth += gridSize * 4.5 + iconsGap;
   }
   if (logs[index].hasError) {
-    optionsWidth += gridSize * 2 + gap;
+    optionsWidth += gridSize * 2 + iconsGap;
   }
   if (logs[index].isSampled) {
-    optionsWidth += gridSize * 2 + gap;
+    optionsWidth += gridSize * 2 + iconsGap;
   }
   if (showTime) {
     optionsWidth += gap;
