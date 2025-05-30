@@ -58,6 +58,7 @@ export { QueryEditorWithMigration } from './components/QueryEditorWithMigration'
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
 export { FolderPicker, setFolderPicker } from './components/FolderPicker';
+export { NewDataSourcePicker, setNewDataSourcePicker } from './components/NewDataSourcePicker';
 export {
   type CorrelationsService,
   type CorrelationData,
