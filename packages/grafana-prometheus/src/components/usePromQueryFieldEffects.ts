@@ -2,13 +2,13 @@ import { MutableRefObject, useEffect, useRef } from 'react';
 
 import { DataFrame, DateTime, TimeRange } from '@grafana/data';
 
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 import { roundMsToMin } from '../language_utils';
 
 import { CancelablePromise } from './cancelable-promise';
 
 export function usePromQueryFieldEffects(
-  languageProvider: PromQlLanguageProvider,
+  languageProvider: PrometheusLanguageProviderInterface,
   range: TimeRange | undefined,
   series: DataFrame[] | undefined,
   refreshMetrics: (languageProviderInitRef: MutableRefObject<CancelablePromise<unknown> | null>) => Promise<void>,
