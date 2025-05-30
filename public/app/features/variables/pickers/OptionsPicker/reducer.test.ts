@@ -83,6 +83,35 @@ describe('optionsPickerReducer', () => {
         });
     };
 
+    describe('Variable search with special characters', () => {
+      it('should match variable options case-insensitively for ä, ö, å', () => {
+        const options = ['ä', 'Ä', 'ö', 'Ö', 'å', 'Å'].map((v) => ({
+          selected: false,
+          text: v,
+          value: v,
+        }));
+
+        let state = {
+          ...optionsPickerInitialState,
+          queryValue: 'ä',
+          options,
+        };
+
+        let newState = optionsPickerReducer(state, updateOptionsAndFilter(options));
+        expect(newState.options.map(o => o.text)).toContain('ä');
+        expect(newState.options.map(o => o.text)).toContain('Ä');
+
+        state = {
+          ...optionsPickerInitialState,
+          queryValue: 'Ä',
+          options,
+        };
+        newState = optionsPickerReducer(state, updateOptionsAndFilter(options));
+        expect(newState.options.map(o => o.text)).toContain('ä');
+        expect(newState.options.map(o => o.text)).toContain('Ä');
+      });
+    });
+
     describe('When toggleOption with undefined option is dispatched', () => {
       it('should update selected values', () => {
         const { initialState } = getVariableTestContext({
