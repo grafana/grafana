@@ -16,20 +16,21 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
+import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
-  getClientCacheDurationInMinutes,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
+import { PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -47,72 +48,137 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
 
-type UrlParamsType = {
-  start?: string;
-  end?: string;
-  'match[]'?: string;
-  limit?: string;
-};
+export interface PrometheusBaseLanguageProvider {
+  datasource: PrometheusDatasource;
+
+  /**
+   * When no timeRange provided, we will use the default time range (now/now-6h)
+   * @param timeRange
+   */
+  start: (timeRange?: TimeRange) => Promise<any[]>;
+
+  request: (url: string, params?: any, options?: Partial<BackendSrvRequest>) => Promise<any>;
+
+  fetchSuggestions: (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ) => Promise<string[]>;
+}
 
 /**
- * Builds cache headers for Prometheus API requests.
- *
- * @param {number} durationInSeconds - Cache duration in seconds
- * @returns {object} Object with headers property containing cache headers
+ * @deprecated This interface is deprecated and will be removed.
  */
-const buildCacheHeaders = (durationInSeconds: number) => {
-  return {
-    headers: {
-      'X-Grafana-Cache': `private, max-age=${durationInSeconds}`,
-    },
-  };
-};
+export interface PrometheusLegacyLanguageProvider {
+  /**
+   * @deprecated Use retrieveHistogramMetrics() method instead
+   */
+  histogramMetrics: string[];
+  /**
+   * @deprecated Use retrieveMetrics() method instead
+   */
+  metrics: string[];
+  /**
+   * @deprecated Use retrieveMetricsMetadata() method instead
+   */
+  metricsMetadata?: PromMetricsMetadata;
+  /**
+   * @deprecated Use retrieveLabelKeys() method instead
+   */
+  labelKeys: string[];
+
+  /**
+   * @deprecated Use queryMetricsMetadata() method instead.
+   */
+  loadMetricsMetadata: () => void;
+  /**
+   * @deprecated Use retrieveMetricsMetadata() method instead
+   */
+  getLabelKeys: () => string[];
+  /**
+   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
+   */
+  getSeries: (timeRange: TimeRange, selector: string, withName?: boolean) => Promise<Record<string, string[]>>;
+  /**
+   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
+   */
+  fetchLabelValues: (range: TimeRange, key: string, limit?: string) => Promise<string[]>;
+  /**
+   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
+   */
+  getLabelValues: (range: TimeRange, key: string) => Promise<string[]>;
+  /**
+   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
+   */
+  fetchLabels: (timeRange: TimeRange, queries?: PromQuery[], limit?: string) => Promise<string[]>;
+  /**
+   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
+   */
+  getSeriesValues: (timeRange: TimeRange, labelName: string, selector: string) => Promise<string[]>;
+  /**
+   * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
+   */
+  fetchSeriesValuesWithMatch: (
+    timeRange: TimeRange,
+    name: string,
+    match?: string,
+    requestId?: string,
+    withLimit?: string
+  ) => Promise<string[]>;
+  /**
+   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
+   */
+  getSeriesLabels: (timeRange: TimeRange, selector: string, otherLabels: Label[]) => Promise<string[]>;
+  /**
+   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
+   */
+  fetchLabelsWithMatch: (
+    timeRange: TimeRange,
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ) => Promise<Record<string, string[]>>;
+  /**
+   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
+   */
+  fetchSeriesLabels: (
+    timeRange: TimeRange,
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ) => Promise<Record<string, string[]>>;
+  /**
+   * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
+   */
+  fetchSeriesLabelsMatch: (timeRange: TimeRange, name: string, withLimit?: string) => Promise<Record<string, string[]>>;
+  /**
+   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
+   */
+  fetchSeries: (timeRange: TimeRange, match: string) => Promise<Array<Record<string, string>>>;
+  /**
+   * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
+   */
+  fetchDefaultSeries: (timeRange: TimeRange) => Promise<{}>;
+}
 
 /**
- * Gets appropriate cache headers based on the configured cache level.
- * Returns undefined if caching is disabled.
- *
- * @param {PrometheusCacheLevel} cacheLevel - Cache level (None, Low, Medium, High)
- * @returns {object|undefined} Cache headers object or undefined if caching is disabled
+ * Old implementation of prometheus language provider.
+ * @deprecated Use PrometheusLanguageProviderInterface and PrometheusLanguageProvider class instead.
  */
-const getDefaultCacheHeaders = (cacheLevel: PrometheusCacheLevel) => {
-  if (cacheLevel !== PrometheusCacheLevel.None) {
-    return buildCacheHeaders(getClientCacheDurationInMinutes(cacheLevel) * 60);
-  }
-  return;
-};
+export default class PromQlLanguageProvider extends LanguageProvider implements PrometheusLegacyLanguageProvider {
+  declare startTask: Promise<any>;
+  declare labelFetchTs: number;
 
-export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  const { type, help } = metadata[metric];
-  return `${type.toUpperCase()}: ${help}`;
-}
+  datasource: PrometheusDatasource;
 
-export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].help;
-}
-
-export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].type;
-}
-
-const secondsInDay = 86400;
-export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
-  declare startTask: Promise<any>;
-  datasource: PrometheusDatasource;
   labelKeys: string[] = [];
-  declare labelFetchTs: number;
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -137,6 +203,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return undefined;
   };
 
+  /**
+   * Overridden by PrometheusLanguageProvider
+   */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
@@ -148,7 +217,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
+    const secondsInDay = 86400;
+    const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         API_V1.METADATA,
@@ -331,14 +401,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(timeRange);
-    let urlParams: UrlParamsType = {
+    let urlParams = {
       ...range,
       'match[]': interpolatedName,
+      ...(withLimit !== 'none' ? { limit: withLimit ?? DEFAULT_SERIES_LIMIT } : {}),
     };
-
-    if (withLimit !== 'none') {
-      urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
-    }
 
     const data = await this.request(API_V1.SERIES, urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     const { values } = processLabels(data, withName);
@@ -446,6 +513,212 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 }
 
+export interface PrometheusLanguageProviderInterface
+  extends PrometheusBaseLanguageProvider,
+    PrometheusLegacyLanguageProvider {
+  retrieveMetricsMetadata: () => PromMetricsMetadata;
+  retrieveHistogramMetrics: () => string[];
+  retrieveMetrics: () => string[];
+  retrieveLabelKeys: () => string[];
+
+  queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
+  queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: string) => Promise<string[]>;
+  queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => Promise<string[]>;
+}
+
+/**
+ * Modern implementation of the Prometheus language provider that abstracts API endpoint selection.
+ * 
+ * Features:
+ * - Automatically selects the most efficient API endpoint based on Prometheus version and configuration
+ * - Supports both labels and series endpoints for backward compatibility
+ * - Handles match[] parameters for filtering time series data
+ * - Implements automatic request limiting (default: 40_000 series)
+ * - Provides unified interface for both modern and legacy Prometheus versions
+ * 
+ * @see LabelsApiClient For modern Prometheus versions using the labels API
+ * @see SeriesApiClient For legacy Prometheus versions using the series API
+ */
+export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
+  private _metricsMetadata?: PromMetricsMetadata;
+  private _resourceClient?: ResourceApiClient;
+
+  constructor(datasource: PrometheusDatasource) {
+    super(datasource);
+  }
+
+  /**
+   * Lazily initializes and returns the appropriate resource client based on Prometheus version.
+   * 
+   * The client selection logic:
+   * - For Prometheus v2.6+ with labels API: Uses LabelsApiClient for efficient label-based queries
+   * - For older versions: Falls back to SeriesApiClient for backward compatibility
+   * 
+   * The client instance is cached after first initialization to avoid repeated creation.
+   * 
+   * @returns {ResourceApiClient} An instance of either LabelsApiClient or SeriesApiClient
+   */
+  private get resourceClient(): ResourceApiClient {
+    if (!this._resourceClient) {
+      this._resourceClient = this.datasource.hasLabelsMatchAPISupport()
+        ? new LabelsApiClient(this.request, this.datasource)
+        : new SeriesApiClient(this.request, this.datasource);
+    }
+
+    return this._resourceClient;
+  }
+
+  /**
+   * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
+   * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
+   */
+  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
+    if (this.datasource.lookupsDisabled) {
+      return [];
+    }
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    return this._backwardCompatibleStart();
+  };
+
+  /**
+   * This private method exists to make sure the old class will be functional until we remove it.
+   * When we remove old class (PromQlLanguageProvider) we should remove this method too.
+   */
+  private _backwardCompatibleStart = async () => {
+    this.metricsMetadata = this.retrieveMetricsMetadata();
+    this.metrics = this.retrieveMetrics();
+    this.histogramMetrics = this.retrieveHistogramMetrics();
+    this.labelKeys = this.retrieveLabelKeys();
+    return [];
+  };
+
+  /**
+   * Fetches metadata for metrics from Prometheus.
+   * Sets cache headers based on the configured metadata cache duration.
+   *
+   * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
+   */
+  private _queryMetadata = async () => {
+    const secondsInDay = 86400;
+    const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
+    const metadata = await this.request(
+      API_V1.METADATA,
+      {},
+      {
+        showErrorAlert: false,
+        ...headers,
+      }
+    );
+    return fixSummariesMetadata(metadata);
+  };
+
+  /**
+   * Retrieves the cached Prometheus metrics metadata.
+   * This metadata includes type information (counter, gauge, etc.) and help text for metrics.
+   * 
+   * @returns {PromMetricsMetadata} Cached metadata or empty object if not yet fetched
+   */
+  public retrieveMetricsMetadata = (): PromMetricsMetadata => {
+    return this._metricsMetadata ?? {};
+  };
+
+  /**
+   * Retrieves the list of histogram metrics from the current resource client.
+   * Histogram metrics are identified by the '_bucket' suffix and are used for percentile calculations.
+   * 
+   * @returns {string[]} Array of histogram metric names
+   */
+  public retrieveHistogramMetrics = (): string[] => {
+    return this.resourceClient?.histogramMetrics;
+  };
+
+  /**
+   * Retrieves the complete list of available metrics from the current resource client.
+   * This includes all metric names regardless of their type (counter, gauge, histogram).
+   * 
+   * @returns {string[]} Array of all metric names
+   */
+  public retrieveMetrics = (): string[] => {
+    return this.resourceClient?.metrics;
+  };
+
+  /**
+   * Retrieves the list of available label keys from the current resource client.
+   * Label keys are the names of labels that can be used to filter and group metrics.
+   * 
+   * @returns {string[]} Array of label key names
+   */
+  public retrieveLabelKeys = (): string[] => {
+    return this.resourceClient?.labelKeys;
+  };
+
+  /**
+   * Fetches fresh metrics metadata from Prometheus and updates the cache.
+   * This includes querying for metric types, help text, and unit information.
+   * If the fetch fails, the cache is set to an empty object to prevent stale data.
+   * 
+   * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
+   */
+  public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+    try {
+      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+    } catch (error) {
+      this._metricsMetadata = {};
+    }
+    return this._metricsMetadata;
+  };
+
+  /**
+   * Fetches all available label keys that match the specified criteria.
+   * 
+   * This method queries Prometheus for label keys within the specified time range.
+   * The results can be filtered using the match parameter and limited in size.
+   * Uses either the labels API (Prometheus v2.6+) or series API based on version.
+   * 
+   * @param {TimeRange} timeRange - Time range to search for label keys
+   * @param {string} [match] - Optional PromQL selector to filter label keys (e.g., '{job="grafana"}')
+   * @param {string} [limit] - Optional maximum number of label keys to return
+   * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
+   */
+  public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: string): Promise<string[]> => {
+    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+  };
+
+  /**
+   * Fetches all values for a specific label key that match the specified criteria.
+   * 
+   * This method queries Prometheus for label values within the specified time range.
+   * Results can be filtered using the match parameter to find values in specific contexts.
+   * Supports both modern (labels API) and legacy (series API) Prometheus versions.
+   * 
+   * The method automatically handles UTF-8 encoded label keys by properly escaping them
+   * before making API requests. This means you can safely pass label keys containing
+   * special characters like dots, colons, or Unicode characters (e.g., 'http.status:code',
+   * 'μs', 'response.time').
+   * 
+   * @param {TimeRange} timeRange - Time range to search for label values
+   * @param {string} labelKey - The label key to fetch values for (e.g., 'job', 'instance', 'http.status:code')
+   * @param {string} [match] - Optional PromQL selector to filter values (e.g., '{job="grafana"}')
+   * @param {string} [limit] - Optional maximum number of values to return
+   * @returns {Promise<string[]>} Array of matching label values, sorted alphabetically
+   * @example
+   * // Fetch all values for the 'job' label
+   * const values = await queryLabelValues(timeRange, 'job');
+   * // Fetch 'instance' values only for jobs matching 'grafana'
+   * const instances = await queryLabelValues(timeRange, 'instance', '{job="grafana"}');
+   * // Fetch values for a label key with special characters
+   * const statusCodes = await queryLabelValues(timeRange, 'http.status:code');
+   */
+  public queryLabelValues = async (
+    timeRange: TimeRange,
+    labelKey: string,
+    match?: string,
+    limit?: string
+  ): Promise<string[]> => {
+    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+  };
+}
+
 export const importFromAbstractQuery = (labelBasedQuery: AbstractQuery): PromQuery => {
   return toPromLikeQuery(labelBasedQuery);
 };
@@ -508,3 +781,29 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
   }
   return nameLabelValue;
 }
+
+/**
+ * Extracts metrics from queries and populates match parameters.
+ * This is used to filter time series data based on existing queries.
+ * Handles UTF8 metrics by properly escaping them.
+ *
+ * @param {URLSearchParams} initialParams - Initial URL parameters
+ * @param {PromQuery[]} queries - Array of Prometheus queries
+ * @returns {URLSearchParams} URL parameters with match[] parameters added
+ */
+export const populateMatchParamsFromQueries = (
+  initialParams: URLSearchParams,
+  queries?: PromQuery[]
+): URLSearchParams => {
+  return (queries ?? []).reduce((params, query) => {
+    const visualQuery = buildVisualQueryFromString(query.expr);
+    const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+    params.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
+    if (visualQuery.query.binaryQueries) {
+      visualQuery.query.binaryQueries.forEach((bq) => {
+        params.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
+      });
+    }
+    return params;
+  }, initialParams);
+};
