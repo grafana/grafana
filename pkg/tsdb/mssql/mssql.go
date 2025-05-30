@@ -294,6 +294,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentity
 	}
 	switch encrypt {
 	case "true":
+	case "strict":
 		connStr += fmt.Sprintf("encrypt=%s;TrustServerCertificate=%t;", encrypt, tlsSkipVerify)
 		if hostNameInCertificate != "" {
 			connStr += fmt.Sprintf("hostNameInCertificate=%s;", hostNameInCertificate)
