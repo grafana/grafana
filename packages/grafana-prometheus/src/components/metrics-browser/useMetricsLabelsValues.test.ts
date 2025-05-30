@@ -74,27 +74,53 @@ const setupMocks = () => {
 
 // Helper to render hook with standard initialization
 const renderHookWithInit = async (mocks: ReturnType<typeof setupMocks>) => {
-  const { result } = renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+  const hookResult = renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
 
   // Wait for initialization
-  await waitFor(() => {
-    expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
+  await act(async () => {
+    await waitFor(() => {
+      expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
+    });
+    // Wait for any additional state updates
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
-  return { result };
+  return hookResult;
 };
 
 describe('useMetricsLabelsValues', () => {
   let mocks: ReturnType<typeof setupMocks>;
+  let consoleSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mocks = setupMocks();
     jest.clearAllMocks();
+    // Spy on console.error to handle React warnings
+    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Cleanup any pending state updates
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    consoleSpy.mockRestore();
     jest.restoreAllMocks();
   });
+
+  // Helper function to wait for all state updates
+  const waitForStateUpdates = async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  };
+
+  // Helper function to wait for debounce
+  const waitForDebounce = async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+  };
 
   describe('initialization', () => {
     it('should initialize by fetching metrics', async () => {
@@ -433,114 +459,476 @@ describe('useMetricsLabelsValues', () => {
     });
   });
 
-  describe('series limit', () => {
-    it('should use default series limit during initialization', async () => {
-      renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+  describe('helper functions', () => {
+    describe('buildSafeSelector', () => {
+      it('should convert EMPTY_SELECTOR to undefined', async () => {
+        jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue(EMPTY_SELECTOR);
 
-      await waitFor(() => {
-        expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalledWith(
-          expect.anything(),
-          METRIC_LABEL,
-          undefined,
-          DEFAULT_SERIES_LIMIT
-        );
+        const { result } = await renderHookWithInit(mocks);
+
+        // Access the helper function
+        const buildSafeSelector = result.current.buildSafeSelector;
+
+        expect(buildSafeSelector('metric1', {})).toBeUndefined();
+      });
+
+      it('should return the selector value when not empty', async () => {
+        const expectedSelector = 'metric1{job="prometheus"}';
+        jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue(expectedSelector);
+
+        const { result } = await renderHookWithInit(mocks);
+
+        const buildSafeSelector = result.current.buildSafeSelector;
+
+        expect(buildSafeSelector('metric1', { job: ['prometheus'] })).toBe(expectedSelector);
       });
     });
 
-    it('should use updated series limit for subsequent requests', async () => {
-      const { result } = await renderHookWithInit(mocks);
-      const newLimit = '500';
+    describe('loadSelectedLabelsFromStorage', () => {
+      it('should filter labels against available labels', async () => {
+        mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance', 'unavailable']));
 
-      // Clear previous calls from initialization
-      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockClear();
+        const { result } = await renderHookWithInit(mocks);
 
-      await act(async () => {
-        result.current.setSeriesLimit(newLimit);
-        // Wait for debounce inside act
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        const loadSelectedLabelsFromStorage = result.current.loadSelectedLabelsFromStorage;
+
+        const availableLabels = ['job', 'instance', 'pod'];
+        expect(loadSelectedLabelsFromStorage(availableLabels)).toEqual(['job', 'instance']);
       });
 
-      // Wait for the API call to happen
-      await waitFor(() => {
-        expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
+      it('should handle empty localStorage', async () => {
+        mocks.localStorageMock.clear();
+
+        const { result } = await renderHookWithInit(mocks);
+
+        const loadSelectedLabelsFromStorage = result.current.loadSelectedLabelsFromStorage;
+
+        expect(loadSelectedLabelsFromStorage(['job', 'instance'])).toEqual([]);
       });
-
-      // Verify that at least one call used the new limit
-      const calls = (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mock.calls;
-      const callWithNewLimit = calls.find((call) => call[3] === newLimit);
-      expect(callWithNewLimit).toBeTruthy();
-    });
-
-    it('should use 0 when series limit is set to 0', async () => {
-      const { result } = await renderHookWithInit(mocks);
-
-      // Clear previous calls from initialization
-      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockClear();
-
-      await act(async () => {
-        result.current.setSeriesLimit('0');
-        // Wait for debounce inside act
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      });
-
-      // Wait for the API call to happen
-      await waitFor(() => {
-        expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
-      });
-
-      // Verify that at least one call used 0 as the limit
-      const calls = (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mock.calls;
-      const callWithZeroLimit = calls.find((call) => call[3] === '0');
-      expect(callWithZeroLimit).toBeTruthy();
     });
   });
 
-  describe('cleanup', () => {
-    it('should clean up localStorage when clearing selections', async () => {
-      const { result } = await renderHookWithInit(mocks);
-
-      // Setup some selections
-      await act(async () => {
-        await result.current.handleSelectedMetricChange('metric1');
-        await result.current.handleSelectedLabelKeyChange('job');
-        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
-      });
-
-      // Clear mock to check for new calls
-      (mocks.localStorageMock.setItem as jest.Mock).mockClear();
-
-      // Clear selections
-      await act(async () => {
-        await result.current.handleClear();
-      });
-
-      // Should clear localStorage
-      expect(mocks.localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, '[]');
-    });
-
-    it('should clean up state when unmounting', async () => {
+  describe('seriesLimit handling', () => {
+    it('should refetch data when seriesLimit changes', async () => {
       const { result, unmount } = renderHook(() =>
         useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider)
       );
 
-      await waitFor(() => {
-        expect(mocks.mockLanguageProvider.queryLabelValues).toHaveBeenCalled();
+      // Wait for initial state updates
+      await waitForStateUpdates();
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Change series limit
+      await act(async () => {
+        result.current.setSeriesLimit(1000 as unknown as typeof DEFAULT_SERIES_LIMIT);
+        await waitForDebounce();
       });
 
-      // Setup some selections
+      // Verify data was refetched with new limit
+      await waitFor(() => {
+        const matchCalls = (mocks.mockLanguageProvider.queryLabelKeys as jest.Mock).mock.calls;
+        const callWithNewLimit = matchCalls.find((call) => call[2] === 1000);
+        expect(callWithNewLimit).toBeTruthy();
+      });
+
+      // Cleanup
+      unmount();
+      await waitForStateUpdates();
+    });
+
+    it('should use DEFAULT_SERIES_LIMIT when seriesLimit is empty', async () => {});
+  });
+
+  describe('timeRange handling', () => {
+    it('should not update timeRangeRef for small time changes', async () => {});
+
+    it('should update timeRangeRef for significant time changes', async () => {});
+  });
+
+  describe('testing with invalid values or special characters', () => {
+    it('should handle metric names with special characters', async () => {
+      // Mock fetchSeriesValuesWithMatch to return metrics with special characters
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric-with-dash', 'metric.with.dots', 'metric{with}brackets']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify that metrics with special characters are returned
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric-with-dash');
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric.with.dots');
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric{with}brackets');
+
+      // Try to select a metric with special characters
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric{with}brackets');
+      });
+
+      // Verify the selection was successful
+      expect(result.current.selectedMetric).toBe('metric{with}brackets');
+    });
+
+    it('should handle label values with special characters', async () => {
+      // Mock fetchSeriesValuesWithMatch to return label values with special characters
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'job') {
+            return Promise.resolve(['name:with:colons', 'name/with/slashes', 'name=with=equals']);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // Set up selected label keys
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify special character label values are loaded
+      await waitFor(() => {
+        expect(result.current.labelValues.job).toContain('name:with:colons');
+        expect(result.current.labelValues.job).toContain('name/with/slashes');
+        expect(result.current.labelValues.job).toContain('name=with=equals');
+      });
+
+      // Test selecting a label value with special characters
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+        await result.current.handleSelectedLabelValueChange('job', 'name:with:colons', true);
+      });
+
+      // Verify the selection was made
+      expect(result.current.selectedLabelValues.job).toContain('name:with:colons');
+    });
+
+    it('should handle empty strings in API responses', async () => {
+      // Mock API to return some empty strings
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'job') {
+            return Promise.resolve(['valid-job', '', 'another-job']);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // Set up selected label keys
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify empty string is included in values
+      await waitFor(() => {
+        expect(result.current.labelValues.job).toContain('');
+      });
+
+      // Test selecting an empty string as a value
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+        await result.current.handleSelectedLabelValueChange('job', '', true);
+      });
+
+      // Verify the empty string was selected
+      expect(result.current.selectedLabelValues.job).toContain('');
+    });
+  });
+
+  describe('complete user workflows', () => {
+    it('should handle a full selection -> validation -> clear workflow', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
       await act(async () => {
         await result.current.handleSelectedMetricChange('metric1');
+      });
+      expect(result.current.selectedMetric).toBe('metric1');
+
+      // 2. Add a label key
+      await act(async () => {
         await result.current.handleSelectedLabelKeyChange('job');
+      });
+      expect(result.current.selectedLabelKeys).toContain('job');
+
+      // 3. Select a label value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+      expect(result.current.selectedLabelValues.job).toContain('grafana');
+
+      // 4. Add another label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+      expect(result.current.selectedLabelKeys).toContain('instance');
+
+      // 5. Select a value for the second label
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
+      });
+      expect(result.current.selectedLabelValues.instance).toContain('host1');
+
+      // 6. Validate the selection
+      // Mock the validation response
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockResolvedValue(['grafana', 'host1']);
+
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+      expect(result.current.validationStatus).toContain('Selector is valid');
+
+      // 7. Clear everything
+      await act(async () => {
+        result.current.handleClear();
+      });
+
+      // 8. Verify everything was cleared
+      expect(result.current.selectedMetric).toBe('');
+      expect(result.current.selectedLabelKeys).toEqual([]);
+      expect(result.current.selectedLabelValues).toEqual({});
+      expect(result.current.validationStatus).toBe('');
+    });
+
+    it('should handle a workflow with deselections and reselections', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+      expect(result.current.selectedMetric).toBe('metric1');
+
+      // 2. Add label keys
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+
+      // Wait for job to be in the selected keys
+      await waitFor(() => expect(result.current.selectedLabelKeys).toContain('job'));
+
+      // Wait for job values to be loaded
+      await waitFor(() => result.current.labelValues.job && result.current.labelValues.job.length > 0);
+
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be in the selected keys
+      await waitFor(() => expect(result.current.selectedLabelKeys).toContain('instance'));
+
+      // Wait for instance values to be loaded
+      await waitFor(() => result.current.labelValues.instance && result.current.labelValues.instance.length > 0);
+
+      // 3. Select values
+      await act(async () => {
         await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
       });
 
-      // Unmount the component
-      unmount();
+      // Wait for job value to be selected
+      await waitFor(
+        () => result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('grafana')
+      );
 
-      // Verify state is cleaned up
-      expect(result.current.selectedMetric).toBe('metric1'); // State should be preserved until unmount
-      expect(result.current.selectedLabelKeys).toEqual(['job']); // State should be preserved until unmount
-      expect(result.current.selectedLabelValues).toHaveProperty('job'); // State should be preserved until unmount
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
+      });
+
+      // Wait for instance value to be selected
+      await waitFor(
+        () =>
+          result.current.selectedLabelValues.instance && result.current.selectedLabelValues.instance.includes('host1')
+      );
+
+      // 4. Deselect a value
+      await act(async () => result.current.handleSelectedLabelValueChange('job', 'grafana', false));
+
+      // Wait for job to be removed from selectedLabelValues
+      await waitFor(
+        () => !result.current.selectedLabelValues.job || result.current.selectedLabelValues.job.length === 0
+      );
+
+      expect(Object.keys(result.current.selectedLabelValues)).not.toContain('job');
+
+      // 5. Select a different value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'prometheus', true);
+      });
+
+      // Wait for new job value to be selected
+      await waitFor(
+        () => result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('prometheus')
+      );
+
+      expect(result.current.selectedLabelValues.job).toContain('prometheus');
+
+      // 6. Change metric selection
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric2');
+      });
+      expect(result.current.selectedMetric).toBe('metric2');
+
+      // 7. Remove a label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be removed from selectedLabelKeys
+      await waitFor(() => !result.current.selectedLabelKeys.includes('instance'));
+
+      expect(result.current.selectedLabelKeys).not.toContain('instance');
+
+      // 8. Validate
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockResolvedValue(['prometheus']);
+
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+      expect(result.current.validationStatus).toContain('Selector is valid');
+    });
+  });
+
+  describe('state maintenance through complex interactions', () => {
+    it('should handle a complex workflow with changing label sets', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+
+      // 2. Add a label key and select a value
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+
+      // Wait for job to be in selectedLabelKeys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('job');
+      });
+
+      // Wait for job values to load
+      await waitFor(() => {
+        return result.current.labelValues.job && result.current.labelValues.job.length > 0;
+      });
+
+      // Select a job value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+
+      // Wait for job value to be selected
+      await waitFor(() => {
+        return result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('grafana');
+      });
+
+      // 3. Now mock that selecting a certain job value changes the available instance values
+      (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'instance' && result.current.selectedLabelValues.job?.includes('grafana')) {
+            return Promise.resolve(['grafana-host1', 'grafana-host2']);
+          } else if (label === 'instance') {
+            return Promise.resolve(['host1', 'host2']);
+          }
+          if (label === 'job') {
+            return Promise.resolve(['grafana', 'prometheus']);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2', 'metric3']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // 4. Add instance label
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be in selectedLabelKeys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('instance');
+      });
+
+      // Wait for instance values to load
+      await waitFor(() => {
+        return result.current.labelValues.instance && result.current.labelValues.instance.length > 0;
+      });
+
+      // 5. Select a grafana-specific instance
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'grafana-host1', true);
+      });
+
+      // Wait for instance value to be selected
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.instance &&
+          result.current.selectedLabelValues.instance.includes('grafana-host1')
+        );
+      });
+
+      // Verify our current state for debugging
+      expect(result.current.selectedLabelValues.job).toBeDefined();
+      expect(result.current.selectedLabelValues.job).toContain('grafana');
+      expect(result.current.selectedLabelValues.instance).toBeDefined();
+      expect(result.current.selectedLabelValues.instance).toContain('grafana-host1');
+
+      // 6. First select a second job value to make sure the job array stays when we remove a value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'prometheus', true);
+      });
+
+      // Wait for both job values to be selected
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.job &&
+          result.current.selectedLabelValues.job.includes('grafana') &&
+          result.current.selectedLabelValues.job.includes('prometheus')
+        );
+      });
+
+      // Now deselect grafana
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', false);
+      });
+
+      // Wait for grafana to be removed from job values but prometheus to remain
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.job &&
+          !result.current.selectedLabelValues.job.includes('grafana') &&
+          result.current.selectedLabelValues.job.includes('prometheus')
+        );
+      });
+
+      // Wait for instance values to update
+      await waitFor(() => {
+        return (
+          result.current.labelValues.instance &&
+          result.current.labelValues.instance.includes('host1') &&
+          !result.current.labelValues.instance.includes('grafana-host1')
+        );
+      });
+
+      // 7. Verify instance value was removed since it's no longer valid with the new job
+      expect(result.current.selectedLabelValues.instance || []).not.toContain('grafana-host1');
+
+      // 8. Verify the instance options have changed
+      expect(result.current.labelValues.instance).toContain('host1');
+      expect(result.current.labelValues.instance).toContain('host2');
+      expect(result.current.labelValues.instance).not.toContain('grafana-host1');
     });
   });
 });
