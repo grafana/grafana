@@ -204,12 +204,6 @@ describe('SeriesApiClient', () => {
   });
 
   describe('queryLabelValues', () => {
-    it('should throw error if match parameter is not provided', async () => {
-      await expect(client.queryLabelValues(mockTimeRange, 'job')).rejects.toThrow(
-        'Series endpoint always expects at least one matcher'
-      );
-    });
-
     it('should fetch and process label values from series', async () => {
       mockRequest.mockResolvedValueOnce([
         { __name__: 'metric1', job: 'grafana' },
@@ -218,7 +212,42 @@ describe('SeriesApiClient', () => {
 
       const result = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
 
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1"}',
+        }),
+        expect.any(Object)
+      );
       expect(result).toEqual(['grafana', 'prometheus']);
+    });
+
+    it('should create matcher with label when no matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should create matcher with label when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
     });
   });
 });

@@ -32,6 +32,7 @@ type RequestFn = (
   options?: Partial<BackendSrvRequest>
 ) => Promise<unknown>;
 
+const EMPTY_MATCHER = '{}';
 const MATCH_ALL_LABELS = '{__name__!=""}';
 const METRIC_LABEL = '__name__';
 
@@ -61,15 +62,15 @@ export abstract class BaseResourceClient {
 
   /**
    * Validates and transforms a matcher string for Prometheus series queries.
-   * 
+   *
    * @param match - The matcher string to validate and transform. Can be undefined, a specific matcher, or '{}'.
    * @returns The validated and potentially transformed matcher string.
    * @throws Error if the matcher is undefined or empty (null, undefined, or empty string).
-   * 
+   *
    * @example
    * // Returns '{__name__!=""}' for empty matcher
    * validateAndTransformMatcher('{}')
-   * 
+   *
    * // Returns the original matcher for specific matchers
    * validateAndTransformMatcher('{job="grafana"}')
    */
@@ -200,7 +201,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const effectiveMatch = this.validateAndTransformMatcher(match);
+    const effectiveMatch = !match || match === EMPTY_MATCHER ? `{${labelKey}!=""}` : match;
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelValues } = processSeries(series, labelKey);
     return labelValues;
