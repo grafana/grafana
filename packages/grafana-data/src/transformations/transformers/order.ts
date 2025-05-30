@@ -7,7 +7,7 @@ import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
-export enum FieldOrdering {
+export enum OrderByMode {
   Manual = 'manual',
   Auto = 'auto',
 }
@@ -18,17 +18,21 @@ export enum Order {
   Desc = 'desc',
 }
 
-// this is a label sort if labelName is defined, and the field name sort if undefined
-export interface AutoSortOption {
-  labelName?: string;
-  order: Order;
-  index: number;
+export enum OrderByType {
+  Name = 'name',
+  Label = 'label',
+}
+
+export interface OrderByItem {
+  type: OrderByType;
+  name?: string;
+  desc?: boolean;
 }
 
 export interface OrderFieldsTransformerOptions {
   indexByName?: Record<string, number>;
-  fieldOrder: FieldOrdering;
-  autoSortOptions?: AutoSortOption[];
+  orderByMode?: OrderByMode;
+  orderBy?: OrderByItem[];
 }
 
 export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerOptions> = {
@@ -43,39 +47,31 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
    * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) =>
-    source.pipe(
-      map((data) => {
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
-        }
+  operator:
+    ({ indexByName, orderByMode = OrderByMode.Manual, orderBy = [] }) =>
+    (source) =>
+      source.pipe(
+        map((data) => {
+          const orderer =
+            orderByMode === OrderByMode.Manual
+              ? createFieldsOrdererManual(indexByName!)
+              : createFieldsOrdererAuto(orderBy);
 
-        const orderer =
-          (options.fieldOrder ?? FieldOrdering.Manual) === FieldOrdering.Manual
-            ? createFieldsOrdererManual(options.indexByName!)
-            : createFieldsOrdererAuto(options.autoSortOptions);
-
-        return data.map((frame) => ({
-          ...frame,
-          fields: orderer(frame.fields, data, frame),
-        }));
-      })
-    ),
+          return data.map((frame) => ({
+            ...frame,
+            fields: orderer(frame.fields, data, frame),
+          }));
+        })
+      ),
 };
 
-export const createOrderFieldsComparer = (indexByName: Record<string, number>) => (a: string, b: string) => {
-  return indexOfField(a, indexByName) - indexOfField(b, indexByName);
-};
+export const createOrderFieldsComparer = (indexByName: Record<string, number>) => (a: string, b: string) =>
+  indexOfField(a, indexByName) - indexOfField(b, indexByName);
 
 const createFieldsOrdererManual =
   (indexByName: Record<string, number>) => (fields: Field[], data: DataFrame[], frame: DataFrame) => {
-    if (!Array.isArray(fields) || fields.length === 0) {
-      return fields;
-    }
-    if (!indexByName || Object.keys(indexByName).length === 0) {
-      return fields;
-    }
     const comparer = createOrderFieldsComparer(indexByName);
+
     return clone(fields).sort((a, b) =>
       comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data))
     );
@@ -88,48 +84,23 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
   return Number.MAX_SAFE_INTEGER;
 };
 
-const createFieldsOrdererAuto = (autoSortOptions?: AutoSortOption[]) => (fields: Field[]) => {
-  let allSort = [...(autoSortOptions ?? [])];
+const compare = new Intl.Collator(undefined, { sensitivity: 'base' }).compare;
 
-  allSort = allSort.filter((s) => s.order !== Order.Off).sort((a, b) => a.index - b.index);
-  if (!Array.isArray(fields) || fields.length === 0) {
-    return fields;
-  }
-  if (!allSort || allSort.length === 0) {
-    return fields;
-  }
+const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
+  fields.slice().sort((fieldA, fieldB) => {
+    for (let i = 0; i < orderBy.length; i++) {
+      let { type, name = '', desc = false } = orderBy[i];
 
-  return clone(fields).sort((fieldA, fieldB) => {
-    let compareReturn = 0;
-    for (let i = 0; i < allSort.length; i++) {
-      let compareValA =
-        allSort[i].labelName === undefined
-          ? fieldA.name
-          : fieldA.labels
-            ? fieldA.labels[allSort[i].labelName!]
-            : undefined;
-      let compareValB =
-        allSort[i].labelName === undefined
-          ? fieldB.name
-          : fieldB.labels
-            ? fieldB.labels[allSort[i].labelName!]
-            : undefined;
+      // TODO: use displayName?
+      let aVal = type === OrderByType.Name ? fieldA.name : (fieldA.labels?.[name] ?? '');
+      let bVal = type === OrderByType.Name ? fieldB.name : (fieldB.labels?.[name] ?? '');
 
-      if (compareValA === compareValB) {
-        // if they're the same value, go to the next type of sort
-        continue;
-      } else if (compareValA === undefined) {
-        compareReturn = -1;
-        break;
-      } else if (compareValB === undefined) {
-        compareReturn = 1;
-        break;
-      } else {
-        compareReturn =
-          allSort[i].order === Order.Asc ? (compareValA < compareValB ? -1 : 1) : compareValA > compareValB ? -1 : 1;
-        break;
+      let res = compare(aVal, bVal) * (desc ? -1 : 1);
+
+      if (res !== 0) {
+        return res;
       }
     }
-    return compareReturn;
+
+    return 0;
   });
-};

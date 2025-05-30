@@ -5,7 +5,14 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { FieldOrdering, Order, orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+import {
+  OrderByMode,
+  Order,
+  orderFieldsTransformer,
+  OrderFieldsTransformerOptions,
+  OrderByType,
+  OrderByItem,
+} from './order';
 
 describe('Order Transformer', () => {
   beforeAll(() => {
@@ -25,7 +32,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
-          fieldOrder: FieldOrdering.Manual,
+          orderByMode: OrderByMode.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -80,7 +87,7 @@ describe('Order Transformer', () => {
         id: DataTransformerID.order,
         disabled: true,
         options: {
-          fieldOrder: FieldOrdering.Manual,
+          orderByMode: OrderByMode.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -145,7 +152,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
-          fieldOrder: FieldOrdering.Manual,
+          orderByMode: OrderByMode.Manual,
           indexByName: {
             time: 2,
             temperature: 0,
@@ -210,7 +217,7 @@ describe('Order Transformer', () => {
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
-          fieldOrder: FieldOrdering.Manual,
+          orderByMode: OrderByMode.Manual,
           indexByName: {},
         },
       };
@@ -275,15 +282,25 @@ describe('Order Transformer', () => {
     `(
       'When the order is (with index order as given) label pod: $labelPodOrder / label user: $labelUserOrder / field name: $fieldNameOrder , then the field order is $expectedFieldNameOrder',
       async ({ labelPodOrder, labelUserOrder, fieldNameOrder, expectedFieldNameOrder }) => {
+        let items: OrderByItem[] = [];
+
+        if (labelPodOrder !== Order.Off) {
+          items.push({ type: OrderByType.Label, name: 'pod', desc: labelPodOrder === Order.Desc });
+        }
+
+        if (labelUserOrder !== Order.Off) {
+          items.push({ type: OrderByType.Label, name: 'user', desc: labelUserOrder === Order.Desc });
+        }
+
+        if (fieldNameOrder !== Order.Off) {
+          items.push({ type: OrderByType.Name, desc: fieldNameOrder === Order.Desc });
+        }
+
         const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
           id: DataTransformerID.order,
           options: {
-            fieldOrder: FieldOrdering.Auto,
-            autoSortOptions: [
-              { index: 0, labelName: 'pod', order: labelPodOrder },
-              { index: 1, labelName: 'user', order: labelUserOrder },
-              { index: 2, order: fieldNameOrder },
-            ],
+            orderByMode: OrderByMode.Auto,
+            orderBy: items,
           },
         };
 
@@ -331,15 +348,17 @@ describe('Order Transformer', () => {
   `(
     'When the indexes are label pod: $labelPodIndex / label user: $labelUserIndex / field name: $fieldNameIndex when all of them are sort DESC, then the field order is $expectedFieldNameOrder',
     async ({ labelPodIndex, labelUserIndex, fieldNameIndex, expectedFieldNameOrder }) => {
+      let items: OrderByItem[] = Array(3);
+
+      items[labelPodIndex] = { type: OrderByType.Label, name: 'pod', desc: true };
+      items[labelUserIndex] = { type: OrderByType.Label, name: 'user', desc: true };
+      items[fieldNameIndex] = { type: OrderByType.Name, desc: true };
+
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
-          fieldOrder: FieldOrdering.Auto,
-          autoSortOptions: [
-            { index: labelPodIndex, labelName: 'pod', order: Order.Desc },
-            { index: labelUserIndex, labelName: 'user', order: Order.Desc },
-            { index: fieldNameIndex, order: Order.Desc },
-          ],
+          orderByMode: OrderByMode.Auto,
+          orderBy: items,
         },
       };
 
