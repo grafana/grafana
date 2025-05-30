@@ -942,9 +942,6 @@
       "title-search-panel": "搜索面板",
       "title-select-dashboard-and-panel": "选择数据面板和面板"
     },
-    "data-source-section": {
-      "import-to-grafana": "导入到 Grafana 规则"
-    },
     "datasource-not-found": {
       "card-description": "找不到此查询的数据源，它可能已被移除或未正确安装。",
       "remove-query": "删除查询",
@@ -1503,12 +1500,6 @@
       "label-insights": "洞察",
       "title-alerting": "警报"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "要导入规则的文件夹",
-      "message": {
-        "please-select-a-target-data-source": ""
-      }
-    },
     "import-to-gma": {
       "action-button": "导入",
       "additional-settings": "附加设置",
@@ -1516,8 +1507,9 @@
       "confirm-modal": {
         "confirm": "导入",
         "loading": "加载中...",
-        "loading-body": "正在准备要导入的数据。这可能需要一段时间...",
+        "loading-body": "",
         "no-rules-body": "没有要导入的规则。请选择其他命名空间或规则组。",
+        "no-rules-body-yaml": "",
         "no-rules-title": "没有要导入的规则",
         "plugin-rules-warning": {
           "text": "我们检测到某些规则由插件管理。这些规则将不会被导入。",
@@ -1536,11 +1528,12 @@
         "label": "组"
       },
       "import-location-and-filters": "导入位置和筛选器",
+      "import-source": "",
       "namespace": {
         "description": "键入以搜索现有命名空间",
         "label": "命名空间"
       },
-      "pageTitle": "将警报规则从数据源导入到 Grafana 管理的规则",
+      "pageTitle": "",
       "pause": {
         "label": "暂停导入的警报规则"
       },
@@ -1548,10 +1541,26 @@
         "label": "暂停导入的录制规则"
       },
       "recording-rules": "录制规则",
+      "source": {
+        "datasource": "",
+        "datasource-description": "",
+        "yaml": "",
+        "yaml-description": ""
+      },
       "success": "已成功将警报规则导入到 Grafana 管理的规则。",
       "target-folder": {
+        "description": "要导入规则的文件夹",
         "label": "目标文件夹"
-      }
+      },
+      "yaml": {
+        "description": "",
+        "label": "",
+        "required-message": "",
+        "target-datasource": "目标数据源",
+        "target-datasource-description": "",
+        "target-datasource-required": ""
+      },
+      "yaml-error": ""
     },
     "insights": {
       "monitor-status-of-system": "监控系统状态",
@@ -2128,7 +2137,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "用于存储录制规则的 Prometheus 数据源",
-      "label-target-data-source": "目标数据源"
+      "label-target-data-source": "目标数据源",
+      "target-data-source-required": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "为您的录制规则选择命名空间和组。",
@@ -2385,6 +2395,9 @@
     "rule-list-v1": {
       "collapse-all": "折叠全部",
       "expand-all": "展开全部"
+    },
+    "rule-list-v2": {
+      "import-to-gma": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在加载规则...",
@@ -2877,6 +2890,36 @@
       "body": "编辑器中的 YAML 内容仅包含警报规则配置<1></1>要配置 Prometheus，您需要提供 <4>配置文件内容</4>的其余部分。"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "",
+      "placeholder-group-by": "分组依据"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "",
+      "aria-label-view-alert-rule": "",
+      "view-alert-rule": ""
+    },
+    "unified-alert-list": {
+      "clear": "清除",
+      "text-loading": "加载中..."
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "",
+      "title-permission-required": ""
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "",
+      "filter": "",
+      "loading": "加载中...",
+      "no-annotations-found": ""
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": ""
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "注释",
@@ -3081,7 +3124,10 @@
       "use-refresh-token-description": "",
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": ""
+      "validate-hosted-domain-label": "",
+      "workload-identity-token-file-description": "",
+      "workload-identity-token-file-label": "",
+      "workload-identity-token-file-required": ""
     },
     "get-page-nav": {
       "subTitle": {
@@ -3124,6 +3170,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "",
+      "label-rtl": ""
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3248,6 +3300,17 @@
     "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。"
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "",
+      "label-header-parameters": "",
+      "label-method": "方法",
+      "label-payload": "负载",
+      "label-query-parameters": "查询参数",
+      "render-test-apibutton": {
+        "test-api": "",
+        "title-test-api": ""
+      }
+    },
     "button-item": {
       "label": {
         "center": "",
@@ -3256,6 +3319,28 @@
       },
       "placeholder": {
         "auto": "自动"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "变体"
+    },
+    "canvas-context-menu": {
+      "close-editor": "",
+      "open-editor": "",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": ""
+        },
+        "edit-element-menu-item": {
+          "label-edit": "编辑"
+        },
+        "label-bring-to-front": "",
+        "label-delete": "删除",
+        "label-duplicate": "复制",
+        "label-send-to-back": "",
+        "set-background-menu-item": {
+          "label-set-background": ""
+        }
       }
     },
     "cloud-item": {
@@ -3284,6 +3369,17 @@
         "auto": "自动"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "",
+      "tooltip-close-inline-editor": ""
+    },
+    "inline-edit-body": {
+      "label-add-item": "",
+      "please-select-an-element": ""
+    },
+    "line-style-editor": {
+      "label-animate": ""
+    },
     "metric-value-item": {
       "label": {
         "bottom": "",
@@ -3300,6 +3396,14 @@
     "not-found-display": {
       "not-found": "<0>未找到：</0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "",
+      "middle-mouse": "",
+      "pan-title": "",
+      "reset-double-click": "",
+      "title-pan-and-zoom-controls": "",
+      "zoom-scroll-wheel": ""
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "",
@@ -3312,6 +3416,25 @@
       "placeholder": {
         "auto": "自动"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "添加",
+      "aria-label-delete": "删除",
+      "placeholder-key": "密钥",
+      "placeholder-value": "值"
+    },
+    "placement-editor": {
+      "label-constraints": "",
+      "label-position": "",
+      "loading": "加载中..."
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "",
+      "tooltip-align-horizontal-centers": "",
+      "tooltip-align-left": "",
+      "tooltip-align-right": "",
+      "tooltip-align-top": "",
+      "tooltip-align-vertical-centers": ""
     },
     "rectangle-item": {
       "label": {
@@ -3341,6 +3464,22 @@
       "placeholder": {
         "auto": "自动"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "清除选择",
+      "frame-selection": "",
+      "label-add-item": "",
+      "missing-layer": "",
+      "no-settings": "",
+      "switcher-icon": {
+        "title-node-icon": ""
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "复制",
+      "title-remove": "删除",
+      "tooltip-duplicate": "复制",
+      "tooltip-remove": "删除"
     },
     "triangle-item": {
       "label": {
@@ -4929,6 +5068,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "group-by-options": "分组选项",
@@ -5446,6 +5586,25 @@
       "message": "未找到数据源"
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": ""
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "",
+        "label-clear-row": "",
+        "label-remove-all-data": "",
+        "label-search": "搜索..."
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "",
+        "label-delete-column": "",
+        "label-rename-column": "",
+        "label-set-field-type": ""
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "您没有配置新数据源的权限"
@@ -5628,6 +5787,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": ""
+    },
+    "render-info-viewer": {
+      "data-counter": "",
+      "elapsed-time": "",
+      "field": "字段",
+      "last": "",
+      "render-counter": "",
+      "schema-counter": "",
+      "title-reset-counters": "",
+      "tooltip-step-back": "",
+      "type": "类型"
+    },
+    "state-view": {
+      "current-value": "",
+      "label-state-name": ""
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "上传"
@@ -5760,6 +5939,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "",
       "footer": "事件时间戳相对于完整跟踪的开始时间。"
     },
     "accordian-references": {
@@ -6476,9 +6656,101 @@
     "incomplete-request-error": "很抱歉，我无法完成您的请求。请重试。",
     "send-custom-feedback": "发送"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "",
+      "label-longitude": ""
+    },
+    "debug-overlay": {
+      "center": "",
+      "zoom": ""
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": ""
+      },
+      "label-data": "数据",
+      "last-only-editor-fragment": {
+        "label-padding": "",
+        "tooltip-padding-relative-percent-beyond-extent": ""
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "geomap-panel": {
+      "aria-label-map": ""
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": ""
+    },
+    "layers-editor": {
+      "label-add-layer": "",
+      "no-layers": ""
+    },
+    "map-view-editor": {
+      "label-max-zoom": "",
+      "label-view": "查看",
+      "label-zoom": "缩放",
+      "use-current-map-settings": ""
+    },
+    "markers-legend": {
+      "title-symbol": "符号"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": ""
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": ""
+    },
+    "style-editor": {
+      "label-align": "",
+      "label-baseline": "",
+      "label-color": "颜色",
+      "label-fill-opacity": "",
+      "label-font-size": "",
+      "label-opacity": "",
+      "label-rotation-angle": "",
+      "label-size": "",
+      "label-symbol": "符号",
+      "label-symbol-horizontal-align": "",
+      "label-symbol-vertical-align": "",
+      "label-text-label": "",
+      "label-x-offset": "",
+      "label-y-offset": ""
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "比较运算符",
+      "aria-label-comparison-value": "",
+      "aria-label-delete-style-rule": "",
+      "aria-label-feature-property": "",
+      "label-rule": "规则",
+      "placeholder-feature-property": "",
+      "placeholder-numeric-value": "",
+      "placeholder-value": "值"
+    }
+  },
   "get-enterprise": {
     "requires-license": "需要 Grafana 企业版许可证",
     "title": "企业"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "完成",
+      "learn-how": ""
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "",
+      "aria-label-to-basic-tutorials": "",
+      "checking-completed-setup-steps": "",
+      "remove-this-panel": ""
+    },
+    "tutorial-card": {
+      "complete": "完成"
+    }
   },
   "gops": {
     "config-card": {
@@ -6967,6 +7239,11 @@
     "support-bundle": "您还可以在<1>支持包部分</1>中检索包含有关 Grafana 实例和已配置数据源信息的支持包。",
     "troubleshooting-help": "要请求故障排除帮助，请将此面板的快照发送给 Grafana Labs 技术支持。快照包含查询响应数据和面板设置。"
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "正在加载",
@@ -7273,8 +7550,26 @@
       "discard-local-changes": "放弃本地更改",
       "title-dashboard-changed": "数据面板已更改"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "",
+      "namespace": "命名空间",
+      "path": "路径",
+      "placeholder-select-watchable-resource": "",
+      "scope": "",
+      "title-grafana-live": ""
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "与服务器的连接已丢失..."
+    },
+    "live-panel": {
+      "error": "错误",
+      "grafana-requires-feature": "",
+      "panel-editor-channel": "",
+      "title-grafana-live": "",
+      "waiting-for-data": ""
+    },
+    "live-publish": {
+      "publish": ""
     }
   },
   "lock-icon": "锁定图标",
@@ -7446,6 +7741,11 @@
       "scroll-bottom": "滚动到底部",
       "scroll-top": "滚动到顶部",
       "start-of-range": "范围的开始"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": ""
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "所选时间范围的结束。"
@@ -8168,7 +8468,53 @@
       "close": "关闭抽屉"
     },
     "link-title": "前往 Grafana Labs 博客",
+    "news-panel": {
+      "body-error-loading-rss-feed": "",
+      "loading": "加载中...",
+      "title-error-loading-rss-feed": ""
+    },
     "title": "最新博客"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "",
+      "title-remove-arc": ""
+    },
+    "edge": {
+      "aria-label-from-to": ""
+    },
+    "edge-header": {
+      "label-source-target": ""
+    },
+    "marker": {
+      "100-node-count": "",
+      "aria-label-hidden-marker": "",
+      "node-count_other": ""
+    },
+    "node": {
+      "aria-label-node-title": ""
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "",
+      "aria-label-nodes-hidden-warning": "",
+      "computing-layout": "",
+      "no-data": "没有数据",
+      "hidden-nodes_other": "",
+      "processed-nodes_other": ""
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": ""
+    },
+    "node-header": {
+      "label-subtitle": "",
+      "label-title": "标题"
+    },
+    "view-controls": {
+      "hide-config": "",
+      "show-config": "",
+      "title-zoom-in": "",
+      "title-zoom-out": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -9953,6 +10299,11 @@
   "sort-picker": {
     "select-aria-label": "排序"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_other": ""
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "新的支持捆绑包"
@@ -9978,10 +10329,35 @@
     "login": "登录"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "",
+      "label-wrap-text": ""
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "",
+      "label-value-display": ""
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "",
+      "description-wrap-text": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-apply-to-entire-row": "",
+      "label-background-display-mode": "",
+      "label-wrap-text": "",
+      "wrap-text": ""
+    },
     "container": {
       "content": "在单个表中显示太多列可能会影响性能，并使数据难以阅读。请考虑优化您的查询。",
       "show-all-series": "显示所有列",
       "show-only-series": "仅显示 {{MAX_NUMBER_OF_COLUMNS}} 列"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "",
+      "description-title-text": "",
+      "label-alt-text": "",
+      "label-title-text": ""
     }
   },
   "tag-filter": {
@@ -10138,6 +10514,42 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "添加注释",
+      "cancel": "取消",
+      "edit-annotation": "",
+      "label-description": "描述",
+      "label-tags": "标签",
+      "placeholder-add-tags": "",
+      "save": "保存",
+      "saving": "正在保存"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "删除",
+      "tooltip-edit": "编辑"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "",
+      "tooltip-help": "帮助"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "从不"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "",
+      "zoom-to-data": ""
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "",
+      "tooltip-remove-timezone": ""
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": ""
     }
   },
   "transformations": {
@@ -10756,6 +11168,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "链接"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "需要帮助吗？",
+      "welcome-to-grafana": ""
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "",
+      "aria-label-select-series": "",
+      "label-color-field": "",
+      "label-frame": "帧",
+      "label-size-field": "",
+      "label-x-field": "X 字段",
+      "label-y-field": "Y 字段",
+      "placeholder-all-frames": "",
+      "placeholder-select-frame": "",
+      "tooltip-delete-series": ""
     }
   }
 }
