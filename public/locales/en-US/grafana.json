@@ -400,7 +400,8 @@
       "no-results": "No results.",
       "text-loading-notifications": "Loading notifications",
       "title-error-loading-notifications": "Error loading notifications",
-      "title-grafana-alerts-delivered-alertmanager": "Grafana alerts are not delivered to Grafana Alertmanager"
+      "title-grafana-alerts-delivered-alertmanager": "Grafana alerts are not delivered to Grafana Alertmanager",
+      "unknown-error": "Unknown error"
     },
     "alert-groups-summary": {
       "text-firing_one": "{{count}} firing",
@@ -523,6 +524,7 @@
       "view-configuration": "View configuration"
     },
     "alertmanager-config": {
+      "an-unknown-error-occurred": "An unknown error occurred.",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
@@ -929,10 +931,16 @@
       "missing-reference": "Expression \"{{source}}\" failed to run because \"{{target}}\" is missing or also failed.",
       "self-reference": "You can't link an expression to itself"
     },
+    "dashboard-annotation-field": {
+      "no-title": "<No title>"
+    },
     "dashboard-picker": {
       "confirm": "Confirm",
       "current-selection-dashboard": "Dashboard: {{dashboardTitle}} ({{ dashboardUid }}) in folder {{ folderTitle }}",
       "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
+      "dashboard-row": {
+        "dashboards": "Dashboards"
+      },
       "fallback-dashboards-string": "Dashboards",
       "panel-row": {
         "content-panel-valid-identifier": "This panel does not have a valid identifier.",
@@ -1872,11 +1880,13 @@
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
+      "no-policies-matching-filters": "No policies matching filters.",
       "search-query-input-placeholder-search": "Search"
     },
     "notification-policies-list": {
       "title-error-loading-alertmanager-config": "Error loading Alertmanager config",
-      "title-notification-policies-have-changed": "Notification policies have changed"
+      "title-notification-policies-have-changed": "Notification policies have changed",
+      "unknown-error": "Unknown error."
     },
     "notification-policies-tabs": {
       "label-notification-policies": "Notification Policies",
@@ -2348,6 +2358,7 @@
       }
     },
     "rule-health": {
+      "content-no-error-message-provided": "No error message provided.",
       "error": "error"
     },
     "rule-inspector": {
@@ -2458,6 +2469,7 @@
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
       },
+      "sub-title-no-error-message": "No error message",
       "title-something-wrong-evaluating-alert": "Something went wrong when evaluating this alert rule"
     },
     "rules": {
@@ -2476,6 +2488,9 @@
       "update-rule": {
         "success": "Rule updated successfully"
       }
+    },
+    "rules-by-state": {
+      "title-unknown": "Unknown"
     },
     "rules-filter": {
       "clear-filters": "Clear filters",
@@ -2700,6 +2715,9 @@
       "existing-templates-selector-placeholder-choose-notification-template": "Choose notification template",
       "loading": "Loading...",
       "template-options": {
+        "ariaLabel": {
+          "select-notification-template": "Select notification template"
+        },
         "label": {
           "select-notification-template": "Select notification template"
         }
@@ -2950,6 +2968,7 @@
       "no-events-found": "No events found",
       "no-query-editor": "Annotations are not supported. This datasource needs to export a QueryEditor",
       "test-annotation-query": "Test annotation query",
+      "there-was-an-error-fetching-data": "There was an error fetching data",
       "title-query-result": "Query result"
     }
   },
@@ -4420,6 +4439,11 @@
       "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
       "unlink": "Unlink"
     },
+    "panel-header-title-items": {
+      "alert-state-item": {
+        "content-unknown": "unknown"
+      }
+    },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
     },
@@ -5843,7 +5867,8 @@
     "resource-dimension-editor": {
       "label-field": "Field",
       "label-mappings": "Mappings",
-      "label-source": "Source"
+      "label-source": "Source",
+      "placeholder-select-a-value": "Select a value"
     },
     "resource-picker": {
       "render-small-resource-picker": {
@@ -6032,6 +6057,11 @@
       "continue-without-saving": "Continue without saving",
       "save-correlation": "Save correlation",
       "title-unsaved-changes-to-correlation": "Unsaved changes to correlation"
+    },
+    "create-span-link-factory": {
+      "new-span-links": {
+        "title-link": "Link"
+      }
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
@@ -6240,6 +6270,9 @@
     },
     "references": {
       "label-attributes": "attributes"
+    },
+    "render-menu-items": {
+      "label-link": "Link"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -6789,6 +6822,9 @@
     },
     "progress-status": {
       "your-progress": "Your progress"
+    },
+    "step-button": {
+      "no-options-available": "No options available"
     },
     "use-get-configuration-for-ui": {
       "get-connect-data-source-configuration": {
@@ -7710,6 +7746,7 @@
       "aria-label-unpin-line": "Unpin line",
       "tooltip-copy-shortlink": "Copy shortlink",
       "tooltip-copy-to-clipboard": "Copy to clipboard",
+      "tooltip-pin-line": "Pin line",
       "tooltip-show-context": "Show context",
       "tooltip-unpin-line": "Unpin line"
     },
@@ -7909,6 +7946,7 @@
       "title": "Disconnect from cloud stack"
     },
     "folder-info": {
+      "dashboards": "Dashboards",
       "folder": "Folder {{folderUid}}",
       "unable-to-load-folder": "Unable to load folder"
     },
@@ -9050,6 +9088,7 @@
       "installed-version": "{{versionNumber}} (installed version)",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
       "latest-release-date": "Latest release date",
+      "na": "N/A",
       "no-version-history-was-found": "No version history was found.",
       "version": "Version"
     }
@@ -9372,6 +9411,7 @@
       "job-id": "Job ID:",
       "last-ref": "Last Ref:",
       "messages": "Messages:",
+      "na": "N/A",
       "not-available": "N/A",
       "pull-status": "Pull status",
       "resources": "Resources",
@@ -9995,6 +10035,9 @@
       "enable": "Enable",
       "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
+    "get-cell-content": {
+      "no-tokens": "No tokens"
+    },
     "get-role-cell": {
       "aria-label-role": "Role"
     },
@@ -10003,6 +10046,7 @@
       "aria-label-role": "Role",
       "disable": "Disable",
       "enable": "Enable",
+      "no-tokens": "No tokens",
       "title-tokens": "Tokens",
       "tooltip-delete-button": "Delete service account {{serviceAccountName}}",
       "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"

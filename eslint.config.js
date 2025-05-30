@@ -59,7 +59,7 @@ module.exports = [
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
-  ...(enableBettererRules ? bettererConfig : []),
+  // ...(enableBettererRules ? bettererConfig : []),
   grafanaConfig,
   {
     name: 'react/jsx-runtime',
@@ -314,7 +314,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], forceFix: ['public/app', 'packages'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },

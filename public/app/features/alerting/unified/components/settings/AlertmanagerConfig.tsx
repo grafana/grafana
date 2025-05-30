@@ -110,7 +110,8 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           'Failed to load Alertmanager configuration'
         )}
       >
-        {loadingError.message ?? 'An unknown error occurred.'}
+        {loadingError.message ??
+          t('alerting.alertmanager-config.an-unknown-error-occurred', 'An unknown error occurred.')}
       </Alert>
     );
   }
@@ -160,7 +161,8 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           severity="error"
           title={t('alerting.alertmanager-config.title-oops-something-went-wrong', 'Oops, something went wrong')}
         >
-          {errors.configJSON.message || 'An unknown error occurred.'}
+          {errors.configJSON.message ||
+            t('alerting.alertmanager-config.an-unknown-error-occurred', 'An unknown error occurred.')}
         </Alert>
       )}
 

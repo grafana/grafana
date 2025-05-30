@@ -141,7 +141,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     </Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.state ?? 'N/A'}</Text>
+                    <Text variant="body">{status?.sync.state ?? t('provisioning.repository-overview.na', 'N/A')}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
@@ -150,7 +150,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     </Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
+                    <Text variant="body">{status?.sync.job ?? t('provisioning.repository-overview.na', 'N/A')}</Text>
                   </div>
 
                   <div className={styles.labelColumn}>
@@ -223,7 +223,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.id ?? 'N/A'}</Text>
+                      <Text variant="body">
+                        {status?.webhook?.id ?? t('provisioning.repository-overview.na', 'N/A')}
+                      </Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
@@ -231,7 +233,10 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.subscribedEvents?.join(', ') ?? 'N/A'}</Text>
+                      <Text variant="body">
+                        {status?.webhook?.subscribedEvents?.join(', ') ??
+                          t('provisioning.repository-overview.na', 'N/A')}
+                      </Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
