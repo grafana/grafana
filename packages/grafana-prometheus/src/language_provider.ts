@@ -528,14 +528,14 @@ export interface PrometheusLanguageProviderInterface
 
 /**
  * Modern implementation of the Prometheus language provider that abstracts API endpoint selection.
- * 
+ *
  * Features:
  * - Automatically selects the most efficient API endpoint based on Prometheus version and configuration
  * - Supports both labels and series endpoints for backward compatibility
  * - Handles match[] parameters for filtering time series data
  * - Implements automatic request limiting (default: 40_000 series)
  * - Provides unified interface for both modern and legacy Prometheus versions
- * 
+ *
  * @see LabelsApiClient For modern Prometheus versions using the labels API
  * @see SeriesApiClient For legacy Prometheus versions using the series API
  */
@@ -549,13 +549,13 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   /**
    * Lazily initializes and returns the appropriate resource client based on Prometheus version.
-   * 
+   *
    * The client selection logic:
    * - For Prometheus v2.6+ with labels API: Uses LabelsApiClient for efficient label-based queries
    * - For older versions: Falls back to SeriesApiClient for backward compatibility
-   * 
+   *
    * The client instance is cached after first initialization to avoid repeated creation.
-   * 
+   *
    * @returns {ResourceApiClient} An instance of either LabelsApiClient or SeriesApiClient
    */
   private get resourceClient(): ResourceApiClient {
@@ -615,7 +615,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   /**
    * Retrieves the cached Prometheus metrics metadata.
    * This metadata includes type information (counter, gauge, etc.) and help text for metrics.
-   * 
+   *
    * @returns {PromMetricsMetadata} Cached metadata or empty object if not yet fetched
    */
   public retrieveMetricsMetadata = (): PromMetricsMetadata => {
@@ -625,7 +625,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   /**
    * Retrieves the list of histogram metrics from the current resource client.
    * Histogram metrics are identified by the '_bucket' suffix and are used for percentile calculations.
-   * 
+   *
    * @returns {string[]} Array of histogram metric names
    */
   public retrieveHistogramMetrics = (): string[] => {
@@ -635,7 +635,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   /**
    * Retrieves the complete list of available metrics from the current resource client.
    * This includes all metric names regardless of their type (counter, gauge, histogram).
-   * 
+   *
    * @returns {string[]} Array of all metric names
    */
   public retrieveMetrics = (): string[] => {
@@ -645,7 +645,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   /**
    * Retrieves the list of available label keys from the current resource client.
    * Label keys are the names of labels that can be used to filter and group metrics.
-   * 
+   *
    * @returns {string[]} Array of label key names
    */
   public retrieveLabelKeys = (): string[] => {
@@ -656,7 +656,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * Fetches fresh metrics metadata from Prometheus and updates the cache.
    * This includes querying for metric types, help text, and unit information.
    * If the fetch fails, the cache is set to an empty object to prevent stale data.
-   * 
+   *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
    */
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
@@ -670,11 +670,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   /**
    * Fetches all available label keys that match the specified criteria.
-   * 
+   *
    * This method queries Prometheus for label keys within the specified time range.
    * The results can be filtered using the match parameter and limited in size.
    * Uses either the labels API (Prometheus v2.6+) or series API based on version.
-   * 
+   *
    * @param {TimeRange} timeRange - Time range to search for label keys
    * @param {string} [match] - Optional PromQL selector to filter label keys (e.g., '{job="grafana"}')
    * @param {string} [limit] - Optional maximum number of label keys to return
@@ -686,16 +686,16 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   /**
    * Fetches all values for a specific label key that match the specified criteria.
-   * 
+   *
    * This method queries Prometheus for label values within the specified time range.
    * Results can be filtered using the match parameter to find values in specific contexts.
    * Supports both modern (labels API) and legacy (series API) Prometheus versions.
-   * 
+   *
    * The method automatically handles UTF-8 encoded label keys by properly escaping them
    * before making API requests. This means you can safely pass label keys containing
    * special characters like dots, colons, or Unicode characters (e.g., 'http.status:code',
    * 'μs', 'response.time').
-   * 
+   *
    * @param {TimeRange} timeRange - Time range to search for label values
    * @param {string} labelKey - The label key to fetch values for (e.g., 'job', 'instance', 'http.status:code')
    * @param {string} [match] - Optional PromQL selector to filter values (e.g., '{job="grafana"}')
