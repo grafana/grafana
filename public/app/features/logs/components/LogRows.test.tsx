@@ -24,6 +24,7 @@ jest.mock('@grafana/runtime', () => ({
       logRowsPopoverMenu: true,
     },
   },
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 describe('LogRows', () => {
