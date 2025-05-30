@@ -23,13 +23,13 @@ import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
-  getRangeSnapInterval,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
@@ -39,7 +39,7 @@ const EMPTY_SELECTOR = '{}';
 export const SUGGESTIONS_LIMIT = 10000;
 
 /**
- * Prometheus API endpoints for fetching resources
+ * Prometheus API endpoints for fetching resoruces
  */
 const API_V1 = {
   METADATA: '/api/v1/metadata',
@@ -47,8 +47,6 @@ const API_V1 = {
   LABELS: '/api/v1/labels',
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
-
-const MATCH_ALL_LABELS = '{__name__!=""}';
 
 export interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
@@ -168,6 +166,7 @@ export interface PrometheusLegacyLanguageProvider {
 }
 
 /**
+ * Old implementation of prometheus language provider.
  * @deprecated Use PrometheusLanguageProviderInterface and PrometheusLanguageProvider class instead.
  */
 export default class PromQlLanguageProvider extends LanguageProvider implements PrometheusLegacyLanguageProvider {
@@ -204,6 +203,9 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     return undefined;
   };
 
+  /**
+   * Overridden by PrometheusLanguageProvider
+   */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
     if (this.datasource.lookupsDisabled) {
       return [];
@@ -514,7 +516,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
 export interface PrometheusLanguageProviderInterface
   extends PrometheusBaseLanguageProvider,
     PrometheusLegacyLanguageProvider {
-  retrieveMetricsMetadata: () => PromMetricsMetadata | undefined;
+  retrieveMetricsMetadata: () => PromMetricsMetadata;
   retrieveHistogramMetrics: () => string[];
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
@@ -524,11 +526,71 @@ export interface PrometheusLanguageProviderInterface
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => Promise<string[]>;
 }
 
+/**
+ * Modern implementation of the Prometheus language provider that abstracts API endpoint selection.
+ *
+ * Features:
+ * - Automatically selects the most efficient API endpoint based on Prometheus version and configuration
+ * - Supports both labels and series endpoints for backward compatibility
+ * - Handles match[] parameters for filtering time series data
+ * - Implements automatic request limiting (default: 40_000 series)
+ * - Provides unified interface for both modern and legacy Prometheus versions
+ *
+ * @see LabelsApiClient For modern Prometheus versions using the labels API
+ * @see SeriesApiClient For legacy Prometheus versions using the series API
+ */
 export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
   private _metricsMetadata?: PromMetricsMetadata;
-  private _histogramMetrics: string[] = [];
-  private _metrics: string[] = [];
-  private _labelKeys: string[] = [];
+  private _resourceClient?: ResourceApiClient;
+
+  constructor(datasource: PrometheusDatasource) {
+    super(datasource);
+  }
+
+  /**
+   * Lazily initializes and returns the appropriate resource client based on Prometheus version.
+   *
+   * The client selection logic:
+   * - For Prometheus v2.6+ with labels API: Uses LabelsApiClient for efficient label-based queries
+   * - For older versions: Falls back to SeriesApiClient for backward compatibility
+   *
+   * The client instance is cached after first initialization to avoid repeated creation.
+   *
+   * @returns {ResourceApiClient} An instance of either LabelsApiClient or SeriesApiClient
+   */
+  private get resourceClient(): ResourceApiClient {
+    if (!this._resourceClient) {
+      this._resourceClient = this.datasource.hasLabelsMatchAPISupport()
+        ? new LabelsApiClient(this.request, this.datasource)
+        : new SeriesApiClient(this.request, this.datasource);
+    }
+
+    return this._resourceClient;
+  }
+
+  /**
+   * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
+   * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
+   */
+  start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
+    if (this.datasource.lookupsDisabled) {
+      return [];
+    }
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    return this._backwardCompatibleStart();
+  };
+
+  /**
+   * This private method exists to make sure the old class will be functional until we remove it.
+   * When we remove old class (PromQlLanguageProvider) we should remove this method too.
+   */
+  private _backwardCompatibleStart = async () => {
+    this.metricsMetadata = this.retrieveMetricsMetadata();
+    this.metrics = this.retrieveMetrics();
+    this.histogramMetrics = this.retrieveHistogramMetrics();
+    this.labelKeys = this.retrieveLabelKeys();
+    return [];
+  };
 
   /**
    * Fetches metadata for metrics from Prometheus.
@@ -550,143 +612,110 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     return fixSummariesMetadata(metadata);
   };
 
-  // ===================================
-  // Labels API
-  // ===================================
-
   /**
-   * Fetches all available label keys from Prometheus using labels endpoint.
-   * Uses the labels endpoint with optional match parameter for filtering.
+   * Retrieves the cached Prometheus metrics metadata.
+   * This metadata includes type information (counter, gauge, etc.) and help text for metrics.
    *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} match - Optional label matcher to filter results
-   * @param {string} limit - Maximum number of results to return
-   * @returns {Promise<string[]>} Array of label keys sorted alphabetically
+   * @returns {PromMetricsMetadata} Cached metadata or empty object if not yet fetched
    */
-  private _withLabelsApiFetchLabelKeys = async (
-    timeRange: TimeRange,
-    match?: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    let url = API_V1.LABELS;
-    const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
-    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
-
-    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    if (Array.isArray(res)) {
-      this._labelKeys = res.slice().sort();
-      return this._labelKeys.slice();
-    }
-
-    return [];
+  public retrieveMetricsMetadata = (): PromMetricsMetadata => {
+    return this._metricsMetadata ?? {};
   };
 
   /**
-   * Fetches all values for a specific label key from Prometheus using labels values endpoint.
+   * Retrieves the list of histogram metrics from the current resource client.
+   * Histogram metrics are identified by the '_bucket' suffix and are used for percentile calculations.
    *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} labelKey - The label key to fetch values for
-   * @param {string} match - Optional label matcher to filter results
-   * @param {string} limit - Maximum number of results to return
-   * @returns {Promise<string[]>} Array of label values
+   * @returns {string[]} Array of histogram metric names
    */
-  private _withLabelsApiFetchLabelValues = async (
-    timeRange: TimeRange,
-    labelKey: string,
-    match?: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const timeParams = this.datasource.getAdjustedInterval(timeRange);
-    const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
-    const interpolatedName = this.datasource.interpolateString(labelKey);
-    const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
-    const url = API_V1.LABELS_VALUES(interpolatedAndEscapedName);
-    const value = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    return value ?? [];
-  };
-
-  // ===================================
-  // Series API
-  // ===================================
-
-  /**
-   * Fetches all time series that match a specific label matcher using series endpoint.
-   *
-   * @param {TimeRange} timeRange - Time range to use for the query
-   * @param {string} match - Label matcher to filter time series
-   * @param {string} limit - Maximum number of series to return
-   */
-  private _withSeriesApiFetchAllSeries = async (
-    timeRange: TimeRange,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ) => {
-    const timeParams = this.datasource.getTimeRangeParams(timeRange);
-    const searchParams = { ...timeParams, 'match[]': match, limit };
-    return await this.request(API_V1.SERIES, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-  };
-
-  private _withSeriesApiFetchLabelKeys = async (
-    timeRange: TimeRange,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
-    const { labelKeys } = processSeries(series);
-    return labelKeys;
-  };
-
-  private _withSeriesApiFetchLabelValues = async (
-    timeRange: TimeRange,
-    labelKey: string,
-    match: string,
-    limit: string = DEFAULT_SERIES_LIMIT
-  ): Promise<string[]> => {
-    const series = await this._withSeriesApiFetchAllSeries(timeRange, match, limit);
-    const { labelValues } = processSeries(series, labelKey);
-    return labelValues;
-  };
-
-  public retrieveMetricsMetadata = (): PromMetricsMetadata | undefined => {
-    return this._metricsMetadata;
-  };
-
   public retrieveHistogramMetrics = (): string[] => {
-    return this._histogramMetrics;
+    return this.resourceClient?.histogramMetrics;
   };
 
+  /**
+   * Retrieves the complete list of available metrics from the current resource client.
+   * This includes all metric names regardless of their type (counter, gauge, histogram).
+   *
+   * @returns {string[]} Array of all metric names
+   */
   public retrieveMetrics = (): string[] => {
-    return this._metrics;
+    return this.resourceClient?.metrics;
   };
 
+  /**
+   * Retrieves the list of available label keys from the current resource client.
+   * Label keys are the names of labels that can be used to filter and group metrics.
+   *
+   * @returns {string[]} Array of label key names
+   */
   public retrieveLabelKeys = (): string[] => {
-    return this._labelKeys;
+    return this.resourceClient?.labelKeys;
   };
 
+  /**
+   * Fetches fresh metrics metadata from Prometheus and updates the cache.
+   * This includes querying for metric types, help text, and unit information.
+   * If the fetch fails, the cache is set to an empty object to prevent stale data.
+   *
+   * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
+   */
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
-    this._metricsMetadata = await this._queryMetadata();
+    try {
+      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+    } catch (error) {
+      this._metricsMetadata = {};
+    }
     return this._metricsMetadata;
   };
 
+  /**
+   * Fetches all available label keys that match the specified criteria.
+   *
+   * This method queries Prometheus for label keys within the specified time range.
+   * The results can be filtered using the match parameter and limited in size.
+   * Uses either the labels API (Prometheus v2.6+) or series API based on version.
+   *
+   * @param {TimeRange} timeRange - Time range to search for label keys
+   * @param {string} [match] - Optional PromQL selector to filter label keys (e.g., '{job="grafana"}')
+   * @param {string} [limit] - Optional maximum number of label keys to return
+   * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
+   */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: string): Promise<string[]> => {
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      return await this._withLabelsApiFetchLabelKeys(timeRange, match, limit);
-    }
-
-    return await this._withSeriesApiFetchLabelKeys(timeRange, match ?? MATCH_ALL_LABELS, limit);
+    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
   };
 
+  /**
+   * Fetches all values for a specific label key that match the specified criteria.
+   *
+   * This method queries Prometheus for label values within the specified time range.
+   * Results can be filtered using the match parameter to find values in specific contexts.
+   * Supports both modern (labels API) and legacy (series API) Prometheus versions.
+   *
+   * The method automatically handles UTF-8 encoded label keys by properly escaping them
+   * before making API requests. This means you can safely pass label keys containing
+   * special characters like dots, colons, or Unicode characters (e.g., 'http.status:code',
+   * 'μs', 'response.time').
+   *
+   * @param {TimeRange} timeRange - Time range to search for label values
+   * @param {string} labelKey - The label key to fetch values for (e.g., 'job', 'instance', 'http.status:code')
+   * @param {string} [match] - Optional PromQL selector to filter values (e.g., '{job="grafana"}')
+   * @param {string} [limit] - Optional maximum number of values to return
+   * @returns {Promise<string[]>} Array of matching label values, sorted alphabetically
+   * @example
+   * // Fetch all values for the 'job' label
+   * const values = await queryLabelValues(timeRange, 'job');
+   * // Fetch 'instance' values only for jobs matching 'grafana'
+   * const instances = await queryLabelValues(timeRange, 'instance', '{job="grafana"}');
+   * // Fetch values for a label key with special characters
+   * const statusCodes = await queryLabelValues(timeRange, 'http.status:code');
+   */
   public queryLabelValues = async (
     timeRange: TimeRange,
     labelKey: string,
     match?: string,
     limit?: string
   ): Promise<string[]> => {
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      return await this._withLabelsApiFetchLabelValues(timeRange, labelKey, match, limit);
-    }
-
-    return await this._withSeriesApiFetchLabelValues(timeRange, labelKey, match ?? MATCH_ALL_LABELS, limit);
+    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
   };
 }
 
@@ -715,36 +744,6 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
     labelMatchers,
   };
 };
-
-export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
-  const metrics: Set<string> = new Set();
-  const labelKeys: Set<string> = new Set();
-  const labelValues: Set<string> = new Set();
-
-  // Extract metrics and label keys
-  series.forEach((item) => {
-    // Add the __name__ value to metrics
-    if ('__name__' in item) {
-      metrics.add(item.__name__);
-    }
-
-    // Add all keys except __name__ to labelKeys
-    Object.keys(item).forEach((key) => {
-      if (key !== '__name__') {
-        labelKeys.add(key);
-      }
-      if (findValuesForKey && key === findValuesForKey) {
-        labelValues.add(item[key]);
-      }
-    });
-  });
-
-  return {
-    metrics: Array.from(metrics).sort(),
-    labelKeys: Array.from(labelKeys).sort(),
-    labelValues: Array.from(labelValues).sort(),
-  };
-}
 
 /**
  * Checks if an error is a cancelled request error.
@@ -782,3 +781,29 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
   }
   return nameLabelValue;
 }
+
+/**
+ * Extracts metrics from queries and populates match parameters.
+ * This is used to filter time series data based on existing queries.
+ * Handles UTF8 metrics by properly escaping them.
+ *
+ * @param {URLSearchParams} initialParams - Initial URL parameters
+ * @param {PromQuery[]} queries - Array of Prometheus queries
+ * @returns {URLSearchParams} URL parameters with match[] parameters added
+ */
+export const populateMatchParamsFromQueries = (
+  initialParams: URLSearchParams,
+  queries?: PromQuery[]
+): URLSearchParams => {
+  return (queries ?? []).reduce((params, query) => {
+    const visualQuery = buildVisualQueryFromString(query.expr);
+    const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+    params.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
+    if (visualQuery.query.binaryQueries) {
+      visualQuery.query.binaryQueries.forEach((bq) => {
+        params.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
+      });
+    }
+    return params;
+  }, initialParams);
+};
