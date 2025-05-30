@@ -99,7 +99,7 @@ export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: H
   const view = panel.initMapView(options.view);
   return (panel.map = new OpenLayersMap({
     view: view,
-    pixelRatio: 1, // or zoom?
+    pixelRatio: window.devicePixelRatio, // or zoom?
     layers: [], // loaded explicitly below
     controls: [],
     target: div,
