@@ -102,13 +102,17 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { getSuggestions, language, onChange, onEditorDidMount } = this.props;
+    const { getSuggestions, language, onChange, onEditorDidMount, languageConfiguration } = this.props;
 
     this.modelId = editor.getModel()?.id;
     this.getEditorValue = () => editor.getValue();
 
     if (getSuggestions && this.modelId) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions, this.modelId);
+    }
+
+    if (languageConfiguration) {
+      monaco.languages.setLanguageConfiguration(language, languageConfiguration);
     }
 
     // Save when pressing Ctrl+S or Cmd+S
