@@ -48,6 +48,11 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	}
 
 	err = s.db.Transaction(ctx, func(ctx context.Context) error {
+		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
+		if err := s.validateSecureValueReferences(ctx, keeper); err != nil {
+			return err
+		}
+
 		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
@@ -132,6 +137,11 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	var newRow *keeperDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
+		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
+			return err
+		}
+
 		// Read old value first.
 		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
@@ -256,6 +266,142 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	}
 
 	return keepers, nil
+}
+
+// validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
+// It is used by other methods inside a transaction.
+func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv0alpha1.Keeper) error {
+	usedSecureValues := extractSecureValues(keeper)
+
+	// No secure values are referenced, return early.
+	if len(usedSecureValues) == 0 {
+		return nil
+	}
+
+	// SQL templates do not support maps.
+	usedSecureValuesList := make([]string, 0, len(usedSecureValues))
+	for sv := range usedSecureValues {
+		usedSecureValuesList = append(usedSecureValuesList, sv)
+	}
+
+	reqSecureValue := listByNameSecureValue{
+		SQLTemplate:      sqltemplate.New(s.dialect),
+		Namespace:        keeper.Namespace,
+		UsedSecureValues: usedSecureValuesList,
+	}
+
+	querySecureValueList, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecureValue)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("executing query: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	// DTO for `sqlSecureValueListByName` query result, only what we need.
+	type listByNameResult struct {
+		Name   string
+		Keeper *string
+	}
+
+	secureValueRows := make([]listByNameResult, 0)
+	for rows.Next() {
+		var row listByNameResult
+		if err := rows.Scan(&row.Name, &row.Keeper); err != nil {
+			return fmt.Errorf("error reading secret value row: %w", err)
+		}
+
+		secureValueRows = append(secureValueRows, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("secret value rows error: %w", err)
+	}
+
+	// If not all secure values being referenced exist, return an error with the missing ones.
+	if len(secureValueRows) != len(usedSecureValues) {
+		// We are guaranteed that the returned `secureValueRows` are a subset of `usedSecureValues`,
+		// so we don't need to check the other way around.
+		missing := make(map[string]struct{}, len(usedSecureValues))
+		for sv := range usedSecureValues {
+			missing[sv] = struct{}{}
+		}
+
+		for _, svRow := range secureValueRows {
+			delete(missing, svRow.Name)
+		}
+
+		return contracts.NewErrKeeperInvalidSecureValues(missing)
+	}
+
+	// If all secure values exist, we need to guarantee that the third-party keeper is not referencing another third-party,
+	// it must reference only the system keeper (when keeper=null) to keep the dependency tree flat (n=1).
+	keeperNames := make([]string, 0, len(secureValueRows))
+	keeperSecureValues := make(map[string][]string, 0)
+
+	for _, svRow := range secureValueRows {
+		// Using the system keeper (null).
+		if svRow.Keeper == nil {
+			continue
+		}
+
+		keeperNames = append(keeperNames, *svRow.Keeper)
+		keeperSecureValues[*svRow.Keeper] = append(keeperSecureValues[*svRow.Keeper], svRow.Name)
+	}
+
+	// We didn't find any secure values that reference third-party keepers.
+	if len(keeperNames) == 0 {
+		return nil
+	}
+
+	reqKeeper := listByNameKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   keeper.Namespace,
+		KeeperNames: keeperNames,
+	}
+
+	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
+	if err != nil {
+		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
+	}
+
+	keepersRows, err := s.db.QueryContext(ctx, qKeeper, reqKeeper.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
+	}
+	defer func() { _ = keepersRows.Close() }()
+
+	thirdPartyKeepers := make([]string, 0)
+	for keepersRows.Next() {
+		var name string
+		if err := keepersRows.Scan(&name); err != nil {
+			return fmt.Errorf("error reading keeper row: %w", err)
+		}
+
+		thirdPartyKeepers = append(thirdPartyKeepers, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("third party keeper rows error: %w", err)
+	}
+
+	// Found secureValueNames that are referenced by third-party keepers.
+	if len(thirdPartyKeepers) > 0 {
+		invalidSecureValues := make(map[string]string, 0)
+
+		for _, keeperName := range thirdPartyKeepers {
+			for _, svName := range keeperSecureValues[keeperName] {
+				invalidSecureValues[svName] = keeperName
+			}
+		}
+
+		return contracts.NewErrKeeperInvalidSecureValuesReference(invalidSecureValues)
+	}
+
+	return nil
 }
 
 func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (secretv0alpha1.KeeperConfig, error) {

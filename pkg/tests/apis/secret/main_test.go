@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -120,6 +121,45 @@ func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, permissionMap map
 	return mustCreateUsersWithOrg(t, helper, orgID, permissionMap)
 }
 
+func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName ...string) *unstructured.Unstructured {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	secureValueClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: user,
+		GVR:  gvrSecureValues,
+	})
+
+	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
+	if len(keeperName) == 1 {
+		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName[0]
+	}
+
+	raw, err := secureValueClient.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, raw)
+
+	// Before returning, we need to wait for the outbox to process it, and the status.phase to be Succeeded.
+	requireThatEventuallyTheSecureValueIsProcessed(t, ctx, secureValueClient, raw.GetName())
+
+	t.Cleanup(func() {
+		// Before cleaning up, wait otherwise we get an error of only 1 operation at a time.
+		// This makes the tests slower, maybe we don't need to clean up?
+		requireThatEventuallyTheSecureValueIsProcessed(t, ctx, secureValueClient, raw.GetName())
+
+		require.NoError(t, secureValueClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+	})
+
+	// Call one last time to get the up-to-date data.
+	raw, err = secureValueClient.Resource.Get(ctx, raw.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, raw)
+
+	return raw
+}
+
 func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User, specType map[string]any, testFile string) *unstructured.Unstructured {
 	t.Helper()
 
@@ -147,4 +187,29 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 	})
 
 	return raw
+}
+
+func requireThatEventuallyTheSecureValueIsProcessed(t *testing.T, ctx context.Context, secureValueClient *apis.K8sResourceClient, name string) {
+	t.Helper()
+
+	require.Eventually(
+		t,
+		func() bool {
+			result, err := secureValueClient.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			status, ok := result.Object["status"].(map[string]any)
+			require.True(t, ok)
+			require.NotNil(t, status)
+
+			statusPhase, ok := status["phase"].(string)
+			require.True(t, ok)
+
+			return statusPhase == "Succeeded"
+		},
+		10*time.Second,
+		250*time.Millisecond,
+		"expected status.phase to be Succeeded",
+	)
 }
