@@ -948,9 +948,6 @@
       "title-search-panel": "Panel ara",
       "title-select-dashboard-and-panel": "Pano ve panel seçin"
     },
-    "data-source-section": {
-      "import-to-grafana": "Grafana kurallarına içe aktar"
-    },
     "datasource-not-found": {
       "card-description": "Bu sorgunun veri kaynağı bulunamadı; ya kaldırılmış ya da doğru şekilde kurulmamış.",
       "remove-query": "Sorguyu kaldır",
@@ -1509,12 +1506,6 @@
       "label-insights": "İçgörüler",
       "title-alerting": "Uyarı sistemi"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "Kuralların içe aktarılacağı klasör",
-      "message": {
-        "please-select-a-target-data-source": ""
-      }
-    },
     "import-to-gma": {
       "action-button": "İçe aktar",
       "additional-settings": "Ek ayarlar",
@@ -1522,8 +1513,9 @@
       "confirm-modal": {
         "confirm": "İçe aktar",
         "loading": "Yükleniyor...",
-        "loading-body": "İçe aktarılacak veriler hazırlanıyor. Bu işlem biraz zaman alabilir...",
+        "loading-body": "",
         "no-rules-body": "İçe aktarılacak kural yok. Lütfen farklı bir ad alanı veya kural grubu seçin.",
+        "no-rules-body-yaml": "",
         "no-rules-title": "İçe aktarılacak kural yok",
         "plugin-rules-warning": {
           "text": "Bazı kuralların eklentiler tarafından yönetildiği tespit edildi. Bu kurallar içe aktarılmayacak.",
@@ -1542,11 +1534,12 @@
         "label": "Grup"
       },
       "import-location-and-filters": "İçe aktarma konumu ve filtreler",
+      "import-source": "",
       "namespace": {
         "description": "Mevcut bir ad alanı aramak için yazın",
         "label": "Ad alanı"
       },
-      "pageTitle": "Uyarı kurallarını bir veri kaynağından içe aktararak Grafana tarafından yönetilen kurallara ekleyin",
+      "pageTitle": "",
       "pause": {
         "label": "İçe aktarılan uyarı kurallarını duraklat"
       },
@@ -1554,10 +1547,26 @@
         "label": "İçe aktarılan kayıt kurallarını duraklat"
       },
       "recording-rules": "Kayıt kuralları",
+      "source": {
+        "datasource": "",
+        "datasource-description": "",
+        "yaml": "",
+        "yaml-description": ""
+      },
       "success": "Uyarı kuralları başarıyla Grafana yönetimli kurallara içe aktarıldı.",
       "target-folder": {
+        "description": "Kuralların içe aktarılacağı klasör",
         "label": "Hedef klasör"
-      }
+      },
+      "yaml": {
+        "description": "",
+        "label": "",
+        "required-message": "",
+        "target-datasource": "Hedef veri kaynağı",
+        "target-datasource-description": "",
+        "target-datasource-required": ""
+      },
+      "yaml-error": ""
     },
     "insights": {
       "monitor-status-of-system": "Sistem durumunu izleyin",
@@ -2137,7 +2146,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "Kayıt kurallarının saklanacağı Prometheus veri kaynağı",
-      "label-target-data-source": "Hedef veri kaynağı"
+      "label-target-data-source": "Hedef veri kaynağı",
+      "target-data-source-required": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Kayıt kuralınız için Ad Alanı ve Grup seçin.",
@@ -2397,6 +2407,9 @@
     "rule-list-v1": {
       "collapse-all": "Tümünü daralt",
       "expand-all": "Tümünü genişlet"
+    },
+    "rule-list-v2": {
+      "import-to-gma": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Kural yükleniyor...",
@@ -2890,6 +2903,36 @@
       "body": "Düzenleyicideki YAML içeriği yalnızca uyarı kuralı yapılandırmasını içerir <1></1>Prometheus yapılandırması yapmak için <4>yapılandırma dosyasının kalan içeriğini</4> sağlamanız gerekir.</4>"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "",
+      "placeholder-group-by": "Gruplama ölçütü"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "",
+      "aria-label-view-alert-rule": "",
+      "view-alert-rule": ""
+    },
+    "unified-alert-list": {
+      "clear": "Temizle",
+      "text-loading": "Yükleniyor..."
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "",
+      "title-permission-required": ""
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "",
+      "filter": "",
+      "loading": "Yükleniyor...",
+      "no-annotations-found": ""
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": ""
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Ek açıklama",
@@ -3094,7 +3137,10 @@
       "use-refresh-token-description": "",
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": ""
+      "validate-hosted-domain-label": "",
+      "workload-identity-token-file-description": "",
+      "workload-identity-token-file-label": "",
+      "workload-identity-token-file-required": ""
     },
     "get-page-nav": {
       "subTitle": {
@@ -3137,6 +3183,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Kimlik doğrulama ayarlarınızı yönetin ve çoklu oturum açmayı yapılandırın. Daha fazla bilgi için <2>belgelerimize</2> bakın."
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "",
+      "label-rtl": ""
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3266,6 +3318,17 @@
     "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın."
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "",
+      "label-header-parameters": "",
+      "label-method": "Yöntem",
+      "label-payload": "Yük",
+      "label-query-parameters": "Sorgu parametreleri",
+      "render-test-apibutton": {
+        "test-api": "",
+        "title-test-api": ""
+      }
+    },
     "button-item": {
       "label": {
         "center": "",
@@ -3274,6 +3337,28 @@
       },
       "placeholder": {
         "auto": "Otomatik"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "Değişken"
+    },
+    "canvas-context-menu": {
+      "close-editor": "",
+      "open-editor": "",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": ""
+        },
+        "edit-element-menu-item": {
+          "label-edit": "Düzenle"
+        },
+        "label-bring-to-front": "",
+        "label-delete": "Sil",
+        "label-duplicate": "Çoğalt",
+        "label-send-to-back": "",
+        "set-background-menu-item": {
+          "label-set-background": ""
+        }
       }
     },
     "cloud-item": {
@@ -3302,6 +3387,17 @@
         "auto": "Otomatik"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "",
+      "tooltip-close-inline-editor": ""
+    },
+    "inline-edit-body": {
+      "label-add-item": "",
+      "please-select-an-element": ""
+    },
+    "line-style-editor": {
+      "label-animate": ""
+    },
     "metric-value-item": {
       "label": {
         "bottom": "",
@@ -3318,6 +3414,14 @@
     "not-found-display": {
       "not-found": "<0>Bulunamadı: </0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "",
+      "middle-mouse": "",
+      "pan-title": "",
+      "reset-double-click": "",
+      "title-pan-and-zoom-controls": "",
+      "zoom-scroll-wheel": ""
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "",
@@ -3330,6 +3434,25 @@
       "placeholder": {
         "auto": "Otomatik"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "Ekle",
+      "aria-label-delete": "Sil",
+      "placeholder-key": "Anahtar",
+      "placeholder-value": "Değer"
+    },
+    "placement-editor": {
+      "label-constraints": "",
+      "label-position": "",
+      "loading": "Yükleniyor..."
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "",
+      "tooltip-align-horizontal-centers": "",
+      "tooltip-align-left": "",
+      "tooltip-align-right": "",
+      "tooltip-align-top": "",
+      "tooltip-align-vertical-centers": ""
     },
     "rectangle-item": {
       "label": {
@@ -3359,6 +3482,22 @@
       "placeholder": {
         "auto": "Otomatik"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "Seçimi temizle",
+      "frame-selection": "",
+      "label-add-item": "",
+      "missing-layer": "",
+      "no-settings": "",
+      "switcher-icon": {
+        "title-node-icon": ""
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "Çoğalt",
+      "title-remove": "Kaldır",
+      "tooltip-duplicate": "Çoğalt",
+      "tooltip-remove": "Kaldır"
     },
     "triangle-item": {
       "label": {
@@ -4948,6 +5087,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
       "group-by-options": "Seçeneklere göre grupla",
@@ -5467,6 +5607,25 @@
       "message": "Veri kaynağı bulunamadı"
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": ""
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "",
+        "label-clear-row": "",
+        "label-remove-all-data": "",
+        "label-search": "Ara..."
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "",
+        "label-delete-column": "",
+        "label-rename-column": "",
+        "label-set-field-type": ""
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Yeni veri kaynaklarını yapılandırma izniniz yok"
@@ -5649,6 +5808,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": ""
+    },
+    "render-info-viewer": {
+      "data-counter": "",
+      "elapsed-time": "",
+      "field": "Alan",
+      "last": "",
+      "render-counter": "",
+      "schema-counter": "",
+      "title-reset-counters": "",
+      "tooltip-step-back": "",
+      "type": "Tür"
+    },
+    "state-view": {
+      "current-value": "",
+      "label-state-name": ""
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "Yükle"
@@ -5781,6 +5960,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "",
       "footer": "Olay zaman damgaları, tam izlemenin başlangıç zamanına göredir."
     },
     "accordian-references": {
@@ -6497,9 +6677,101 @@
     "incomplete-request-error": "Ne yazık ki isteğiniz gerçekleştirilemedi. Lütfen tekrar deneyin.",
     "send-custom-feedback": "Gönder"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "",
+      "label-longitude": ""
+    },
+    "debug-overlay": {
+      "center": "",
+      "zoom": ""
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": ""
+      },
+      "label-data": "Veri",
+      "last-only-editor-fragment": {
+        "label-padding": "",
+        "tooltip-padding-relative-percent-beyond-extent": ""
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "geomap-panel": {
+      "aria-label-map": ""
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": ""
+    },
+    "layers-editor": {
+      "label-add-layer": "",
+      "no-layers": ""
+    },
+    "map-view-editor": {
+      "label-max-zoom": "",
+      "label-view": "Görüntüle",
+      "label-zoom": "Yakınlaştır",
+      "use-current-map-settings": ""
+    },
+    "markers-legend": {
+      "title-symbol": "Sembol"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": ""
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": ""
+    },
+    "style-editor": {
+      "label-align": "",
+      "label-baseline": "",
+      "label-color": "Renk",
+      "label-fill-opacity": "",
+      "label-font-size": "",
+      "label-opacity": "",
+      "label-rotation-angle": "",
+      "label-size": "",
+      "label-symbol": "Sembol",
+      "label-symbol-horizontal-align": "",
+      "label-symbol-vertical-align": "",
+      "label-text-label": "",
+      "label-x-offset": "",
+      "label-y-offset": ""
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "Karşılaştırma işleci",
+      "aria-label-comparison-value": "",
+      "aria-label-delete-style-rule": "",
+      "aria-label-feature-property": "",
+      "label-rule": "Kural",
+      "placeholder-feature-property": "",
+      "placeholder-numeric-value": "",
+      "placeholder-value": "değer"
+    }
+  },
   "get-enterprise": {
     "requires-license": "Grafana Enterprise lisansı gerektirir",
     "title": "Enterprise"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "tamamlandı",
+      "learn-how": ""
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "",
+      "aria-label-to-basic-tutorials": "",
+      "checking-completed-setup-steps": "",
+      "remove-this-panel": ""
+    },
+    "tutorial-card": {
+      "complete": "tamamlandı"
+    }
   },
   "gops": {
     "config-card": {
@@ -6988,6 +7260,11 @@
     "support-bundle": "<1>Destek paketleri bölümünden</1>, Grafana örneğiniz ve yapılandırılmış veri kaynakları hakkında bilgi içeren bir destek paketi de alabilirsiniz.",
     "troubleshooting-help": "Sorun giderme yardımı istemek için bu panelin anlık görüntüsünü Grafana Labs Teknik Destek ekibine gönderin. Anlık görüntü, sorgu yanıt verilerini ve panel ayarlarını içerir."
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Yükleniyor",
@@ -7299,8 +7576,26 @@
       "discard-local-changes": "Yerel değişiklikleri sil",
       "title-dashboard-changed": "Pano değiştirildi"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "",
+      "namespace": "Ad alanı",
+      "path": "Yol",
+      "placeholder-select-watchable-resource": "",
+      "scope": "",
+      "title-grafana-live": ""
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "Sunucu bağlantısı kesildi..."
+    },
+    "live-panel": {
+      "error": "Hata",
+      "grafana-requires-feature": "",
+      "panel-editor-channel": "",
+      "title-grafana-live": "",
+      "waiting-for-data": ""
+    },
+    "live-publish": {
+      "publish": ""
     }
   },
   "lock-icon": "kilit simgesi",
@@ -7472,6 +7767,11 @@
       "scroll-bottom": "En alta kaydır",
       "scroll-top": "En üste kaydır",
       "start-of-range": "Aralık başlangıcı"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": ""
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "Seçilen zaman aralığının sonu."
@@ -8194,7 +8494,56 @@
       "close": "Çekmeceyi kapat"
     },
     "link-title": "Grafana Labs bloguna git",
+    "news-panel": {
+      "body-error-loading-rss-feed": "",
+      "loading": "Yükleniyor...",
+      "title-error-loading-rss-feed": ""
+    },
     "title": "Blog'tan son gönderiler"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "",
+      "title-remove-arc": ""
+    },
+    "edge": {
+      "aria-label-from-to": ""
+    },
+    "edge-header": {
+      "label-source-target": ""
+    },
+    "marker": {
+      "100-node-count": "",
+      "aria-label-hidden-marker": "",
+      "node-count_one": "",
+      "node-count_other": ""
+    },
+    "node": {
+      "aria-label-node-title": ""
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "",
+      "aria-label-nodes-hidden-warning": "",
+      "computing-layout": "",
+      "no-data": "Veri yok",
+      "hidden-nodes_one": "",
+      "hidden-nodes_other": "",
+      "processed-nodes_one": "",
+      "processed-nodes_other": ""
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": ""
+    },
+    "node-header": {
+      "label-subtitle": "",
+      "label-title": "Başlık"
+    },
+    "view-controls": {
+      "hide-config": "",
+      "show-config": "",
+      "title-zoom-in": "",
+      "title-zoom-out": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -9984,6 +10333,12 @@
   "sort-picker": {
     "select-aria-label": "Sırala"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_one": "",
+      "too-many-points_other": ""
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "Yeni destek paketi"
@@ -10009,10 +10364,35 @@
     "login": "Oturum Aç"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "",
+      "label-wrap-text": ""
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "",
+      "label-value-display": ""
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "",
+      "description-wrap-text": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-apply-to-entire-row": "",
+      "label-background-display-mode": "",
+      "label-wrap-text": "",
+      "wrap-text": ""
+    },
     "container": {
       "content": "Tek bir tabloda çok fazla sütun göstermek performansı etkileyebilir ve verilerin okunmasını zorlaştırabilir. Sorgularınızı daraltmayı düşünün.",
       "show-all-series": "Tüm sütunları göster",
       "show-only-series": "Sadece {{MAX_NUMBER_OF_COLUMNS}} sütun gösteriliyor"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "",
+      "description-title-text": "",
+      "label-alt-text": "",
+      "label-title-text": ""
     }
   },
   "tag-filter": {
@@ -10169,6 +10549,42 @@
     "zone": {
       "select-aria-label": "Zaman dilimi seçici",
       "select-search-input": "Aramak için yazmaya başlayın (ülke, şehir, kısaltma)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "Ek açıklama ekle",
+      "cancel": "İptal et",
+      "edit-annotation": "",
+      "label-description": "Açıklama",
+      "label-tags": "Etiketler",
+      "placeholder-add-tags": "",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "Sil",
+      "tooltip-edit": "Düzenle"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "",
+      "tooltip-help": "Yardım"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "Hiçbir zaman"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "",
+      "zoom-to-data": ""
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "",
+      "tooltip-remove-timezone": ""
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": ""
     }
   },
   "transformations": {
@@ -10787,6 +11203,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "Bağlantı"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "Yardıma mı ihtiyacınız var?",
+      "welcome-to-grafana": ""
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "",
+      "aria-label-select-series": "",
+      "label-color-field": "",
+      "label-frame": "Çerçeve",
+      "label-size-field": "",
+      "label-x-field": "X alanı",
+      "label-y-field": "Y alanı",
+      "placeholder-all-frames": "",
+      "placeholder-select-frame": "",
+      "tooltip-delete-series": ""
     }
   }
 }
