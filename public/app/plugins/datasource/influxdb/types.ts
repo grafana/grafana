@@ -15,6 +15,7 @@ export interface InfluxOptions extends DataSourceJsonData {
   httpMode?: string;
 
   dbName?: string;
+  product?: string;
 
   // With Flux
   organization?: string;

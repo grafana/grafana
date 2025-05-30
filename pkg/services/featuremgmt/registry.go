@@ -1758,6 +1758,14 @@ var (
 			HideFromAdminPage: true,
 			Expression:        "false",
 		},
+		{
+			Name:         "newInfluxDSConfigPageDesign",
+			Description:  "Enables new design for the InfluxDB data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
+		},
 	}
 )
 
