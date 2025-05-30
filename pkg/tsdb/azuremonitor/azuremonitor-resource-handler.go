@@ -77,7 +77,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.logger.Warn("Failed to close response body", "err", err)
+			s.logger.Warn("Failed to close response body test", "err", err)
 		}
 	}()
 
