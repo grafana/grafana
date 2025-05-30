@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -50,5 +51,6 @@ var WireSet = wire.NewSet(
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	secret.RegisterAPIService,
+	preferences.RegisterAPIService,
 	userstorage.RegisterAPIService,
 )
