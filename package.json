@@ -38,6 +38,7 @@
     "lint:fix": "yarn lint:ts --fix",
     "packages:build": "nx run-many -t build --projects='tag:scope:package'",
     "packages:clean": "rimraf ./npm-artifacts && nx run-many -t clean --projects='tag:scope:package' --maxParallel=100",
+    "packages:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:package'",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
     "packages:typecheck": "nx run-many -t typecheck --projects='tag:scope:package'",
