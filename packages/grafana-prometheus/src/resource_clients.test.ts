@@ -353,14 +353,14 @@ describe('SeriesApiClient', () => {
 
         // Create entries that will exceed the size limit
         const largeArray = Array(5).fill('large_value');
-        
+
         // Add first large entry
         cache.setLabelKeys(mockTimeRange, 'match1', '1000', largeArray);
-        
+
         // Verify initial size
         expect(Object.keys(cache._cache).length).toBe(1);
         expect(cache.getCacheSizeInBytes()).toBeGreaterThan(10);
-        
+
         // Add second large entry - should trigger size-based cleanup
         cache.setLabelKeys(mockTimeRange, 'match2', '1000', largeArray);
 

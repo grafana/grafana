@@ -258,7 +258,7 @@ class SeriesCache {
     const currentEntries = Object.keys(this._cache).length;
     if (currentEntries >= this.MAX_CACHE_ENTRIES) {
       // Calculate 20% of current entries, but ensure we remove at least 1 entry
-      const entriesToRemove = Math.max(1, Math.floor((currentEntries - this.MAX_CACHE_ENTRIES + 1)));
+      const entriesToRemove = Math.max(1, Math.floor(currentEntries - this.MAX_CACHE_ENTRIES + 1));
       this.removeOldestEntries(entriesToRemove);
     }
 
@@ -288,8 +288,9 @@ class SeriesCache {
 
   private removeOldestEntries(count: number) {
     // Get all entries sorted by timestamp (oldest first)
-    const entries = Object.entries(this._accessTimestamps)
-      .sort(([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2);
+    const entries = Object.entries(this._accessTimestamps).sort(
+      ([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2
+    );
 
     // Take the oldest 'count' entries
     const entriesToRemove = entries.slice(0, count);
