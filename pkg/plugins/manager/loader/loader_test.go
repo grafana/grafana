@@ -243,8 +243,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "public/build/img/icn-datasource.svg",
+								Large: "public/build/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -300,8 +300,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "public/build/img/icn-datasource.svg",
+								Large: "public/build/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -390,8 +390,8 @@ func TestLoader_Load(t *testing.T) {
 								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-app.svg",
-								Large: "public/img/icn-app.svg",
+								Small: "public/build/img/icn-app.svg",
+								Large: "public/build/img/icn-app.svg",
 							},
 							Updated:  "2015-02-10",
 							Keywords: []string{"test"},

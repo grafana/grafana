@@ -142,7 +142,7 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 
 // DefaultLogoPath returns the default logo path for the specified plugin type.
 func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
-	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
+	return path.Join("public/build/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
 }
 
 func getBaseDir(pluginDir string) string {
