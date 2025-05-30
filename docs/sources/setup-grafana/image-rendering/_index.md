@@ -66,6 +66,8 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 ### Security
 
+#### Auth token
+
 {{% admonition type="note" %}}
 This feature is available in Image Renderer v3.6.1 and later.
 {{% /admonition %}}
@@ -95,6 +97,30 @@ AUTH_TOKEN=-
 ```
 
 See [Grafana configuration](../configure-grafana/#renderer_token) for how to configure the token in Grafana.
+
+#### Rate limiter
+
+{{% admonition type="note" %}}
+This feature is available in Image Renderer v3.13.0 and later.
+{{% /admonition %}}
+
+You can rate-limit image renderer requests using in-memory storage or Redis.
+
+The rate limiter can be used for multi-tenants setups. If you are using Grafana v12.1.0 or later, requests will be rate-limited by Grafana instance domains (defined in `[rendering] callback_url`, `[server] http_addr` or set to `localhost` if none of the two other options are specified).
+If you are using an earlier version of Grafana, the requests will be rate-limited by IP addresses.
+
+```json
+{
+  "service": {
+    "rateLimiter": {
+      "enabled": true,
+      "redisHost": null,
+      "redisPort": null,
+      "requestsPerSecond": 5
+    }
+  }
+}
+```
 
 ### Rendering mode
 
