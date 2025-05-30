@@ -37,22 +37,27 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	ctx, span := f.Tracer.Start(ctx, "legacy.grpc.Authenticator.Authenticate")
 	defer span.End()
 
+	logger.Info("authenticating")
 	r, err := identity.GetRequester(ctx)
 	if err == nil && r != nil {
+		logger.Info("found user in ctx")
 		return ctx, nil // noop, requester exists
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
+		logger.Info("error getting md from ctx")
 		err := status.Error(codes.Unauthenticated, "no metadata found in grpc context")
 		span.RecordError(err)
 		return nil, err
 	}
 	user, err := f.decodeMetadata(md)
 	if err != nil {
+		logger.Info("no user in ctx")
 		span.RecordError(err)
 		return nil, err
 	}
+	logger.Info("yes user")
 	return identity.WithRequester(ctx, user), nil
 }
 

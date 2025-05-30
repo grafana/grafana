@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -264,6 +265,7 @@ func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	span.SetAttributes(attribute.Bool("fallback_used", false))
 	newCtx, err := f.authenticator(ctx)
 	if err == nil {
+		fmt.Println("fallback not used")
 		// fallback not used, authentication successful
 		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
 		return newCtx, nil
@@ -320,13 +322,18 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
 	return func(ctx context.Context) (context.Context, error) {
+		r, err := identity.GetRequester(ctx)
+		fmt.Println("requester in ctx before authenticating", r, err)
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
 			fallback:      fallback,
 			tracer:        tracer,
 			metrics:       newMetrics(reg),
 		}
-		return a.Authenticate(ctx)
+		ctx, err = a.Authenticate(ctx)
+		fmt.Println("response from authenticate ctx", ctx)
+		fmt.Println("response from authenticate ", err)
+		return ctx, err
 	}
 }
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/modules"
@@ -20,6 +21,7 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
 	authn := sql.NewAuthenticatorWithFallback(ms.cfg, ms.registerer, tracer, func(ctx context.Context) (context.Context, error) {
+		fmt.Println("auth here")
 		auth := resourcegrpc.Authenticator{Tracer: tracer}
 		return auth.Authenticate(ctx)
 	})

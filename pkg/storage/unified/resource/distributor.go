@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
-	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/metadata"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -112,7 +112,10 @@ func (ds *distributorServer) Read(ctx context.Context, r *resourcepb.ReadRequest
 		return nil, err
 	}
 
-	return client.Read(ctx, r)
+	res, err := client.Read(ctx, r)
+	ds.log.Info("Read result", "err", err)
+
+	return res, err
 }
 
 func (ds *distributorServer) Create(ctx context.Context, r *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
@@ -239,9 +242,15 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
+	ds.log.Info("distributing request to", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
 
-	return userutils.InjectOrgID(ctx, namespace), client.(*RingClient).Client, nil
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		ds.log.Error("no good")
+		return ctx, nil, err
+	}
+
+	return metadata.NewOutgoingContext(ctx, md), client.(*RingClient).Client, nil
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
