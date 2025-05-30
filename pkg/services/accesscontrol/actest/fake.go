@@ -141,6 +141,10 @@ func (f *FakePermissionsService) SetUserPermission(ctx context.Context, orgID in
 	return f.ExpectedPermission, f.ExpectedErr
 }
 
+func (f *FakePermissionsService) SetUsersPermission(ctx context.Context, orgID int64, users []accesscontrol.User, resourceID, permission string) ([]accesscontrol.ResourcePermission, error) {
+	return f.ExpectedPermissions, f.ExpectedErr
+}
+
 func (f *FakePermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermission, f.ExpectedErr
 }
