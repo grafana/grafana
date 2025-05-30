@@ -12,14 +12,13 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import {
-  createOrderFieldsComparer,
   AutoSortOption,
-  Order,
+  createOrderFieldsComparer,
   FieldOrdering,
+  Order,
   OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
 import {
   Input,
   IconButton,
@@ -46,6 +45,8 @@ type AutoSortOptions = Array<{ order: Order; index: number; labelName?: string }
 const FIELD_NAME_DRAGGABLE_ID = '!{{fieldName}}';
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
+  const { t } = useTranslate();
+
   const { indexByName, excludeByName, renameByName, includeByName } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
@@ -202,11 +203,17 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field Order')}>
+        <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field order')}>
           <RadioButtonGroup
             options={[
-              { label: 'Manual', value: FieldOrdering.Manual },
-              { label: 'Auto', value: FieldOrdering.Auto },
+              {
+                label: t('transformers.organize-fields-transformer-editor.field-order-manual', 'Manual'),
+                value: FieldOrdering.Manual,
+              },
+              {
+                label: t('transformers.organize-fields-transformer-editor.field-order-auto', 'Auto'),
+                value: FieldOrdering.Auto,
+              },
             ]}
             value={options.fieldOrder ?? FieldOrdering.Manual}
             onChange={(v) => onChange({ ...options, fieldOrder: v })}
@@ -358,6 +365,8 @@ interface DraggableLabelProps {
 }
 
 const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort }: DraggableLabelProps) => {
+  const { t } = useTranslate();
+
   const styles = useStyles2(getFieldNameStyles);
 
   return (
@@ -385,9 +394,9 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
           </InlineLabel>
           <RadioButtonGroup
             options={[
-              { label: 'Off', value: Order.Off },
-              { label: 'ASC', value: Order.Asc },
-              { label: 'DESC', value: Order.Desc },
+              { label: t('transformers.draggable-sort-order.off', 'Off'), value: Order.Off },
+              { label: t('transformers.draggable-sort-order.asc', 'ASC'), value: Order.Asc },
+              { label: t('transformers.draggable-sort-order.desc', 'DESC'), value: Order.Desc },
             ]}
             value={order ?? Order.Off}
             onChange={(order) => {
