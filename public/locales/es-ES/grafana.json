@@ -948,9 +948,6 @@
       "title-search-panel": "Buscar panel",
       "title-select-dashboard-and-panel": "Seleccionar dashboard y panel"
     },
-    "data-source-section": {
-      "import-to-grafana": "Importar a las reglas de Grafana"
-    },
     "datasource-not-found": {
       "card-description": "No se ha encontrado la fuente de datos para esta consulta, se ha eliminado o no está instalada correctamente.",
       "remove-query": "Eliminar consulta",
@@ -1509,12 +1506,6 @@
       "label-insights": "Información",
       "title-alerting": "Alertas"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "La carpeta a la que se importarán las reglas",
-      "message": {
-        "please-select-a-target-data-source": ""
-      }
-    },
     "import-to-gma": {
       "action-button": "Importar",
       "additional-settings": "Configuraciones adicionales",
@@ -1522,8 +1513,9 @@
       "confirm-modal": {
         "confirm": "Importar",
         "loading": "Cargando...",
-        "loading-body": "Preparando los datos para la importación. Este proceso puede tardar un poco...",
+        "loading-body": "",
         "no-rules-body": "No hay reglas que importar. Selecciona un espacio de nombres o un grupo de reglas diferente.",
+        "no-rules-body-yaml": "",
         "no-rules-title": "No hay reglas para importar",
         "plugin-rules-warning": {
           "text": "Hemos detectado que algunas reglas están gestionadas por plugins. Estas reglas no se importarán.",
@@ -1542,11 +1534,12 @@
         "label": "Grupo"
       },
       "import-location-and-filters": "Importar ubicación y filtros",
+      "import-source": "",
       "namespace": {
         "description": "Escribe para buscar un espacio de nombres existente",
         "label": "Nombre del espacio"
       },
-      "pageTitle": "Importar reglas de alerta desde una fuente de datos a las reglas gestionadas por Grafana",
+      "pageTitle": "",
       "pause": {
         "label": "Pausar las reglas de alerta importadas"
       },
@@ -1554,10 +1547,26 @@
         "label": "Pausar las reglas de registro importadas"
       },
       "recording-rules": "Reglas de registro",
+      "source": {
+        "datasource": "",
+        "datasource-description": "",
+        "yaml": "",
+        "yaml-description": ""
+      },
       "success": "Reglas de alerta importadas correctamente a las reglas gestionadas por Grafana.",
       "target-folder": {
+        "description": "La carpeta a la que se importarán las reglas",
         "label": "Carpeta de destino"
-      }
+      },
+      "yaml": {
+        "description": "",
+        "label": "",
+        "required-message": "",
+        "target-datasource": "Fuente de datos de destino",
+        "target-datasource-description": "",
+        "target-datasource-required": ""
+      },
+      "yaml-error": ""
     },
     "insights": {
       "monitor-status-of-system": "Supervisa el estado de tu sistema",
@@ -2137,7 +2146,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "La fuente de datos de Prometheus para almacenar las reglas de registro en",
-      "label-target-data-source": "Fuente de datos de destino"
+      "label-target-data-source": "Fuente de datos de destino",
+      "target-data-source-required": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecciona el espacio de nombres y el grupo para tu regla de registro.",
@@ -2397,6 +2407,9 @@
     "rule-list-v1": {
       "collapse-all": "Contraer todo",
       "expand-all": "Expandir todo"
+    },
+    "rule-list-v2": {
+      "import-to-gma": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Cargando la regla...",
@@ -2890,6 +2903,36 @@
       "body": "El contenido YAML en el editor solo contiene la configuración de la regla de alerta <1></1>Para configurar Prometheus, debes proporcionar el resto del <4>contenido del archivo de configuración.</4>"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "",
+      "placeholder-group-by": "Agrupar por"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "",
+      "aria-label-view-alert-rule": "",
+      "view-alert-rule": ""
+    },
+    "unified-alert-list": {
+      "clear": "Borrar",
+      "text-loading": "Cargando..."
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "",
+      "title-permission-required": ""
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "",
+      "filter": "",
+      "loading": "Cargando...",
+      "no-annotations-found": ""
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": ""
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Notas",
@@ -3094,7 +3137,10 @@
       "use-refresh-token-description": "",
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": ""
+      "validate-hosted-domain-label": "",
+      "workload-identity-token-file-description": "",
+      "workload-identity-token-file-label": "",
+      "workload-identity-token-file-required": ""
     },
     "get-page-nav": {
       "subTitle": {
@@ -3137,6 +3183,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2><0>documentación</0></2>."
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "",
+      "label-rtl": ""
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3266,6 +3318,17 @@
     "text-this-repository-is-read-only": "Si tienes acceso directo al destino, copia el JSON y pégalo allí."
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "",
+      "label-header-parameters": "",
+      "label-method": "Método",
+      "label-payload": "Payload",
+      "label-query-parameters": "Parámetros de la consulta",
+      "render-test-apibutton": {
+        "test-api": "",
+        "title-test-api": ""
+      }
+    },
     "button-item": {
       "label": {
         "center": "",
@@ -3274,6 +3337,28 @@
       },
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "Variante"
+    },
+    "canvas-context-menu": {
+      "close-editor": "",
+      "open-editor": "",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": ""
+        },
+        "edit-element-menu-item": {
+          "label-edit": "Editar"
+        },
+        "label-bring-to-front": "",
+        "label-delete": "Eliminar",
+        "label-duplicate": "Duplicar",
+        "label-send-to-back": "",
+        "set-background-menu-item": {
+          "label-set-background": ""
+        }
       }
     },
     "cloud-item": {
@@ -3302,6 +3387,17 @@
         "auto": "Auto"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "",
+      "tooltip-close-inline-editor": ""
+    },
+    "inline-edit-body": {
+      "label-add-item": "",
+      "please-select-an-element": ""
+    },
+    "line-style-editor": {
+      "label-animate": ""
+    },
     "metric-value-item": {
       "label": {
         "bottom": "",
@@ -3318,6 +3414,14 @@
     "not-found-display": {
       "not-found": "<0>No se ha encontrado: </0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "",
+      "middle-mouse": "",
+      "pan-title": "",
+      "reset-double-click": "",
+      "title-pan-and-zoom-controls": "",
+      "zoom-scroll-wheel": ""
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "",
@@ -3330,6 +3434,25 @@
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "Añadir",
+      "aria-label-delete": "Eliminar",
+      "placeholder-key": "Clave",
+      "placeholder-value": "Valor"
+    },
+    "placement-editor": {
+      "label-constraints": "",
+      "label-position": "",
+      "loading": "Cargando..."
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "",
+      "tooltip-align-horizontal-centers": "",
+      "tooltip-align-left": "",
+      "tooltip-align-right": "",
+      "tooltip-align-top": "",
+      "tooltip-align-vertical-centers": ""
     },
     "rectangle-item": {
       "label": {
@@ -3359,6 +3482,22 @@
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "Eliminar selección",
+      "frame-selection": "",
+      "label-add-item": "",
+      "missing-layer": "",
+      "no-settings": "",
+      "switcher-icon": {
+        "title-node-icon": ""
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "Duplicar",
+      "title-remove": "Eliminar",
+      "tooltip-duplicate": "Duplicar",
+      "tooltip-remove": "Eliminar"
     },
     "triangle-item": {
       "label": {
@@ -4948,6 +5087,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "",
       "description-enables-users-custom-values": "Permite a los usuarios añadir valores personalizados a la lista",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Proporcionar dimensiones como CSV: {{name}}, {{value}}",
       "group-by-options": "Agrupar por opciones",
@@ -5467,6 +5607,25 @@
       "message": "No se ha encontrado ninguna fuente de datos"
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": ""
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "",
+        "label-clear-row": "",
+        "label-remove-all-data": "",
+        "label-search": "Buscar…"
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "",
+        "label-delete-column": "",
+        "label-rename-column": "",
+        "label-set-field-type": ""
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "No tienes permiso para configurar nuevas fuentes de datos"
@@ -5649,6 +5808,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": ""
+    },
+    "render-info-viewer": {
+      "data-counter": "",
+      "elapsed-time": "",
+      "field": "Campo",
+      "last": "",
+      "render-counter": "",
+      "schema-counter": "",
+      "title-reset-counters": "",
+      "tooltip-step-back": "",
+      "type": "Tipo"
+    },
+    "state-view": {
+      "current-value": "",
+      "label-state-name": ""
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "Subir"
@@ -5781,6 +5960,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "",
       "footer": "Las marcas de tiempo de los eventos son relativas a la hora de inicio de trazas completas."
     },
     "accordian-references": {
@@ -6497,9 +6677,101 @@
     "incomplete-request-error": "Lo sentimos, no hemos podido completar tu solicitud. Vuelve a intentarlo.",
     "send-custom-feedback": "Enviar"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "",
+      "label-longitude": ""
+    },
+    "debug-overlay": {
+      "center": "",
+      "zoom": ""
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": ""
+      },
+      "label-data": "Datos",
+      "last-only-editor-fragment": {
+        "label-padding": "",
+        "tooltip-padding-relative-percent-beyond-extent": ""
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "geomap-panel": {
+      "aria-label-map": ""
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": ""
+    },
+    "layers-editor": {
+      "label-add-layer": "",
+      "no-layers": ""
+    },
+    "map-view-editor": {
+      "label-max-zoom": "",
+      "label-view": "Vista",
+      "label-zoom": "Ampliar",
+      "use-current-map-settings": ""
+    },
+    "markers-legend": {
+      "title-symbol": "Símbolo"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": ""
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": ""
+    },
+    "style-editor": {
+      "label-align": "",
+      "label-baseline": "",
+      "label-color": "Color",
+      "label-fill-opacity": "",
+      "label-font-size": "",
+      "label-opacity": "",
+      "label-rotation-angle": "",
+      "label-size": "",
+      "label-symbol": "Símbolo",
+      "label-symbol-horizontal-align": "",
+      "label-symbol-vertical-align": "",
+      "label-text-label": "",
+      "label-x-offset": "",
+      "label-y-offset": ""
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "Operador de comparación",
+      "aria-label-comparison-value": "",
+      "aria-label-delete-style-rule": "",
+      "aria-label-feature-property": "",
+      "label-rule": "Regla",
+      "placeholder-feature-property": "",
+      "placeholder-numeric-value": "",
+      "placeholder-value": "valor"
+    }
+  },
   "get-enterprise": {
     "requires-license": "Requiere una licencia de Grafana Enterprise",
     "title": "Enterprise"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "completada",
+      "learn-how": ""
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "",
+      "aria-label-to-basic-tutorials": "",
+      "checking-completed-setup-steps": "",
+      "remove-this-panel": ""
+    },
+    "tutorial-card": {
+      "complete": "completada"
+    }
   },
   "gops": {
     "config-card": {
@@ -6988,6 +7260,11 @@
     "support-bundle": "También puedes recuperar un paquete de asistencia que contiene información relativa a tu instancia de Grafana y a las fuentes de datos configuradas en la <1>sección de paquetes de asistencia</1>.",
     "troubleshooting-help": "Para solicitar ayuda con la resolución de problemas, envía una instantánea de este panel al equipo de asistencia técnica de Grafana Labs. La instantánea contiene los datos de respuesta a la consulta y la configuración del panel."
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Cargando",
@@ -7299,8 +7576,26 @@
       "discard-local-changes": "Descartar cambios locales",
       "title-dashboard-changed": "Dashboard cambiado"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "",
+      "namespace": "Nombre del espacio",
+      "path": "Ruta",
+      "placeholder-select-watchable-resource": "",
+      "scope": "",
+      "title-grafana-live": ""
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "Se ha perdido la conexión con el servidor..."
+    },
+    "live-panel": {
+      "error": "Error",
+      "grafana-requires-feature": "",
+      "panel-editor-channel": "",
+      "title-grafana-live": "",
+      "waiting-for-data": ""
+    },
+    "live-publish": {
+      "publish": ""
     }
   },
   "lock-icon": "Icono de candado",
@@ -7472,6 +7767,11 @@
       "scroll-bottom": "Desplazarse al final",
       "scroll-top": "Desplazarse al inicio",
       "start-of-range": "Inicio del intervalo"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": ""
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "Fin del intervalo de tiempo seleccionado."
@@ -8194,7 +8494,56 @@
       "close": "Cerrar cajón"
     },
     "link-title": "Ir al blog de Grafana Labs",
+    "news-panel": {
+      "body-error-loading-rss-feed": "",
+      "loading": "Cargando...",
+      "title-error-loading-rss-feed": ""
+    },
     "title": "Últimas entradas del blog"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "",
+      "title-remove-arc": ""
+    },
+    "edge": {
+      "aria-label-from-to": ""
+    },
+    "edge-header": {
+      "label-source-target": ""
+    },
+    "marker": {
+      "100-node-count": "",
+      "aria-label-hidden-marker": "",
+      "node-count_one": "",
+      "node-count_other": ""
+    },
+    "node": {
+      "aria-label-node-title": ""
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "",
+      "aria-label-nodes-hidden-warning": "",
+      "computing-layout": "",
+      "no-data": "Sin datos",
+      "hidden-nodes_one": "",
+      "hidden-nodes_other": "",
+      "processed-nodes_one": "",
+      "processed-nodes_other": ""
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": ""
+    },
+    "node-header": {
+      "label-subtitle": "",
+      "label-title": "Título"
+    },
+    "view-controls": {
+      "hide-config": "",
+      "show-config": "",
+      "title-zoom-in": "",
+      "title-zoom-out": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -9984,6 +10333,12 @@
   "sort-picker": {
     "select-aria-label": "Ordenar"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_one": "",
+      "too-many-points_other": ""
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "Nuevo paquete de asistencia"
@@ -10009,10 +10364,35 @@
     "login": "Iniciar sesión"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "",
+      "label-wrap-text": ""
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "",
+      "label-value-display": ""
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "",
+      "description-wrap-text": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-apply-to-entire-row": "",
+      "label-background-display-mode": "",
+      "label-wrap-text": "",
+      "wrap-text": ""
+    },
     "container": {
       "content": "Mostrar demasiadas columnas en una sola tabla puede afectar al rendimiento y dificultar la lectura de los datos. Considera la posibilidad de afinar tus consultas.",
       "show-all-series": "Mostrar todas las columnas",
       "show-only-series": "Mostrando solo {{MAX_NUMBER_OF_COLUMNS}} columnas"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "",
+      "description-title-text": "",
+      "label-alt-text": "",
+      "label-title-text": ""
     }
   },
   "tag-filter": {
@@ -10169,6 +10549,42 @@
     "zone": {
       "select-aria-label": "Selector de huso horario",
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "Añadir anotación",
+      "cancel": "Cancelar",
+      "edit-annotation": "",
+      "label-description": "Descripción",
+      "label-tags": "Etiquetas",
+      "placeholder-add-tags": "",
+      "save": "Guardar",
+      "saving": "Guardando"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "Eliminar",
+      "tooltip-edit": "Editar"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "",
+      "tooltip-help": "Ayuda"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "Nunca"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "",
+      "zoom-to-data": ""
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "",
+      "tooltip-remove-timezone": ""
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": ""
     }
   },
   "transformations": {
@@ -10787,6 +11203,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "Enlace"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "¿Necesitas ayuda?",
+      "welcome-to-grafana": ""
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "",
+      "aria-label-select-series": "",
+      "label-color-field": "",
+      "label-frame": "Marco",
+      "label-size-field": "",
+      "label-x-field": "Campo X",
+      "label-y-field": "Campo Y",
+      "placeholder-all-frames": "",
+      "placeholder-select-frame": "",
+      "tooltip-delete-series": ""
     }
   }
 }
