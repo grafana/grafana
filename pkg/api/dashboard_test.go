@@ -418,7 +418,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 	})
 }
 
-func TestDashboardAPIEndpoint(t *testing.T) {
+func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2

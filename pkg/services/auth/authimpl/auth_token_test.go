@@ -787,7 +787,7 @@ func TestIntegrationTokenCount(t *testing.T) {
 	require.Equal(t, int64(0), count)
 }
 
-func TestRevokeAllUserTokens(t *testing.T) {
+func TestIntegrationRevokeAllUserTokens(t *testing.T) {
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {
 		ctx := createTestContext(t)
 		usr := &user.User{ID: int64(10)}
@@ -820,7 +820,7 @@ func TestRevokeAllUserTokens(t *testing.T) {
 	})
 }
 
-func TestRevokeToken(t *testing.T) {
+func TestIntegrationRevokeToken(t *testing.T) {
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {
 		ctx := createTestContext(t)
 		usr := &user.User{ID: int64(10)}
@@ -851,7 +851,7 @@ func TestRevokeToken(t *testing.T) {
 	})
 }
 
-func TestBatchRevokeAllUserTokens(t *testing.T) {
+func TestIntegrationBatchRevokeAllUserTokens(t *testing.T) {
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {
 		ctx := createTestContext(t)
 		userIds := []int64{1, 2, 3}
