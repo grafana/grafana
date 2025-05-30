@@ -163,6 +163,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
+    this._seriesCache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, metrics);
     this._seriesCache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
@@ -191,6 +192,11 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     const effectiveMatch = !match || match === EMPTY_MATCHER ? `{${labelKey}!=""}` : match;
+    const maybeCachedValues = this._seriesCache.getLabelValues(timeRange, effectiveMatch, limit);
+    if (maybeCachedValues) {
+      return maybeCachedValues;
+    }
+
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelValues } = processSeries(series, labelKey);
     return labelValues;
@@ -207,20 +213,15 @@ class SeriesCache {
   constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
 
   public setLabelKeys(timeRange: TimeRange, match: string, limit: string, keys: string[]) {
-    const snappedTimeRange = getRangeSnapInterval(this.cacheLevel, timeRange);
-    const cacheKey = [snappedTimeRange.start, snappedTimeRange.end, limit, match].join('|');
-
     // Check and potentially clean cache before adding new entry
     this.cleanCacheIfNeeded();
-
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
     this._cache[cacheKey] = keys.slice().sort();
     this._accessTimestamps[cacheKey] = Date.now();
   }
 
   public getLabelKeys(timeRange: TimeRange, match: string, limit: string): string[] | undefined {
-    const snappedTimeRange = getRangeSnapInterval(PrometheusCacheLevel.High, timeRange);
-    const cacheKey = [snappedTimeRange.start, snappedTimeRange.end, limit, match].join('|');
-
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
     const result = this._cache[cacheKey];
     if (result) {
       // Update access timestamp on cache hit
@@ -229,15 +230,44 @@ class SeriesCache {
     return result;
   }
 
+  public setLabelValues(timeRange: TimeRange, match: string, limit: string, values: string[]) {
+    // Check and potentially clean cache before adding new entry
+    this.cleanCacheIfNeeded();
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');
+    this._cache[cacheKey] = values.slice().sort();
+    this._accessTimestamps[cacheKey] = Date.now();
+  }
+
+  public getLabelValues(timeRange: TimeRange, match: string, limit: string): string[] | undefined {
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');
+    const result = this._cache[cacheKey];
+    if (result) {
+      // Update access timestamp on cache hit
+      this._accessTimestamps[cacheKey] = Date.now();
+    }
+    return result;
+  }
+
+  private getCacheKey(timeRange: TimeRange, match: string, limit: string, type: 'key' | 'value') {
+    const snappedTimeRange = getRangeSnapInterval(this.cacheLevel, timeRange);
+    return [snappedTimeRange.start, snappedTimeRange.end, limit, match, type].join('|');
+  }
+
   private cleanCacheIfNeeded() {
     // Check number of entries
-    if (Object.keys(this._cache).length >= this.MAX_CACHE_ENTRIES) {
-      this.removeOldestEntries(Math.floor(this.MAX_CACHE_ENTRIES * 0.2)); // Remove 20% of entries
+    const currentEntries = Object.keys(this._cache).length;
+    if (currentEntries >= this.MAX_CACHE_ENTRIES) {
+      // Calculate 20% of current entries, but ensure we remove at least 1 entry
+      const entriesToRemove = Math.max(1, Math.floor((currentEntries - this.MAX_CACHE_ENTRIES + 1)));
+      this.removeOldestEntries(entriesToRemove);
     }
 
     // Check cache size in bytes
-    if (this.getCacheSizeInBytes() > this.MAX_CACHE_SIZE_BYTES) {
-      this.removeOldestEntries(Math.floor(Object.keys(this._cache).length * 0.2)); // Remove 20% of entries
+    const currentSize = this.getCacheSizeInBytes();
+    if (currentSize > this.MAX_CACHE_SIZE_BYTES) {
+      // Calculate 20% of current entries, but ensure we remove at least 1 entry
+      const entriesToRemove = Math.max(1, Math.floor(Object.keys(this._cache).length * 0.2));
+      this.removeOldestEntries(entriesToRemove);
     }
   }
 
@@ -257,11 +287,15 @@ class SeriesCache {
   }
 
   private removeOldestEntries(count: number) {
+    // Get all entries sorted by timestamp (oldest first)
     const entries = Object.entries(this._accessTimestamps)
-      .sort(([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2)
-      .slice(0, count);
+      .sort(([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2);
 
-    for (const [key] of entries) {
+    // Take the oldest 'count' entries
+    const entriesToRemove = entries.slice(0, count);
+
+    // Remove these entries from both cache and timestamps
+    for (const [key] of entriesToRemove) {
       delete this._cache[key];
       delete this._accessTimestamps[key];
     }
