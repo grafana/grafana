@@ -1,7 +1,7 @@
 import { dateTime, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import { LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
+import { BaseResourceClient, LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
 
 const mockTimeRange: TimeRange = {
@@ -186,15 +186,24 @@ describe('SeriesApiClient', () => {
 
       expect(result).toEqual(['label1', 'label2']);
     });
+
+    it('should use MATCH_ALL_LABELS when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
+
+      const result = await client.queryLabelKeys(mockTimeRange, '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__!=""}',
+        }),
+        expect.any(Object)
+      );
+      expect(result).toEqual(['label1', 'label2']);
+    });
   });
 
   describe('queryLabelValues', () => {
-    it('should throw error if match parameter is not provided', async () => {
-      await expect(client.queryLabelValues(mockTimeRange, 'job')).rejects.toThrow(
-        'Series endpoint always expects at least one matcher'
-      );
-    });
-
     it('should fetch and process label values from series', async () => {
       mockRequest.mockResolvedValueOnce([
         { __name__: 'metric1', job: 'grafana' },
@@ -203,7 +212,42 @@ describe('SeriesApiClient', () => {
 
       const result = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
 
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1"}',
+        }),
+        expect.any(Object)
+      );
       expect(result).toEqual(['grafana', 'prometheus']);
+    });
+
+    it('should create matcher with label when no matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should create matcher with label when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
     });
   });
 });
@@ -338,5 +382,93 @@ describe('processSeries', () => {
 
     const result = processSeries(series, 'non_existent_label');
     expect(result.labelValues).toEqual([]);
+  });
+});
+
+describe('BaseResourceClient', () => {
+  const mockRequest = jest.fn();
+  const mockGetTimeRangeParams = jest.fn();
+  const mockDatasource = {
+    cacheLevel: PrometheusCacheLevel.Low,
+    getTimeRangeParams: mockGetTimeRangeParams,
+  } as unknown as PrometheusDatasource;
+
+  class TestBaseResourceClient extends BaseResourceClient {
+    constructor() {
+      super(mockRequest, mockDatasource);
+    }
+  }
+
+  let client: TestBaseResourceClient;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    client = new TestBaseResourceClient();
+  });
+
+  describe('querySeries', () => {
+    const mockTimeRange = {
+      from: dateTime(1681300292392),
+      to: dateTime(1681300293392),
+      raw: {
+        from: 'now-1s',
+        to: 'now',
+      },
+    };
+
+    beforeEach(() => {
+      mockGetTimeRangeParams.mockReturnValue({ start: '1681300260', end: '1681300320' });
+    });
+
+    it('should make request with correct parameters', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1' }]);
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {
+          start: '1681300260',
+          end: '1681300320',
+          'match[]': '{job="grafana"}',
+          limit: '40000',
+        },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
+      );
+      expect(result).toEqual([{ __name__: 'metric1' }]);
+    });
+
+    it('should use custom limit when provided', async () => {
+      mockRequest.mockResolvedValueOnce([]);
+
+      await client.querySeries(mockTimeRange, '{job="grafana"}', '1000');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {
+          start: '1681300260',
+          end: '1681300320',
+          'match[]': '{job="grafana"}',
+          limit: '1000',
+        },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
+      );
+    });
+
+    it('should handle empty response', async () => {
+      mockRequest.mockResolvedValueOnce(null);
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle non-array response', async () => {
+      mockRequest.mockResolvedValueOnce({ error: 'invalid response' });
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(result).toEqual([]);
+    });
   });
 });
