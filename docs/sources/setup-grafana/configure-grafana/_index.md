@@ -2041,6 +2041,10 @@ A negative value such as `-1` disables expiry.
 Short links without an expiration increase the size of the database and can't be deleted.
 {{< /admonition >}}
 
+{{< admonition type="note">}}
+To adjust short link expiration time or disable expiration entirely in Grafana Cloud, open a support ticket.
+{{< /admonition >}}
+
 <hr>
 
 ### `[metrics]`
