@@ -5,15 +5,19 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 type RunnerConfig struct {
 	RestConfigGetter func(context.Context) (*rest.Config, error)
 	APIRegistrar     builder.APIRegistrar
+	Tracer           trace.Tracer
 }
 
 func NewAPIGroupRunner(cfg RunnerConfig, providers ...app.Provider) (*APIGroupRunner, error) {
@@ -49,22 +53,30 @@ func (r *APIGroupRunner) Run(ctx context.Context) error {
 
 func (r *APIGroupRunner) Init(ctx context.Context) error {
 	defer close(r.initialized)
+
 	restConfig, err := r.config.RestConfigGetter(ctx)
 	if err != nil {
 		return err
 	}
+
 	for i := range r.groups {
 		appConfig := app.Config{
 			KubeConfig:     *restConfig,
 			ManifestData:   *r.groups[i].provider.Manifest().ManifestData,
 			SpecificConfig: r.groups[i].customConfig,
 		}
+
 		app, err := r.groups[i].provider.NewApp(appConfig)
 		if err != nil {
 			return err
 		}
+
 		r.groups[i].setApp(app)
 	}
+
+	// TODO: initialize all other o11y stuff.
+	k8s.SetTracer(r.config.Tracer)
+
 	return nil
 }
 

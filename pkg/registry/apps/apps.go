@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -38,6 +39,7 @@ func ProvideRegistryServiceSink(
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
 	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
+	tracer trace.Tracer,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -52,6 +54,7 @@ func ProvideRegistryServiceSink(
 	cfg := runner.RunnerConfig{
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
+		Tracer:           tracer,
 	}
 	logger := log.New("app-registry")
 	var apiGroupRunner *runner.APIGroupRunner
