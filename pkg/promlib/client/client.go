@@ -139,7 +139,6 @@ func (c *Client) executeResourceQueryWithFallback(ctx context.Context, u *url.UR
 	// Try GET if POST fails with 405 or 400
 	if err == nil && httpRequest.Method == http.MethodPost &&
 		(resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusBadRequest) {
-
 		if err = resp.Body.Close(); err != nil {
 			return nil, err
 		}
