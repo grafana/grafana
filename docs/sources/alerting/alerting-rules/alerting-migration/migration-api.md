@@ -22,8 +22,6 @@ You can convert data source-managed alert rules to Grafana-managed alert rules w
 
 ## Before you begin
 
-To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
-
 To import data source-managed alert rules with Grafana Mimirtool, you need to have the Grafana Mimirtool command-line tool installed.
 
 You need a service account the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):

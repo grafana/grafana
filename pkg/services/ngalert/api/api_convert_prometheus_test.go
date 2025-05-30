@@ -295,45 +295,25 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("with disabled recording rules", func(t *testing.T) {
 		testCases := []struct {
-			name                   string
-			recordingRules         bool
-			recordingRulesTargetDS bool
-			expectedStatus         int
+			name           string
+			recordingRules bool
+			expectedStatus int
 		}{
 			{
-				name:                   "when recording rules are enabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusAccepted,
+				name:           "when recording rules are enabled",
+				recordingRules: true,
+				expectedStatus: http.StatusAccepted,
 			},
 			{
-				name:                   "when recording rules are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when target datasources for recording rules are disabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when both recording rules and target datasources are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
+				name:           "when recording rules are disabled",
+				recordingRules: false,
+				expectedStatus: http.StatusBadRequest,
 			},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				var features featuremgmt.FeatureToggles
-				if tc.recordingRulesTargetDS {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources)
-				} else {
-					features = featuremgmt.WithFeatures()
-				}
+				features := featuremgmt.WithFeatures()
 
 				srv, _, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(features))
 				srv.cfg.RecordingRules.Enabled = tc.recordingRules
@@ -1317,7 +1297,6 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		provenanceStore:              fakes.NewFakeProvisioningStore(),
 		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
 		quotaChecker:                 quotas,
-		featureToggles:               featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources),
 	}
 
 	for _, opt := range opts {

@@ -3,7 +3,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Field, Input, Stack, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -110,9 +109,10 @@ export const AlertRuleNameAndMetric = () => {
           </Field>
         )}
 
-        {isGrafanaRecordingRule && config.featureToggles.grafanaManagedRecordingRulesDatasources && (
+        {isGrafanaRecordingRule && (
           <Field
             id="target-data-source"
+            data-testid="target-data-source"
             label={t('alerting.recording-rules.label-target-data-source', 'Target data source')}
             description={t(
               'alerting.recording-rules.description-target-data-source',

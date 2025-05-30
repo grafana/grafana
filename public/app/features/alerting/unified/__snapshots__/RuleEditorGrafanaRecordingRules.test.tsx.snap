@@ -106,6 +106,7 @@ exports[`RuleEditor grafana recording rules can create new grafana recording rul
             "record": {
               "from": "B",
               "metric": "metricName",
+              "target_datasource_uid": "prometheus",
             },
             "title": "my great new rule",
           },
@@ -235,6 +236,7 @@ exports[`RuleEditor grafana recording rules can create new grafana recording rul
             "record": {
               "from": "B",
               "metric": "metricName",
+              "target_datasource_uid": "prometheus",
             },
             "title": "my great new rule",
           },
