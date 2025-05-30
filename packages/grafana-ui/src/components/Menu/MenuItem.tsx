@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
 import { t } from '../../utils/i18n';

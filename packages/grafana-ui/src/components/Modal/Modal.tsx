@@ -5,8 +5,8 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { PropsWithChildren, useRef } from 'react';
 import * as React from 'react';
 
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types/icon';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';

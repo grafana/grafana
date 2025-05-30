@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 

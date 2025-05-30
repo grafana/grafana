@@ -5,7 +5,8 @@ import * as React from 'react';
 
 import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, withTheme2 } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable2 } from '../../types/theme';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';

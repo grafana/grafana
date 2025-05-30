@@ -2,7 +2,7 @@ import { Meta, StoryFn } from '@storybook/react';
 
 import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { JustifyContent, Wrap, Direction } from '../types';
 

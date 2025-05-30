@@ -2,7 +2,7 @@ import { StoryFn, Meta } from '@storybook/react';
 
 import { FieldSparkline, FieldType } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 import {
   BigValue,

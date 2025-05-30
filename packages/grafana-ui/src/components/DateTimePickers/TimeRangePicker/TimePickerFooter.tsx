@@ -6,7 +6,7 @@ import * as React from 'react';
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Combobox } from '../../Combobox/Combobox';

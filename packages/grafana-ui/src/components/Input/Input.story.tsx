@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
 import { Button } from '../Button';
 import { Field } from '../Forms/Field';
 

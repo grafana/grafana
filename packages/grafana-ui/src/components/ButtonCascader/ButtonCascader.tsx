@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { Button, ButtonProps } from '../Button';
 import { CascaderOption } from '../Cascader/Cascader';

@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { withTheme2, stylesFactory } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';

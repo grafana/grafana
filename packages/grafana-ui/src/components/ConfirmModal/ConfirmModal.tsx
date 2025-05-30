@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { IconName } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 

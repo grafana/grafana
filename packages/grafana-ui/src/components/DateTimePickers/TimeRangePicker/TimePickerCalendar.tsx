@@ -7,7 +7,7 @@ import { createRef, FormEvent, memo } from 'react';
 import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { WeekStart } from '../WeekStartPicker';
 

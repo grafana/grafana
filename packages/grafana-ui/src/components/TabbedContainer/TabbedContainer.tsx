@@ -6,7 +6,7 @@ import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 
 import { IconButton } from '../../components/IconButton/IconButton';
 import { TabsBar, Tab, TabContent } from '../../components/Tabs';
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { Box } from '../Layout/Box/Box';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';

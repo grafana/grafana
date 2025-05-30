@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';

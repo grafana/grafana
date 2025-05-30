@@ -4,7 +4,8 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
 
