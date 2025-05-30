@@ -264,13 +264,13 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 <!-- INTERACTIVE page finish.md START -->
 
-## Learn more in [Grafana Alerting - Alert routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
+## Learn more in [Grafana Alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt1/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Alert routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt1/) you will create alerts using Prometheus data and link them to your visualizations.
 
 {{< /admonition >}}
 
@@ -278,7 +278,7 @@ In [Get started with Grafana Alerting - Alert routing](http://www.grafana.com/tu
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Alert routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt1/) you will create alerts using Prometheus data and link them to your visualizations.
 
 {{< /docs/ignore >}}
 

@@ -173,6 +173,11 @@ Notification policies route alert instances to contact points via label matchers
 
 Although our application doesn't explicitly include an `environment` label, we can rely on other labels like `instance` or `deployment`, which may contain keywords (like prod or staging) that indicate the environment.
 
+1. Sign in to Grafana:
+
+   - **Grafana Cloud** users: Log in via Grafana Cloud.
+   - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
+
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
 
 1. Add a child policy:
