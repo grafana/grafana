@@ -186,6 +186,21 @@ describe('SeriesApiClient', () => {
 
       expect(result).toEqual(['label1', 'label2']);
     });
+
+    it('should use MATCH_ALL_LABELS when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
+
+      const result = await client.queryLabelKeys(mockTimeRange, '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__!=""}',
+        }),
+        expect.any(Object)
+      );
+      expect(result).toEqual(['label1', 'label2']);
+    });
   });
 
   describe('queryLabelValues', () => {
