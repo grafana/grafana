@@ -246,6 +246,7 @@ type ResourcePermission struct {
 	BuiltInRole      string
 	IsManaged        bool
 	IsInherited      bool
+	IsProvisioned    bool
 	IsServiceAccount bool
 	Created          time.Time
 	Updated          time.Time

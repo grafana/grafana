@@ -13538,6 +13538,9 @@
           "isManaged": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "isServiceAccount": {
             "type": "boolean"
           },

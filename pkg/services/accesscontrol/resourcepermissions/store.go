@@ -58,6 +58,11 @@ func (p *flatResourcePermission) IsInherited(scope string) bool {
 	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
 }
 
+// Permissions which are neither managed nor inherited must be provisioned.
+func (p *flatResourcePermission) IsProvisioned(scope string) bool {
+	return !p.IsManaged(scope) && !p.IsInherited(scope)
+}
+
 type DeleteResourcePermissionsCmd struct {
 	Resource          string
 	ResourceAttribute string
@@ -496,6 +501,7 @@ func flatPermissionsToResourcePermissions(scope string, permissions []flatResour
 		} else if p.IsInherited(scope) {
 			inherited = append(inherited, p)
 		} else {
+			// not managed or inherited
 			provisioned = append(provisioned, p)
 		}
 	}
@@ -543,6 +549,7 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 		Updated:          first.Updated,
 		IsManaged:        first.IsManaged(scope),
 		IsInherited:      first.IsInherited(scope),
+		IsProvisioned:    first.IsProvisioned(scope),
 		IsServiceAccount: first.IsServiceAccount,
 	}
 }
