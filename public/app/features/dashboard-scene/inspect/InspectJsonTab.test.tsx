@@ -197,6 +197,27 @@ describe('InspectJsonTab', () => {
     expect(obj.spec.id).toEqual(12);
     expect(obj.spec.data.kind).toEqual('QueryGroup');
     expect(tab.isEditable()).toBe(false);
+    
+  it('Should hide data frames option when dashboard is not editable', async () => {
+    const { tab, scene } = await buildTestScene();
+
+    scene.state.meta.canEdit = false;
+
+    const actualOptions = tab.getOptions();
+
+    expect(actualOptions.length).toBe(2);
+    expect(actualOptions.some((option) => option.value === 'data-frames')).toBe(false);
+  });
+
+  it('Should show data frames option when dashboard is editable', async () => {
+    const { tab, scene } = await buildTestScene();
+
+    scene.state.meta.canEdit = true;
+
+    const actualOptions = tab.getOptions();
+
+    expect(actualOptions.length).toBe(3);
+    expect(actualOptions.some((option) => option.value === 'data-frames')).toBe(true);
   });
 });
 
