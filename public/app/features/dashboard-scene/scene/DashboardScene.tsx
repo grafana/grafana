@@ -42,6 +42,7 @@ import {
   ResourceForCreate,
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
+import { dashboardEditActions } from '../edit-pane/shared';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -85,10 +86,10 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
+import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { isLayoutParent, LayoutParent } from './types/LayoutParent';
+import { LayoutParent } from './types/LayoutParent';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -495,13 +496,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
 
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      layout.addPanel(vizPanel);
-      return;
-    }
-
     // Add panel to layout
     this.state.body.addPanel(vizPanel);
   }
@@ -633,23 +627,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onCreateNewRow() {
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return addNewRowTo(layout);
-    }
-
     return addNewRowTo(this.state.body);
-  }
-
-  public onCreateNewTab() {
-    const selectedObject = this.state.editPane.getSelection();
-    if (selectedObject && !Array.isArray(selectedObject) && isLayoutParent(selectedObject)) {
-      const layout = selectedObject.getLayout();
-      return addNewTabTo(layout);
-    }
-
-    return addNewTabTo(this.state.body);
   }
 
   public onCreateNewPanel(): VizPanel {
@@ -659,8 +637,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: layout });
-    this.state.body.activateRepeaters?.();
+    const currentLayout = this.state.body;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
+      source: this,
+      perform: () => this.setState({ body: layout }),
+      undo: () => this.setState({ body: currentLayout }),
+    });
   }
 
   public getLayout(): DashboardLayoutManager {
