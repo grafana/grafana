@@ -638,3 +638,13 @@ export const processNestedTableRows = (
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
 };
+
+export function getDisplayedValue(row: TableRow, key: string, fields: DataFrame['fields']): string | null {
+  const field = fields.find((field) => getDisplayName(field) === key);
+  if (!field || !field.display) {
+    return null;
+  }
+  const fieldValue = row[getDisplayName(field)];
+  const displayedValue = formattedValueToString(field.display(fieldValue));
+  return displayedValue;
+}
