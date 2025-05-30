@@ -1,7 +1,18 @@
-name: Integration Tests
+name: Database Integration Tests
 
 on:
   push:
+    paths:
+      - Makefile
+      - pkg/**
+      - packaging/**
+      - conf/**
+      - go.sum
+      - go.mod
+      - public/app/plugins/**/plugin.json
+      - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
+      - devenv/**
+      - apps/**
     branches:
       - main
       - release-*.*.*
