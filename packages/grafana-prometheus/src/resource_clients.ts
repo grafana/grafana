@@ -6,6 +6,7 @@ import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
+import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
@@ -145,6 +146,8 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
 }
 
 export class SeriesApiClient extends BaseResourceClient implements ResourceApiClient {
+  private _seriesCache: SeriesCache = new SeriesCache(this.datasource.cacheLevel);
+
   public histogramMetrics: string[] = [];
   public metrics: string[] = [];
   public labelKeys: string[] = [];
@@ -155,11 +158,12 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    const series = await this.querySeries(timeRange, MATCH_ALL_LABELS);
+    const series = await this.querySeries(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT);
     const { metrics, labelKeys } = processSeries(series);
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
+    this._seriesCache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -169,8 +173,14 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
+    const maybeCachedKeys = this._seriesCache.getLabelKeys(timeRange, effectiveMatch, limit);
+    if (maybeCachedKeys) {
+      return maybeCachedKeys;
+    }
+
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelKeys } = processSeries(series);
+    this._seriesCache.setLabelKeys(timeRange, effectiveMatch, limit, labelKeys);
     return labelKeys;
   };
 
@@ -185,6 +195,77 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     const { labelValues } = processSeries(series, labelKey);
     return labelValues;
   };
+}
+
+class SeriesCache {
+  private readonly MAX_CACHE_ENTRIES = 1000; // Maximum number of cache entries
+  private readonly MAX_CACHE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB max cache size
+
+  private _cache: Record<string, string[]> = {};
+  private _accessTimestamps: Record<string, number> = {};
+
+  constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
+
+  public setLabelKeys(timeRange: TimeRange, match: string, limit: string, keys: string[]) {
+    const snappedTimeRange = getRangeSnapInterval(this.cacheLevel, timeRange);
+    const cacheKey = [snappedTimeRange.start, snappedTimeRange.end, limit, match].join('|');
+
+    // Check and potentially clean cache before adding new entry
+    this.cleanCacheIfNeeded();
+
+    this._cache[cacheKey] = keys.slice().sort();
+    this._accessTimestamps[cacheKey] = Date.now();
+  }
+
+  public getLabelKeys(timeRange: TimeRange, match: string, limit: string): string[] | undefined {
+    const snappedTimeRange = getRangeSnapInterval(PrometheusCacheLevel.High, timeRange);
+    const cacheKey = [snappedTimeRange.start, snappedTimeRange.end, limit, match].join('|');
+
+    const result = this._cache[cacheKey];
+    if (result) {
+      // Update access timestamp on cache hit
+      this._accessTimestamps[cacheKey] = Date.now();
+    }
+    return result;
+  }
+
+  private cleanCacheIfNeeded() {
+    // Check number of entries
+    if (Object.keys(this._cache).length >= this.MAX_CACHE_ENTRIES) {
+      this.removeOldestEntries(Math.floor(this.MAX_CACHE_ENTRIES * 0.2)); // Remove 20% of entries
+    }
+
+    // Check cache size in bytes
+    if (this.getCacheSizeInBytes() > this.MAX_CACHE_SIZE_BYTES) {
+      this.removeOldestEntries(Math.floor(Object.keys(this._cache).length * 0.2)); // Remove 20% of entries
+    }
+  }
+
+  private getCacheSizeInBytes(): number {
+    let size = 0;
+    for (const key in this._cache) {
+      // Calculate size of key
+      size += key.length * 2; // Approximate size of string in bytes (UTF-16)
+
+      // Calculate size of value array
+      const value = this._cache[key];
+      for (const item of value) {
+        size += item.length * 2; // Approximate size of each string in bytes
+      }
+    }
+    return size;
+  }
+
+  private removeOldestEntries(count: number) {
+    const entries = Object.entries(this._accessTimestamps)
+      .sort(([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2)
+      .slice(0, count);
+
+    for (const [key] of entries) {
+      delete this._cache[key];
+      delete this._accessTimestamps[key];
+    }
+  }
 }
 
 export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
