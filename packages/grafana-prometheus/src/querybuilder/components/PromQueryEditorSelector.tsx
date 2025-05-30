@@ -4,6 +4,7 @@ import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
@@ -38,6 +39,7 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 type Props = PromQueryEditorProps;
 
 export const PromQueryEditorSelector = memo<Props>((props) => {
+  const { t } = useTranslate();
   const {
     onChange,
     onRunQuery,
@@ -105,7 +107,10 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     <>
       <ConfirmModal
         isOpen={parseModalOpen}
-        title="Parsing error: Switch to the builder mode?"
+        title={t(
+          'querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
+          'Parsing error: Switch to the builder mode?'
+        )}
         body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
         confirmText="Continue"
         onConfirm={() => {
@@ -130,10 +135,14 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           size="sm"
           onClick={handleOpenQueryPatternsModal}
         >
-          Kick start your query
+          <Trans i18nKey="querybuilder.prom-query-editor-selector.kick-start-your-query">Kick start your query</Trans>
         </Button>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
-          <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
+          <QueryHeaderSwitch
+            label={t('querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
+            value={explain}
+            onChange={onShowExplainChange}
+          />
         </div>
         <FlexItem grow={1} />
         {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
@@ -144,7 +153,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
-            Run queries
+            <Trans i18nKey="querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
           </Button>
         )}
         <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />
