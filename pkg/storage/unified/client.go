@@ -101,7 +101,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:      backend,
+			AccessClient: authzc,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},

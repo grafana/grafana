@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -52,7 +53,8 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 		return nil, err
 	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
+		AccessClient: types.FixedAccessClient(true),
+		Backend:      backend,
 	})
 	if err != nil {
 		return nil, err
@@ -88,7 +90,8 @@ func NewRESTOptionsGetterForFile(path string,
 		return nil, err
 	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
+		AccessClient: types.FixedAccessClient(true),
+		Backend:      backend,
 	})
 	if err != nil {
 		return nil, err
