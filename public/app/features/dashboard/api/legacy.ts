@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n/internal';
 import { FetchError, getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { Resource, ListOptions, ResourceList } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
@@ -47,5 +48,24 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
     }
 
     return result;
+  }
+
+  /**
+   * No-op for legacy API
+   */
+  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>): Promise<ResourceList<Dashboard>> {
+    return Promise.resolve({
+      apiVersion: 'v1',
+      kind: 'List',
+      metadata: { resourceVersion: '0' },
+      items: [],
+    });
+  }
+
+  /**
+   * No-op for legacy API
+   */
+  restoreDashboard(dashboard: Resource<Dashboard>): Promise<Resource<Dashboard>> {
+    return Promise.reject(new Error('Restore functionality not supported in legacy API'));
   }
 }

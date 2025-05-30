@@ -421,13 +421,25 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID, targetFolderUID }) => ({
-        url: `/dashboards/uid/${dashboardUID}/trash`,
-        body: {
-          folderUid: targetFolderUID,
-        },
-        method: 'PATCH',
-      }),
+      queryFn: async ({ dashboardUID }, _api, _extraOptions) => {
+        const api = getDashboardAPI();
+        const dashboards = await api.listDeletedDashboards({});
+        const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
+        if (dashboard) {
+          // const response = await getBackendSrv().post<Resource<DashboardDataDTO>>(baseURL, dashboard);
+          const response = await api.restoreDashboard(dashboard);
+          const name = response.spec.title;
+
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
+            });
+          }
+        }
+
+        return { data: undefined };
+      },
     }),
 
     // permanently delete a dashboard. used in PermanentlyDeleteModal.
@@ -473,5 +485,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;

@@ -1,11 +1,13 @@
-import { Dashboard } from '@grafana/schema/dist/esm/index';
+import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { DashboardDTO } from 'app/types';
+import { isResource } from 'app/features/apiserver/guards';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
+import { Resource, ListOptions, ResourceList } from '../../apiserver/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
-import { isV1DashboardCommand, isV2DashboardCommand } from './utils';
+import { isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
@@ -46,5 +48,34 @@ export class UnifiedDashboardAPI
   // Delete operation for any version is supported in the v1 client
   async deleteDashboard(uid: string, showSuccessAlert: boolean) {
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
+  }
+
+  async listDeletedDashboards(
+    options: Omit<ListOptions, 'labelSelector'>
+  ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
+    try {
+      const resp = await this.v1Client.listDeletedDashboards(options);
+      // TODO better version mismatch handling
+      if (resp.items.every((item) => item.spec === null)) {
+        throw new DashboardVersionError('unsupported version');
+      }
+      return resp;
+    } catch (error) {
+      if (error instanceof DashboardVersionError) {
+        return await this.v2Client.listDeletedDashboards(options);
+      }
+      throw error;
+    }
+  }
+
+  async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
+    if (isDashboardV2Spec(dashboard.spec) && isResource<DashboardV2Spec>(dashboard)) {
+      return await this.v2Client.restoreDashboard(dashboard);
+    }
+
+    if (isResource<DashboardDataDTO>(dashboard)) {
+      return await this.v1Client.restoreDashboard(dashboard);
+    }
+    throw new Error('Invalid dashboard resource for restore operation');
   }
 }
