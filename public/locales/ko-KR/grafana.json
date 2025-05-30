@@ -942,9 +942,6 @@
       "title-search-panel": "패널 검색",
       "title-select-dashboard-and-panel": "대시보드 및 패널 선택"
     },
-    "data-source-section": {
-      "import-to-grafana": "Grafana 규칙으로 가져오기"
-    },
     "datasource-not-found": {
       "card-description": "이 쿼리의 데이터 소스가 제거되었거나 올바르게 설치되지 않아 찾을 수 없습니다.",
       "remove-query": "쿼리 제거",
@@ -1503,12 +1500,6 @@
       "label-insights": "인사이트",
       "title-alerting": "경고"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "규칙을 가져올 폴더",
-      "message": {
-        "please-select-a-target-data-source": ""
-      }
-    },
     "import-to-gma": {
       "action-button": "가져오기",
       "additional-settings": "추가 설정",
@@ -1516,8 +1507,9 @@
       "confirm-modal": {
         "confirm": "가져오기",
         "loading": "로딩 중...",
-        "loading-body": "가져올 데이터를 준비하는 중입니다. 다소 시간이 걸릴 수 있습니다...",
+        "loading-body": "",
         "no-rules-body": "가져올 규칙이 없습니다. 다른 네임스페이스 또는 규칙 그룹을 선택하세요.",
+        "no-rules-body-yaml": "",
         "no-rules-title": "가져올 규칙 없음",
         "plugin-rules-warning": {
           "text": "일부 규칙이 플러그인에 의해 관리되고 있는 것으로 감지되었습니다. 이러한 규칙은 가져오지 않습니다.",
@@ -1536,11 +1528,12 @@
         "label": "그룹"
       },
       "import-location-and-filters": "위치 및 필터 가져오기",
+      "import-source": "",
       "namespace": {
         "description": "기존 네임스페이스를 검색하려면 입력하세요",
         "label": "네임스페이스"
       },
-      "pageTitle": "데이터 소스에서 Grafana 관리 규칙으로 경고 규칙 가져오기",
+      "pageTitle": "",
       "pause": {
         "label": "가져온 경고 규칙 일시 중지"
       },
@@ -1548,10 +1541,26 @@
         "label": "가져온 기록 규칙 일시 중지"
       },
       "recording-rules": "기록 규칙",
+      "source": {
+        "datasource": "",
+        "datasource-description": "",
+        "yaml": "",
+        "yaml-description": ""
+      },
       "success": "경고 규칙을 Grafana 관리 규칙으로 가져왔습니다.",
       "target-folder": {
+        "description": "규칙을 가져올 폴더",
         "label": "대상 폴더"
-      }
+      },
+      "yaml": {
+        "description": "",
+        "label": "",
+        "required-message": "",
+        "target-datasource": "대상 데이터 소스",
+        "target-datasource-description": "",
+        "target-datasource-required": ""
+      },
+      "yaml-error": ""
     },
     "insights": {
       "monitor-status-of-system": "시스템 상태 모니터링",
@@ -2128,7 +2137,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "기록 규칙을 저장할 Prometheus 데이터 소스",
-      "label-target-data-source": "대상 데이터 소스"
+      "label-target-data-source": "대상 데이터 소스",
+      "target-data-source-required": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "기록 규칙에 대한 네임스페이스 및 그룹을 선택하세요.",
@@ -2385,6 +2395,9 @@
     "rule-list-v1": {
       "collapse-all": "모두 접기",
       "expand-all": "모두 펼치기"
+    },
+    "rule-list-v2": {
+      "import-to-gma": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "규칙 로딩 중...",
@@ -2877,6 +2890,36 @@
       "body": "편집기의 YAML 콘텐츠에는 경고 규칙 구성만 포함되어 있습니다. <1></1>Prometheus를 구성하려면 <4>구성 파일 콘텐츠의 나머지 부분을 제공해야 합니다.</4>"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "",
+      "placeholder-group-by": "그룹화 기준"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "",
+      "aria-label-view-alert-rule": "",
+      "view-alert-rule": ""
+    },
+    "unified-alert-list": {
+      "clear": "초기화",
+      "text-loading": "로딩 중..."
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "",
+      "title-permission-required": ""
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "",
+      "filter": "",
+      "loading": "로딩 중...",
+      "no-annotations-found": ""
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": ""
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "주석",
@@ -3081,7 +3124,10 @@
       "use-refresh-token-description": "",
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": ""
+      "validate-hosted-domain-label": "",
+      "workload-identity-token-file-description": "",
+      "workload-identity-token-file-label": "",
+      "workload-identity-token-file-required": ""
     },
     "get-page-nav": {
       "subTitle": {
@@ -3124,6 +3170,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "인증 설정을 관리하고 싱글 사인온을 구성하세요. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "",
+      "label-rtl": ""
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3248,6 +3300,17 @@
     "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요."
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "",
+      "label-header-parameters": "",
+      "label-method": "방법",
+      "label-payload": "페이로드",
+      "label-query-parameters": "쿼리 파라미터",
+      "render-test-apibutton": {
+        "test-api": "",
+        "title-test-api": ""
+      }
+    },
     "button-item": {
       "label": {
         "center": "",
@@ -3256,6 +3319,28 @@
       },
       "placeholder": {
         "auto": "자동"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "변형"
+    },
+    "canvas-context-menu": {
+      "close-editor": "",
+      "open-editor": "",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": ""
+        },
+        "edit-element-menu-item": {
+          "label-edit": "편집"
+        },
+        "label-bring-to-front": "",
+        "label-delete": "삭제",
+        "label-duplicate": "복제",
+        "label-send-to-back": "",
+        "set-background-menu-item": {
+          "label-set-background": ""
+        }
       }
     },
     "cloud-item": {
@@ -3284,6 +3369,17 @@
         "auto": "자동"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "",
+      "tooltip-close-inline-editor": ""
+    },
+    "inline-edit-body": {
+      "label-add-item": "",
+      "please-select-an-element": ""
+    },
+    "line-style-editor": {
+      "label-animate": ""
+    },
     "metric-value-item": {
       "label": {
         "bottom": "",
@@ -3300,6 +3396,14 @@
     "not-found-display": {
       "not-found": "<0>찾을 수 없음: </0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "",
+      "middle-mouse": "",
+      "pan-title": "",
+      "reset-double-click": "",
+      "title-pan-and-zoom-controls": "",
+      "zoom-scroll-wheel": ""
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "",
@@ -3312,6 +3416,25 @@
       "placeholder": {
         "auto": "자동"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "추가",
+      "aria-label-delete": "삭제",
+      "placeholder-key": "키",
+      "placeholder-value": "값"
+    },
+    "placement-editor": {
+      "label-constraints": "",
+      "label-position": "",
+      "loading": "로딩 중..."
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "",
+      "tooltip-align-horizontal-centers": "",
+      "tooltip-align-left": "",
+      "tooltip-align-right": "",
+      "tooltip-align-top": "",
+      "tooltip-align-vertical-centers": ""
     },
     "rectangle-item": {
       "label": {
@@ -3341,6 +3464,22 @@
       "placeholder": {
         "auto": "자동"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "선택 초기화",
+      "frame-selection": "",
+      "label-add-item": "",
+      "missing-layer": "",
+      "no-settings": "",
+      "switcher-icon": {
+        "title-node-icon": ""
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "복제",
+      "title-remove": "제거",
+      "tooltip-duplicate": "복제",
+      "tooltip-remove": "제거"
     },
     "triangle-item": {
       "label": {
@@ -4929,6 +5068,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "",
       "description-enables-users-custom-values": "사용자가 목록에 사용자 지정 값을 추가할 수 있습니다",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "차원에 대한 다음 정보를 CSV로 제공: {{name}}, {{value}}",
       "group-by-options": "옵션을 기준으로 그룹화",
@@ -5446,6 +5586,25 @@
       "message": "데이터 소스를 찾을 수 없습니다."
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": ""
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "",
+        "label-clear-row": "",
+        "label-remove-all-data": "",
+        "label-search": "검색..."
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "",
+        "label-delete-column": "",
+        "label-rename-column": "",
+        "label-set-field-type": ""
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "새 데이터 소스를 구성할 권한이 없습니다"
@@ -5628,6 +5787,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": ""
+    },
+    "render-info-viewer": {
+      "data-counter": "",
+      "elapsed-time": "",
+      "field": "필드",
+      "last": "",
+      "render-counter": "",
+      "schema-counter": "",
+      "title-reset-counters": "",
+      "tooltip-step-back": "",
+      "type": "유형"
+    },
+    "state-view": {
+      "current-value": "",
+      "label-state-name": ""
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "업로드"
@@ -5760,6 +5939,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "",
       "footer": "이벤트 타임스탬프는 전체 트레이스의 시작 시간을 기준으로 합니다."
     },
     "accordian-references": {
@@ -6476,9 +6656,101 @@
     "incomplete-request-error": "죄송합니다. 요청을 완료할 수 없었습니다. 다시 시도해 주세요.",
     "send-custom-feedback": "전송"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "",
+      "label-longitude": ""
+    },
+    "debug-overlay": {
+      "center": "",
+      "zoom": ""
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": ""
+      },
+      "label-data": "데이터",
+      "last-only-editor-fragment": {
+        "label-padding": "",
+        "tooltip-padding-relative-percent-beyond-extent": ""
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "geomap-panel": {
+      "aria-label-map": ""
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": ""
+    },
+    "layers-editor": {
+      "label-add-layer": "",
+      "no-layers": ""
+    },
+    "map-view-editor": {
+      "label-max-zoom": "",
+      "label-view": "보기",
+      "label-zoom": "확대/축소",
+      "use-current-map-settings": ""
+    },
+    "markers-legend": {
+      "title-symbol": "기호"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": ""
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": ""
+    },
+    "style-editor": {
+      "label-align": "",
+      "label-baseline": "",
+      "label-color": "색상",
+      "label-fill-opacity": "",
+      "label-font-size": "",
+      "label-opacity": "",
+      "label-rotation-angle": "",
+      "label-size": "",
+      "label-symbol": "기호",
+      "label-symbol-horizontal-align": "",
+      "label-symbol-vertical-align": "",
+      "label-text-label": "",
+      "label-x-offset": "",
+      "label-y-offset": ""
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "비교 연산자",
+      "aria-label-comparison-value": "",
+      "aria-label-delete-style-rule": "",
+      "aria-label-feature-property": "",
+      "label-rule": "규칙",
+      "placeholder-feature-property": "",
+      "placeholder-numeric-value": "",
+      "placeholder-value": "값"
+    }
+  },
   "get-enterprise": {
     "requires-license": "Grafana Enterprise 라이선스 필요",
     "title": "Enterprise"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "완료",
+      "learn-how": ""
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "",
+      "aria-label-to-basic-tutorials": "",
+      "checking-completed-setup-steps": "",
+      "remove-this-panel": ""
+    },
+    "tutorial-card": {
+      "complete": "완료"
+    }
   },
   "gops": {
     "config-card": {
@@ -6967,6 +7239,11 @@
     "support-bundle": "<1>지원 번들 섹션</1>에서 Grafana 인스턴스 및 구성된 데이터 소스에 대한 정보가 포함된 지원 번들을 검색할 수도 있습니다.",
     "troubleshooting-help": "문제 해결 지원을 요청하려면 이 패널의 스냅샷을 Grafana Labs 기술 지원팀에 보내세요. 스냅샷에는 쿼리 응답 데이터와 패널 설정이 포함되어야 합니다."
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "로딩 중",
@@ -7273,8 +7550,26 @@
       "discard-local-changes": "로컬 변경 사항 삭제",
       "title-dashboard-changed": "대시보드 변경됨"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "",
+      "namespace": "네임스페이스",
+      "path": "경로",
+      "placeholder-select-watchable-resource": "",
+      "scope": "",
+      "title-grafana-live": ""
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "서버 연결이 끊어졌습니다..."
+    },
+    "live-panel": {
+      "error": "오류",
+      "grafana-requires-feature": "",
+      "panel-editor-channel": "",
+      "title-grafana-live": "",
+      "waiting-for-data": ""
+    },
+    "live-publish": {
+      "publish": ""
     }
   },
   "lock-icon": "잠금 아이콘",
@@ -7446,6 +7741,11 @@
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
       "start-of-range": "범위의 시작"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": ""
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "선택한 시간 범위의 끝입니다."
@@ -8168,7 +8468,53 @@
       "close": "드로어 닫기"
     },
     "link-title": "Grafana Labs 블로그로 이동",
+    "news-panel": {
+      "body-error-loading-rss-feed": "",
+      "loading": "로딩 중...",
+      "title-error-loading-rss-feed": ""
+    },
     "title": "블로그 최근 글"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "",
+      "title-remove-arc": ""
+    },
+    "edge": {
+      "aria-label-from-to": ""
+    },
+    "edge-header": {
+      "label-source-target": ""
+    },
+    "marker": {
+      "100-node-count": "",
+      "aria-label-hidden-marker": "",
+      "node-count_other": ""
+    },
+    "node": {
+      "aria-label-node-title": ""
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "",
+      "aria-label-nodes-hidden-warning": "",
+      "computing-layout": "",
+      "no-data": "데이터 없음",
+      "hidden-nodes_other": "",
+      "processed-nodes_other": ""
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": ""
+    },
+    "node-header": {
+      "label-subtitle": "",
+      "label-title": "제목"
+    },
+    "view-controls": {
+      "hide-config": "",
+      "show-config": "",
+      "title-zoom-in": "",
+      "title-zoom-out": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -9953,6 +10299,11 @@
   "sort-picker": {
     "select-aria-label": "정렬"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_other": ""
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "새 지원 번들"
@@ -9978,10 +10329,35 @@
     "login": "로그인"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "",
+      "label-wrap-text": ""
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "",
+      "label-value-display": ""
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "",
+      "description-wrap-text": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-apply-to-entire-row": "",
+      "label-background-display-mode": "",
+      "label-wrap-text": "",
+      "wrap-text": ""
+    },
     "container": {
       "content": "하나의 표에 열을 너무 많이 표시하면 성능에 영향을 주고 데이터를 읽기 힘들어질 수 있습니다. 쿼리를 좁혀 보세요.",
       "show-all-series": "모든 열 표시",
       "show-only-series": "{{MAX_NUMBER_OF_COLUMNS}}개 열만 표시 중"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "",
+      "description-title-text": "",
+      "label-alt-text": "",
+      "label-title-text": ""
     }
   },
   "tag-filter": {
@@ -10138,6 +10514,42 @@
     "zone": {
       "select-aria-label": "시간대 선택기",
       "select-search-input": "입력하여 검색(국가, 도시, 약어)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "주석 추가",
+      "cancel": "취소",
+      "edit-annotation": "",
+      "label-description": "설명",
+      "label-tags": "태그",
+      "placeholder-add-tags": "",
+      "save": "저장",
+      "saving": "저장 중"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "삭제",
+      "tooltip-edit": "편집"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "",
+      "tooltip-help": "도움말"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "무기한"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "",
+      "zoom-to-data": ""
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "",
+      "tooltip-remove-timezone": ""
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": ""
     }
   },
   "transformations": {
@@ -10756,6 +11168,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "링크"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "도움이 필요하세요?",
+      "welcome-to-grafana": ""
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "",
+      "aria-label-select-series": "",
+      "label-color-field": "",
+      "label-frame": "프레임",
+      "label-size-field": "",
+      "label-x-field": "X 필드",
+      "label-y-field": "Y 필드",
+      "placeholder-all-frames": "",
+      "placeholder-select-frame": "",
+      "tooltip-delete-series": ""
     }
   }
 }
