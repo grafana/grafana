@@ -21,4 +21,9 @@ export class EmptyLanguageProviderMock {
   fetchLabels = jest.fn();
   loadMetricsMetadata = jest.fn();
   retrieveMetrics = jest.fn().mockReturnValue(['metric']);
+  queryLabelKeys = jest.fn().mockResolvedValue([]);
+  queryLabelValues = jest.fn().mockResolvedValue([]);
+  retrieveLabelKeys = jest.fn().mockReturnValue([]);
+  retrieveMetricsMetadata = jest.fn().mockReturnValue({});
+  queryMetricsMetadata = jest.fn().mockResolvedValue({});
 }
