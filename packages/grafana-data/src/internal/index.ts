@@ -66,8 +66,9 @@ export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transfo
 export {
   createOrderFieldsComparer,
   Order,
-  FieldOrdering,
-  type AutoSortOption,
+  OrderByMode,
+  OrderByType,
+  type OrderByItem,
 } from '../transformations/transformers/order';
 export { type RenameByRegexTransformerOptions } from '../transformations/transformers/renameByRegex';
 export { type OrganizeFieldsTransformerOptions } from '../transformations/transformers/organize';

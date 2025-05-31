@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { differenceWith } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import {
@@ -12,10 +11,11 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import {
-  AutoSortOption,
   createOrderFieldsComparer,
-  FieldOrdering,
   Order,
+  OrderByItem,
+  OrderByMode,
+  OrderByType,
   OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
 import { Trans, useTranslate } from '@grafana/i18n';
@@ -39,37 +39,66 @@ import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
-type AutoSortOptions = Array<{ order: Order; index: number; labelName?: string }>;
-
-// draggable component needs an identifier, this is something that shouldn't be a label key
-const FIELD_NAME_DRAGGABLE_ID = '!{{fieldName}}';
+interface UIOrderByItem {
+  type: OrderByType;
+  name?: string;
+  order: Order;
+}
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { t } = useTranslate();
 
-  const { indexByName, excludeByName, renameByName, includeByName } = options;
+  const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
-  const distinctLabels = Array.from(getDistinctLabels(input));
 
-  // find labels that exist for the data but do not have an existing sort and append them to the list of possible options
-  const unSortedLabels: AutoSortOption[] = differenceWith(
-    distinctLabels,
-    options.autoSortOptions ?? [],
-    (distLabl, sortLabel) => distLabl === sortLabel.labelName
-  ).map((label, i) => ({ labelName: label, order: Order.Off, index: (options.autoSortOptions?.length ?? 0) + i }));
+  const uiOrderByItems: UIOrderByItem[] = [];
 
-  const allAutoSortOptions = useMemo(
-    (): AutoSortOptions => [...(options.autoSortOptions ?? []), ...unSortedLabels].sort((a, b) => a.index - b.index),
-    [options.autoSortOptions, unSortedLabels]
-  );
+  if (orderByMode === OrderByMode.Auto) {
+    const foundLabels = getDistinctLabels(input);
 
-  // if the field name sort was not already set, add it to the end
-  if ((options.autoSortOptions ?? []).findIndex((aso) => aso.labelName === undefined) === -1) {
-    allAutoSortOptions.push({
-      index: allAutoSortOptions.length,
-      order: Order.Off,
+    let byFieldNameAdded = false;
+
+    // add Asc or Desc items
+    orderBy?.forEach((item) => {
+      let order = item.desc ? Order.Desc : Order.Asc;
+
+      // by field name
+      if (item.type === OrderByType.Name) {
+        uiOrderByItems.push({
+          type: OrderByType.Name,
+          order,
+        });
+
+        byFieldNameAdded = true;
+      }
+      // by label
+      else if (foundLabels.has(item.name!)) {
+        uiOrderByItems.push({
+          type: OrderByType.Label,
+          name: item.name,
+          order,
+        });
+
+        foundLabels.delete(item.name!);
+      }
+    });
+
+    // add Off items
+    if (!byFieldNameAdded) {
+      uiOrderByItems.push({
+        type: OrderByType.Name,
+        order: Order.Off,
+      });
+    }
+
+    foundLabels.forEach((name) => {
+      uiOrderByItems.push({
+        type: OrderByType.Label,
+        name,
+        order: Order.Off,
+      });
     });
   }
 
@@ -136,55 +165,58 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
     [onChange, options]
   );
 
-  // when any option in auto mode is changed, even if the sort is off, we save what we have at that time so the indexes are preserved and fields don't jump around
   const onChangeSort = useCallback(
-    (sortOptionString: string, sortOrder: Order) => {
-      const allOptions = [...allAutoSortOptions];
-      const changedIdx = allOptions.findIndex(
-        (label) =>
-          (sortOptionString === FIELD_NAME_DRAGGABLE_ID && label.labelName === undefined) ||
-          label.labelName === sortOptionString
-      );
-      allOptions[changedIdx].order = sortOrder;
-      onChange({ ...options, autoSortOptions: allOptions });
-    },
-    [allAutoSortOptions, onChange, options]
-  );
+    (item: UIOrderByItem, sortOrder: Order) => {
+      item.order = sortOrder;
 
-  const onDragEndLabels = useCallback(
-    (result: DropResult) => {
-      if (!result || !result.destination) {
-        return;
-      }
-      const startIndex = result.source.index;
-      const endIndex = result.destination.index;
+      const orderBy: OrderByItem[] = [];
 
-      if (startIndex === endIndex) {
-        return;
-      }
-
-      let delta = startIndex - endIndex;
-      const isForward = delta < 0;
-      delta = Math.abs(delta);
-
-      const allOptions = [...allAutoSortOptions];
-      const changedSort = allOptions.splice(startIndex, 1)[0];
-      changedSort.index = endIndex;
-
-      for (let i = 0; i < delta; i++) {
-        const changeIndex = allOptions.findIndex((opt) => opt.index === (isForward ? startIndex + 1 : endIndex) + i);
-        allOptions[changeIndex].index = allOptions[changeIndex].index + (isForward ? -1 : 1);
-      }
-
-      allOptions.push(changedSort);
-
-      onChange({
-        ...options,
-        autoSortOptions: allOptions.sort((a, b) => a.index - b.index),
+      uiOrderByItems.forEach((item) => {
+        if (item.order !== Order.Off) {
+          orderBy.push({
+            type: item.type,
+            name: item.name,
+            desc: item.order === Order.Desc,
+          });
+        }
       });
+
+      onChange({ ...options, orderBy });
     },
-    [allAutoSortOptions, onChange, options]
+    [options]
   );
+
+  const onDragEndLabels = useCallback((result: DropResult) => {
+    if (!result || !result.destination) {
+      return;
+    }
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+
+    if (startIndex === endIndex) {
+      return;
+    }
+
+    let delta = startIndex - endIndex;
+    const isForward = delta < 0;
+    delta = Math.abs(delta);
+
+    const allOptions = [...allAutoSortOptions];
+    const changedSort = allOptions.splice(startIndex, 1)[0];
+    changedSort.index = endIndex;
+
+    for (let i = 0; i < delta; i++) {
+      const changeIndex = allOptions.findIndex((opt) => opt.index === (isForward ? startIndex + 1 : endIndex) + i);
+      allOptions[changeIndex].index = allOptions[changeIndex].index + (isForward ? -1 : 1);
+    }
+
+    allOptions.push(changedSort);
+
+    onChange({
+      ...options,
+      autoSortOptions: allOptions.sort((a, b) => a.index - b.index),
+    });
+  }, []);
 
   // Show warning that we only apply the first frame
   if (input.length > 1) {
@@ -208,34 +240,27 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
             options={[
               {
                 label: t('transformers.organize-fields-transformer-editor.field-order-manual', 'Manual'),
-                value: FieldOrdering.Manual,
+                value: OrderByMode.Manual,
               },
               {
                 label: t('transformers.organize-fields-transformer-editor.field-order-auto', 'Auto'),
-                value: FieldOrdering.Auto,
+                value: OrderByMode.Auto,
               },
             ]}
-            value={options.fieldOrder ?? FieldOrdering.Manual}
-            onChange={(v) => onChange({ ...options, fieldOrder: v })}
+            value={options.orderByMode ?? OrderByMode.Manual}
+            onChange={(v) => onChange({ ...options, orderByMode: v })}
           />
         </InlineField>
       </InlineFieldRow>
       <DragDropContext onDragEnd={onDragEndLabels}>
-        {options.fieldOrder === FieldOrdering.Auto && (
+        {options.orderByMode === OrderByMode.Auto && (
           <Droppable droppableId="sortable-labels-transformer" direction="vertical">
             {(provided) => {
               return (
                 <>
                   <div ref={provided.innerRef} className={styles.labelsDraggable} {...provided.droppableProps}>
-                    {allAutoSortOptions.map((label, idx) => (
-                      <DraggableLabel
-                        key={label.labelName ?? FIELD_NAME_DRAGGABLE_ID}
-                        labelKeyName={label.labelName ?? 'Field Name'}
-                        index={idx}
-                        isFieldName={label.labelName === undefined}
-                        onChangeSort={onChangeSort}
-                        order={label.order}
-                      />
+                    {uiOrderByItems.map((item, idx) => (
+                      <DraggableUIOrderByItem item={item} index={idx} onChangeSort={onChangeSort} />
                     ))}
                   </div>
                   {provided.placeholder}
@@ -264,7 +289,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
                     onRenameField={onRenameField}
                     visible={isVisible}
                     key={fieldName}
-                    isDragDisabled={options.fieldOrder === FieldOrdering.Auto}
+                    isDragDisabled={options.orderByMode === OrderByMode.Auto}
                   />
                 );
               })}
@@ -356,39 +381,38 @@ const DraggableFieldName = ({
 
 DraggableFieldName.displayName = 'DraggableFieldName';
 
-interface DraggableLabelProps {
-  labelKeyName: string;
+interface DraggableUIOrderByItemProps {
+  item: UIOrderByItem;
   index: number;
-  order?: Order;
-  isFieldName: boolean;
-  onChangeSort: (sortOptionString: string, order: Order) => void;
+  onChangeSort: (item: UIOrderByItem, order: Order) => void;
 }
 
-const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort }: DraggableLabelProps) => {
+const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderByItemProps) => {
   const { t } = useTranslate();
 
   const styles = useStyles2(getFieldNameStyles);
 
   return (
-    <Draggable draggableId={isFieldName ? FIELD_NAME_DRAGGABLE_ID : `${labelKeyName}`} index={index}>
+    <Draggable draggableId={item.name ?? ''} index={index}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
             <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
-              <span {...provided.dragHandleProps}>
-                <Icon
-                  name="draggabledots"
-                  title={t(
-                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
-                    'Drag and drop to reorder'
-                  )}
-                  size="lg"
-                  className={styles.draggable}
-                />
-              </span>
-
+              {item.order !== Order.Off && (
+                <span {...provided.dragHandleProps}>
+                  <Icon
+                    name="draggabledots"
+                    title={t(
+                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                      'Drag and drop to reorder'
+                    )}
+                    size="lg"
+                    className={styles.draggable}
+                  />
+                </span>
+              )}
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
-                {!isFieldName && 'Label:'} {labelKeyName}
+                {item.type === OrderByType.Label ? `Label: ${item.name}` : `Field name`}
               </Text>
             </Stack>
           </InlineLabel>
@@ -398,9 +422,9 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
               { label: t('transformers.draggable-sort-order.asc', 'ASC'), value: Order.Asc },
               { label: t('transformers.draggable-sort-order.desc', 'DESC'), value: Order.Desc },
             ]}
-            value={order ?? Order.Off}
+            value={item.order}
             onChange={(order) => {
-              onChangeSort(isFieldName ? FIELD_NAME_DRAGGABLE_ID : labelKeyName, order);
+              onChangeSort(item, order);
             }}
           />
         </Box>
@@ -409,7 +433,7 @@ const DraggableLabel = ({ labelKeyName, index, order, isFieldName, onChangeSort 
   );
 };
 
-DraggableLabel.displayName = 'DraggableLabel';
+DraggableUIOrderByItem.displayName = 'DraggableUIOrderByItem';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   toggle: css({
