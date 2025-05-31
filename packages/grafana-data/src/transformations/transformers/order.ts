@@ -84,7 +84,7 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
   return Number.MAX_SAFE_INTEGER;
 };
 
-const compare = new Intl.Collator(undefined, { sensitivity: 'base' }).compare;
+const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 
 const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
   fields.slice().sort((fieldA, fieldB) => {
