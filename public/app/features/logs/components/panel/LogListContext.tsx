@@ -24,7 +24,7 @@ import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, downloadLogs as download } from '../../utils';
 
-import { GetRowContextQueryFn } from './LogLineMenu';
+import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
@@ -35,6 +35,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
   hasUnescapedContent?: boolean;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
@@ -129,6 +130,7 @@ export interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
@@ -169,6 +171,7 @@ export const LogListContextProvider = ({
   isLabelFilterActive,
   getRowContextQuery,
   logs,
+  logLineMenuCustomItems,
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
@@ -425,6 +428,7 @@ export const LogListContextProvider = ({
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
+        logLineMenuCustomItems,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
