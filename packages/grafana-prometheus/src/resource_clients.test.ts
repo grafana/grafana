@@ -224,7 +224,7 @@ describe('SeriesApiClient', () => {
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/series',
         expect.objectContaining({
-          'match[]': '{__name__="metric1"}',
+          'match[]': '{__name__="metric1",job!=""}',
         }),
         expect.any(Object)
       );
@@ -273,7 +273,7 @@ describe('SeriesApiClient', () => {
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/series',
         expect.objectContaining({
-          'match[]': '{__name__="metric1"}',
+          'match[]': '{__name__="metric1",job!=""}',
         }),
         expect.any(Object)
       );
