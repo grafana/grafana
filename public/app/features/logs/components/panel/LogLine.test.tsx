@@ -22,7 +22,6 @@ const contextProps = {
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
-  logs: [],
   showControls: false,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
@@ -33,6 +32,7 @@ describe('LogLine', () => {
   let log: LogListModel, defaultProps: Props;
   beforeEach(() => {
     log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
+    contextProps.logs = [log];
     defaultProps = {
       displayedFields: [],
       index: 0,
@@ -106,9 +106,10 @@ describe('LogLine', () => {
 
   test('Shows log lines with errors', async () => {
     log.hasError = true;
+    log.labels.__error__ = 'error message';
     jest.spyOn(log, 'errorMessage', 'get').mockReturnValue('error message');
     render(
-      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature}>
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
         <LogLine {...defaultProps} />
       </LogListContextProvider>
     );
@@ -118,9 +119,10 @@ describe('LogLine', () => {
 
   test('Shows sampled log lines', async () => {
     log.isSampled = true;
+    log.labels.__adaptive_logs_sampled__ = 'true';
     jest.spyOn(log, 'sampledMessage', 'get').mockReturnValue('sampled message');
     render(
-      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature}>
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
         <LogLine {...defaultProps} />
       </LogListContextProvider>
     );

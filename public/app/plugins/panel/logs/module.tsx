@@ -1,4 +1,5 @@
 import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LogsPanel } from './LogsPanel';
 import { Options } from './panelcfg.gen';
@@ -6,25 +7,30 @@ import { LogsPanelSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder) => {
+    builder.addBooleanSwitch({
+      path: 'showTime',
+      name: 'Time',
+      description: '',
+      defaultValue: false,
+    });
+
+    if (!config.featureToggles.newLogsPanel) {
+      builder
+        .addBooleanSwitch({
+          path: 'showLabels',
+          name: 'Unique labels',
+          description: '',
+          defaultValue: false,
+        })
+        .addBooleanSwitch({
+          path: 'showCommonLabels',
+          name: 'Common labels',
+          description: '',
+          defaultValue: false,
+        });
+    }
+
     builder
-      .addBooleanSwitch({
-        path: 'showTime',
-        name: 'Time',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'showLabels',
-        name: 'Unique labels',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'showCommonLabels',
-        name: 'Common labels',
-        description: '',
-        defaultValue: false,
-      })
       .addBooleanSwitch({
         path: 'wrapLogMessage',
         name: 'Wrap lines',
@@ -33,7 +39,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       })
       .addBooleanSwitch({
         path: 'prettifyLogMessage',
-        name: 'Prettify JSON',
+        name: config.featureToggles.newLogsPanel ? 'Enable log message highlighting' : 'Prettify JSON',
         description: '',
         defaultValue: false,
       })

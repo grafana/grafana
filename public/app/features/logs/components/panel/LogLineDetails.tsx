@@ -54,7 +54,7 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   return (
     <Resizable
       onResize={handleResize}
-      handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+      handleClasses={{ left: dragStyles.dragHandleVertical }}
       defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
       enable={{ left: true }}
       minWidth={40}

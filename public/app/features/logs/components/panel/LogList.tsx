@@ -24,7 +24,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { LogLineDetails } from './LogLineDetails';
-import { GetRowContextQueryFn } from './LogLineMenu';
+import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
@@ -53,6 +53,7 @@ export interface Props {
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
   loadMore?: (range: AbsoluteTimeRange) => void;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
@@ -111,6 +112,7 @@ export const LogList = ({
   isLabelFilterActive,
   loading,
   loadMore,
+  logLineMenuCustomItems,
   logOptionsStorageKey,
   logs,
   logsMeta,
@@ -150,6 +152,7 @@ export const LogList = ({
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
+      logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
       onClickFilterLabel={onClickFilterLabel}
@@ -209,6 +212,8 @@ const LogListComponent = ({
     dedupStrategy,
     filterLevels,
     forceEscape,
+    hasLogsWithErrors,
+    hasSampledLogs,
     permalinkedLogId,
     showDetails,
     showTime,
@@ -265,7 +270,7 @@ const LogListComponent = ({
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, showDetails, displayedFields]);
+  }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -362,6 +367,8 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                hasLogsWithErrors,
+                hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
                 wrap: wrapLogMessage,
@@ -370,6 +377,7 @@ const LogListComponent = ({
               layout="vertical"
               onItemsRendered={onItemsRendered}
               outerRef={scrollRef}
+              overscanCount={5}
               ref={listRef}
               style={{ overflowY: 'scroll' }}
               width="100%"

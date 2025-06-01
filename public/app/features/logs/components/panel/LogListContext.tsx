@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -22,9 +23,9 @@ import {
 } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, downloadLogs as download } from '../../utils';
+import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
-import { GetRowContextQueryFn } from './LogLineMenu';
+import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
@@ -34,7 +35,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  hasLogsWithErrors?: boolean;
+  hasSampledLogs?: boolean;
   hasUnescapedContent?: boolean;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
@@ -129,6 +133,7 @@ export interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
@@ -169,6 +174,7 @@ export const LogListContextProvider = ({
   isLabelFilterActive,
   getRowContextQuery,
   logs,
+  logLineMenuCustomItems,
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
@@ -259,6 +265,18 @@ export const LogListContextProvider = ({
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
+
+  useEffect(() => {
+    if (!showDetails.length) {
+      return;
+    }
+    const newShowDetails = showDetails.filter(
+      (expandedLog) => logs.findIndex((log) => log.uid === expandedLog.uid) >= 0
+    );
+    if (newShowDetails.length !== showDetails.length) {
+      setShowDetails(newShowDetails);
+    }
+  }, [logs, showDetails]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -403,6 +421,9 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey]
   );
 
+  const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
+  const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+
   const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
   const detailsWidth = logOptionsStorageKey
     ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
@@ -421,10 +442,13 @@ export const LogListContextProvider = ({
         enableLogDetails,
         filterLevels: logListState.filterLevels,
         forceEscape: logListState.forceEscape,
+        hasLogsWithErrors,
+        hasSampledLogs,
         hasUnescapedContent: logListState.hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
+        logLineMenuCustomItems,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
