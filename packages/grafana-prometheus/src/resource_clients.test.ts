@@ -132,6 +132,157 @@ describe('LabelsApiClient', () => {
       );
     });
   });
+
+  describe('LabelsCache', () => {
+    let cache: any; // Using any to access private members for testing
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      cache = (client as any)._cache;
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    describe('cache key generation', () => {
+      it('should generate different cache keys for keys and values', () => {
+        const keyKey = cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const valueKey = cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'value');
+        expect(keyKey).not.toEqual(valueKey);
+      });
+
+      it('should use cache level from constructor for time range snapping', () => {
+        const highLevelCache = new LabelsApiClient(mockRequest, {
+          cacheLevel: PrometheusCacheLevel.High,
+          getAdjustedInterval: mockGetAdjustedInterval,
+          getTimeRangeParams: mockGetTimeRangeParams,
+          interpolateString: mockInterpolateString,
+        } as unknown as PrometheusDatasource);
+
+        const lowLevelCache = new LabelsApiClient(mockRequest, {
+          cacheLevel: PrometheusCacheLevel.Low,
+          getAdjustedInterval: mockGetAdjustedInterval,
+          getTimeRangeParams: mockGetTimeRangeParams,
+          interpolateString: mockInterpolateString,
+        } as unknown as PrometheusDatasource);
+
+        const highKey = (highLevelCache as any)._cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const lowKey = (lowLevelCache as any)._cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+
+        expect(highKey).not.toEqual(lowKey);
+      });
+    });
+
+    describe('cache size management', () => {
+      beforeEach(() => {
+        // Start with a clean cache for each test
+        cache._cache = {};
+        cache._accessTimestamps = {};
+      });
+
+      it('should remove oldest entries when max entries limit is reached', () => {
+        // Override MAX_CACHE_ENTRIES for testing
+        Object.defineProperty(cache, 'MAX_CACHE_ENTRIES', { value: 5 });
+
+        // Add entries up to the limit
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', ['key1']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match2', '1000', ['key2']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match3', '1000', ['key3']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match4', '1000', ['key4']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match5', '1000', ['key5']);
+
+        // Access first entry to make it more recently used
+        cache.getLabelKeys(mockTimeRange, 'match1', '1000');
+
+        jest.advanceTimersByTime(1000);
+
+        // Add sixth entry - this should trigger cache cleaning
+        cache.setLabelKeys(mockTimeRange, 'match6', '1000', ['key6']);
+
+        // Verify cache state - should have removed one entry (match2)
+        expect(Object.keys(cache._cache).length).toBe(5);
+
+        // Second entry should be removed (was least recently used)
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toBeUndefined();
+        // First entry should exist (was accessed recently)
+        expect(cache.getLabelKeys(mockTimeRange, 'match1', '1000')).toEqual(['key1']);
+        // Third entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match3', '1000')).toEqual(['key3']);
+        // Fourth entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match4', '1000')).toEqual(['key4']);
+        // Fifth entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match5', '1000')).toEqual(['key5']);
+        // Sixth entry should exist (newest)
+        expect(cache.getLabelKeys(mockTimeRange, 'match6', '1000')).toEqual(['key6']);
+      });
+
+      it('should remove oldest entries when max size limit is reached', () => {
+        // Override MAX_CACHE_SIZE_BYTES for testing - set to small value to trigger cleanup
+        Object.defineProperty(cache, 'MAX_CACHE_SIZE_BYTES', { value: 10 }); // Very small size to force cleanup
+
+        // Create entries that will exceed the size limit
+        const largeArray = Array(5).fill('large_value');
+
+        // Add first large entry
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', largeArray);
+
+        // Verify initial size
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getCacheSizeInBytes()).toBeGreaterThan(10);
+
+        // Add second large entry - should trigger size-based cleanup
+        cache.setLabelKeys(mockTimeRange, 'match2', '1000', largeArray);
+
+        // Verify cache state - should only have the newest entry
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getLabelKeys(mockTimeRange, 'match1', '1000')).toBeUndefined();
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toEqual(largeArray);
+
+        // Add third entry to verify the cleanup continues to work
+        cache.setLabelKeys(mockTimeRange, 'match3', '1000', largeArray);
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toBeUndefined();
+        expect(cache.getLabelKeys(mockTimeRange, 'match3', '1000')).toEqual(largeArray);
+      });
+
+      it('should update access time when getting cached values', () => {
+        // Add an entry
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', ['key1']);
+        const cacheKey = cache.getCacheKey(mockTimeRange, 'match1', '1000', 'key');
+        const initialTimestamp = cache._accessTimestamps[cacheKey];
+
+        // Advance time
+        jest.advanceTimersByTime(1000);
+
+        // Access the entry
+        cache.getLabelKeys(mockTimeRange, 'match1', '1000');
+        const updatedTimestamp = cache._accessTimestamps[cacheKey];
+
+        // Verify timestamp was updated
+        expect(updatedTimestamp).toBeGreaterThan(initialTimestamp);
+      });
+    });
+
+    describe('label values caching', () => {
+      it('should cache and retrieve label values', () => {
+        const values = ['value1', 'value2'];
+        cache.setLabelValues(mockTimeRange, '{job="test"}', '1000', values);
+
+        const cachedValues = cache.getLabelValues(mockTimeRange, '{job="test"}', '1000');
+        expect(cachedValues).toEqual(values);
+      });
+
+      it('should return undefined for non-existent label values', () => {
+        const result = cache.getLabelValues(mockTimeRange, '{job="nonexistent"}', '1000');
+        expect(result).toBeUndefined();
+      });
+    });
+  });
 });
 
 describe('SeriesApiClient', () => {
@@ -293,7 +444,7 @@ describe('SeriesApiClient', () => {
 
     beforeEach(() => {
       jest.useFakeTimers();
-      cache = (client as any)._seriesCache;
+      cache = (client as any)._cache;
     });
 
     afterEach(() => {
@@ -320,8 +471,8 @@ describe('SeriesApiClient', () => {
           getTimeRangeParams: mockGetTimeRangeParams,
         } as unknown as PrometheusDatasource);
 
-        const highKey = (highLevelCache as any)._seriesCache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
-        const lowKey = (lowLevelCache as any)._seriesCache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const highKey = (highLevelCache as any)._cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const lowKey = (lowLevelCache as any)._cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
 
         expect(highKey).not.toEqual(lowKey);
       });
