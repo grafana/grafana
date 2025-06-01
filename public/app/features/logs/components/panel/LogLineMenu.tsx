@@ -110,12 +110,12 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
-        {logLineMenuCustomItems.map((item) => {
+        {logLineMenuCustomItems.map((item, i) => {
           if (isDivider(item)) {
-            return <Menu.Divider />;
+            return <Menu.Divider key={i} />;
           }
           if (isItem(item)) {
-            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} />;
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
           }
           return null;
         })}
