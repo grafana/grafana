@@ -24,7 +24,7 @@ import { LogRows } from '../../logs/components/LogRows';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTING_KEY_ROOT, SETTINGS_KEYS } from './utils/logs';
 
 type Props = {
   queryResponse: DataQueryResponse | undefined;
@@ -118,6 +118,7 @@ export function LogsSamplePanel(props: Props) {
           enableLogDetails
           dedupStrategy={LogsDedupStrategy.none}
           displayedFields={[]}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
           logs={logs.rows}
           showControls
           showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
