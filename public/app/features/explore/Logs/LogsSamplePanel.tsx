@@ -119,7 +119,7 @@ export function LogsSamplePanel(props: Props) {
           dedupStrategy={LogsDedupStrategy.none}
           displayedFields={[]}
           logs={logs.rows}
-          showControls={false}
+          showControls
           showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
           sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
           timeRange={props.timeRange}
