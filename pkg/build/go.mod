@@ -84,7 +84,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.23.1 // indirect
+	cel.dev/expr v0.19.1 // indirect
 	cloud.google.com/go/monitoring v1.23.0 // indirect
 	github.com/99designs/gqlgen v0.17.70 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
