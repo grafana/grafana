@@ -19,7 +19,7 @@ export type GetRowContextQueryFn = (
 
 type MenuItem = {
   label: string;
-  onClick(): void;
+  onClick(log: LogListModel): void;
 };
 
 type MenuItemDivider = {
