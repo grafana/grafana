@@ -30,7 +30,7 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
       start: () => Promise.resolve([]),
       syntax: () => {},
       getLabelKeys: () => [],
-      metrics: [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();

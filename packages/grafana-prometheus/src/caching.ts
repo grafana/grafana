@@ -47,12 +47,12 @@ export const getDaysToCacheMetadata = (cacheLevel: PrometheusCacheLevel): number
  * Used for general API response caching.
  *
  * @param {PrometheusCacheLevel} cacheLevel - The cache level (None, Low, Medium, High)
- * @returns {number} Cache duration in minutes:
+ * @returns Cache duration in minutes:
  *   - Medium: 10 minutes
  *   - High: 60 minutes
  *   - Default (None/Low): 1 minute
  */
-export function getCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
+export const getCacheDurationInMinutes = (cacheLevel: PrometheusCacheLevel) => {
   switch (cacheLevel) {
     case PrometheusCacheLevel.Medium:
       return 10;
@@ -61,14 +61,14 @@ export function getCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
     default:
       return 1;
   }
-}
+};
 
 /**
  * Builds cache headers for Prometheus API requests.
  * Creates a standard cache control header with private scope and max-age directive.
  *
  * @param {number} durationInSeconds - Cache duration in seconds
- * @returns {object} Object containing headers with cache control directives:
+ * @returns Object containing headers with cache control directives:
  *   - X-Grafana-Cache: private, max-age=<duration>
  * @example
  * // Returns { headers: { 'X-Grafana-Cache': 'private, max-age=300' } }
@@ -88,7 +88,7 @@ export const buildCacheHeaders = (durationInSeconds: number) => {
  * Returns undefined if caching is disabled (None level).
  *
  * @param {PrometheusCacheLevel} cacheLevel - Cache level (None, Low, Medium, High)
- * @returns {object|undefined} Cache headers object or undefined if caching is disabled
+ * @returns Cache headers object or undefined if caching is disabled
  * @example
  * // For Medium level, returns { headers: { 'X-Grafana-Cache': 'private, max-age=600' } }
  * getDefaultCacheHeaders(PrometheusCacheLevel.Medium)
