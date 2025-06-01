@@ -11,6 +11,7 @@ import {
   LogRowContextOptions,
   LogRowModel,
   ScopedVars,
+  SelectableValue,
 } from '@grafana/data';
 import { DataSourceWithBackend, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
@@ -43,8 +44,29 @@ import {
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
+  Dimensions,
 } from './types';
 import { CloudWatchVariableSupport } from './variables';
+
+export interface DimensionValuesRequest {
+  dimensionKey: string;
+  dimensionFilters: Dimensions;
+  region: string;
+  namespace: string;
+  metricName?: string;
+  accountId?: string;
+  applicationId?: string; // Added for EMRServerless JobId filtering
+}
+
+export interface CloudWatchResources {
+  getRegions(): Promise<Array<SelectableValue<string>>>;
+  getNamespaces(): Promise<Array<SelectableValue<string>>>;
+  getMetrics(params: { namespace: string; region: string }): Promise<Array<SelectableValue<string>>>;
+  getDimensionKeys(params: { namespace: string; region: string }): Promise<Array<SelectableValue<string>>>;
+  getDimensionValues(params: DimensionValuesRequest): Promise<Array<SelectableValue<string>>>;
+  getAccounts(): Promise<Array<SelectableValue<string>>>;
+  isMonitoringAccount(region: string): Promise<boolean>;
+}
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
@@ -92,11 +114,6 @@ export class CloudWatchDatasource
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
   }
 
-  // reminder: when queries are made on the backend through alerting they will not go through this function
-  // we have duplicated code here to retry queries on the frontend so that the we can show partial results to users
-  // but ultimately anytime we add special error handling or logic retrying here we should ask ourselves
-  // could it only live in the backend? if so let's implement it there. If not, should it also live in the backend or just in the frontend?
-  // another note that at the end of the day all of these queries call super.query which is what forwards the request to the backend through /query
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
@@ -160,10 +177,6 @@ export class CloudWatchDatasource
     }));
   }
 
-  /**
-   * Get log row context for a given log row. This is called when the user clicks on a log row in the logs visualization and the "show context button"
-   * it shows the surrounding logs.
-   */
   getLogRowContext(row: LogRowModel, context?: LogRowContextOptions, query?: CloudWatchLogsQuery) {
     return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
   }
@@ -187,7 +200,6 @@ export class CloudWatchDatasource
     }
   }
 
-  // public
   getVariables() {
     return this.resources.getVariables();
   }
