@@ -115,7 +115,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
             return <Menu.Divider />;
           }
           if (isItem(item)) {
-            return <Menu.Item onClick={item.onClick} label={item.label} />;
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} />;
           }
           return null;
         })}
