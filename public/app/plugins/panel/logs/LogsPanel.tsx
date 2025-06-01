@@ -526,12 +526,26 @@ export const LogsPanel = ({
               dedupStrategy={dedupStrategy}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
+              getFieldLinks={getFieldLinks}
+              isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
               logs={deduplicatedRows}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              onClickFilterLabel={
+                isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
+              }
+              onClickFilterOutLabel={
+                isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
+              }
+              onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
+              onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               onLogLineHover={onLogRowHover}
               onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
+              onOpenContext={onOpenContext}
+              onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
+              permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              logSupportsContext={showContextToggle}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}
