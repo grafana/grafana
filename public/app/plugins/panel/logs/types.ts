@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
-import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
+import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 export type { Options } from './panelcfg.gen';
 
