@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
 import { LogListContextData, Props } from '../LogListContext';
 import { LogListModel } from '../processing';
@@ -114,6 +115,8 @@ export const LogListContextProvider = ({
   enableLogDetails = false,
   filterLevels = [],
   getRowContextQuery = jest.fn(),
+  logLineMenuCustomItems = undefined,
+  logs = [],
   logSupportsContext = jest.fn(),
   onLogLineHover,
   onPermalinkClick = jest.fn(),
@@ -127,6 +130,9 @@ export const LogListContextProvider = ({
   syntaxHighlighting = true,
   wrapLogMessage = true,
 }: Partial<Props>) => {
+  const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
+  const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
+
   return (
     <LogListContext.Provider
       value={{
@@ -136,8 +142,11 @@ export const LogListContextProvider = ({
         displayedFields,
         downloadLogs: jest.fn(),
         enableLogDetails,
+        hasLogsWithErrors,
+        hasSampledLogs,
         filterLevels,
         getRowContextQuery,
+        logLineMenuCustomItems,
         logSupportsContext,
         onLogLineHover,
         onPermalinkClick,

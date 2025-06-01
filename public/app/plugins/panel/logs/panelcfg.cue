@@ -49,6 +49,7 @@ composableKinds: PanelCfg: {
 					onLogOptionsChange?:     _
 					logRowMenuIconsBefore?:  _
 					logRowMenuIconsAfter?:   _
+					logLineMenuCustomItems?: _
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
