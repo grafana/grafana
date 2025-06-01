@@ -263,7 +263,7 @@ describe('SeriesApiClient', () => {
       // Setup mock response for first call
       mockRequest.mockResolvedValueOnce([
         { __name__: 'metric1', job: 'grafana' },
-        { __name__: 'metric2', job: 'prometheus' }
+        { __name__: 'metric2', job: 'prometheus' },
       ]);
 
       // First query - should hit the backend

@@ -7,7 +7,7 @@ import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
 import { PrometheusCacheLevel } from './types';
-import { escapeForUtf8Support } from './utf8_support';
+import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
 type PrometheusLabelsResponse = string[];
@@ -159,7 +159,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
     const series = await this.querySeries(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT);
-    const { metrics, labelKeys } = processSeries(series);
+    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL);
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
@@ -191,7 +191,11 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const effectiveMatch = !match || match === EMPTY_MATCHER ? `{${labelKey}!=""}` : match;
+    const utf8SafeLabelKey = utf8Support(labelKey);
+    const effectiveMatch =
+      !match || match === EMPTY_MATCHER
+        ? `{${utf8SafeLabelKey}!=""}`
+        : match.slice(0, match.length - 1).concat(`,${utf8SafeLabelKey}!=""}`);
     const maybeCachedValues = this._seriesCache.getLabelValues(timeRange, effectiveMatch, limit);
     if (maybeCachedValues) {
       return maybeCachedValues;
