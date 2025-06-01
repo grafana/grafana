@@ -464,10 +464,6 @@ export const LogsPanel = ({
     [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
   );
 
-  if (!data || logRows.length === 0) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
-  }
-
   const renderCommonLabels = () => (
     <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
       <span className={style.label}>Common labels:</span>
@@ -498,6 +494,10 @@ export const LogsPanel = ({
     }
     return `${data.request?.dashboardUID}.${id}`;
   }, [controlsStorageKey, data.request, id]);
+
+  if (!data || logRows.length === 0) {
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+  }
 
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
   const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
