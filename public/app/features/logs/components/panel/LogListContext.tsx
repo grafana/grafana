@@ -263,6 +263,19 @@ export const LogListContextProvider = ({
     }
   }, [logListState, pinnedLogs]);
 
+  useEffect(() => {
+    console.log(showDetails);
+    if (!showDetails.length) {
+      return;
+    }
+    const newShowDetails = showDetails.filter(
+      (expandedLog) => logs.findIndex((log) => log.uid === expandedLog.uid) >= 0
+    );
+    if (newShowDetails.length !== showDetails.length) {
+      setShowDetails(newShowDetails);
+    }
+  }, [logs, showDetails]);
+
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
     [showDetails]
