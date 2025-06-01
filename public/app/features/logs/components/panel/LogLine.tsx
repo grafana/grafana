@@ -45,7 +45,8 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, dedupStrategy, enableLogDetails, onLogLineHover } = useLogListContext();
+  const { detailsDisplayed, dedupStrategy, enableLogDetails, hasLogsWithErrors, hasSampledLogs, onLogLineHover } =
+    useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -104,32 +105,38 @@ export const LogLine = ({
             {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
           </div>
         )}
-        {log.hasError && (
+        {hasLogsWithErrors && (
           <div className={`${styles.hasError}`}>
-            <Tooltip
-              content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', { errorMessage: log.errorMessage })}
-              placement="right"
-              theme="error"
-            >
-              <Icon
-                className={styles.logIconError}
-                name="exclamation-triangle"
-                aria-label={t('logs.log-line.has-error', 'Has errors')}
-                size="xs"
-              />
-            </Tooltip>
+            {log.hasError && (
+              <Tooltip
+                content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', {
+                  errorMessage: log.errorMessage,
+                })}
+                placement="right"
+                theme="error"
+              >
+                <Icon
+                  className={styles.logIconError}
+                  name="exclamation-triangle"
+                  aria-label={t('logs.log-line.has-error', 'Has errors')}
+                  size="xs"
+                />
+              </Tooltip>
+            )}
           </div>
         )}
-        {log.isSampled && (
+        {hasSampledLogs && (
           <div className={`${styles.isSampled}`}>
-            <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
-              <Icon
-                className={styles.logIconInfo}
-                name="info-circle"
-                size="xs"
-                aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
-              />
-            </Tooltip>
+            {log.isSampled && (
+              <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
+                <Icon
+                  className={styles.logIconInfo}
+                  name="info-circle"
+                  size="xs"
+                  aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+                />
+              </Tooltip>
+            )}
           </div>
         )}
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}

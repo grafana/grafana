@@ -212,6 +212,8 @@ const LogListComponent = ({
     dedupStrategy,
     filterLevels,
     forceEscape,
+    hasLogsWithErrors,
+    hasSampledLogs,
     permalinkedLogId,
     showDetails,
     showTime,
@@ -365,6 +367,8 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                hasLogsWithErrors,
+                hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
                 wrap: wrapLogMessage,

@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -22,7 +23,7 @@ import {
 } from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, downloadLogs as download } from '../../utils';
+import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListModel } from './processing';
@@ -34,6 +35,8 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  hasLogsWithErrors?: boolean;
+  hasSampledLogs?: boolean;
   hasUnescapedContent?: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
@@ -418,6 +421,9 @@ export const LogListContextProvider = ({
     [logOptionsStorageKey]
   );
 
+  const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
+  const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+
   const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
   const detailsWidth = logOptionsStorageKey
     ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
@@ -436,6 +442,8 @@ export const LogListContextProvider = ({
         enableLogDetails,
         filterLevels: logListState.filterLevels,
         forceEscape: logListState.forceEscape,
+        hasLogsWithErrors,
+        hasSampledLogs,
         hasUnescapedContent: logListState.hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
