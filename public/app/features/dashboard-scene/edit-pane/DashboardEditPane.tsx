@@ -4,6 +4,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -13,6 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import {
+  clearButtonStyles,
   ElementSelectionContextItem,
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
@@ -23,7 +25,6 @@ import {
   Text,
   Icon,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
 import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
@@ -199,6 +200,7 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
@@ -219,6 +221,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       setOutlinePaneSize(1 - size);
     },
   });
+  const { t } = useTranslate();
 
   if (!editableElement) {
     return null;
@@ -280,17 +283,17 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           data-edit-pane-splitter={true}
         />
         <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
-          <div
-            role="button"
+          <button
+            type="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
-            className={styles.outlineCollapseButton}
+            className={cx(clearButton, styles.outlineCollapseButton)}
             data-testid={selectors.components.PanelEditor.Outline.section}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
             <Icon name={outlineCollapsed ? 'angle-up' : 'angle-down'} />
-          </div>
+          </button>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>
               <ScrollContainer showScrollIndicators={true}>

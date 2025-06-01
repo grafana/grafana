@@ -1,7 +1,7 @@
 import { set } from 'lodash';
 
 import { RelativeTimeRange } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n/internal';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {

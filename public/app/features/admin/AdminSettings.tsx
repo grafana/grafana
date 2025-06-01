@@ -1,9 +1,9 @@
 import { useAsync } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 
 import { AdminSettingsTable } from './AdminSettingsTable';
 

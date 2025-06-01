@@ -2,10 +2,10 @@ import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Legend, TextLink } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
-import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
