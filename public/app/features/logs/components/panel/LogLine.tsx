@@ -45,7 +45,7 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, dedupStrategy, onLogLineHover } = useLogListContext();
+  const { detailsDisplayed, dedupStrategy, enableLogDetails, onLogLineHover } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -135,7 +135,7 @@ export const LogLine = ({
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+          className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
           onClick={handleClick}
         >
           <Log
@@ -387,15 +387,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
     overflows: css({
       outline: 'solid 1px red',
     }),
-    unwrappedLogLine: css({
+    clickable: css({
       cursor: 'pointer',
+    }),
+    unwrappedLogLine: css({
       display: 'grid',
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
-      cursor: 'pointer',
       alignSelf: 'flex-start',
       paddingBottom: theme.spacing(0.75),
       whiteSpace: 'pre-wrap',
