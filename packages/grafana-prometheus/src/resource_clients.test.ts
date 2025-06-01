@@ -1,7 +1,7 @@
 import { dateTime, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import { LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
+import { BaseResourceClient, LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
 
 const mockTimeRange: TimeRange = {
@@ -173,10 +173,34 @@ describe('SeriesApiClient', () => {
   });
 
   describe('queryLabelKeys', () => {
-    it('should throw error if match parameter is not provided', async () => {
-      await expect(client.queryLabelKeys(mockTimeRange)).rejects.toThrow(
-        'Series endpoint always expects at least one matcher'
+    it('should use MATCH_ALL_LABELS when no matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
+
+      const result = await client.queryLabelKeys(mockTimeRange);
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__!=""}',
+        }),
+        expect.any(Object)
       );
+      expect(result).toEqual(['label1', 'label2']);
+    });
+
+    it('should use MATCH_ALL_LABELS when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
+
+      const result = await client.queryLabelKeys(mockTimeRange, '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__!=""}',
+        }),
+        expect.any(Object)
+      );
+      expect(result).toEqual(['label1', 'label2']);
     });
 
     it('should fetch and process label keys from series', async () => {
@@ -189,12 +213,6 @@ describe('SeriesApiClient', () => {
   });
 
   describe('queryLabelValues', () => {
-    it('should throw error if match parameter is not provided', async () => {
-      await expect(client.queryLabelValues(mockTimeRange, 'job')).rejects.toThrow(
-        'Series endpoint always expects at least one matcher'
-      );
-    });
-
     it('should fetch and process label values from series', async () => {
       mockRequest.mockResolvedValueOnce([
         { __name__: 'metric1', job: 'grafana' },
@@ -203,7 +221,220 @@ describe('SeriesApiClient', () => {
 
       const result = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
 
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1",job!=""}',
+        }),
+        expect.any(Object)
+      );
       expect(result).toEqual(['grafana', 'prometheus']);
+    });
+
+    it('should create matcher with label when no matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should create matcher with label when empty matcher is provided', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', job: 'grafana' }]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', '{}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should use cache for subsequent identical queries', async () => {
+      // Setup mock response for first call
+      mockRequest.mockResolvedValueOnce([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      // First query - should hit the backend
+      const firstResult = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
+      expect(firstResult).toEqual(['grafana', 'prometheus']);
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1",job!=""}',
+        }),
+        expect.any(Object)
+      );
+
+      // Reset mock to verify it's not called again
+      mockRequest.mockClear();
+
+      // Second query with same parameters - should use cache
+      const secondResult = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
+      expect(secondResult).toEqual(['grafana', 'prometheus']);
+      expect(mockRequest).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('SeriesCache', () => {
+    let cache: any; // Using any to access private members for testing
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      cache = (client as any)._seriesCache;
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    describe('cache key generation', () => {
+      it('should generate different cache keys for keys and values', () => {
+        const keyKey = cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const valueKey = cache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'value');
+        expect(keyKey).not.toEqual(valueKey);
+      });
+
+      it('should use cache level from constructor for time range snapping', () => {
+        const highLevelCache = new SeriesApiClient(mockRequest, {
+          cacheLevel: PrometheusCacheLevel.High,
+          getAdjustedInterval: mockGetAdjustedInterval,
+          getTimeRangeParams: mockGetTimeRangeParams,
+        } as unknown as PrometheusDatasource);
+
+        const lowLevelCache = new SeriesApiClient(mockRequest, {
+          cacheLevel: PrometheusCacheLevel.Low,
+          getAdjustedInterval: mockGetAdjustedInterval,
+          getTimeRangeParams: mockGetTimeRangeParams,
+        } as unknown as PrometheusDatasource);
+
+        const highKey = (highLevelCache as any)._seriesCache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+        const lowKey = (lowLevelCache as any)._seriesCache.getCacheKey(mockTimeRange, '{job="test"}', '1000', 'key');
+
+        expect(highKey).not.toEqual(lowKey);
+      });
+    });
+
+    describe('cache size management', () => {
+      beforeEach(() => {
+        // Start with a clean cache for each test
+        cache._cache = {};
+        cache._accessTimestamps = {};
+      });
+
+      it('should remove oldest entries when max entries limit is reached', () => {
+        // Override MAX_CACHE_ENTRIES for testing
+        Object.defineProperty(cache, 'MAX_CACHE_ENTRIES', { value: 5 });
+
+        // Add entries up to the limit
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', ['key1']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match2', '1000', ['key2']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match3', '1000', ['key3']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match4', '1000', ['key4']);
+        jest.advanceTimersByTime(1000);
+        cache.setLabelKeys(mockTimeRange, 'match5', '1000', ['key5']);
+
+        // Access first entry to make it more recently used
+        cache.getLabelKeys(mockTimeRange, 'match1', '1000');
+
+        jest.advanceTimersByTime(1000);
+
+        // Add sixth entry - this should trigger cache cleaning
+        // and remove 20% (1 entry) of the oldest entries
+        cache.setLabelKeys(mockTimeRange, 'match6', '1000', ['key6']);
+
+        // Verify cache state - should have removed one entry (match2)
+        expect(Object.keys(cache._cache).length).toBe(5);
+
+        // Second entry should be removed (was least recently used)
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toBeUndefined();
+        // First entry should exist (was accessed recently)
+        expect(cache.getLabelKeys(mockTimeRange, 'match1', '1000')).toEqual(['key1']);
+        // Third entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match3', '1000')).toEqual(['key3']);
+        // Fourth entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match4', '1000')).toEqual(['key4']);
+        // Fifth entry should exist
+        expect(cache.getLabelKeys(mockTimeRange, 'match5', '1000')).toEqual(['key5']);
+        // Sixth entry should exist (newest)
+        expect(cache.getLabelKeys(mockTimeRange, 'match6', '1000')).toEqual(['key6']);
+      });
+
+      it('should remove oldest entries when max size limit is reached', () => {
+        // Override MAX_CACHE_SIZE_BYTES for testing - set to small value to trigger cleanup
+        Object.defineProperty(cache, 'MAX_CACHE_SIZE_BYTES', { value: 10 }); // Very small size to force cleanup
+
+        // Create entries that will exceed the size limit
+        const largeArray = Array(5).fill('large_value');
+
+        // Add first large entry
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', largeArray);
+
+        // Verify initial size
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getCacheSizeInBytes()).toBeGreaterThan(10);
+
+        // Add second large entry - should trigger size-based cleanup
+        cache.setLabelKeys(mockTimeRange, 'match2', '1000', largeArray);
+
+        // Verify cache state - should only have the newest entry
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getLabelKeys(mockTimeRange, 'match1', '1000')).toBeUndefined();
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toEqual(largeArray);
+
+        // Add third entry to verify the cleanup continues to work
+        cache.setLabelKeys(mockTimeRange, 'match3', '1000', largeArray);
+        expect(Object.keys(cache._cache).length).toBe(1);
+        expect(cache.getLabelKeys(mockTimeRange, 'match2', '1000')).toBeUndefined();
+        expect(cache.getLabelKeys(mockTimeRange, 'match3', '1000')).toEqual(largeArray);
+      });
+
+      it('should update access time when getting cached values', () => {
+        // Add an entry
+        cache.setLabelKeys(mockTimeRange, 'match1', '1000', ['key1']);
+        const cacheKey = cache.getCacheKey(mockTimeRange, 'match1', '1000', 'key');
+        const initialTimestamp = cache._accessTimestamps[cacheKey];
+
+        // Advance time
+        jest.advanceTimersByTime(1000);
+
+        // Access the entry
+        cache.getLabelKeys(mockTimeRange, 'match1', '1000');
+        const updatedTimestamp = cache._accessTimestamps[cacheKey];
+
+        // Verify timestamp was updated
+        expect(updatedTimestamp).toBeGreaterThan(initialTimestamp);
+      });
+    });
+
+    describe('label values caching', () => {
+      it('should cache and retrieve label values', () => {
+        const values = ['value1', 'value2'];
+        cache.setLabelValues(mockTimeRange, '{job="test"}', '1000', values);
+
+        const cachedValues = cache.getLabelValues(mockTimeRange, '{job="test"}', '1000');
+        expect(cachedValues).toEqual(values);
+      });
+
+      it('should return undefined for non-existent label values', () => {
+        const result = cache.getLabelValues(mockTimeRange, '{job="nonexistent"}', '1000');
+        expect(result).toBeUndefined();
+      });
     });
   });
 });
@@ -338,5 +569,93 @@ describe('processSeries', () => {
 
     const result = processSeries(series, 'non_existent_label');
     expect(result.labelValues).toEqual([]);
+  });
+});
+
+describe('BaseResourceClient', () => {
+  const mockRequest = jest.fn();
+  const mockGetTimeRangeParams = jest.fn();
+  const mockDatasource = {
+    cacheLevel: PrometheusCacheLevel.Low,
+    getTimeRangeParams: mockGetTimeRangeParams,
+  } as unknown as PrometheusDatasource;
+
+  class TestBaseResourceClient extends BaseResourceClient {
+    constructor() {
+      super(mockRequest, mockDatasource);
+    }
+  }
+
+  let client: TestBaseResourceClient;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    client = new TestBaseResourceClient();
+  });
+
+  describe('querySeries', () => {
+    const mockTimeRange = {
+      from: dateTime(1681300292392),
+      to: dateTime(1681300293392),
+      raw: {
+        from: 'now-1s',
+        to: 'now',
+      },
+    };
+
+    beforeEach(() => {
+      mockGetTimeRangeParams.mockReturnValue({ start: '1681300260', end: '1681300320' });
+    });
+
+    it('should make request with correct parameters', async () => {
+      mockRequest.mockResolvedValueOnce([{ __name__: 'metric1' }]);
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {
+          start: '1681300260',
+          end: '1681300320',
+          'match[]': '{job="grafana"}',
+          limit: '40000',
+        },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
+      );
+      expect(result).toEqual([{ __name__: 'metric1' }]);
+    });
+
+    it('should use custom limit when provided', async () => {
+      mockRequest.mockResolvedValueOnce([]);
+
+      await client.querySeries(mockTimeRange, '{job="grafana"}', '1000');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        {
+          start: '1681300260',
+          end: '1681300320',
+          'match[]': '{job="grafana"}',
+          limit: '1000',
+        },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
+      );
+    });
+
+    it('should handle empty response', async () => {
+      mockRequest.mockResolvedValueOnce(null);
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle non-array response', async () => {
+      mockRequest.mockResolvedValueOnce({ error: 'invalid response' });
+
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+
+      expect(result).toEqual([]);
+    });
   });
 });

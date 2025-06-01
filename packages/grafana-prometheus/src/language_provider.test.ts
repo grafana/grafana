@@ -18,6 +18,7 @@ import {
   removeQuotesIfExist,
   PrometheusLanguageProviderInterface,
   PrometheusLanguageProvider,
+  populateMatchParamsFromQueries,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
@@ -759,7 +760,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
 
       // Mock the resource client's start method
-      const resourceClientStartSpy = jest.spyOn(provider['_resourceClient'], 'start');
+      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start');
       const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
 
       await provider.start();
@@ -815,7 +816,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should delegate to resource client queryLabelKeys', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
-        .spyOn(provider['_resourceClient'], 'queryLabelKeys')
+        .spyOn(provider['resourceClient'], 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
 
       const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
@@ -827,7 +828,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
-        .spyOn(provider['_resourceClient'], 'queryLabelValues')
+        .spyOn(provider['resourceClient'], 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
 
       const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
@@ -855,6 +856,52 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(provider.retrieveHistogramMetrics()).toEqual(['histogram1', 'histogram2']);
       expect(provider.retrieveMetrics()).toEqual(['metric1', 'metric2']);
       expect(provider.retrieveLabelKeys()).toEqual(['label1', 'label2']);
+    });
+  });
+
+  describe('populateMatchParamsFromQueries', () => {
+    it('should add match params from queries', () => {
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [
+        { expr: 'metric1', refId: '1' },
+        { expr: 'metric2', refId: '2' },
+      ];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('metric1');
+      expect(matches).toContain('metric2');
+    });
+
+    it('should handle binary queries', () => {
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('binary');
+      expect(matches).toContain('second');
+    });
+
+    it('should handle undefined queries', () => {
+      const initialParams = new URLSearchParams({ param: 'value' });
+
+      const result = populateMatchParamsFromQueries(initialParams, undefined);
+
+      expect(result.toString()).toBe('param=value');
+    });
+
+    it('should handle UTF8 metrics', () => {
+      // Using the mocked isValidLegacyName function from jest.mock setup
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"}', refId: '1' }];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('{"utf8.metric"}');
     });
   });
 });

@@ -112,11 +112,9 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const fetchLabelKeys = useCallback(
     async (safeSelector?: string) => {
       try {
-        if (safeSelector) {
-          return Object.keys(await languageProvider.queryLabelKeys(timeRangeRef.current, safeSelector, effectiveLimit));
-        } else {
-          return (await languageProvider.queryLabelKeys(timeRangeRef.current, undefined, effectiveLimit)) || [];
-        }
+        return (
+          (await languageProvider.queryLabelKeys(timeRangeRef.current, safeSelector || undefined, effectiveLimit)) ?? []
+        );
       } catch (e) {
         handleError(e, 'Error fetching labels');
         return [];
