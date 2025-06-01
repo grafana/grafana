@@ -264,7 +264,6 @@ export const LogListContextProvider = ({
   }, [logListState, pinnedLogs]);
 
   useEffect(() => {
-    console.log(showDetails);
     if (!showDetails.length) {
       return;
     }
