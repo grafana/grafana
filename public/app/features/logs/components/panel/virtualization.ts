@@ -147,8 +147,8 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
 }
 
 interface DisplayOptions {
-  hasLogsWithErrors: boolean;
-  hasSampledLogs: boolean;
+  hasLogsWithErrors?: boolean;
+  hasSampledLogs?: boolean;
   showDuplicates: boolean;
   showTime: boolean;
   wrap: boolean;
