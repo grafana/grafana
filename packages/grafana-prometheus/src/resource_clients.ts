@@ -199,6 +199,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
 
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelValues } = processSeries(series, labelKey);
+    this._seriesCache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
     return labelValues;
   };
 }

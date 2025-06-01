@@ -258,6 +258,34 @@ describe('SeriesApiClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should use cache for subsequent identical queries', async () => {
+      // Setup mock response for first call
+      mockRequest.mockResolvedValueOnce([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' }
+      ]);
+
+      // First query - should hit the backend
+      const firstResult = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
+      expect(firstResult).toEqual(['grafana', 'prometheus']);
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1"}',
+        }),
+        expect.any(Object)
+      );
+
+      // Reset mock to verify it's not called again
+      mockRequest.mockClear();
+
+      // Second query with same parameters - should use cache
+      const secondResult = await client.queryLabelValues(mockTimeRange, 'job', '{__name__="metric1"}');
+      expect(secondResult).toEqual(['grafana', 'prometheus']);
+      expect(mockRequest).not.toHaveBeenCalled();
+    });
   });
 
   describe('SeriesCache', () => {
