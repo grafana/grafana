@@ -49,6 +49,7 @@ import {
   GetFieldLinksFn,
   isCoreApp,
   isIsFilterLabelActive,
+  isLogLineMenuCustomItems,
   isOnClickFilterLabel,
   isOnClickFilterOutLabel,
   isOnClickFilterOutString,
@@ -142,6 +143,7 @@ export const LogsPanel = ({
     isFilterLabelActive,
     logRowMenuIconsBefore,
     logRowMenuIconsAfter,
+    logLineMenuCustomItems,
     enableInfiniteScrolling,
     onNewLogsReceived,
     ...options
@@ -530,7 +532,11 @@ export const LogsPanel = ({
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
+              logLineMenuCustomItems={
+                isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined
+              }
               logs={deduplicatedRows}
+              logSupportsContext={showContextToggle}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
               onClickFilterLabel={
                 isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
@@ -545,7 +551,6 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
-              logSupportsContext={showContextToggle}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}
