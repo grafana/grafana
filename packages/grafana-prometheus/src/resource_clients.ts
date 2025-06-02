@@ -6,7 +6,7 @@ import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
-import { PrometheusCacheLevel } from './types';
+import { EMPTY_MATCHER, MATCH_ALL_LABELS, METRIC_LABEL, PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
@@ -32,10 +32,6 @@ type RequestFn = (
   params?: Record<string, unknown>,
   options?: Partial<BackendSrvRequest>
 ) => Promise<unknown>;
-
-const EMPTY_MATCHER = '{}';
-const MATCH_ALL_LABELS = '{__name__!=""}';
-const METRIC_LABEL = '__name__';
 
 export abstract class BaseResourceClient {
   constructor(

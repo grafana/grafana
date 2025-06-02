@@ -17,7 +17,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -30,16 +30,15 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
-import { PromMetricsMetadata, PromQuery } from './types';
+import { MATCH_ALL_LABELS_STR, PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
-const EMPTY_SELECTOR = '{}';
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
 
 /**
- * Prometheus API endpoints for fetching resoruces
+ * Prometheus API endpoints for fetching resources
  */
 const API_V1 = {
   METADATA: '/api/v1/metadata',
@@ -791,10 +790,15 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * @returns {string} Metric names as a regex matcher
  */
 export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+  if (!queries) {
+    return MATCH_ALL_LABELS_STR;
+  }
+
   const metrics = (queries ?? []).reduce<string[]>((params, query) => {
     const visualQuery = buildVisualQueryFromString(query.expr);
-    // const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
-    params.push(visualQuery.query.metric);
+    if (visualQuery.query.metric !== '') {
+      params.push(visualQuery.query.metric);
+    }
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
         params.push(bq.query.metric);
@@ -802,5 +806,6 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     }
     return params;
   }, []);
-  return `__name__=~"${metrics.join('|')}"`;
+
+  return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
 };

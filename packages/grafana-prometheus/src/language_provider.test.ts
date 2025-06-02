@@ -866,32 +866,42 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         { expr: 'metric2', refId: '2' },
       ];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toContain('metric1');
-      expect(result).toContain('metric2');
+      expect(result).toBe(`__name__=~"metric1|metric2"`);
     });
 
     it('should handle binary queries', () => {
       const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toContain('binary');
-      expect(result).toContain('second');
+      expect(result).toBe(`__name__=~"binary|second"`);
     });
 
     it('should handle undefined queries', () => {
       const result = populateMatchParamsFromQueries(undefined);
-      expect(result).toBe('{__name__=~""}');
+      expect(result).toBe('__name__!=""');
     });
 
     it('should handle UTF8 metrics', () => {
       const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"}', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toContain('{__name__=~"utf8.metric"}');
+      expect(result).toContain('__name__=~"utf8.metric"');
     });
 
     it('should handle UTF8 metrics with normal metrics', () => {
       const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"} + second{}', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toContain('{__name__=~"utf8.metric|second"}');
+      expect(result).toContain('__name__=~"utf8.metric|second"');
+    });
+
+    it('should return match-all matcher if there is no expr in queries', () => {
+      const queries: PromQuery[] = [{ expr: '', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
+    });
+
+    it('should return match-all matcher if there is no query', () => {
+      const queries: PromQuery[] = [];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
     });
   });
 });
