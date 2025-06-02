@@ -1093,6 +1093,15 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.test">test</Trans></div>
         },
       ],
     },
+    {
+      name: 'Auto fixes expressions when configured',
+      code: `const Foo = () => <div>{isAThing || 'test'}</div>`,
+      filename,
+      options: [{ forceFix: ['public/app/features/some-feature'] }],
+      output: `${T_IMPORT}
+const Foo = () => <div>{isAThing || t("some-feature.foo.test", "test")}</div>`,
+      errors: 1,
+    },
 
     {
       name: 'Auto fixes when options are configured - prop',
@@ -1156,6 +1165,26 @@ const Foo = () => {
     label: t("some-feature.foo.label.test", "test"),
   }
 }`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Fixes JSXExpression in attribute if it is simple template literal',
+      code: `
+const Foo = () => <div title={\`foo\`} />`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStrings',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+${T_IMPORT}
+const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
         },
@@ -1232,13 +1261,6 @@ const Foo = () => {
     },
 
     {
-      name: 'Cannot fix JSXExpression in attribute if it is template literal',
-      code: `const Foo = () => <div title={\`foo\`} />`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }],
-    },
-
-    {
       name: 'Cannot fix text outside correct directory location',
       code: `const Foo = () => <div>Untranslated text</div>`,
       filename: 'public/something-else/foo/SomeOtherFile.tsx',
@@ -1256,6 +1278,16 @@ const Foo = () => {
 }`,
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }],
+    },
+
+    {
+      name: 'Cannot fix expression with complicated template literal',
+      code: `
+const Foo = () => {
+  return <div title={foo ? \`Count \$\{someNumber\}\` : \`Another count \$\{someNumber\}\`} />
+}`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
 
     // TODO: Enable test once all top-level issues have been fixed

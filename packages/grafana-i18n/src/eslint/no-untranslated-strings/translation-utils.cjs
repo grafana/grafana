@@ -138,10 +138,16 @@ function canBeFixed(node, context) {
     (node.type === AST_NODE_TYPES.JSXExpressionContainer && node.expression.type === AST_NODE_TYPES.TemplateLiteral);
   const isPropertyOrAttribute = isAttribute || isProperty;
 
+  const isSimpleTemplateLiteral =
+    (node.type === AST_NODE_TYPES.TemplateLiteral && node.expressions.length === 0) ||
+    (node.type === AST_NODE_TYPES.JSXExpressionContainer &&
+      node.expression.type === AST_NODE_TYPES.TemplateLiteral &&
+      node.expression.expressions.length === 0);
+
   // We can only fix JSX attribute strings that are within a function,
   // otherwise the `t` function call will be made too early
   // We also can't easily fix template literals
-  if ((isPropertyOrAttribute && !parentMethods.length) || isTemplateLiteral) {
+  if ((isPropertyOrAttribute && !parentMethods.length) || (isTemplateLiteral && !isSimpleTemplateLiteral)) {
     return false;
   }
 
@@ -198,7 +204,7 @@ function canBeFixed(node, context) {
  */
 function getTranslationPrefix(context) {
   const filename = context.filename;
-  const match = filename.match(/public\/app\/(?:features)\/(.+?)\//);
+  const match = filename.match(/public\/app\/(?:features|plugins\/datasource)\/(.+?)\//);
   if (match) {
     return match[1];
   }
@@ -348,13 +354,13 @@ function getImportsFixer(node, fixer, importName, context) {
     t: '@grafana/i18n/internal',
   };
 
-  const parentMethod = getParentMethods(node, context);
+  const [parentMethod] = getParentMethods(node, context);
 
   if (importName === 't') {
     // If we're trying to import `t`,
     // and there's already a `t` variable declaration in the parent method that came from `useTranslate`,
     // do nothing
-    const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod[0], context) : false;
+    const declarationFromUseTranslate = parentMethod ? methodHasUseTranslate(parentMethod, context) : false;
     if (declarationFromUseTranslate) {
       return;
     }
@@ -505,6 +511,9 @@ const getTFixers = (node, context) => (fixer) => {
       fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
     );
   }
+  if (node.type === AST_NODE_TYPES.TemplateLiteral) {
+    fixes.push(fixer.replaceText(node, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+  }
 
   // Check if we need to add `useTranslate` to the node
   const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
@@ -543,6 +552,10 @@ function getNodeValue(node) {
 
   if (node.type === AST_NODE_TYPES.JSXExpressionContainer) {
     return getNodeValue(node.expression);
+  }
+
+  if (node.type === AST_NODE_TYPES.TemplateLiteral) {
+    return node.quasis[0].value.cooked;
   }
 
   const isAttributeOrProperty = node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property;

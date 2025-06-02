@@ -91,10 +91,6 @@ const noUntranslatedStrings = createRule({
         }
 
         const nodeValue = getNodeValue(node);
-
-        const isOnlySymbols = !/[a-zA-Z0-9]/.test(nodeValue);
-        const isNumeric = !/[a-zA-Z]/.test(nodeValue);
-
         const isUntranslated = stringShouldBeTranslated(nodeValue);
 
         const errorCanBeFixed = canBeFixed(node, context);
@@ -109,14 +105,12 @@ const noUntranslatedStrings = createRule({
             node,
             messageId: 'noUntranslatedStringsProperties',
             fix: errorCanBeFixed && errorShouldBeFixed ? getTFixers(node, context) : undefined,
-            suggest: errorCanBeFixed
-              ? [
-                  {
-                    messageId: 'wrapWithT',
-                    fix: getTFixers(node, context),
-                  },
-                ]
-              : undefined,
+            suggest: [
+              {
+                messageId: 'wrapWithT',
+                fix: getTFixers(node, context),
+              },
+            ],
           });
         }
       },
@@ -132,9 +126,9 @@ const noUntranslatedStrings = createRule({
         }
 
         const nodeValue = getNodeValue(node);
-        const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
+        const isUntranslated = stringShouldBeTranslated(nodeValue);
 
-        if (shouldBeTranslated) {
+        if (isUntranslated) {
           const errorShouldBeFixed = shouldBeFixed(context);
           const errorCanBeFixed = canBeFixed(node, context);
           return context.report({
@@ -159,17 +153,15 @@ const noUntranslatedStrings = createRule({
         const isInAttribute = parentType === AST_NODE_TYPES.JSXAttribute;
         const isInElement = parentType === AST_NODE_TYPES.JSXElement;
         const isUnsupportedAttribute = isInAttribute && !propsToCheck.includes(String(parent.name.name));
-
-        if (isUnsupportedAttribute || (!isInAttribute && !isInElement)) {
-          return;
-        }
-
         const isConditional = expression.type === AST_NODE_TYPES.ConditionalExpression;
         const isLogical = expression.type === AST_NODE_TYPES.LogicalExpression;
         const isTemplateLiteral = expression.type === AST_NODE_TYPES.TemplateLiteral;
         const isStringLiteral = expression.type === AST_NODE_TYPES.Literal && typeof expression.value === 'string';
 
-        if (!isConditional && !isLogical && !isTemplateLiteral && !isStringLiteral) {
+        const isUnsupported = isUnsupportedAttribute || (!isInAttribute && !isInElement);
+        const isNotConditionOrLiteral = !isConditional && !isLogical && !isTemplateLiteral && !isStringLiteral;
+
+        if (isUnsupported || isNotConditionOrLiteral) {
           return;
         }
 
@@ -182,17 +174,18 @@ const noUntranslatedStrings = createRule({
          * @param {Node} expr
          */
         const isExpressionUntranslated = (expr) => {
+          const nodeValue = getNodeValue(expr);
           return (
             (expr.type === AST_NODE_TYPES.Literal &&
               typeof expr.value === 'string' &&
-              stringShouldBeTranslated(expr.value)) ||
+              stringShouldBeTranslated(nodeValue)) ||
             (expr.type === AST_NODE_TYPES.TemplateLiteral && templateLiteralShouldBeTranslated(expr))
           );
         };
 
         const untranslatedExpressions = [
-          isConditional && expression.alternate,
           isConditional && expression.consequent,
+          isConditional && expression.alternate,
           isLogical && expression.left,
           isLogical && expression.right,
         ]
@@ -261,7 +254,7 @@ const noUntranslatedStrings = createRule({
         const children = node.children;
         const untranslatedTextNodes = children.filter((child) => {
           if (child.type === AST_NODE_TYPES.JSXText) {
-            const nodeValue = child.value.trim();
+            const nodeValue = getNodeValue(child);
             const shouldBeTranslated = stringShouldBeTranslated(nodeValue);
             if (!nodeValue || !shouldBeTranslated) {
               return false;
