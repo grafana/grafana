@@ -44,7 +44,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   }));
 
   const selectAllOption: SelectableValue<string> = {
-    label: 'All Columns',
+    label: t('azuremonitor.table-section.select-all-option.label.all-columns', 'All Columns'),
     value: '__all_columns__',
   };
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
+
 import Datasource from '../../datasource';
 import { AzureMonitorQuery } from '../../types';
 import { isGUIDish } from '../ResourcePicker/utils';
@@ -45,12 +47,16 @@ export default function useMigrations(
   query: AzureMonitorQuery,
   onChange: (newQuery: AzureMonitorQuery) => void
 ) {
+  const { t } = useTranslate();
   const [migrationError, setMigrationError] = useState<ErrorMessage>();
 
   useEffect(() => {
     migrateWorkspaceQueryToResourceQuery(datasource, query, onChange).catch((err) =>
       setMigrationError({
-        title: 'Unable to migrate workspace as a resource',
+        title: t(
+          'azuremonitor.use-migrations.title.unable-migrate-workspace-resource',
+          'Unable to migrate workspace as a resource'
+        ),
         message: err.message,
       })
     );

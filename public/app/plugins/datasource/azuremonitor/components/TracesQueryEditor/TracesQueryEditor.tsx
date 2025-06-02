@@ -162,8 +162,14 @@ const TracesQueryEditor = ({
               onQueryChange={onChange}
               inputId="azure-monitor-traces"
               options={[
-                { label: 'Table', value: ResultFormat.Table },
-                { label: 'Trace', value: ResultFormat.Trace },
+                {
+                  label: t('azuremonitor.traces-query-editor.label.options-table', 'Table'),
+                  value: ResultFormat.Table,
+                },
+                {
+                  label: t('azuremonitor.traces-query-editor.label.options-trace', 'Trace'),
+                  value: ResultFormat.Trace,
+                },
               ]}
               defaultValue={ResultFormat.Table}
               setFormatAs={setFormatAs}

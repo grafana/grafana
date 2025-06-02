@@ -60,8 +60,8 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   }));
 
   const orderOptions: Array<SelectableValue<string>> = [
-    { label: 'Ascending', value: 'asc' },
-    { label: 'Descending', value: 'desc' },
+    { label: t('azuremonitor.order-by-section.order-options.label.ascending', 'Ascending'), value: 'asc' },
+    { label: t('azuremonitor.order-by-section.order-options.label.descending', 'Descending'), value: 'desc' },
   ];
 
   const handleOrderByChange = (index: number, key: 'column' | 'order', value: string) => {

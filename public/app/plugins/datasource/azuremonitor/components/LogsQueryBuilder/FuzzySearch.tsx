@@ -65,7 +65,10 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     ? templateVariableOptions
     : [templateVariableOptions];
 
-  const defaultColumn: SelectableValue<string> = { label: 'All Columns *', value: '*' };
+  const defaultColumn: SelectableValue<string> = {
+    label: t('azuremonitor.fuzzy-search.default-column.label.all-columns', 'All Columns *'),
+    value: '*',
+  };
   const selectableOptions = [defaultColumn, ...columnOptions, ...safeTemplateVariables];
 
   const updateFuzzySearch = (column: string, term: string) => {

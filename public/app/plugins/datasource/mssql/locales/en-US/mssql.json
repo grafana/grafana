@@ -124,5 +124,28 @@
       "required-credential-cache-path": "Credential cache path is required",
       "required-username": "Username is required"
     }
+  },
+  "mssql": {
+    "configuration-editor": {
+      "build-authentication-options": {
+        "basic-authentication-options": {
+          "label": {
+            "sql-server-authentication": "SQL Server Authentication",
+            "windows-ad-credential-cache": "Windows AD: Credential cache",
+            "windows-ad-credential-cache-file": "Windows AD: Credential cache file",
+            "windows-ad-keytab-file": "Windows AD: Keytab file",
+            "windows-ad-username-password": "Windows AD: Username + password",
+            "windows-authentication": "Windows Authentication"
+          }
+        }
+      },
+      "encrypt-options": {
+        "label": {
+          "disable": "disable",
+          "false": "false",
+          "true": "true"
+        }
+      }
+    }
   }
 }

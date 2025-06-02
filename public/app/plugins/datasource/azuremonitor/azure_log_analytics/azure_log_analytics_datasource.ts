@@ -2,6 +2,7 @@ import { map } from 'lodash';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
 import { ScopedVars } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
@@ -231,14 +232,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
-          message: 'The Tenant Id field is required.',
+          message: t(
+            'azuremonitor.azure-log-analytics-datasource.message.the-tenant-id-field-is-required',
+            'The Tenant Id field is required.'
+          ),
         };
       }
 
       if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
-          message: 'The Client Id field is required.',
+          message: t(
+            'azuremonitor.azure-log-analytics-datasource.message.the-client-id-field-is-required',
+            'The Client Id field is required.'
+          ),
         };
       }
     }

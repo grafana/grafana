@@ -1,6 +1,7 @@
 import { intersection } from 'lodash';
 import { useState, useMemo } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 
 import Datasource from '../../datasource';
@@ -52,13 +53,24 @@ const ArgQueryEditor = ({
   onChange,
   setError,
 }: ArgQueryEditorProps) => {
+  const { t } = useTranslate();
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
   useMemo(() => {
     datasource
       .getSubscriptions()
       .then((results) => {
         const selectAllSubscriptionOption = [
-          { label: 'Select all subscriptions', value: 'Select all subscriptions', description: 'Select all' },
+          {
+            label: t(
+              'azuremonitor.arg-query-editor.select-all-subscription-option.label.select-all-subscriptions',
+              'Select all subscriptions'
+            ),
+            value: 'Select all subscriptions',
+            description: t(
+              'azuremonitor.arg-query-editor.select-all-subscription-option.description.select-all',
+              'Select all'
+            ),
+          },
         ];
         const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
         setSubscriptions(selectAllSubscriptionOption.concat(fetchedSubscriptions));

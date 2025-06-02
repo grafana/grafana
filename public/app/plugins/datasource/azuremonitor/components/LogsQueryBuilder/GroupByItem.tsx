@@ -32,7 +32,12 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({
   const columnOptions: Array<SelectableValue<string>> =
     columns.length > 0
       ? columns.map((c) => ({ label: c.label, value: c.value }))
-      : [{ label: 'No columns available', value: '' }];
+      : [
+          {
+            label: t('azuremonitor.group-by-item.column-options.label.no-columns-available', 'No columns available'),
+            value: '',
+          },
+        ];
 
   const selectableOptions: Array<SelectableValue<string>> = [
     ...columnOptions,

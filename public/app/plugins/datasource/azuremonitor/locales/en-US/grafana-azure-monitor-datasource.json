@@ -1,4 +1,177 @@
 {
+  "azuremonitor": {
+    "arg-query-editor": {
+      "select-all-subscription-option": {
+        "description": {
+          "select-all": "Select all"
+        },
+        "label": {
+          "select-all-subscriptions": "Select all subscriptions"
+        }
+      }
+    },
+    "azure-credentials-form": {
+      "auth-type-options": {
+        "label": {
+          "current-user": "Current User",
+          "managed-identity": "Managed Identity",
+          "workload-identity": "Workload Identity"
+        },
+        "opts": {
+          "label": {
+            "app-registration": "App Registration"
+          }
+        }
+      }
+    },
+    "azure-log-analytics-datasource": {
+      "message": {
+        "the-client-id-field-is-required": "The Client Id field is required.",
+        "the-tenant-id-field-is-required": "The Tenant Id field is required."
+      }
+    },
+    "azure-monitor-datasource": {
+      "message": {
+        "the-client-id-field-is-required": "The Client Id field is required.",
+        "the-tenant-id-field-is-required": "The Tenant Id field is required."
+      }
+    },
+    "config-editor": {
+      "title": {
+        "error-requesting-subscriptions": "Error requesting subscriptions"
+      }
+    },
+    "current-user-fallback-credentials": {
+      "auth-type-options": {
+        "label": {
+          "managed-identity": "Managed Identity",
+          "workload-identity": "Workload Identity"
+        },
+        "opts": {
+          "label": {
+            "app-registration": "App Registration"
+          }
+        }
+      },
+      "label": {
+        "options-disabled": "Disabled",
+        "options-enabled": "Enabled"
+      }
+    },
+    "dimension-fields": {
+      "dimension-operators": {
+        "label": {
+          "starts-with": "starts with"
+        }
+      }
+    },
+    "fuzzy-search": {
+      "default-column": {
+        "label": {
+          "all-columns": "All Columns *"
+        }
+      }
+    },
+    "group-by-item": {
+      "column-options": {
+        "label": {
+          "no-columns-available": "No columns available"
+        }
+      }
+    },
+    "logs-management": {
+      "label": {
+        "options-analytics": "Analytics",
+        "options-basic": "Basic"
+      }
+    },
+    "logs-query-editor": {
+      "label": {
+        "options-log": "Log",
+        "options-table": "Table",
+        "options-time-series": "Time series"
+      }
+    },
+    "order-by-section": {
+      "order-options": {
+        "label": {
+          "ascending": "Ascending",
+          "descending": "Descending"
+        }
+      }
+    },
+    "query-editor": {
+      "variable-option-group": {
+        "label": {
+          "template-variables": "Template Variables"
+        }
+      }
+    },
+    "query-header": {
+      "query-types": {
+        "label": {
+          "azure-resource-graph": "Azure Resource Graph",
+          "logs": "Logs",
+          "metrics": "Metrics",
+          "traces": "Traces"
+        }
+      }
+    },
+    "response-parser": {
+      "label": {
+        "auto": "Auto"
+      }
+    },
+    "table-section": {
+      "select-all-option": {
+        "label": {
+          "all-columns": "All Columns"
+        }
+      }
+    },
+    "time-management": {
+      "label": {
+        "options-dashboard": "Dashboard",
+        "options-default-time-columns": "Default time columns",
+        "options-other-time-columns": "Other time columns",
+        "options-query": "Query",
+        "options-time-generated": "TimeGenerated",
+        "value-time-generated": "TimeGenerated"
+      }
+    },
+    "traces-query-editor": {
+      "label": {
+        "options-table": "Table",
+        "options-trace": "Trace"
+      }
+    },
+    "use-migrations": {
+      "title": {
+        "unable-migrate-workspace-resource": "Unable to migrate workspace as a resource"
+      }
+    },
+    "variable-editor": {
+      "azure_query_variable_type_options": {
+        "label": {
+          "custom-metric-names": "Custom Metric Names",
+          "custom-namespaces": "Custom Namespaces",
+          "logs": "Logs",
+          "metric-names": "Metric Names",
+          "namespaces": "Namespaces",
+          "regions": "Regions",
+          "resource-graph": "Resource Graph",
+          "resource-groups": "Resource Groups",
+          "resource-names": "Resource Names",
+          "subscriptions": "Subscriptions",
+          "workspaces": "Workspaces"
+        }
+      },
+      "label": {
+        "grafana-query-function": "Grafana Query Function",
+        "template-variables": "Template Variables"
+      }
+    }
+  },
   "components": {
     "advanced-multi": {
       "label-advanced": "Advanced"

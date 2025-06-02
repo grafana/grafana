@@ -104,8 +104,12 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       >
         <RadioButtonGroup
           options={[
-            { label: 'Query', value: 'query', disabled: query.azureLogAnalytics?.mode === 'builder' },
-            { label: 'Dashboard', value: 'dashboard' },
+            {
+              label: t('azuremonitor.time-management.label.options-query', 'Query'),
+              value: 'query',
+              disabled: query.azureLogAnalytics?.mode === 'builder',
+            },
+            { label: t('azuremonitor.time-management.label.options-dashboard', 'Dashboard'), value: 'dashboard' },
           ]}
           value={
             query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder'
@@ -133,11 +137,16 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
           <Select
             options={[
               {
-                label: 'Default time columns',
-                options: defaultTimeColumns ?? [{ value: 'TimeGenerated', label: 'TimeGenerated' }],
+                label: t('azuremonitor.time-management.label.options-default-time-columns', 'Default time columns'),
+                options: defaultTimeColumns ?? [
+                  {
+                    value: 'TimeGenerated',
+                    label: t('azuremonitor.time-management.label.options-time-generated', 'TimeGenerated'),
+                  },
+                ],
               },
               {
-                label: 'Other time columns',
+                label: t('azuremonitor.time-management.label.options-other-time-columns', 'Other time columns'),
                 options: timeColumns ?? [],
               },
             ]}
@@ -149,7 +158,10 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
                   ? defaultTimeColumns[0]
                   : timeColumns
                     ? timeColumns[0]
-                    : { value: 'TimeGenerated', label: 'TimeGenerated' }
+                    : {
+                        value: 'TimeGenerated',
+                        label: t('azuremonitor.time-management.label.value-time-generated', 'TimeGenerated'),
+                      }
             }
             allowCustomValue
           />

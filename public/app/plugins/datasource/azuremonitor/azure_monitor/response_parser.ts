@@ -1,5 +1,6 @@
 import { find, get } from 'lodash';
 
+import { t } from '@grafana/i18n/internal';
 import { FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
@@ -57,7 +58,7 @@ export default class ResponseParser {
       supportedAggTypes: metricData.supportedAggregationTypes || defaultAggTypes,
 
       supportedTimeGrains: [
-        { label: 'Auto', value: 'auto' },
+        { label: t('azuremonitor.response-parser.label.auto', 'Auto'), value: 'auto' },
         ...ResponseParser.parseTimeGrains(metricData.metricAvailabilities ?? []),
       ],
       dimensions: ResponseParser.parseDimensions(metricData.dimensions ?? []),
