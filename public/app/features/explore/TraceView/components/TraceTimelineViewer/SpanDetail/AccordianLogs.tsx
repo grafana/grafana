@@ -16,13 +16,11 @@ import { css } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { GrafanaTheme2, TraceLog } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
-import { TraceLink } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -69,7 +67,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 export type AccordianLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logs: TraceLog[];
   onItemToggle?: (log: TraceLog) => void;
   onToggle?: () => void;
@@ -80,7 +77,6 @@ export type AccordianLogsProps = {
 export default function AccordianLogs({
   interactive = true,
   isOpen,
-  linksGetter,
   logs,
   openedItems,
   onItemToggle,
@@ -138,7 +134,6 @@ export default function AccordianLogs({
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(log) : false}
                 label={label}
-                linksGetter={linksGetter}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
               />
             );
