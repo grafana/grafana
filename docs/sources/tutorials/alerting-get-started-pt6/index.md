@@ -282,4 +282,10 @@ After the alert rules are created, they should appear as **health indicators** (
 
 Finally, as part of the alerting process, you should receive notifications at the associated contact point.
 
+It’s worth mentioning that you can include a link to a dashboard or panel in your alert notifications. In the alert notification example above, the message includes useful information such as the summary, description, and a link to the relevant dashboard for the firing or resolved alert. This helps responders quickly navigate to the appropriate context for investigation.
+
+You can extend this functionality by adding a custom annotation to your alert rules and creating a notification template that [includes a link to a dashboard with a time range.](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). The URL includes a time range based on the alert’s timing—starting from one hour before the alert started (`from`) to either the alert’s end time or the current time (`to`), depending on whether the alert is resolved or still firing.
+
+The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the from and to parameters, which are calculated in the notification template.
+
 <!-- INTERACTIVE page finish.md END -->
