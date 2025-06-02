@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { chain, isEmpty, truncate } from 'lodash';
+import { chain, truncate } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Alert,
   LinkButton,
@@ -40,6 +41,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
+import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import {
@@ -188,7 +190,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   const hasDashboardAndPanel = dashboardUID && panelID;
   const hasDashboard = dashboardUID;
-  const hasLabels = !isEmpty(labels);
+  const hasLabels = labelsSize(labels) > 0;
 
   const interval = group.interval;
   const styles = useStyles2(getStyles);
@@ -204,14 +206,14 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       <Text variant="bodySmall">{truncatedUrl}</Text>
     );
     metadata.push({
-      label: 'Runbook URL',
+      label: t('alerting.create-metadata.label.runbook-url', 'Runbook URL'),
       value: valueToAdd,
     });
   }
 
   if (hasDashboardAndPanel) {
     metadata.push({
-      label: 'Dashboard and panel',
+      label: t('alerting.create-metadata.label.dashboard-and-panel', 'Dashboard and panel'),
       value: (
         <WithReturnButton
           title={rule.name}
@@ -225,7 +227,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     });
   } else if (hasDashboard) {
     metadata.push({
-      label: 'Dashboard',
+      label: t('alerting.create-metadata.label.dashboard', 'Dashboard'),
       value: (
         <WithReturnButton
           title={rule.name}
@@ -241,14 +243,14 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
     const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
     metadata.push({
-      label: 'Metric name',
+      label: t('alerting.create-metadata.label.metric-name', 'Metric name'),
       value: <Text color="primary">{metric}</Text>,
     });
   }
 
   if (interval) {
     metadata.push({
-      label: 'Evaluation interval',
+      label: t('alerting.create-metadata.label.evaluation-interval', 'Evaluation interval'),
       value: (
         <Text color="primary">
           <Trans i18nKey="alerting.rule-viewer.evaluation-interval">Every {{ interval }}</Trans>
@@ -259,7 +261,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   if (hasLabels) {
     metadata.push({
-      label: 'Labels',
+      label: t('alerting.create-metadata.label.labels', 'Labels'),
       /* TODO truncate number of labels, maybe build in to component? */
       value: <AlertLabels labels={labels} size="sm" />,
     });
@@ -414,14 +416,14 @@ function usePageNav(rule: CombinedRule) {
     subTitle: summary,
     children: [
       {
-        text: 'Query and conditions',
+        text: t('alerting.use-page-nav.page-nav.text.query-and-conditions', 'Query and conditions'),
         active: activeTab === ActiveTab.Query,
         onClick: () => {
           setActiveTab(ActiveTab.Query);
         },
       },
       {
-        text: 'Instances',
+        text: t('alerting.use-page-nav.page-nav.text.instances', 'Instances'),
         active: activeTab === ActiveTab.Instances,
         onClick: () => {
           setActiveTab(ActiveTab.Instances);
@@ -430,7 +432,7 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: isRecordingRuleType,
       },
       {
-        text: 'History',
+        text: t('alerting.use-page-nav.page-nav.text.history', 'History'),
         active: activeTab === ActiveTab.History,
         onClick: () => {
           setActiveTab(ActiveTab.History);
@@ -439,14 +441,14 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule,
       },
       {
-        text: 'Details',
+        text: t('alerting.use-page-nav.page-nav.text.details', 'Details'),
         active: activeTab === ActiveTab.Details,
         onClick: () => {
           setActiveTab(ActiveTab.Details);
         },
       },
       {
-        text: 'Versions',
+        text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
         active: activeTab === ActiveTab.VersionHistory,
         onClick: () => {
           setActiveTab(ActiveTab.VersionHistory);

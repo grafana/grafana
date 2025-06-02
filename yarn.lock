@@ -2320,9 +2320,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.27.8":
-  version: 0.27.8
-  resolution: "@floating-ui/react@npm:0.27.8"
+"@floating-ui/react@npm:0.27.9":
+  version: 0.27.9
+  resolution: "@floating-ui/react@npm:0.27.9"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.2"
     "@floating-ui/utils": "npm:^0.2.9"
@@ -2330,7 +2330,7 @@ __metadata:
   peerDependencies:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/9423e3b7d6298918cb14ad3cfa36ba7b88ef86f18c4c47f7870b367716e918757dc0cf9842ef4995ee784b68aebe725c28c2ae143ecfe16380d3ccfd05cacb43
+  checksum: 10/0f5cab7a20fd882845fb7aec0aabb4bcb0f380149e99bc7623033c810f24274d80645d8494beb1fd5e7b5068a1a2cfa645be1a92f5439855edfdfcb737bbc8b7
   languageName: node
   linkType: hard
 
@@ -2828,7 +2828,7 @@ __metadata:
     "@lezer/lr": "npm:1.4.2"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.28.0"
+    "@opentelemetry/semantic-conventions": "npm:1.34.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -2932,23 +2932,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/async-query-data@npm:0.4.0":
-  version: 0.4.0
-  resolution: "@grafana/async-query-data@npm:0.4.0"
+"@grafana/async-query-data@npm:0.4.1":
+  version: 0.4.1
+  resolution: "@grafana/async-query-data@npm:0.4.1"
   dependencies:
     semver: "npm:^7.6.3"
     tslib: "npm:^2.8.0"
-  checksum: 10/58232cc085b1bc813b002189bdf80f6e12a2dc418c86b43e42dc50349b2ab327fcaec1310d5878a6ba974eab9194c20cef6540912656bbb4d18ddac4dae08d7c
+  checksum: 10/f75d3114f15b91227e23fa8214ca55ec00f5b6bce0ebb977ab14ad197ae1ab46126e9fdcce9af5816774b13e2797e5e26283f6a14d3f57420a08b2ded64a6515
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.7.0":
-  version: 0.7.0
-  resolution: "@grafana/aws-sdk@npm:0.7.0"
+"@grafana/aws-sdk@npm:0.7.1":
+  version: 0.7.1
+  resolution: "@grafana/aws-sdk@npm:0.7.1"
   dependencies:
-    "@grafana/async-query-data": "npm:0.4.0"
+    "@grafana/async-query-data": "npm:0.4.1"
     "@grafana/plugin-ui": "npm:^0.10.1"
-  checksum: 10/7f29b5234081c1a13e6e8ad099d0e5e26b4b220c9343382105554e95251df3171f17b93280f1e3265912359c496ac5fe0182b93211ed16f907271cbb27884a7c
+  checksum: 10/3b03b2bc6a7174d7b7e8aae77d62d70e87fb694781e69c16bb75312071c2adac9c6cfa2a51c0881cc302c6630a7b94adbb2696e0dc674e43cc9de8954ac761bf
   languageName: node
   linkType: hard
 
@@ -3337,7 +3337,7 @@ __metadata:
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@floating-ui/react": "npm:0.27.8"
+    "@floating-ui/react": "npm:0.27.9"
     "@grafana/data": "npm:12.1.0-pre"
     "@grafana/e2e-selectors": "npm:12.1.0-pre"
     "@grafana/plugin-ui": "npm:0.10.6"
@@ -3350,7 +3350,7 @@ __metadata:
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
-    "@prometheus-io/lezer-promql": "npm:0.301.0"
+    "@prometheus-io/lezer-promql": "npm:0.304.0"
     "@reduxjs/toolkit": "npm:2.5.1"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
@@ -3444,10 +3444,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.12.0":
-  version: 6.13.0
-  resolution: "@grafana/scenes-react@npm:6.13.0"
+  version: 6.16.0
+  resolution: "@grafana/scenes-react@npm:6.16.0"
   dependencies:
-    "@grafana/scenes": "npm:6.13.0"
+    "@grafana/scenes": "npm:6.16.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3459,13 +3459,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/8bbb098770d3b24fd60f4caa88579cd2e2327131061c7f54c25aa86688b4f4b7326d112515fe8ff3d62134af37af757d12d023c76dfaa68836f034e38f02da6d
+  checksum: 10/a1a7824b1c8f05fd5149d93a5aa0037014d5ff3e777669d5212c2426812973510dbeea225cb4f5d5e5a9038910a590d6d170b5ebe681c5be6e2fd951a3fabc07
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.13.0, @grafana/scenes@npm:^6.12.0":
-  version: 6.13.0
-  resolution: "@grafana/scenes@npm:6.13.0"
+"@grafana/scenes@npm:6.16.0, @grafana/scenes@npm:^6.12.0":
+  version: 6.16.0
+  resolution: "@grafana/scenes@npm:6.16.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3483,7 +3483,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/62247045c095ac951c83059816214407e2fcf3736a61b536323616cdce08cd77a99b6a3532a1dbbe4f50ca26c94094a82e1713df84c37b0a7c0bebcf164b0b26
+  checksum: 10/e379ba53fc835b6b3a6eb19d7527a6e775c10684d4eed650f85e5ad8c3fdb682fe20428c2ea467e66fc9050b19b19eb46ebed2ef5253dd1c3f6a58fd04d42205
   languageName: node
   linkType: hard
 
@@ -3576,7 +3576,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.27.8"
+    "@floating-ui/react": "npm:0.27.9"
     "@grafana/data": "npm:12.1.0-pre"
     "@grafana/e2e-selectors": "npm:12.1.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
@@ -3672,7 +3672,7 @@ __metadata:
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
-    react-data-grid: "npm:7.0.0-beta.46"
+    react-data-grid: "grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
     react-highlight-words: "npm:0.21.0"
@@ -5767,17 +5767,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.28.0":
-  version: 1.28.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.28.0"
-  checksum: 10/c182a3206769b5d5a8ab89a5c674d046fd789421cef27ea55af179990e314732433c98e5017aa23e99f15fd2b0e13cb129bb6c2282da6860ce9419adf32b2e87
-  languageName: node
-  linkType: hard
-
-"@opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
-  version: 1.32.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.32.0"
-  checksum: 10/5f0e5f36f5f808a5312f98faeb0ea099c66f531c06ab638177d2635faa8e7637c025b146342b49907d9af585963f078a2b28fde1f85437daba7a9163d9294906
+"@opentelemetry/semantic-conventions@npm:1.34.0, @opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
+  version: 1.34.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.34.0"
+  checksum: 10/1892b4cc69c9e00456c809604a980e32696563e96463ff5f9d07e72d5aca73836a7378090509f28f54445ac6e072d2343a888c9d64d9ce287198e899082ff7aa
   languageName: node
   linkType: hard
 
@@ -6039,13 +6032,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.301.0":
-  version: 0.301.0
-  resolution: "@prometheus-io/lezer-promql@npm:0.301.0"
+"@prometheus-io/lezer-promql@npm:0.304.0":
+  version: 0.304.0
+  resolution: "@prometheus-io/lezer-promql@npm:0.304.0"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/4ee6c9cfb318d6741b471b9abd3db7e4acab9d8ad035bf95fce450ba60b540eae8a3387a425bda78108c2526ec5cc44c34ecb1ddab33dc4b189652afb66aa736
+  checksum: 10/c582072a8a5b4bc4e44a36ce577ea1d082092972d79b736014891d4aaf8e9b6308473a0ee5f23b4c446f0f601a796b213ea1e94bf1a5771a980663939f9e70fb
   languageName: node
   linkType: hard
 
@@ -17760,11 +17753,11 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.27.8"
+    "@floating-ui/react": "npm:0.27.9"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/aws-sdk": "npm:0.7.0"
+    "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -17806,7 +17799,7 @@ __metadata:
     "@npmcli/package-json": "npm:^5.2.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.28.0"
+    "@opentelemetry/semantic-conventions": "npm:1.34.0"
     "@playwright/test": "npm:1.52.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
@@ -25939,15 +25932,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@npm:7.0.0-beta.46":
-  version: 7.0.0-beta.46
-  resolution: "react-data-grid@npm:7.0.0-beta.46"
+"react-data-grid@grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5":
+  version: 7.0.0-beta.55
+  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
   dependencies:
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^18.0 || ^19.0
     react-dom: ^18.0 || ^19.0
-  checksum: 10/d8a679b5e22a07293923894591adcac5ad57b8bd28dcc93f7438563384f6acc2287f14394a3ef360bc1dc901defa00b4030aa9af37c70cf53cf121437e0882bc
+  checksum: 10/9fe309924a7b22d0a62f0df69bdc7b9e0df62c5624e96125f2d729500dfe103037cfbe654fa63294d89fc9b5fea618a540160e2e12e7de4c7052049827df3687
   languageName: node
   linkType: hard
 

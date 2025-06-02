@@ -190,7 +190,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               <div className={styles.emailContainer}>
                 <Input
                   className={styles.emailInput}
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="me@example.com"
                   autoCapitalize="none"
                   {...register('email', {
