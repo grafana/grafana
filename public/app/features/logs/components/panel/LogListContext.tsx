@@ -128,6 +128,7 @@ export type LogListState = Pick<
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
+  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
@@ -445,10 +446,7 @@ export const LogListContextProvider = ({
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
 
-  const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
-  const detailsWidth = logOptionsStorageKey
-    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
-    : defaultWidth;
+  const detailsWidth = getDetailsWidth(containerElement, logOptionsStorageKey);
 
   return (
     <LogListContext.Provider
@@ -457,7 +455,7 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
-        detailsWidth: detailsWidth || defaultWidth,
+        detailsWidth,
         displayedFields,
         downloadLogs,
         enableLogDetails,
@@ -524,4 +522,21 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
     value === LogsDedupStrategy.numbers ||
     value === LogsDedupStrategy.signature
   );
+}
+
+// Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+function getDetailsWidth(containerElement: HTMLDivElement | undefined, logOptionsStorageKey?: string) {
+  if (!containerElement) {
+    return 0;
+  }
+  const defaultWidth = containerElement.clientWidth * 0.4;
+  const detailsWidth = logOptionsStorageKey
+    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
+    : defaultWidth;
+
+  // The user might have resized the screen.
+  if (detailsWidth >= containerElement.clientWidth) {
+    return defaultWidth;
+  }
+  return detailsWidth;
 }
