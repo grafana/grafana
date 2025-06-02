@@ -470,6 +470,8 @@ Use one of the following methods to include a dashboard link with the correct ti
    {{ end -}}
    ```
 
+   To use this template, define a custom annotation named `MyDashboardURL` that contains the base dashboard URL without `from` and `to` parameters. For example: `http://localhost:3000/d/uiyahbsdaubsd`.
+
    Run the template using:
 
    ```go
