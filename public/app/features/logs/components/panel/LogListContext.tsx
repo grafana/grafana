@@ -26,6 +26,7 @@ import { PopoverContent } from '@grafana/ui';
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
+import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
@@ -42,6 +43,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setFontSize: (size: LogListFontSize) => void;
   setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
@@ -65,10 +67,12 @@ export const LogListContext = createContext<LogListContextData>({
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
+  setFontSize: () => {},
   setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
@@ -108,6 +112,7 @@ export const useLogIsPermalinked = (log: LogListModel) => {
 export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
+  | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
   | 'hasUnescapedContent'
@@ -128,6 +133,7 @@ export interface Props {
   displayedFields: string[];
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
+  fontSize: LogListFontSize;
   forceEscape?: boolean;
   hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
@@ -169,6 +175,7 @@ export const LogListContextProvider = ({
   dedupStrategy,
   displayedFields,
   filterLevels,
+  fontSize,
   forceEscape = false,
   hasUnescapedContent,
   isLabelFilterActive,
@@ -205,6 +212,7 @@ export const LogListContextProvider = ({
     dedupStrategy,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
+    fontSize,
     forceEscape,
     hasUnescapedContent,
     pinnedLogs,
@@ -255,6 +263,12 @@ export const LogListContextProvider = ({
   }, [filterLevels, logListState]);
 
   useEffect(() => {
+    if (!shallowCompare(logListState.fontSize, fontSize)) {
+      setLogListState({ ...logListState, fontSize });
+    }
+  }, [fontSize, logListState]);
+
+  useEffect(() => {
     if (logListState.hasUnescapedContent !== hasUnescapedContent) {
       setLogListState({ ...logListState, hasUnescapedContent });
     }
@@ -289,6 +303,13 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('dedupStrategy', dedupStrategy);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setFontSize = useCallback(
+    (fontSize: LogListFontSize) => {
+      setLogListState({ ...logListState, fontSize });
+    },
+    [logListState]
   );
 
   const setForceEscape = useCallback(
@@ -441,6 +462,7 @@ export const LogListContextProvider = ({
         downloadLogs,
         enableLogDetails,
         filterLevels: logListState.filterLevels,
+        fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
         hasLogsWithErrors,
         hasSampledLogs,
@@ -467,6 +489,7 @@ export const LogListContextProvider = ({
         setDedupStrategy,
         setDetailsWidth,
         setFilterLevels,
+        setFontSize,
         setForceEscape,
         setLogListState,
         setPinnedLogs,
