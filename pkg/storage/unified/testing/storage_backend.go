@@ -184,6 +184,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 
 	t.Run("Watch events", func(t *testing.T) {
 		event := <-stream
+		fmt.Println("consumed event", event.Key.Name, event.ResourceVersion, event.Type, event.Folder)
 		require.Equal(t, "item1", event.Key.Name)
 		require.Equal(t, rv1, event.ResourceVersion)
 		require.Equal(t, resourcepb.WatchEvent_ADDED, event.Type)

@@ -569,6 +569,14 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+require (
+	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
+	github.com/dgraph-io/badger v1.6.2 // indirect
+	github.com/dgraph-io/badger/v4 v4.7.0 // indirect
+	github.com/dgraph-io/ristretto v0.0.2 // indirect
+	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
+)
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 

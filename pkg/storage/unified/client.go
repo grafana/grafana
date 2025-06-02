@@ -151,6 +151,9 @@ func newClient(opts options.StorageOptions,
 		return client, nil
 
 	// Use the local SQL
+	case options.StorageTypeEtcd:
+		//
+		return nil, fmt.Errorf("etcd is not supported")
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
 		if err != nil {

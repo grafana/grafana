@@ -1,0 +1,495 @@
+package resource
+
+import (
+	"context"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func setupTestDataStore(t *testing.T) *dataStore {
+	kv := setupTestKV(t)
+	return newDataStore(kv)
+}
+
+func TestNewDataStore(t *testing.T) {
+	ds := setupTestDataStore(t)
+	assert.NotNil(t, ds)
+}
+
+func TestDataStore_GetPrefix(t *testing.T) {
+	ds := setupTestDataStore(t)
+
+	key := resourcepb.ResourceKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+	}
+
+	expected := "/unified/data/test-namespace/test-group/test-resource/test-name/"
+	actual, err := ds.getPrefix(key)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+	key.Name = ""
+	expected = "/unified/data/test-namespace/test-group/test-resource/"
+	actual, err = ds.getPrefix(key)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+
+}
+
+func TestDataStore_GetKey(t *testing.T) {
+	ds := setupTestDataStore(t)
+
+	testUUID, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		key      DataKey
+		expected string
+	}{
+		{
+			name: "normal key",
+			key: DataKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+				UUID:      testUUID,
+				IsDeleted: false,
+			},
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String(),
+		},
+		{
+			name: "deleted key",
+			key: DataKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+				UUID:      testUUID,
+				IsDeleted: true,
+			},
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "-deleted",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := ds.getKey(tt.key)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestDataStore_ParseKey(t *testing.T) {
+	ds := setupTestDataStore(t)
+
+	testUUID, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		key         string
+		expected    DataKey
+		expectError bool
+	}{
+		{
+			name: "valid normal key",
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String(),
+			expected: DataKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+				UUID:      testUUID,
+				IsDeleted: false,
+			},
+		},
+		{
+			name: "valid deleted key",
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "-deleted",
+			expected: DataKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+				UUID:      testUUID,
+				IsDeleted: true,
+			},
+		},
+		{
+			name:        "invalid key - too short",
+			key:         "/unified/data/test",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - invalid uuid",
+			key:         "/unified/data/test-namespace/test-group/test-resource/test-name/invalid-uuid",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - too many dashes in uuid part",
+			key:         "/unified/data/test-namespace/test-group/test-resource/test-name/uuid-part-extra-dash",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := ds.parseKey(tt.key)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, actual)
+			}
+		})
+	}
+}
+
+func TestDataStore_Save_And_Get(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	testUUID, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	testKey := DataKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+		UUID:      testUUID,
+		IsDeleted: false,
+	}
+	testValue := []byte("test-value")
+
+	t.Run("save and get normal key", func(t *testing.T) {
+		err := ds.Save(ctx, testKey, testValue)
+		require.NoError(t, err)
+
+		result, err := ds.Get(ctx, testKey)
+		require.NoError(t, err)
+		assert.Equal(t, testValue, result)
+	})
+
+	t.Run("save and get deleted key", func(t *testing.T) {
+		deletedKey := testKey
+		deletedKey.IsDeleted = true
+		deletedValue := []byte("deleted-value")
+
+		err := ds.Save(ctx, deletedKey, deletedValue)
+		require.NoError(t, err)
+
+		result, err := ds.Get(ctx, deletedKey)
+		require.NoError(t, err)
+		assert.Equal(t, deletedValue, result)
+	})
+
+	t.Run("get non-existent key", func(t *testing.T) {
+		testUUID, err := uuid.NewV7()
+		require.NoError(t, err)
+
+		nonExistentKey := DataKey{
+			Namespace: "non-existent",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      "test-name",
+			UUID:      testUUID,
+			IsDeleted: false,
+		}
+
+		_, err = ds.Get(ctx, nonExistentKey)
+		assert.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
+	})
+}
+
+func TestDataStore_Delete(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	testUUID, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	testKey := DataKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+		UUID:      testUUID,
+		IsDeleted: false,
+	}
+	testValue := []byte("test-value")
+
+	t.Run("delete existing key", func(t *testing.T) {
+		// First save the key
+		err := ds.Save(ctx, testKey, testValue)
+		require.NoError(t, err)
+
+		// Verify it exists
+		_, err = ds.Get(ctx, testKey)
+		require.NoError(t, err)
+
+		// Delete it
+		err = ds.Delete(ctx, testKey)
+		require.NoError(t, err)
+
+		// Verify it's gone
+		_, err = ds.Get(ctx, testKey)
+		assert.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
+	})
+
+	t.Run("delete non-existent key", func(t *testing.T) {
+		nonExistentKey := DataKey{
+			Namespace: "non-existent",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      "test-name",
+			UUID:      testUUID,
+			IsDeleted: false,
+		}
+
+		err := ds.Delete(ctx, nonExistentKey)
+		require.NoError(t, err) // BadgerDB doesn't return error for non-existent keys
+	})
+}
+
+func TestDataStore_List(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	resourceKey := resourcepb.ResourceKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+	}
+
+	// Create test data
+	testUUID1, err := uuid.NewV7()
+	require.NoError(t, err)
+	testUUID2, err := uuid.NewV7()
+	require.NoError(t, err)
+	testValue1 := []byte("test-value-1")
+	testValue2 := []byte("test-value-2")
+
+	dataKey1 := DataKey{
+		Namespace: resourceKey.Namespace,
+		Group:     resourceKey.Group,
+		Resource:  resourceKey.Resource,
+		Name:      resourceKey.Name,
+		UUID:      testUUID1,
+		IsDeleted: false,
+	}
+
+	dataKey2 := DataKey{
+		Namespace: resourceKey.Namespace,
+		Group:     resourceKey.Group,
+		Resource:  resourceKey.Resource,
+		Name:      resourceKey.Name,
+		UUID:      testUUID2,
+		IsDeleted: false,
+	}
+
+	t.Run("list multiple keys", func(t *testing.T) {
+		// Save test data
+		err := ds.Save(ctx, dataKey1, testValue1)
+		require.NoError(t, err)
+
+		err = ds.Save(ctx, dataKey2, testValue2)
+		require.NoError(t, err)
+
+		// List the data
+		var results []DataObj
+		for obj, err := range ds.List(ctx, resourceKey) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		// Verify results
+		require.Len(t, results, 2)
+
+		// Create a map for easier verification
+		resultMap := make(map[string]DataObj)
+		for _, result := range results {
+			resultMap[result.Key.UUID.String()] = result
+		}
+
+		// Check first result
+		result1, exists := resultMap[testUUID1.String()]
+		require.True(t, exists)
+		assert.Equal(t, testValue1, result1.Value)
+		assert.Equal(t, testUUID1, result1.Key.UUID)
+		assert.Equal(t, resourceKey.Namespace, result1.Key.Namespace)
+		assert.Equal(t, resourceKey.Group, result1.Key.Group)
+		assert.Equal(t, resourceKey.Resource, result1.Key.Resource)
+		assert.False(t, result1.Key.IsDeleted)
+
+		// Check second result
+		result2, exists := resultMap[testUUID2.String()]
+		require.True(t, exists)
+		assert.Equal(t, testValue2, result2.Value)
+		assert.Equal(t, testUUID2, result2.Key.UUID)
+		assert.Equal(t, resourceKey.Namespace, result2.Key.Namespace)
+		assert.Equal(t, resourceKey.Group, result2.Key.Group)
+		assert.Equal(t, resourceKey.Resource, result2.Key.Resource)
+		assert.False(t, result2.Key.IsDeleted)
+	})
+
+	t.Run("list empty", func(t *testing.T) {
+		emptyResourceKey := resourcepb.ResourceKey{
+			Namespace: "empty-namespace",
+			Group:     "empty-group",
+			Resource:  "empty-resource",
+			Name:      "empty-name",
+		}
+
+		var results []DataObj
+		for obj, err := range ds.List(ctx, emptyResourceKey) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		assert.Len(t, results, 0)
+	})
+
+	t.Run("list with deleted keys", func(t *testing.T) {
+		deletedResourceKey := resourcepb.ResourceKey{
+			Namespace: "deleted-namespace",
+			Group:     "deleted-group",
+			Resource:  "deleted-resource",
+			Name:      "deleted-name",
+		}
+
+		testUUID3, err := uuid.NewV7()
+		require.NoError(t, err)
+		testValue3 := []byte("deleted-value")
+
+		deletedKey := DataKey{
+			Namespace: deletedResourceKey.Namespace,
+			Group:     deletedResourceKey.Group,
+			Resource:  deletedResourceKey.Resource,
+			Name:      deletedResourceKey.Name,
+			UUID:      testUUID3,
+			IsDeleted: true,
+		}
+
+		// Save deleted key
+		err = ds.Save(ctx, deletedKey, testValue3)
+		require.NoError(t, err)
+
+		// List should include deleted keys
+		var results []DataObj
+		for obj, err := range ds.List(ctx, deletedResourceKey) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		require.Len(t, results, 1)
+		assert.Equal(t, testValue3, results[0].Value)
+		assert.Equal(t, testUUID3, results[0].Key.UUID)
+		assert.True(t, results[0].Key.IsDeleted)
+	})
+}
+
+func TestDataStore_Integration(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	t.Run("full lifecycle test", func(t *testing.T) {
+		resourceKey := resourcepb.ResourceKey{
+			Namespace: "integration-ns",
+			Group:     "integration-group",
+			Resource:  "integration-resource",
+			Name:      "integration-name",
+		}
+
+		uuid1, err := uuid.NewV7()
+		require.NoError(t, err)
+		uuid2, err := uuid.NewV7()
+		require.NoError(t, err)
+		uuid3, err := uuid.NewV7()
+		require.NoError(t, err)
+
+		// Create multiple versions
+		versions := []struct {
+			uuid  uuid.UUID
+			value []byte
+		}{
+			{uuid1, []byte("version-1")},
+			{uuid2, []byte("version-2")},
+			{uuid3, []byte("version-3")},
+		}
+
+		// Save all versions
+		for _, version := range versions {
+			dataKey := DataKey{
+				Namespace: resourceKey.Namespace,
+				Group:     resourceKey.Group,
+				Resource:  resourceKey.Resource,
+				Name:      resourceKey.Name,
+				UUID:      version.uuid,
+				IsDeleted: false,
+			}
+
+			err := ds.Save(ctx, dataKey, version.value)
+			require.NoError(t, err)
+		}
+
+		// List all versions
+		var results []DataObj
+		for obj, err := range ds.List(ctx, resourceKey) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		assert.Len(t, results, 3)
+
+		// Delete one version
+		deleteKey := DataKey{
+			Namespace: resourceKey.Namespace,
+			Group:     resourceKey.Group,
+			Resource:  resourceKey.Resource,
+			Name:      resourceKey.Name,
+			UUID:      versions[1].uuid,
+			IsDeleted: false,
+		}
+
+		err = ds.Delete(ctx, deleteKey)
+		require.NoError(t, err)
+
+		// Verify it's gone
+		_, err = ds.Get(ctx, deleteKey)
+		assert.Equal(t, ErrNotFound, err)
+
+		// List should now have 2 items
+		results = nil
+		for obj, err := range ds.List(ctx, resourceKey) {
+			require.NoError(t, err)
+			results = append(results, obj)
+		}
+
+		assert.Len(t, results, 2)
+
+		// Verify remaining items
+		remainingUUIDs := make(map[string]bool)
+		for _, result := range results {
+			remainingUUIDs[result.Key.UUID.String()] = true
+		}
+
+		assert.True(t, remainingUUIDs[versions[0].uuid.String()])
+		assert.False(t, remainingUUIDs[versions[1].uuid.String()]) // deleted
+		assert.True(t, remainingUUIDs[versions[2].uuid.String()])
+	})
+}

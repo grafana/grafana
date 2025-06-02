@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,30 @@ func TestIntegrationStorageServer(t *testing.T) {
 		err = backend.Init(testutil.NewDefaultTestContext(t))
 		require.NoError(t, err)
 		return backend
+	})
+}
+
+func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
+	// TODO: this should be moved to the resource package
+	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		opts := badger.DefaultOptions("").WithInMemory(true)
+		db, err := badger.Open(opts)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = db.Close()
+		})
+		return resource.NewKVStorageBackend(resource.NewBadgerKV(db))
+	}, &unitest.TestOptions{
+		NSPrefix: "kvstorage-test",
+		SkipTests: map[string]bool{
+			unitest.TestHappyPath:                 false,
+			unitest.TestWatchWriteEvents:          true,
+			unitest.TestList:                      true,
+			unitest.TestListHistory:               true,
+			unitest.TestListHistoryErrorReporting: true,
+			unitest.TestBlobSupport:               true,
+			unitest.TestCreateNewResource:         true,
+		},
 	})
 }
 
