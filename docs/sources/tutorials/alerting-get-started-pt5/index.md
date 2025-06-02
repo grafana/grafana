@@ -330,7 +330,23 @@ The template should be flexible enough to capture the target keywords (e.g., pro
 
 By using notification policies, you can route alerts based on query values, directing them to the appropriate teams.
 
-## Learn more
+## Learn more in [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /docs/ignore >}}
 
 Explore related topics covered in this tutorial:
 

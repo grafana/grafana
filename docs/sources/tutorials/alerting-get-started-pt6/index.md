@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-This tutorial is a continuation of the [Get started with Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
+This tutorial is a continuation of the [Get started with Grafana Alerting - Route alerts using dynamic labels](http://www.grafana.com/tutorials/alerting-get-started-pt5/) tutorial.
 
 <!-- USE CASE -->
 
@@ -40,7 +40,7 @@ In this tutorial you will learn how to:
 
 - **Interactive learning environment**
 
-  - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt1/). It’s a fully configured environment with all the dependencies already installed.
+  - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt6/). It’s a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
@@ -227,7 +227,6 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
    The query returns the CPU usage of the Flask application in the production environment. In this case, the usage is `86.01%`, which exceeds the configured threshold of `75%`, causing the alert to fire.
 
-
 <!-- INTERACTIVE page step4.md END -->
 <!-- INTERACTIVE page step5.md START -->
 
@@ -273,7 +272,7 @@ When the CPU usage exceeds the defined threshold, an annotation should appear on
 Check how your dashboard looks now that both alerts have been linked to your dashboard panel.
 
 <!-- INTERACTIVE page step6.md END -->
-<!-- INTERACTIVE page step7.md START -->
+<!-- INTERACTIVE page finish.md START -->
 
 ## Visualizing metrics and alert annotations
 
@@ -282,26 +281,5 @@ Check how your dashboard looks now that both alerts have been linked to your das
 After the alert rules are created, they should appear as **health indicators** (colored heart icons: a red heart when the alert is in **Alerting** state, and a green heart when in **Normal** state) on the linked panel. In addition, annotations provide helpful context, such as the time the alert was triggered.
 
 Finally, as part of the alerting process, you should receive notifications at the associated contact point.
-
-<!-- INTERACTIVE page step7.md END -->
-<!-- INTERACTIVE page finish.md START -->
-
-## Learn more in [Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
-
-<!-- INTERACTIVE ignore START -->
-
-{{< admonition type="tip" >}}
-
-In [Get started with Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
-
-{{< /admonition >}}
-
-<!-- INTERACTIVE ignore END -->
-
-{{< docs/ignore >}}
-
-In [Get started with Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
-
-{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->
