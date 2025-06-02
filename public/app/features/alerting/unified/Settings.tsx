@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { WithReturnButton } from './components/WithReturnButton';
@@ -20,6 +20,7 @@ function SettingsPage() {
 function SettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
+  const { t } = useTranslate();
 
   return (
     <AlertingPageWrapper

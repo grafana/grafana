@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -30,12 +31,12 @@ func NewWithEngine(db db.DB) contracts.SecretDBMigrator {
 	return &SecretDB{engine: db.GetEngine()}
 }
 
-func (db *SecretDB) RunMigrations() error {
+func (db *SecretDB) RunMigrations(ctx context.Context, lockDatabase bool) error {
 	mg := migrator.NewScopedMigrator(db.engine, nil, "secret")
 
 	db.AddMigration(mg)
 
-	return mg.Start(true, 0)
+	return mg.RunMigrations(ctx, lockDatabase, 0)
 }
 
 func (*SecretDB) AddMigration(mg *migrator.Migrator) {
@@ -132,6 +133,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: TableNameSecureValueOutbox,
 		Columns: []*migrator.Column{
+			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
 			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
@@ -139,6 +141,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: true},
 			{Name: "keeper_name", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
 			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true},  // Fixed size of a UUID.
+			{Name: "receive_count", Type: migrator.DB_SmallInt, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{

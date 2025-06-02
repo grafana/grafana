@@ -8,7 +8,6 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneScopesBridge,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -34,7 +33,13 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind, ResourceForCreate } from '../../apiserver/types';
+import {
+  AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+  ResourceForCreate,
+} from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -79,7 +84,6 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
@@ -142,7 +146,6 @@ export interface DashboardSceneState extends SceneObjectState {
   panelsPerRow?: number;
   /** options pane */
   editPane: DashboardEditPane;
-  scopesBridge: SceneScopesBridge | undefined;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator?: DashboardLayoutOrchestrator;
 }
@@ -187,8 +190,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardJson | DashboardV2Spec
   >;
 
-  private _layoutRestorer = new LayoutRestorer();
-
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
@@ -199,7 +200,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
-      scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
     });
 
@@ -212,8 +212,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private _activationHandler() {
-    this.state.scopesBridge?.setEnabled(true);
-
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
 
@@ -222,7 +220,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
-      this.state.scopesBridge?.setReadOnly(true);
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
     }
@@ -247,8 +244,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Deactivation logic
     return () => {
-      this.state.scopesBridge?.setReadOnly(false);
-      this.state.scopesBridge?.setEnabled(false);
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -280,9 +275,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
-
-    // Propagate edit mode to scopes
-    this.state.scopesBridge?.setReadOnly(true);
 
     this._changeTracker.startTrackingChanges();
   };
@@ -322,9 +314,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (!this.state.isDirty || skipConfirm) {
+    if (!this.state.isDirty || skipConfirm || this.managedResourceCannotBeEdited()) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
-      this.state.scopesBridge?.setReadOnly(false);
       return;
     }
 
@@ -336,7 +327,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         yesText: 'Discard',
         onConfirm: () => {
           this.exitEditModeConfirmed();
-          this.state.scopesBridge?.setReadOnly(false);
         },
       })
     );
@@ -668,7 +658,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
+    this.setState({ body: layout });
     this.state.body.activateRepeaters?.();
   }
 
@@ -817,6 +807,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 
+  managedResourceCannotBeEdited() {
+    return (
+      this.isManaged() && !this.isManagedRepository() && !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits]
+    );
+  }
+
   getPath() {
     return this.state.meta.k8s?.annotations?.[AnnoKeySourcePath];
   }
@@ -857,8 +853,4 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       }
     }
   }
-}
-
-export function isV2Dashboard(model: Dashboard | DashboardV2Spec): model is DashboardV2Spec {
-  return 'elements' in model;
 }

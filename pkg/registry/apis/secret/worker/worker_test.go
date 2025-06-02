@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"testing"
 	"time"
 
@@ -12,7 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -21,132 +25,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
-
-func TestProcessMessage(t *testing.T) {
-	t.Parallel()
-
-	seed := time.Now().UnixMicro()
-	rng := rand.New(rand.NewSource(seed))
-
-	defer func() {
-		if err := recover(); err != nil {
-			panic(fmt.Sprintf("TestProcessMessage: err=%+v\n\nSEED=%+v", err, seed))
-		}
-		if t.Failed() {
-			fmt.Printf("TestProcessMessage: SEED=%+v\n\n", seed)
-		}
-	}()
-
-	for range 10 {
-		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-
-		database := database.ProvideDatabase(testDB)
-
-		outboxQueueWrapper := newOutboxQueueWrapper(rng, metadata.ProvideOutboxQueue(database))
-
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-
-		// Initialize access client + access control
-		accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-		accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
-		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
-		require.NoError(t, err)
-		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
-
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
-		require.NoError(t, err)
-		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
-
-		sqlKeeperWrapper := newKeeperWrapper(rng, fakes.NewFakeKeeper())
-		keeperServiceWrapper := newKeeperServiceWrapper(rng, sqlKeeperWrapper)
-
-		secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueueWrapper)
-
-		secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
-
-		worker := NewWorker(Config{
-			// TODO: randomize
-			BatchSize:       10,
-			ReceiveTimeout:  1 * time.Second,
-			PollingInterval: time.Millisecond,
-		},
-			database,
-			outboxQueueWrapper,
-			secureValueMetadataStorageWrapper,
-			keeperMetadataStorageWrapper,
-			keeperServiceWrapper,
-		)
-
-		for i := range 1000 {
-			state := buildState(database)
-			action := nextAction(rng, state)
-
-			switch action {
-			case actionAppendCreateSecretMessage:
-				ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
-				sv := &secretv0alpha1.SecureValue{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("sv-%d", i),
-						Namespace: fmt.Sprintf("stack-%d", i),
-					},
-					Spec: secretv0alpha1.SecureValueSpec{
-						Description: fmt.Sprintf("description-%d", i),
-						Value:       secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
-					},
-					Status: secretv0alpha1.SecureValueStatus{
-						Phase: secretv0alpha1.SecureValuePhasePending,
-					},
-				}
-				validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
-				_, err := secureValueRest.Create(ctx, sv, validationFunc, &metav1.CreateOptions{})
-				require.NoError(t, err)
-
-			case actionAppendUpdateSecretMessage:
-				i := rng.Intn(len(state.secrets))
-				secret := state.secrets[i]
-				externalID := string(secret.externalID)
-
-				_, err := outboxQueueWrapper.Append(context.Background(), contracts.AppendOutboxMessage{
-					Type:            contracts.UpdateSecretOutboxMessage,
-					Name:            secret.name,
-					Namespace:       secret.namespace,
-					EncryptedSecret: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("v-%d", i)),
-					ExternalID:      &externalID,
-				})
-				require.NoError(t, err)
-
-			case actionAppendDeleteSecretMessage:
-				i := rng.Intn(len(state.secrets))
-				secret := state.secrets[i]
-				externalID := string(secret.externalID)
-
-				_, err := outboxQueueWrapper.Append(context.Background(), contracts.AppendOutboxMessage{
-					Type:       contracts.DeleteSecretOutboxMessage,
-					Name:       secret.name,
-					Namespace:  secret.namespace,
-					ExternalID: &externalID,
-				})
-				require.NoError(t, err)
-
-			case actionReceiveAndProcessMessages:
-				worker.receiveAndProcessMessages(context.Background())
-
-			default:
-				panic(fmt.Sprintf("unhandled action: %+v", action))
-			}
-		}
-	}
-
-	// TODO: more assertions
-}
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
 	requester := &identity.StaticRequester{
@@ -166,349 +55,413 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 	return types.WithAuthInfo(ctx, requester)
 }
 
-type action string
-
-const (
-	actionAppendCreateSecretMessage action = "create"
-	actionAppendUpdateSecretMessage action = "update"
-	actionAppendDeleteSecretMessage action = "delete"
-	actionReceiveAndProcessMessages action = "receive"
-)
-
-type state struct {
-	secrets []secret
-}
-
-type secret struct {
-	namespace  string
-	name       string
-	externalID contracts.ExternalID
-}
-
-func enabledActions(state *state) []action {
-	enabled := make([]action, 0)
-
-	for _, action := range []action{
-		actionAppendCreateSecretMessage,
-		actionAppendUpdateSecretMessage,
-		actionAppendDeleteSecretMessage,
-		actionReceiveAndProcessMessages,
-	} {
-		switch action {
-		case actionAppendCreateSecretMessage:
-			enabled = append(enabled, action)
-
-		case actionAppendUpdateSecretMessage, actionAppendDeleteSecretMessage:
-			if len(state.secrets) > 0 {
-				enabled = append(enabled, action)
-			}
-
-		case actionReceiveAndProcessMessages:
-			enabled = append(enabled, action)
-
-		default:
-			panic(fmt.Sprintf("unhandled action: %+v", action))
-		}
-	}
-
-	return enabled
-}
-
-func nextAction(rng *rand.Rand, state *state) action {
-	enabled := enabledActions(state)
-	i := rng.Intn(len(enabled))
-	return enabled[i]
-}
-
-func buildState(database contracts.Database) *state {
-	const secureValuesNotInOutboxQueueQuery = `
-	SELECT
-		secret_secure_value.namespace,
-		secret_secure_value.name,
-		secret_secure_value.external_id
-	FROM secret_secure_value
-	WHERE NOT EXISTS (
-		SELECT 1 FROM secret_secure_value_outbox
-		WHERE secret_secure_value_outbox.namespace = secret_secure_value.namespace
-					AND secret_secure_value_outbox.name = secret_secure_value.name
-		)
-	`
-	rows, err := database.QueryContext(context.Background(), secureValuesNotInOutboxQueueQuery)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	secrets := make([]secret, 0)
-
-	for rows.Next() {
-		var secret secret
-		if err := rows.Scan(&secret.namespace, &secret.name, &secret.externalID); err != nil {
-			panic(err)
-		}
-		secrets = append(secrets, secret)
-	}
-
-	return &state{secrets: secrets}
-}
-
-// A wrapper that injects errors and forwards calls to the real implementation
-type outboxQueueWrapper struct {
-	rng         *rand.Rand
-	outboxQueue contracts.OutboxQueue
-}
-
-func newOutboxQueueWrapper(rng *rand.Rand, outboxQueue contracts.OutboxQueue) *outboxQueueWrapper {
-	return &outboxQueueWrapper{rng: rng, outboxQueue: outboxQueue}
-}
-
-// Append never fails because it is not called by the sut
-func (wrapper *outboxQueueWrapper) Append(ctx context.Context, message contracts.AppendOutboxMessage) (string, error) {
-	return wrapper.outboxQueue.Append(ctx, message)
-}
-
-func (wrapper *outboxQueueWrapper) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxMessage, error) {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return nil, context.DeadlineExceeded
-	}
-	messages, err := wrapper.outboxQueue.ReceiveN(ctx, n)
-	if err != nil {
-		return messages, err
-	}
-	// Maybe return an error after
-	if wrapper.rng.Float32() <= 0.2 {
-		return messages, context.DeadlineExceeded
-	}
-	return messages, err
-}
-
-func (wrapper *outboxQueueWrapper) Delete(ctx context.Context, messageID string) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.outboxQueue.Delete(ctx, messageID); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-
-// A wrapper that injects errors and forwards calls to the real implementation
-type secureValueMetadataStorageWrapper struct {
-	rng  *rand.Rand
-	impl contracts.SecureValueMetadataStorage
-}
-
-func newSecureValueMetadataStorageWrapper(rng *rand.Rand, impl contracts.SecureValueMetadataStorage) *secureValueMetadataStorageWrapper {
-	return &secureValueMetadataStorageWrapper{rng: rng, impl: impl}
-}
-
-func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Create(ctx, sv, actorUID)
-}
-func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Read(ctx, namespace, name, opts)
-}
-func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return nil, context.DeadlineExceeded
-	}
-	sv, err := wrapper.impl.Update(ctx, sv, actorUID)
-	if err != nil {
-		return sv, err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return nil, context.DeadlineExceeded
-	}
-	return sv, err
-}
-func (wrapper *secureValueMetadataStorageWrapper) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.impl.Delete(ctx, namespace, name); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.List(ctx, namespace)
-}
-
-func (wrapper *secureValueMetadataStorageWrapper) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.impl.SetStatus(ctx, namespace, name, status); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-func (wrapper *secureValueMetadataStorageWrapper) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.impl.SetExternalID(ctx, namespace, name, externalID); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	return wrapper.impl.ReadForDecrypt(ctx, namespace, name)
-}
-
 type keeperServiceWrapper struct {
-	rng    *rand.Rand
 	keeper contracts.Keeper
 }
 
-func newKeeperServiceWrapper(rng *rand.Rand, keeper contracts.Keeper) *keeperServiceWrapper {
-	return &keeperServiceWrapper{rng: rng, keeper: keeper}
+func newKeeperServiceWrapper(keeper contracts.Keeper) *keeperServiceWrapper {
+	return &keeperServiceWrapper{keeper: keeper}
 }
 
 func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return nil, context.DeadlineExceeded
-	}
-
 	return wrapper.keeper, nil
 }
 
-type keeperWrapper struct {
-	rng    *rand.Rand
-	keeper contracts.Keeper
+type fakeKeeperService struct {
+	keeperForConfigFunc func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error)
 }
 
-func newKeeperWrapper(rng *rand.Rand, keeper contracts.Keeper) *keeperWrapper {
-	return &keeperWrapper{rng: rng, keeper: keeper}
+func newFakeKeeperService(keeperForConfigFunc func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error)) *fakeKeeperService {
+	return &fakeKeeperService{keeperForConfigFunc: keeperForConfigFunc}
 }
 
-func (wrapper *keeperWrapper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return "", context.DeadlineExceeded
+func (s *fakeKeeperService) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+	return s.keeperForConfigFunc(cfg)
+}
+
+func TestProcessMessage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("secure value metadata status is set to Failed when processing a message fails too many times", func(t *testing.T) {
+		t.Parallel()
+
+		// Given a worker that will attempt to process a message N times
+		workerCfg := Config{
+			BatchSize:                    10,
+			ReceiveTimeout:               1 * time.Second,
+			PollingInterval:              time.Millisecond,
+			MaxMessageProcessingAttempts: 2,
+		}
+
+		// And an error that keeps happening
+		keeperService := newFakeKeeperService(func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+			return nil, fmt.Errorf("oops")
+		})
+
+		sut := setup(t, withWorkerConfig(workerCfg), withKeeperService(keeperService))
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+
+		ctx := context.Background()
+
+		for range workerCfg.MaxMessageProcessingAttempts + 1 {
+			// The secure value status should be Pending while the worker is trying to process the message
+			sv, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+			require.NoError(t, err)
+			require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+
+			// Worker tries to process messages
+			_ = sut.worker.receiveAndProcessMessages(ctx)
+		}
+
+		// After the worker fails to process a message too many times,
+		// the secure value status is changed to Failed
+		sv, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhaseFailed, sv.Status.Phase)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Empty(t, messages)
+	})
+
+	t.Run("create sv: secure value metadata status is set to Succeeded when message is processed successfully", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+
+		ctx := context.Background()
+
+		// Worker receives and processes the message
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		// and sets the secure value status to Succeeded
+		sv, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Empty(t, messages)
+	})
+
+	t.Run("update sv: secure value metadata status is set to Succeeded when message is processed successfully", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+
+		ctx := context.Background()
+
+		// Worker receives and processes the message
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		// and sets the secure value status to Succeeded
+		sv, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+
+		sv.Spec.Description = "desc2"
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+
+		// Queue an update operation
+		sv, err = sut.updateSv(sv)
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+
+		// Worker receives and processes the message
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+		updatedSv, err := sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, updatedSv.Status.Phase)
+		require.Equal(t, sv.Spec.Description, updatedSv.Spec.Description)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Empty(t, messages)
+	})
+
+	t.Run("delete sv: secure value metadata is deleted", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+
+		ctx := context.Background()
+
+		// Worker receives and processes the message
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		// and sets the secure value status to Succeeded
+		sv, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+
+		// Queue a delete operation
+		updatedSv, err := sut.deleteSv(sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.Equal(t, secretv0alpha1.SecureValuePhasePending, updatedSv.Status.Phase)
+
+		// Worker receives and processes the message
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		// The secure value has been deleted
+		_, err = sut.worker.secureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
+		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Empty(t, messages)
+	})
+
+	t.Run("when creating a secure value, the secret is encrypted before it is added to the outbox queue", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		var secret string
+		_, err := sut.createSv(func(cfg *createSvConfig) {
+			secret = string(cfg.sv.Spec.Value)
+		})
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+
+		encryptedSecret := messages[0].EncryptedSecret
+		require.NotEmpty(t, secret)
+		require.NotEmpty(t, encryptedSecret)
+		require.NotEqual(t, secret, encryptedSecret)
+	})
+
+	t.Run("when updating a secure value, the secret is encrypted before it is added to the outbox queue", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		newValue := "v2"
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(newValue)
+
+		// Queue an update secure value operation
+		_, err = sut.updateSv(sv)
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+
+		encryptedSecret := messages[0].EncryptedSecret
+		require.NotEmpty(t, encryptedSecret)
+		require.NotEqual(t, newValue, encryptedSecret)
+	})
+
+	t.Run("when deleting a secure value, no value is added to the outbox message", func(t *testing.T) {
+		t.Parallel()
+
+		sut := setup(t)
+		ctx := context.Background()
+
+		// Queue a create secure value operation
+		sv, err := sut.createSv()
+		require.NoError(t, err)
+		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+
+		require.NoError(t, sut.worker.receiveAndProcessMessages(ctx))
+
+		// Queue a delete secure value operation
+		_, err = sut.deleteSv(sv.Namespace, sv.Name)
+		require.NoError(t, err)
+
+		messages, err := sut.outboxQueue.ReceiveN(ctx, 100)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(messages))
+		require.Empty(t, messages[0].EncryptedSecret)
+	})
+}
+
+type setupConfig struct {
+	workerCfg     Config
+	keeperService contracts.KeeperService
+}
+
+func defaultSetupCfg() setupConfig {
+	return setupConfig{
+		workerCfg: Config{
+			BatchSize:                    10,
+			ReceiveTimeout:               1 * time.Second,
+			PollingInterval:              time.Millisecond,
+			MaxMessageProcessingAttempts: 5,
+		},
 	}
-	externalID, err := wrapper.keeper.Store(ctx, cfg, namespace, exposedValueOrRef)
+}
+
+func withWorkerConfig(cfg Config) func(*setupConfig) {
+	return func(setupCfg *setupConfig) {
+		setupCfg.workerCfg = cfg
+	}
+}
+
+func withKeeperService(keeperService contracts.KeeperService) func(*setupConfig) {
+	return func(setupCfg *setupConfig) {
+		setupCfg.keeperService = keeperService
+	}
+}
+
+func setup(t *testing.T, opts ...func(*setupConfig)) sut {
+	setupCfg := defaultSetupCfg()
+	for _, opt := range opts {
+		opt(&setupCfg)
+	}
+
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+
+	database := database.ProvideDatabase(testDB)
+
+	outboxQueue := metadata.ProvideOutboxQueue(database)
+
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
+	require.NoError(t, err)
+
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
+	require.NoError(t, err)
+
+	sqlKeeper := fakes.NewFakeKeeper()
+	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
+
+	if setupCfg.keeperService != nil {
+		keeperService = setupCfg.keeperService
+	}
+
+	// Initialize access client + access control
+	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+
+	defaultKey := "SdlklWklckeLS"
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			SecretKey:          defaultKey,
+			EncryptionProvider: "secretKey.v1",
+			Encryption: setting.EncryptionSettings{
+				DataKeysCleanupInterval: time.Nanosecond,
+				DataKeysCacheTTL:        5 * time.Minute,
+				Algorithm:               cipher.AesGcm,
+			},
+		},
+	}
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	require.NoError(t, err)
+
+	usageStats := &usagestats.UsageStatsMock{T: t}
+
+	encryptionManager, err := manager.ProvideEncryptionManager(
+		tracing.InitializeTracerForTest(),
+		store,
+		cfg,
+		usageStats,
+		encryption.ProvideThirdPartyProviderMap(),
+	)
+	require.NoError(t, err)
+
+	secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+
+	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
+
+	worker, err := NewWorker(setupCfg.workerCfg,
+		database,
+		outboxQueue,
+		secureValueMetadataStorage,
+		keeperMetadataStorage,
+		keeperService,
+		encryptionManager,
+	)
+	require.NoError(t, err)
+
+	return sut{worker: worker, secureValueRest: secureValueRest, outboxQueue: outboxQueue, database: database}
+}
+
+type sut struct {
+	worker          *Worker
+	secureValueRest *reststorage.SecureValueRest
+	outboxQueue     contracts.OutboxQueue
+	database        *database.Database
+}
+
+type createSvConfig struct {
+	sv *secretv0alpha1.SecureValue
+}
+
+func (s *sut) createSv(opts ...func(*createSvConfig)) (*secretv0alpha1.SecureValue, error) {
+	cfg := createSvConfig{
+		sv: &secretv0alpha1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sv1",
+				Namespace: "ns1",
+			},
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "desc1",
+				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+			},
+			Status: secretv0alpha1.SecureValueStatus{
+				Phase: secretv0alpha1.SecureValuePhasePending,
+			},
+		},
+	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+
+	validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
+	createdSv, err := s.secureValueRest.Create(ctx, cfg.sv, validationFunc, &metav1.CreateOptions{})
 	if err != nil {
-		return externalID, err
+		return nil, err
 	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return externalID, context.DeadlineExceeded
-	}
-	return externalID, nil
+	return createdSv.(*secretv0alpha1.SecureValue), nil
 }
 
-func (wrapper *keeperWrapper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.keeper.Update(ctx, cfg, namespace, externalID, exposedValueOrRef); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-
-func (wrapper *keeperWrapper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
-	var zero secretv0alpha1.ExposedSecureValue
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return zero, context.DeadlineExceeded
-	}
-	sv, err := wrapper.keeper.Expose(ctx, cfg, namespace, externalID)
+func (s *sut) updateSv(sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+	ctx := createAuthContext(context.Background(), "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+	ctx = request.WithNamespace(ctx, sv.Namespace)
+	validationFunc := func(_ context.Context, _, _ runtime.Object) error { return nil }
+	newSv, _, err := s.secureValueRest.Update(ctx, sv.Name, rest.DefaultUpdatedObjectInfo(sv), nil, validationFunc, false, &metav1.UpdateOptions{})
 	if err != nil {
-		return sv, err
+		return nil, err
 	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return sv, context.DeadlineExceeded
-	}
-	return sv, nil
+	return newSv.(*secretv0alpha1.SecureValue), nil
 }
 
-func (wrapper *keeperWrapper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	if err := wrapper.keeper.Delete(ctx, cfg, namespace, externalID); err != nil {
-		return err
-	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
-
-type keeperMetadataStorageWrapper struct {
-	rng  *rand.Rand
-	impl contracts.KeeperMetadataStorage
-}
-
-func newKeeperMetadataStorageWrapper(rng *rand.Rand, impl contracts.KeeperMetadataStorage) *keeperMetadataStorageWrapper {
-	return &keeperMetadataStorageWrapper{rng: rng, impl: impl}
-}
-
-func (wrapper *keeperMetadataStorageWrapper) Create(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
-	panic("unimplemented")
-}
-func (wrapper *keeperMetadataStorageWrapper) Read(_ context.Context, _ xkube.Namespace, _ string, _ contracts.ReadOpts) (*secretv0alpha1.Keeper, error) {
-	panic("unimplemented")
-}
-func (wrapper *keeperMetadataStorageWrapper) Update(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
-	panic("unimplemented")
-}
-func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.Namespace, _ string) error {
-	panic("unimplemented")
-}
-func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
-	panic("unimplemented")
-}
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (secretv0alpha1.KeeperConfig, error) {
-	// Maybe return an error before calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return nil, context.DeadlineExceeded
-	}
-	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name, opts)
+func (s *sut) deleteSv(namespace, name string) (*secretv0alpha1.SecureValue, error) {
+	ctx := context.Background()
+	ctx = request.WithNamespace(ctx, namespace)
+	validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
+	obj, _, err := s.secureValueRest.Delete(ctx, name, validationFunc, &metav1.DeleteOptions{})
 	if err != nil {
-		return cfg, err
+		return nil, err
 	}
-	// Maybe return an error after calling the real implementation
-	if wrapper.rng.Float32() <= 0.2 {
-		return cfg, context.DeadlineExceeded
-	}
-	return cfg, nil
+	return obj.(*secretv0alpha1.SecureValue), nil
 }

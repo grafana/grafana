@@ -3,12 +3,13 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -77,6 +78,7 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+  const { t } = useTranslate();
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -128,7 +130,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow, t]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
@@ -157,11 +159,11 @@ export function SaveProvisionedDashboardForm({
   };
 
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
-
+  const readOnly = !repository?.workflows?.length;
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repository?.workflows?.length && (
+        {readOnly && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
@@ -177,6 +179,7 @@ export function SaveProvisionedDashboardForm({
         {isNew && (
           <>
             <Field
+              noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
               invalid={!!errors.title}
               error={errors.title?.message}
@@ -193,6 +196,7 @@ export function SaveProvisionedDashboardForm({
               />
             </Field>
             <Field
+              noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
               invalid={!!errors.description}
               error={errors.description?.message}
@@ -200,7 +204,10 @@ export function SaveProvisionedDashboardForm({
               <TextArea id="dashboard-description" {...register('description')} />
             </Field>
 
-            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}>
+            <Field
+              noMargin
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+            >
               <Controller
                 control={control}
                 name={'folder'}
@@ -230,9 +237,10 @@ export function SaveProvisionedDashboardForm({
           </>
         )}
 
-        {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+        {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field
+          noMargin
           label={t('dashboard-scene.save-provisioned-dashboard-form.label-path', 'Path')}
           description={t(
             'dashboard-scene.save-provisioned-dashboard-form.description-inside-repository',
@@ -242,10 +250,11 @@ export function SaveProvisionedDashboardForm({
           <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
         </Field>
 
-        <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
+        <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
           <TextArea
             id="dashboard-comment"
             {...register('comment')}
+            disabled={readOnly}
             placeholder={t(
               'dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
               'Add a note to describe your changes (optional)'
@@ -254,9 +263,9 @@ export function SaveProvisionedDashboardForm({
           />
         </Field>
 
-        {isGitHub && (
+        {isGitHub && !readOnly && (
           <>
-            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
+            <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
               <Controller
                 control={control}
                 name="workflow"
@@ -267,6 +276,7 @@ export function SaveProvisionedDashboardForm({
             </Field>
             {workflow === 'branch' && (
               <Field
+                noMargin
                 label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
                 description={t(
                   'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
@@ -282,7 +292,7 @@ export function SaveProvisionedDashboardForm({
         )}
 
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
+          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
             {request.isLoading
               ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
               : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}

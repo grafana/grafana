@@ -306,6 +306,16 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlSecureValueOutboxUpdateReceiveCount: {
+				{
+
+					Name: "update-receive-count",
+					Data: &incrementReceiveCountOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MessageIDs:  []string{"id1", "id2", "id3"},
+					},
+				},
+			},
 			sqlSecureValueOutboxAppend: {
 				{
 					Name: "no-encrypted-secret",

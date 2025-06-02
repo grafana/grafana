@@ -55,7 +55,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		t.Cleanup(cancel)
 
 		// Create auth context with proper permissions
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, "svc", types.TypeUser)
 
 		decryptSvc, _, _, _ := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
@@ -70,8 +70,11 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		// Create auth context with permissions that are not in allowlist
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/unlisted-group:decrypt"}, types.TypeUser)
+		svName := "sv-test"
+		svcIdentity := "svc"
+
+		// Create auth context with identity that is not in allowlist
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/" + svName + ":decrypt"}, svcIdentity, types.TypeUser)
 
 		// Create an allowlist that doesn't include the permission
 		allowList := map[string]struct{}{"allowed-group": {}}
@@ -82,16 +85,16 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value that is not in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"unlisted-group"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
-		sv.Name = "sv-test"
+		sv.Name = svName
 		sv.Namespace = "default"
 
 		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
-		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
+		exposed, err := decryptSvc.Decrypt(authCtx, "default", svName)
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
@@ -102,11 +105,13 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
+		svcIdentity := "svc"
+
 		// Create auth context with proper permissions that match the decrypters
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
 
 		// Include the group in allowlist
-		allowList := map[string]struct{}{"group1": {}}
+		allowList := map[string]struct{}{svcIdentity: {}}
 
 		// Setup service
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
@@ -114,7 +119,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value that is in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"group1"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
@@ -129,22 +134,59 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
 	})
 
+	t.Run("with permissions for a specific secure value but trying to decrypt another one, it returns unauthorized error", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		svName := "sv-test"
+		svcIdentity := "svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/sv-test2:decrypt"}, svcIdentity, types.TypeUser)
+
+		// Include the group in allowlist
+		allowList := map[string]struct{}{svcIdentity: {}}
+
+		// Setup service
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
+
+		// Create a secure value that is in the allowlist
+		spec := secretv0alpha1.SecureValueSpec{
+			Description: "description",
+			Decrypters:  []string{svcIdentity},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+		}
+		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv.Name = svName
+		sv.Namespace = "default"
+
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
+
+		exposed, err := decryptSvc.Decrypt(authCtx, "default", svName)
+		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
+		require.Empty(t, exposed)
+	})
+
 	t.Run("when permission format is malformed (no verb), it returns unauthorized error", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
+		svcIdentity := "svc"
+
 		// Create auth context with malformed permission (no verb)
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues"}, svcIdentity, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"group1"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
@@ -164,25 +206,28 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
+		svName := "sv-test"
+		svcIdentity := "svc"
+
 		// Create auth context with wrong verb
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:read"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/" + svName + ":read"}, svcIdentity, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"group1"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
-		sv.Name = "sv-test"
+		sv.Name = svName
 		sv.Namespace = "default"
 
 		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
-		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
+		exposed, err := decryptSvc.Decrypt(authCtx, "default", svName)
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
@@ -193,16 +238,18 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
+		svcIdentity := "svc"
+
 		// Create auth context with incorrect number of parts
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/:decrypt"}, svcIdentity, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"group1"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
@@ -222,25 +269,28 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
+		svName := "sv-test"
+		svcIdentity := "svc"
+
 		// Create auth context with incorrect group
-		authCtx := createAuthContext(ctx, "default", []string{"wrong.group/securevalues/group1:decrypt"}, types.TypeUser)
+		authCtx := createAuthContext(ctx, "default", []string{"wrong.group/securevalues/" + svName + ":decrypt"}, svcIdentity, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
-			Decrypters:  []string{"group1"},
+			Decrypters:  []string{svcIdentity},
 			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
-		sv.Name = "sv-test"
+		sv.Name = svName
 		sv.Namespace = "default"
 
 		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
-		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
+		exposed, err := decryptSvc.Decrypt(authCtx, "default", svName)
 		require.Error(t, err)
 		require.Equal(t, err.Error(), "not authorized")
 		require.Empty(t, exposed)
@@ -311,13 +361,14 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	return decryptSvc.(*decryptStorage), secureValueMetadataStorage, keeperService, keeperMetadataStorage
 }
 
-func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
+func createAuthContext(ctx context.Context, namespace string, permissions []string, svc string, identityType types.IdentityType) context.Context {
 	requester := &identity.StaticRequester{
 		Type:      identityType,
 		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
-				Permissions: permissions,
+				Permissions:     permissions,
+				ServiceIdentity: svc,
 			},
 		},
 	}

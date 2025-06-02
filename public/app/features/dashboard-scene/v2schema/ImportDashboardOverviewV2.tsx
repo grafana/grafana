@@ -2,8 +2,10 @@ import { useState } from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  AnnotationQueryKind,
+  Spec as DashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';

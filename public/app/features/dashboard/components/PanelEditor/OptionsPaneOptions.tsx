@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -43,6 +43,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
   );
+  const { t } = useTranslate();
 
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
@@ -138,6 +139,7 @@ export function renderSearchHits(
   overrides: OptionsPaneCategoryDescriptor[],
   searchQuery: string
 ) {
+  const { t } = useTranslate();
   const engine = new OptionSearchEngine(allOptions, overrides);
   const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 

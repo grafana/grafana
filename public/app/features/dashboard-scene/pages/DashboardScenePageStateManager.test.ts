@@ -719,6 +719,57 @@ describe('DashboardScenePageStateManager v2', () => {
         fetchDashboardSpy.mockRestore();
       });
 
+      it('should not use cache if cache version and current dashboard state version differ', async () => {
+        const getDashSpy = jest.fn();
+        setupDashboardAPI(
+          {
+            access: {},
+            apiVersion: 'v2alpha1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-dash',
+              creationTimestamp: '',
+              resourceVersion: '1',
+              generation: 1,
+            },
+            spec: { ...defaultDashboardV2Spec() },
+          },
+          getDashSpy
+        );
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(getDashSpy).toHaveBeenCalledTimes(1);
+
+        const mockDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          access: {},
+          apiVersion: 'v2alpha1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+            generation: 2,
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        };
+
+        const fetchDashboardSpy = jest.spyOn(loader, 'fetchDashboard').mockResolvedValue(mockDashboard);
+
+        // mimic navigating from db1 to db2 and then back to db1, which maintains the cache. but on
+        // db1 load the initial version will be 1. Since the cache is set we also need to verify against the
+        // current dashboard state whether we should reload or not
+        loader.setSceneCache('fake-dash', loader.state.dashboard!.clone({ version: 2 }));
+        const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
+        await loader.reloadDashboard(options);
+
+        expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
+        expect(loader.state.dashboard?.state.version).toBe(2);
+
+        fetchDashboardSpy.mockRestore();
+      });
+
       it('should handle errors during reload', async () => {
         const getDashSpy = jest.fn();
         setupDashboardAPI(
@@ -942,6 +993,44 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       }
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+
+    it('should not use cache if cache version and current dashboard state version differ in v1', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({
+        dashboard: { uid: 'fake-dash', editable: true, version: 0 },
+        meta: {},
+      });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined);
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+
+      loadDashboardMock.mockClear();
+
+      const mockDashboard: DashboardDTO = {
+        dashboard: {
+          uid: 'fake-dash',
+          version: 2,
+          title: 'fake-dash',
+        } as DashboardDataDTO,
+        meta: {},
+      };
+
+      const fetchDashboardSpy = jest.spyOn(manager['activeManager'], 'fetchDashboard').mockResolvedValue(mockDashboard);
+
+      // mimic navigating from db1 to db2 and then back to db1, which maintains the cache. but on
+      // db1 load the initial version will be 1. Since the cache is set we also need to verify against the
+      // current dashboard state whether we should reload or not
+      manager.setSceneCache('fake-dash', manager.state.dashboard!.clone({ version: 2 }));
+      const options = { version: 2, scopes: [], timeRange: { from: 'now-1h', to: 'now' }, variables: {} };
+      await manager.reloadDashboard(options);
+
+      expect(fetchDashboardSpy).toHaveBeenCalledTimes(1);
+      expect(manager.state.dashboard?.state.version).toBe(2);
+
+      fetchDashboardSpy.mockRestore();
     });
   });
 

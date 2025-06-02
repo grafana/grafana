@@ -24,8 +24,7 @@ func TestService_IsDisabled(t *testing.T) {
 	// Create a new service
 	s, err := ProvideService(
 		&setting.Cfg{
-			PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
-			PreinstallPluginsAsync: true,
+			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
@@ -44,13 +43,14 @@ func TestService_IsDisabled(t *testing.T) {
 
 func TestService_Run(t *testing.T) {
 	tests := []struct {
-		name             string
-		shouldInstall    bool
-		pluginsToInstall []setting.InstallPlugin
-		existingPlugins  []*plugins.Plugin
-		pluginsToFail    []string
-		blocking         bool
-		latestPlugin     *repo.PluginArchiveInfo
+		name                 string
+		shouldInstall        bool
+		shouldThrowError     bool
+		pluginsToInstall     []setting.InstallPlugin
+		pluginsToInstallSync []setting.InstallPlugin
+		existingPlugins      []*plugins.Plugin
+		pluginsToFail        []string
+		latestPlugin         *repo.PluginArchiveInfo
 	}{
 		{
 			name:             "Installs a plugin",
@@ -64,6 +64,7 @@ func TestService_Run(t *testing.T) {
 		},
 		{
 			name:             "Skips already installed plugin",
+			shouldThrowError: false,
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin"}}},
@@ -86,17 +87,16 @@ func TestService_Run(t *testing.T) {
 			pluginsToFail:    []string{"myplugin1"},
 		},
 		{
-			name:             "Install a blocking plugin",
-			shouldInstall:    true,
-			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			blocking:         true,
+			name:                 "Install a plugin from sync list",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
 		{
-			name:             "Fails to install a blocking plugin",
-			shouldInstall:    false,
-			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			blocking:         true,
-			pluginsToFail:    []string{"myplugin"},
+			name:                 "when installation fails in sync mode, it should throw an error",
+			shouldInstall:        false,
+			shouldThrowError:     true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			pluginsToFail:        []string{"myplugin"},
 		},
 		{
 			name:             "Updates a plugin",
@@ -138,6 +138,12 @@ func TestService_Run(t *testing.T) {
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0-rc.1"},
 		},
+		{
+			name:                 "should install all plugins - sync and async",
+			shouldInstall:        true,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			pluginsToInstall:     []setting.InstallPlugin{{ID: "myplugin2"}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -150,8 +156,8 @@ func TestService_Run(t *testing.T) {
 			installedFromURL := 0
 			s, err := ProvideService(
 				&setting.Cfg{
-					PreinstallPlugins:      tt.pluginsToInstall,
-					PreinstallPluginsAsync: !tt.blocking,
+					PreinstallPluginsAsync: tt.pluginsToInstall,
+					PreinstallPluginsSync:  tt.pluginsToInstallSync,
 				},
 				pluginstore.New(preg, &fakes.FakeLoader{}),
 				&fakes.FakePluginInstaller{
@@ -165,7 +171,8 @@ func TestService_Run(t *testing.T) {
 							t.Fatal("Should not install plugin")
 							return errors.New("Should not install plugin")
 						}
-						for _, plugin := range tt.pluginsToInstall {
+						allPluginsToInstall := append(tt.pluginsToInstallSync, tt.pluginsToInstall...)
+						for _, plugin := range allPluginsToInstall {
 							if plugin.ID == pluginID && plugin.Version == version {
 								if opts.URL() != "" {
 									installedFromURL++
@@ -190,20 +197,19 @@ func TestService_Run(t *testing.T) {
 					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
-			if tt.blocking && !tt.shouldInstall {
+			if tt.shouldThrowError {
 				require.ErrorContains(t, err, "Failed to install plugin")
-			} else {
-				require.NoError(t, err)
+				return
 			}
+			require.NoError(t, err)
+			err = s.Run(context.Background())
+			require.NoError(t, err)
 
-			if !tt.blocking {
-				err = s.Run(context.Background())
-				require.NoError(t, err)
-			}
 			if tt.shouldInstall {
 				expectedInstalled := 0
 				expectedInstalledFromURL := 0
-				for _, plugin := range tt.pluginsToInstall {
+				allPluginsToInstall := append(tt.pluginsToInstallSync, tt.pluginsToInstall...)
+				for _, plugin := range allPluginsToInstall {
 					expectedFailed := false
 					for _, pluginFail := range tt.pluginsToFail {
 						if plugin.ID == pluginFail {

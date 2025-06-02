@@ -2,8 +2,6 @@ package contracts
 
 import (
 	"context"
-
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 type contextRequestIdKey struct{}
@@ -35,7 +33,7 @@ type AppendOutboxMessage struct {
 	Type            OutboxMessageType
 	Name            string
 	Namespace       string
-	EncryptedSecret secretv0alpha1.ExposedSecureValue
+	EncryptedSecret string
 	KeeperName      *string
 	ExternalID      *string
 }
@@ -46,9 +44,11 @@ type OutboxMessage struct {
 	MessageID       string
 	Name            string
 	Namespace       string
-	EncryptedSecret secretv0alpha1.ExposedSecureValue
+	EncryptedSecret string
 	KeeperName      *string
 	ExternalID      *string
+	// How many times this message has been received
+	ReceiveCount int
 }
 
 type OutboxQueue interface {
@@ -58,4 +58,6 @@ type OutboxQueue interface {
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
 	// Deletes a message from the outbox queue
 	Delete(ctx context.Context, messageID string) error
+	// Increments the number of times each message has been received by 1. Must be atomic.
+	IncrementReceiveCount(ctx context.Context, messageIDs []string) error
 }

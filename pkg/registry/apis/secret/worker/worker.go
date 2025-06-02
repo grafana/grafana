@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +20,7 @@ type Worker struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
+	encryptionManager          contracts.EncryptionManager
 }
 
 type Config struct {
@@ -28,6 +30,8 @@ type Config struct {
 	ReceiveTimeout time.Duration
 	// How often to poll the outbox queue for new messages
 	PollingInterval time.Duration
+	// How many tries to try to process a message before marking the operation as failed
+	MaxMessageProcessingAttempts uint
 }
 
 func NewWorker(
@@ -37,7 +41,21 @@ func NewWorker(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
-) *Worker {
+	encryptionManager contracts.EncryptionManager,
+) (*Worker, error) {
+	if config.BatchSize == 0 {
+		return nil, fmt.Errorf("config.BatchSize is required")
+	}
+	if config.ReceiveTimeout == 0 {
+		return nil, fmt.Errorf("config.ReceiveTimeout is required")
+	}
+	if config.PollingInterval == 0 {
+		return nil, fmt.Errorf("config.PollingInterval is required")
+	}
+	if config.MaxMessageProcessingAttempts == 0 {
+		return nil, fmt.Errorf("config.MaxMessageProcessingAttempts is required")
+	}
+
 	return &Worker{
 		config:                     config,
 		database:                   database,
@@ -45,7 +63,8 @@ func NewWorker(
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
-	}
+		encryptionManager:          encryptionManager,
+	}, nil
 }
 
 // The main method to drive the worker
@@ -66,14 +85,18 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 				return ctx.Err()
 			}
 
-			w.receiveAndProcessMessages(ctx)
+			if err := w.receiveAndProcessMessages(ctx); err != nil {
+				logging.FromContext(ctx).Error("receiving outbox messages", "err", err.Error())
+			}
 		}
 	}
 }
 
 // TODO: don't rollback every message when a single error happens
-func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
-	if err := w.database.Transaction(ctx, func(ctx context.Context) error {
+func (w *Worker) receiveAndProcessMessages(ctx context.Context) error {
+	messageIDs := make([]string, 0)
+
+	txErr := w.database.Transaction(ctx, func(ctx context.Context) error {
 		timeoutCtx, cancel := context.WithTimeout(ctx, w.config.ReceiveTimeout)
 		messages, err := w.outboxQueue.ReceiveN(timeoutCtx, w.config.BatchSize)
 		cancel()
@@ -82,18 +105,35 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 
 		for _, message := range messages {
+			messageIDs = append(messageIDs, message.MessageID)
 			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
 		}
 		return nil
-	}); err != nil {
-		logging.FromContext(ctx).Error("receiving outbox messages", "err", err.Error())
+	})
+
+	// This call is made outside the transaction to make sure the receive count is updated on rollbacks.
+	incrementErr := w.outboxQueue.IncrementReceiveCount(ctx, messageIDs)
+	if incrementErr != nil {
+		incrementErr = fmt.Errorf("incrementing receive count for outbox message: %w", incrementErr)
 	}
+
+	return errors.Join(txErr, incrementErr)
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
+	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
+			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+		}
+		if err := w.outboxQueue.Delete(ctx, message.MessageID); err != nil {
+			return fmt.Errorf("deleting message from outbox queue: %w", err)
+		}
+		return nil
+	}
+
 	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName, contracts.ReadOpts{ForUpdate: true})
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
@@ -103,16 +143,15 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	if err != nil {
 		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
-	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperCfg.Type())
-	}
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
-		// TODO: DECRYPT HERE
-		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret))
+		if err != nil {
+			return fmt.Errorf("decrypting secure value secret: %w", err)
+		}
 
-		externalID, err := keeper.Store(ctx, keeperCfg, message.Namespace, rawSecret)
+		externalID, err := keeper.Store(ctx, keeperCfg, message.Namespace, string(rawSecret))
 		if err != nil {
 			return fmt.Errorf("storing secret: message=%+v %w", message, err)
 		}
@@ -128,10 +167,12 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
-		// TODO: DECRYPT HERE
-		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
+		rawSecret, err := w.encryptionManager.Decrypt(ctx, message.Namespace, []byte(message.EncryptedSecret))
+		if err != nil {
+			return fmt.Errorf("decrypting secure value secret: %w", err)
+		}
 
-		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), string(rawSecret)); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 

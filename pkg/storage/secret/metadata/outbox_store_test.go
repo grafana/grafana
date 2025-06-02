@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -65,7 +64,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -74,7 +73,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -83,7 +82,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -104,6 +103,43 @@ func TestOutboxStoreModel(t *testing.T) {
 	require.Empty(t, model.ReceiveN(1))
 }
 
+func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Append returns error when the queue already contains an operation for the secure value", func(t *testing.T) {
+		t.Parallel()
+
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+
+		ctx := context.Background()
+
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
+
+		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID:       "1",
+			Type:            contracts.CreateSecretOutboxMessage,
+			Name:            "name1",
+			Namespace:       "ns1",
+			EncryptedSecret: "v1",
+			KeeperName:      nil,
+			ExternalID:      nil,
+		})
+		require.NoError(t, err)
+
+		_, err = outbox.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID:       "1",
+			Type:            contracts.UpdateSecretOutboxMessage,
+			Name:            "name1",
+			Namespace:       "ns1",
+			EncryptedSecret: "v1",
+			KeeperName:      nil,
+			ExternalID:      nil,
+		})
+
+		require.ErrorIs(t, err, contracts.ErrSecureValueOperationInProgress)
+	})
+}
+
 func TestOutboxStore(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
@@ -115,14 +151,14 @@ func TestOutboxStore(t *testing.T) {
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 	m2 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-2",
-		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+		EncryptedSecret: "value",
 		ExternalID:      nil,
 	}
 
@@ -191,7 +227,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 					Type:            contracts.CreateSecretOutboxMessage,
 					Name:            fmt.Sprintf("s-%d", i),
 					Namespace:       fmt.Sprintf("n-%d", i),
-					EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
+					EncryptedSecret: "value",
 					ExternalID:      nil,
 				}
 				messageID, err := outbox.Append(ctx, message)

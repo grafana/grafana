@@ -64,8 +64,25 @@ func NewSecretAPIBuilder(
 	database contracts.Database,
 	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
+	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
+	worker, err := worker.NewWorker(worker.Config{
+		BatchSize:                    20,
+		ReceiveTimeout:               5 * time.Second,
+		PollingInterval:              100 * time.Millisecond,
+		MaxMessageProcessingAttempts: 10,
+	},
+		database,
+		secretsOutboxQueue,
+		secureValueMetadataStorage,
+		keeperMetadataStorage,
+		keeperService,
+		encryptionManager,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
+	}
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
 		secretService:              secretService,
@@ -74,18 +91,8 @@ func NewSecretAPIBuilder(
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
-		worker: worker.NewWorker(worker.Config{
-			BatchSize:       1,
-			ReceiveTimeout:  5 * time.Second,
-			PollingInterval: 500 * time.Millisecond,
-		},
-			database,
-			secretsOutboxQueue,
-			secureValueMetadataStorage,
-			keeperMetadataStorage,
-			keeperService,
-		),
-		decryptersAllowList: decryptersAllowList,
+		worker:                     worker,
+		decryptersAllowList:        decryptersAllowList,
 	}, nil
 }
 
@@ -103,6 +110,7 @@ func RegisterAPIService(
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
+	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -110,7 +118,10 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	if err := secretDBMigrator.RunMigrations(); err != nil {
+	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
+	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+
+	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
 		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
@@ -127,6 +138,7 @@ func RegisterAPIService(
 		database,
 		keeperService,
 		accessClient,
+		encryptionManager,
 		nil, // OSS does not need an allow list.
 	)
 	if err != nil {
@@ -425,7 +437,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Description: "A secret in default",
 													Value:       "this is super duper secure",
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -439,7 +451,7 @@ spec:
 													Description: "A secret in aws",
 													Value:       "this is super duper secure",
 													Keeper:      &exampleKeeperAWS,
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -453,7 +465,7 @@ spec:
 													Description: "A secret from aws",
 													Ref:         &exampleRef,
 													Keeper:      &exampleKeeperAWS,
-													Decrypters:  []string{"actor_k6"},
+													Decrypters:  []string{"k6"},
 												},
 											},
 										},
@@ -469,7 +481,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Description: "XYZ secret",
 													Value:       "this is super duper secure",
-													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
+													Decrypters:  []string{"k6, synthetic-monitoring"},
 												},
 											},
 										},
@@ -498,8 +510,8 @@ spec:
   description: A secret value
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 								"secret to store in aws keeper": {
@@ -518,8 +530,8 @@ spec:
   keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 								"secret to reference in aws keeper": {
@@ -538,7 +550,7 @@ spec:
   keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
-    - actor_k6`,
+    - k6`,
 									},
 								},
 								"secret with name specified": {
@@ -557,8 +569,8 @@ spec:
   description: XYZ secret
   value: this is super duper secure
   decrypters:
-    - actor_k6 
-    - actor_synthetic-monitoring`,
+    - k6 
+    - synthetic-monitoring`,
 									},
 								},
 							},

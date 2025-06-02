@@ -19,6 +19,7 @@ const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
+const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor', 'public/app/plugins/datasource/mssql'];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -118,21 +119,28 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['react-i18next', 'i18next'],
+              importNames: ['t'],
+              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+            },
+            {
+              group: ['react-i18next'],
+              importNames: ['Trans'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+            {
+              regex: '\\.test$',
+              message:
+                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
               importNames: ['useDispatch', 'useSelector'],
               message: 'Please import from app/types instead.',
-            },
-            {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from app/core/internationalization instead',
-            },
-            {
-              name: 'i18next',
-              importNames: ['t'],
-              message: 'Please import from app/core/internationalization instead',
             },
           ],
         },
@@ -269,7 +277,7 @@ module.exports = [
       react: reactPlugin,
       '@grafana': grafanaPlugin,
     },
-    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}', 'packages/grafana-alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
@@ -287,15 +295,12 @@ module.exports = [
     plugins: {
       '@grafana': grafanaPlugin,
     },
-    files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
-    ignores: [
-      'public/app/plugins/**',
-      '**/*.story.tsx',
-      '**/*.{test,spec}.{ts,tsx}',
-      '**/__mocks__/',
-      'public/test',
-      '**/spec/**/*.{ts,tsx}',
+    files: [
+      'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
+    ignores: ['**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test', '**/spec/**/*.{ts,tsx}'],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
       '@grafana/no-translation-top-level': 'error',
@@ -310,7 +315,7 @@ module.exports = [
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
       'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
-      'packages/grafana-ui/**/*.{spec,test}.{ts,tsx}',
+      'packages/{grafana-ui,grafana-alerting}/**/*.{spec,test}.{ts,tsx}',
     ],
     rules: {
       ...testingLibraryPlugin.configs['flat/react'].rules,

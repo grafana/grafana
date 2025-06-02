@@ -42,6 +42,6 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
   }, 10);
 }
 
-function scrollIntoView(element: HTMLElement) {
+export function scrollIntoView(element: HTMLElement) {
   element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
 }

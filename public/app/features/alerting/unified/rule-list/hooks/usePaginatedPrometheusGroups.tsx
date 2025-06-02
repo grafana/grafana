@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { isLoading, useAsync } from '../../hooks/useAsync';
+import { isLoading as isLoadingState, isUninitialized as isUninitializedState, useAsync } from '../../hooks/useAsync';
 
 /**
  * Provides pagination functionality for rule groups with lazy loading.
@@ -11,21 +12,20 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
  *
  * @param groupsGenerator - An async generator that yields rule groups in batches
  * @param pageSize - Number of groups to display per page
- * @returns Pagination state and controls for navigating through rule groups
+ * @returns Groups loaded so far and controls for navigating through rule groups
  */
-export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
+export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   groupsGenerator: AsyncIterator<TGroup>,
   pageSize: number
 ) {
-  const [currentPage, setCurrentPage] = useState(1);
   const [groups, setGroups] = useState<TGroup[]>([]);
-  const [lastPage, setLastPage] = useState<number | undefined>(undefined);
+  const [hasMoreGroups, setHasMoreGroups] = useState<boolean>(true);
 
-  const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
+  const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async () => {
     let done = false;
     const currentGroups: TGroup[] = [];
 
-    while (currentGroups.length < groupsCount) {
+    while (currentGroups.length < pageSize) {
       const generatorResult = await groupsGenerator.next();
       if (generatorResult.done) {
         done = true;
@@ -36,42 +36,24 @@ export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
     }
 
     if (done) {
-      const groupsTotal = groups.length + currentGroups.length;
-      setLastPage(Math.ceil(groupsTotal / pageSize));
+      setHasMoreGroups(false);
     }
 
-    setGroups((groups) => [...groups, ...currentGroups]);
+    setGroups((groups) => groups.concat(currentGroups));
   });
 
-  // lastPage could be computed from groups.length and pageSize
-  const fetchInProgress = isLoading(groupsRequestState);
-  const canMoveForward = !fetchInProgress && (!lastPage || currentPage < lastPage);
-  // When going backward we already have the groups loaded, so no need to check if fetchInProgress
-  const canMoveBackward = currentPage > 1;
+  // make sure we only load the initial group exactly once
+  useEffectOnce(() => {
+    fetchMoreGroups();
+  });
 
-  const nextPage = useCallback(async () => {
-    if (canMoveForward) {
-      setCurrentPage((page) => page + 1);
-    }
-  }, [canMoveForward]);
+  const isLoading = isLoadingState(groupsRequestState);
+  const isUninitialized = isUninitializedState(groupsRequestState);
 
-  const previousPage = useCallback(async () => {
-    if (canMoveBackward) {
-      setCurrentPage((page) => page - 1);
-    }
-  }, [canMoveBackward]);
-
-  // groups.length - pageSize to have one more page loaded to prevent flickering with loading state
-  // lastPage === undefined because 0 is falsy but a value which should stop fetching (e.g for broken data sources)
-  const shouldFetchNextPage = groups.length - pageSize < pageSize * currentPage && lastPage === undefined;
-
-  if (shouldFetchNextPage && !fetchInProgress) {
-    fetchMoreGroups(pageSize);
-  }
-
-  const groupsPage = useMemo(() => {
-    return groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  }, [groups, currentPage, pageSize]);
-
-  return { isLoading: fetchInProgress, page: groupsPage, nextPage, previousPage, canMoveForward, canMoveBackward };
+  return {
+    isLoading,
+    groups,
+    hasMoreGroups: !isUninitialized && hasMoreGroups,
+    fetchMoreGroups,
+  };
 }

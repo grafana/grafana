@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -222,14 +223,15 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	updatedSv, err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name)
+	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, false, s.resource.NewNotFound(name)
 		}
 		return nil, false, fmt.Errorf("deleting secure value: %+w", err)
 	}
 
-	return nil, false, nil
+	return updatedSv, false, nil
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
@@ -306,7 +308,7 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 	return errs
 }
 
-// validateDecrypters validates that (if populated) the `decrypters` must match "actor_{name}" and must be unique.
+// validateDecrypters validates that (if populated) the `decrypters` must be unique.
 func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
@@ -324,8 +326,17 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 	decrypterNames := make(map[string]struct{}, 0)
 
 	for i, decrypter := range decrypters {
+		decrypter = strings.TrimSpace(decrypter)
+		if decrypter == "" {
+			errs = append(
+				errs,
+				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters cannot be empty if specified"),
+			)
+
+			continue
+		}
+
 		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
-		// This means an allow list item should have the format "actor_{name}" and not just "{name}".
 		if len(decryptersAllowList) > 0 {
 			if _, exists := decryptersAllowList[decrypter]; !exists {
 				errs = append(
@@ -339,17 +350,19 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 			continue
 		}
 
-		actor, name, found := strings.Cut(strings.TrimSpace(decrypter), "_")
-		if !found || actor != "actor" || name == "" {
-			errs = append(
-				errs,
-				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "a decrypter must have the format `actor_{name}`"),
-			)
+		// Use the same validation as labels for the decrypters.
+		if verrs := validation.IsValidLabelValue(decrypter); len(verrs) > 0 {
+			for _, verr := range verrs {
+				errs = append(
+					errs,
+					field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, verr),
+				)
+			}
 
 			continue
 		}
 
-		if _, exists := decrypterNames[name]; exists {
+		if _, exists := decrypterNames[decrypter]; exists {
 			errs = append(
 				errs,
 				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters must be unique"),
@@ -358,7 +371,7 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 			continue
 		}
 
-		decrypterNames[name] = struct{}{}
+		decrypterNames[decrypter] = struct{}{}
 	}
 
 	return errs
