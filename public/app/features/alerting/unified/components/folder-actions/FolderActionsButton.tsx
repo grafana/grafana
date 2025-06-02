@@ -61,10 +61,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   // URLs
   const redirectToListView = useRedirectToListView(viewComponent);
 
-  if (!canPause && !canDelete) {
-    return null;
-  }
-
   if (!folder) {
     return null;
   }
@@ -140,7 +136,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
         <MoreButton
           fill="text"
           size="sm"
-          aria-label={t('alerting.list-view.folder-actions.button.title', 'Folder actions')}
+          aria-label={t('alerting.list-view.folder-actions.button.aria-label', 'Folder actions')}
           title={t('alerting.list-view.folder-actions.button.title', 'Actions')}
         />
       </Dropdown>
