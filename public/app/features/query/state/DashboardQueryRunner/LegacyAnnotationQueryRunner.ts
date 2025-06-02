@@ -36,8 +36,6 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return of([]);
     }
 
-    return from(annotationQuery).pipe(
-      catchError(handleAnnotationQueryRunnerError)
-    );
+    return from(annotationQuery).pipe(catchError(handleAnnotationQueryRunnerError));
   }
 }
