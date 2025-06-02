@@ -78,8 +78,8 @@ export class ScopesService implements ScopesContextValue {
         }
         const queryParams = new URLSearchParams(location.search);
         const scopes = queryParams.getAll('scopes');
-        const scopesFromState = this.state.value.map((scope) => scope.metadata.name);
-        if (!isEqual(scopes, scopesFromState)) {
+        //const scopesFromState = this.state.value.map((scope) => scope.metadata.name);
+        if (scopes.length) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
           // changes the URL directly, it would trigger a reload so scopes would still be reset.
