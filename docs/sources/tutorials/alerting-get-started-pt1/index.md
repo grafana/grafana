@@ -9,7 +9,7 @@ labels:
     - oss
     - cloud
 tags:
-  - intermediate
+  - beginner
 title: Get started with Grafana Alerting - Link alerts to visualizations
 weight: 61
 killercoda:
