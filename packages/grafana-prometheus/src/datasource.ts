@@ -45,6 +45,7 @@ import { PrometheusAnnotationSupport } from './annotations';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
+  populateMatchParamsFromQueries,
   PrometheusLanguageProvider,
   PrometheusLanguageProviderInterface,
   SUGGESTIONS_LIMIT,
@@ -348,7 +349,7 @@ export class PrometheusDatasource
   shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
     if (target.exemplar) {
       // We check all already processed targets and only create exemplar target for not used metric names
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+      const metricName = this.languageProvider.retrieveHistogramMetrics().find((m) => target.expr.includes(m));
       // Remove targets that weren't processed yet (in targets array they are after current target)
       const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
       const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
@@ -522,25 +523,12 @@ export class PrometheusDatasource
         .map((k) => ({ value: k, text: k }));
     }
 
-    if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
-      return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
-    }
+    const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
-      label: f.key,
-      value: f.value,
-      op: f.operator,
-    }));
-    const expr = promQueryModeller.renderLabels(labelFilters);
-
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
-      options.timeRange,
-      expr
-    );
+    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match, '0');
 
     // filter out already used labels
-    return Object.keys(labelsIndex)
+    return labelKeys
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
   }
@@ -566,26 +554,36 @@ export class PrometheusDatasource
       ).map((v) => ({ value: v, text: v }));
     }
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+    const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
+
+    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match, '0')).map((v) => ({
+      value: v,
+      text: v,
+    }));
+  }
+
+  /**
+   * It creates a matcher string for resource calls
+   * @param queries
+   * @param adhocFilters
+   *
+   * @example
+   * queries<PromQuery>=[{expr:`metricName{label="value"}`}]
+   * adhocFilters={key:"instance", operator:"=", value:"localhost"}
+   * returns {__name__=~"metricName", instance="localhost"}
+   */
+  extractResourceMatcher(queries: PromQuery[], adhocFilters: AdHocVariableFilter[]): string {
+    // Extract metric names from queries we have already
+    const metricMatch = populateMatchParamsFromQueries(queries);
+    const labelFilters: QueryBuilderLabelFilter[] = adhocFilters.map((f) => ({
       label: f.key,
       value: f.value,
       op: f.operator,
     }));
-
-    const expr = promQueryModeller.renderLabels(labelFilters);
-
-    if (this.hasLabelsMatchAPISupport()) {
-      return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
-      ).map((v) => ({
-        value: v,
-        text: v,
-      }));
-    }
-
-    const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
-    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
-    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+    // Extract label filters from the filters we have already
+    const labelsMatch = promQueryModeller.renderLabelsWithoutBrackets(labelFilters);
+    // Create a matcher using metric names and label filters
+    return `{${[metricMatch, ...labelsMatch].join(',')}}`;
   }
 
   interpolateVariablesInQueries(
