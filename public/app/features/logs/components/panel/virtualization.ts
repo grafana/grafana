@@ -139,16 +139,16 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
       let delta = 0;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
+        let measuredLine = testLogLine;
         if (logLines > 0) {
-          testLogLine.trimStart();
+          measuredLine.trimStart();
         }
-        width = measureTextWidth(testLogLine);
+        width = measureTextWidth(measuredLine);
         delta += 1;
       } while (width >= availableWidth);
       if (beforeWidth) {
         beforeWidth = 0;
       }
-      console.log(testLogLine);
       logLines += 1;
       start += testLogLine.length;
     }
