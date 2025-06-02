@@ -1,0 +1,6 @@
+envtpl==0.7.0 \
+    --hash=sha256:cfc5bec6c554fa2b1578980f4c2931dd0db128f14f5a7f4c91c3280167e30cf9
+Jinja2==3.1.6 \
+    --hash=sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d
+MarkupSafe==2.1.5 \
+    --hash=sha256:d283d37a890ba4c1ae73ffadf8046435c76e7bc2247bbb63c00bd1a709c6544b 
