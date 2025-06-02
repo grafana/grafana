@@ -28,7 +28,6 @@ func TestIntegrationConvertPrometheusNotificationSettings(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 		EnableRecordingRules:  true,
 	})
 
