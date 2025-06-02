@@ -94,5 +94,5 @@ This option is available only in [time series panels](ref:time-series-visualizat
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 
 {{< admonition type="tip" >}}
-For a practical example, refer to the [Grafana alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt1/) tutorial.
+For a practical example, refer to the [Grafana alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) tutorial.
 {{% /admonition %}}
