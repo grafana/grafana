@@ -1,5 +1,6 @@
 import { Button, EmptyState } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+
+import { t, Trans } from '../../../core/internationalization';
 
 interface SecretsEmptyStateProps {
   onCreateSecret: () => void;

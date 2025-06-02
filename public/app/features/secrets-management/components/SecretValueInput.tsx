@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Button, Input, Stack, TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+
+import { t, Trans } from '../../../core/internationalization';
 
 export type SecretValueInputProps = React.ComponentProps<typeof TextArea> & {
   isConfigured: boolean;

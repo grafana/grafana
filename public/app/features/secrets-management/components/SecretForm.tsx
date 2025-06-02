@@ -4,8 +4,8 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Button, Field, IconButton, Input, MultiSelect, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
+import { t } from '../../../core/internationalization';
 import { DECRYPT_ALLOW_LIST_OPTIONS, SECRETS_MAX_LABELS } from '../constants';
 import { SecretFormValues } from '../types';
 import {

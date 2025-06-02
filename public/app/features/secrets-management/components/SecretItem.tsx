@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
+import { t, Trans } from '../../../core/internationalization';
 import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
 import { Secret } from '../types';
 import { isSecretPending } from '../utils';

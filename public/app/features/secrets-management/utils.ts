@@ -1,7 +1,8 @@
 import { FormEvent } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+
+import { t } from '../../core/internationalization';
 
 import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
 import {

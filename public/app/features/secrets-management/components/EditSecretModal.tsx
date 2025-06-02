@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
 import { Modal, Spinner } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
+import { t } from '../../../core/internationalization';
 import { useCreateSecretMutation, useGetSecretQuery, useUpdateSecretMutation } from '../api/secretsManagementApi';
 import { SecretFormValues } from '../types';
 import { secretFormValuesToSecret, secretToSecretFormValues } from '../utils';
