@@ -145,7 +145,6 @@ const loadDashboardMock = jest.fn();
 setDashboardLoaderSrv({
   loadDashboard: loadDashboardMock,
   // disabling type checks since this is a test util
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 } as unknown as DashboardLoaderSrv);
 
 describe('DashboardScenePage', () => {

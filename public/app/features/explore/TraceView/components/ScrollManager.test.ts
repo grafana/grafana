@@ -74,15 +74,14 @@ describe('ScrollManager', () => {
     });
 
     it('is a noop if an invalid rowPosition is returned by the accessors', () => {
-      // eslint-disable-next-line no-console
       const oldWarn = console.warn;
-      // eslint-disable-next-line no-console
+
       console.warn = () => {};
       manager._scrollPast(-2, 1);
       expect(jest.mocked(accessors.getRowPosition).mock.calls.length).toBe(1);
       expect(jest.mocked(accessors.getViewHeight).mock.calls.length).toBe(0);
       expect(jest.mocked(scrollTo).mock.calls.length).toBe(0);
-      // eslint-disable-next-line no-console
+
       console.warn = oldWarn;
     });
 

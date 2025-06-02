@@ -2,4 +2,4 @@
 // message cataloge isnt really used anyway, but we mock them out so anything that imports them
 // won't fail if they aren't generated when the tests run
 
-/*eslint-disable*/ module.exports = { messages: {} };
+module.exports = { messages: {} };

@@ -148,7 +148,7 @@ export function TableNG(props: TableNGProps) {
       setRevId(revId + 1);
     }
     prevProps.current = props;
-  }, [props, revId, fieldConfig?.overrides, fieldConfig?.defaults]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [props, revId, fieldConfig?.overrides, fieldConfig?.defaults]);
 
   useLayoutEffect(() => {
     if (!isContextMenuOpen) {
@@ -426,7 +426,7 @@ export function TableNG(props: TableNGProps) {
       }
       return getFooterItemNG(sortedRows, field, footerOptions);
     });
-  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]);
 
   const onCellExpand = (rowIdx: number) => {
     if (!expandedRows.includes(rowIdx)) {

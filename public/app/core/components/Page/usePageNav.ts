@@ -19,7 +19,6 @@ export function usePageNav(navId?: string, oldProp?: NavModel): NavModel | undef
     return;
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   return useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, navId ?? 'home')));
 }
 

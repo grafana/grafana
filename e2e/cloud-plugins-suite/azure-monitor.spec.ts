@@ -150,7 +150,6 @@ describe('Azure monitor datasource', () => {
       });
     } else {
       cy.readFile(provisioningPath).then((azMonitorProvision: string) => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const yaml = load(azMonitorProvision) as AzureMonitorProvision;
         provisionAzureMonitorDatasources([yaml]);
       });

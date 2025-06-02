@@ -58,7 +58,6 @@ export const LocationModeEditor = ({
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.settings]);
 
   const styles = useStyles2(getStyles);

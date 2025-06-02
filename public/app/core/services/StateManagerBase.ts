@@ -12,7 +12,6 @@ export class StateManagerBase<TState> {
   }
 
   useState() {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useLatestState(this);
   }
 

@@ -14,7 +14,6 @@ import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),

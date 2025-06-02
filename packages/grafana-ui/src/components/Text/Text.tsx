@@ -56,14 +56,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       return childElement(undefined);
     }
 
-    return (
-      <TruncatedText
-        childElement={childElement}
-        // eslint-disable-next-line react/no-children-prop
-        children={children}
-        ref={ref}
-      />
-    );
+    return <TruncatedText childElement={childElement} children={children} ref={ref} />;
   }
 );
 

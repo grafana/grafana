@@ -122,7 +122,7 @@ function isCustomTransformation(t: DataTransformerConfig | CustomTransformOperat
 }
 
 function deepIterate<T extends object>(obj: T, doSomething: (current: any) => any): T;
-// eslint-disable-next-line no-redeclare
+
 function deepIterate(obj: any, doSomething: (current: any) => any): any {
   if (Array.isArray(obj)) {
     return obj.map((o) => deepIterate(o, doSomething));

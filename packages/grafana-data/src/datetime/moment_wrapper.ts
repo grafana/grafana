@@ -1,7 +1,7 @@
 import moment, { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
 
 import { TimeZone } from '../types/time';
-/* eslint-disable id-blacklist, no-restricted-imports */
+
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }

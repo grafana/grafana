@@ -37,7 +37,6 @@ const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.Prop
 
 export const withTheme =
   (handleSassThemeChange: SassThemeChangeHandler): Decorator =>
-  // eslint-disable-next-line react/display-name
   (story, context) => (
     <ThemeableStory themeId={context.globals.theme} handleSassThemeChange={handleSassThemeChange}>
       {story()}

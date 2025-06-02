@@ -46,12 +46,10 @@ jest.mock('@grafana/runtime', () => ({
 
 // Mock connected child components instead of rendering them
 jest.mock('./TeamSettings', () => {
-  //eslint-disable-next-line
   return () => <div>Team settings</div>;
 });
 
 jest.mock('./TeamGroupSync', () => {
-  //eslint-disable-next-line
   return () => <div>Team group sync</div>;
 });
 

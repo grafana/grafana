@@ -38,7 +38,6 @@ import { cloneRuleDefinition } from './clone.utils';
 import { getDefaultFormValues } from './formDefaults';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),

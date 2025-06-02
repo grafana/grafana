@@ -297,7 +297,6 @@ describe('timeRegions', () => {
   let _ = null;
 
   describe('various scenarios (regions)', () => {
-    /* eslint-disable */
     // prettier-ignore
     let tests: TestDef[] = [
       ['from every day (time before) to every day (time after)',  _, '10:27', _, '14:27', '27 10 * * *', '4h'],
@@ -317,7 +316,6 @@ describe('timeRegions', () => {
       ['from fri (time after)        to fri (time before)',       5, '14:27', 5, '10:27', '27 14 * * 5', '6d 20h'],
 
     ];
-    /* eslint-enable */
 
     tests.forEach(([name, fromDayOfWeek, from, toDayOfWeek, to, cronExpr, duration]) => {
       it(name, () => {
@@ -331,7 +329,6 @@ describe('timeRegions', () => {
   });
 
   describe('various scenarios (points)', () => {
-    /* eslint-disable */
     // prettier-ignore
     let tests: TestDef[] = [
       ['from every day (time)',                            _, '10:03', _, _,       '3 10 * * *', ''],
@@ -339,7 +336,6 @@ describe('timeRegions', () => {
       ['from tues      (time)',                            2, '10:03', _,       _, '3 10 * * 2', ''],
       ['from tues      (time)        to tues      (time)', 2, '10:03', _, '10:03', '3 10 * * 2', ''],
     ];
-    /* eslint-enable */
 
     tests.forEach(([name, fromDayOfWeek, from, toDayOfWeek, to, cronExpr, duration]) => {
       it(name, () => {

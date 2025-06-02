@@ -173,7 +173,6 @@ export class AppChromeService {
   }
 
   public useState() {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
   }
 

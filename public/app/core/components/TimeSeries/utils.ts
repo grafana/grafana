@@ -433,7 +433,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           fauxData[0] = xData;
           fauxData[seriesIdx] = yData;
 
-          //eslint-disable-next-line
           return defaultBuilder(
             {
               ...u,

@@ -52,7 +52,6 @@ export const DynamicConfigValueEditor = ({
   const labelCategory = item.category?.filter((c) => c !== item.name);
   let editor;
 
-  /* eslint-disable react/display-name */
   const renderLabel =
     (includeDescription = true, includeCounter = false) =>
     (isExpanded = false) => (
@@ -85,7 +84,6 @@ export const DynamicConfigValueEditor = ({
         )}
       </HorizontalGroup>
     );
-  /* eslint-enable react/display-name */
 
   if (isCollapsible) {
     editor = (

@@ -63,7 +63,7 @@ const columns: AlertTableColumnProps[] = [
   {
     id: 'state',
     label: 'State',
-    // eslint-disable-next-line react/display-name
+
     renderCell: ({
       data: {
         alert: { state },
@@ -74,7 +74,7 @@ const columns: AlertTableColumnProps[] = [
   {
     id: 'labels',
     label: 'Labels',
-    // eslint-disable-next-line react/display-name
+
     renderCell: ({
       data: {
         alert: { labels, commonLabels },
@@ -84,7 +84,7 @@ const columns: AlertTableColumnProps[] = [
   {
     id: 'created',
     label: 'Created',
-    // eslint-disable-next-line react/display-name
+
     renderCell: ({
       data: {
         alert: { activeAt },

@@ -1,4 +1,3 @@
-/* eslint-disable @grafana/no-restricted-img-srcs */
 import { RuleTester } from 'eslint';
 
 import noRestrictedImgSrcs from '../rules/no-restricted-img-srcs.cjs';

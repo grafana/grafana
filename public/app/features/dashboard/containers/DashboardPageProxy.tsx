@@ -37,7 +37,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
   // To avoid querying single dashboard multiple times, stateManager.fetchDashboard uses a simple, short-lived cache.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+
   const dashboard = useAsync(async () => {
     if (params.type === 'snapshot') {
       return null;

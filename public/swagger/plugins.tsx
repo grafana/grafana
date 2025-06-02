@@ -22,7 +22,6 @@ export const SchemaContext = createContext<SchemaType>(undefined);
 export const NamespaceContext = createContext<string | undefined>(undefined);
 export const ResourceContext = createContext<ResourceInfo | undefined>(undefined);
 
-/* eslint-disable react/display-name */
 export const WrappedPlugins = function () {
   return {
     wrapComponents: {

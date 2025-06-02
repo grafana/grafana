@@ -60,7 +60,6 @@ export function DataSourceVariableForm({
       <VariableTextField
         defaultValue={regex}
         name="Instance name filter"
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(.*)-.*/"
         onBlur={onRegExBlur}
         description={

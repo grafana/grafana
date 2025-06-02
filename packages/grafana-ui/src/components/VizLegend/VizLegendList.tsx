@@ -27,7 +27,6 @@ export const VizLegendList = <T extends unknown>({
   const styles = useStyles2(getStyles);
 
   if (!itemRenderer) {
-    /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
       <VizLegendListItem
         item={item}
