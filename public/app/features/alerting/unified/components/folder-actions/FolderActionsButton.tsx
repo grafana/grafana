@@ -75,9 +75,13 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
       return null;
     }
 
+    if (!canPause && !canDelete) {
+      return null;
+    }
+
     return (
       <>
-        {(canPause || canDelete) && <Menu.Divider />}
+        <Menu.Divider />
         {canPause && (
           <>
             <PauseUnpauseActionMenuItem
