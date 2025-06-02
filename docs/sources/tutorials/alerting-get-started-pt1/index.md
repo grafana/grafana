@@ -21,15 +21,15 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-The Get started with Grafana Alerting - Dynamic routing tutorial is a continuation of the [Get started with Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
+This tutorial is a continuation of the [Get started with Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
 <!-- USE CASE -->
 
 In this tutorial you will learn how to:
 
 - Link alert rules to time series panels for better visualization
-- View alert annotations directly on dashboards for better context and traceability
-- Monitor CPU and memory usage using Prometheus queries.
+- View alert annotations directly on dashboards for better context
+- Write Prometheus queries
 
 <!-- INTERACTIVE page intro.md END -->
 <!-- INTERACTIVE page step1.md START -->
@@ -132,26 +132,9 @@ If you already have Grafana, Loki, or Prometheus running on your system, you mig
 
 ## Use case: monitoring and alerting for system health with Prometheus and Grafana
 
-In this use case, we focus on monitoring the system's CPU, memory, and disk usage as part of a monitoring setup. This example is based on the [Grafana Prometheus Alerting Demo](https://github.com/tonypowa/grafana-prometheus-alerting-demo), which collects and visualizes system metrics via Prometheus and Grafana.
+In this use case, we focus on monitoring the system's CPU, memory, and disk usage as part of a monitoring setup. The [demo app](https://github.com/tonypowa/grafana-prometheus-alerting-demo), launches a stack that includes a Python script to simulate metrics, which Grafana collects and visualizes as a time-series visualization.
 
-Your team is responsible for ensuring the health of your servers, and you want to leverage advanced alerting features in Grafana to:
-
-- Set who should receive an alert notification based on query value.
-- Suppress alerts based on query value.
-
-### Scenario
-
-In the provided demo setup, you're monitoring:
-
-- CPU Usage.
-- Memory Consumption.
-
-You have a mixture of critical alerts (e.g., CPU usage over `75%`) and warning alerts (e.g., memory usage over `60%`).
-
-This Flask-based Python script simulates a service that:
-
-- Generates random CPU and memory usage values (10% to 100%) every **10 seconds**
-- Exposes them as Prometheus metrics
+The script simulates random CPU and memory usage values (10% to 100%) every **10 seconds** and exposes them as Prometheus metrics.
 
 ### Objective
 
@@ -162,7 +145,7 @@ You'll build a time series visualization to monitor CPU and memory usage, define
 
 ## Step 1: Create a visualization to monitor metrics
 
-To keep track of these metrics and understand system behavior across different environments, you can set up a visualization for CPU usage and memory consumption. This will make it easier to see how the system is performing and how alerts are distributed based on the environment label, including during scheduled maintenance windows.
+To keep track of these metrics you can set up a visualization for CPU usage and memory consumption. This will make it easier to see how the system is performing.
 
 The time-series visualization supports alert rules to provide more context in the form of annotations and alert rule state. Follow these steps to create a visualization to monitor the application’s metrics.
 
@@ -174,8 +157,7 @@ The time-series visualization supports alert rules to provide more context in th
 1. Create a time series panel:
 
    - Navigate to **Dashboards**.
-   - Click **New**.
-   - Select **New Dashboard**.
+   - Click **+ Create dashboard**.
    - Click **+ Add visualization**.
    - Select **Prometheus** as the data source (provided with the demo).
    - Enter a title for your panel, e.g., **CPU and Memory Usage**.
@@ -192,7 +174,7 @@ The time-series visualization supports alert rules to provide more context in th
 
    - Click **Run queries**.
 
-   This query should display the simulated CPU usage data in the **prod** environment.
+   This query should display the simulated CPU usage data for the **prod** environment.
 
 1. Add memory usage query:
 
@@ -200,14 +182,14 @@ The time-series visualization supports alert rules to provide more context in th
    - In the query area, paste the following PromQL query:
 
      ```promql
-     flask_app_memory_usage{flask-prod:5000}
+     flask_app_memory_usage{instance="flask-prod:5000"}
      ```
 
-   {{< figure src="/media/docs/alerting/time-series_cpu_mem_usage_metrics.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
+   {{< figure src="/media/docs/alerting/cpu-mem-dash.png" max-width="1200px" caption="Time-series panel displaying CPU and memory usage metrics in production." >}}
 
-   1. Click **Save dashboard**. Name it: `cpu-and-memory-metrics`.
+1. Click **Save dashboard**. Name it: `cpu-and-memory-metrics`.
 
-   We have our time-series panel ready. Feel free to combine metrics with labels such as `instance = “flask-staging:5000”`, or other labels like `deployment="prod-us-cs30"`.
+We have our time-series panel ready. Feel free to combine metrics with labels such as `flask_app_cpu_usage{instance=“flask-staging:5000”}`, or other labels like `deployment`.
 
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
@@ -257,7 +239,7 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
 1. Click + **New evaluation group**. Name it `system-usage`.
 1. Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
-1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration.).
+1. Set the **pending period** to `0s` (None), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration.).
 1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
 
 ### Configure notifications
@@ -268,25 +250,25 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
 ### Configure notification message
 
-To link this alert rule to our visualization click **Link dashboard and panel**
+To link this alert rule to our visualization click [**Link dashboard and panel**](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/link-alert-rules-to-panels/#link-alert-rules-to-panels)
 
-- Click **system-metrics**
-- Select the **cpu-and-memory-metrics** panel
+- Select the folder that contains the dashboard. In this case: **system-metrics**
+- Select the **cpu-and-memory-metrics** visualization
 - Click **confirm**
 
-You have successfully linked this alert rule to your visualization! 
+You have successfully linked this alert rule to your visualization!
 
-When the CPU usage exceeds the defined threshold, an annotation will appear on the graph to mark the event. Similarly, when the alert is resolved, another annotation will be added to indicate the moment it returned to normal.
+When the CPU usage exceeds the defined threshold, an annotation should appear on the graph to mark the event. Similarly, when the alert is resolved, another annotation is added to indicate the moment it returned to normal.
 
 <!-- INTERACTIVE page step5.md END -->
 <!-- INTERACTIVE page step6.md START -->
 
-## Step 3: Create a second alert rule for memory usage
+## (Optional) Step 3: Create a second alert rule for memory usage
 
 1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
 1. Give it a name. For example: `memory-usage`
 1. Query: `flask_app_memory_usage{instance="flask-prod:5000"}`
-1. Link to the same visualization to obtain memory usage annotations whenever the alert rule triggers or resolves.
+1. Link to the same visualization to obtain memory usage annotations
 
 Check how your dashboard looks now that both alerts have been linked to your dashboard panel.
 
@@ -297,9 +279,9 @@ Check how your dashboard looks now that both alerts have been linked to your das
 
 {{< figure src="/media/docs/alerting/panel-2-queries-and-alerts.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
 
-After the alert rules are created, they should appear as **health indicators** (colored heart icons: red heart when the alert is in **Alerting** state, and green heart when in **Normal** state.) on the linked panel. In addition, the annotations include helpful context, such as the time the alert was triggered.
+After the alert rules are created, they should appear as **health indicators** (colored heart icons: a red heart when the alert is in **Alerting** state, and a green heart when in **Normal** state) on the linked panel. In addition, annotations provide helpful context, such as the time the alert was triggered.
 
-Finally, you should also receive notifications at the contact point associated.
+Finally, as part of the alerting process, you should receive notifications at the associated contact point.
 
 <!-- INTERACTIVE page step7.md END -->
 <!-- INTERACTIVE page finish.md START -->
