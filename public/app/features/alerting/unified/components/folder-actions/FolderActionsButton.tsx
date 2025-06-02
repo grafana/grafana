@@ -2,17 +2,24 @@ import { useState } from 'react';
 
 import { useTranslate } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Dropdown, IconButton, Menu } from '@grafana/ui';
+import { Dropdown, Menu } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { FolderBulkAction, useFolderBulkActionAbility } from '../../hooks/useAbilities';
+import {
+  AlertingAction,
+  FolderBulkAction,
+  useAlertingAbility,
+  useFolderBulkActionAbility,
+} from '../../hooks/useAbilities';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { makeFolderLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
+import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 
 import { DeleteModal } from './DeleteModal';
 import { PauseUnpauseActionMenuItem } from './PauseUnpauseActionMenuItem';
@@ -20,18 +27,25 @@ interface Props {
   folderUID: string;
 }
 
-export const FolderBulkActionsButton = ({ folderUID }: Props) => {
+export const FolderActionsButton = ({ folderUID }: Props) => {
   const { t } = useTranslate();
 
   // state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // feature toggles
+  const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+  const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
 
   // abilities
   const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
   const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
   const canPause = pauseSupported && pauseAllowed;
   const canDelete = deleteSupported && deleteAllowed;
+  const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   // mutations
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
@@ -40,7 +54,8 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
 
   const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
-  const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
+  const folderUrl = makeFolderLink(folderUID);
+  const { folder } = useFolder(folderUID);
   const viewComponent = listView2Enabled ? 'list' : 'grouped';
 
   // URLs
@@ -50,76 +65,86 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     return null;
   }
 
+  if (!folder) {
+    return null;
+  }
+
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
     await redirectToListView();
   };
 
+  const BulkActions = () => {
+    if (!bulkActionsEnabled) {
+      return null;
+    }
+
+    return (
+      <>
+        {(canPause || canDelete) && <Menu.Divider />}
+        {canPause && (
+          <>
+            <PauseUnpauseActionMenuItem
+              folderUID={folderUID}
+              action="pause"
+              executeAction={async (folderUID) => {
+                await pauseFolder({ namespace: folderUID }).unwrap();
+                await redirectToListView();
+              }}
+              isLoading={updateState.isLoading}
+            />
+            <PauseUnpauseActionMenuItem
+              folderUID={folderUID}
+              action="unpause"
+              executeAction={async (folderUID) => {
+                await unpauseFolder({ namespace: folderUID }).unwrap();
+                await redirectToListView();
+              }}
+              isLoading={unpauseState.isLoading}
+            />
+          </>
+        )}
+        {canDelete && (
+          <Menu.Item
+            label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete all rules')}
+            icon="trash-alt"
+            onClick={() => setIsDeleteModalOpen(true)}
+            disabled={deleteState.isLoading}
+          />
+        )}
+      </>
+    );
+  };
+
   const menuItems = (
     <>
-      {canPause && (
+      <Menu.Item
+        url={folderUrl}
+        icon="eye"
+        aria-label={t('alerting.list-view.folder-actions.view.aria-label', 'View folder')}
+        label={t('alerting.list-view.folder-actions.view.label', 'View folder')}
+      />
+      <BulkActions />
+      {canExportRules && (
         <>
-          <PauseUnpauseActionMenuItem
-            folderUID={folderUID}
-            action="pause"
-            executeAction={async (folderUID) => {
-              await pauseFolder({ namespace: folderUID }).unwrap();
-              await redirectToListView();
-            }}
-            isLoading={updateState.isLoading}
-          />
-          <PauseUnpauseActionMenuItem
-            folderUID={folderUID}
-            action="unpause"
-            executeAction={async (folderUID) => {
-              await unpauseFolder({ namespace: folderUID }).unwrap();
-              await redirectToListView();
-            }}
-            isLoading={unpauseState.isLoading}
-          />
+          {bulkActionsEnabled && <Menu.Divider />}
+          <ExportFolderButton folderUid={folderUID} onClickExport={() => setIsExporting(true)} />
         </>
       )}
-      {canDelete && (
-        <Menu.Item
-          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete all rules')}
-          icon="trash-alt"
-          onClick={() => setIsDeleteModalOpen(true)}
-          disabled={deleteState.isLoading}
-        />
-      )}
-      {/* @TODO re-implement */}
-      {/* {listView2Enabled && (
-        <>
-          <Menu.Divider />
-          <Menu.Item
-            label={t('alerting.folder-bulk-actions.export.button.label', 'Export rules')}
-            icon="download-alt"
-            onClick={() => {}}
-          />
-        </>
-      )} */}
     </>
   );
 
   return (
     <>
       <Dropdown placement="bottom" overlay={<Menu>{menuItems}</Menu>}>
-        {listView2Enabled ? (
-          <MoreButton
-            fill="text"
-            size="sm"
-            aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
-          />
-        ) : (
-          <IconButton
-            name="ellipsis-h"
-            size="sm"
-            aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder actions')}
-            tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder actions')}
-            tooltipPlacement="top"
-          />
-        )}
+        <MoreButton
+          fill="text"
+          size="sm"
+          aria-label={t('alerting.list-view.folder-actions.button.title', 'Folder actions')}
+          title={t('alerting.list-view.folder-actions.button.title', 'Actions')}
+        />
       </Dropdown>
+      {isExporting && <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(false)} />}
       <DeleteModal
         isOpen={isDeleteModalOpen}
         onConfirm={onConfirmDelete}
@@ -144,4 +169,22 @@ function useRedirectToListView(view: string) {
   };
 
   return redirectToListView;
+}
+
+function ExportFolderButton({ folderUid, onClickExport }: { folderUid: string; onClickExport: () => void }) {
+  const { t } = useTranslate();
+  const { folder } = useFolder(folderUid);
+  if (!folder) {
+    return null;
+  }
+  return (
+    <Menu.Item
+      aria-label={t('alerting.list-view.folder-actions.export.aria-label', 'Export rules folder')}
+      data-testid="export-folder"
+      key="export-folder"
+      label={t('alerting.list-view.folder-actions.export.label', 'Export rules folder')}
+      icon="download-alt"
+      onClick={onClickExport}
+    />
+  );
 }

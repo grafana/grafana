@@ -1,19 +1,13 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaRuleFolderExporter } from '../components/export/GrafanaRuleFolderExporter';
-import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
-import { ActionIcon } from '../components/rules/ActionIcon';
+import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
-import { useFolder } from '../hooks/useFolder';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import { makeFolderLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
@@ -28,7 +22,6 @@ import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups
 export const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const { t } = useTranslate();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
 
   const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
@@ -48,15 +41,12 @@ export function PaginatedGrafanaLoader() {
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
 
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
-
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;
-          const folderUrl = makeFolderLink(folderUid);
 
           return (
             <ListSection
@@ -69,21 +59,7 @@ export function PaginatedGrafanaLoader() {
                   </Text>
                 </Stack>
               }
-              actions={
-                <>
-                  <LinkButton
-                    variant="secondary"
-                    fill="text"
-                    size="sm"
-                    href={folderUrl}
-                    icon="eye"
-                    tooltip={t('alerting.list-view.folder-actions.view.tooltip', 'View folder')}
-                    aria-label={t('alerting.list-view.folder-actions.view.aria-label', 'View folder')}
-                  />
-                  <ExportFolderButton folderUid={folderUid} />
-                  {isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
-                </>
-              }
+              actions={<FolderActionsButton folderUID={folderUid} />}
             >
               {groups.map((group) => (
                 <GrafanaRuleGroupListItem
@@ -104,28 +80,6 @@ export function PaginatedGrafanaLoader() {
         )}
       </Stack>
     </DataSourceSection>
-  );
-}
-
-function ExportFolderButton({ folderUid }: { folderUid: string }) {
-  const { t } = useTranslate();
-  const [isExporting, setIsExporting] = useState<boolean>(false);
-  const { folder } = useFolder(folderUid);
-  if (!folder) {
-    return null;
-  }
-  return (
-    <>
-      <ActionIcon
-        aria-label={t('alerting.list-view.folder-actions.export.aria-label', 'Export rules folder')}
-        data-testid="export-folder"
-        key="export-folder"
-        icon="download-alt"
-        tooltip={t('alerting.list-view.folder-actions.export.tooltip', 'Export rules folder')}
-        onClick={() => setIsExporting(true)}
-      />
-      {isExporting && <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(false)} />}
-    </>
   );
 }
 
