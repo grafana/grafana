@@ -263,10 +263,10 @@ export const LogListContextProvider = ({
   }, [filterLevels, logListState]);
 
   useEffect(() => {
-    if (!shallowCompare(logListState.fontSize, fontSize)) {
-      setLogListState({ ...logListState, fontSize });
-    }
-  }, [fontSize, logListState]);
+    setLogListState((logListState) => {
+      return { ...logListState, fontSize };
+    });
+  }, [fontSize]);
 
   useEffect(() => {
     if (logListState.hasUnescapedContent !== hasUnescapedContent) {
