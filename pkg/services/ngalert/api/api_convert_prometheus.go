@@ -62,11 +62,6 @@ var (
 		"alerting.recordingRulesNotEnabled",
 		errutil.WithPublicMessage("Cannot import recording rules: Feature not enabled."),
 	).Errorf("recording rules not enabled")
-
-	errRecordingRulesDatasourcesNotEnabled = errutil.ValidationFailed(
-		"alerting.recordingRulesDatasourcesNotEnabled",
-		errutil.WithPublicMessage("Cannot import recording rules: Configuration of target datasources not enabled."),
-	).Errorf("recording rules target datasources configuration not enabled")
 )
 
 func errInvalidHeaderValue(header string, err error) error {
@@ -398,11 +393,6 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				if !srv.cfg.RecordingRules.Enabled {
 					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
 					return errorToResponse(errRecordingRulesNotEnabled)
-				}
-
-				if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-					logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
-					return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
 				}
 			}
 
