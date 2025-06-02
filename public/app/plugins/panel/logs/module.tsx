@@ -54,7 +54,27 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         name: 'Enable infinite scrolling',
         description: 'Experimental. Request more results by scrolling to the bottom of the logs list.',
         defaultValue: false,
-      })
+      });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addRadio({
+        path: 'fontSize',
+        name: 'Font size',
+        description: '',
+        settings: {
+          options: [
+            { value: 'default', label: 'Default' },
+            {
+              value: 'small',
+              label: 'Small',
+            },
+          ],
+        },
+        defaultValue: 'default',
+      });
+    }
+
+    builder
       .addRadio({
         path: 'dedupStrategy',
         name: 'Deduplication',

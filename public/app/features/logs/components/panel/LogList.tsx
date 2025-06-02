@@ -46,6 +46,7 @@ export interface Props {
   enableLogDetails: boolean;
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
+  fontSize?: LogListFontSize;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
@@ -82,6 +83,8 @@ export interface Props {
   wrapLogMessage: boolean;
 }
 
+export type LogListFontSize = 'default' | 'small';
+
 export type LogListControlOptions = LogListState;
 
 type LogListComponentProps = Omit<
@@ -105,6 +108,7 @@ export const LogList = ({
   enableLogDetails,
   eventBus,
   filterLevels,
+  fontSize = 'default',
   getFieldLinks,
   getRowContextQuery,
   grammar,
@@ -148,6 +152,7 @@ export const LogList = ({
       displayedFields={displayedFields}
       enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
+      fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
