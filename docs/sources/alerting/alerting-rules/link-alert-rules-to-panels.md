@@ -92,3 +92,7 @@ This option is available only in [time series panels](ref:time-series-visualizat
 1. Hover over the top-right corner of the panel and click the panel menu icon.
 1. Click **Edit**.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
+
+{{< admonition type="tip" >}}
+For a practical example, refer to the [Grafana alerting: Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt1/) tutorial.
+{{% /admonition %}}
