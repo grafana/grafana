@@ -330,7 +330,7 @@ The template should be flexible enough to capture the target keywords (e.g., pro
 
 By using notification policies, you can route alerts based on query values, directing them to the appropriate teams.
 
-## Learn more in [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/)
+## Learn more in [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/)
 
 <!-- INTERACTIVE ignore START -->
 
