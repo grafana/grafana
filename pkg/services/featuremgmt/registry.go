@@ -1555,14 +1555,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "grafanaManagedRecordingRulesDatasources",
-			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: false,
-			Expression:     "false",
-		},
-		{
 			Name:         "infinityRunQueriesInParallel",
 			Description:  "Enables running Infinity queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
