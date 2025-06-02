@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
@@ -35,6 +35,7 @@ export const SupportBundlesCreateUnconnected = ({
   loadSupportBundleCollectors,
   createSupportBundle,
 }: Props): JSX.Element => {
+  const { t } = useTranslate();
   const onSubmit = (data: Record<string, boolean>) => {
     const selectedLabelsArray = Object.keys(data).filter((key) => data[key]);
     createSupportBundle({ collectors: selectedLabelsArray });
@@ -58,7 +59,16 @@ export const SupportBundlesCreateUnconnected = ({
   );
 
   return (
-    <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
+    <Page
+      navId="support-bundles"
+      pageNav={{
+        text: t(
+          'support-bundles.support-bundles-create-unconnected.text.create-support-bundle',
+          'Create support bundle'
+        ),
+      }}
+      subTitle={subTitle}
+    >
       <Page.Contents isLoading={isLoading}>
         {loadCollectorsError && <Alert title={loadCollectorsError} severity="error" />}
         {createBundleError && <Alert title={createBundleError} severity="error" />}

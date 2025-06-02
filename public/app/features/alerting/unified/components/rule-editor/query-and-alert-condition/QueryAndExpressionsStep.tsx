@@ -6,6 +6,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -21,7 +22,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
@@ -357,6 +357,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   );
 
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   // Cloud alerts load data from form values
   // whereas Grafana managed alerts load data from reducer
@@ -543,7 +544,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
                 control={control}
                 rules={{
-                  required: { value: true, message: 'A valid expression is required' },
+                  required: {
+                    value: true,
+                    message: t(
+                      'alerting.query-and-expressions-step.message.a-valid-expression-is-required',
+                      'A valid expression is required'
+                    ),
+                  },
                 }}
               />
             </Field>

@@ -21,19 +21,20 @@ func NewSQLKeeper(
 	tracer tracing.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
-) (*SQLKeeper, error) {
+) *SQLKeeper {
 	return &SQLKeeper{
 		tracer:            tracer,
 		encryptionManager: encryptionManager,
 		store:             store,
-	}, nil
+	}
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
+// TODO: parameter cfg is not being used
+func (s *SQLKeeper) Store(ctx context.Context, _ secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Store")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
 	if err != nil {
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
@@ -79,7 +80,7 @@ func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
 	defer span.End()
 
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptWithoutScope())
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
 	if err != nil {
 		return fmt.Errorf("unable to encrypt value: %w", err)
 	}

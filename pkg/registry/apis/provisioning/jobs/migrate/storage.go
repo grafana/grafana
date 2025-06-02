@@ -9,15 +9,17 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 //go:generate mockery --name BulkStoreClient --structname MockBulkStoreClient --inpackage --filename mock_bulk_store_client.go --with-expecter
 //go:generate mockery --name=BulkStore_BulkProcessClient --srcpkg=github.com/grafana/grafana/pkg/storage/unified/resource --output=. --outpkg=migrate --filename=mock_bulk_process_client.go --with-expecter
 type BulkStoreClient interface {
-	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error)
+	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
 //go:generate mockery --name StorageSwapper --structname MockStorageSwapper --inpackage --filename mock_storage_swapper.go --with-expecter
@@ -69,7 +71,7 @@ func (s *storageSwapper) WipeUnifiedAndSetMigratedFlag(ctx context.Context, name
 		}
 		settings := resource.BulkSettings{
 			RebuildCollection: true, // wipes everything in the collection
-			Collection: []*resource.ResourceKey{{
+			Collection: []*resourcepb.ResourceKey{{
 				Namespace: namespace,
 				Group:     gr.Group,
 				Resource:  gr.Resource,

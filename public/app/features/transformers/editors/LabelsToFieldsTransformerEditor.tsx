@@ -9,8 +9,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LabelsToFieldsMode, LabelsToFieldsOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -48,6 +48,8 @@ export const LabelsAsFieldsTransformerEditor = ({
     const selected = new Set(options.keepLabels?.length ? options.keepLabels : Object.keys(uniqueLabels));
     return { labelNames, selected };
   }, [options.keepLabels, input]);
+
+  const { t } = useTranslate();
 
   const onValueLabelChange = (value: SelectableValue<string> | null) => {
     onChange({ ...options, valueLabel: value?.value });

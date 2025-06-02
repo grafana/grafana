@@ -1,0 +1,6 @@
+# This file is used by lefthook to 'expose' the installed lefthook under
+# the name `lefthook`, as expected by the lefthook pre-commit scripts
+
+lefthook () {
+  GOWORK=off go tool -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook "$@"
+}

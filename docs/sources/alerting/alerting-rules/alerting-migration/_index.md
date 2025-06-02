@@ -9,22 +9,30 @@ title: Import data source-managed alert rules
 menuTitle: Import to Grafana-managed alert rules
 weight: 600
 refs:
+  import-ds-rules-api:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/migration-api/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/migration-api/
+  configure-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Prometheus and Loki alert rules into Grafana-managed alert rules.
+Grafana provides an internal tool in Alerting which allows you to import Mimir and Loki alert rules as Grafana-managed alert rules. To import Prometheus rules, use the [API](ref:import-ds-rules-api).
 
 ## Before you begin
-
-The `alertingMigrationUI` and `grafanaManagedRecordingRulesDatasources` [feature flags](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
 
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 
 - Alerting: Rules Writer
 - Alerting: Set provisioning status
 - Datasources: Reader
-- Folders: Creator  
+- Folders: Creator
   {{< admonition type="note" >}}
   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one. It is a best practice to prepare an import plan before you convert all your alert rules.
   {{< /admonition >}}
@@ -43,6 +51,10 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 Plugin rules that have the label `__grafana_origin` are not included on alert rule imports.
 {{< /admonition >}}
 
+### Evaluation of imported rules
+
+The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. Sequential evaluation applies to rules only while they remain read‑only (displayed as "Provisioned"). If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana alert rules and are evaluated in parallel.
+
 ## Import alert rules
 
 To convert data source-managed alert rules to Grafana managed alerts:
@@ -53,11 +65,11 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    The import alert rules page opens.
 
-1. In the Data source dropdown, select the Loki or Prometheus data source of the alert rules.
+1. In the Data source dropdown, select the Loki or Mimir data source of the alert rules.
 
 1. In Additional settings, select a target folder or designate a new folder to import the rules into.
 
-   If you import the rules into an existing folder, don't chose a folder with existing alert rules, as they could get overwritten.
+   If you import the rules into an existing folder, don't choose a folder with existing alert rules, as they could get overwritten.
 
 1. (Optional) Select a Namespace and/or Group to determine which rules are imported.
 

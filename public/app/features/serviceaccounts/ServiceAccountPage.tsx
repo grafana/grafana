@@ -3,10 +3,10 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
@@ -63,6 +63,7 @@ export const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   updateServiceAccount,
 }: Props): JSX.Element => {
+  const { t } = useTranslate();
   const [newToken, setNewToken] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -83,7 +84,10 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    subTitle: 'Manage settings for an individual service account.',
+    subTitle: t(
+      'serviceaccounts.service-account-page-unconnected.page-nav.subTitle.manage-settings-individual-service-account',
+      'Manage settings for an individual service account.'
+    ),
   };
 
   useEffect(() => {

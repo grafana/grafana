@@ -76,9 +76,15 @@ describe('RuleEditor grafana recording rules', () => {
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await user.type(await ui.inputs.metric.find(), 'metricName');
+
+      const targetDsField = await ui.inputs.targetDatasource.find();
+      const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);
+      await user.click(dsPickerInput);
+      await user.click(await screen.findByText('Prom'));
+
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
 
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
@@ -94,9 +100,15 @@ describe('RuleEditor grafana recording rules', () => {
       const { user } = renderRuleEditor(undefined, 'grafana-recording');
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      const targetDsField = await ui.inputs.targetDatasource.find();
+      const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);
+      await user.click(dsPickerInput);
+      await user.click(await screen.findByText('Prom'));
+
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       expect(requests).toHaveLength(0);
     });

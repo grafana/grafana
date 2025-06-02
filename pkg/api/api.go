@@ -91,7 +91,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if err != nil {
 			panic(err) // ???
 		}
-		r.Get("/mtfe", index.HandleRequest)
+		r.Get("/femt", index.HandleRequest)
 
 		// Temporarily expose the full bootdata via API
 		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
@@ -203,6 +203,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/library-panels/", reqSignedIn, hs.Index)
 	r.Get("/monitoring/", reqSignedIn, hs.Index)
 	r.Get("/monitoring/*", reqSignedIn, hs.Index)
+	r.Get("/observability/", reqSignedIn, hs.Index)
+	r.Get("/observability/*", reqSignedIn, hs.Index)
 	r.Get("/alerts-and-incidents", reqSignedIn, hs.Index)
 	r.Get("/alerts-and-incidents/*", reqSignedIn, hs.Index)
 

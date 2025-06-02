@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -63,6 +63,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
     500,
     [amSourceName, matchers]
   );
+  const { t } = useTranslate();
 
   if (isError) {
     return (
@@ -147,12 +148,13 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 };
 
 function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return [
     {
       id: 'state',
-      label: 'State',
+      label: t('alerting.use-columns.label.state', 'State'),
       renderCell: function renderStateTag({ data }) {
         return <AmAlertStateTag state={data.status.state} />;
       },
@@ -161,7 +163,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'labels',
-      label: 'Labels',
+      label: t('alerting.use-columns.label.labels', 'Labels'),
       renderCell: function renderName({ data }) {
         return <AlertLabels labels={data.labels} size="sm" />;
       },
@@ -169,7 +171,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'created',
-      label: 'Created',
+      label: t('alerting.use-columns.label.created', 'Created'),
       renderCell: function renderSummary({ data }) {
         return <>{isNullDate(data.startsAt) ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },

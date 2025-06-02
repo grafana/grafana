@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -131,23 +131,6 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res 
 			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
 		res = &t
-		return nil
-	})
-	return res, err
-}
-
-func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (res *apikey.APIKey, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var key apikey.APIKey
-		has, err := sess.ID(query.ApiKeyID).Get(&key)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return apikey.ErrInvalid
-		}
-
-		res = &key
 		return nil
 	})
 	return res, err

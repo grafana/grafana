@@ -47,6 +47,7 @@ const (
 `
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
+	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
@@ -137,9 +138,6 @@ type UnifiedAlertingSettings struct {
 
 type RecordingRuleSettings struct {
 	Enabled              bool
-	URL                  string
-	BasicAuthUsername    string
-	BasicAuthPassword    string
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
@@ -148,11 +146,11 @@ type RecordingRuleSettings struct {
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable       bool
 	URL          string
 	TenantID     string
 	Password     string
 	SyncInterval time.Duration
+	Timeout      time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -389,12 +387,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
-		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
 	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
+	if err != nil {
+		return err
+	}
+	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {
 		return err
 	}
@@ -451,10 +452,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:              rr.Key("enabled").MustBool(false),
-		URL:                  rr.Key("url").MustString(""),
-		BasicAuthUsername:    rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword:    rr.Key("basic_auth_password").MustString(""),
+		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 	}

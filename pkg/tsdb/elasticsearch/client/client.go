@@ -344,11 +344,30 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			return err
 		}
 
-		if tok == "hits" {
+		switch tok {
+		case "hits":
 			if err := streamHitsArray(dec, sr); err != nil {
 				return err
 			}
-		} else {
+		case "total":
+			var total *SearchResponseHitsTotal
+			err := dec.Decode(&total)
+			if err != nil {
+				// It's possible that the user is using an older version of Elasticsearch (or one that doesn't return what is expected)
+				// Attempt to parse the total value as an integer in this case
+				totalInt := 0
+				err = dec.Decode(&totalInt)
+				if err == nil {
+					total = &SearchResponseHitsTotal{
+						Value: totalInt,
+					}
+				} else {
+					// Log the error but do not fail the query
+					backend.Logger.Debug("failed to decode total hits", "error", err)
+				}
+			}
+			sr.Hits.Total = total
+		default:
 			// ignore these fields as they are not used in the current implementation
 			err := skipUnknownField(dec)
 			if err != nil {

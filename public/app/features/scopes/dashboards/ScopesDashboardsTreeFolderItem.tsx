@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { OnFolderUpdate, SuggestedNavigationsFolder, SuggestedNavigationsFoldersMap } from './types';
@@ -21,7 +21,7 @@ export function ScopesDashboardsTreeFolderItem({
   onFolderUpdate,
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <button
@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(0.25),
     }),
     children: css({
-      paddingLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(3),
     }),
   };
 };
