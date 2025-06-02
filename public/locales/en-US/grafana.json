@@ -1210,9 +1210,6 @@
         "button": {
           "label": "Resume all rules"
         }
-      },
-      "view": {
-        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1663,6 +1660,16 @@
         "new-recording-rule": "New recording rule",
         "no-rules-created": "You haven't created any rules yet",
         "provisioning": "You can also define rules through file provisioning or Terraform"
+      },
+      "folder-actions": {
+        "export": {
+          "aria-label": "Export rules folder",
+          "tooltip": "Export rules folder"
+        },
+        "view": {
+          "aria-label": "View folder",
+          "tooltip": "View folder"
+        }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
