@@ -111,28 +111,20 @@ type UserSync struct {
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
-func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIdentity *authn.Identity, _ *authn.Request) error {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID)
+
+	if !currentIdentity.ClientParams.SyncUser {
+		log.Debug("Skipping user provisioning validation, syncUser is disabled")
+		return nil
+	}
 
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
-	// Skip validation if user provisioning is disabled
-	if !s.isUserProvisioningEnabled {
-		log.Debug("User provisioning is disabled, skipping validation")
-		return nil
-	}
-
-	// Skip validation if non-provisioned users are allowed
-	if s.allowNonProvisionedUsers {
-		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
-		return nil
-	}
-
-	// Skip validation if the auth module is GrafanaComAuthModule
-	if id.AuthenticatedBy == login.GrafanaComAuthModule {
-		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+	if s.skipProvisioningValidation(ctx, currentIdentity) {
+		log.Debug("Skipping user provisioning validation")
 		return nil
 	}
 
@@ -140,7 +132,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
 
 	// Retrieve user and authinfo from database
-	usr, authInfo, err := s.getUser(ctx, id)
+	usr, authInfo, err := s.getUser(ctx, currentIdentity)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return nil
@@ -154,14 +146,8 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
 	}
 
-	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
-		// Allow non-SAML requests for SAML-provisioned users to proceed if incoming ExternalUID is empty (e.g. session access).
-		if authInfo.AuthModule == login.SAMLAuthModule && id.AuthenticatedBy != login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
-			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
-			return nil
-		}
-		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != currentIdentity.ExternalUID {
 			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
@@ -172,6 +158,27 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 	// Reject non-provisioned users
 	log.Error("Failed to access user, user is not provisioned")
 	return errUserNotProvisioned.Errorf("user is not provisioned")
+}
+
+func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
+	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID, "id", currentIdentity.ID)
+
+	if !s.isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation")
+		return true
+	}
+
+	if s.allowNonProvisionedUsers {
+		log.Debug("Non-provisioned users are allowed, skipping validation")
+		return true
+	}
+
+	if currentIdentity.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return true
+	}
+
+	return false
 }
 
 // SyncUserHook syncs a user with the database

@@ -692,6 +692,21 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 
 	tests := []testCase{
 		{
+			desc: "it should skip validation if the user identity is not syncying a user",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.isUserProvisioningEnabled = true
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				ID:   "1",
+				Type: claims.TypeAPIKey,
+				ClientParams: authn.ClientParams{
+					SyncUser: false,
+				},
+			},
+		},
+		{
 			desc: "it should skip validation if the user provisioning is disabled",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
@@ -701,6 +716,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			identity: &authn.Identity{
 				AuthenticatedBy: login.GenericOAuthModule,
 				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -714,6 +732,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			identity: &authn.Identity{
 				AuthenticatedBy: login.GenericOAuthModule,
 				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -727,6 +748,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			identity: &authn.Identity{
 				AuthenticatedBy: login.GrafanaComAuthModule,
 				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -744,6 +768,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation"),
 		},
@@ -760,6 +787,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUnableToRetrieveUser.Errorf("unable to retrieve user for validation"),
 		},
@@ -788,6 +818,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
 		},
@@ -817,6 +850,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
 		},
@@ -846,6 +882,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -874,37 +913,11 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "random-external-uid",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
-		},
-		{
-			desc: "it should skip validation if identity is incomplete because it's not from the SAML auth flow",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.allowNonProvisionedUsers = false
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "random-external-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GenericOAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "",
-			},
-			expectedErr: nil,
 		},
 		{
 			desc: "ValidateProvisioning: DB ExternalUID is empty, Incoming ExternalUID is empty - expect mismatch (stricter logic)",
@@ -915,19 +928,14 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
 				return userSyncService
 			},
-			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: ""},
-			expectedErr: errUserExternalUIDMismatch,
-		},
-		{
-			desc: "ValidateProvisioning: DB ExternalUID non-empty, Incoming ExternalUID is empty - expect mismatch",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
-				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "valid-uid"}}
-				return userSyncService
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+				ExternalUID: "",
 			},
-			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: ""},
 			expectedErr: errUserExternalUIDMismatch,
 		},
 		{
@@ -939,7 +947,14 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
 				return userSyncService
 			},
-			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: "valid-uid"},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+				ExternalUID: "valid-uid",
+			},
 			expectedErr: errUserExternalUIDMismatch,
 		},
 		{
@@ -951,7 +966,14 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "db-uid"}}
 				return userSyncService
 			},
-			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: "incoming-uid"},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+				ExternalUID: "incoming-uid",
+			},
 			expectedErr: errUserExternalUIDMismatch,
 		},
 		{
@@ -1009,6 +1031,9 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				AuthenticatedBy: login.SAMLAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
 		},
