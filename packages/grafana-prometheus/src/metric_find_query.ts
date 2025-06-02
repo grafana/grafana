@@ -37,7 +37,7 @@ export class PrometheusMetricFindQuery {
     if (labelNamesMatchQuery) {
       const selector = `{__name__=~".*${labelNamesMatchQuery[1]}.*"}`;
       const keys = await this.datasource.languageProvider.queryLabelKeys(timeRange, selector);
-      return keys.map((result) => ({ text: result }));
+      return keys.filter((key) => key !== METRIC_LABEL).map((result) => ({ text: result }));
     }
 
     if (labelNamesQuery) {
