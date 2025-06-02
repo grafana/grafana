@@ -223,7 +223,7 @@ Make it short and descriptive, as this will appear in your alert notification. F
    - Enter 75 as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
    - Click **Preview alert rule condition** to run the queries.
 
-        {{< figure src="/media/docs/alerting/alert-condition-details-prod.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
+     {{< figure src="/media/docs/alerting/alert-condition-details-prod.png" max-width="1200px" caption="Preview of a query returning alert instances in Grafana." >}}
 
    The query returns the CPU usage of the Flask application in the production environment. In this case, the usage is `86.01%`, which exceeds the configured threshold of `75%`, causing the alert to fire.
 
@@ -245,7 +245,7 @@ Make it short and descriptive, as this will appear in your alert notification. F
 
 - Select a **Contact point**. If you don’t have any contact points, add a [Contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#add-a-contact-point).
 
-   For a quick test, you can use a public webhook from [webhook.site](https://webhook.site/) to capture and inspect alert notifications. If you choose this method, select **Webhook** from the drop-down menu in contact points.
+  For a quick test, you can use a public webhook from [webhook.site](https://webhook.site/) to capture and inspect alert notifications. If you choose this method, select **Webhook** from the drop-down menu in contact points.
 
 ### Configure notification message
 
