@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
-import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteSecretMutation, useListSecretsQuery } from './api/secretsManagementApi';
 import { EditSecretModal } from './components/EditSecretModal';
@@ -14,6 +14,7 @@ import { SecretStatusPhase } from './types';
 
 export default function SecretsManagementPage() {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   // Api test
   const [pollingInterval, setPollingInterval] = useState(0);

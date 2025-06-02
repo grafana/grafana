@@ -3,9 +3,9 @@ import { FormEvent, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/';
+import { useTranslate } from '@grafana/i18n';
 import { Button, Field, IconButton, Input, MultiSelect, Stack, useStyles2 } from '@grafana/ui';
 
-import { t } from '../../../core/internationalization';
 import { DECRYPT_ALLOW_LIST_OPTIONS, SECRETS_MAX_LABELS } from '../constants';
 import { SecretFormValues } from '../types';
 import {
@@ -42,6 +42,7 @@ export function SecretForm({
   const isNew = initialValues?.uid === undefined;
   const [isConfigured, setIsConfigured] = useState(!isNew);
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   const {
     register,
