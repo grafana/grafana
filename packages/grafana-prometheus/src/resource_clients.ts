@@ -6,6 +6,7 @@ import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { EMPTY_MATCHER, MATCH_ALL_LABELS, METRIC_LABEL, PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
@@ -204,10 +205,24 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     const utf8SafeLabelKey = utf8Support(labelKey);
-    const effectiveMatch =
-      !match || match === EMPTY_MATCHER
-        ? `{${utf8SafeLabelKey}!=""}`
-        : match.slice(0, match.length - 1).concat(`,${utf8SafeLabelKey}!=""}`);
+    let effectiveMatch = '';
+    if (!match || match === EMPTY_MATCHER) {
+      // Just and empty matcher {} or no matcher
+      effectiveMatch = `{${utf8SafeLabelKey}!=""}`;
+    } else {
+      const {
+        query: { metric, labels },
+      } = buildVisualQueryFromString(match);
+      labels.push({
+        label: utf8SafeLabelKey,
+        op: '!=',
+        value: '',
+      });
+      const metricFilter = metric ? `__name__="${metric}",` : '';
+      const labelFilters = labels.map((lf) => `${utf8Support(lf.label)}${lf.op}"${lf.value}"`).join(',');
+      effectiveMatch = `{${metricFilter}${labelFilters}}`;
+    }
+
     const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
     if (maybeCachedValues) {
       return maybeCachedValues;
