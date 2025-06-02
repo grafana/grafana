@@ -40,9 +40,6 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	return s.store.GetAllAPIKeys(ctx, orgID)
 }
-func (s *Service) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (*apikey.APIKey, error) {
-	return s.store.GetApiKeyById(ctx, query)
-}
 func (s *Service) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) (*apikey.APIKey, error) {
 	return s.store.GetApiKeyByName(ctx, query)
 }

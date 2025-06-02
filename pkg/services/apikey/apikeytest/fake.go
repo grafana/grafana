@@ -15,9 +15,6 @@ type Service struct {
 func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	return s.ExpectedAPIKeys, s.ExpectedError
 }
-func (s *Service) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (*apikey.APIKey, error) {
-	return s.ExpectedAPIKey, s.ExpectedError
-}
 func (s *Service) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) (*apikey.APIKey, error) {
 	return s.ExpectedAPIKey, s.ExpectedError
 }
