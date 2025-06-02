@@ -240,7 +240,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
-				if errors.Is(err, ErrInvalidRequestBody) {
+				if errors.Is(err, ErrInvalidRequestBody) || errors.Is(err, ErrInvalidRequest) {
 					c.JSON(http.StatusBadRequest, map[string]string{
 						"message": err.Error(),
 						"traceID": tracing.TraceIDFromContext(c.Req.Context(), false),
@@ -308,8 +308,7 @@ func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	query, err := getOrgQueryFromRequest(c)
 	if err != nil {
-		// Special case of macaron handling invalid params
-		return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+		return NoOrgID, err
 	}
 
 	if query.OrgId == nil {
@@ -325,11 +324,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		query, err := getOrgQueryFromRequest(c)
 		if err != nil {
-			if errors.Is(err, ErrInvalidRequestBody) {
-				return NoOrgID, err
-			}
-			// Special case of macaron handling invalid params
-			return NoOrgID, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+			return NoOrgID, err
 		}
 
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
@@ -367,7 +362,7 @@ func getOrgQueryFromRequest(c *contextmodel.ReqContext) (*QueryWithOrg, error) {
 		if err.Error() == "unexpected EOF" {
 			return nil, fmt.Errorf("%w: unexpected end of JSON input", ErrInvalidRequestBody)
 		}
-		return nil, err
+		return nil, ErrInvalidRequest.Errorf("error parsing request: %w", err)
 	}
 
 	return query, nil
