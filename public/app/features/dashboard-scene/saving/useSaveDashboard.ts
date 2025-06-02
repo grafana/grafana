@@ -94,8 +94,12 @@ export function useSaveDashboard(isCopy = false) {
           );
         }
 
-        console.log({ result });
-        console.log({ resultData });
+        // window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetIdList } }, '*');
+
+        const params = new URLSearchParams(window.location.search);
+        const assetId = params.get('assetId');
+
+        console.log({ uid: resultData.uid, assetId });
 
         return result.data;
       }
