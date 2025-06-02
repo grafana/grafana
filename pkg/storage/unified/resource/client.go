@@ -64,6 +64,17 @@ func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features
 	})
 }
 
+func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
+	return &resourceClient{
+		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
+		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
+	}
+}
+
 func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
