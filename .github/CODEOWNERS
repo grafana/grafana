@@ -259,7 +259,6 @@
 /devenv/docker/blocks/etcd @grafana/grafana-app-platform-squad
 /devenv/docker/blocks/grafana/ @grafana/grafana-as-code
 /devenv/docker/blocks/graphite/ @grafana/partner-datasources
-/devenv/docker/blocks/graphite09/ @grafana/partner-datasources
 /devenv/docker/blocks/graphite1/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
