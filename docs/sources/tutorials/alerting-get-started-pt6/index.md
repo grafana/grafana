@@ -11,7 +11,7 @@ labels:
 tags:
   - beginner
 title: Get started with Grafana Alerting - Link alerts to visualizations
-weight: 61
+weight: 67
 killercoda:
   title: Get started with Grafana Alerting - Link alerts to visualizations
   description: Create alerts using Prometheus data and link them to your visualizations.
