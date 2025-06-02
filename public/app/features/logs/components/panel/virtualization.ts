@@ -127,7 +127,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
   if (textLines.length === 1 && text.length < firstLineCharsLength) {
     return {
       lines: 1,
-      height: lineHeight + paddingBottom,
+      height: getLineHeight() + paddingBottom,
     };
   }
 
@@ -154,7 +154,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
     }
   }
 
-  const height = logLines * lineHeight + paddingBottom;
+  const height = logLines * getLineHeight() + paddingBottom;
 
   return {
     lines: logLines,
@@ -183,12 +183,12 @@ export function getLogLineSize(
   }
   // !logs[index] means the line is not yet loaded by infinite scrolling
   if (!wrap || !logs[index]) {
-    return lineHeight + paddingBottom;
+    return getLineHeight() + paddingBottom;
   }
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
   logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
-    return (TRUNCATION_LINE_COUNT + 1) * lineHeight;
+    return (getTruncationLineCount() + 1) * getLineHeight();
   }
 
   const storedSize = retrieveLogLineSize(logs[index].uid, container, fontSize);
@@ -227,7 +227,7 @@ export function getLogLineSize(
 
   const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   // When the log is collapsed, add an extra line for the expand/collapse control
-  return logs[index].collapsed === false ? height + lineHeight : height;
+  return logs[index].collapsed === false ? height + getLineHeight() : height;
 }
 
 export interface LogFieldDimension {
@@ -280,10 +280,10 @@ export const calculateFieldDimensions = (logs: LogListModel[], displayedFields: 
 };
 
 // 2/3 of the viewport height
-export const TRUNCATION_LINE_COUNT = Math.round(window.innerHeight / getLineHeight() / 1.5);
+export const getTruncationLineCount = () => Math.round(window.innerHeight / getLineHeight() / 1.5);
 export function getTruncationLength(container: HTMLDivElement | null) {
   const availableWidth = container ? getLogContainerWidth(container) : window.innerWidth;
-  return (availableWidth / measureTextWidth('e')) * TRUNCATION_LINE_COUNT;
+  return (availableWidth / measureTextWidth('e')) * getTruncationLineCount();
 }
 
 export function hasUnderOrOverflow(
