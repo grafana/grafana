@@ -2,6 +2,7 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
@@ -16,8 +17,20 @@ export const FIELD_GAP_MULTIPLIER = 1.5;
 
 export const getLineHeight = () => lineHeight;
 
-export function init(theme: GrafanaTheme2) {
-  const font = `${theme.typography.fontSize}px ${theme.typography.fontFamilyMonospace}`;
+export function init(theme: GrafanaTheme2, fontSize: LogListFontSize) {
+  let fontSizePx = theme.typography.fontSize;
+
+  if (fontSize === 'default') {
+    lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+  } else {
+    fontSizePx =
+      typeof theme.typography.bodySmall.fontSize === 'string' && theme.typography.bodySmall.fontSize.includes('rem')
+        ? theme.typography.fontSize * parseFloat(theme.typography.bodySmall.fontSize)
+        : parseInt(theme.typography.bodySmall.fontSize, 10);
+    lineHeight = fontSizePx * theme.typography.bodySmall.lineHeight;
+  }
+
+  const font = `${fontSizePx}px ${theme.typography.fontFamilyMonospace}`;
   const letterSpacing = theme.typography.body.letterSpacing;
 
   initDOMmeasurement(font, letterSpacing);
@@ -25,7 +38,6 @@ export function init(theme: GrafanaTheme2) {
 
   gridSize = theme.spacing.gridSize;
   paddingBottom = gridSize * 0.75;
-  lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
 
   widthMap = new Map<number, number>();
   resetLogLineSizes();
@@ -127,12 +139,16 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
       let delta = 0;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
+        if (logLines > 0) {
+          testLogLine.trimStart();
+        }
         width = measureTextWidth(testLogLine);
         delta += 1;
       } while (width >= availableWidth);
       if (beforeWidth) {
         beforeWidth = 0;
       }
+      console.log(testLogLine);
       logLines += 1;
       start += testLogLine.length;
     }
