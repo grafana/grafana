@@ -707,10 +707,6 @@ const (
 	// Enables querying the Jaeger data source without the proxy
 	FlagJaegerBackendMigration = "jaegerBackendMigration"
 
-	// FlagReportingUseRawTimeRange
-	// Uses the original report or dashboard time range instead of making an absolute transformation
-	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -830,10 +826,6 @@ const (
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
-
-	// FlagGrafanaManagedRecordingRulesDatasources
-	// Enables writing to data sources for Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
 
 	// FlagInfinityRunQueriesInParallel
 	// Enables running Infinity queries in parallel
