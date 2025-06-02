@@ -264,9 +264,7 @@ export const LogListContextProvider = ({
   }, [filterLevels, logListState]);
 
   useEffect(() => {
-    setLogListState((logListState) => {
-      return { ...logListState, fontSize };
-    });
+    setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
 
   useEffect(() => {
@@ -308,9 +306,12 @@ export const LogListContextProvider = ({
 
   const setFontSize = useCallback(
     (fontSize: LogListFontSize) => {
-      setLogListState({ ...logListState, fontSize });
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.fontSize`, fontSize);
+      }
+      setLogListState((logListState) => ({ ...logListState, fontSize }));
     },
-    [logListState]
+    [logOptionsStorageKey]
   );
 
   const setForceEscape = useCallback(
