@@ -113,7 +113,6 @@ func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -181,7 +180,6 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -387,7 +385,6 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -468,7 +465,6 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -550,7 +546,6 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -658,7 +653,6 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -755,7 +749,6 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
@@ -865,7 +858,6 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 

@@ -204,7 +204,6 @@ newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
-grafanaManagedRecordingRulesDatasources,GA,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true

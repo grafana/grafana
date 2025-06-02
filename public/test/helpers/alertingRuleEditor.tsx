@@ -17,6 +17,7 @@ export const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     metric: byRole('textbox', { name: 'metric' }),
+    targetDatasource: byTestId('target-data-source'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),
