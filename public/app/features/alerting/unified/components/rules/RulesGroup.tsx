@@ -136,16 +136,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
       if (folder) {
         if (isListView) {
-          // actionIcons.push(
-          //   <ActionIcon
-          //     aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-          //     data-testid="export-folder"
-          //     key="export-folder"
-          //     icon="download-alt"
-          //     tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-          //     onClick={() => setIsExporting('folder')}
-          //   />
-          // );
           if (folderUID && isListView) {
             actionIcons.push(<FolderActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
           }
