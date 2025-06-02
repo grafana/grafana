@@ -928,7 +928,14 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
 				return userSyncService
 			},
-			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: ""},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
+				ExternalUID: "",
+			},
 			expectedErr: errUserExternalUIDMismatch,
 		},
 		{
