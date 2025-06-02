@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -27,6 +29,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
+		db:           db.InitTestDB(t),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -263,6 +266,46 @@ func TestMetrics(t *testing.T) {
 		assert.Len(t, stats, 2, stats)
 		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
 		assert.Equal(t, 1, stats["stats.password_policy.count"])
+	})
+}
+
+func TestIntegrationCreateUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	cfg := setting.NewCfg()
+	ss := db.InitTestDB(t)
+	userStore := &sqlStore{
+		db:      ss,
+		dialect: ss.GetDialect(),
+		logger:  log.NewNopLogger(),
+		cfg:     cfg,
+	}
+
+	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
+		userService := Service{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{InsertOrgUserFn: func(ctx context.Context, orgUser *org.OrgUser) (int64, error) {
+				return 0, errors.New("some error")
+			}},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          setting.NewCfg(),
+			db:           ss,
+		}
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "email",
+			Login: "login",
+			Name:  "name",
+		})
+		require.Error(t, err)
+
+		usr, err := userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "login"})
+		require.Nil(t, usr)
+		require.Error(t, err)
+		require.ErrorIs(t, err, user.ErrUserNotFound)
 	})
 }
 
