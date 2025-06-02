@@ -1,4 +1,5 @@
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -22,6 +23,7 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { isDashboardV2Spec } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -42,7 +44,10 @@ export class K8sDashboardV2API
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
+      // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
+      // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       if (
+        !isDashboardV2Spec(dashboard.spec) &&
         dashboard.status?.conversion?.failed &&
         (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
           dashboard.status.conversion.storedVersion === 'v1beta1' ||
@@ -87,7 +92,7 @@ export class K8sDashboardV2API
     return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
-      title: 'deleted',
+      title: t('dashboard.k8s-dashboard-v2api.title.deleted', 'deleted'),
     }));
   }
 

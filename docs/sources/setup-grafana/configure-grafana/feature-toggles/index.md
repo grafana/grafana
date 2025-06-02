@@ -74,13 +74,13 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginsSriChecks`                        | Enables SRI checks for plugin assets                                                                                               |                    |
 | `azureMonitorDisableLogLimit`             | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                   |                    |
 | `preinstallAutoUpdate`                    | Enables automatic updates for pre-installed plugins                                                                                | Yes                |
-| `reportingUseRawTimeRange`                | Uses the original report or dashboard time range instead of making an absolute transformation                                      | Yes                |
 | `alertingUIOptimizeReducer`               | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                           | Yes                |
 | `azureMonitorEnableUserAuth`              | Enables user auth for Azure Monitor datasource only                                                                                | Yes                |
 | `alertingNotificationsStepMode`           | Enables simplified step mode in the notifications section                                                                          | Yes                |
 | `lokiLabelNamesQueryApi`                  | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `grafanaManagedRecordingRulesDatasources` | Enables writing to data sources for Grafana-managed recording rules.                                                               |                    |
 | `alertingMigrationUI`                     | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
+| `alertingImportYAMLUI`                    | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                          | Enables unified navbars                                                                                                            |                    |
 
 ## Public preview feature toggles

@@ -7,6 +7,7 @@ import { VariableSizeList } from 'react-window';
 import {
   AbsoluteTimeRange,
   CoreApp,
+  DataFrame,
   EventBus,
   EventBusSrv,
   LogLevel,
@@ -22,7 +23,8 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
-import { GetRowContextQueryFn } from './LogLineMenu';
+import { LogLineDetails } from './LogLineDetails';
+import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
@@ -36,35 +38,44 @@ import {
   storeLogLineSize,
 } from './virtualization';
 
-interface Props {
+export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
+  enableLogDetails: boolean;
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   initialScrollPosition?: 'top' | 'bottom';
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
   loadMore?: (range: AbsoluteTimeRange) => void;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
-  storageKey?: string;
   timeRange: TimeRange;
   timeZone: string;
   syntaxHighlighting?: boolean;
@@ -75,7 +86,15 @@ export type LogListControlOptions = LogListState;
 
 type LogListComponentProps = Omit<
   Props,
-  'app' | 'dedupStrategy' | 'displayedFields' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
+  | 'app'
+  | 'dedupStrategy'
+  | 'displayedFields'
+  | 'enableLogDetails'
+  | 'permalinkedLogId'
+  | 'showTime'
+  | 'sortOrder'
+  | 'syntaxHighlighting'
+  | 'wrapLogMessage'
 >;
 
 export const LogList = ({
@@ -83,24 +102,34 @@ export const LogList = ({
   displayedFields,
   containerElement,
   dedupStrategy,
+  enableLogDetails,
   eventBus,
   filterLevels,
   getFieldLinks,
   getRowContextQuery,
   grammar,
   initialScrollPosition = 'top',
+  isLabelFilterActive,
   loading,
   loadMore,
+  logLineMenuCustomItems,
   logOptionsStorageKey,
   logs,
   logsMeta,
   logSupportsContext,
+  onClickFilterLabel,
+  onClickFilterOutLabel,
+  onClickFilterString,
+  onClickFilterOutString,
+  onClickShowField,
+  onClickHideField,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
   onPinLine,
   onOpenContext,
   onUnpinLine,
+  permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
   showControls,
@@ -114,20 +143,31 @@ export const LogList = ({
   return (
     <LogListContextProvider
       app={app}
+      containerElement={containerElement}
       dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
+      enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
+      isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
+      logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
+      onClickFilterLabel={onClickFilterLabel}
+      onClickFilterOutLabel={onClickFilterOutLabel}
+      onClickFilterString={onClickFilterString}
+      onClickFilterOutString={onClickFilterOutString}
+      onClickShowField={onClickShowField}
+      onClickHideField={onClickHideField}
       onLogOptionsChange={onLogOptionsChange}
       onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
       onPinLine={onPinLine}
       onOpenContext={onOpenContext}
       onUnpinLine={onUnpinLine}
+      permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
       showControls={showControls}
@@ -166,20 +206,45 @@ const LogListComponent = ({
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
-  const { app, displayedFields, filterLevels, forceEscape, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+  const {
+    app,
+    displayedFields,
+    dedupStrategy,
+    filterLevels,
+    forceEscape,
+    hasLogsWithErrors,
+    hasSampledLogs,
+    permalinkedLogId,
+    showDetails,
+    showTime,
+    sortOrder,
+    toggleDetails,
+    wrapLogMessage,
+  } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
+    app === CoreApp.Explore
+      ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+      : containerElement.clientHeight
   );
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const dimensions = useMemo(
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
   const styles = getStyles(dimensions, { showTime });
+  const widthContainer = wrapperRef.current ?? containerElement;
+
+  const debouncedResetAfterIndex = useMemo(() => {
+    return debounce((index: number) => {
+      listRef.current?.resetAfterIndex(index);
+      overflowIndexRef.current = Infinity;
+    }, 25);
+  }, []);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -205,11 +270,15 @@ const LogListComponent = ({
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage]);
+  }, [wrapLogMessage, showDetails, displayedFields, dedupStrategy]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight);
+      setListHeight(
+        app === CoreApp.Explore
+          ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
+          : containerElement.clientHeight
+      );
     }, 50);
     window.addEventListener('resize', handleResize);
     handleResize();
@@ -219,31 +288,55 @@ const LogListComponent = ({
   }, [app, containerElement.clientHeight]);
 
   useLayoutEffect(() => {
-    if (widthRef.current === containerElement.clientWidth) {
+    if (widthRef.current === widthContainer.clientWidth) {
       return;
     }
-    widthRef.current = containerElement.clientWidth;
-    listRef.current?.resetAfterIndex(0);
+    widthRef.current = widthContainer.clientWidth;
+    debouncedResetAfterIndex(0);
   });
 
+  const overflowIndexRef = useRef(Infinity);
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
-      if (containerElement && height !== undefined) {
-        storeLogLineSize(id, containerElement, height);
+      if (height !== undefined) {
+        storeLogLineSize(id, widthContainer, height);
       }
-      listRef.current?.resetAfterIndex(index);
+      overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
+      debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [containerElement]
+    [debouncedResetAfterIndex, widthContainer]
   );
 
   const handleScrollPosition = useCallback(() => {
-    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : logs.length - 1);
-  }, [initialScrollPosition, logs.length]);
+    if (permalinkedLogId) {
+      const index = processedLogs.findIndex((log) => log.uid === permalinkedLogId);
+      if (index >= 0) {
+        listRef.current?.scrollToItem(index, 'start');
+        return;
+      }
+    }
+    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+  }, [initialScrollPosition, permalinkedLogId, processedLogs]);
 
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
   }
+
+  const handleLogLineClick = useCallback(
+    (log: LogListModel) => {
+      // Let people select text
+      if (document.getSelection()?.toString()) {
+        return;
+      }
+      toggleDetails(log);
+    },
+    [toggleDetails]
+  );
+
+  const handleLogDetailsResize = useCallback(() => {
+    debouncedResetAfterIndex(0);
+  }, [debouncedResetAfterIndex]);
 
   const filteredLogs = useMemo(
     () =>
@@ -253,41 +346,55 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
-      <InfiniteScroll
-        displayedFields={displayedFields}
-        handleOverflow={handleOverflow}
-        logs={filteredLogs}
-        loadMore={loadMore}
-        scrollElement={scrollRef.current}
-        showTime={showTime}
-        sortOrder={sortOrder}
-        timeRange={timeRange}
-        timeZone={timeZone}
-        setInitialScrollPosition={handleScrollPosition}
-        wrapLogMessage={wrapLogMessage}
-      >
-        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
-          <VariableSizeList
-            className={styles.logList}
-            height={listHeight}
-            itemCount={itemCount}
-            itemSize={getLogLineSize.bind(null, filteredLogs, containerElement, displayedFields, {
-              wrap: wrapLogMessage,
-              showControls,
-              showTime,
-            })}
-            itemKey={getItemKey}
-            layout="vertical"
-            onItemsRendered={onItemsRendered}
-            outerRef={scrollRef}
-            ref={listRef}
-            style={{ overflowY: 'scroll' }}
-            width="100%"
-          >
-            {Renderer}
-          </VariableSizeList>
-        )}
-      </InfiniteScroll>
+      <div className={styles.logListWrapper} ref={wrapperRef}>
+        <InfiniteScroll
+          displayedFields={displayedFields}
+          handleOverflow={handleOverflow}
+          logs={filteredLogs}
+          loadMore={loadMore}
+          onClick={handleLogLineClick}
+          scrollElement={scrollRef.current}
+          showTime={showTime}
+          sortOrder={sortOrder}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          setInitialScrollPosition={handleScrollPosition}
+          wrapLogMessage={wrapLogMessage}
+        >
+          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+            <VariableSizeList
+              className={styles.logList}
+              height={listHeight}
+              itemCount={itemCount}
+              itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                hasLogsWithErrors,
+                hasSampledLogs,
+                showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
+                showTime,
+                wrap: wrapLogMessage,
+              })}
+              itemKey={getItemKey}
+              layout="vertical"
+              onItemsRendered={onItemsRendered}
+              outerRef={scrollRef}
+              overscanCount={5}
+              ref={listRef}
+              style={{ overflowY: 'scroll' }}
+              width="100%"
+            >
+              {Renderer}
+            </VariableSizeList>
+          )}
+        </InfiniteScroll>
+      </div>
+      {showDetails.length > 0 && (
+        <LogLineDetails
+          containerElement={containerElement}
+          getFieldLinks={getFieldLinks}
+          logs={filteredLogs}
+          onResize={handleLogDetailsResize}
+        />
+      )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
@@ -304,6 +411,9 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
     }),
     logListContainer: css({
       display: 'flex',
+    }),
+    logListWrapper: css({
+      width: '100%',
     }),
   };
 }

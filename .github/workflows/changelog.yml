@@ -22,6 +22,10 @@ on:
         required: false
         default: false
         type: boolean
+      work_branch:
+        required: false
+        type: string
+        description: "Use specific branch for changelog"
 
   workflow_dispatch:
     inputs:
@@ -45,6 +49,10 @@ on:
         required: false
         default: false
         type: boolean
+      work_branch:
+        required: false
+        type: string
+        description: "Use specific branch for changelog"
 
 permissions: {}
 
@@ -81,13 +89,13 @@ jobs:
           ref: main
           sparse-checkout: |
             .github/workflows
+            .github/actions
             CHANGELOG.md
             .nvmrc
             .prettierignore
             .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
-          persist-credentials: false
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -98,7 +106,20 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
+        run: |
+          if [[ "$WORK_BRANCH" == '' ]]; then
+            git switch -c "changelog/${RUN_ID}/${VERSION}"
+            exit 0
+          fi
+
+          # Checkout the changelog branch if exists, otherwise create a new one
+          if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
+            git switch --track "origin/$WORK_BRANCH"
+          else
+            git switch -c "$WORK_BRANCH"
+          fi
+        env:
+          WORK_BRANCH: ${{ inputs.work_branch }}
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/actions/changelog
@@ -145,13 +166,26 @@ jobs:
         if: inputs.dry_run != true
         run: git push
       - name: "Create changelog PR"
-        run: >
-          gh pr create \
-            --dry-run="${DRY_RUN}" \
-            --label "no-backport" \
-            --label "no-changelog" \
-            -B "${TARGET}" \
-            --title "Release: update changelog for ${VERSION}" \
-            --body "Changelog changes for release ${VERSION}"
+        run: |
+          if gh pr view &>/dev/null; then
+            echo "Changelog pr has already been created"
+          else
+
+            gh pr create \
+              --dry-run="${DRY_RUN}" \
+              --label "no-backport" \
+              --label "no-changelog" \
+              -B "${TARGET}" \
+              --title "Release: update changelog for ${TARGET}" \
+              --body "Changelog changes for release versions:"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Add release version to PR description"
+        if: inputs.dry_run != true
+        run: |
+          gh pr view --json body --jq .body > pr_body.md
+          echo " -  ${VERSION}" >> pr_body.md
+          gh pr edit --body-file pr_body.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

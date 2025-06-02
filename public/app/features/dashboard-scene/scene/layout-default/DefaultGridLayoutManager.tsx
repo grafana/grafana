@@ -43,6 +43,7 @@ import {
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -292,7 +293,7 @@ export class DefaultGridLayoutManager
 
     const row = new SceneGridRow({
       key: getVizPanelKeyForPanelId(id),
-      title: 'Row title',
+      title: t('dashboard-scene.default-grid-layout-manager.row.title.row-title', 'Row title'),
       actions: new RowActions({}),
       y: 0,
     });
@@ -589,12 +590,7 @@ function getStyles(theme: GrafanaTheme2) {
         flexGrow: `0 !important`,
         minHeight: '250px',
       },
-      '&:hover': {
-        '.dashboard-canvas-add-button': {
-          opacity: 1,
-          filter: 'unset',
-        },
-      },
+      ...dashboardCanvasAddButtonHoverStyles,
     }),
     actionsWrapper: css({
       position: 'relative',

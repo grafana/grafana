@@ -6,8 +6,9 @@ import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana
 import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles } from './LogLine';
-import { LogLineMenu } from './LogLineMenu';
+import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 
 jest.mock('./LogListContext');
@@ -15,6 +16,8 @@ jest.mock('./LogListContext');
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
+  ...defaultProps,
+  ...defaultValue,
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
@@ -49,6 +52,33 @@ describe('LogLineMenu', () => {
       await userEvent.click(screen.getByLabelText('Log menu'));
       await userEvent.click(screen.getByText('Copy link to log line'));
       expect(onPermalinkClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('Allows to copy a permalink', async () => {
+      const customOption1onClick = jest.fn();
+      const logLineMenuCustomItems: LogLineMenuCustomItem[] = [
+        {
+          label: 'Custom option 1',
+          onClick: customOption1onClick,
+        },
+        {
+          divider: true,
+        },
+        {
+          label: 'Custom option 2',
+          onClick: jest.fn(),
+        },
+      ];
+      render(
+        <LogListContextProvider {...contextProps} logLineMenuCustomItems={logLineMenuCustomItems}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      await screen.findByText('Custom option 1');
+      await screen.findByText('Custom option 2');
+      await userEvent.click(screen.getByText('Custom option 1'));
+      expect(customOption1onClick).toHaveBeenCalledTimes(1);
     });
 
     test('Allows to open show context', async () => {
@@ -111,6 +141,26 @@ describe('LogLineMenu', () => {
       expect(screen.queryByText('Pin log')).not.toBeInTheDocument();
       await userEvent.click(screen.getByText('Unpin log'));
       expect(onUnpinLine).toHaveBeenCalledTimes(1);
+    });
+
+    test('Allows to open log details', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={true}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      await screen.findByText('Show log details');
+    });
+
+    test('Does not show log details option when disabled', async () => {
+      render(
+        <LogListContextProvider {...contextProps} enableLogDetails={false}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      expect(screen.queryByText('Show log details')).not.toBeInTheDocument();
     });
   });
 });

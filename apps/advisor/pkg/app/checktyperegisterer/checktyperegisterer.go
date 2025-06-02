@@ -3,6 +3,7 @@ package checktyperegisterer
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -65,6 +66,18 @@ func (r *Runner) createOrUpdate(ctx context.Context, log logging.Logger, obj res
 		if errors.IsAlreadyExists(err) {
 			// Already exists, update
 			log.Debug("Check type already exists, updating", "identifier", id)
+			// Retrieve current annotations to avoid overriding them
+			current, err := r.client.Get(ctx, obj.GetStaticMetadata().Identifier())
+			if err != nil {
+				return err
+			}
+			currentAnnotations := current.GetAnnotations()
+			if currentAnnotations == nil {
+				currentAnnotations = make(map[string]string)
+			}
+			annotations := obj.GetAnnotations()
+			maps.Copy(currentAnnotations, annotations)
+			obj.SetAnnotations(currentAnnotations) // This will update the annotations in the object
 			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
 			if err != nil {
 				// Ignore the error, it's probably due to a race condition
@@ -96,8 +109,10 @@ func (r *Runner) Run(ctx context.Context) error {
 				Name:      t.ID(),
 				Namespace: r.namespace,
 				Annotations: map[string]string{
+					checks.NameAnnotation: t.Name(),
 					// Flag to indicate feature availability
-					checks.RetryAnnotation: "1",
+					checks.RetryAnnotation:       "1",
+					checks.IgnoreStepsAnnotation: "1",
 				},
 			},
 			Spec: advisorv0alpha1.CheckTypeSpec{

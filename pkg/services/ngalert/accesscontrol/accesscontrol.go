@@ -1,7 +1,7 @@
 package accesscontrol
 
 import (
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

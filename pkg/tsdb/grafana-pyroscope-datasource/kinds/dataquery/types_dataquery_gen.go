@@ -41,6 +41,8 @@ type GrafanaPyroscopeDataQuery struct {
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
+	// If set to true, the response will contain annotations
+	Annotations *bool `json:"annotations,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -52,5 +54,6 @@ type GrafanaPyroscopeDataQuery struct {
 func NewGrafanaPyroscopeDataQuery() *GrafanaPyroscopeDataQuery {
 	return &GrafanaPyroscopeDataQuery{
 		LabelSelector: "{}",
+		GroupBy:       []string{},
 	}
 }
