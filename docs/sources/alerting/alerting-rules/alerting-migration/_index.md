@@ -27,15 +27,12 @@ Grafana provides an internal tool in Alerting which allows you to import Mimir a
 
 ## Before you begin
 
-The `alertingMigrationUI` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
-To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
-
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 
 - Alerting: Rules Writer
 - Alerting: Set provisioning status
 - Datasources: Reader
-- Folders: Creator  
+- Folders: Creator
   {{< admonition type="note" >}}
   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one. It is a best practice to prepare an import plan before you convert all your alert rules.
   {{< /admonition >}}

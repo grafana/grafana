@@ -1330,13 +1330,6 @@ var (
 			Owner:       grafanaOSSBigTent,
 		},
 		{
-			Name:        "reportingUseRawTimeRange",
-			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:         "alertingUIOptimizeReducer",
 			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1438,27 +1431,11 @@ var (
 			Owner:        identityAccessTeam,
 		},
 		{
-			Name:         "ABTestFeatureToggleA",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-		},
-		{
 			Name:         "templateVariablesUsesCombobox",
 			Description:  "Use new **Combobox** component for template variables",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "ABTestFeatureToggleB",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
 		},
 		{
 			Name:        "grafanaAdvisor",
@@ -1576,14 +1553,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:           "grafanaManagedRecordingRulesDatasources",
-			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: false,
-			Expression:     "false",
 		},
 		{
 			Name:         "infinityRunQueriesInParallel",
