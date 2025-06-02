@@ -40,3 +40,4 @@ public/mockServiceWorker.js
 
 /.nx/cache
 /.nx/workspace-data
+eslint-suppressions.json
