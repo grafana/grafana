@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -72,7 +73,13 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
           path: '',
           name: '',
           // eslint-disable-next-line react/display-name
-          editor: () => <div>The basemap layer is configured by the server admin.</div>,
+          editor: () => (
+            <div>
+              <Trans i18nKey="geomap.plugin.basemap-layer-configured-server-admin">
+                The basemap layer is configured by the server admin.
+              </Trans>
+            </div>
+          ),
         });
       } else if (baselayer) {
         builder.addNestedOptions(
