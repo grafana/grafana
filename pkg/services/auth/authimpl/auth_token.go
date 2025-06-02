@@ -277,7 +277,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, auth.ErrInvalidSessionToken
 	}
 
-	rotate := func() (*auth.UserToken, error) {
+	rotate := func(ctx context.Context) (*auth.UserToken, error) {
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
 			return nil, err
@@ -313,12 +313,12 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 			var token *auth.UserToken
 			err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
 				var err error
-				token, err = rotate()
+				token, err = rotate(ctx)
 				return err
 			})
 			return token, err
 		}
-		return rotate()
+		return rotate(ctx)
 	})
 
 	if err != nil {
