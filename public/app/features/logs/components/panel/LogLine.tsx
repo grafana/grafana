@@ -17,7 +17,7 @@ import {
   hasUnderOrOverflow,
   getLineHeight,
   LogFieldDimension,
-  TRUNCATION_LINE_COUNT,
+  getTruncationLineCount,
 } from './virtualization';
 
 export interface Props {
@@ -150,6 +150,7 @@ export const LogLine = ({
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          style={collapsed ? { maxHeight: `${getTruncationLineCount() * getLineHeight()}px` } : undefined}
           onClick={handleClick}
         >
           <Log
@@ -427,7 +428,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     collapsedLogLine: css({
-      maxHeight: `${TRUNCATION_LINE_COUNT * getLineHeight()}px`,
       overflow: 'hidden',
     }),
     expandCollapseControl: css({
