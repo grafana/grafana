@@ -163,6 +163,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
 }
 
 interface DisplayOptions {
+  fontSize: LogListFontSize;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   showDuplicates: boolean;
@@ -174,7 +175,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  { fontSize, hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -190,7 +191,7 @@ export function getLogLineSize(
     return (TRUNCATION_LINE_COUNT + 1) * lineHeight;
   }
 
-  const storedSize = retrieveLogLineSize(logs[index].uid, container);
+  const storedSize = retrieveLogLineSize(logs[index].uid, container, fontSize);
   if (storedSize) {
     return storedSize;
   }
@@ -331,13 +332,13 @@ export function resetLogLineSizes() {
   logLineSizesMap = new Map<string, number>();
 }
 
-export function storeLogLineSize(id: string, container: HTMLDivElement, height: number) {
-  const key = `${id}_${getLogContainerWidth(container)}`;
+export function storeLogLineSize(id: string, container: HTMLDivElement, height: number, fontSize: LogListFontSize) {
+  const key = `${id}_${getLogContainerWidth(container)}_${fontSize}`;
   logLineSizesMap.set(key, height);
 }
 
-export function retrieveLogLineSize(id: string, container: HTMLDivElement) {
-  const key = `${id}_${getLogContainerWidth(container)}`;
+export function retrieveLogLineSize(id: string, container: HTMLDivElement, fontSize: LogListFontSize) {
+  const key = `${id}_${getLogContainerWidth(container)}_${fontSize}`;
   return logLineSizesMap.get(key);
 }
 
