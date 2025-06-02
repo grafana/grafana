@@ -787,23 +787,20 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * This is used to filter time series data based on existing queries.
  * Handles UTF8 metrics by properly escaping them.
  *
- * @param {URLSearchParams} initialParams - Initial URL parameters
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {URLSearchParams} URL parameters with match[] parameters added
+ * @returns {string} Metric names as a regex matcher
  */
-export const populateMatchParamsFromQueries = (
-  initialParams: URLSearchParams,
-  queries?: PromQuery[]
-): URLSearchParams => {
-  return (queries ?? []).reduce((params, query) => {
+export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+  const metrics = (queries ?? []).reduce<string[]>((params, query) => {
     const visualQuery = buildVisualQueryFromString(query.expr);
-    const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
-    params.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
+    // const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
+    params.push(visualQuery.query.metric);
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
-        params.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
+        params.push(bq.query.metric);
       });
     }
     return params;
-  }, initialParams);
+  }, []);
+  return `__name__=~"${metrics.join('|')}"`;
 };

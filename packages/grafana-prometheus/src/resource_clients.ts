@@ -234,6 +234,9 @@ class ResourceClientsCache {
   constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
 
   public setLabelKeys(timeRange: TimeRange, match: string, limit: string, keys: string[]) {
+    if (keys.length === 0) {
+      return;
+    }
     // Check and potentially clean cache before adding new entry
     this.cleanCacheIfNeeded();
     const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
@@ -252,6 +255,9 @@ class ResourceClientsCache {
   }
 
   public setLabelValues(timeRange: TimeRange, match: string, limit: string, values: string[]) {
+    if (values.length === 0) {
+      return;
+    }
     // Check and potentially clean cache before adding new entry
     this.cleanCacheIfNeeded();
     const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');
