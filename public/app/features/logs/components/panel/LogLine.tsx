@@ -45,8 +45,15 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, dedupStrategy, enableLogDetails, hasLogsWithErrors, hasSampledLogs, onLogLineHover } =
-    useLogListContext();
+  const {
+    detailsDisplayed,
+    dedupStrategy,
+    enableLogDetails,
+    fontSize,
+    hasLogsWithErrors,
+    hasSampledLogs,
+    onLogLineHover,
+  } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -94,7 +101,7 @@ export const LogLine = ({
   return (
     <div style={style}>
       <div
-        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
@@ -266,6 +273,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
         background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
@@ -315,6 +323,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '& .no-highlighting': {
         color: theme.colors.text.primary,
       },
+    }),
+    fontSizeSmall: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
       background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,

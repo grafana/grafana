@@ -108,7 +108,8 @@ export const LogList = ({
   enableLogDetails,
   eventBus,
   filterLevels,
-  fontSize = 'default',
+  logOptionsStorageKey,
+  fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
   getRowContextQuery,
   grammar,
@@ -117,7 +118,6 @@ export const LogList = ({
   loading,
   loadMore,
   logLineMenuCustomItems,
-  logOptionsStorageKey,
   logs,
   logsMeta,
   logSupportsContext,
@@ -216,6 +216,7 @@ const LogListComponent = ({
     displayedFields,
     dedupStrategy,
     filterLevels,
+    fontSize,
     forceEscape,
     hasLogsWithErrors,
     hasSampledLogs,
@@ -252,8 +253,8 @@ const LogListComponent = ({
   }, []);
 
   useEffect(() => {
-    initVirtualization(theme);
-  }, [theme]);
+    initVirtualization(theme, fontSize);
+  }, [fontSize, theme]);
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
