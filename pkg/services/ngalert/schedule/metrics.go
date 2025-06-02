@@ -88,7 +88,8 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			}
 		}
 
-		if rule.ImportedFromPrometheus() {
+		_, hasConvertedPrometheusRuleLabel := rule.GetLabels()[models.ConvertedPrometheusRuleLabel]
+		if rule.ImportedFromPrometheus() || hasConvertedPrometheusRuleLabel {
 			orgsRulesPrometheusImported[rule.OrgID]++
 		}
 
