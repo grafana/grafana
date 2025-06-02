@@ -34,7 +34,7 @@ In this tutorial you will:
 
 {{< admonition type="tip" >}}
 
-Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+After you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /admonition >}}
 
@@ -42,7 +42,7 @@ Once you have completed Part 1, don’t forget to explore the advanced but essen
 
 {{< docs/ignore >}}
 
-> Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+> After you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /docs/ignore >}}
 
