@@ -24,5 +24,8 @@ type TemplateGroupMetadata struct {
 
 // NewTemplateGroupMetadata creates a new TemplateGroupMetadata object.
 func NewTemplateGroupMetadata() *TemplateGroupMetadata {
-	return &TemplateGroupMetadata{}
+	return &TemplateGroupMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }
