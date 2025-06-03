@@ -17,6 +17,17 @@ export type GetRowContextQueryFn = (
   cacheFilters?: boolean
 ) => Promise<DataQuery | null>;
 
+type MenuItem = {
+  label: string;
+  onClick(log: LogListModel): void;
+};
+
+type MenuItemDivider = {
+  divider: true;
+};
+
+export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
+
 interface Props {
   log: LogListModel;
   styles: LogLineStyles;
@@ -31,6 +42,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    logLineMenuCustomItems = [],
     logSupportsContext,
     toggleDetails,
   } = useLogListContext();
@@ -98,6 +110,15 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
+        {logLineMenuCustomItems.map((item, i) => {
+          if (isDivider(item)) {
+            return <Menu.Divider key={i} />;
+          }
+          if (isItem(item)) {
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
+          }
+          return null;
+        })}
       </Menu>
     ),
     [
@@ -106,6 +127,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       detailsDisplayed,
       enableLogDetails,
       log,
+      logLineMenuCustomItems,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
@@ -128,3 +150,11 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     </Dropdown>
   );
 };
+
+function isDivider(item: LogLineMenuCustomItem) {
+  return 'divider' in item && item.divider;
+}
+
+function isItem(item: LogLineMenuCustomItem) {
+  return 'onClick' in item && 'label' in item;
+}

@@ -172,7 +172,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?)?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(-[0-9A-Za-z-.]+)?)?$"
         },
         "plugins": {
           "type": "array",
