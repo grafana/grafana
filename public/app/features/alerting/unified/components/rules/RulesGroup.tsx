@@ -320,7 +320,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(2)}`,
     }),
     actionIcons: css({
-      width: '80px',
+      width: '120px',
       alignItems: 'center',
 
       flexShrink: 0,
