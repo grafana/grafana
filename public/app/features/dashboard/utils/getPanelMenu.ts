@@ -268,7 +268,7 @@ export function getPanelMenu(
 
   if (extensions.length > 0 && !panel.isEditing) {
     menu.push({
-      text: 'Extensions',
+      text: t('dashboard.get-panel-menu.text.extensions', 'Extensions'),
       iconClassName: 'plug',
       type: 'submenu',
       subMenu: createExtensionSubMenu(extensions),
