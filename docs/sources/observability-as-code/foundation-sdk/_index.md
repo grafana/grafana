@@ -286,6 +286,16 @@ new stat.PanelBuilder()
 
 By using option builders, you don't need to manually construct deeply nested config objects. Instead, the SDK gives you a typed and guided API that mirrors Grafana's internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
 
+## Explore a real-world example
+
+If you want to explore further and see a more real-world example of using the Grafana Foundation SDK, watch the following walkthrough:
+
+{{< youtube id="ZjWdGVsrCiQ" >}}
+
+In this video, we generate a dashboard from code and deploy it using the Grafana API, covering patterns and practices you'd use in production environments. It also includes a working example of a web service that emits metrics and logs, and shows how to deploy a dashboard alongside it using Docker Compose.
+
+You can find the full source code for this example in the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk/tree/main/generate-and-deploy-example).
+
 ## Summary
 
 The Grafana Foundation SDK is designed to make dashboard creation:
