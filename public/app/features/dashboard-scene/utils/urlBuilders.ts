@@ -25,6 +25,8 @@ export interface DashboardUrlOptions {
   timeZone?: string;
   // Check if we are on the home dashboard
   isHomeDashboard?: boolean;
+
+  disableAssureBaseUrl?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
@@ -80,6 +82,10 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
   if (options.absolute) {
     return config.appUrl + relativeUrl.slice(1);
+  }
+
+  if (options.disableAssureBaseUrl) {
+    return relativeUrl;
   }
 
   return assureBaseUrl(relativeUrl);
