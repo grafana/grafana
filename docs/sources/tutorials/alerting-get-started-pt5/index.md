@@ -173,6 +173,11 @@ Notification policies route alert instances to contact points via label matchers
 
 Although our application doesn't explicitly include an `environment` label, we can rely on other labels like `instance` or `deployment`, which may contain keywords (like prod or staging) that indicate the environment.
 
+1. Sign in to Grafana:
+
+   - **Grafana Cloud** users: Log in via Grafana Cloud.
+   - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
+
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
 
 1. Add a child policy:
@@ -325,7 +330,23 @@ The template should be flexible enough to capture the target keywords (e.g., pro
 
 By using notification policies, you can route alerts based on query values, directing them to the appropriate teams.
 
-## Learn more
+## Learn more in [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /docs/ignore >}}
 
 Explore related topics covered in this tutorial:
 

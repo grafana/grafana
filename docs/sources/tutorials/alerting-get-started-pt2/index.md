@@ -21,7 +21,7 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-This tutorial is a continuation of the [Get started with Grafana Alerting - Alert rules](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
+This tutorial is a continuation of the [Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
@@ -321,13 +321,13 @@ In this tutorial, you have learned how Grafana Alerting can route individual ale
 
 If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-## Learn more in [Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
+## Learn more in [Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /admonition >}}
 
@@ -335,7 +335,7 @@ In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutoria
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /docs/ignore >}}
 
