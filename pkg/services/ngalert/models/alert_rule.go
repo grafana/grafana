@@ -406,6 +406,11 @@ func WithoutInternalLabels() LabelOption {
 	}
 }
 
+func (alertRule *AlertRule) ImportedPrometheusRule() bool {
+	_, hasConvertedPrometheusRuleLabel := alertRule.GetLabels()[ConvertedPrometheusRuleLabel]
+	return hasConvertedPrometheusRuleLabel || alertRule.HasPrometheusRuleDefinition()
+}
+
 func (alertRule *AlertRule) HasPrometheusRuleDefinition() bool {
 	_, err := alertRule.PrometheusRuleDefinition()
 	return err == nil
