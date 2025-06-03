@@ -48,6 +48,10 @@ describe('RuleList - GroupedView', () => {
 
     expect(mimirSection).toBeInTheDocument();
     expect(prometheusSection).toBeInTheDocument();
+
+    // assert if namespace and groups have all of the metadata
+    expect(within(mimirSection).getByRole('heading', { name: 'test-mimir-namespace' })).toBeInTheDocument();
+    expect(within(mimirSection).getByRole('treeitem', { name: 'test-group-1 10s' })).toBeInTheDocument();
   });
 
   it('should paginate through groups', async () => {
