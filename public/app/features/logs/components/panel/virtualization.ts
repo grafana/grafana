@@ -1,3 +1,5 @@
+import ansicolor from 'ansicolor';
+
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -222,7 +224,7 @@ export function getLogLineSize(
     textToMeasure = logs[index].getDisplayedFieldValue(field) + textToMeasure;
   }
   if (!displayedFields.length) {
-    textToMeasure += logs[index].body;
+    textToMeasure += ansicolor.strip(logs[index].body);
   }
 
   const { height } = measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
