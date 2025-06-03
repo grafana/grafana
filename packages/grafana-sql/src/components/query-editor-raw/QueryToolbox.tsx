@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
@@ -15,6 +16,7 @@ interface QueryToolboxProps extends Omit<QueryValidatorProps, 'onValidate'> {
 }
 
 export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ...validatorProps }: QueryToolboxProps) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const [validationResult, setValidationResult] = useState<boolean>();
 
@@ -80,7 +82,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 }}
                 name="brackets-curly"
                 size="xs"
-                tooltip="Format query"
+                tooltip={t('components.query-toolbox.tooltip-format-query', 'Format query')}
               />
             )}
             {onExpand && (
@@ -95,10 +97,19 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 }}
                 name={isExpanded ? 'angle-up' : 'angle-down'}
                 size="xs"
-                tooltip={isExpanded ? 'Collapse editor' : 'Expand editor'}
+                tooltip={
+                  isExpanded
+                    ? t('components.query-toolbox.tooltip-collapse', 'Collapse editor')
+                    : t('components.query-toolbox.tooltip-expand', 'Expand editor')
+                }
               />
             )}
-            <Tooltip content="Hit CTRL/CMD+Return to run query">
+            <Tooltip
+              content={t(
+                'components.query-toolbox.content-hit-ctrlcmdreturn-to-run-query',
+                'Hit CTRL/CMD+Return to run query'
+              )}
+            >
               <Icon className={styles.hint} name="keyboard" />
             </Tooltip>
           </HorizontalGroup>
