@@ -41,7 +41,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     };
   }, [groupsGenerator]);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     DATA_SOURCE_GROUP_PAGE_SIZE
   );
@@ -50,7 +50,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
   const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
 
   return (
-    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
+    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading} error={error}>
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByNamespace).map(([namespace, groups]) => (
           <ListSection
