@@ -54,7 +54,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 			}
 			// no hits to the index server in this case
-			for _, _ = range indexServer.Calls {
+			for range indexServer.Calls {
 				require.FailNow(t, "index server was called when it should have not")
 			}
 		})
@@ -108,8 +108,8 @@ func testCallAllMethods(client resource.ResourceClient) {
 	_, _ = client.ListManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListManagedObjectsRequest{})
 }
 
-func createTestGrpcServer(t *testing.T, adress string) *testServer {
-	listener, err := net.Listen("tcp", adress)
+func createTestGrpcServer(t *testing.T, address string) *testServer {
+	listener, err := net.Listen("tcp", address)
 	require.NoError(t, err, "failed to listen")
 
 	testServer := newTestServer()
@@ -118,9 +118,7 @@ func createTestGrpcServer(t *testing.T, adress string) *testServer {
 	)
 
 	go func() {
-		if err := s.Serve(listener); err != nil {
-			t.Fatalf("failed to start test server")
-		}
+		_ = s.Serve(listener)
 	}()
 
 	testServer.s = s
@@ -144,7 +142,6 @@ func (s *testServer) resetCalls() {
 	s.Calls = make(map[string]int)
 }
 
-// Track method calls via interceptor
 func (s *testServer) handler(srv interface{}, serverStream grpc.ServerStream) error {
 	fullMethodName, ok := grpc.MethodFromServerStream(serverStream)
 	if ok {
