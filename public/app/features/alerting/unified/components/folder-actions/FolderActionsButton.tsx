@@ -38,18 +38,10 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
   const listView2Enabled = shouldUseAlertingListViewV2();
 
-  // abilities
-  const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
-  const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
-  const canPause = pauseSupported && pauseAllowed;
-  const canDelete = deleteSupported && deleteAllowed;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
-  // mutations
-  const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
-  const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
 
@@ -70,52 +62,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
     await redirectToListView();
   };
 
-  const BulkActions = () => {
-    if (!bulkActionsEnabled) {
-      return null;
-    }
-
-    if (!canPause && !canDelete) {
-      return null;
-    }
-
-    return (
-      <>
-        <Menu.Divider />
-        {canPause && (
-          <>
-            <PauseUnpauseActionMenuItem
-              folderUID={folderUID}
-              action="pause"
-              executeAction={async (folderUID) => {
-                await pauseFolder({ namespace: folderUID }).unwrap();
-                await redirectToListView();
-              }}
-              isLoading={updateState.isLoading}
-            />
-            <PauseUnpauseActionMenuItem
-              folderUID={folderUID}
-              action="unpause"
-              executeAction={async (folderUID) => {
-                await unpauseFolder({ namespace: folderUID }).unwrap();
-                await redirectToListView();
-              }}
-              isLoading={unpauseState.isLoading}
-            />
-          </>
-        )}
-        {canDelete && (
-          <Menu.Item
-            label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete all rules')}
-            icon="trash-alt"
-            onClick={() => setIsDeleteModalOpen(true)}
-            disabled={deleteState.isLoading}
-          />
-        )}
-      </>
-    );
-  };
-
   const menuItems = (
     <>
       <Menu.Item
@@ -124,13 +70,19 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
         aria-label={t('alerting.list-view.folder-actions.view.aria-label', 'View folder')}
         label={t('alerting.list-view.folder-actions.view.label', 'View folder')}
       />
-      <BulkActions />
+      <BulkActions folderUID={folderUID} onClickDelete={setIsDeleteModalOpen} isLoading={deleteState.isLoading} />
       {canExportRules && (
         <>
           {bulkActionsEnabled && <Menu.Divider />}
           <ExportFolderButton onClickExport={() => setIsExporting(true)} />
         </>
       )}
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={onConfirmDelete}
+        onDismiss={() => setIsDeleteModalOpen(false)}
+        folderName={folderName}
+      />
     </>
   );
 
@@ -182,5 +134,80 @@ function ExportFolderButton({ onClickExport }: { onClickExport: () => void }) {
       icon="download-alt"
       onClick={onClickExport}
     />
+  );
+}
+
+function BulkActions({
+  folderUID,
+  onClickDelete,
+  isLoading,
+}: {
+  folderUID: string;
+  onClickDelete: (showModal: boolean) => void;
+  isLoading: boolean;
+}) {
+  const { t } = useTranslate();
+
+  // feature toggles
+  const listView2Enabled = shouldUseAlertingListViewV2();
+  const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+
+  // abilities
+  const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
+  const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
+
+  const canPause = pauseSupported && pauseAllowed;
+  const canDelete = deleteSupported && deleteAllowed;
+
+  // mutations
+  const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
+  const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();
+
+  // URLs
+  const viewComponent = listView2Enabled ? 'list' : 'grouped';
+  const redirectToListView = useRedirectToListView(viewComponent);
+
+  if (!bulkActionsEnabled) {
+    return null;
+  }
+
+  if (!canPause && !canDelete) {
+    return null;
+  }
+
+  return (
+    <>
+      <Menu.Divider />
+      {canPause && (
+        <>
+          <PauseUnpauseActionMenuItem
+            folderUID={folderUID}
+            action="pause"
+            executeAction={async (folderUID) => {
+              await pauseFolder({ namespace: folderUID }).unwrap();
+              await redirectToListView();
+            }}
+            isLoading={updateState.isLoading}
+          />
+          <PauseUnpauseActionMenuItem
+            folderUID={folderUID}
+            action="unpause"
+            executeAction={async (folderUID) => {
+              await unpauseFolder({ namespace: folderUID }).unwrap();
+              await redirectToListView();
+            }}
+            isLoading={unpauseState.isLoading}
+          />
+        </>
+      )}
+      {canDelete && (
+        <Menu.Item
+          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete all rules')}
+          icon="trash-alt"
+          onClick={() => onClickDelete(true)}
+          disabled={isLoading}
+        />
+      )}
+    </>
   );
 }
