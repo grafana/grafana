@@ -56,13 +56,29 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
+    // hook to handle anchor elements with target="_blank"
+    DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        const currentRel = node.getAttribute('rel') || '';
+        const relValues = new Set(currentRel.split(/\s+/).filter(Boolean));
+
+        relValues.add('noopener');
+        relValues.add('noreferrer');
+
+        node.setAttribute('rel', Array.from(relValues).join(' '));
+      }
+    });
+
     return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
+      ADD_ATTR: ['target'],
     });
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
