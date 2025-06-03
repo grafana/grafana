@@ -187,6 +187,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 		if err != nil {
 			b.log.Error("failed to get instance configuration settings", "err", err)
+			responder.Error(err)
+			return
 		}
 
 		// Actually run the query (includes expressions)
