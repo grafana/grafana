@@ -147,7 +147,7 @@ export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
       onFocus={() => setPrevDescription(panel.state.description)}
       onBlur={() => {
         dashboardEditActions.edit({
-          description: 'Change panel description',
+          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
           source: panel,
           perform: () => panel.setState({ description: description }),
           undo: () => panel.setState({ description: prevDescription }),
@@ -164,7 +164,7 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     dashboardEditActions.edit({
-      description: 'Change panel background',
+      description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
       undo: () => panel.setState({ displayMode: displayMode }),
@@ -184,7 +184,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
   }
 
   dashboardEditActions.edit({
-    description: 'Change panel title',
+    description: t('dashboard.edit-actions.panel-title', 'Change panel title'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),

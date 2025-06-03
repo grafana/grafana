@@ -154,7 +154,7 @@ export class DefaultGridLayoutManager
     const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
 
     dashboardEditActions.edit({
-      description: 'Paste panel',
+      description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
       addedObject: newGridItem.state.body,
       source: this,
       perform: () => {
