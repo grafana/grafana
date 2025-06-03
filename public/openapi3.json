@@ -7903,6 +7903,9 @@
           "isExternallySynced": {
             "type": "boolean"
           },
+          "isProvisioned": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -13533,9 +13536,6 @@
             "type": "boolean"
           },
           "isManaged": {
-            "type": "boolean"
-          },
-          "isProvisioned": {
             "type": "boolean"
           },
           "isServiceAccount": {
