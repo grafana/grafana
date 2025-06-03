@@ -455,19 +455,19 @@ Use one of the following methods to include a dashboard link with the correct ti
    {{ range .Alerts -}}
 
      {{/* StartsAt - 1h */}}
-     {{ $from := (.StartsAt.Add -3600000000000).UnixMilli }}
+     {{- $from := (.StartsAt.Add -3600000000000).UnixMilli }}
 
-     {{ $to := "" }}
-     {{ if eq .Status "resolved" }}
-        {{ $to = (.EndsAt).UnixMilli }}
-     {{ else }}
+     {{- $to := "" }}
+     {{- if eq .Status "resolved" }}
+        {{- $to = (.EndsAt).UnixMilli }}
+     {{- else -}}
        {{/* Use current time if alert is firing */}}
-       {{ $to = (time.Now).UnixMilli }}
-     {{ end }}
+       {{- $to = (time.Now).UnixMilli }}
+     {{- end -}}
 
      Dashboard: {{.Annotations.MyDashboardURL}}?from={{$from}}&to={{$to}}
-   {{ end -}}
-   {{ end -}}
+   {{ end }}
+   {{ end }}
    ```
 
    To use this template, define a custom annotation named `MyDashboardURL` that contains the base dashboard URL without `from` and `to` parameters. For example: `http://localhost:3000/d/uiyahbsdaubsd`.
