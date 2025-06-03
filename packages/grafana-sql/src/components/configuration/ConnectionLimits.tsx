@@ -5,8 +5,6 @@ import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafan
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
-import { MaxLifetimeField } from './MaxLifetimeField';
-import { MaxOpenConnectionsField } from './MaxOpenConnectionsField';
 import { NumberInput } from './NumberInput';
 
 interface Props<T> {
@@ -86,11 +84,36 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
 
   return (
     <ConfigSubSection title="Connection limits">
-      <MaxOpenConnectionsField
-        labelWidth={labelWidth}
-        onMaxConnectionsChanged={onMaxConnectionsChanged}
-        jsonData={jsonData}
-      />
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Max open</span>
+              <Tooltip
+                content={
+                  <span>
+                    The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
+                    than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
+                    <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
+                    to 0, there is no limit on the number of open connections.
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
+        <NumberInput
+          value={jsonData.maxOpenConns}
+          defaultValue={config.sqlConnectionLimits.maxOpenConns}
+          onChange={(value) => {
+            onMaxConnectionsChanged(value);
+          }}
+          width={labelWidth}
+        />
+      </Field>
 
       <Field
         label={
@@ -150,11 +173,34 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         )}
       </Field>
 
-      <MaxLifetimeField
-        labelWidth={labelWidth}
-        onMaxLifetimeChanged={onJSONDataNumberChanged('connMaxLifetime')}
-        jsonData={jsonData}
-      />
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Max lifetime</span>
+              <Tooltip
+                content={
+                  <span>
+                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                    reused forever.
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
+        <NumberInput
+          value={jsonData.connMaxLifetime}
+          defaultValue={config.sqlConnectionLimits.connMaxLifetime}
+          onChange={(value) => {
+            onJSONDataNumberChanged('connMaxLifetime')(value);
+          }}
+          width={labelWidth}
+        />
+      </Field>
     </ConfigSubSection>
   );
 };
