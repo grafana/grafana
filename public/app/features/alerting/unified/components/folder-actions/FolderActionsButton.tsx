@@ -6,7 +6,7 @@ import { Dropdown, Menu } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
-import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import {
   AlertingAction,
   FolderBulkAction,
@@ -36,7 +36,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   // feature toggles
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
-  const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
+  const listView2Enabled = shouldUseAlertingListViewV2();
 
   // abilities
   const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
@@ -53,9 +53,9 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
 
-  const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
-  const folderUrl = makeFolderLink(folderUID);
   const { folder } = useFolder(folderUID);
+  const folderName = folder?.title || 'unknown folder';
+  const folderUrl = makeFolderLink(folderUID);
   const viewComponent = listView2Enabled ? 'list' : 'grouped';
 
   // URLs
@@ -128,7 +128,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
       {canExportRules && (
         <>
           {bulkActionsEnabled && <Menu.Divider />}
-          <ExportFolderButton folderUid={folderUID} onClickExport={() => setIsExporting(true)} />
+          <ExportFolderButton onClickExport={() => setIsExporting(true)} />
         </>
       )}
     </>
@@ -171,12 +171,8 @@ function useRedirectToListView(view: string) {
   return redirectToListView;
 }
 
-function ExportFolderButton({ folderUid, onClickExport }: { folderUid: string; onClickExport: () => void }) {
+function ExportFolderButton({ onClickExport }: { onClickExport: () => void }) {
   const { t } = useTranslate();
-  const { folder } = useFolder(folderUid);
-  if (!folder) {
-    return null;
-  }
   return (
     <Menu.Item
       aria-label={t('alerting.list-view.folder-actions.export.aria-label', 'Export rules folder')}
