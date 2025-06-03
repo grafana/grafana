@@ -43,6 +43,7 @@ type StorageOptions struct {
 
 	// For unified-grpc
 	Address                                  string
+	IndexServerAddress                       string
 	GrpcClientAuthenticationToken            string
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string

@@ -48,9 +48,9 @@ type resourceClient struct {
 	resourcepb.DiagnosticsClient
 }
 
-func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return NewLegacyResourceClient(conn), nil
+		return NewLegacyResourceClient(conn, indexConn), nil
 	}
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
@@ -75,12 +75,13 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	}
 }
 
-func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
+func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
 		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cci),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cci),
 		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
 		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
