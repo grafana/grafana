@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -292,6 +293,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       const status = getStatusFromError(err);
       const message = getMessageFromError(err);
       const messageId = getMessageIdFromError(err);
+
       this.setState({
         isLoading: false,
         loadError: {
@@ -300,6 +302,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+
+      if (!isFetchError(err)) {
+        console.error('Error loading dashboard:', err);
+      }
+
       // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
       // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
@@ -545,7 +552,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           isLoading: false,
           loadError: {
             status: 404,
-            message: 'Dashboard not found',
+            message: t(
+              'dashboard-scene.dashboard-scene-page-state-manager.message.dashboard-not-found',
+              'Dashboard not found'
+            ),
           },
         });
         return;
@@ -728,7 +738,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           isLoading: false,
           loadError: {
             status: 404,
-            message: 'Dashboard not found',
+            message: t(
+              'dashboard-scene.dashboard-scene-page-state-manager-v2.message.dashboard-not-found',
+              'Dashboard not found'
+            ),
           },
         });
         return;

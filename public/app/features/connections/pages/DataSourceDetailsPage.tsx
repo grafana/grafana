@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Badge, TextLink } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
 import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
@@ -8,6 +8,7 @@ import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
 import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
+  const { t } = useTranslate();
   const overrideNavId = 'standalone-plugin-page-/connections/add-new-connection';
   const { id = '' } = useParams<{ id: string }>();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
@@ -20,8 +21,11 @@ export function DataSourceDetailsPage() {
       navId={navId}
       notFoundComponent={<NotFoundDatasource />}
       notFoundNavModel={{
-        text: 'Unknown datasource',
-        subTitle: 'No datasource with this ID could be found.',
+        text: t('connections.data-source-details-page.text.unknown-datasource', 'Unknown datasource'),
+        subTitle: t(
+          'connections.data-source-details-page.subTitle.datasource-could-found',
+          'No datasource with this ID could be found.'
+        ),
         active: true,
       }}
     />

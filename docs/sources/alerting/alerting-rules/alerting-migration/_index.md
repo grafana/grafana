@@ -23,19 +23,16 @@ refs:
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Mimir and Loki alert rules as Grafana-managed alert rules. To import Prometheus rules, use the [API](ref:import-ds-rules-api).
+Grafana provides an internal tool in Alerting which allows you to import Mimir, Loki, and Prometheus alert rules as Grafana-managed alert rules.
 
 ## Before you begin
-
-The `alertingMigrationUI` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) needs to be enabled to use this feature.
-To import recording rules, they [must be configured](ref:configure-recording-rules), and the `grafanaManagedRecordingRulesDatasources` [feature flag](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) must be enabled.
 
 To use the migration tool, you need the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 
 - Alerting: Rules Writer
 - Alerting: Set provisioning status
 - Datasources: Reader
-- Folders: Creator  
+- Folders: Creator
   {{< admonition type="note" >}}
   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one. It is a best practice to prepare an import plan before you convert all your alert rules.
   {{< /admonition >}}
@@ -66,9 +63,11 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
 1. Navigate to the Data source-managed alert rules section and click **Import to Grafana-managed rules**.
 
-   The import alert rules page opens.
+1. Select from the input source whether you want to import rules from and existing Loki or Mimir data source or from a Prometheus YAML file.
 
-1. In the Data source dropdown, select the Loki or Mimir data source of the alert rules.
+   If you choose to import a Prometheus data source rule from a YAML file, an, **Upload file** button appears. Click this to upload your YAML file.
+
+1. In the Data source dropdown, select the data source of the alert rules.
 
 1. In Additional settings, select a target folder or designate a new folder to import the rules into.
 
