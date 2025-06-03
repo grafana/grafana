@@ -73,7 +73,6 @@ export const SubformField = ({
                 onResetSecureField={onResetSecureField}
                 secureFields={secureFields}
                 defaultValue={defaultValue?.[subOption.propertyName]}
-                parentOption={option}
                 key={subOption.propertyName}
                 option={subOption}
                 pathPrefix={`${name}.`}
