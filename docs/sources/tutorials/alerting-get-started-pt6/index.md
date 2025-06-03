@@ -300,7 +300,7 @@ Finally, as part of the alerting process, you should receive notifications at th
       "silenceURL": "http://localhost:3000/alerting/silence/new?
       "dashboardURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006",
       "panelURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006&viewPanel=2",
-  
+
 ... }
 ```
 
