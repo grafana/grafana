@@ -18,7 +18,7 @@ const {
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
+  (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-i18n/src/eslint/README.md#${name}`
 );
 
 /**
@@ -224,7 +224,10 @@ const noUntranslatedStrings = createRule({
         // We don't want to report if the parent has a text node,
         // as we'd end up doing it twice. This makes it awkward for us to auto fix
         const parentHasText = parentHasChildren
-          ? parent.children.some((child) => child.type === AST_NODE_TYPES.JSXText && getNodeValue(child).trim())
+          ? parent.children.some((child) => {
+              const childValue = getNodeValue(child).trim();
+              return child.type === AST_NODE_TYPES.JSXText && childValue && !isStringNonAlphanumeric(childValue);
+            })
           : false;
 
         if (untranslatedTextNodes.length && !parentHasText) {

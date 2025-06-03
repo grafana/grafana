@@ -138,9 +138,6 @@ type UnifiedAlertingSettings struct {
 
 type RecordingRuleSettings struct {
 	Enabled              bool
-	URL                  string
-	BasicAuthUsername    string
-	BasicAuthPassword    string
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
@@ -455,10 +452,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:              rr.Key("enabled").MustBool(false),
-		URL:                  rr.Key("url").MustString(""),
-		BasicAuthUsername:    rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword:    rr.Key("basic_auth_password").MustString(""),
+		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 	}

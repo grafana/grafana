@@ -827,10 +827,6 @@ const (
 	// Enables the alert rule restore feature
 	FlagAlertRuleRestore = "alertRuleRestore"
 
-	// FlagGrafanaManagedRecordingRulesDatasources
-	// Enables writing to data sources for Grafana-managed recording rules.
-	FlagGrafanaManagedRecordingRulesDatasources = "grafanaManagedRecordingRulesDatasources"
-
 	// FlagInfinityRunQueriesInParallel
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"
@@ -930,4 +926,8 @@ const (
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
+
+	// FlagSkipTokenRotationIfRecent
+	// Skip token rotation if it was already rotated less than 5 seconds ago
+	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
 )

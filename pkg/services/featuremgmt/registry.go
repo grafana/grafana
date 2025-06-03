@@ -1555,14 +1555,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "grafanaManagedRecordingRulesDatasources",
-			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: false,
-			Expression:     "false",
-		},
-		{
 			Name:         "infinityRunQueriesInParallel",
 			Description:  "Enables running Infinity queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -1756,6 +1748,15 @@ var (
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
+			Name:              "skipTokenRotationIfRecent",
+			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 			Expression:        "false",
 		},
 	}

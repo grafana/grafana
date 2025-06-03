@@ -24,7 +24,7 @@ export function EmbeddedDashboardTestPage() {
       layout={PageLayoutType.Canvas}
     >
       {/* this is a test page, no need to translate */}
-      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       <Box paddingY={2}>Internal url state: {state}</Box>
       <EmbeddedDashboard uid="lVE-2YFMz" initialState={state} onStateChange={setState} />
     </Page>

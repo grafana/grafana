@@ -907,11 +907,6 @@ export interface FeatureToggles {
   */
   alertRuleRestore?: boolean;
   /**
-  * Enables writing to data sources for Grafana-managed recording rules.
-  * @default false
-  */
-  grafanaManagedRecordingRulesDatasources?: boolean;
-  /**
   * Enables running Infinity queries in parallel
   */
   infinityRunQueriesInParallel?: boolean;
@@ -1022,4 +1017,9 @@ export interface FeatureToggles {
   * @default false
   */
   restoreDashboards?: boolean;
+  /**
+  * Skip token rotation if it was already rotated less than 5 seconds ago
+  * @default false
+  */
+  skipTokenRotationIfRecent?: boolean;
 }
