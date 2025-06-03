@@ -17,6 +17,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	permreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authn"
+	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -421,6 +422,118 @@ func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
 	}
 }
 
+func TestRBACSync_translateK8sPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		k8sPerms      []string
+		expectedPerms []accesscontrol.Permission
+		expectedError error
+	}
+
+	tests := []testCase{
+		{
+			name: "should translate folder.grafana.app/folders:get to folders:read",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should translate resource with wildcard verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read"},
+				{Action: "folders:write"},
+				{Action: "folders:delete"},
+				{Action: "folders:create"},
+				{Action: "folders.permissions:read"},
+				{Action: "folders.permissions:write"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should translate group with wildcard resource",
+			k8sPerms: []string{
+				"secret.grafana.app:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				// securevalues actions
+				{Action: "secret.securevalues:read"},
+				{Action: "secret.securevalues:write"},
+				{Action: "secret.securevalues:delete"},
+				{Action: "secret.securevalues:create"},
+				{Action: "secret.securevalues.permissions:read"},
+				{Action: "secret.securevalues.permissions:write"},
+				// keepers actions
+				{Action: "secret.keepers:read"},
+				{Action: "secret.keepers:write"},
+				{Action: "secret.keepers:delete"},
+				{Action: "secret.keepers:create"},
+				{Action: "secret.keepers.permissions:read"},
+				{Action: "secret.keepers.permissions:write"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle multiple permissions",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:get",
+				"dashboard.grafana.app/dashboards:*",
+				"query.grafana.app:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read"},
+				{Action: "dashboards:read"},
+				{Action: "dashboards:write"},
+				{Action: "dashboards:delete"},
+				{Action: "dashboards:create"},
+				{Action: "dashboards.permissions:read"},
+				{Action: "dashboards.permissions:write"},
+				{Action: "datasources:query"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle invalid permission format",
+			k8sPerms: []string{
+				"invalid-format",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown resource",
+			k8sPerms: []string{
+				"folder.grafana.app/unknown:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:unknown",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setupTestEnv(t)
+			perms, err := s.translateK8sPermissions(context.Background(), tt.k8sPerms)
+			assert.ErrorIs(t, tt.expectedError, err)
+			assert.ElementsMatch(t, tt.expectedPerms, perms)
+		})
+	}
+}
+
 func setupTestEnv(t *testing.T) *RBACSync {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -451,6 +564,7 @@ func setupTestEnv(t *testing.T) *RBACSync {
 		log:          log.NewNopLogger(),
 		tracer:       tracing.InitializeTracerForTest(),
 		permRegistry: permRegistry,
+		mapper:       rbac.NewMappingRegistry(),
 	}
 	return s
 }
