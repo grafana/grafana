@@ -79,8 +79,8 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 // NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
@@ -423,7 +423,7 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
-	store, err := initTestDB(t, cfg, features, migration, opts...)
+	store, err := initTestDB(t, cfg, features, migration, bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -436,7 +436,8 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.C
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features),
+		bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -502,6 +503,7 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
+	bus bus.Bus,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -537,59 +539,26 @@ func TestMain(m *testing.M) {
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
 
-		// set test db config
-		cfg := setting.NewCfg()
-		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
-
-		sec, err := cfg.Raw.NewSection("database")
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := sec.NewKey("type", dbType); err != nil {
-			return nil, err
-		}
+		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
-			return nil, err
-		}
-		if _, err := sec.NewKey("path", testDB.Path); err != nil {
-			return nil, err
-		}
+		cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+		cfgDBSec.Key("path").SetValue(testDB.Path)
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
+			cfgDBSec.Key("skip_migrations").SetValue("true")
 		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-
 		// need to get engine to clean db before we init
-		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		engine, err := xorm.NewEngine(dbType, testDB.ConnStr)
 		if err != nil {
 			return nil, err
 		}
@@ -606,8 +575,7 @@ func TestMain(m *testing.M) {
 		}
 
 		tracer := tracing.InitializeTracerForTest()
-		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
+		testSQLStore, err = newStore(testCfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}
