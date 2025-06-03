@@ -517,8 +517,6 @@ help: ## Display this help.
 
 # check licenses of used dependencies (can be run using build image using
 # container/check-licenses target)
-# YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
-#license_finder --decisions-file --yarn-options=immutable .license_finder.yaml
 check-licenses:
 	license_finder --decisions-file .license_finder.yaml
 
