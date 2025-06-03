@@ -22,8 +22,8 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
-  AlertInstanceTotals,
   AlertInstanceTotalState,
+  AlertInstanceTotals,
   CombinedRule,
   RuleGroupIdentifierV2,
   RuleHealth,
