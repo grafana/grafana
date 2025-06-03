@@ -6033,9 +6033,6 @@
         "isExternallySynced": {
           "type": "boolean"
         },
-        "isProvisioned": {
-          "type": "boolean"
-        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"

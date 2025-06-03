@@ -7903,9 +7903,6 @@
           "isExternallySynced": {
             "type": "boolean"
           },
-          "isProvisioned": {
-            "type": "boolean"
-          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"

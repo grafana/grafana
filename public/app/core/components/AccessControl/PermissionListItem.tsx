@@ -16,6 +16,7 @@ interface Props {
 
 export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, onChange }: Props) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
   return (
     <tr>
       <td>{getAvatar(item)}</td>
@@ -53,53 +54,40 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
           </Tooltip>
         )}
       </td>
-      <td>{getPermissionActionButton(item, canSet, onRemove)}</td>
+      <td>
+        {item.isManaged ? (
+          <Button
+            size="sm"
+            icon="times"
+            variant="destructive"
+            disabled={!canSet}
+            onClick={() => onRemove(item)}
+            aria-label={t(
+              'access-control.permission-list-item.remove-aria-label',
+              'Remove permission for {{identifier}}',
+              {
+                identifier: getName(item),
+              }
+            )}
+          />
+        ) : (
+          <Tooltip
+            content={
+              item.isInherited
+                ? t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')
+                : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
+            }
+          >
+            <Button
+              size="sm"
+              icon="lock"
+              aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
+            />
+          </Tooltip>
+        )}
+      </td>
     </tr>
   );
-};
-
-const getPermissionActionButton = (
-  item: ResourcePermission,
-  canSet: boolean,
-  onRemove: (item: ResourcePermission) => void
-) => {
-  const { t } = useTranslate();
-  if (item.isManaged) {
-    return (
-      <Button
-        size="sm"
-        icon="times"
-        variant="destructive"
-        disabled={!canSet}
-        onClick={() => onRemove(item)}
-        aria-label={t('access-control.permission-list-item.remove-aria-label', 'Remove permission for {{identifier}}', {
-          identifier: getName(item),
-        })}
-      />
-    );
-  } else if (item.isInherited) {
-    return (
-      <Tooltip content={t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')}>
-        <Button
-          size="sm"
-          icon="lock"
-          aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-        />
-      </Tooltip>
-    );
-  } else {
-    return (
-      <Tooltip
-        content={t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')}
-      >
-        <Button
-          size="sm"
-          icon="lock"
-          aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-        />
-      </Tooltip>
-    );
-  }
 };
 
 const getAvatar = (item: ResourcePermission) => {

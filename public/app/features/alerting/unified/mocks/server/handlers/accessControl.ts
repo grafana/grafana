@@ -28,7 +28,6 @@ const resourceDetailsMap: Record<string, Record<string, ResourcePermission[]>> =
         roleName: 'somerole:name',
         isManaged: true,
         isInherited: false,
-        isProvisioned: false,
         isServiceAccount: false,
         builtInRole: 'Viewer',
         actions: [AccessControlAction.FoldersRead, AccessControlAction.AlertingRuleRead],

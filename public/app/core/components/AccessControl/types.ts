@@ -5,7 +5,6 @@ export type ResourcePermission = {
   resourceId?: string;
   isManaged: boolean;
   isInherited: boolean;
-  isProvisioned: boolean;
   isServiceAccount: boolean;
   userId?: number;
   userUid?: string;
