@@ -101,6 +101,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           inspect: null,
           inspectTab: null,
         },
+        disableAssureBaseUrl: true,
       })
     );
   };
