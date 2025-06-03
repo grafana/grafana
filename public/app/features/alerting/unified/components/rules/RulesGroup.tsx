@@ -4,13 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { Badge, Icon, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
 import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
@@ -227,6 +227,23 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 });
 
 RulesGroup.displayName = 'RulesGroup';
+
+// It's a simple component but we render 80 of them on the list page it needs to be fast
+// The Tooltip component is expensive to render and the rulesSource doesn't change often
+// so memoization seems to bring a lot of benefit here
+const CloudSourceLogo = React.memo(({ rulesSource }: { rulesSource: RulesSource | string }) => {
+  const styles = useStyles2(getStyles);
+
+  if (isCloudRulesSource(rulesSource)) {
+    return (
+      <Tooltip content={rulesSource.name} placement="top">
+        <img alt={rulesSource.meta.name} className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+      </Tooltip>
+    );
+  }
+
+  return null;
+});
 
 CloudSourceLogo.displayName = 'CloudSourceLogo';
 
