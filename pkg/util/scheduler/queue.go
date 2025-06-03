@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -118,6 +119,10 @@ type QueueOptions struct {
 func NewQueue(opts *QueueOptions) *Queue {
 	if opts.MaxSizePerTenant <= 0 {
 		opts.MaxSizePerTenant = DefaultMaxSizePerTenant
+	}
+
+	if opts.Logger == nil {
+		opts.Logger = log.NewNopLogger()
 	}
 
 	q := &Queue{
