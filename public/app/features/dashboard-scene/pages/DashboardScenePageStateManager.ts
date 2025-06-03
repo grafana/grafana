@@ -502,7 +502,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         fromCache.state.version === this.state.dashboard?.state.version
       ) {
         this.setState({ isLoading: false });
-        console.log('reloadDashboard same version, skipping reload');
         return;
       }
 
@@ -525,7 +524,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
 
       this.setSceneCache(uid, scene);
-
       this.setState({ dashboard: scene, isLoading: false });
     } catch (err) {
       const status = getStatusFromError(err);

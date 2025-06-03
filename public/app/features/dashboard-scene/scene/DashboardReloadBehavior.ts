@@ -9,6 +9,7 @@ import {
   SceneVariable,
   VariableDependencyConfig,
 } from '@grafana/scenes';
+import { createLogger } from '@grafana/ui';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 
@@ -22,6 +23,7 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _dashboardScene: DashboardScene | undefined;
   private _prevState?: UrlQueryMap;
+  private _log = createLogger('DashboardReloadBehavior');
 
   constructor(state: DashboardReloadBehaviorState) {
     super(state);
@@ -41,7 +43,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
       this._variableDependency = new VariableDependencyConfig(this, {
         onAnyVariableChanged: (variable: SceneVariable) => {
-          console.log('onAnyVariableChanged', variable.state.name, JSON.stringify(variable.getValue()));
+          this._log.logger('onAnyVariableChanged', variable.state.name, JSON.stringify(variable.getValue()));
           this.reloadDashboard();
         },
         dependsOnScopes: true,
@@ -73,7 +75,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
   private reloadDashboard() {
     if (this.isEditing() || this.isWaitingForVariables()) {
-      console.log('DashboardReloadBehavior reloadDashboard isEditing or waiting for variables, skipping reload');
+      this._log.logger('DashboardReloadBehavior reloadDashboard isEditing or waiting for variables, skipping reload');
       return;
     }
 
@@ -86,7 +88,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
     const stateChanged = !isEqual(newState, this._prevState);
 
-    console.log(
+    this._log.logger(
       `DashboardReloadBehavior reloadDashboard stateChanged ${stateChanged ? 'true' : 'false'}`,
       this._prevState,
       newState
