@@ -293,6 +293,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       const status = getStatusFromError(err);
       const message = getMessageFromError(err);
       const messageId = getMessageIdFromError(err);
+
       this.setState({
         isLoading: false,
         loadError: {
@@ -301,6 +302,11 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+
+      if (!isFetchError(err)) {
+        console.error('Error loading dashboard:', err);
+      }
+
       // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
       // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
