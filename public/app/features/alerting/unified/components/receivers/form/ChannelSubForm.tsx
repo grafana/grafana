@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
 import { useEffect, useMemo } from 'react';
-import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -21,6 +21,7 @@ import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIn
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 import { Notifier } from './notifiers';
+import { NotificationChannelOption } from 'app/types';
 
 interface Props<R extends ChannelValues> {
   defaultValues: R;
@@ -99,9 +100,6 @@ export function ChannelSubForm<R extends ChannelValues>({
     return () => subscription.unsubscribe();
   }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
 
-  // const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
-  const formSecureFields = useWatch({ control, name: `${channelFieldPath}.secureFields` });
-
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
     const currentSecureFields = getValues(`${channelFieldPath}.secureFields`);
@@ -110,12 +108,29 @@ export function ChannelSubForm<R extends ChannelValues>({
     }
   };
 
-  const onDeleteSubform = (propertyName: string) => {
-    const relatedSecureFields = Object.keys(formSecureFields).filter((key) => key.startsWith(propertyName));
+  const findSecureFieldsRecursively = (options: NotificationChannelOption[]): string[] => {
+    const secureFields: string[] = [];
+    options?.forEach((option) => {
+      if (option.secure && option.secureFieldKey) {
+        secureFields.push(option.secureFieldKey);
+      }
+      if (option.subformOptions) {
+        secureFields.push(...findSecureFieldsRecursively(option.subformOptions));
+      }
+    });
+    return secureFields;
+  };
+
+  const onDeleteSubform = (settingsPath: string, option: NotificationChannelOption) => {
+    // Get all subform options with secure=true recursively.
+    const relatedSecureFields = findSecureFieldsRecursively(option.subformOptions ?? []);
     relatedSecureFields.forEach((key) => {
       onResetSecureField(key);
     });
-    setValue(`${channelFieldPath}.settings.${propertyName}`, undefined);
+    const fieldPath = settingsPath.startsWith(`${channelFieldPath}.settings.`)
+      ? settingsPath.slice(`${channelFieldPath}.settings.`.length)
+      : settingsPath;
+    setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
   };
 
   const typeOptions = useMemo(
