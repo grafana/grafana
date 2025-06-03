@@ -77,12 +77,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
           <ExportFolderButton onClickExport={() => setIsExporting(true)} />
         </>
       )}
-      <DeleteModal
-        isOpen={isDeleteModalOpen}
-        onConfirm={onConfirmDelete}
-        onDismiss={() => setIsDeleteModalOpen(false)}
-        folderName={folderName}
-      />
     </>
   );
 
