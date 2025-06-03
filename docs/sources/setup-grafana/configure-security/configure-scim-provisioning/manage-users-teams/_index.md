@@ -36,7 +36,7 @@ With SCIM, you can:
 SCIM provisioning works in conjunction with existing user management methods in Grafana. While SCIM automates user provisioning from the identity provider, users can still be created through SAML just-in-time provisioning when they log in, manually through the Grafana UI, or via automation tools like Terraform and the Grafana API. For the most consistent user management experience, we recommend centralizing user provisioning through SCIM.
 
 {{< admonition type="note" >}}
-User provisioning requires `user_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../_index.md#configure-scim-in-grafana) for more information.
+User provisioning requires `user_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../../configure-scim-provisioning#configure-scim-in-grafana) for more information.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
@@ -45,8 +45,8 @@ After a user is provisioned through SCIM, they cannot be deleted from Grafana - 
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Azure AD](../configure-scim-azure/)
-- [Configure SCIM with Okta](../configure-scim-okta/)
+- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### How SCIM identifies users
 
@@ -121,7 +121,7 @@ SCIM handles user synchronization but not role assignments. Role management is h
 SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
 
 {{< admonition type="note" >}}
-Team provisioning requires `group_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../_index.md#configure-scim-in-grafana) for more information.
+Team provisioning requires `group_sync_enabled = true` in the SCIM configuration. See [Configure SCIM in Grafana](../../configure-scim-provisioning#configure-scim-in-grafana) for more information.
 {{< /admonition >}}
 
 {{< admonition type="warning" >}}
@@ -130,8 +130,8 @@ Teams provisioned through SCIM cannot be deleted manually from Grafana - they ca
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Azure AD](../configure-scim-azure/)
-- [Configure SCIM with Okta](../configure-scim-okta/)
+- [Configure SCIM with Azure AD](../configure-scim-with-azuread/)
+- [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### SCIM vs Team Sync
 
