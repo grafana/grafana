@@ -149,11 +149,10 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			}
 
 			jsonData := sqleng.JsonData{
-				MaxOpenConns:        10,
+				MaxOpenConns:        0,
 				MaxIdleConns:        2,
 				ConnMaxLifetime:     14400,
 				Timescaledb:         false,
-				Mode:                "disable",
 				ConfigurationMethod: "file-path",
 			}
 
@@ -166,12 +165,13 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			p, handler, err := newPostgresPGX(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
-				_, err := p.Exec(context.Background(), "DROP TABLE tbl")
+				_, err := db.Exec("DROP TABLE tbl")
 				require.NoError(t, err)
-				p.Close()
+				err = db.Close()
+				require.NoError(t, err)
 			}))
 
 			require.NoError(t, err)
@@ -181,12 +181,12 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			rawSQL, sql := readSqlFile(sqlFilePath)
 
-			_, err = p.Exec(context.Background(), sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			query := makeQuery(rawSQL, test.format)
 
-			result, err := handler.QueryDataPGX(context.Background(), &query)
+			result, err := handler.QueryData(context.Background(), &query)
 			require.Len(t, result.Responses, 1)
 			response, found := result.Responses["A"]
 			require.True(t, found)

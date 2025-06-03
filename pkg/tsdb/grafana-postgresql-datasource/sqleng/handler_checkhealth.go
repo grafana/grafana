@@ -10,17 +10,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/lib/pq"
 )
 
-func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
-	var err error
-	if features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-		err = e.PingPGX(ctx)
-	} else {
-		err = e.Ping()
-	}
+func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	err := e.Ping()
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
@@ -69,7 +63,6 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 	}
-
 	if errors.Is(err, pq.ErrSSLNotSupported) {
 		res.Message = "SSL error: Failed to connect to the server"
 	}
@@ -132,10 +125,10 @@ func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) 
 		"config_tls_client_cert_length":     len(dsInfo.DecryptedSecureJSONData["tlsClientCert"]),
 		"config_tls_client_key_length":      len(dsInfo.DecryptedSecureJSONData["tlsClientKey"]),
 	}
-	configSummaryJSON, marshalError := json.Marshal(configSummary)
+	configSummaryJson, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
 		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJSON))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJson))
 }
