@@ -178,11 +178,11 @@ console.log(JSON.stringify(dashboard, null, 2));
 
 {{< /code >}}
 
-This code defines a dashboard titled “My Dashboard” with a two panels; a simple stat panel displaying a version number, and a time series panel displaying randomized data from the `testdata` datasource `random_walk` scenario.
+This code defines a dashboard titled “My Dashboard” with a two panels; a simple stat panel displaying a version number, and a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
 
 ## Export and use the JSON
 
-Once you've defined your dashboard as code, build the final dashboard representation using the dashboard builder (typically using the `build()` function depending on language choice) and output the result as a JSON.
+After you've defined your dashboard as code, build the final dashboard representation using the dashboard builder (typically using the `build()` function depending on language choice) and output the result as a JSON.
 
 With the JSON payload you can:
 
@@ -201,7 +201,7 @@ Here are a few you've already seen:
 
 - `DashboardBuilder` - Starts the dashboard definition and sets global configuration settings like title, UID, refresh interval, time range, etc.
 - `PanelBuilder` - Creates individual visualizations like time series panels, stat panels, or log panels.
-- `DataqueryBuilder` - Defines how a panel fetches data, e.g. from Prometheus or the testdata plugin.
+- `DataqueryBuilder` - Defines how a panel fetches data, e.g. from Prometheus or the `testdata` plugin.
 
 Builders are chainable, so you can fluently compose dashboards in a readable, structured way:
 
@@ -249,7 +249,7 @@ For example:
 
 This helps you:
 
-- Avoid typos or unsupported config values
+- Avoid typos or unsupported configuration values
 - Get full autocomplete and inline documentation in your IDE
 - Write dashboards that are less error-prone and easier to maintain
 
@@ -284,7 +284,7 @@ new stat.PanelBuilder()
 ```
 {{< /code >}}
 
-By using option builders, you don't need to manually construct deeply nested config objects. Instead, the SDK gives you a typed and guided API that mirrors Grafana's internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
+By using option builders, you don't need to manually construct deeply nested configuration objects. Instead, the SDK gives you a typed and guided API that mirrors a dashboards internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
 
 ## Explore a real-world example
 
