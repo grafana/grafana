@@ -56,7 +56,7 @@ export function CheatSheet() {
         </li>
       </ul>
       <Trans i18nKey="cheat-sheet.macros">Macros:</Trans>
-      {/* eslint-disable @grafana/no-untranslated-strings */}
+      {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
       <ul className={styles.ulPadding}>
         <li>$__time(column) -&gt; column AS time</li>
         <li>$__timeEpoch(column) -&gt; DATEDIFF(second, &apos;1970-01-01&apos;, column) AS time</li>
@@ -84,13 +84,13 @@ export function CheatSheet() {
         <li>$__unixEpochGroup(column,&apos;5m&apos;) -&gt; FLOOR(column/300)*300</li>
         <li>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; FLOOR(column/300)*300 AS [time]</li>
       </ul>
-      {/* eslint-enable @grafana/no-untranslated-strings */}
+      {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
       <p>
         <Trans i18nKey="cheat-sheet.example-time-group" values={{ timeGroupMacro: '$__timeGroup' }}>
           Example of group by and order by with {'{{timeGroupMacro}}'}:
         </Trans>
       </p>
-      {/* eslint-disable @grafana/no-untranslated-strings */}
+      {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
       <pre>
         <code>
           SELECT $__timeGroup(date_time_col, &apos;1h&apos;) AS time, sum(value) as value <br />
@@ -102,11 +102,11 @@ export function CheatSheet() {
           <br />
         </code>
       </pre>
-      {/* eslint-enable @grafana/no-untranslated-strings */}
+      {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
       <Trans i18nKey="cheat-sheet.condtional-macros">
         Or build your own conditionals using these macros which just return the values:
       </Trans>
-      {/* eslint-disable @grafana/no-untranslated-strings */}
+      {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
       <ul className={styles.ulPadding}>
         <li>$__timeFrom() -&gt; &apos;2017-04-21T05:01:17Z&apos;</li>
         <li>$__timeTo() -&gt; &apos;2017-04-21T05:01:17Z&apos;</li>
@@ -115,7 +115,7 @@ export function CheatSheet() {
         <li>$__unixEpochNanoFrom() -&gt; 1494410783152415214</li>
         <li>$__unixEpochNanoTo() -&gt; 1494497183142514872</li>
       </ul>
-      {/* eslint-enable @grafana/no-untranslated-strings */}
+      {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
     </div>
   );
 }

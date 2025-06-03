@@ -10,8 +10,6 @@ import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { supportedImportTypes } from '../../components/import-to-gma/ImportFromDSRules';
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { isAdmin } from '../../utils/misc';
 
 import { DataSourceIcon } from './Namespace';
@@ -37,11 +35,6 @@ export const DataSourceSection = ({
 }: DataSourceSectionProps) => {
   const [isCollapsed, toggleCollapsed] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
-  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
-
-  const showImportLink =
-    uid !== GrafanaRulesSourceSymbol &&
-    rulesSourcesWithRuler.some(({ uid: dsUid, type }) => dsUid === uid && supportedImportTypes.includes(type));
 
   const { t } = useTranslate();
   const configureLink = (() => {
@@ -79,16 +72,6 @@ export const DataSourceSection = ({
                   </Text>
                 )}
                 <Spacer />
-                {showImportLink && (
-                  <LinkButton
-                    variant="secondary"
-                    fill="text"
-                    size="sm"
-                    href={`/alerting/import-datasource-managed-rules?datasourceUid=${String(uid)}`}
-                  >
-                    <Trans i18nKey="alerting.data-source-section.import-to-grafana">Import to Grafana rules</Trans>
-                  </LinkButton>
-                )}
                 {configureLink && (
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}

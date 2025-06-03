@@ -1449,6 +1449,7 @@
         "name": "grafanaManagedRecordingRulesDatasources",
         "resourceVersion": "1746998568254",
         "creationTimestamp": "2025-03-07T13:30:40Z",
+        "deletionTimestamp": "2025-05-19T10:18:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
         }
@@ -2917,7 +2918,8 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-11-14T20:08:03Z"
+        "creationTimestamp": "2024-11-14T20:08:03Z",
+        "deletionTimestamp": "2025-05-28T13:44:54Z"
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
@@ -3016,6 +3018,24 @@
         "description": "Show warnings when dashboards do not validate against the schema",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "skipTokenRotationIfRecent",
+        "resourceVersion": "1748363818965",
+        "creationTimestamp": "2025-05-27T16:30:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

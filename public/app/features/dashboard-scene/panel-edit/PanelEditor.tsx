@@ -2,6 +2,7 @@ import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
@@ -253,7 +254,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     return {
-      text: 'Edit panel',
+      text: t('dashboard-scene.panel-editor.text.edit-panel', 'Edit panel'),
       parentItem: dashboard.getPageNav(location, navIndex),
     };
   }
