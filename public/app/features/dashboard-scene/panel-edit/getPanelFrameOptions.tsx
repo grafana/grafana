@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n/internal';
@@ -10,6 +12,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { dashboardEditActions } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
@@ -41,7 +44,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
-            onGenerate={(title) => setPanelTitle(panel, title)}
+            onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
           />
@@ -112,6 +115,7 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel; isNewElement?: boolean }) {
   const { title } = panel.useState();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
+  const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
   let ref = useEditPaneInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
@@ -122,41 +126,69 @@ export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel;
       ref={ref}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
-      onChange={(e) => setPanelTitle(panel, e.currentTarget.value)}
+      onFocus={() => setPrevTitle(title)}
+      onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
+      // The full action (that can be undone) is done by setPanelTitle,
+      // But to see changes in the input field, canvas and outline we change the real value here
+      onChange={(e) => updatePanelTitleState(panel, e.currentTarget.value)}
     />
   );
 }
 
 export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
   const { description } = panel.useState();
+  const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
 
   return (
     <TextArea
       id="description-text-area"
       value={description}
-      onChange={(e) => panel.setState({ description: e.currentTarget.value })}
-    />
-  );
-}
-
-export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
-  const { displayMode } = panel.useState();
-
-  return (
-    <Switch
-      value={displayMode === 'transparent'}
-      id="transparent-background"
-      onChange={() => {
-        panel.setState({
-          displayMode: panel.state.displayMode === 'transparent' ? 'default' : 'transparent',
+      onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+      onFocus={() => setPrevDescription(panel.state.description)}
+      onBlur={() => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+          source: panel,
+          perform: () => panel.setState({ description: description }),
+          undo: () => panel.setState({ description: prevDescription }),
         });
       }}
     />
   );
 }
 
-export function setPanelTitle(panel: VizPanel, title: string) {
-  panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
+  const { displayMode = 'default' } = panel.useState();
+
+  const onChange = () => {
+    const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
+      source: panel,
+      perform: () => panel.setState({ displayMode: newDisplayMode }),
+      undo: () => panel.setState({ displayMode: displayMode }),
+    });
+  };
+
+  return <Switch value={displayMode === 'transparent'} id="transparent-background" onChange={onChange} />;
+}
+
+function updatePanelTitleState(panel: VizPanel, title: string) {
+  panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+}
+
+export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+  if (title === prevTitle) {
+    return;
+  }
+
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.panel-title', 'Change panel title'),
+    source: panel,
+    perform: () => updatePanelTitleState(panel, title),
+    undo: () => updatePanelTitleState(panel, prevTitle),
+  });
 }
 
 export function getUpdatedHoverHeader(title: string, timeRange: SceneTimeRangeLike | undefined): boolean {
