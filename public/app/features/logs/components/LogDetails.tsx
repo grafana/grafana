@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { PureComponent, useMemo } from 'react';
 
-import { CoreApp, DataFrame, DataFrameType, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameType, IconName, LinkModel, LogRowModel } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { usePluginLinks } from '@grafana/runtime';
@@ -43,6 +43,10 @@ export interface Props extends Themeable2 {
   links?: Record<string, LinkModel[]>;
 }
 
+interface LinkModelWithIcon extends LinkModel {
+  icon?: IconName;
+}
+
 const useAttributesExtensionLinks = (row: LogRowModel) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
@@ -62,14 +66,15 @@ const useAttributesExtensionLinks = (row: LogRowModel) => {
   });
 
   return useMemo(() => {
-    return links.reduce<Record<string, LinkModel[]>>((acc, link) => {
+    return links.reduce<Record<string, LinkModelWithIcon[]>>((acc, link) => {
       if (link.category) {
-        const linkModel: LinkModel = {
+        const linkModel: LinkModelWithIcon = {
           href: link.path ?? '',
           target: '_blank',
-          origin: link,
+          origin: undefined,
           title: link.title,
           onClick: link.onClick,
+          icon: link.icon,
         };
 
         if (acc[link.category]) {
