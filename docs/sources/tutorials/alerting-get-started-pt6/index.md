@@ -282,10 +282,32 @@ After the alert rules are created, they should appear as **health indicators** (
 
 Finally, as part of the alerting process, you should receive notifications at the associated contact point.
 
-It’s worth mentioning that you can include a link to a dashboard or panel in your alert notifications. In the alert notification example above, the message includes useful information such as the summary, description, and a link to the relevant dashboard for the firing or resolved alert. This helps responders quickly navigate to the appropriate context for investigation.
+```
+{
+  "receiver": "prod-alerts",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "cpu-usage",
+        "deployment": "prod-us-cs30",
+        "grafana_folder": "sys-metrics",
+        "instance": "flask-prod:5000",
+        "job": "flask"
+      },
+      "annotations": {},
+      "silenceURL": "http://localhost:3000/alerting/silence/new?
+      "dashboardURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006",
+      "panelURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006&viewPanel=2",
+  
+... }
+```
 
-You can extend this functionality by adding a custom annotation to your alert rules and creating a notification template that [includes a link to a dashboard with a time range.](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). The URL includes a time range based on the alert’s timing—starting from one hour before the alert started (`from`) to either the alert’s end time or the current time (`to`), depending on whether the alert is resolved or still firing.
+It’s worth mentioning that alert rules that are linked to a panel include a link to said visualziation in the alert notifications. In the alert notification example above, the message includes useful information such as the summary, description, and a link to the relevant dashboard for the firing or resolved alert (i.e. `dashboardURL`). This helps responders quickly navigate to the appropriate context for investigation.
 
-The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the from and to parameters, which are calculated in the notification template.
+You can extend this functionality by adding a custom annotation to your alert rules and creating a notification template that [includes a link to a dashboard with a time range.](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). The URL will include a time range based on the alert’s timing—starting from one hour before the alert started (`from`) to either the alert’s end time or the current time (`to`), depending on whether the alert is resolved or still firing.
+
+The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the `from` and `to` parameters, which are calculated in the notification template.
 
 <!-- INTERACTIVE page finish.md END -->
