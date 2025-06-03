@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,12 +32,14 @@ var (
 	errUserIDInvalid   = errors.New("invalid user ID")
 )
 
+const SkipRotationTime = 5 * time.Second
+
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service,
-	cfg *setting.Cfg, tracer tracing.Tracer,
+	cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
@@ -42,6 +47,8 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		cfg:               cfg,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
+		features:          features,
+		tracer:            tracer,
 	}
 	s.externalSessionStore = provideExternalSessionStore(sqlStore, secretService, tracer)
 
@@ -68,6 +75,8 @@ type UserAuthTokenService struct {
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
+	features             featuremgmt.FeatureToggles
+	tracer               tracing.Tracer
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
@@ -261,28 +270,55 @@ func (s *UserAuthTokenService) UpdateExternalSession(ctx context.Context, extern
 }
 
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+	ctx, span := s.tracer.Start(ctx, "authtoken.RotateToken")
+	defer span.End()
+
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken
 	}
 
-	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
+	rotate := func(ctx context.Context) (*auth.UserToken, error) {
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
 			return nil, err
 		}
-		s.log.FromContext(ctx).Debug("Rotating token", "tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
+
+		// Avoid multiple instances in HA mode rotating at the same time.
+		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+			log.Debug("Token was last rotated very recently, skipping rotation")
+			span.SetAttributes(attribute.Bool("skipped", true))
+			return token, nil
+		}
+		log.Debug("Rotating token")
 
 		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
 
 		if errors.Is(err, errTokenNotRotated) {
+			span.SetAttributes(attribute.Bool("rotated", false))
 			return token, nil
 		}
 
 		if err != nil {
+			span.SetStatus(codes.Error, "token rotation failed")
+			span.RecordError(err)
 			return nil, err
 		}
 
 		return newToken, nil
+	}
+
+	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
+		if s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
+			var token *auth.UserToken
+			err := s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+				var err error
+				token, err = rotate(ctx)
+				return err
+			})
+			return token, err
+		}
+		return rotate(ctx)
 	})
 
 	if err != nil {
@@ -318,7 +354,11 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 
 	now := getTime()
 	var affected int64
-	err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	withDbSession := s.sqlStore.WithDbSession
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagSkipTokenRotationIfRecent) {
+		withDbSession = s.sqlStore.WithTransactionalDbSession
+	}
+	err = withDbSession(ctx, func(dbSession *db.Session) error {
 		res, err := dbSession.Exec(sql, userAgent, clientIPStr, hashedToken, s.sqlStore.GetDialect().BooleanValue(false), now.Unix(), token.Id)
 		if err != nil {
 			return err
