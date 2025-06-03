@@ -20,6 +20,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 
+import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
@@ -82,6 +83,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
       panel.changePluginType('timeseries');
     }
+
+    this._subs.add(
+      this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+        // TODO add support for undo/redo within panel edit
+        payload.perform();
+      })
+    );
 
     const deactivateParents = activateSceneObjectAndParentTree(panel);
 

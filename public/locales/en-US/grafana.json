@@ -4058,6 +4058,15 @@
         "tooltip-remove-property": "Remove property"
       }
     },
+    "edit-actions": {
+      "add": "Add {{typeName}}",
+      "panel-background": "Change panel background",
+      "panel-description": "Change panel description",
+      "panel-title": "Change panel title",
+      "paste-panel": "Paste panel",
+      "remove": "Remove {{typeName}}",
+      "switch-layout": "Switch layout"
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4619,6 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-new": {
-        "button": {
-          "label": "Add",
-          "tooltip": "Add panels and other elements"
-        },
-        "menu": {
-          "lib-panel": "Library panel",
-          "panel": "Panel",
-          "row": "Row",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
