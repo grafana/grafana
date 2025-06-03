@@ -518,5 +518,5 @@ help: ## Display this help.
 # check licenses of used dependencies (can be run using build image using
 # container/check-licenses target)
 check-licenses:
-	license_finder --decisions-file .license_finder.yaml
+	license_finder --decisions-file .github/license_finder.yaml
 
