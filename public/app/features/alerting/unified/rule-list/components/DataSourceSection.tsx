@@ -4,7 +4,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { Alert, Badge, Button, IconButton, LinkButton, Stack, Text, Toggletip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
