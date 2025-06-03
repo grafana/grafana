@@ -3797,6 +3797,18 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					ngmodels.ErrorErrState: {
 						t2: {
 							{
+								PreviousState: eval.Pending,
+								State: &State{
+									Labels:             labels["system + rule + labels1"],
+									State:              eval.Pending,
+									LatestResult:       newEvaluationWithValues(t1, eval.Alerting, map[string]float64{"A": 1.0}),
+									StartsAt:           t1,
+									EndsAt:             t1.Add(ResendDelay * 4),
+									LastEvaluationTime: t1,
+									Values:             map[string]float64{"A": 1.0},
+								},
+							},
+							{
 								PreviousState: eval.Normal,
 								State: &State{
 									CacheID:            labels["system + rule"].Fingerprint(),
@@ -3829,8 +3841,23 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									LastSentAt:         &t3,
 									Annotations:        baseRule.Annotations,
 									Values:             map[string]float64{"A": 1.0},
-									// TODO(@moustafab): check if we should clear out the state reason
-									// StateReason: "",
+								},
+							},
+							{
+								PreviousState: eval.Error,
+								State: &State{
+									CacheID:            labels["system + rule"].Fingerprint(),
+									Labels:             labels["system + rule + datasource-error"],
+									State:              eval.Error,
+									Error:              datasourceError,
+									LatestResult:       newEvaluation(t2, eval.Error),
+									StartsAt:           t2,
+									EndsAt:             t2.Add(ResendDelay * 4),
+									LastEvaluationTime: t2,
+									LastSentAt:         &t2,
+									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+										"Error": datasourceError.Error(),
+									}),
 								},
 							},
 						},
