@@ -1197,10 +1197,6 @@
       "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
-      "more-button": {
-        "title": "Folder actions",
-        "tooltip": "Folder actions"
-      },
       "pause": {
         "button": {
           "label": "Pause all rules"
@@ -1210,9 +1206,6 @@
         "button": {
           "label": "Resume all rules"
         }
-      },
-      "view": {
-        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "New recording rule",
         "no-rules-created": "You haven't created any rules yet",
         "provisioning": "You can also define rules through file provisioning or Terraform"
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Folder actions",
+          "title": "Actions"
+        },
+        "export": {
+          "aria-label": "Export rules folder",
+          "label": "Export rules folder"
+        },
+        "view": {
+          "aria-label": "View folder",
+          "label": "View folder"
+        }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "rule group details",
       "edit": "edit rule group",
-      "export-rules-folder": "Export rules folder",
       "go-to-folder": "go to folder",
       "manage-permissions": "manage permissions"
     },
