@@ -1259,7 +1259,7 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := tt.rule.PrometheusRuleDefinition()
-			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+			isPrometheusRule := tt.rule.HasPrometheusRuleDefinition()
 
 			if tt.expectedErrorMsg != "" {
 				require.Error(t, err)
