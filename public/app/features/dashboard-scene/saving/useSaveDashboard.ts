@@ -97,8 +97,6 @@ export function useSaveDashboard(isCopy = false) {
         const params = new URLSearchParams(window.location.search);
         const assetId = params.get('assetId');
 
-        console.log({ uid: resultData.uid, assetId });
-
         window.parent.postMessage(
           {
             source: 'grafana-dashboard-integration-event',
