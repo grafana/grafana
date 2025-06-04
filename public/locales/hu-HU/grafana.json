@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Törlés",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Új felvételi szabály",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Mappaműveletek",
+          "title": "Műveletek"
+        },
+        "export": {
+          "aria-label": "Szabálymappa exportálása",
+          "label": "Szabálymappa exportálása"
+        },
+        "view": {
+          "aria-label": "Mappa megtekintése",
+          "label": "Mappa megtekintése"
+        }
       },
       "no-prom-or-loki-rules": "Nincsenek konfigurálva Prometheus- vagy Loki-adatforrások",
       "no-rules": "Nem található szabály.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "szabálycsoport részletei",
       "edit": "szabálycsoport szerkesztése",
-      "export-rules-folder": "Szabálymappa exportálása",
       "go-to-folder": "ugrás mappához",
       "manage-permissions": "engedélyek kezelése"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Tulajdonság eltávolítása"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Panel beillesztése",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Irányítópult",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Hozzáadás",
-      "add-new": {
-        "button": {
-          "label": "Hozzáadás",
-          "tooltip": "Adjon hozzá paneleket és egyéb elemeket"
-        },
-        "menu": {
-          "lib-panel": "Könyvtárpanel",
-          "panel": "Panel",
-          "row": "Sor",
-          "tab": "Lap"
-        }
-      },
       "alert-rules": "Riasztási szabályok",
       "back-to-dashboard": "Vissza az irányítópultra",
       "dashboard-settings": {

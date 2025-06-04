@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Radera",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Ny inspelningsregel",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Mappåtgärder",
+          "title": "Åtgärder"
+        },
+        "export": {
+          "aria-label": "Exportera regelmapp",
+          "label": "Exportera regelmapp"
+        },
+        "view": {
+          "aria-label": "Visa mapp",
+          "label": "Visa mapp"
+        }
       },
       "no-prom-or-loki-rules": "Det finns inga Prometheus- eller Loki-datakällor konfigurerade",
       "no-rules": "Inga regler hittades.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "information om regelgrupp",
       "edit": "redigera regelgrupp",
-      "export-rules-folder": "Exportera regelmapp",
       "go-to-folder": "gå till mapp",
       "manage-permissions": "hantera behörigheter"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Ta bort egenskap"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Klistra in panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Instrumentpanel",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Lägg till",
-      "add-new": {
-        "button": {
-          "label": "Lägg till",
-          "tooltip": "Lägg till paneler och andra element"
-        },
-        "menu": {
-          "lib-panel": "Bibliotekspanel",
-          "panel": "Panel",
-          "row": "Rad",
-          "tab": "Flik"
-        }
-      },
       "alert-rules": "Varningsregler",
       "back-to-dashboard": "Tillbaka till instrumentpanel",
       "dashboard-settings": {
