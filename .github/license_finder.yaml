@@ -1,0 +1,37 @@
+---
+- - :permit
+  - MIT
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:11:50.696368005 Z
+- - :permit
+  - Apache 2.0
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - New BSD
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - Simplified BSD
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - Mozilla Public License 2.0
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - ISC
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 
