@@ -42,7 +42,6 @@ type Store interface {
 		ctx context.Context, orgID int64,
 		users []accesscontrol.User,
 		cmd SetResourcePermissionCommand,
-		hook UserResourceHookFunc,
 	) ([]accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
@@ -260,7 +259,7 @@ func (s *Service) SetUsersPermission(ctx context.Context, orgID int64, users []a
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
-	}, s.options.OnSetUser)
+	})
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {

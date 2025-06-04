@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -133,7 +135,6 @@ func (s *store) setUserResourcePermission(
 func (s *store) SetUsersResourcePermission(
 	ctx context.Context, orgID int64, users []accesscontrol.User,
 	cmd SetResourcePermissionCommand,
-	hook UserResourceHookFunc,
 ) ([]accesscontrol.ResourcePermission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUsersResourcePermission")
 	defer span.End()
@@ -153,7 +154,7 @@ func (s *store) SetUsersResourcePermission(
 	var err error
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		permissions, err = s.setUsersResourcePermission(sess, orgID, users, cmd, hook)
+		permissions, err = s.setUsersResourcePermission(sess, orgID, users, cmd)
 		return err
 	})
 
@@ -163,7 +164,6 @@ func (s *store) SetUsersResourcePermission(
 func (s *store) setUsersResourcePermission(
 	sess *db.Session, orgID int64, users []accesscontrol.User,
 	cmd SetResourcePermissionCommand,
-	hook UserResourceHookFunc,
 ) ([]accesscontrol.ResourcePermission, error) {
 	// Create a map to store user IDs for quick lookup
 	userIDs := make(map[int64]struct{}, len(users))
@@ -255,13 +255,21 @@ func (s *store) setUsersResourcePermission(
 		}
 	}
 
-	// Execute hooks if provided
-	if hook != nil {
-		for _, usr := range users {
-			if err := hook(sess, orgID, usr, cmd.ResourceID, cmd.Permission); err != nil {
-				return nil, err
-			}
-		}
+	var permission team.PermissionType
+	switch cmd.Permission {
+	case "Member":
+		permission = team.PermissionTypeMember
+	case "Admin":
+		permission = team.PermissionTypeAdmin
+	}
+
+	teamID, err := strconv.ParseInt(cmd.ResourceID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := teamimpl.AddOrUpdateTeamMembersHook(sess, users, orgID, teamID, true, permission); err != nil {
+		return nil, err
 	}
 
 	return permissions, nil
