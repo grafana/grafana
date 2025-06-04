@@ -99,21 +99,24 @@ describe('FlameGraphContainer', () => {
     render(<FlameGraphContainerWithProps />);
 
     // Checking for presence of this function before filter
-    const matchingText = 'net/http.HandlerFunc.ServeHTTP';
+    const matchingText1 = 'net/http.HandlerFunc.ServeHTTP';
+    const matchingText2 = 'runtime.gcBgMarkWorker';
     const nonMatchingText = 'runtime.systemstack';
 
-    expect(screen.queryAllByText(matchingText).length).toBe(1);
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
     expect(screen.queryAllByText(nonMatchingText).length).toBe(1);
 
     // Apply the filter
-    const searchInput = await screen.getByPlaceholderText('Search...');
-    await userEvent.type(searchInput, 'Handler serve');
+    const searchInput = screen.getByPlaceholderText('Search...');
+    await userEvent.type(searchInput, 'Handler serve,gcBgMarkWorker');
 
     // We have to wait for filter to take effect
     await waitFor(() => {
       expect(screen.queryAllByText(nonMatchingText).length).toBe(0);
     });
     // Check we didn't lose the one that should match
-    expect(screen.queryAllByText(matchingText).length).toBe(1);
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
   });
 });

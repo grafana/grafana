@@ -323,12 +323,15 @@ function useLabelSearch(
 ): Set<string> | undefined {
   return useMemo(() => {
     if (search && data) {
+      const terms = search.split(',');
       const foundLabels = new Set<string>();
-      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
 
-      if (idxs) {
-        for (let idx of idxs) {
-          foundLabels.add(data.getUniqueLabels()[idx]);
+      for (let term of terms) {
+        let idxs = ufuzzy.filter(data.getUniqueLabels(), term);
+        if (idxs) {
+          for (let idx of idxs) {
+            foundLabels.add(data.getUniqueLabels()[idx]);
+          }
         }
       }
 
