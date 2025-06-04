@@ -107,12 +107,32 @@ var datasourcesActions = map[string]bool{
 	ac.ActionAlertingNotificationsExternalWrite: true,
 }
 
-// GetDataSourceRouteEvaluator returns an evaluator for the given data source UID and action.
-func GetDataSourceRouteEvaluator(dsUID, action string) ac.Evaluator {
+// NOTE: remove me before commit
+// made this private to avoid confusion with the external GetDataSourceRouteMultiActionEvaluator
+// getDataSourceRouteEvaluator returns an evaluator for the given data source UID and action.
+func getDataSourceRouteEvaluator(dsUID, action string) ac.Evaluator {
 	if datasourcesActions[action] {
 		return ac.EvalPermission(action, "datasources:uid:"+dsUID)
 	}
 	return ac.EvalPermission(action)
+}
+
+// GetDataSourceRouteMultiActionEvaluator returns an evaluator for multiple data source actions (OR logic)
+func GetDataSourceRouteMultiActionEvaluator(dsUID string, actions []string) ac.Evaluator {
+	if len(actions) == 0 {
+		return ac.EvalPermission("") // Always deny
+	}
+
+	if len(actions) == 1 {
+		return getDataSourceRouteEvaluator(dsUID, actions[0])
+	}
+
+	evaluators := make([]ac.Evaluator, 0, len(actions))
+	for _, action := range actions {
+		evaluators = append(evaluators, getDataSourceRouteEvaluator(dsUID, action))
+	}
+
+	return ac.EvalAny(evaluators...)
 }
 
 var pluginsActions = map[string]bool{
@@ -120,10 +140,28 @@ var pluginsActions = map[string]bool{
 	ActionAppAccess: true,
 }
 
-// GetPluginRouteEvaluator returns an evaluator for the given plugin ID and action.
-func GetPluginRouteEvaluator(pluginID, action string) ac.Evaluator {
+// getPluginRouteEvaluator returns an evaluator for the given plugin ID and action.
+func getPluginRouteEvaluator(pluginID, action string) ac.Evaluator {
 	if pluginsActions[action] {
 		return ac.EvalPermission(action, "plugins:id:"+pluginID)
 	}
 	return ac.EvalPermission(action)
+}
+
+// GetPluginRouteMultiActionEvaluator returns an evaluator for multiple actions (OR logic)
+func GetPluginRouteMultiActionEvaluator(pluginID string, actions []string) ac.Evaluator {
+	if len(actions) == 0 {
+		return ac.EvalPermission("") // Always deny
+	}
+
+	if len(actions) == 1 {
+		return getPluginRouteEvaluator(pluginID, actions[0])
+	}
+
+	evaluators := make([]ac.Evaluator, 0, len(actions))
+	for _, action := range actions {
+		evaluators = append(evaluators, getPluginRouteEvaluator(pluginID, action))
+	}
+
+	return ac.EvalAny(evaluators...)
 }

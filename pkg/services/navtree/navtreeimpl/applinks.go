@@ -296,12 +296,12 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
-		if include.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
+		if include.RequiresRBACActions() && !hasAccess(pluginaccesscontrol.GetPluginRouteMultiActionEvaluator(pluginID, include.GetActions())) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
 			return false
-		} else if !include.RequiresRBACAction() && !c.HasUserRole(include.Role) {
+		} else if !include.RequiresRBACActions() && !c.HasUserRole(include.Role) {
 			return false
 		}
 		return true
