@@ -1013,6 +1013,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
+			// TODO(@moustafab): figure out why this test doesn't fail as is
 			desc:                "classic condition, execution Error as Error (alerting -> query error -> alerting)",
 			alertRule:           baseRuleWith(m.WithErrorExecAs(models.ErrorErrState)),
 			expectedAnnotations: 3,

@@ -401,6 +401,8 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	case eval.Alerting:
 		prevEndsAt := state.EndsAt
 		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		// explicitly clear errors
+		state.Error = nil
 		logger.Debug("Keeping state",
 			"state",
 			state.State,
