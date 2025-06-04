@@ -246,18 +246,18 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
-	namespaces := map[string]string{}
+	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
 		// only add namespaces that the user has access to rules in
-		allowed, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
 		if err != nil {
 			ruleResponse.Status = "error"
 			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
 			ruleResponse.ErrorType = apiv1.ErrServer
 			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 		}
-		if allowed {
-			namespaces[namespaceUID] = folder.Fullpath
+		if hasAccess {
+			allowedNamespaces[namespaceUID] = folder.Fullpath
 		}
 	}
 
@@ -265,7 +265,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		Ctx:               c.Req.Context(),
 		OrgID:             c.OrgID,
 		Query:             c.Req.Form,
-		AllowedNamespaces: namespaces,
+		AllowedNamespaces: allowedNamespaces,
 	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager))
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
