@@ -14,7 +14,6 @@ import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
 import { playlistAPI } from '../api/clients/playlist';
 import { provisioningAPI } from '../api/clients/provisioning';
-
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
