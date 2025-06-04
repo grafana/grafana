@@ -29,7 +29,7 @@ import {
 } from '@grafana/ui';
 import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
 
-import { PieChartType, PieChartLabels } from './panelcfg.gen';
+import { PieChartType, PieSortOption, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -40,6 +40,7 @@ interface PieChartProps {
   width: number;
   fieldDisplayValues: FieldDisplay[];
   pieType: PieChartType;
+  pieSorting: PieSortOption;
   highlightedTitle?: string;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean; // not used?
@@ -49,6 +50,7 @@ interface PieChartProps {
 export const PieChart = ({
   fieldDisplayValues,
   pieType,
+  pieSorting,
   width,
   height,
   highlightedTitle,
@@ -105,6 +107,15 @@ export const PieChart = ({
           <Pie
             data={filteredFieldDisplayValues}
             pieValue={getValue}
+	    pieSortValues={(a, b) => {
+	      if(pieSorting === PieSortOption.Clockwise){
+		return a-b;
+	      } else if (pieSorting === PieSortOption.Counterclockwise){
+		return b-a;
+	      } else {
+	      	return -1;
+	      }
+	    }}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}
             cornerRadius={3}
