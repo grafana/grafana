@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting-rules/alerting-migration/migration-api/
+canonical: https://grafana.com/docs/grafana/latest/alerting-rules/alerting-migration/
 description: Use the Grafana Alerting import tool to convert your datasource managed alert rules into Grafana managed alert rules
 labels:
   products:
