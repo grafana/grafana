@@ -65,6 +65,7 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
 export interface Options extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
+  pieSorting: PieSortOption;
   pieType: PieChartType;
 }
 
