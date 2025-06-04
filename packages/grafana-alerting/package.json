@@ -2,8 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/alerting",
-  "version": "12.0.0-pre",
-  "private": true,
+  "version": "12.1.0-pre",
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [
     "typescript",
@@ -35,9 +34,19 @@
       "require": "./src/unstable.ts"
     }
   },
+  "publishConfig": {
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/cjs/index.d.cts",
+    "access": "public"
+  },
   "scripts": {
+    "compile": "tsc -p ./tsconfig.build.json",
+    "build": "yarn clean && yarn compile && yarn bundle",
+    "bundle": "rollup --config rollup.config.ts  --configPlugin esbuild",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts"
+    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
+    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
@@ -53,6 +62,8 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-redux": "^9.2.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.41.1",
     "type-fest": "^4.40.0",
     "typescript": "5.7.3"
   },
@@ -60,10 +71,12 @@
     "@grafana/runtime": "^12.0.0-pre",
     "@grafana/ui": "^12.0.0-pre",
     "@reduxjs/toolkit": "^2.8.0",
+    "msw": "^2.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "dependencies": {
+    "fishery": "^2.3.1",
     "lodash": "^4.17.21"
   }
 }
