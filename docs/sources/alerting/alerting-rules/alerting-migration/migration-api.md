@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting-rules/alerting-migration/migration-api/
 description: Use the Grafana Alerting API import tool to convert your datasource managed alert rules into Grafana managed alert rules
 labels:
   products:
@@ -9,6 +10,11 @@ title: Import data source-managed alert rules with Grafana Mimirtool
 menuTitle: API alert rules import
 weight: 601
 refs:
+  ui-import-tool:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
   configure-recording-rules:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
@@ -18,13 +24,13 @@ refs:
 
 # Import data source-managed alert rules with Grafana Mimirtool
 
-You can convert data source-managed alert rules to Grafana-managed alert rules with the Grafana import tool in the Grafana user interface, or you can convert them with the Grafana Mimirtool command-line tool. This guide tells you how to use Mimirtool to import your data source-managed alert rules.
+You can convert data source–managed alert rules, such as Prometheus alert rules, to Grafana-managed alert rules using [Grafana user interface](ref:ui-import-tool) or command-line tools. This guide shows you how to use the Grafana Mimirtool to import your data source-managed alert rules.
 
 ## Before you begin
 
-To import data source-managed alert rules with Grafana Mimirtool, you need to have the Grafana Mimirtool command-line tool installed.
+You need to have the [Grafana Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) command-line tool installed.
 
-You need a service account the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
+You need a service account with the following [RBAC permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/):
 
 - Alerting: Rules Reader
 - Alerting: Rules Writer
@@ -34,9 +40,11 @@ You need a service account the following [RBAC permissions](/docs/grafana/latest
 - Folders: Reader
 - Folders: Writer
 
-You also need to create a service account token with your service account. Refer to the [documentation for more information on service accounts and service account tokens](/docs/grafana/latest/administration/service-accounts/)
+You also need to create a service account token with your service account. Refer to the [documentation for more information on service accounts and service account tokens](/docs/grafana/latest/administration/service-accounts/).
 
 ## How it works
+
+When you use the import tool, data source-managed rules are copied to another folder as Grafana-managed alert rules, preserving the behavior of the rules, and the original alert rules are kept in their original location.
 
 When data source-managed alert rules are converted to Grafana-managed alert rules, the following are applied to the Grafana-managed alert rules:
 
@@ -53,70 +61,93 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 
 ## Import alert rules with Mimirtool or cortextool
 
-You can use either [Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import your alert rules. For more information about Mimirtool commands, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules).
+You can use either [`mimirtool`](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import data source–managed alert rules into Grafana as Grafana-managed alert rules.
 
-To convert your alert rules, use the following command prompt substituting the your URL and your service account token as indicated, followed by your intended Mimirtool command.
+To convert and import them into a Grafana instance, you can use the `mimirtool rules load` command:
 
 ```bash
-MIMIR_ADDRESS=https://<Grafana URL>.grafana-dev.net/api/convert/ MIMIR_AUTH_TOKEN=<your token ID> MIMIR_TENANT_ID=1
+MIMIR_ADDRESS=<GRAFANA_BASE_URL>/api/convert/ \
+MIMIR_AUTH_TOKEN=<SERVICE_ACCOUNT_TOKEN> \
+MIMIR_TENANT_ID=1 \
+mimirtool rules load rule_file.yaml \
+  --extra-headers "X-Grafana-Alerting-Datasource-UID=<DATASOURCE_UID_QUERY_TARGET>" \
+  --extra-headers "X-Disable-Provenance=true"
 ```
+
+This command imports Prometheus alert rules defined in `rule_file.yaml` as Grafana-managed alert rules.
+
+- `mimirtool` interacts with Grafana—not with a Mimir instance—when using the `<GRAFANA_BASE_URL>/api/convert/` endpoint. In this case, the `MIMIR_TENANT_ID` environment variable must be set to `1`.
+- The [`X-Grafana-Alerting-Datasource-UID` header](#x-grafana-alerting-datasource-uid) configures the data source that the imported alert rules will query.
+- [`X-Disable-Provenance=true`](#x-disable-provenance) allows you to edit the imported alert rules.
+- You can pass multiple `--extra-headers` flags to include additional [optional headers](#optional-headers).
+
+{{< admonition type="note" >}}
+
+You can use other `mimirtool` commands as well. For example, when using `mimirtool rules sync`, you need to set the `--concurrency` flag to `1`. The default value is `8`, which may cause the API to return errors.
+
+{{< /admonition >}}
+
+For more information other Mimirtool commands and options, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules) and the [Mimir HTTP Rule API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration).
 
 For cortextool, you need to set `--backend=loki` to import Loki alert rules. For example:
 
 ```bash
-CORTEX_ADDRESS=<grafana url>/api/convert/ CORTEX_AUTH_TOKEN=<your token> CORTEX_TENANT_ID=1 cortextool rules --backend=loki list
+CORTEX_ADDRESS=<GRAFANA_BASE_URL>/api/convert/ \
+CORTEX_AUTH_TOKEN=<SERVICE_ACCOUNT_TOKEN> \
+CORTEX_TENANT_ID=1 \
+cortextool rules load rule_file.yaml \
+  --backend=loki \
+  --extra-headers "X-Grafana-Alerting-Datasource-UID=<DATASOURCE_UID_QUERY_TARGET>"
+  --extra-headers "X-Disable-Provenance=true"
 ```
-
-Headers can be passed to the `mimirtool` or `cortextool` via `--extra-headers`.
-
-For more information about the Rule API points and examples of Mimirtool commands, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
-
-{{< admonition type="note" >}}
-To use the `mimirtool rules sync` command, you need to set the `--concurrency` parameter to `1` (`--concurrency=1`). The parameter defaults to 8, which may cause the API to return errors.
-{{< /admonition >}}
 
 ### Compatible endpoints
 
-The following are compatible API endpoints:
+The following API endpoints are supported in Grafana and can also be used to import data source–managed alert rules.
 
-**GET**
+| Endpoint | Method                                                     | Summary                                                                                                                                               |
+| -------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET      | /convert/prometheus/config/v1/rules                        | Get all rule groups across all namespaces.                                                                                                            |
+| POST     | /convert/prometheus/config/v1/rules                        | Create or update multiple rule groups across multiple namespaces. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid). |
+| GET      | /convert/prometheus/config/v1/rules/:namespaceTitle        | Get rule groups in a specific namespace.                                                                                                              |
+| POST     | /convert/prometheus/config/v1/rules/:namespaceTitle        | Create or update a single rule group in a namespace. Requires [`X-Grafana-Alerting-Datasource-UID`](#x-grafana-alerting-datasource-uid).              |
+| DELETE   | /convert/prometheus/config/v1/rules/:namespaceTitle        | Delete all alert rules in a namespace.                                                                                                                |
+| GET      | /convert/prometheus/config/v1/rules/:namespaceTitle/:group | Get a single rule group.                                                                                                                              |
+| DELETE   | /convert/prometheus/config/v1/rules/:namespaceTitle/:group | Delete a specific rule group.                                                                                                                         |
 
-```
-GET /convert/prometheus/config/v1/rules - Get all rule groups across all namespaces
-GET /convert/prometheus/config/v1/rules/<NamespaceTitle> - Get rule groups in a specific namespace
-GET /convert/prometheus/config/v1/rules/<NamespaceTitle>/<Group> - Get a single rule group
-
-```
-
-**POST**
-
-```
-POST /convert/prometheus/config/v1/rules - Create/update multiple rule groups across multiple namespaces
-POST /convert/prometheus/config/v1/rules/<NamespaceTitle> - Create/update a single rule group in a namespace
-```
-
-When posting rules, the following header is required:
-`X-Grafana-Alerting-Datasource-UID` - Supply the UID of the data source to use for queries.
-
-**Delete**
-
-```
-DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle} - Delete all alert rules in a namespace
-DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} - Delete a specific rule group
-```
-
-**Optional Headers**
+### Optional Headers
 
 Additional configuration headers for more granular import control include the following:
 
-- `X-Grafana-Alerting-Recording-Rules-Paused` - Set to "true" to import recording rules in paused state.
-- `X-Grafana-Alerting-Alert-Rules-Paused` - Set to "true" to import alert rules in paused state.
-- `X-Grafana-Alerting-Target-Datasource-UID` - The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
-- `X-Grafana-Alerting-Folder-UID` - Enter the UID of the target destination folder for imported rules.
-- `X-Disable-Provenance` - When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
-- `X-Grafana-Alerting-Notification-Settings` – JSON-encoded `AlertRuleNotificationSettings` object that allows setting the contact point for the alert rules.
+#### `X-Disable-Provenance`
 
-#### AlertRuleNotificationSettings object
+When present, imported rules won't be marked as provisioned, which allows for them to be edited in the UI. Note that rules imported with this header won't be visible in the GET endpoints of this API, as these endpoints only return rules that are provisioned and were specifically imported via this API.
+
+#### `X-Grafana-Alerting-Alert-Rules-Paused`
+
+Set to "true" to import alert rules in paused state.
+
+#### `X-Grafana-Alerting-Recording-Rules-Paused`
+
+Set to "true" to import recording rules in paused state.
+
+#### `X-Grafana-Alerting-Datasource-UID`
+
+The UID of the data source to use for alert rule queries.
+
+#### `X-Grafana-Alerting-Target-Datasource-UID`
+
+The UID of the target data source for recording rules. If not specified, the value from `X-Grafana-Alerting-Datasource-UID` is used.
+
+#### `X-Grafana-Alerting-Folder-UID`
+
+Enter the UID of the target destination folder for imported rules.
+
+#### `X-Grafana-Alerting-Notification-Settings`
+
+JSON-encoded [`AlertRuleNotificationSettings` object](#alertrulenotificationsettings-object) that allows setting the contact point for the alert rules.
+
+##### AlertRuleNotificationSettings object
 
 When you set `X-Grafana-Alerting-Notification-Settings`, the header value must be a JSON-encoded object with the following keys:
 
