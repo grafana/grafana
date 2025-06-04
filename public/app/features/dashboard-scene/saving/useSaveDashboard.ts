@@ -14,6 +14,28 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 
+function applyChrononVariablesToTargets(saveModel: any) {
+  if (!Array.isArray(saveModel?.panels) || !Array.isArray(saveModel?.templating?.list)) {
+    return saveModel;
+  }
+
+  const variableNames = saveModel.templating.list.map((variable: any) => variable.name);
+  const variablesAsProps = Object.fromEntries(
+    variableNames.map((variableName: any) => [variableName, `${variableName}`])
+  );
+
+  const updatedPanels = saveModel.panels.map((panel: any) => {
+    if (panel?.datasource?.type === 'chronon-datasource' && Array.isArray(panel.targets)) {
+      const updatedTargets = panel.targets.map((target: any) => ({ ...target, ...variablesAsProps }));
+      return { ...panel, targets: updatedTargets };
+    }
+
+    return panel;
+  });
+
+  return { ...saveModel, panels: updatedPanels };
+}
+
 export function useSaveDashboard(isCopy = false) {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -31,7 +53,9 @@ export function useSaveDashboard(isCopy = false) {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
 
-        console.log({ saveModel, options });
+        saveModel = applyChrononVariablesToTargets(saveModel);
+
+        console.log({ saveModel });
 
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
