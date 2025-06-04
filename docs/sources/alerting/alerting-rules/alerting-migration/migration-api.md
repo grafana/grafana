@@ -95,7 +95,7 @@ For cortextool, you need to set `--backend=loki` to import Loki alert rules. For
 CORTEX_ADDRESS=<GRAFANA_BASE_URL>/api/convert/ \
 CORTEX_AUTH_TOKEN=<SERVICE_ACCOUNT_TOKEN> \
 CORTEX_TENANT_ID=1 \
-cortextool rules load rule_file.yaml \
+cortextool rules load loki_rules.yaml \
   --backend=loki \
   --extra-headers "X-Grafana-Alerting-Datasource-UID=<DATASOURCE_UID_QUERY_TARGET>"
   --extra-headers "X-Disable-Provenance=true"
