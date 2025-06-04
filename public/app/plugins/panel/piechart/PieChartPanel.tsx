@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { PieChartLegendOptions, PieSortOption, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -67,7 +67,8 @@ export function PieChartPanel(props: Props) {
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
-            displayLabels={options.displayLabels}
+            pieSorting={options.pieSorting}
+	    displayLabels={options.displayLabels}
           />
         );
       }}
@@ -84,8 +85,18 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
   const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
+    // Sort the legend according to the pie slice sorting.
     .sort((a, b) => {
+      if(props.options.pieSorting === PieSortOption.None){
+	return 1;
+      } else if (props.options.pieSorting === PieSortOption.Counterclockwise){
+	// Reverse compared objects so that the clockwise sorting (default)
+	// is inverted.
+	let tmp = a;
+	a = b;
+	b = tmp;
+      }
+
       if (isNaN(a.display.numeric)) {
         return 1;
       } else if (isNaN(b.display.numeric)) {

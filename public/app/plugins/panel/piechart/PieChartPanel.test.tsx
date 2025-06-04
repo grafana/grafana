@@ -14,7 +14,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import { Options, PieChartType, PieSortOption, PieChartLegendValues } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -173,6 +173,7 @@ const setup = (propsOverrides?: {}) => {
 
   const options: Options = {
     pieType: PieChartType.Pie,
+    pieSorting: PieSortOption.Clockwise,
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,
