@@ -31,6 +31,8 @@ export function useSaveDashboard(isCopy = false) {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
 
+        console.log({ saveModel, options });
+
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
             isNew: options.isNew,
@@ -96,8 +98,6 @@ export function useSaveDashboard(isCopy = false) {
 
         const params = new URLSearchParams(window.location.search);
         const assetId = params.get('assetId');
-
-        console.log({ uid: resultData.uid, assetId });
 
         window.parent.postMessage(
           {
