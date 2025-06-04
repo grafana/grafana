@@ -1771,7 +1771,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 #### `ha_redis_address`
 
-Redis server address(es). It can be a single Redis address if using Redis standalone, 
+Redis server address(es). It can be a single Redis address if using Redis standalone,
 or a list of comma-separated addresses if using Redis Cluster/Sentinel.
 
 {{< admonition type="note" >}}
