@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Excluir",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Nova regra de registro",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Ações da pasta",
+          "title": "Ações"
+        },
+        "export": {
+          "aria-label": "Pasta de regras de exportação",
+          "label": "Pasta de regras de exportação"
+        },
+        "view": {
+          "aria-label": "Visualizar pasta",
+          "label": "Visualizar pasta"
+        }
       },
       "no-prom-or-loki-rules": "Não há fontes de dados Prometheus ou Loki configuradas",
       "no-rules": "Nenhuma regra foi encontrada.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "detalhes do grupo de regras",
       "edit": "editar grupo de regras",
-      "export-rules-folder": "Pasta de regras de exportação",
       "go-to-folder": "ir para a pasta",
       "manage-permissions": "gerenciar permissões"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Remover titularidade"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Colar painel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Painel de controle",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Adicionar",
-      "add-new": {
-        "button": {
-          "label": "Adicionar",
-          "tooltip": "Adicionar painéis e outros elementos"
-        },
-        "menu": {
-          "lib-panel": "Painel de biblioteca",
-          "panel": "Painel",
-          "row": "Linha",
-          "tab": "Aba"
-        }
-      },
       "alert-rules": "Regras de alerta",
       "back-to-dashboard": "Voltar para o painel de controle",
       "dashboard-settings": {

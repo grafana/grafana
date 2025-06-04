@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Sil",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Yeni kayıt kuralı",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Klasör işlemleri",
+          "title": "İşlemler"
+        },
+        "export": {
+          "aria-label": "Kurallar klasörünü dışa aktar",
+          "label": "Kurallar klasörünü dışa aktar"
+        },
+        "view": {
+          "aria-label": "Klasörü görüntüle",
+          "label": "Klasörü görüntüle"
+        }
       },
       "no-prom-or-loki-rules": "Yapılandırılmış Prometheus veya Loki veri kaynağı yok",
       "no-rules": "Kural bulunamadı.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "kural grubu bilgileri",
       "edit": "kural grubunu düzenle",
-      "export-rules-folder": "Kurallar klasörünü dışa aktar",
       "go-to-folder": "klasöre git",
       "manage-permissions": "izinleri yönet"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Özelliği kaldır"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Paneli yapıştır",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Pano",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Ekle",
-      "add-new": {
-        "button": {
-          "label": "Ekle",
-          "tooltip": "Panel ve diğer bileşenleri ekle"
-        },
-        "menu": {
-          "lib-panel": "Kütüphane paneli",
-          "panel": "Panel",
-          "row": "Satır",
-          "tab": "Sekme"
-        }
-      },
       "alert-rules": "Uyarı kuralları",
       "back-to-dashboard": "Panoya geri dön",
       "dashboard-settings": {

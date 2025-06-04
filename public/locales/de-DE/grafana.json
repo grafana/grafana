@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Löschen",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Neue Aufnahmeregel",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Ordneraktionen",
+          "title": "Aktionen"
+        },
+        "export": {
+          "aria-label": "Regelordner exportieren",
+          "label": "Regelordner exportieren"
+        },
+        "view": {
+          "aria-label": "Ordner anzeigen",
+          "label": "Ordner anzeigen"
+        }
       },
       "no-prom-or-loki-rules": "Es sind keine Prometheus- oder Loki-Datenquellen konfiguriert",
       "no-rules": "Keine Regeln gefunden.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "Details der Rollengruppe",
       "edit": "Rollengruppe bearbeiten",
-      "export-rules-folder": "Regelordner exportieren",
       "go-to-folder": "Zum Ordner",
       "manage-permissions": "Berechtigungen verwalten"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Eigenschaft entfernen"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Panel einfügen",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "add-new": {
-        "button": {
-          "label": "Hinzufügen",
-          "tooltip": "Panels und andere Elemente hinzufügen"
-        },
-        "menu": {
-          "lib-panel": "Bibliotheks-Panel",
-          "panel": "Panel",
-          "row": "Zeile",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Warnregeln",
       "back-to-dashboard": "Zurück zum Dashboard",
       "dashboard-settings": {
