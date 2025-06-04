@@ -21,7 +21,11 @@ var (
 	_ grafanarest.Storage = (*dualWriter)(nil)
 )
 
-const backgroundReqTimeout = 5 * time.Second
+// Let's give the background queries a bit more time to complete
+// as we also run them as part of load tests that might need longer
+// to complete. Those run in the background and won't impact the
+// user experience in any way.
+const backgroundReqTimeout = time.Minute
 
 // dualWriter will write first to legacy, then to unified keeping the same internal ID
 type dualWriter struct {

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
-import useMeasure from 'react-use/lib/useMeasure';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -275,7 +275,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         label: 'input-suffix',
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
-        marginBottom: '-2px',
         borderLeft: 'none',
         borderTopLeftRadius: 0,
         borderBottomLeftRadius: 0,
