@@ -53,9 +53,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
 		  {value: PieSortOption.Clockwise, label: 'Clockwise'},
 		  {value: PieSortOption.Counterclockwise, label: 'Counterclockwise'},
 		  {value: PieSortOption.None, label:'None'}
-	  ]
-	}
-})
+	  ],
+	},
+	defaultValue: PieSortOption.Clockwise,
+      })
       .addMultiSelect({
         name: 'Labels',
         path: 'displayLabels',
