@@ -2930,7 +2930,7 @@ __metadata:
     "@grafana/runtime": ^12.0.0-pre
     "@grafana/ui": ^12.0.0-pre
     "@reduxjs/toolkit": ^2.8.0
-    msw: "*"
+    msw: ^2.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
