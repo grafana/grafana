@@ -82,7 +82,7 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 
 ## Configure SAML assertions when using SCIM provisioning
 
-In order to verify the logged in user is the same user that was provisioend through Azure AD, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
+In order to verify the logged in user is the same user that was provisioned through Azure AD, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
 
 1. Open your Entra ID application.
 1. Select the SAML single sign-on configuration.

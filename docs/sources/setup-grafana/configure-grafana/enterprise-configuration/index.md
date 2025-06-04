@@ -308,7 +308,7 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 Friendly name or name of the attribute within the SAML assertion to use as the user organization.
 
-### assertion_attrbiute_external_uid
+### assertion_attribute_external_uid
 
 Friendly name or name of the attribute within the SAML assertion to use as the user external UID.
 
