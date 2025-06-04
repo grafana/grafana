@@ -308,7 +308,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
-      version: oldModel.version,
     }),
   ];
 

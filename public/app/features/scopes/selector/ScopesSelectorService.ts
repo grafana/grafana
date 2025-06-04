@@ -212,7 +212,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    *   before for example by toggling the scopes in the scoped tree UI.
    */
   private setNewScopes = async (treeScopes = this.state.treeScopes) => {
-    if (isEqual(treeScopes, getTreeScopesFromSelectedScopes(this.state.selectedScopes))) {
+    const newNames = treeScopes.map(({ scopeName }) => scopeName);
+    const currentNames = this.state.selectedScopes.map((scope) => scope.scope.metadata.name);
+
+    if (isEqual(newNames, currentNames)) {
       return;
     }
 
