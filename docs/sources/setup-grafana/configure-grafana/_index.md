@@ -1771,10 +1771,8 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 #### `ha_redis_address`
 
-Redis server address(es).
-* For Redis standalone, use a single address of the Redis server.
-* For Redis Cluster, use the cluster configuration address or a comma-separated list of addresses.
-* For Redis Sentinel, use a comma-separated list of Sentinel addresses.
+Redis server address(es). It can be a single Redis address if using Redis standalone, 
+or a list of comma-separated addresses if using Redis Cluster/Sentinel.
 
 {{< admonition type="note" >}}
 For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
