@@ -193,6 +193,7 @@ export enum PluginExtensionPoints {
   TraceViewDetails = 'grafana/traceview/details',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
+  LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
 }
 
 export type PluginExtensionPanelContext = {
