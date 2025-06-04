@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 # ver=$(cat ${GRAFANA_DIR}/package.json | jq -r .version | sed -E "s/$/-/" | sed -E "s/-.*/-${DRONE_BUILD_NUMBER}/")
 local_dir="${DRONE_WORKSPACE}/dist"
