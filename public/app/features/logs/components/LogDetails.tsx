@@ -1,17 +1,22 @@
 import { cx } from '@emotion/css';
 import { PureComponent, useMemo } from 'react';
 
-import { CoreApp, DataFrame, DataFrameType, IconName, LinkModel, LogRowModel } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  DataFrameType,
+  IconName,
+  LinkModel,
+  LogRowModel,
+  PluginExtensionPoints,
+  PluginExtensionResourceAttributesContext,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { usePluginLinks } from '@grafana/runtime';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import {
-  PluginExtensionPoints,
-  PluginExtensionResourceAttributesContext,
-} from '../../../../../packages/grafana-data/src/types/pluginExtensions';
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsBody } from './LogDetailsBody';
