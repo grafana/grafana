@@ -4,13 +4,13 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { IconButton, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { isAdmin } from '../../utils/misc';
+import { isAdmin, stringifyErrorLike } from '../../utils/misc';
 
 import { DataSourceIcon } from './Namespace';
 import { LoadingIndicator } from './RuleGroup';
@@ -22,6 +22,7 @@ export interface DataSourceSectionProps extends PropsWithChildren {
   application?: RulesSourceApplication;
   isLoading?: boolean;
   description?: ReactNode;
+  error?: unknown;
 }
 
 export const DataSourceSection = ({
@@ -30,6 +31,7 @@ export const DataSourceSection = ({
   application,
   children,
   loader,
+  error,
   isLoading = false,
   description = null,
 }: DataSourceSectionProps) => {
@@ -60,6 +62,7 @@ export const DataSourceSection = ({
                   name={isCollapsed ? 'angle-right' : 'angle-down'}
                   onClick={toggleCollapsed}
                   aria-label={t('common.collapse', 'Collapse')}
+                  disabled={Boolean(error)}
                 />
                 {application && <DataSourceIcon application={application} />}
 
@@ -71,6 +74,18 @@ export const DataSourceSection = ({
                     {'·'} {description}
                   </Text>
                 )}
+
+                {Boolean(error) && (
+                  <Toggletip
+                    title={t('alerting.rule-list.ds-error.title', 'Cannot load rules for this datasource')}
+                    content={<div>{stringifyErrorLike(error)}</div>}
+                  >
+                    <Button variant="destructive" fill="outline" size="sm" icon="exclamation-circle">
+                      <Trans i18nKey="alerting.rule-list.error-button">Error</Trans>
+                    </Button>
+                  </Toggletip>
+                )}
+
                 <Spacer />
                 {configureLink && (
                   <WithReturnButton
