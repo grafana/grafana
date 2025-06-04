@@ -48,10 +48,11 @@ yarn add @grafana/grafana-foundation-sdk
 
 ### Go
 
-For Go, install the SDK package via `go get`:
+For Go, lookup your Grafana version and [pick the branch appropriately](https://github.com/grafana/grafana-foundation-sdk?tab=readme-ov-file#navigating-the-sdk). You can then install the SDK package via `go get` by specifying the branch:
 
 ```go
-go get github.com/grafana/grafana-foundation-sdk/go
+// Example: go get github.com/grafana/grafana-foundation-sdk/go@v11.6.x+cog-v0.0.x
+go get github.com/grafana/grafana-foundation-sdk/go@<branch-name>
 ```
 
 ### Python
