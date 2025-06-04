@@ -611,6 +611,7 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   /**
   * Use the new SSO Settings API to configure LDAP
+  * @default true
   */
   ssoSettingsLDAP?: boolean;
   /**
