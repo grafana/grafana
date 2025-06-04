@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting-rules/alerting-migration/
 description: Use the Grafana Alerting import tool to convert your datasource managed alert rules into Grafana managed alert rules
 labels:
   products:
@@ -23,7 +24,11 @@ refs:
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Mimir, Loki, and Prometheus alert rules as Grafana-managed alert rules.
+Grafana Alerting provides multiple options for importing Mimir, Loki, and Prometheus alert rules as Grafana-managed alert rules.
+
+This guide shows you how to import data source–managed alert rules from existing data sources configured in Grafana Alerting.
+
+Alternatively, you can [use the API or command-line tools](ref:import-ds-rules-api) like `mimirtool` to convert and import rules from files.
 
 ## Before you begin
 
