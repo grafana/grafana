@@ -7,6 +7,13 @@ import { createLogRow } from '../__mocks__/logRow';
 
 import { LogList, Props } from './LogList';
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  };
+});
+
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {

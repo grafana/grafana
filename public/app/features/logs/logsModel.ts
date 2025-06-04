@@ -437,7 +437,9 @@ export function logSeriesToLogsModel(
         logLevel = getLogLevel(entry);
       }
 
-      const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
+      const datasource = queries.find((query) => query.refId === series.refId)?.datasource;
+      const datasourceType = datasource?.type;
+      const datasourceUid = datasource?.uid;
 
       const row: LogRowModel = {
         entryFieldIndex: stringField.index,
@@ -459,6 +461,7 @@ export function logSeriesToLogsModel(
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
+        datasourceUid,
       };
 
       if (idField !== null) {

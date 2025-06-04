@@ -43,6 +43,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(),
   getDataSourceSrv: () => getDataSourceSrvMock(),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const hasLogsContextSupport = jest.fn().mockImplementation((ds) => {

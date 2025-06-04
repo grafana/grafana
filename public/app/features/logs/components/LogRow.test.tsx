@@ -14,6 +14,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
     reportInteraction(interactionName, properties),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const theme = createTheme();
