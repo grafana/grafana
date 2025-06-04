@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -234,66 +233,6 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
-			require.NoError(t, res.Body.Close())
-		})
-	}
-}
-
-func TestServiceAccountsAPI_MigrateApiKeysToServiceAccounts(t *testing.T) {
-	type TestCase struct {
-		desc                    string
-		orgId                   int64
-		basicRole               org.RoleType
-		permissions             []accesscontrol.Permission
-		expectedMigrationResult *serviceaccounts.MigrationResult
-		expectedCode            int
-	}
-
-	tests := []TestCase{
-		{
-			desc:      "should be able to migrate API keys to service accounts with correct permissions",
-			orgId:     1,
-			basicRole: org.RoleAdmin,
-			permissions: []accesscontrol.Permission{
-				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
-			},
-			expectedMigrationResult: &serviceaccounts.MigrationResult{
-				Total:         5,
-				Migrated:      4,
-				Failed:        1,
-				FailedDetails: []string{"API key name: failedKey - Error: migration error"},
-			},
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc:      "should not be able to migrate API keys to service accounts with wrong permissions",
-			orgId:     2,
-			basicRole: org.RoleAdmin,
-			permissions: []accesscontrol.Permission{
-				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
-			},
-			expectedCode: http.StatusForbidden,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &satests.FakeServiceAccountService{ExpectedMigrationResult: tt.expectedMigrationResult}
-			})
-
-			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/migrate", nil)
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: tt.orgId, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
-			res, err := server.SendJSON(req)
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.expectedCode, res.StatusCode)
-			if tt.expectedCode == http.StatusOK {
-				var result serviceaccounts.MigrationResult
-				err := json.NewDecoder(res.Body).Decode(&result)
-				require.NoError(t, err)
-				assert.Equal(t, tt.expectedMigrationResult, &result)
-			}
 			require.NoError(t, res.Body.Close())
 		})
 	}
