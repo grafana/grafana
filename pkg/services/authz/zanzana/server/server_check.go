@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -164,7 +165,9 @@ func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, re
 	})
 
 	if err != nil {
-		s.logger.Error("failed to perform check", "error", err, "subject", subject, "relation", relation, "object", object)
+		// error is decorated by openfga with a public-facing error message, so we need to unwrap it to get the actual error and log it server-side,
+		// but we want to return wrapped error to the client to prevent leaking internal error details
+		s.logger.Error("failed to perform check", "error", errors.Unwrap(err), "subject", subject, "relation", relation, "object", object)
 		return nil, fmt.Errorf("failed to perform check: %w", err)
 	}
 
