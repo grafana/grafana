@@ -149,6 +149,12 @@ describe('labelSearch', () => {
       expect(found.size).toBe(107);
     });
 
+    it('falls back to fuzzy with malformed regex', () => {
+      const search = 'deduplicatingSlice[.';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(1);
+    });
+
     it('no results', () => {
       const search = 'term_not_found';
       let found = labelSearch(search, container);
@@ -198,6 +204,12 @@ describe('labelSearch', () => {
     it('regex not found, fuzzy not found', () => {
       const term = 'not_found_suffix$,not_found_fuzzy';
       let found = labelSearch(term, container);
+      expect(found.size).toBe(0);
+    });
+
+    it('does not match empty terms', () => {
+      const search = ',,,,,';
+      let found = labelSearch(search, container);
       expect(found.size).toBe(0);
     });
   });

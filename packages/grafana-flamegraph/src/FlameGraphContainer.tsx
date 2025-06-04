@@ -371,6 +371,10 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
   };
 
   for (let term of terms) {
+    if (!term) {
+      continue;
+    }
+
     const found = regexFilter(data.getUniqueLabels(), term);
     if (!found) {
       fuzzyFilter(data.getUniqueLabels(), term);
