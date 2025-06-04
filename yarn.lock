@@ -3350,7 +3350,7 @@ __metadata:
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
-    "@prometheus-io/lezer-promql": "npm:0.304.0"
+    "@prometheus-io/lezer-promql": "npm:0.304.1"
     "@reduxjs/toolkit": "npm:2.5.1"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
@@ -6032,13 +6032,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.304.0":
-  version: 0.304.0
-  resolution: "@prometheus-io/lezer-promql@npm:0.304.0"
+"@prometheus-io/lezer-promql@npm:0.304.1":
+  version: 0.304.1
+  resolution: "@prometheus-io/lezer-promql@npm:0.304.1"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/c582072a8a5b4bc4e44a36ce577ea1d082092972d79b736014891d4aaf8e9b6308473a0ee5f23b4c446f0f601a796b213ea1e94bf1a5771a980663939f9e70fb
+  checksum: 10/d308388bb817423c2b966e8d8e27deb02e98915af91043baf7c7b9634fb5ff3655378b237cc0766e5f0446fed74027f2c385aa3cff7921620e7cbdd1844bc95c
   languageName: node
   linkType: hard
 
