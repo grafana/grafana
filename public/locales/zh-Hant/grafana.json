@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "刪除",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1657,6 +1650,20 @@
         "new-recording-rule": "新的錄製規則",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "資料夾動作",
+          "title": "動作"
+        },
+        "export": {
+          "aria-label": "匯出規則資料夾",
+          "label": "匯出規則資料夾"
+        },
+        "view": {
+          "aria-label": "檢視資料夾",
+          "label": "檢視資料夾"
+        }
       },
       "no-prom-or-loki-rules": "尚未設定 Prometheus 或 Loki 資料來源",
       "no-rules": "沒有找到規則。",
@@ -2319,7 +2326,6 @@
     "rule-group-action": {
       "details": "規則群組詳細資料",
       "edit": "編輯規則群組",
-      "export-rules-folder": "匯出規則資料夾",
       "go-to-folder": "前往資料夾",
       "manage-permissions": "管理權限"
     },
@@ -4040,6 +4046,15 @@
         "tooltip-remove-property": "移除屬性"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "貼上面板",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "儀表板",
@@ -4591,18 +4606,6 @@
     },
     "toolbar": {
       "add": "新增",
-      "add-new": {
-        "button": {
-          "label": "新增",
-          "tooltip": "新增面板和其他元素"
-        },
-        "menu": {
-          "lib-panel": "資料庫面板",
-          "panel": "面板",
-          "row": "列",
-          "tab": "分頁"
-        }
-      },
       "alert-rules": "警報規則",
       "back-to-dashboard": "返回儀表板",
       "dashboard-settings": {

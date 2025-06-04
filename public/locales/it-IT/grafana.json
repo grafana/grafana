@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Elimina",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Nuova regola di registrazione",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Azioni cartella",
+          "title": "Azioni"
+        },
+        "export": {
+          "aria-label": "Esporta la cartella delle regole",
+          "label": "Esporta la cartella delle regole"
+        },
+        "view": {
+          "aria-label": "Visualizza cartella",
+          "label": "Visualizza cartella"
+        }
       },
       "no-prom-or-loki-rules": "Non sono presenti origini di dati Prometheus o Loki configurate",
       "no-rules": "Nessuna regola trovata.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "dettagli del gruppo di regole",
       "edit": "modifica gruppo di regole",
-      "export-rules-folder": "Esporta la cartella delle regole",
       "go-to-folder": "vai alla cartella",
       "manage-permissions": "gestisci autorizzazioni"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Rimuovi proprietà"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Incolla pannello",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Aggiungi",
-      "add-new": {
-        "button": {
-          "label": "Aggiungi",
-          "tooltip": "Aggiungi pannelli e altri elementi"
-        },
-        "menu": {
-          "lib-panel": "Pannello della libreria",
-          "panel": "Pannello",
-          "row": "Riga",
-          "tab": "Scheda"
-        }
-      },
       "alert-rules": "Regole di avviso",
       "back-to-dashboard": "Torna al dashboard",
       "dashboard-settings": {
