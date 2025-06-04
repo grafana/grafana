@@ -5,7 +5,8 @@ import { useRef, useCallback } from 'react';
 import { createDataFrame, createTheme } from '@grafana/data';
 
 import { data } from './FlameGraph/testData/dataNestedSet';
-import FlameGraphContainer from './FlameGraphContainer';
+import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
@@ -118,5 +119,86 @@ describe('FlameGraphContainer', () => {
     // Check we didn't lose the one that should match
     expect(screen.queryAllByText(matchingText1).length).toBe(1);
     expect(screen.queryAllByText(matchingText2).length).toBe(1);
+  });
+});
+
+describe('labelSearch', () => {
+  let container: FlameGraphDataContainer;
+
+  beforeEach(() => {
+    const df = createDataFrame(data);
+    df.meta = {
+      custom: {
+        ProfileTypeID: 'cpu:foo:bar',
+      },
+    };
+
+    container = new FlameGraphDataContainer(df, { collapsing: false });
+  });
+
+  describe('fuzzy', () => {
+    it('single term', () => {
+      const search = 'test pkg';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(45);
+    });
+
+    it('multiple terms', () => {
+      const search = 'test pkg,compress';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(107);
+    });
+
+    it('no results', () => {
+      const search = 'term_not_found';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(0);
+    });
+  });
+
+  describe('regex', () => {
+    it('single pattern', () => {
+      const term = '\\d$';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(61);
+    });
+
+    it('multiple patterns', () => {
+      const term = '\\d$,^go';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(62);
+    });
+
+    it('no results', () => {
+      const term = 'pattern_not_found';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(0);
+    });
+  });
+
+  describe('fuzzy and regex', () => {
+    it('regex found, fuzzy found', () => {
+      const term = '\\d$,test pkg';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(98);
+    });
+
+    it('regex not found, fuzzy found', () => {
+      const term = 'not_found_suffix$,test pkg';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(45);
+    });
+
+    it('regex found, fuzzy not found', () => {
+      const term = '\\d$,not_found_fuzzy';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(61);
+    });
+
+    it('regex not found, fuzzy not found', () => {
+      const term = 'not_found_suffix$,not_found_fuzzy';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(0);
+    });
   });
 });
