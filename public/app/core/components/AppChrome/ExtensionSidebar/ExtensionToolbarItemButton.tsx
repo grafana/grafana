@@ -9,14 +9,25 @@ interface ToolbarItemButtonProps {
   isOpen: boolean;
   title?: string;
   onClick?: () => void;
+  pluginId?: string;
+}
+
+// Helper function to determine icon based on plugin ID
+function getIconForPlugin(pluginId?: string): string {
+  if (pluginId === 'grafana-grafanadocsplugin-app') {
+    return 'book';
+  }
+  // Default to ai-sparkle for other plugins (including grafana-investigations-app, grafana-assistant-app, etc.)
+  return 'ai-sparkle';
 }
 
 function ExtensionToolbarItemButtonComponent(
-  { isOpen, title, onClick }: ToolbarItemButtonProps,
+  { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const styles = useStyles2(getStyles);
   const { t } = useTranslate();
+  const icon = getIconForPlugin(pluginId);
 
   if (isOpen) {
     // render button to close the sidebar
@@ -24,7 +35,7 @@ function ExtensionToolbarItemButtonComponent(
       <ToolbarButton
         ref={ref}
         className={cx(styles.button, styles.buttonActive)}
-        icon="ai-sparkle"
+        icon={icon}
         data-testid="extension-toolbar-button-close"
         variant="default"
         onClick={onClick}
@@ -41,7 +52,7 @@ function ExtensionToolbarItemButtonComponent(
     <ToolbarButton
       ref={ref}
       className={cx(styles.button)}
-      icon="ai-sparkle"
+      icon={icon}
       data-testid="extension-toolbar-button-open"
       variant="default"
       onClick={onClick}

@@ -14,10 +14,12 @@ export function ExtensionToolbarItem() {
     useExtensionSidebarContext();
 
   let dockedComponentTitle = '';
+  let dockedPluginId = '';
   if (dockedComponentId) {
     const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
     if (dockedComponent) {
       dockedComponentTitle = dockedComponent.componentTitle;
+      dockedPluginId = dockedComponent.pluginId;
     }
   }
 
@@ -40,6 +42,7 @@ export function ExtensionToolbarItem() {
         <ExtensionToolbarItemButton
           isOpen={isOpen}
           title={components[0].title}
+          pluginId={components[0].pluginId}
           onClick={() => {
             if (isOpen) {
               setDockedComponentId(undefined);
@@ -80,6 +83,7 @@ export function ExtensionToolbarItem() {
         <ExtensionToolbarItemButton
           isOpen
           title={dockedComponentTitle}
+          pluginId={dockedPluginId}
           onClick={() => {
             if (isOpen) {
               setDockedComponentId(undefined);
