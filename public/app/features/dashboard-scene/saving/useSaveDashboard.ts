@@ -31,6 +31,8 @@ export function useSaveDashboard(isCopy = false) {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
 
+        console.log({ saveModel, options });
+
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
             isNew: options.isNew,
