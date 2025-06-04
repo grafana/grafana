@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { MutationActionCreatorResult, MutationDefinition } from '@reduxjs/toolkit/query';
-import { ChangeEvent, FormEvent, useState } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { ChangeEvent, FormEvent, useState, useEffect } from 'react';
+import { Controller, FieldPath, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { useTranslate } from '@grafana/i18n';
@@ -29,6 +29,7 @@ interface BaseSecretFormProps {
   onSubmit: (data: SecretFormValues) => MutationActionCreatorResult<MutationDefinition<Secret, any, any, any>>;
   submitText: string;
   disableNameField?: boolean;
+  externalErrors?: Record<string, { message: string }>;
 }
 
 export function SecretForm({
@@ -37,6 +38,7 @@ export function SecretForm({
   initialValues,
   submitText,
   disableNameField = false,
+  externalErrors,
 }: BaseSecretFormProps) {
   // Duplicates are not shown.
   const audiences = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.audiences ?? [])];
@@ -53,6 +55,7 @@ export function SecretForm({
     setValue,
     getValues,
     trigger,
+    setError,
   } = useForm<SecretFormValues>({
     defaultValues: initialValues,
   });
@@ -65,6 +68,14 @@ export function SecretForm({
     control,
     name: 'labels',
   });
+
+  useEffect(() => {
+    if (externalErrors) {
+      Object.entries(externalErrors).forEach(([field, value]) => {
+        setError(field as FieldPath<SecretFormValues>, { type: 'custom', ...value });
+      });
+    }
+  }, [setError, externalErrors]);
 
   const handleResetValue = () => {
     setIsConfigured(false);

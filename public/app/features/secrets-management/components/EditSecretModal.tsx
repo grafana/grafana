@@ -8,7 +8,7 @@ import { Alert, Box, Modal, Spinner, Text } from '@grafana/ui';
 
 import { useGetSecretQuery, useSecretMutation } from '../api/secretsManagementApi';
 import { SecretFormValues } from '../types';
-import { getErrorMessage, secretFormValuesToSecret, secretToSecretFormValues } from '../utils';
+import { getErrorMessage, getFieldErrors, secretFormValuesToSecret, secretToSecretFormValues } from '../utils';
 
 import { SecretForm } from './SecretForm';
 
@@ -30,7 +30,7 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
   });
   const isNew = isUninitialized;
   const [mutation, { data: response, error, isSuccess }] = useSecretMutation(!isNew);
-
+  const fieldError = getFieldErrors(error);
   const initialValues = isNew ? undefined : secretToSecretFormValues(secret);
   const modalTitle = isNew
     ? t('secrets.edit-modal.title.create', 'Create secret')
@@ -65,7 +65,7 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
       {isLoading && <Spinner />}
       {!isLoading && (
         <div>
-          {!!error && (
+          {!!error && !fieldError && (
             <Alert severity="error" title={t('secrets.mutation-error.title', 'Request error')}>
               {isNew
                 ? t(
@@ -90,6 +90,7 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
             initialValues={initialValues}
             onSubmit={handleSubmit}
             onCancel={onDismiss}
+            externalErrors={fieldError}
           />
         </div>
       )}

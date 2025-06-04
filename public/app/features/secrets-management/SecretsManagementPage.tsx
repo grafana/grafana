@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { Button, EmptyState, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, Button, EmptyState, FilterInput, InlineField, TextLink, useStyles2, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
 
@@ -100,12 +100,16 @@ export default function SecretsManagementPage() {
               </Trans>
             }
           >
-            <Trans i18nKey="secrets.error-state.body">
+            <Trans i18nKey="secrets.error-state.body" values={{ details: getErrorMessage(error) }}>
               <p>
                 This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the
                 problem persists, contact support.
               </p>
-              {!!error && <p>Details: {getErrorMessage(error)}</p>}
+              <Box marginTop={1}>
+                <Text color="error" italic>
+                  Details: {'{{details}}'}
+                </Text>
+              </Box>
             </Trans>
           </EmptyState>
         ) : (

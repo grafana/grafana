@@ -8274,7 +8274,7 @@
       "title": "You don't have any secrets yet."
     },
     "error-state": {
-      "body": "<0>This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the problem persists, contact support.</0>{!!error && <p>Details: {getErrorMessage(error)}</p>}",
+      "body": "<0>This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the problem persists, contact support.</0><1><0>Details: {{details}}</0></1>",
       "details": "<0>Details: {{message}}</0>",
       "message": "Something went wrong",
       "retry": "<0>Retry</0>",
@@ -8328,7 +8328,8 @@
         "error": {
           "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods",
           "required": "Name is required",
-          "too-long": "Name must be less than {{maxLength}} characters"
+          "too-long": "Name must be less than {{maxLength}} characters",
+          "unique": "A secret with this name already exists"
         },
         "label": "Name"
       },

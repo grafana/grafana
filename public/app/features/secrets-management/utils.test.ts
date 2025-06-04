@@ -3,6 +3,7 @@ import { SecretStatusPhase } from './types';
 import {
   checkLabelNameAvailability,
   getErrorMessage,
+  getFieldErrors,
   isFieldInvalid,
   isSecretPending,
   transformSecretLabel,
@@ -180,5 +181,31 @@ describe('getErrorMessage', () => {
     ['{data: null}', { data: {} }, fallbackMessage],
   ])('should return an error message from `%s`', (description, subject, expected) => {
     expect(getErrorMessage(subject)).toBe(expected);
+  });
+});
+
+describe('getFieldErrors', () => {
+  it('should detect error message when secret name already exists', () => {
+    const error = {
+      data: {
+        message:
+          'creating secure value failed to create securevalue: db failure: namespace=default name=some-secret-name secure value already exists',
+      },
+    };
+    expect(getFieldErrors(error)).toStrictEqual({
+      name: {
+        message: 'A secret with this name already exists',
+      },
+    });
+  });
+
+  it('should return undefined when no match is found', () => {
+    const error = {
+      data: {
+        message:
+          'creating secure value failed to create securevalue: db failure: namespace=default name=some-secret-name some new error',
+      },
+    };
+    expect(getFieldErrors(error)).toBeUndefined();
   });
 });

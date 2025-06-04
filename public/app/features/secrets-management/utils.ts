@@ -261,3 +261,22 @@ export function getErrorMessage(error: any) {
 
   return fallback;
 }
+
+export function getFieldErrors(error: any): Record<string, { message: string }> | undefined {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'data' in error &&
+    error.data &&
+    'message' in error.data &&
+    typeof error.data.message === 'string'
+  ) {
+    const { message } = error.data;
+
+    if (/secure value already exists/.test(message)) {
+      return { name: { message: t('secrets.form.name.error.unique', 'A secret with this name already exists') } };
+    }
+  }
+
+  return undefined;
+}
