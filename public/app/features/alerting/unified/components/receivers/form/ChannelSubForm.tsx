@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -70,12 +70,22 @@ export function ChannelSubForm<R extends ChannelValues>({
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
 
+  const prevSelectedType = useRef<string | undefined>(selectedType);
   useEffect(() => {
     register(`${channelFieldPath}.__id`);
     /* Need to manually register secureFields or else they'll
      be lost when testing a contact point */
     register(`${channelFieldPath}.secureFields`);
   }, [register, channelFieldPath]);
+
+  useEffect(() => {
+    // If the integration type has changed, clear the settings to avoid shared field conflicts
+    if (prevSelectedType.current !== selectedType) {
+      setValue(settingsFieldPath, {});
+      prevSelectedType.current = selectedType;
+    }
+  }, [selectedType, setValue, settingsFieldPath]);
+
 
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
