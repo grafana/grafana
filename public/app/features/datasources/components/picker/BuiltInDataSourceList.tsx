@@ -74,8 +74,6 @@ export function BuiltInDataSourceList({
 
   const filteredResults = grafanaDataSources.filter((ds) => (filter ? filter?.(ds) : true) && !!ds.meta.builtIn);
 
-  console.log({ filteredResults });
-
   return (
     <div className={className} data-testid={selectors.components.DataSourcePicker.advancedModal.builtInDataSourceList}>
       {filteredResults.map((ds) => {
