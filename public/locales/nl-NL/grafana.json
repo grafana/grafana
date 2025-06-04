@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Verwijderen",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Nieuwe opnameregel",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Mapacties",
+          "title": "Acties"
+        },
+        "export": {
+          "aria-label": "Regelsmap exporteren",
+          "label": "Regelsmap exporteren"
+        },
+        "view": {
+          "aria-label": "Map weergeven",
+          "label": "Map weergeven"
+        }
       },
       "no-prom-or-loki-rules": "Er zijn geen Prometheus- of Loki-gegevensbronnen geconfigureerd",
       "no-rules": "Geen regels gevonden.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "gegevens van regelgroep",
       "edit": "regelgroep bewerken",
-      "export-rules-folder": "Regelsmap exporteren",
       "go-to-folder": "ga naar map",
       "manage-permissions": "toestemmingen beheren"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Eigenschap verwijderen"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Paneel plakken",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Toevoegen",
-      "add-new": {
-        "button": {
-          "label": "Toevoegen",
-          "tooltip": "Panelen en andere elementen toevoegen"
-        },
-        "menu": {
-          "lib-panel": "Bibliotheekpaneel",
-          "panel": "Paneel",
-          "row": "Rij",
-          "tab": "Tabblad"
-        }
-      },
       "alert-rules": "Waarschuwingsregels",
       "back-to-dashboard": "Terug naar dashboard",
       "dashboard-settings": {

@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Supprimer",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Nouvelle règle d'enregistrement",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Actions relatives au dossier",
+          "title": "Actions"
+        },
+        "export": {
+          "aria-label": "Exporter le dossier des règles",
+          "label": "Exporter le dossier des règles"
+        },
+        "view": {
+          "aria-label": "Afficher le dossier",
+          "label": "Afficher le dossier"
+        }
       },
       "no-prom-or-loki-rules": "Il n’y a pas de sources de données Prometheus ou Loki configurées",
       "no-rules": "Aucune règle n’a été trouvée.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "détails du groupe de règles",
       "edit": "modifier le groupe de règles",
-      "export-rules-folder": "Exporter le dossier des règles",
       "go-to-folder": "accéder au dossier",
       "manage-permissions": "gérer les autorisations"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Supprimer la propriété"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Coller le panneau",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Tableau de bord",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Ajouter",
-      "add-new": {
-        "button": {
-          "label": "Ajouter",
-          "tooltip": "Ajouter des panneaux et d’autres éléments"
-        },
-        "menu": {
-          "lib-panel": "Panneau de bibliothèque",
-          "panel": "Panneau",
-          "row": "Ligne",
-          "tab": "Onglet"
-        }
-      },
       "alert-rules": "Règles d'alerte",
       "back-to-dashboard": "Retour au tableau de bord",
       "dashboard-settings": {

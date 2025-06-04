@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Hapus",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1657,6 +1650,20 @@
         "new-recording-rule": "Aturan pencatatan baru",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Tindakan folder",
+          "title": "Tindakan"
+        },
+        "export": {
+          "aria-label": "Ekspor folder aturan",
+          "label": "Ekspor folder aturan"
+        },
+        "view": {
+          "aria-label": "Lihat folder",
+          "label": "Lihat folder"
+        }
       },
       "no-prom-or-loki-rules": "Tidak ada sumber data Prometheus atau Loki yang dikonfigurasi",
       "no-rules": "Tidak ada aturan yang ditemukan.",
@@ -2319,7 +2326,6 @@
     "rule-group-action": {
       "details": "detail grup aturan",
       "edit": "edit grup aturan",
-      "export-rules-folder": "Ekspor folder aturan",
       "go-to-folder": "buka folder",
       "manage-permissions": "kelola izin"
     },
@@ -4040,6 +4046,15 @@
         "tooltip-remove-property": "Hapus properti"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Tempel panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
@@ -4591,18 +4606,6 @@
     },
     "toolbar": {
       "add": "Tambahkan",
-      "add-new": {
-        "button": {
-          "label": "Tambahkan",
-          "tooltip": "Tambahkan panel dan elemen lainnya"
-        },
-        "menu": {
-          "lib-panel": "Panel pustaka",
-          "panel": "Panel",
-          "row": "Baris",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Aturan peringatan",
       "back-to-dashboard": "Kembali ke dasbor",
       "dashboard-settings": {

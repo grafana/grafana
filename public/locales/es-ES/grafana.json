@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Eliminar",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1663,6 +1656,20 @@
         "new-recording-rule": "Nueva regla de registro",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Acciones de carpeta",
+          "title": "Acciones"
+        },
+        "export": {
+          "aria-label": "Exportar carpeta de reglas",
+          "label": "Exportar carpeta de reglas"
+        },
+        "view": {
+          "aria-label": "Ver carpeta",
+          "label": "Ver carpeta"
+        }
       },
       "no-prom-or-loki-rules": "No hay configuradas fuentes de datos de Prometheus o Loki",
       "no-rules": "No se han encontrado reglas.",
@@ -2329,7 +2336,6 @@
     "rule-group-action": {
       "details": "detalles del grupo de reglas",
       "edit": "editar grupo de reglas",
-      "export-rules-folder": "Exportar carpeta de reglas",
       "go-to-folder": "Ir a la carpeta",
       "manage-permissions": "gestionar permisos"
     },
@@ -4058,6 +4064,15 @@
         "tooltip-remove-property": "Quitar propiedad"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Pegar panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Panel de control",
@@ -4610,18 +4625,6 @@
     },
     "toolbar": {
       "add": "Añadir",
-      "add-new": {
-        "button": {
-          "label": "Añadir",
-          "tooltip": "Añadir paneles y otros elementos"
-        },
-        "menu": {
-          "lib-panel": "Panel de librería",
-          "panel": "Panel",
-          "row": "Fila",
-          "tab": "Pestaña"
-        }
-      },
       "alert-rules": "Reglas de alerta",
       "back-to-dashboard": "Volver al panel de control",
       "dashboard-settings": {
