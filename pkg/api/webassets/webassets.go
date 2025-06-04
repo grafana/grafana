@@ -119,7 +119,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 
 	entryPoints, ok := manifest["entrypoints"]
 	if !ok {
-		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
+		return nil, fmt.Errorf("could not find entrypoints in assets-manifest")
 	}
 
 	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
