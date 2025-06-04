@@ -11,7 +11,7 @@ env:
   ORGANIZATION: ${{ github.repository_owner }}
   REPO: ${{ github.event.repository.name }}
   TARGET_PROJECT: 202
-  LABEL_IDs: "LA_kwDOAOaWjc8AAAABT38U-A"
+  LABEL_IDS: "LA_kwDOAOaWjc8AAAABT38U-A"
 
 concurrency:
   group: issue-label-when-in-project-${{ github.event.number }}
@@ -26,15 +26,15 @@ jobs:
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
         with:
-          app_id: ${{ env.GH_APP_ID }}
-          private_key: ${{ env.GH_APP_PEM }}
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
       - name: Check if issue is in target project
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
@@ -43,9 +43,9 @@ jobs:
         run: |
           # shellcheck disable=SC2016 # we don't want the $s to be expanded
           gh api graphql -f query='
-            query($org: String!, $repo: String!) {
+            query($org: String!, $repo: String!, $issueNumber: Int!) {
               repository(name: $repo, owner: $org) {
-                issue (number: $ISSUE_NUMBER) {
+                issue (number: $issueNumber) {
                   id
                   projectItems(first:20) {
                     nodes {
@@ -56,7 +56,7 @@ jobs:
                   }
                 }
               }
-            }' -f org="$ORGANIZATION" -f repo="$REPO" > projects_data.json
+            }' -f org="$ORGANIZATION" -f repo="$REPO" -F issueNumber="$ISSUE_NUMBER" > projects_data.json
 
             {
               echo "IN_TARGET_PROJ=$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json)"
