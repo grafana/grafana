@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
+      "ds-error": {
+        "title": "Cannot load rules for this datasource"
+      },
       "ds-error-boundary": {
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
       "empty-data-source": "No rules found",
+      "error-button": "Error",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",

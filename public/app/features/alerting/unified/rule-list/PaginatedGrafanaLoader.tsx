@@ -33,7 +33,7 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     GRAFANA_GROUP_PAGE_SIZE
   );
@@ -42,7 +42,13 @@ export function PaginatedGrafanaLoader() {
   const hasNoRules = isEmpty(groups) && !isLoading;
 
   return (
-    <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
+    <DataSourceSection
+      name="Grafana"
+      application="grafana"
+      uid={GrafanaRulesSourceSymbol}
+      isLoading={isLoading}
+      error={error}
+    >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
