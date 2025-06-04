@@ -41,8 +41,6 @@ type Service interface {
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	ListTokens(ctx context.Context, query *GetSATokensQuery) ([]apikey.APIKey, error)
 
-	// API specific functions
-	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*MigrationResult, error)
 }
 

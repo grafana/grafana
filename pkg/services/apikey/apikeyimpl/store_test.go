@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -26,7 +25,6 @@ type getStore func(db.DB) store
 type getApiKeysTestCase struct {
 	desc               string
 	user               identity.Requester
-	expectedNumKeys    int
 	expectedAllNumKeys int
 }
 
@@ -85,12 +83,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 				assert.Nil(t, err)
 				assert.NotNil(t, key)
-			})
-			t.Run("Should be able to delete key by id", func(t *testing.T) {
-				key, err := ss.GetAPIKeyByHash(context.Background(), cmd.Key)
-				assert.NoError(t, err)
-				err = ss.DeleteApiKey(context.Background(), &apikey.DeleteCommand{ID: key.ID, OrgID: key.OrgID})
-				assert.NoError(t, err)
 			})
 		})
 
@@ -171,47 +163,12 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 			// advance mocked getTime by 1s
 			timeNow()
-
-			testUser := &user.SignedInUser{
-				OrgID: 1,
-				Permissions: map[int64]map[string][]string{
-					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
-				},
-			}
-			query := apikey.GetApiKeysQuery{OrgID: 1, IncludeExpired: false, User: testUser}
-			keys, err := ss.GetAPIKeys(context.Background(), &query)
-			assert.Nil(t, err)
-
-			for _, k := range keys {
-				if k.Name == "key2" {
-					t.Fatalf("key2 should not be there")
-				}
-			}
-
-			query = apikey.GetApiKeysQuery{OrgID: 1, IncludeExpired: true, User: testUser}
-			keys, err = ss.GetAPIKeys(context.Background(), &query)
-			assert.Nil(t, err)
-
-			found := false
-			for _, k := range keys {
-				if k.Name == "key2" {
-					found = true
-				}
-			}
-			assert.True(t, found)
 		})
 	})
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
 		db := db.InitTestDB(t)
 		ss := fn(db)
-
-		t.Run("Delete non-existing key should return error", func(t *testing.T) {
-			cmd := apikey.DeleteCommand{ID: 1}
-			err := ss.DeleteApiKey(context.Background(), &cmd)
-
-			assert.EqualError(t, err, apikey.ErrNotFound.Error())
-		})
 
 		t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
 			t.Run("Given saved api key", func(t *testing.T) {
@@ -235,7 +192,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: {"apikeys:read": {"apikeys:*"}},
 				}},
-				expectedNumKeys:    10,
 				expectedAllNumKeys: 10,
 			},
 			{
@@ -243,7 +199,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
 				}},
-				expectedNumKeys:    2,
 				expectedAllNumKeys: 10,
 			},
 			{
@@ -251,7 +206,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: {"apikeys:read": {}},
 				}},
-				expectedNumKeys:    0,
 				expectedAllNumKeys: 10,
 			},
 		}
@@ -261,11 +215,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				db := db.InitTestDB(t, db.InitTestDBOpt{})
 				store := fn(db)
 				seedApiKeys(t, store, 10)
-
-				query := &apikey.GetApiKeysQuery{OrgID: 1, User: tt.user}
-				keys, err := store.GetAPIKeys(context.Background(), query)
-				require.NoError(t, err)
-				assert.Len(t, keys, tt.expectedNumKeys)
 
 				res, err := store.GetAllAPIKeys(context.Background(), 1)
 				require.NoError(t, err)

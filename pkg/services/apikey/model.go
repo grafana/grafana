@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
@@ -42,16 +41,6 @@ type AddCommand struct {
 	ServiceAccountID *int64       `json:"-"`
 }
 
-type DeleteCommand struct {
-	ID    int64 `json:"id"`
-	OrgID int64 `json:"-"`
-}
-
-type GetApiKeysQuery struct {
-	OrgID          int64
-	IncludeExpired bool
-	User           identity.Requester
-}
 type GetByNameQuery struct {
 	KeyName string
 	OrgID   int64

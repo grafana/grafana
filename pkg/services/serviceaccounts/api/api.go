@@ -65,8 +65,6 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
-		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
-		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 
@@ -300,30 +298,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)
-}
-
-// POST /api/serviceaccounts/migrate
-func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.GetOrgID())
-	if err != nil {
-		return response.JSON(http.StatusInternalServerError, results)
-	}
-
-	return response.JSON(http.StatusOK, results)
-}
-
-// POST /api/serviceaccounts/migrate/:keyId
-func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
-	}
-
-	if err := api.service.MigrateApiKey(ctx.Req.Context(), ctx.GetOrgID(), keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
-	}
-
-	return response.Success("Service accounts migrated")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
