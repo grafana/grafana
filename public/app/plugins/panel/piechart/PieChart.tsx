@@ -109,9 +109,9 @@ export const PieChart = ({
             pieValue={getValue}
 	    pieSortValues={(a, b) => {
 	      if(pieSorting === PieSortOption.Clockwise){
-		return a-b;
-	      } else if (pieSorting === PieSortOption.Counterclockwise){
 		return b-a;
+	      } else if (pieSorting === PieSortOption.Counterclockwise){
+		return a-b;
 	      } else {
 	      	return -1;
 	      }
