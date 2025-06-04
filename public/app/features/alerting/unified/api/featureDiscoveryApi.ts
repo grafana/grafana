@@ -59,24 +59,28 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
         }
 
-        const features = await discoverFeaturesByUid(dataSourceSettings.uid);
+        try {
+          const features = await discoverFeaturesByUid(dataSourceSettings.uid);
 
-        const rulerConfig = features.features.rulerApiEnabled
-          ? ({
-              dataSourceName: dataSourceSettings.name,
-              dataSourceUid: dataSourceSettings.uid,
-              apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
-            } satisfies RulerDataSourceConfig)
-          : undefined;
+          const rulerConfig = features.features.rulerApiEnabled
+            ? ({
+                dataSourceName: dataSourceSettings.name,
+                dataSourceUid: dataSourceSettings.uid,
+                apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
+              } satisfies RulerDataSourceConfig)
+            : undefined;
 
-        return {
-          data: {
-            name: dataSourceSettings.name,
-            uid: dataSourceSettings.uid,
-            application: features.application,
-            rulerConfig,
-          } satisfies RulesSourceFeatures,
-        };
+          return {
+            data: {
+              name: dataSourceSettings.name,
+              uid: dataSourceSettings.uid,
+              application: features.application,
+              rulerConfig,
+            } satisfies RulesSourceFeatures,
+          };
+        } catch (error) {
+          return { error: error };
+        }
       },
     }),
   }),

@@ -38,12 +38,16 @@ export function GrafanaDataSourceLoader() {
 }
 
 function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
-  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
+  const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
 
   if (isLoading) {
     return <DataSourceSection loader={<Skeleton width={250} height={16} />} uid={uid} name={name} />;
+  }
+
+  if (error) {
+    return <DataSourceSection error={error} uid={uid} name={name} />;
   }
 
   // 2. grab prometheus rule groups with max_groups if supported
