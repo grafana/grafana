@@ -16,6 +16,13 @@ import { DataSourceCard } from './DataSourceCard';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 
+function decodeJWT(token: string) {
+  const [, payload] = token.split('.');
+  const decodedPayload = atob(payload);
+
+  return JSON.parse(decodedPayload);
+}
+
 /**
  * Component props description for the {@link DataSourceList}
  *
@@ -72,13 +79,17 @@ export function DataSourceList(props: DataSourceListProps) {
   });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  let filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   const token = loadUrlToken();
 
-  console.log({ token });
+  console.log({ filteredDataSources });
+
   if (token !== null && token !== '') {
-    //
+    const payload = decodeJWT(token);
+    console.log({ payload });
+    filteredDataSources = filteredDataSources.filter((ds) => ds.type !== 'grafana-postgresql-datasource');
+    // grafana-postgresql-datasource
   }
 
   console.log({ filteredDataSources });
