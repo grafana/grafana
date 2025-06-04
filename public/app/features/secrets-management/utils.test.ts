@@ -2,6 +2,8 @@ import { LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
 import { SecretStatusPhase } from './types';
 import {
   checkLabelNameAvailability,
+  getErrorMessage,
+  isFieldInvalid,
   isSecretPending,
   transformSecretLabel,
   transformSecretName,
@@ -140,5 +142,43 @@ describe('transformSecretLabel', () => {
 
   it('should NOT lowercase value', () => {
     expect(transformSecretLabel('My-Label-Value')).toBe('My-Label-Value');
+  });
+});
+
+describe('isFieldInvalid', () => {
+  it('should return true', () => {
+    expect(isFieldInvalid('invalid', { invalid: { message: '' } })).toBe(true);
+  });
+
+  it('should return false', () => {
+    expect(isFieldInvalid('valid', { invalid: { message: '' } })).toBe(false);
+  });
+});
+
+describe('getErrorMessage', () => {
+  const fallbackMessage = 'Unknown error';
+  it.each([
+    ['{  }', {}, fallbackMessage],
+    ['{ message: {} }', { message: {} }, fallbackMessage],
+    ['{ message: string}', { message: 'TEST_ERROR' }, 'TEST_ERROR'],
+    ['{ message: { error: string }', { message: { error: 'TEST_ERROR' } }, fallbackMessage],
+    ['{ message: null}', { message: null }, fallbackMessage],
+    ['null', null, fallbackMessage],
+    ['1', 1, fallbackMessage],
+    ['undefined', undefined, fallbackMessage],
+    [
+      'Function',
+      function testError() {
+        return 'TEST_ERROR';
+      },
+      fallbackMessage,
+    ],
+    ['{data: {message: string}}', { data: { message: 'TEST_ERROR' } }, 'TEST_ERROR'],
+    ['{data: {message: null}}', { data: { message: null } }, fallbackMessage],
+    ['{data: {message: 1}}', { data: { message: 1 } }, fallbackMessage],
+    ['{data: {}}', { data: {} }, fallbackMessage],
+    ['{data: null}', { data: {} }, fallbackMessage],
+  ])('should return an error message from `%s`', (description, subject, expected) => {
+    expect(getErrorMessage(subject)).toBe(expected);
   });
 });

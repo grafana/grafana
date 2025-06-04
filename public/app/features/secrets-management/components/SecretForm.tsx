@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { FormEvent, useState } from 'react';
+import { MutationActionCreatorResult, MutationDefinition } from '@reduxjs/toolkit/query';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/';
@@ -7,7 +8,7 @@ import { useTranslate } from '@grafana/i18n';
 import { Button, Field, IconButton, Input, MultiSelect, Stack, useStyles2 } from '@grafana/ui';
 
 import { DECRYPT_ALLOW_LIST_OPTIONS, SECRETS_MAX_LABELS } from '../constants';
-import { SecretFormValues } from '../types';
+import { Secret, SecretFormValues } from '../types';
 import {
   checkLabelNameAvailability,
   isFieldInvalid,
@@ -25,7 +26,7 @@ import { SecretValueInput } from './SecretValueInput';
 interface BaseSecretFormProps {
   onCancel: () => void;
   initialValues?: SecretFormValues;
-  onSubmit: (data: SecretFormValues) => void;
+  onSubmit: (data: SecretFormValues) => MutationActionCreatorResult<MutationDefinition<Secret, any, any, any>>;
   submitText: string;
   disableNameField?: boolean;
 }
@@ -69,7 +70,7 @@ export function SecretForm({
     setIsConfigured(false);
   };
 
-  const handleNameOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNameOnChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChangeTransformation(event, transformSecretName, (value) => {
       setValue('name', value);
       trigger('name');
@@ -79,16 +80,12 @@ export function SecretForm({
   const maxLabelsReached = getValues('labels')?.length >= SECRETS_MAX_LABELS;
 
   return (
-    <form
-      onSubmit={handleSubmit((data) => {
-        onSubmit(data);
-      })}
-    >
+    <form onSubmit={handleSubmit(onSubmit)}>
       <input type="hidden" {...register('uid')} />
       <Field
         disabled={disableNameField}
-        description={t('secrets-management.form.name.description', 'The name will be used to reference the secret')}
-        label={t('secrets-management.form.name.label', 'Name')}
+        description={t('secrets.form.name.description', 'The name will be used to reference the secret')}
+        label={t('secrets.form.name.label', 'Name')}
         invalid={isFieldInvalid('name', errors)}
         error={errors?.name?.message as string}
         required
@@ -101,11 +98,8 @@ export function SecretForm({
         />
       </Field>
       <Field
-        description={t(
-          'secrets-management.form.description.description',
-          'Short description of the purpose of this secret'
-        )}
-        label={t('secrets-management.form.description.label', 'Description')}
+        description={t('secrets.form.description.description', 'Short description of the purpose of this secret')}
+        label={t('secrets.form.description.label', 'Description')}
         invalid={isFieldInvalid('description', errors)}
         error={errors?.description?.message as string}
         required
@@ -117,8 +111,8 @@ export function SecretForm({
         />
       </Field>
       <Field
-        description={t('secrets-management.form.value.description', 'Secret value')}
-        label={t('secrets-management.form.value.label', 'Value')}
+        description={t('secrets.form.value.description', 'Secret value')}
+        label={t('secrets.form.value.label', 'Value')}
         invalid={isFieldInvalid('value', errors)}
         error={errors?.value?.message as string}
         required
@@ -132,15 +126,15 @@ export function SecretForm({
         />
       </Field>
       <Field
-        description={t('secrets-management.form.decrypters.description', 'Services able to decrypt secret value')}
-        label={t('secrets-management.form.decrypters.label', 'Decrypters')}
+        description={t('secrets.form.decrypters.description', 'Services able to decrypt secret value')}
+        label={t('secrets.form.decrypters.label', 'Decrypters')}
       >
         <Controller
           control={control}
           name="audiences"
           render={({ field: { ref, ...field } }) => (
             <MultiSelect
-              placeholder={t('secrets-management.form.decrypters.placeholder', 'Choose decrypter(s)')}
+              placeholder={t('secrets.form.decrypters.placeholder', 'Choose decrypter(s)')}
               options={audiences}
               {...field}
             />
@@ -149,8 +143,8 @@ export function SecretForm({
       </Field>
 
       <Field
-        description={t('secrets-management.form.labels.description', 'Labels to categorize the secret')}
-        label={t('secrets-management.form.labels.label', 'Labels')}
+        description={t('secrets.form.labels.description', 'Labels to categorize the secret')}
+        label={t('secrets.form.labels.label', 'Labels')}
         invalid={isFieldInvalid('labels', errors)}
         error={errors?.labels?.message as string}
       >
@@ -166,7 +160,7 @@ export function SecretForm({
                 >
                   <Input
                     id={`secret-labels.${index}.name`}
-                    placeholder={t('secrets-management.form.label-name.placeholder', 'name')}
+                    placeholder={t('secrets.form.label-name.placeholder', 'name')}
                     {...register(`labels.${index}.name` as const, {
                       validate: {
                         checkAvailability: (label, formValues) => checkLabelNameAvailability(label, index, formValues),
@@ -187,7 +181,7 @@ export function SecretForm({
                 >
                   <Input
                     id={`secret-labels.${index}.value`}
-                    placeholder={t('secrets-management.form.label-value.placeholder', 'value')}
+                    placeholder={t('secrets.form.label-value.placeholder', 'value')}
                     {...register(`labels.${index}.value` as const, {
                       validate: (value) => validateSecretLabel('value', value),
                     })}
@@ -199,7 +193,7 @@ export function SecretForm({
                   />
                 </Field>
                 <IconButton
-                  aria-label={t('secrets-management.form.labels.actions.aria-label-remove', 'Remove label')}
+                  aria-label={t('secrets.form.labels.actions.aria-label-remove', 'Remove label')}
                   name="minus-circle"
                   onClick={() => remove(index)}
                 />
@@ -220,23 +214,19 @@ export function SecretForm({
           disabled={maxLabelsReached}
           tooltip={
             maxLabelsReached
-              ? t(
-                  'secrets-management.form.labels.error.too-many',
-                  'Maximum number of labels reached (Max: {{maxLabels}})',
-                  {
-                    maxLabels: SECRETS_MAX_LABELS,
-                  }
-                )
+              ? t('secrets.form.labels.error.too-many', 'Maximum number of labels reached (Max: {{maxLabels}})', {
+                  maxLabels: SECRETS_MAX_LABELS,
+                })
               : undefined
           }
         >
-          {t('secrets-management.form.labels.actions.add', 'Add label')}
+          {t('secrets.form.labels.actions.add', 'Add label')}
         </Button>
       </div>
 
       <Stack gap={1} justifyContent="flex-end">
         <Button variant="secondary" onClick={onCancel}>
-          {t('secrets-management.form.btn-cancel', 'Cancel')}
+          {t('secrets.form.btn-cancel', 'Cancel')}
         </Button>
         <Button disabled={isSubmitting} type="submit">
           {submitText}

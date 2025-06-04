@@ -8273,53 +8273,13 @@
       "description": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
       "title": "You don't have any secrets yet."
     },
-    "form": {
-      "label-name": {
-        "error": {
-          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
-          "required": "Label name is required",
-          "too-long": "Label name must be less than {{maxLength}} characters",
-          "unique": "Label name must be unique"
-        }
-      },
-      "label-value": {
-        "error": {
-          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
-          "required": "Label value is required",
-          "too-long": "Label value must be less than {{maxLength}} characters"
-        }
-      }
+    "error-state": {
+      "body": "<0>This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the problem persists, contact support.</0>{!!error && <p>Details: {getErrorMessage(error)}</p>}",
+      "details": "<0>Details: {{message}}</0>",
+      "message": "Something went wrong",
+      "retry": "<0>Retry</0>",
+      "unknown-error": "Unknown error"
     },
-    "item": {
-      "copy-value-aria-label": "Copy \"{{value}}\"",
-      "delete-item-aria-label": "Delete {{name}}",
-      "delete-modal": {
-        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-        "confirm-text": "delete",
-        "delete-button": "Delete",
-        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
-        "title": "Delete secret"
-      },
-      "edit-item": "Edit",
-      "edit-item-aria-label": "Edit {{name}}",
-      "label-created": "Created:",
-      "label-decrypters": "Decrypters:",
-      "label-description": "Description:",
-      "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
-      "label-uid": "ID:"
-    },
-    "search-placeholder": "Search secret by name",
-    "search-result": {
-      "clear-filters": "Clear active filter to see all secrets.",
-      "no-results": "No secrets found"
-    },
-    "secret-value-input": {
-      "configured-value": "configured",
-      "reset-button": "<0>Reset</0>"
-    },
-    "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
-  },
-  "secrets-management": {
     "form": {
       "btn-cancel": "Cancel",
       "decrypters": {
@@ -8336,9 +8296,20 @@
         "label": "Description"
       },
       "label-name": {
+        "error": {
+          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label name is required",
+          "too-long": "Label name must be less than {{maxLength}} characters",
+          "unique": "Label name must be unique"
+        },
         "placeholder": "name"
       },
       "label-value": {
+        "error": {
+          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label value is required",
+          "too-long": "Label value must be less than {{maxLength}} characters"
+        },
         "placeholder": "value"
       },
       "labels": {
@@ -8368,7 +8339,44 @@
         },
         "label": "Value"
       }
-    }
+    },
+    "item": {
+      "copy-value-aria-label": "Copy \"{{value}}\"",
+      "delete-item-aria-label": "Delete {{name}}",
+      "delete-modal": {
+        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirm-text": "delete",
+        "delete-button": "Delete",
+        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "title": "Delete secret"
+      },
+      "edit-item": "Edit",
+      "edit-item-aria-label": "Edit {{name}}",
+      "label-created": "Created:",
+      "label-decrypters": "Decrypters:",
+      "label-description": "Description:",
+      "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
+      "label-uid": "ID:"
+    },
+    "mutation-error": {
+      "create": "Failed to create secret. Please try again, and if the problem persists, contact support",
+      "title": "Request error",
+      "update": "Failed to update secret. Please try again, and if the problem persists, contact support"
+    },
+    "mutation-success": {
+      "create": "Secret \"{{name}}\" was created successfully",
+      "update": "Secret \"{{name}}\" was updated successfully"
+    },
+    "search-placeholder": "Search secret by name",
+    "search-result": {
+      "clear-filters": "Clear active filter to see all secrets.",
+      "no-results": "No secrets found"
+    },
+    "secret-value-input": {
+      "configured-value": "configured",
+      "reset-button": "<0>Reset</0>"
+    },
+    "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
   },
   "select": {
     "select-menu": {

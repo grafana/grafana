@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { Button, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, FilterInput, InlineField, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
 
@@ -11,6 +11,7 @@ import { useDeleteSecretMutation, useListSecretsQuery } from './api/secretsManag
 import { EditSecretModal } from './components/EditSecretModal';
 import { SecretsList } from './components/SecretsList';
 import { SecretStatusPhase } from './types';
+import { getErrorMessage } from './utils';
 
 export default function SecretsManagementPage() {
   const styles = useStyles2(getStyles);
@@ -18,7 +19,13 @@ export default function SecretsManagementPage() {
 
   // Api test
   const [pollingInterval, setPollingInterval] = useState(0);
-  const { data: secrets, isLoading } = useListSecretsQuery(undefined, {
+  const {
+    data: secrets,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useListSecretsQuery(undefined, {
     pollingInterval,
   });
 
@@ -83,13 +90,33 @@ export default function SecretsManagementPage() {
           </InlineField>
         </div>
 
-        <SecretsList
-          onEditSecret={handleEditSecret}
-          onDeleteSecret={deleteSecret}
-          secrets={secrets}
-          filter={filter}
-          onCreateSecret={handleShowCreateModal}
-        />
+        {isError ? (
+          <EmptyState
+            variant="not-found"
+            message={t('secrets.error-state.message', 'Something went wrong')}
+            button={
+              <Trans i18nKey="secrets.error-state.retry">
+                <Button onClick={() => refetch()}>Retry</Button>
+              </Trans>
+            }
+          >
+            <Trans i18nKey="secrets.error-state.body">
+              <p>
+                This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the
+                problem persists, contact support.
+              </p>
+              {!!error && <p>Details: {getErrorMessage(error)}</p>}
+            </Trans>
+          </EmptyState>
+        ) : (
+          <SecretsList
+            onEditSecret={handleEditSecret}
+            onDeleteSecret={deleteSecret}
+            secrets={secrets}
+            filter={filter}
+            onCreateSecret={handleShowCreateModal}
+          />
+        )}
 
         {isEditModalOpen && <EditSecretModal isOpen onDismiss={handleDismissModal} name={editTarget} />}
       </PageContents>

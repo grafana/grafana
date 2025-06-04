@@ -95,18 +95,18 @@ export function isSecretPending(secret: Pick<Secret, 'status'>): boolean {
 
 export function validateSecretName(value: string): true | string {
   if (value.length < 1) {
-    return t('secrets-management.form.name.error.required', 'Name is required');
+    return t('secrets.form.name.error.required', 'Name is required');
   }
 
   if (value.length > SUBDOMAIN_MAX_LENGTH) {
-    return t('secrets-management.form.name.error.too-long', 'Name must be less than {{maxLength}} characters', {
+    return t('secrets.form.name.error.too-long', 'Name must be less than {{maxLength}} characters', {
       maxLength: SUBDOMAIN_MAX_LENGTH,
     });
   }
 
   if (!RegExp(/^[a-z\d][a-z\d.-]*$/).test(value)) {
     return t(
-      'secrets-management.form.name.error.invalid',
+      'secrets.form.name.error.invalid',
       'Name must start with a letter or number and can only contain letters, numbers, dashes, and periods'
     );
   }
@@ -116,15 +116,13 @@ export function validateSecretName(value: string): true | string {
 
 export function validateSecretDescription(value: string): true | string {
   if (value.length < 1) {
-    return t('secrets-management.form.description.error.required', 'Description is required');
+    return t('secrets.form.description.error.required', 'Description is required');
   }
 
   if (value.length > SUBDOMAIN_MAX_LENGTH) {
-    return t(
-      'secrets-management.form.description.error.too-long',
-      'Description must be less than {{maxLength}} characters',
-      { maxLength: SUBDOMAIN_MAX_LENGTH }
-    );
+    return t('secrets.form.description.error.too-long', 'Description must be less than {{maxLength}} characters', {
+      maxLength: SUBDOMAIN_MAX_LENGTH,
+    });
   }
 
   return true;
@@ -137,7 +135,7 @@ export function validateSecretValue(value: string | undefined): true | string {
   }
 
   if (value.length < 1) {
-    return t('secrets-management.form.value.error.required', 'Value is required');
+    return t('secrets.form.value.error.required', 'Value is required');
   }
 
   return true;
@@ -237,6 +235,29 @@ export function transformSecretLabel(nameOrValue: string): string {
   return nameOrValue.replaceAll(' ', '-');
 }
 
+/**
+ * Returns whether a field key exists in errors map created by `react-hook-form (meaning, it's an invalid field)
+ * @param {string} fieldName - Name of field to lookup
+ * @param {Object} errors - Error map
+ */
 export function isFieldInvalid(fieldName: string, errors: Record<string, { message?: string } | undefined>) {
   return fieldName in errors;
+}
+
+export function getErrorMessage(error: any) {
+  const fallback = t('secrets.error-state.unknown-error', 'Unknown error');
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+    if ('data' in error && 'message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+  }
+
+  return fallback;
 }
