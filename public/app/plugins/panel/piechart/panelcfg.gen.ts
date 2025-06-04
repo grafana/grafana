@@ -19,6 +19,18 @@ export enum PieChartType {
 }
 
 /**
+ * Select the sorting of the pie slices.
+ *  - Clockwise - The slices are sorted descending by value in the clockwise direction.
+ *  - Counterclockwise - The slices are sorted ascending by value in the clockwise direction.
+ *  - None - The slices are not sorted and the order of the query/transform is maintained.
+ */
+export enum PieSortOption {
+  Clockwise = 'clockwise',
+  Counterclockwise = 'counterclockwise',
+  None = 'none',
+}
+
+/**
  * Select labels to display on the pie chart.
  *  - Name - The series or field name.
  *  - Percent - The percentage of the whole.
