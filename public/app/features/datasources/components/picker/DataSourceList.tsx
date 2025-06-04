@@ -14,6 +14,7 @@ import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
+import { loadUrlToken } from 'app/core/utils/urlToken';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -72,6 +73,15 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+
+  const token = loadUrlToken();
+
+  console.log({ token });
+  if (token !== null && token !== '') {
+    //
+  }
+
+  console.log({ filteredDataSources });
 
   return (
     <div

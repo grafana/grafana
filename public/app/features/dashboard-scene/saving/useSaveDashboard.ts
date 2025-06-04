@@ -21,7 +21,7 @@ function applyChrononVariablesToTargets(saveModel: any) {
 
   const variableNames = saveModel.templating.list.map((variable: any) => variable.name);
   const variablesAsProps = Object.fromEntries(
-    variableNames.map((variableName: any) => [variableName, `${variableName}`])
+    variableNames.map((variableName: any) => [variableName, `$${variableName}`])
   );
 
   const updatedPanels = saveModel.panels.map((panel: any) => {
