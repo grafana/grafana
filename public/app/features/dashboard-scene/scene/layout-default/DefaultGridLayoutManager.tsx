@@ -22,6 +22,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
+  dashboardEditActions,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -122,7 +123,18 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+      dashboardEditActions.addElement({
+        addedObject: vizPanel,
+        source: this,
+        perform: () => {
+          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.grid.setState({
+            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      });
     } else {
       const newGridItem = new DashboardGridItem({
         height: NEW_PANEL_HEIGHT,
@@ -135,15 +147,24 @@ export class DefaultGridLayoutManager
 
       this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
     }
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public pastePanel() {
     const emptySpace = findSpaceForNewPanel(this.state.grid);
-    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
-    this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
+      addedObject: newGridItem.state.body,
+      source: this,
+      perform: () => {
+        this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+      },
+      undo: () => {
+        this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== newGridItem) });
+      },
+    });
+
     clearClipboard();
   }
 
@@ -170,11 +191,18 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    this.state.grid.setState({
-      children: layout.state.children.filter((child) => child !== gridItem),
-    });
+    if (!config.featureToggles.dashboardNewLayouts) {
+      // No undo/redo support in legacy edit mode
+      layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      return;
+    }
 
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
+    dashboardEditActions.removeElement({
+      removedObject: gridItem.state.body,
+      source: this,
+      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
+    });
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -226,7 +254,6 @@ export class DefaultGridLayoutManager
     }
 
     grid.setState({ children: [...grid.state.children, newGridItem] });
-
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 

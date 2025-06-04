@@ -3,20 +3,47 @@ package postgres
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 var validateCertFunc = validateCertFilePaths
+var writeCertFileFunc = writeCertFile
 
-type tlsManager struct {
-	logger log.Logger
+type certFileType int
+
+const (
+	rootCert = iota
+	clientCert
+	clientKey
+)
+
+type tlsSettingsProvider interface {
+	getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error)
 }
 
-func newTLSManager(logger log.Logger) *tlsManager {
+type datasourceCacheManager struct {
+	locker *locker
+	cache  sync.Map
+}
+
+type tlsManager struct {
+	logger          log.Logger
+	dsCacheInstance datasourceCacheManager
+	dataPath        string
+}
+
+func newTLSManager(logger log.Logger, dataPath string) tlsSettingsProvider {
 	return &tlsManager{
-		logger: logger,
+		logger:          logger,
+		dataPath:        dataPath,
+		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 	}
 }
 
@@ -28,116 +55,178 @@ type tlsSettings struct {
 	CertKeyFile         string
 }
 
-// getTLSSettings retrieves TLS settings and handles certificate file creation if needed.
 func (m *tlsManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
-	tlsConfig := tlsSettings{
+	tlsconfig := tlsSettings{
 		Mode: dsInfo.JsonData.Mode,
 	}
 
-	if tlsConfig.Mode == "disable" {
+	isTLSDisabled := (tlsconfig.Mode == "disable")
+
+	if isTLSDisabled {
 		m.logger.Debug("Postgres TLS/SSL is disabled")
-		return tlsConfig, nil
+		return tlsconfig, nil
 	}
 
-	tlsConfig.ConfigurationMethod = dsInfo.JsonData.ConfigurationMethod
-	tlsConfig.RootCertFile = dsInfo.JsonData.RootCertFile
-	tlsConfig.CertFile = dsInfo.JsonData.CertFile
-	tlsConfig.CertKeyFile = dsInfo.JsonData.CertKeyFile
+	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsconfig.Mode)
 
-	if tlsConfig.ConfigurationMethod == "file-content" {
-		if err := m.createCertFiles(dsInfo, &tlsConfig); err != nil {
-			return tlsConfig, fmt.Errorf("failed to create TLS certificate files: %w", err)
+	tlsconfig.ConfigurationMethod = dsInfo.JsonData.ConfigurationMethod
+	tlsconfig.RootCertFile = dsInfo.JsonData.RootCertFile
+	tlsconfig.CertFile = dsInfo.JsonData.CertFile
+	tlsconfig.CertKeyFile = dsInfo.JsonData.CertKeyFile
+
+	if tlsconfig.ConfigurationMethod == "file-content" {
+		if err := m.writeCertFiles(dsInfo, &tlsconfig); err != nil {
+			return tlsconfig, err
 		}
 	} else {
-		if err := validateCertFunc(tlsConfig.RootCertFile, tlsConfig.CertFile, tlsConfig.CertKeyFile); err != nil {
-			return tlsConfig, fmt.Errorf("invalid TLS certificate file paths: %w", err)
+		if err := validateCertFunc(tlsconfig.RootCertFile, tlsconfig.CertFile, tlsconfig.CertKeyFile); err != nil {
+			return tlsconfig, err
 		}
 	}
-
-	return tlsConfig, nil
+	return tlsconfig, nil
 }
 
-// createCertFiles writes certificate files to temporary locations.
-func (m *tlsManager) createCertFiles(dsInfo sqleng.DataSourceInfo, tlsConfig *tlsSettings) error {
-	m.logger.Debug("Writing TLS certificate files to temporary locations")
+func (t certFileType) String() string {
+	switch t {
+	case rootCert:
+		return "root certificate"
+	case clientCert:
+		return "client certificate"
+	case clientKey:
+		return "client key"
+	default:
+		panic(fmt.Sprintf("Unrecognized certFileType %d", t))
+	}
+}
 
-	var err error
-	if tlsConfig.RootCertFile, err = m.writeCertFile("root-*.crt", dsInfo.DecryptedSecureJSONData["tlsCACert"]); err != nil {
-		return err
+func getFileName(dataDir string, fileType certFileType) string {
+	var filename string
+	switch fileType {
+	case rootCert:
+		filename = "root.crt"
+	case clientCert:
+		filename = "client.crt"
+	case clientKey:
+		filename = "client.key"
+	default:
+		panic(fmt.Sprintf("unrecognized certFileType %s", fileType.String()))
 	}
-	if tlsConfig.CertFile, err = m.writeCertFile("client-*.crt", dsInfo.DecryptedSecureJSONData["tlsClientCert"]); err != nil {
-		return err
-	}
-	if tlsConfig.CertKeyFile, err = m.writeCertFile("client-*.key", dsInfo.DecryptedSecureJSONData["tlsClientKey"]); err != nil {
-		return err
+	generatedFilePath := filepath.Join(dataDir, filename)
+	return generatedFilePath
+}
+
+// writeCertFile writes a certificate file.
+func writeCertFile(logger log.Logger, fileContent string, generatedFilePath string) error {
+	fileContent = strings.TrimSpace(fileContent)
+	if fileContent != "" {
+		logger.Debug("Writing cert file", "path", generatedFilePath)
+		if err := os.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+			return err
+		}
+		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail
+		if err := os.Chmod(generatedFilePath, 0600); err != nil {
+			return err
+		}
+		return nil
 	}
 
+	logger.Debug("Deleting cert file since no content is provided", "path", generatedFilePath)
+	exists, err := fileExists(generatedFilePath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if err := os.Remove(generatedFilePath); err != nil {
+			return fmt.Errorf("failed to remove %q: %w", generatedFilePath, err)
+		}
+	}
 	return nil
 }
 
-// writeCertFile writes a single certificate file to a temporary location.
-func (m *tlsManager) writeCertFile(pattern, content string) (string, error) {
-	if content == "" {
-		return "", nil
+func (m *tlsManager) writeCertFiles(dsInfo sqleng.DataSourceInfo, tlsconfig *tlsSettings) error {
+	m.logger.Debug("Writing TLS certificate files to disk")
+	tlsRootCert := dsInfo.DecryptedSecureJSONData["tlsCACert"]
+	tlsClientCert := dsInfo.DecryptedSecureJSONData["tlsClientCert"]
+	tlsClientKey := dsInfo.DecryptedSecureJSONData["tlsClientKey"]
+	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
+		m.logger.Debug("No TLS/SSL certificates provided")
 	}
 
-	m.logger.Debug("Writing certificate file", "pattern", pattern)
-	file, err := os.CreateTemp("", pattern)
+	// Calculate all files path
+	workDir := filepath.Join(m.dataPath, "tls", dsInfo.UID+"generatedTLSCerts")
+	tlsconfig.RootCertFile = getFileName(workDir, rootCert)
+	tlsconfig.CertFile = getFileName(workDir, clientCert)
+	tlsconfig.CertKeyFile = getFileName(workDir, clientKey)
+
+	// Find datasource in the cache, if found, skip writing files
+	cacheKey := strconv.Itoa(int(dsInfo.ID))
+	m.dsCacheInstance.locker.RLock(cacheKey)
+	item, ok := m.dsCacheInstance.cache.Load(cacheKey)
+	m.dsCacheInstance.locker.RUnlock(cacheKey)
+	if ok {
+		if !item.(time.Time).Before(dsInfo.Updated) {
+			return nil
+		}
+	}
+
+	m.dsCacheInstance.locker.Lock(cacheKey)
+	defer m.dsCacheInstance.locker.Unlock(cacheKey)
+
+	item, ok = m.dsCacheInstance.cache.Load(cacheKey)
+	if ok {
+		if !item.(time.Time).Before(dsInfo.Updated) {
+			return nil
+		}
+	}
+
+	// Write certification directory and files
+	exists, err := fileExists(workDir)
 	if err != nil {
-		return "", fmt.Errorf("failed to create temporary file: %w", err)
+		return err
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			m.logger.Error("Failed to close file", "error", err)
+	if !exists {
+		if err := os.MkdirAll(workDir, 0700); err != nil {
+			return err
 		}
-	}()
-
-	if _, err := file.WriteString(content); err != nil {
-		return "", fmt.Errorf("failed to write to temporary file: %w", err)
 	}
 
-	return file.Name(), nil
+	if err = writeCertFileFunc(m.logger, tlsRootCert, tlsconfig.RootCertFile); err != nil {
+		return err
+	}
+	if err = writeCertFileFunc(m.logger, tlsClientCert, tlsconfig.CertFile); err != nil {
+		return err
+	}
+	if err = writeCertFileFunc(m.logger, tlsClientKey, tlsconfig.CertKeyFile); err != nil {
+		return err
+	}
+
+	// we do not want to point to cert-files that do not exist
+	if tlsRootCert == "" {
+		tlsconfig.RootCertFile = ""
+	}
+
+	if tlsClientCert == "" {
+		tlsconfig.CertFile = ""
+	}
+
+	if tlsClientKey == "" {
+		tlsconfig.CertKeyFile = ""
+	}
+
+	// Update datasource cache
+	m.dsCacheInstance.cache.Store(cacheKey, dsInfo.Updated)
+	return nil
 }
 
-// cleanupCertFiles removes temporary certificate files.
-func (m *tlsManager) cleanupCertFiles(tlsConfig tlsSettings) {
-	// Only clean up if the configuration method is "file-content"
-	if tlsConfig.ConfigurationMethod != "file-content" {
-		m.logger.Debug("Skipping cleanup of TLS certificate files")
-		return
-	}
-	m.logger.Debug("Cleaning up TLS certificate files")
-
-	files := []struct {
-		path string
-		name string
-	}{
-		{tlsConfig.RootCertFile, "root certificate"},
-		{tlsConfig.CertFile, "client certificate"},
-		{tlsConfig.CertKeyFile, "client key"},
-	}
-
-	for _, file := range files {
-		if file.path == "" {
-			continue
-		}
-		if err := os.Remove(file.path); err != nil {
-			m.logger.Error("Failed to remove file", "type", file.name, "path", file.path, "error", err)
-		} else {
-			m.logger.Debug("Successfully removed file", "type", file.name, "path", file.path)
-		}
-	}
-}
-
-// validateCertFilePaths validates the existence of configured certificate file paths.
+// validateCertFilePaths validates configured certificate file paths.
 func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
-	for _, path := range []string{rootCert, clientCert, clientKey} {
-		if path == "" {
+	for _, fpath := range []string{rootCert, clientCert, clientKey} {
+		if fpath == "" {
 			continue
 		}
-		exists, err := fileExists(path)
+		exists, err := fileExists(fpath)
 		if err != nil {
-			return fmt.Errorf("error checking file existence: %w", err)
+			return err
 		}
 		if !exists {
 			return sqleng.ErrCertFileNotExist
@@ -146,14 +235,15 @@ func validateCertFilePaths(rootCert, clientCert, clientKey string) error {
 	return nil
 }
 
-// fileExists checks if a file exists at the given path.
-func fileExists(path string) (bool, error) {
-	_, err := os.Stat(path)
+// Exists determines whether a file/directory exists or not.
+func fileExists(fpath string) (bool, error) {
+	_, err := os.Stat(fpath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
+		if !os.IsNotExist(err) {
+			return false, err
 		}
-		return false, err
+		return false, nil
 	}
+
 	return true, nil
 }

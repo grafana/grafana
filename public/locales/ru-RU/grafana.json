@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Удалить",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1675,6 +1668,20 @@
         "new-recording-rule": "Новое правило записи",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Действия с папками",
+          "title": "Действия"
+        },
+        "export": {
+          "aria-label": "Папка правил экспорта",
+          "label": "Папка правил экспорта"
+        },
+        "view": {
+          "aria-label": "Просмотр папки",
+          "label": "Просмотр папки"
+        }
       },
       "no-prom-or-loki-rules": "Нет настроенных источников данных Prometheus или Loki",
       "no-rules": "Правила не найдены.",
@@ -2349,7 +2356,6 @@
     "rule-group-action": {
       "details": "данные группы правил",
       "edit": "редактировать группу правил",
-      "export-rules-folder": "Папка правил экспорта",
       "go-to-folder": "перейти в папку",
       "manage-permissions": "управление разрешениями"
     },
@@ -4094,6 +4100,15 @@
         "tooltip-remove-property": "Удалить свойство"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Вставка панели",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
@@ -4648,18 +4663,6 @@
     },
     "toolbar": {
       "add": "Добавить",
-      "add-new": {
-        "button": {
-          "label": "Добавить",
-          "tooltip": "Добавить панели и другие элементы"
-        },
-        "menu": {
-          "lib-panel": "Панель библиотеки",
-          "panel": "Панель",
-          "row": "Строка",
-          "tab": "Вкладка"
-        }
-      },
       "alert-rules": "Правила оповещения",
       "back-to-dashboard": "Назад на дашборд",
       "dashboard-settings": {
