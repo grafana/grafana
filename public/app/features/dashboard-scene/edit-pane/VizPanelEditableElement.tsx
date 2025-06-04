@@ -45,6 +45,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     const layoutElement = panel.parent!;
 
     const panelOptions = useMemo(() => {
+      const panelTitleInputId = 'PanelFrameTitle';
+      const panelDescriptionTextAreaId = 'description-text-area';
+      const panelTransparentToggleId = 'transparent-background';
+
       return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
@@ -55,22 +59,25 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
+            id: panelTitleInputId,
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
+            render: () => <PanelFrameTitleInput id={panelTitleInputId} panel={panel} isNewElement={isNewElement} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
+            id: panelDescriptionTextAreaId,
             value: panel.state.description,
-            render: () => <PanelDescriptionTextArea panel={panel} />,
+            render: () => <PanelDescriptionTextArea id={panelDescriptionTextAreaId} panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: () => <PanelBackgroundSwitch panel={panel} />,
+            id: panelTransparentToggleId,
+            render: () => <PanelBackgroundSwitch id={panelTransparentToggleId} panel={panel} />,
           })
         );
     }, [panel, isNewElement]);

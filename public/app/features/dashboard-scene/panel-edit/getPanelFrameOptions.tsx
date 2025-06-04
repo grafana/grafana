@@ -32,15 +32,19 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
   const links = panelLinksObject?.state.rawLinks ?? [];
   const dashboard = getDashboardSceneFor(panel);
   const layoutElement = panel.parent!;
+  const panelTitleInputId = 'PanelFrameTitle';
+  const panelDescriptionTextAreaId = 'description-text-area';
+  const panelTransparentToggleId = 'transparent-background';
 
   descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.title', 'Title'),
+        id: panelTitleInputId,
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
-          return <PanelFrameTitleInput panel={panel} />;
+          return <PanelFrameTitleInput id={panelTitleInputId} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
@@ -54,9 +58,10 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
+        id: panelDescriptionTextAreaId,
         value: panel.state.description,
         render: function renderDescription() {
-          return <PanelDescriptionTextArea panel={panel} />;
+          return <PanelDescriptionTextArea id={panelDescriptionTextAreaId} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
@@ -69,8 +74,9 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
+        id: panelTransparentToggleId,
         render: function renderTransparent() {
-          return <PanelBackgroundSwitch panel={panel} />;
+          return <PanelBackgroundSwitch id={panelTransparentToggleId} panel={panel} />;
         },
       })
     )
@@ -112,7 +118,15 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel; isNewElement?: boolean }) {
+export function PanelFrameTitleInput({
+  panel,
+  isNewElement,
+  id,
+}: {
+  panel: VizPanel;
+  isNewElement?: boolean;
+  id?: string;
+}) {
   const { title } = panel.useState();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
@@ -125,6 +139,7 @@ export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel;
     <Input
       ref={ref}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+      id={id}
       value={title}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
@@ -135,13 +150,13 @@ export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel;
   );
 }
 
-export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
+export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description } = panel.useState();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
 
   return (
     <TextArea
-      id="description-text-area"
+      id={id}
       value={description}
       onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
       onFocus={() => setPrevDescription(panel.state.description)}
@@ -157,7 +172,7 @@ export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
   );
 }
 
-export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
+export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: string }) {
   const { displayMode = 'default' } = panel.useState();
 
   const onChange = () => {
@@ -171,7 +186,7 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
     });
   };
 
-  return <Switch value={displayMode === 'transparent'} id="transparent-background" onChange={onChange} />;
+  return <Switch value={displayMode === 'transparent'} id={id} onChange={onChange} />;
 }
 
 function updatePanelTitleState(panel: VizPanel, title: string) {

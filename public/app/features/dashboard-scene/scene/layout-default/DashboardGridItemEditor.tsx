@@ -10,6 +10,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { DashboardGridItem } from './DashboardGridItem';
 
 export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor[] {
+  const repeatByVariableSelectId = 'repeat-by-variable-select';
   const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
     id: 'Repeat options',
@@ -18,11 +19,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+        id: repeatByVariableSelectId,
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
         ),
-        render: () => <RepeatByOption gridItem={gridItem} />,
+        render: () => <RepeatByOption id={repeatByVariableSelectId} gridItem={gridItem} />,
       })
     )
     .addItem(
@@ -86,12 +88,12 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function RepeatByOption({ gridItem }: OptionComponentProps) {
+function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { variableName, width } = gridItem.useState();
 
   return (
     <RepeatRowSelect2
-      id="repeat-by-variable-select"
+      id={id}
       sceneContext={gridItem}
       repeat={variableName}
       onChange={(value?: string) => {
