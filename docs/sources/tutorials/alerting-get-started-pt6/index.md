@@ -194,7 +194,7 @@ We have our time-series panel ready. Feel free to combine metrics with labels su
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
 
-## Step 2: Create alert rules to monitor CPU and memory usage
+## Step 2: Create alert rules
 
 Follow these steps to manually create alert rules and link them to a visualization.
 
