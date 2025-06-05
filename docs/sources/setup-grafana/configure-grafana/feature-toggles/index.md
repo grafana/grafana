@@ -70,6 +70,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
+| `lokiSendDashboardPanelNames`          | Send dashboard and panel names to Loki when querying                                                                               | Yes                |
 | `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                             | Yes                |
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                       | Yes                |
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                               |                    |

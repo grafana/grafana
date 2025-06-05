@@ -165,13 +165,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "lokiQuerySplittingConfig",
-			Description:  "Give users the option to configure split durations for Loki queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
@@ -1126,8 +1119,9 @@ var (
 		{
 			Name:        "lokiSendDashboardPanelNames",
 			Description: "Send dashboard and panel names to Loki when querying",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",

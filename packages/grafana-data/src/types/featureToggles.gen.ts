@@ -107,10 +107,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Give users the option to configure split durations for Loki queries
-  */
-  lokiQuerySplittingConfig?: boolean;
-  /**
   * Support overriding cookie preferences per user
   */
   individualCookiePreferences?: boolean;
@@ -657,6 +653,7 @@ export interface FeatureToggles {
   tableNextGen?: boolean;
   /**
   * Send dashboard and panel names to Loki when querying
+  * @default true
   */
   lokiSendDashboardPanelNames?: boolean;
   /**
