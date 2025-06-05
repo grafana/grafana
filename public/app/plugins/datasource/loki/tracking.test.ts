@@ -101,7 +101,7 @@ describe('Tracks queries', () => {
 });
 
 test('Tracks predefined operations', () => {
-  trackQuery({ data: [] }, originalRequest, new Date(), { predefinedOperations: 'count_over_time' });
+  trackQuery({ data: [] }, originalRequest, new Date());
 
   expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
     bytes_processed: 0,

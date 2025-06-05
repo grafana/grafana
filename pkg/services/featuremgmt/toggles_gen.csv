@@ -33,7 +33,6 @@ refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
-lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/oss-big-tent,false,false,true

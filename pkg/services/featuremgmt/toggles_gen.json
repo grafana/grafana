@@ -2009,7 +2009,8 @@
       "metadata": {
         "name": "lokiPredefinedOperations",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-06-02T10:52:36Z"
+        "creationTimestamp": "2023-06-02T10:52:36Z",
+        "deletionTimestamp": "2025-06-05T07:13:27Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",
