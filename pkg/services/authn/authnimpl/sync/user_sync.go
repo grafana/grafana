@@ -440,7 +440,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		if !usr.IsProvisioned {
 			finalCmdToExecute = updateCmd
 			shouldExecuteUpdate = true
-			s.log.FromContext(ctx).Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID, "update", fmt.Sprintf("%#v", finalCmdToExecute))
+			logCmd := sanitizeUpdateUserCommand(finalCmdToExecute)
+			s.log.FromContext(ctx).Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID, "update", fmt.Sprintf("%#v", logCmd))
 		} else {
 			if updateCmd.IsGrafanaAdmin != nil {
 				finalCmdToExecute.IsGrafanaAdmin = updateCmd.IsGrafanaAdmin
@@ -449,13 +450,15 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 			}
 
 			if !shouldExecuteUpdate {
-				s.log.FromContext(ctx).Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID, "overallDelta", fmt.Sprintf("%#v", updateCmd))
+				logCmd := sanitizeUpdateUserCommand(finalCmdToExecute)
+				s.log.FromContext(ctx).Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID, "overallDelta", fmt.Sprintf("%#v", logCmd))
 			}
 		}
 
 		if shouldExecuteUpdate {
 			if err := s.userService.Update(ctx, finalCmdToExecute); err != nil {
-				s.log.FromContext(ctx).Error("Failed to update user attributes", "error", err, "id", id.ID, "command", fmt.Sprintf("%#v", finalCmdToExecute), "isProvisioned", usr.IsProvisioned)
+				logCmd := sanitizeUpdateUserCommand(finalCmdToExecute)
+				s.log.FromContext(ctx).Error("Failed to update user attributes", "error", err, "id", id.ID, "command", fmt.Sprintf("%#v", logCmd), "isProvisioned", usr.IsProvisioned)
 				return err
 			}
 		}
@@ -615,4 +618,18 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin
 	id.EmailVerified = usr.EmailVerified
+}
+
+func sanitizeUpdateUserCommand(cmd *user.UpdateUserCommand) user.UpdateUserCommand {
+	logCmd := *cmd
+	if logCmd.Password != nil || logCmd.OldPassword != nil {
+		redacted := user.Password("[REDACTED]")
+		if logCmd.Password != nil {
+			logCmd.Password = &redacted
+		}
+		if logCmd.OldPassword != nil {
+			logCmd.OldPassword = &redacted
+		}
+	}
+	return logCmd
 }
