@@ -310,12 +310,15 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
           }
 
           let v = fields[j].values[i];
-          // For FieldType frame, use value if it exists to prevent exporting [object object]
-          if (fields[j].type === FieldType.frame && v?.value) {
-            v = v.value;
-          }
 
-          csv += v === null ? 'null' : writers[j](v);
+          if (v !== null) {
+            // For FieldType frame, use value if it exists to prevent exporting [object object]
+            if (fields[j].type === FieldType.frame && 'value' in v) {
+              v = v.value;
+            }
+
+            csv += writers[j](v);
+          }
         }
 
         if (i !== length - 1) {
