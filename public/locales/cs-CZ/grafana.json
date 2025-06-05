@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Odstranit",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1675,6 +1668,20 @@
         "new-recording-rule": "Nové pravidlo nahrávání",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Akce složky",
+          "title": "Akce"
+        },
+        "export": {
+          "aria-label": "Exportovat složku pravidel",
+          "label": "Exportovat složku pravidel"
+        },
+        "view": {
+          "aria-label": "Zobrazit složku",
+          "label": "Zobrazit složku"
+        }
       },
       "no-prom-or-loki-rules": "Nejsou nakonfigurovány žádné zdroje dat Prometheus nebo Loki",
       "no-rules": "Nebyla nalezena žádná pravidla.",
@@ -2349,7 +2356,6 @@
     "rule-group-action": {
       "details": "podrobnosti o skupině pravidel",
       "edit": "upravit skupinu pravidel",
-      "export-rules-folder": "Exportovat složku pravidel",
       "go-to-folder": "jít do složky",
       "manage-permissions": "spravovat oprávnění"
     },
@@ -2378,11 +2384,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurovat",
       "draft-new-rule": "Navrhnout nové pravidlo",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Zkontrolujte konfiguraci zdroje dat. Podporuje zdroj dat Prometheus API?",
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
       },
       "empty-data-source": "",
+      "error-button": "Chyba",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -2394,6 +2404,7 @@
         "new-badge": "Nové!",
         "text": "Importovat do pravidel spravovaných Grafanou"
       },
+      "loading-more-groups": "",
       "more": "Další",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
@@ -4094,6 +4105,15 @@
         "tooltip-remove-property": "Odebrat vlastnost"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Vložit panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
@@ -4648,18 +4668,6 @@
     },
     "toolbar": {
       "add": "Přidat",
-      "add-new": {
-        "button": {
-          "label": "Přidat",
-          "tooltip": "Přidat panely a další prvky"
-        },
-        "menu": {
-          "lib-panel": "Panel knihovny",
-          "panel": "Panel",
-          "row": "Řádek",
-          "tab": "Karta"
-        }
-      },
       "alert-rules": "Pravidla výstrah",
       "back-to-dashboard": "Zpět na nástěnku",
       "dashboard-settings": {

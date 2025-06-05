@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "削除",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1657,6 +1650,20 @@
         "new-recording-rule": "新しい記録ルール",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "フォルダ操作",
+          "title": "操作"
+        },
+        "export": {
+          "aria-label": "ルールフォルダをエクスポート",
+          "label": "ルールフォルダをエクスポート"
+        },
+        "view": {
+          "aria-label": "フォルダを表示",
+          "label": "フォルダを表示"
+        }
       },
       "no-prom-or-loki-rules": "PrometheusまたはLokiデータソースが設定されていません",
       "no-rules": "ルールが見つかりません。",
@@ -2319,7 +2326,6 @@
     "rule-group-action": {
       "details": "ルールグループの詳細",
       "edit": "ルールグループを編集",
-      "export-rules-folder": "ルールフォルダをエクスポート",
       "go-to-folder": "フォルダに移動",
       "manage-permissions": "権限を管理する"
     },
@@ -2348,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "構成",
       "draft-new-rule": "新しいルールの下書きを作成",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "データソースの設定を確認してください。データソースはPrometheus APIをサポートしていますか？",
         "title": "このデータソースからルールを読み込めません"
       },
       "empty-data-source": "",
+      "error-button": "エラー",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -2364,6 +2374,7 @@
         "new-badge": "新登場！",
         "text": "Grafana管理ルールにインポート"
       },
+      "loading-more-groups": "",
       "more": "その他",
       "new-alert-rule": "新しいアラートルール",
       "new-datasource-recording-rule": "新しいデータソース記録ルール",
@@ -4040,6 +4051,15 @@
         "tooltip-remove-property": "プロパティを削除"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "パネルを貼り付け",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "ダッシュボード",
@@ -4591,18 +4611,6 @@
     },
     "toolbar": {
       "add": "追加",
-      "add-new": {
-        "button": {
-          "label": "追加",
-          "tooltip": "パネルやその他の要素を追加"
-        },
-        "menu": {
-          "lib-panel": "ライブラリパネルを追加",
-          "panel": "パネル",
-          "row": "行",
-          "tab": "タブ"
-        }
-      },
       "alert-rules": "アラートルール",
       "back-to-dashboard": "ダッシュボードに戻る",
       "dashboard-settings": {

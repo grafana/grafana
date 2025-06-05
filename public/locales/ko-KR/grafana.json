@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "삭제",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1657,6 +1650,20 @@
         "new-recording-rule": "새 기록 규칙",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "폴더 작업",
+          "title": "작업"
+        },
+        "export": {
+          "aria-label": "규칙 폴더 내보내기",
+          "label": "규칙 폴더 내보내기"
+        },
+        "view": {
+          "aria-label": "폴더 보기",
+          "label": "폴더 보기"
+        }
       },
       "no-prom-or-loki-rules": "구성된 Prometheus 또는 Loki 데이터 소스가 없습니다",
       "no-rules": "규칙을 찾을 수 없습니다.",
@@ -2319,7 +2326,6 @@
     "rule-group-action": {
       "details": "규칙 그룹 세부 정보",
       "edit": "규칙 그룹 편집",
-      "export-rules-folder": "규칙 폴더 내보내기",
       "go-to-folder": "폴더로 이동",
       "manage-permissions": "권한 관리"
     },
@@ -2348,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "구성",
       "draft-new-rule": "새 규칙 초안 작성",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
       "empty-data-source": "",
+      "error-button": "오류",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -2364,6 +2374,7 @@
         "new-badge": "새 기능!",
         "text": "Grafana 관리 규칙으로 가져오기"
       },
+      "loading-more-groups": "",
       "more": "더 보기",
       "new-alert-rule": "새 경고 규칙",
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
@@ -4040,6 +4051,15 @@
         "tooltip-remove-property": "속성 제거"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "패널 붙여넣기",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "대시보드",
@@ -4591,18 +4611,6 @@
     },
     "toolbar": {
       "add": "추가",
-      "add-new": {
-        "button": {
-          "label": "추가",
-          "tooltip": "패널 및 기타 요소 추가"
-        },
-        "menu": {
-          "lib-panel": "라이브러리 패널",
-          "panel": "패널",
-          "row": "행",
-          "tab": "탭"
-        }
-      },
       "alert-rules": "경고 규칙",
       "back-to-dashboard": "대시보드로 돌아가기",
       "dashboard-settings": {

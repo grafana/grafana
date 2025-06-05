@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Usuń",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1675,6 +1668,20 @@
         "new-recording-rule": "Nowa reguła rejestracji",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Działania dotyczące folderu",
+          "title": "Działania"
+        },
+        "export": {
+          "aria-label": "Eksportuj folder reguł",
+          "label": "Eksportuj folder reguł"
+        },
+        "view": {
+          "aria-label": "Wyświetl folder",
+          "label": "Wyświetl folder"
+        }
       },
       "no-prom-or-loki-rules": "Brak skonfigurowanych źródeł danych Prometheus lub Loki",
       "no-rules": "Nie znaleziono reguł.",
@@ -2349,7 +2356,6 @@
     "rule-group-action": {
       "details": "szczegóły grupy reguł",
       "edit": "edytuj grupę reguł",
-      "export-rules-folder": "Eksportuj folder reguł",
       "go-to-folder": "przejdź do folderu",
       "manage-permissions": "zarządzaj uprawnieniami"
     },
@@ -2378,11 +2384,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfiguruj",
       "draft-new-rule": "Zaprojektuj nową regułę",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
       "empty-data-source": "",
+      "error-button": "Błąd",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -2394,6 +2404,7 @@
         "new-badge": "Nowość!",
         "text": "Importuj do reguł zarządzanych przez usługę Grafana"
       },
+      "loading-more-groups": "",
       "more": "Więcej",
       "new-alert-rule": "Nowa reguła alertu",
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
@@ -4094,6 +4105,15 @@
         "tooltip-remove-property": "Usuń właściwość"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Wklej panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Pulpit",
@@ -4648,18 +4668,6 @@
     },
     "toolbar": {
       "add": "Dodaj",
-      "add-new": {
-        "button": {
-          "label": "Dodaj",
-          "tooltip": "Dodaj panele i inne elementy"
-        },
-        "menu": {
-          "lib-panel": "Panel biblioteki",
-          "panel": "Panel",
-          "row": "Wiersz",
-          "tab": "Karta"
-        }
-      },
       "alert-rules": "Reguły alertu",
       "back-to-dashboard": "Wróć do pulpitu",
       "dashboard-settings": {

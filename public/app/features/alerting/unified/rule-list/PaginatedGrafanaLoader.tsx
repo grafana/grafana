@@ -1,7 +1,8 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { Icon, Spinner, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -33,7 +34,7 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     GRAFANA_GROUP_PAGE_SIZE
   );
@@ -42,7 +43,13 @@ export function PaginatedGrafanaLoader() {
   const hasNoRules = isEmpty(groups) && !isLoading;
 
   return (
-    <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
+    <DataSourceSection
+      name="Grafana"
+      application="grafana"
+      uid={GrafanaRulesSourceSymbol}
+      isLoading={isLoading}
+      error={error}
+    >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
@@ -77,6 +84,12 @@ export function PaginatedGrafanaLoader() {
           <div>
             <LoadMoreButton onClick={fetchMoreGroups} />
           </div>
+        )}
+        {isLoading && (
+          <Stack direction="row" gap={2} alignItems="center" justifyContent="flex-start">
+            <Spinner inline={true} />
+            <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
+          </Stack>
         )}
       </Stack>
     </DataSourceSection>
