@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Configureren",
       "draft-new-rule": "Een nieuwe regel opstellen",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Controleer de configuratie van de gegevensbron. Ondersteunt de gegevensbron Prometheus API?",
         "title": "Kan regels uit deze gegevensbron niet laden"
       },
       "empty-data-source": "",
+      "error-button": "Fout",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -2380,6 +2384,7 @@
         "new-badge": "Nieuw!",
         "text": "Importeren naar door Grafana beheerde regels"
       },
+      "loading-more-groups": "",
       "more": "Meer",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",

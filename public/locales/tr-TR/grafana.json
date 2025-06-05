@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Yapılandır",
       "draft-new-rule": "Yeni bir kural taslağı oluştur",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Veri kaynağı yapılandırmasını kontrol edin. Veri kaynağı Prometheus API'yi destekliyor mu?",
         "title": "Bu veri kaynağından kurallar yüklenemedi"
       },
       "empty-data-source": "",
+      "error-button": "Hata",
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -2380,6 +2384,7 @@
         "new-badge": "Yeni!",
         "text": "Grafana tarafından yönetilen kurallara içe aktar"
       },
+      "loading-more-groups": "",
       "more": "Daha Fazla",
       "new-alert-rule": "Yeni uyarı kuralı",
       "new-datasource-recording-rule": "Yeni veri kaynağı kayıt kuralı",
