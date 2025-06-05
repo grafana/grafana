@@ -26,7 +26,9 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
+	logger := log.New("openfga.server")
+
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),

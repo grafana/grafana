@@ -89,7 +89,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
 	require.NoError(t, err)
-	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store, log.NewNopLogger())
+	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	require.NoError(t, err)
 
 	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService())

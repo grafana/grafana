@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"io"
 	"strings"
@@ -18,18 +19,28 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 
+	res, err := s.list(ctx, r)
+	if err != nil {
+		s.logger.Error("failed to perform list request", "error", err, "namespace", r.GetNamespace())
+		return nil, errors.New("failed to perform list request")
+	}
+
+	return res, nil
+}
+
+func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
 		return nil, err
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
 	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
@@ -37,7 +48,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 
 	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to check group resource: %w", err)
 	}
 
 	if res.GetAllowed() {
@@ -161,7 +172,13 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 		return s.listObjectCached(ctx, req, fn)
 	}
 
-	return fn(ctx, req)
+	res, err := fn(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to perform openfga ListObjects request", "error", errors.Unwrap(err), "user", req.GetUser(), "type", req.GetType(), "relation", req.GetRelation())
+		return nil, err
+	}
+
+	return res, nil
 }
 
 type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
