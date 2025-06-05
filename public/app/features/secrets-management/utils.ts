@@ -17,7 +17,7 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
   return {
     name: subject.metadata.name,
     description: subject.spec.description,
-    audiences: subject.spec.decrypters,
+    decrypters: subject.spec.decrypters,
     keeper: subject.spec.keeper,
     uid: subject.metadata.uid,
     status: subject.status?.phase ?? SecretStatusPhase.Succeeded,
@@ -48,7 +48,7 @@ export function transformFromSecret(
     },
     spec: {
       description: secret.description,
-      decrypters: secret.audiences ?? [],
+      decrypters: secret.decrypters ?? [],
       ...(!!secret.value ? { value: secret.value } : undefined),
     },
   };
@@ -62,8 +62,8 @@ export function secretToSecretFormValues(secret?: Secret): SecretFormValues | un
       uid: secret.uid,
       name: secret.name,
       description: secret.description,
-      audiences:
-        secret.audiences?.map((audience) => {
+      decrypters:
+        secret.decrypters?.map((audience) => {
           if (audience in DECRYPT_ALLOW_LIST_LABEL_MAP) {
             return { label: DECRYPT_ALLOW_LIST_LABEL_MAP[audience as AllowedDecrypter], value: audience };
           }
@@ -76,10 +76,10 @@ export function secretToSecretFormValues(secret?: Secret): SecretFormValues | un
 }
 
 export function secretFormValuesToSecret(secretFormValues: SecretFormValues): NewSecret | Secret {
-  const audiences = secretFormValues.audiences?.map((audience) => audience.value) ?? [];
+  const decrypters = secretFormValues.decrypters?.map((decrypter) => decrypter.value) ?? [];
   const secret = {
     ...secretFormValues,
-    audiences,
+    decrypters,
   };
 
   if (!!secretFormValues.uid) {

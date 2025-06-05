@@ -39,7 +39,7 @@ export interface SecretsListResponseItem {
   status?: SecretStatus;
 }
 
-type Audiences = `${string}/${string}`;
+type Decrypter = `${string}/${string}`;
 
 // Minimum required fields to create a secret
 export interface CreateSecretPayload {
@@ -49,7 +49,7 @@ export interface CreateSecretPayload {
 
   spec: {
     title: string;
-    audiences: Audiences[];
+    decrypter: Decrypter[];
     value: string;
   };
 }
@@ -64,7 +64,7 @@ export interface SecretsListResponse {
 export interface Secret {
   name: SecretsListResponseItem['metadata']['name'];
   description: SecretsListResponseItem['spec']['description'];
-  audiences: SecretsListResponseItem['spec']['decrypters'];
+  decrypters: SecretsListResponseItem['spec']['decrypters'];
   keeper?: SecretsListResponseItem['spec']['keeper'];
   uid: SecretsListResponseItem['metadata']['uid'];
   value?: string; // Only present when editing a secret
@@ -87,7 +87,7 @@ export interface SecretFormValues {
   value?: string;
   uid?: string;
   enabled?: boolean;
-  audiences: Array<{ label: string; value: string }>;
+  decrypters: Array<{ label: string; value: string }>;
   keeper?: string;
   labels: Array<{ name: string; value: string }>;
 }

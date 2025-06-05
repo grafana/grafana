@@ -41,7 +41,7 @@ export function SecretForm({
   externalErrors,
 }: BaseSecretFormProps) {
   // Duplicates are not shown.
-  const audiences = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.audiences ?? [])];
+  const decrypters = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.decrypters ?? [])];
   const isNew = initialValues?.uid === undefined;
   const [isConfigured, setIsConfigured] = useState(!isNew);
   const styles = useStyles2(getStyles);
@@ -142,11 +142,11 @@ export function SecretForm({
       >
         <Controller
           control={control}
-          name="audiences"
+          name="decrypters"
           render={({ field: { ref, ...field } }) => (
             <MultiSelect
               placeholder={t('secrets.form.decrypters.placeholder', 'Choose decrypter(s)')}
-              options={audiences}
+              options={decrypters}
               {...field}
             />
           )}

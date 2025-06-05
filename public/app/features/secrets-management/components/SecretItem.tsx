@@ -140,10 +140,17 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
 
         <div className={styles.keyValue}>
           <strong>
+            <Trans i18nKey="secrets.item.label-modified">Modified:</Trans>
+          </strong>
+          <span>{secret.modified}</span>
+        </div>
+
+        <div className={styles.keyValue}>
+          <strong>
             <Trans i18nKey="secrets.item.label-decrypters">Decrypters:</Trans>
           </strong>
           <div className={styles.row}>
-            {secret.audiences?.map((item) => (
+            {secret.decrypters?.map((item) => (
               <Badge
                 className={styles.audienceBadge}
                 color="blue"

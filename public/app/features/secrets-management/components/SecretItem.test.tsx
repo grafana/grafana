@@ -52,8 +52,8 @@ describe('SecretItem', () => {
     const props = getProps(1);
     render(<SecretItem {...props} />);
     expect(screen.getByText('Decrypters:')).toBeInTheDocument();
-    expect(props.secret.audiences!.length).toBe(2);
-    props.secret.audiences!.forEach((decrypter) => {
+    expect(props.secret.decrypters!.length).toBe(2);
+    props.secret.decrypters!.forEach((decrypter) => {
       expect(
         screen.getByText(DECRYPT_ALLOW_LIST_LABEL_MAP[decrypter as keyof typeof DECRYPT_ALLOW_LIST_LABEL_MAP])
       ).toBeInTheDocument();
