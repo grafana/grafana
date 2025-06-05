@@ -27,9 +27,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
   evaluation-of-imported-ds-rules:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/#evaluation-of-imported-rules
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/#how-it-works
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/#evaluation-of-imported-rules
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/#how-it-works
 ---
 
 # Alert rule evaluation
