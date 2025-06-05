@@ -166,7 +166,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
   };
 }
 
-interface DisplayOptions {
+export interface DisplayOptions {
   fontSize: LogListFontSize;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
