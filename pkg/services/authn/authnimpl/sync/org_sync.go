@@ -50,14 +50,6 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
-	// Allow org syncing even if the user is provisioned by SCIM.
-	// SAML assertion will update org roles for SCIM users.
-	_, err = s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		ctxLogger.Error("Failed to get user from provided identity for org sync", "error", err)
-		return err
-	}
-
 	ctxLogger.Debug("Syncing organization roles", "extOrgRoles", id.OrgRoles)
 	// don't sync org roles if none is specified
 	if len(id.OrgRoles) == 0 {
