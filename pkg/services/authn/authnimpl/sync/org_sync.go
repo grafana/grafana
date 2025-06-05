@@ -50,14 +50,12 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
-	// ignore org syncing if the user is provisioned
-	usr, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	// Allow org syncing even if the user is provisioned by SCIM.
+	// SAML assertion will update org roles for SCIM users.
+	_, err = s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
-		ctxLogger.Error("Failed to get user from provided identity", "error", err)
-		return nil
-	}
-	if usr.IsProvisioned {
-		return nil
+		ctxLogger.Error("Failed to get user from provided identity for org sync", "error", err)
+		return err
 	}
 
 	ctxLogger.Debug("Syncing organization roles", "extOrgRoles", id.OrgRoles)
