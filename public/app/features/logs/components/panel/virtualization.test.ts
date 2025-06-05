@@ -4,7 +4,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../__mocks__/logRow';
 
 import { LogListModel } from './processing';
-import { getLineHeight, getLogLineSize, init, measureTextWidth, TRUNCATION_LINE_COUNT } from './virtualization';
+import { getLineHeight, getLogLineSize, init, measureTextWidth, getTruncationLineCount, DisplayOptions } from './virtualization';
 
 const PADDING_BOTTOM = 6;
 const LINE_HEIGHT = getLineHeight();
@@ -14,12 +14,13 @@ const THREE_LINES_HEIGHT = 3 * LINE_HEIGHT + PADDING_BOTTOM;
 let LETTER_WIDTH: number;
 let CONTAINER_SIZE = 200;
 let TWO_LINES_OF_CHARACTERS: number;
-const defaultOptions = {
+const defaultOptions: DisplayOptions = {
   wrap: false,
   showTime: false,
   showDuplicates: false,
   hasLogsWithErrors: false,
   hasSampledLogs: false,
+  fontSize: 'default',
 };
 
 describe('Virtualization', () => {
@@ -28,7 +29,7 @@ describe('Virtualization', () => {
     log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
     container = document.createElement('div');
     jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(CONTAINER_SIZE);
-    init(createTheme());
+    init(createTheme(), 'default');
     LETTER_WIDTH = measureTextWidth('e');
     TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
   });
@@ -56,7 +57,7 @@ describe('Virtualization', () => {
       log.collapsed = true;
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(10);
       const size = getLogLineSize([log], container, [], { ...defaultOptions, wrap: true, showTime: true }, 0);
-      expect(size).toBe((TRUNCATION_LINE_COUNT + 1) * LINE_HEIGHT);
+      expect(size).toBe((getTruncationLineCount() + 1) * LINE_HEIGHT);
     });
 
     test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
