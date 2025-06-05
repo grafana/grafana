@@ -178,7 +178,12 @@ export { FieldLinkList } from './components/DataLinks/FieldLinkList';
 // Panel editors
 export { FullWidthButtonContainer } from './components/Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './components/ClickOutsideWrapper/ClickOutsideWrapper';
-export * from './components/SingleStatShared/index';
+export {
+  type SingleStatBaseOptions,
+  sharedSingleStatMigrationHandler,
+  convertOldAngularValueMapping,
+  sharedSingleStatPanelChangedHandler,
+} from './components/SingleStatShared/SingleStatBaseOptions';
 export { CallToActionCard } from './components/CallToActionCard/CallToActionCard';
 export { ContextMenu, type ContextMenuProps } from './components/ContextMenu/ContextMenu';
 export { Menu, type MenuProps } from './components/Menu/Menu';
@@ -219,7 +224,11 @@ export { CertificationKey } from './components/DataSourceSettings/CertificationK
 export { Spinner } from './components/Spinner/Spinner';
 export { FadeTransition } from './components/transitions/FadeTransition';
 export { SlideOutTransition } from './components/transitions/SlideOutTransition';
-export { Segment, SegmentAsync, SegmentInput, SegmentSelect, SegmentSection } from './components/Segment/';
+export { Segment } from './components/Segment/Segment';
+export { SegmentAsync } from './components/Segment/SegmentAsync';
+export { SegmentInput } from './components/Segment/SegmentInput';
+export { SegmentSelect } from './components/Segment/SegmentSelect';
+export { SegmentSection } from './components/Segment/SegmentSection';
 export { Drawer } from './components/Drawer/Drawer';
 export { Slider } from './components/Slider/Slider';
 export { RangeSlider } from './components/Slider/RangeSlider';
@@ -232,11 +241,12 @@ export {
   Button,
   LinkButton,
   type ButtonVariant,
-  ButtonGroup,
   type ButtonProps,
   clearButtonStyles,
-} from './components/Button';
-export { ToolbarButton, ToolbarButtonRow } from './components/ToolbarButton';
+} from './components/Button/Button';
+export { ButtonGroup } from './components/Button/ButtonGroup';
+export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
+export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
 export { Link } from './components/Link/Link';
@@ -289,7 +299,14 @@ export { Checkbox } from './components/Forms/Checkbox';
 
 export { TextArea } from './components/TextArea/TextArea';
 export { FileUpload } from './components/FileUpload/FileUpload';
-export * from './components/FileDropzone';
+export {
+  FileDropzone,
+  getMimeTypeByExtension,
+  transformAcceptToNewFormat,
+  FileDropzoneDefaultChildren,
+  type FileDropzoneProps,
+  type DropzoneFile,
+} from './components/FileDropzone/FileDropzone';
 export { TimeRangeInput } from './components/DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, type Props as CardProps, getCardStyles } from './components/Card/Card';
@@ -330,8 +347,13 @@ export { UPlotConfigBuilder } from './components/uPlot/config/UPlotConfigBuilder
 export { UPLOT_AXIS_FONT_SIZE } from './components/uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './components/uPlot/Plot';
 export { PlotLegend } from './components/uPlot/PlotLegend';
-export * from './components/uPlot/geometries';
-export * from './components/uPlot/plugins';
+export { XYCanvas } from './components/uPlot/geometries/XYCanvas';
+export { Marker } from './components/uPlot/geometries/Marker';
+export { EventsCanvas } from './components/uPlot/geometries/EventsCanvas';
+export { TooltipPlugin2 } from './components/uPlot/plugins/TooltipPlugin2';
+export { EventBusPlugin } from './components/uPlot/plugins/EventBusPlugin';
+export { KeyboardPlugin } from './components/uPlot/plugins/KeyboardPlugin';
+
 export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './components/uPlot/types';
 export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBuilder';
 export * from './components/PanelChrome/types';
