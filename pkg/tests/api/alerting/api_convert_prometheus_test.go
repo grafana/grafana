@@ -1204,5 +1204,4 @@ func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
 	rule := ruleGroup.Rules[0]
 
 	require.Equal(t, expectedLabels, rule.Labels)
-
 }
