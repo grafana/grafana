@@ -632,8 +632,8 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
-		if query.ImportedPrometheusRule != nil {
-			q, err = st.filterImportedPrometheusRules(*query.ImportedPrometheusRule, q)
+		if query.HasPrometheusRuleDefinition != nil {
+			q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
 			if err != nil {
 				return err
 			}
@@ -678,8 +678,8 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 					continue
 				}
 			}
-			if query.ImportedPrometheusRule != nil { // remove false-positive hits from the result
-				if *query.ImportedPrometheusRule != converted.ImportedFromPrometheus() {
+			if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
+				if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
 					continue
 				}
 			}
@@ -1019,7 +1019,7 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 	return sess.And(sql, param), nil
 }
 
-func (st DBstore) filterImportedPrometheusRules(value bool, sess *xorm.Session) (*xorm.Session, error) {
+func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Session) (*xorm.Session, error) {
 	if value {
 		// Filter for rules that have both prometheus_style_rule and original_rule_definition in metadata
 		return sess.And(

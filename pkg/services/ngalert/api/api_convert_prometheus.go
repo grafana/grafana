@@ -158,8 +158,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          folderUIDs,
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -193,8 +193,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:          []string{namespace.UID},
-		ImportedPrometheusRule: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -251,8 +251,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -288,9 +288,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
-		RuleGroups:             []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		RuleGroups:                  []string{group},
 	}
 	groupsWithFolders, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
