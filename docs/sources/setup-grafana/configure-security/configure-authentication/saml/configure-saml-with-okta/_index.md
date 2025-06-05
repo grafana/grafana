@@ -35,7 +35,7 @@ Grafana supports user authentication through Okta, which is useful when you want
      {{< admonition type="note" >}}
      If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
      {{< /admonition >}}
-   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
+   - In the **ATTRIBUTE STATEMENTS (REQUIRED)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
      | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
      | --------------------------- | ---------------------------------------------------- | ----------------------------------------- |
@@ -47,3 +47,19 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
+
+## Configure SAML assertions when using SCIM provisioning
+
+In order to verify the logged in user is the same user that was provisioned through Okta, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
+
+1. Open your Okta application.
+1. Select the SAML single sign-on configuration.
+1. Edit the `Attributes & Claims` section.
+1. Add a new claim with the following settings:
+   - Name: `userUID`
+
+### Example configuration
+
+| Attribute name (in Grafana) | Name and value (in Okta profile)           | Grafana default configuration (under `auth.saml`) |
+| --------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| userUID                     | userUID - `user.getInternalProperty("id")` | `assertion_attribute_login = userUID`             |
