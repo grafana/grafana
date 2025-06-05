@@ -2,7 +2,7 @@ import { useState, useRef, ReactElement } from 'react';
 import * as React from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 
 interface LabelProps {
   Component: ReactElement;

@@ -6,7 +6,7 @@ import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@gra
 import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types/theme';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 import { buildLayout } from './BigValueLayout';

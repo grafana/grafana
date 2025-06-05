@@ -8,10 +8,12 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
-import { Tab, TabContent, TabsBar } from '../../Tabs';
+import { Tab } from '../../Tabs/Tab';
+import { TabContent } from '../../Tabs/TabContent';
+import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';

@@ -11,7 +11,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
 import { t } from '../../utils/i18n';
-import { getButtonStyles } from '../Button';
+import { getButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {

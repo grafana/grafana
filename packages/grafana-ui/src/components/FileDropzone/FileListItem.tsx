@@ -5,7 +5,7 @@ import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/
 import { useStyles2 } from '../../themes/ThemeContext';
 import { trimFileName } from '../../utils/file';
 import { t, Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 

@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
-import { Button, ButtonFill, ButtonVariant } from '../Button';
+import { Button, ButtonFill, ButtonVariant } from '../Button/Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {

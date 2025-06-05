@@ -8,7 +8,7 @@ import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';
