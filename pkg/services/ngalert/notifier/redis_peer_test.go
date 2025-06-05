@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/Bose/minisentinel"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/Bose/minisentinel"
 	"github.com/alicebob/miniredis/v2"
 	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana/pkg/infra/log"
