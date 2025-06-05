@@ -496,7 +496,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
-/public/app/features/api-keys/ @grafana/identity-squad
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
