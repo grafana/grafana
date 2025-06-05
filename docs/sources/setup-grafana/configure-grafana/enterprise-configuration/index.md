@@ -308,6 +308,10 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 Friendly name or name of the attribute within the SAML assertion to use as the user organization.
 
+### assertion_attribute_external_uid
+
+Friendly name or name of the attribute within the SAML assertion to use as the user external UID.
+
 ### allowed_organizations
 
 List of comma- or space-separated organizations. Each user must be a member of at least one organization to log in.
