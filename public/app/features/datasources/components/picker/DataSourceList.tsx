@@ -82,17 +82,14 @@ export function DataSourceList(props: DataSourceListProps) {
   let filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   const token = loadUrlToken();
-
-  console.log({ filteredDataSources });
-
-  if (token !== null && token !== '') {
+  if (token) {
     const payload = decodeJWT(token);
-    console.log({ payload });
-    filteredDataSources = filteredDataSources.filter((ds) => ds.type !== 'grafana-postgresql-datasource');
-    // grafana-postgresql-datasource
-  }
+    const hasPermission = payload?.permissions?.includes('grafana_postgresql_datasource:WRITE') || payload?.is_admin;
 
-  console.log({ filteredDataSources });
+    if (!hasPermission) {
+      filteredDataSources = filteredDataSources.filter((ds: any) => ds.type !== 'grafana-postgresql-datasource');
+    }
+  }
 
   return (
     <div
