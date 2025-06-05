@@ -69,9 +69,9 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The [Missing series evaluations to resolve](ref_missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
 
-- **Evaluation of imported rules**
+- **Sequential evaluation**
 
-  Sequential evaluation applies to imported rules only while they remain read‑only, displayed as **Provisioned**. If they are editable, they behave like regular Grafana-managed alert rules and are evaluated in parallel. For more details, refer to [evaluation strategies](ref:evaluation-strategies).
+  Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](ref:evaluation-strategies).
 
 {{< admonition type="note" >}}
 Rules with the label `__grafana_origin` are not included in rule imports. These rules are typically created by apps such as **Kubernetes Monitoring**, **Synthetic Monitoring**, and other **Grafana plugins**.
