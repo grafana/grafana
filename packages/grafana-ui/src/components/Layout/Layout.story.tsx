@@ -1,7 +1,7 @@
 import { StoryFn, Meta } from '@storybook/react';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 
 import { HorizontalGroup, Layout, LayoutProps, VerticalGroup } from './Layout';
 import mdx from './Layout.mdx';
