@@ -70,8 +70,8 @@ const (
 )
 
 var (
-	errHARedisBothClusterAndSentinel     = fmt.Errorf("settings 'ha_redis_cluster_mode_enabled' and 'ha_redis_sentinel_mode_enabled' are mutually exclusive")
-	errHARedisSentinelMasterNameRequired = fmt.Errorf("setting 'ha_redis_sentinel_master_name' is required when 'ha_redis_sentinel_mode_enabled' is true")
+	errHARedisBothClusterAndSentinel     = fmt.Errorf("'ha_redis_cluster_mode_enabled' and 'ha_redis_sentinel_mode_enabled' are mutually exclusive")
+	errHARedisSentinelMasterNameRequired = fmt.Errorf("'ha_redis_sentinel_master_name' is required when 'ha_redis_sentinel_mode_enabled' is true")
 )
 
 type UnifiedAlertingSettings struct {

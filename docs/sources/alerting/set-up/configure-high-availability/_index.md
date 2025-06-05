@@ -77,7 +77,7 @@ Memberlist is the preferred option for high availability. Use Redis only in envi
 
 1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
-1. Set `ha_redis_address` to the Redis server address(es) Grafana should connect to. It can be a single Redis address if using Redis standalone, or a list of comma-separated addresses if using Redis Cluster or Sentinel.
+1. Set `ha_redis_address` to the Redis server address or addresses Grafana should connect to. It can be a single Redis address if using Redis standalone, or a list of comma-separated addresses if using Redis Cluster or Sentinel.
 1. Optional: Set `ha_redis_cluster_mode_enabled` to `true` if you are using Redis Cluster.
 1. Optional: Set `ha_redis_sentinel_mode_enabled` to `true` if you are using Redis Sentinel. Also set `ha_redis_sentinel_master_name` to the Redis Sentinel master name.
 1. Optional: Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
