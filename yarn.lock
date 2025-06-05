@@ -2273,10 +2273,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.7.0":
+"@faker-js/faker@npm:^9.0.0":
   version: 9.7.0
   resolution: "@faker-js/faker@npm:9.7.0"
   checksum: 10/5167cc179bbf5f140b957f600af24772ca8c6e7e42405c312c25a6b4278b851b84bd8e3065f80e667dd4c35dd5aeb0ed490b0b1872f908d58ffae1cef9a5ef72
+  languageName: node
+  linkType: hard
+
+"@faker-js/faker@npm:^9.8.0":
+  version: 9.8.0
+  resolution: "@faker-js/faker@npm:9.8.0"
+  checksum: 10/d7d7940ba7f2bd0d266d507bb7a33ec5099654da624dc8647d7cfd2e908b75ba06ed7dd0ec3b771a18600a734f420370b3cecd1ee5d4799993b1ee3505f866d8
   languageName: node
   linkType: hard
 
@@ -2907,7 +2914,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
-    "@faker-js/faker": "npm:^9.7.0"
+    "@faker-js/faker": "npm:^9.8.0"
     "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
@@ -2927,8 +2934,8 @@ __metadata:
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.7.3"
   peerDependencies:
-    "@grafana/runtime": ^12.0.0-pre
-    "@grafana/ui": ^12.0.0-pre
+    "@grafana/runtime": ^11.6.2
+    "@grafana/ui": ^11.6.2
     "@reduxjs/toolkit": ^2.8.0
     msw: ^2.0.0
     react: ^18.0.0

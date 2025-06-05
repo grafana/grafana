@@ -21,6 +21,7 @@
   "types": "src/index.ts",
   "module": "src/index.ts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "import": "./src/index.ts",
       "require": "./src/index.ts"
@@ -40,16 +41,23 @@
     "types": "./dist/cjs/index.d.cts",
     "access": "public"
   },
+  "files": [
+    "./dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "./LICENSE_APACHE2"
+  ],
   "scripts": {
-    "compile": "tsc -p ./tsconfig.build.json",
-    "build": "yarn clean && yarn compile && yarn bundle",
-    "bundle": "rollup --config rollup.config.ts  --configPlugin esbuild",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
-    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz"
+    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.7.0",
+    "@faker-js/faker": "^9.8.0",
     "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
@@ -68,8 +76,8 @@
     "typescript": "5.7.3"
   },
   "peerDependencies": {
-    "@grafana/runtime": "^12.0.0-pre",
-    "@grafana/ui": "^12.0.0-pre",
+    "@grafana/runtime": "^11.6.2",
+    "@grafana/ui": "^11.6.2",
     "@reduxjs/toolkit": "^2.8.0",
     "msw": "^2.0.0",
     "react": "^18.0.0",
