@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Configurar",
       "draft-new-rule": "Elabore o rascunho de uma nova regra",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Verifique a configuração da origem de dados. A origem de dados suporta a API do Prometheus?",
         "title": "Não foi possível carregar as regras desta origem de dados"
       },
       "empty-data-source": "",
+      "error-button": "Erro",
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não existem mais resultados – {{numberOfRules}} regras encontradas",
@@ -2380,6 +2384,7 @@
         "new-badge": "Novidade!",
         "text": "Importar para as regras geridas pela Grafana"
       },
+      "loading-more-groups": "",
       "more": "Mais",
       "new-alert-rule": "Nova regra de alerta",
       "new-datasource-recording-rule": "Nova regra de gravação da origem de dados",

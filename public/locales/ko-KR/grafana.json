@@ -2354,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "구성",
       "draft-new-rule": "새 규칙 초안 작성",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
       "empty-data-source": "",
+      "error-button": "오류",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -2370,6 +2374,7 @@
         "new-badge": "새 기능!",
         "text": "Grafana 관리 규칙으로 가져오기"
       },
+      "loading-more-groups": "",
       "more": "더 보기",
       "new-alert-rule": "새 경고 규칙",
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",

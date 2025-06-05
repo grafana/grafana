@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurera",
       "draft-new-rule": "Skapa utkast till en ny regel",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Kontrollera datakällans konfiguration. Har datakällan stöd för Prometheus API?",
         "title": "Det gick inte att ladda reglerna från den här datakällan"
       },
       "empty-data-source": "",
+      "error-button": "Fel",
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -2380,6 +2384,7 @@
         "new-badge": "Nyhet!",
         "text": "Importera till Grafana-hanterade regler"
       },
+      "loading-more-groups": "",
       "more": "Mer",
       "new-alert-rule": "Ny varningsregel",
       "new-datasource-recording-rule": "Ny registreringsregel för datakälla",
