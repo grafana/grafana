@@ -19,7 +19,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	res, err := s.check(ctx, r)
 	if err != nil {
 		s.logger.Error("failed to perform check request", "error", err, "namespace", r.GetNamespace())
-		return nil, err
+		return nil, errors.New("failed to perform check request")
 	}
 
 	return res, nil
@@ -27,7 +27,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
-		return nil, fmt.Errorf("failed to authorize request: %w", err)
+		return nil, err
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())

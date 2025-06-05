@@ -18,7 +18,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	res, err := s.write(ctx, req)
 	if err != nil {
 		s.logger.Error("failed to perform write request", "error", err, "namespace", req.GetNamespace())
-		return nil, err
+		return nil, errors.New("failed to perform write request")
 	}
 
 	return res, nil
@@ -26,7 +26,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 
 func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
 	if err := authorize(ctx, req.GetNamespace()); err != nil {
-		return nil, fmt.Errorf("failed to authorize request: %w", err)
+		return nil, err
 	}
 
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)

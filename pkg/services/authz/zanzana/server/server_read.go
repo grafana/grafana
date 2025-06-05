@@ -18,7 +18,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	res, err := s.read(ctx, req)
 	if err != nil {
 		s.logger.Error("failed to perform read request", "error", err, "namespace", req.GetNamespace())
-		return nil, err
+		return nil, errors.New("failed to perform read request")
 	}
 
 	return res, nil
@@ -26,7 +26,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 
 func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	if err := authorize(ctx, req.GetNamespace()); err != nil {
-		return nil, fmt.Errorf("failed to authorize request: %w", err)
+		return nil, err
 	}
 
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)

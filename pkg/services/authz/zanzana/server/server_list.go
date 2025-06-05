@@ -22,7 +22,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	res, err := s.list(ctx, r)
 	if err != nil {
 		s.logger.Error("failed to perform list request", "error", err, "namespace", r.GetNamespace())
-		return nil, err
+		return nil, errors.New("failed to perform list request")
 	}
 
 	return res, nil
@@ -30,7 +30,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 
 func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
-		return nil, fmt.Errorf("failed to authorize request: %w", err)
+		return nil, err
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
