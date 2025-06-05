@@ -371,6 +371,10 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
 UPDATE alert_rule_version SET is_paused = false;`))
+
+	mg.AddMigration("alter table alert_rule_version alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_rule_version MODIFY rule_group_idx BIGINT;").
+		Postgres("ALTER TABLE alert_rule_version ALTER COLUMN rule_group_idx TYPE BIGINT;"))
 }
 
 func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {
