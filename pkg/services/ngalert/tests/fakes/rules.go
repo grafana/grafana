@@ -222,8 +222,8 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
 			continue
 		}
-		if q.ImportedPrometheusRule != nil {
-			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
+		if q.HasPrometheusRuleDefinition != nil {
+			if *q.HasPrometheusRuleDefinition != r.HasPrometheusRuleDefinition() {
 				continue
 			}
 		}

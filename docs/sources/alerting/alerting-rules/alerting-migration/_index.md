@@ -58,7 +58,7 @@ Plugin rules that have the label `__grafana_origin` are not included on alert ru
 
 ### Evaluation of imported rules
 
-The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. Sequential evaluation applies to rules only while they remain read‑only (displayed as "Provisioned"). If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana alert rules and are evaluated in parallel.
+The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This behavior is different from native Grafana-managed alert rules, where the evaluation order is not enforced.
 
 ## Import alert rules
 
