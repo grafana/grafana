@@ -85,7 +85,6 @@ describe('Tracks queries', () => {
       time_range_from: '2023-02-08T05:00:00.000Z',
       time_range_to: '2023-02-10T06:00:00.000Z',
       time_taken: 0,
-      predefined_operations_applied: 'n/a',
     });
   });
 
@@ -121,7 +120,6 @@ test('Tracks predefined operations', () => {
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
-    predefined_operations_applied: true,
   });
 });
 
@@ -150,7 +148,6 @@ test('Tracks grouped queries', () => {
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
-    predefined_operations_applied: 'n/a',
   });
 
   expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
@@ -175,7 +172,6 @@ test('Tracks grouped queries', () => {
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
-    predefined_operations_applied: 'n/a',
   });
 });
 
