@@ -2384,11 +2384,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Настроить",
       "draft-new-rule": "Составить новое правило",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Проверьте конфигурацию источника данных. Поддерживает ли источник данных API Prometheus?",
         "title": "Не удалось загрузить правила из этого источника данных"
       },
       "empty-data-source": "",
+      "error-button": "Ошибка",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -2400,6 +2404,7 @@
         "new-badge": "Новое",
         "text": "Импортировать в правила, управляемые Grafana"
       },
+      "loading-more-groups": "",
       "more": "Еще",
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",

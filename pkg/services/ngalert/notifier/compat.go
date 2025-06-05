@@ -139,6 +139,7 @@ func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplate
 		out = append(out, alertingTemplates.TemplateDefinition{
 			Name:     name,
 			Template: tmpl,
+			Kind:     alertingTemplates.GrafanaKind,
 		})
 	}
 	return out

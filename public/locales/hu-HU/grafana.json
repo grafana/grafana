@@ -2364,11 +2364,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurálás",
       "draft-new-rule": "Új szabály felvázolása",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Ellenőrizze az adatforrás konfigurációját. Támogatja az adatforrás a Prometheus API-t?",
         "title": "Nem lehet betölteni a szabályokat ebből az adatforrásból"
       },
       "empty-data-source": "",
+      "error-button": "Hiba",
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -2380,6 +2384,7 @@
         "new-badge": "Új!",
         "text": "Importálás a Grafana által felügyelt szabályokba"
       },
+      "loading-more-groups": "",
       "more": "Továbbiak",
       "new-alert-rule": "Új riasztási szabály",
       "new-datasource-recording-rule": "Új adatforrás-felvételkészítési szabály",
