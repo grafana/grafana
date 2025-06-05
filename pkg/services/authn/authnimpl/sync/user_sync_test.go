@@ -109,7 +109,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				return nil
 			}
 
-			// Always assert UserID and IsGrafanaAdmin (as it's the core of the change)
+			// Always assert UserID and IsGrafanaAdmin
 			assert.Equal(t, expectedCmd.UserID, cmd.UserID, "UpdateUserCommand UserID mismatch")
 			if expectedCmd.IsGrafanaAdmin != nil {
 				require.NotNil(t, cmd.IsGrafanaAdmin, "UpdateUserCommand IsGrafanaAdmin should not be nil if expected")
@@ -123,21 +123,18 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				assert.Empty(t, cmd.Login, "UpdateUserCommand Login should be empty for SCIM user")
 				assert.Empty(t, cmd.Email, "UpdateUserCommand Email should be empty for SCIM user")
 				assert.Empty(t, cmd.Name, "UpdateUserCommand Name should be empty for SCIM user")
-				// If email doesn't change, EmailVerified should not be touched.
-				// If IsGrafanaAdmin changes, it is possible EmailVerified might be reset IF email was also in the original dirty check,
-				// but the email value itself isn't applied. For simplicity, let's assume it's nil if email field in cmd is empty.
 				assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil for SCIM user if email not changing")
 			} else {
 				// For non-SCIM users, other attributes can be updated
 				assert.Equal(t, expectedCmd.Login, cmd.Login, "UpdateUserCommand Login mismatch for non-SCIM user")
 				assert.Equal(t, expectedCmd.Email, cmd.Email, "UpdateUserCommand Email mismatch for non-SCIM user")
 				assert.Equal(t, expectedCmd.Name, cmd.Name, "UpdateUserCommand Name mismatch for non-SCIM user")
-				if cmd.Email != "" && cmd.Email != originalUserEmail { // If email is part of the update and it's different
+				if cmd.Email != "" && cmd.Email != originalUserEmail {
 					require.NotNil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be set for non-SCIM user if email changes")
 					assert.False(t, *cmd.EmailVerified, "UpdateUserCommand EmailVerified should be false for non-SCIM user if email changes")
-				} else if cmd.Email != "" && cmd.Email == originalUserEmail { // Email in command but same as original
+				} else if cmd.Email != "" && cmd.Email == originalUserEmail {
 					assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil if email is same as original")
-				} else { // Email not in command
+				} else {
 					assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil if email is not changing")
 				}
 			}
@@ -178,23 +175,19 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		EmailVerified: false,
 	}
 
-	// AuthInfo service that finds a SCIM user by authID and externalUID
-	// We'll clone and customize UserId and ExternalUID per test case
 	authFakeBaseScimUser := func(userID int64, externalUID string) *authinfotest.FakeService {
 		return &authinfotest.FakeService{
 			ExpectedUserAuth: &login.UserAuth{
-				AuthModule:  "saml",                   // Matches identity.AuthenticatedBy
-				AuthId:      "id_from_saml_assertion", // Matches identity.AuthID
-				ExternalUID: externalUID,              // Must match identity.ExternalUID for SCIM path
+				AuthModule:  "saml",
+				AuthId:      "id_from_saml_assertion",
+				ExternalUID: externalUID,
 				UserId:      userID,
 			},
 			SetAuthInfoFn:    func(ctx context.Context, cmd *login.SetAuthInfoCommand) error { return nil },
 			UpdateAuthInfoFn: func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error { return nil },
 		}
 	}
-	// --- End of Setup for SCIM User Tests ---
 
-	// Helper to convert int64 to string for IDs in tests
 	int64ToStr := func(i int64) string {
 		return strconv.FormatInt(i, 10)
 	}
