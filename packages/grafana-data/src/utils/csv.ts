@@ -314,11 +314,8 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
           if (fields[j].type === FieldType.frame && v?.value) {
             v = v.value;
           }
-          if (v === null) {
-            csv += 'null';
-          } else {
-            csv += writers[j](v);
-          }
+
+          csv += v === null ? 'null' : writers[j](v);
         }
 
         if (i !== length - 1) {
