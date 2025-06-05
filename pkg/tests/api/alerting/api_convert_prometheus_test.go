@@ -113,18 +113,12 @@ func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		sourceDS := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -186,19 +180,12 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -398,19 +385,12 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create a user to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -485,19 +465,12 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -573,19 +546,12 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-		// Create users to make authenticated requests
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -687,18 +653,12 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		apiClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -789,19 +749,12 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
-		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+		grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create admin user
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		ds := adminClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
@@ -905,19 +858,12 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 			EnableUnifiedAlerting: true,
 			DisableAnonymous:      true,
 			AppModeProduction:     true,
-			EnableFeatureToggles:  []string{"grafanaManagedRecordingRulesDatasources"},
 			EnableRecordingRules:  true,
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
 
-		// Create users with different permissions
-		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       "password",
-			Login:          "admin",
-		})
-		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "password")
+		adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 		adminClient.prometheusConversionUseLokiPaths = enableLokiPaths
 
 		createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

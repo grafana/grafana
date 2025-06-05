@@ -896,6 +896,7 @@ func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
+		setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 		frames = append(frames, frame)
 	}
 	return frames, nil
@@ -973,6 +974,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model, 0)
+	setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 
 	return frame, nil
 }

@@ -62,11 +62,6 @@ var (
 		"alerting.recordingRulesNotEnabled",
 		errutil.WithPublicMessage("Cannot import recording rules: Feature not enabled."),
 	).Errorf("recording rules not enabled")
-
-	errRecordingRulesDatasourcesNotEnabled = errutil.ValidationFailed(
-		"alerting.recordingRulesDatasourcesNotEnabled",
-		errutil.WithPublicMessage("Cannot import recording rules: Configuration of target datasources not enabled."),
-	).Errorf("recording rules target datasources configuration not enabled")
 )
 
 func errInvalidHeaderValue(header string, err error) error {
@@ -163,8 +158,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          folderUIDs,
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -198,8 +193,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:          []string{namespace.UID},
-		ImportedPrometheusRule: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -256,8 +251,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -293,9 +288,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
-		RuleGroups:             []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		RuleGroups:                  []string{group},
 	}
 	groupsWithFolders, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -398,11 +393,6 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				if !srv.cfg.RecordingRules.Enabled {
 					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
 					return errorToResponse(errRecordingRulesNotEnabled)
-				}
-
-				if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-					logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
-					return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
 				}
 			}
 

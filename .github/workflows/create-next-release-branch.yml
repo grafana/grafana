@@ -42,10 +42,12 @@ jobs:
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: "[\"grafana\", \"grafana-enterprise\"]"
+          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
       - name: Create release branch
         id: branch
         uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]

@@ -14,7 +14,7 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  setPanelTitle,
+  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -115,7 +115,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onChangeName(name: string) {
-    setPanelTitle(this.panel, name);
+    editPanelTitleAction(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
@@ -123,10 +123,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public scrollIntoView() {
-    if (this.panel.parent instanceof AutoGridItem) {
-      this.panel.parent.scrollIntoView();
-    }
-    if (this.panel.parent instanceof DashboardGridItem) {
+    if (this.panel.parent instanceof AutoGridItem || this.panel.parent instanceof DashboardGridItem) {
       this.panel.parent.scrollIntoView();
     }
   }

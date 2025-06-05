@@ -46,7 +46,7 @@ func TestSetAlerting(t *testing.T) {
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			FiredAt:     mock.Now(),
+			FiredAt:     util.Pointer(mock.Now()),
 		},
 	}, {
 		name: "previous state is removed",
@@ -61,7 +61,7 @@ func TestSetAlerting(t *testing.T) {
 			State:    eval.Alerting,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			FiredAt:  mock.Now(),
+			FiredAt:  util.Pointer(mock.Now()),
 		},
 	}}
 
@@ -512,7 +512,7 @@ func TestNeedsSending(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay, tc.resolvedRetention))
+			assert.Equal(t, tc.expected, tc.testState.NeedsSending(evaluationTime, tc.resendDelay, tc.resolvedRetention))
 		})
 	}
 }

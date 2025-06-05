@@ -88,7 +88,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			}
 		}
 
-		if rule.ImportedFromPrometheus() {
+		if rule.ImportedPrometheusRule() {
 			orgsRulesPrometheusImported[rule.OrgID]++
 		}
 

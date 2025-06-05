@@ -134,7 +134,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       defaultValue={field.operator}
                       control={control}
                       name={`object_matchers.${index}.operator`}
-                      rules={{ required: { value: true, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: true,
+                          message: t('alerting.am-routes-expanded-form.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field

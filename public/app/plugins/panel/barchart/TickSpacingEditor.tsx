@@ -1,4 +1,5 @@
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Checkbox, HorizontalGroup, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 const GAPS_OPTIONS: Array<SelectableValue<number>> = [
@@ -25,6 +26,7 @@ const GAPS_OPTIONS: Array<SelectableValue<number>> = [
 ];
 
 export const TickSpacingEditor = (props: StandardEditorProps<number>) => {
+  const { t } = useTranslate();
   let value = props.value ?? 0;
   const isRTL = value < 0;
   if (isRTL) {
@@ -50,9 +52,15 @@ export const TickSpacingEditor = (props: StandardEditorProps<number>) => {
     <HorizontalGroup>
       <RadioButtonGroup value={gap.value} options={GAPS_OPTIONS} onChange={onSpacingChange} />
       {value !== 0 && (
-        <Tooltip content="Require space from the right side" placement="top">
+        <Tooltip
+          content={t(
+            'barchart.tick-spacing-editor.content-require-space-from-the-right-side',
+            'Require space from the right side'
+          )}
+          placement="top"
+        >
           <div>
-            <Checkbox value={isRTL} onChange={onRTLChange} label="RTL" />
+            <Checkbox value={isRTL} onChange={onRTLChange} label={t('barchart.tick-spacing-editor.label-rtl', 'RTL')} />
           </div>
         </Tooltip>
       )}

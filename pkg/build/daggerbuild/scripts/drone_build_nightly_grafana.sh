@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 local_dst="${DRONE_WORKSPACE}/dist"
 
@@ -37,7 +37,6 @@ dagger run --silent go run ./pkg/build/cmd \
   --github-token=${GITHUB_TOKEN} \
   --destination=${local_dst} \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" > assets.txt
 
