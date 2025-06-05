@@ -169,13 +169,14 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
   const editPane = dashboard.state.editPane;
   const { undoStack } = editPane.useState();
   const undoAction = undoStack[undoStack.length - 1];
+  const tooltip = undoAction ? `Undo '${undoAction.description}'` : 'Undo';
 
   return (
     <ToolbarButton
       icon="corner-up-left"
       disabled={undoStack.length === 0}
       onClick={() => editPane.undoAction()}
-      tooltip={undoAction?.description}
+      tooltip={tooltip}
     />
   );
 }
@@ -184,12 +185,13 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
   const editPane = dashboard.state.editPane;
   const { redoStack } = editPane.useState();
   const redoAction = redoStack[redoStack.length - 1];
+  const tooltip = redoAction ? `Redo '${redoAction?.description}'` : 'Redo';
 
   return (
     <ToolbarButton
       icon="corner-up-right"
       disabled={redoStack.length === 0}
-      tooltip={redoAction?.description}
+      tooltip={tooltip}
       onClick={() => editPane.redoAction()}
     />
   );
