@@ -151,6 +151,7 @@ export const LogsPanel = ({
     logLineMenuCustomItems,
     enableInfiniteScrolling,
     onNewLogsReceived,
+    fontSize,
     ...options
   },
   id,
@@ -535,6 +536,7 @@ export const LogsPanel = ({
               dedupStrategy={dedupStrategy}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
+              fontSize={fontSize}
               getFieldLinks={getFieldLinks}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
