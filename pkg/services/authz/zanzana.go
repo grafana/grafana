@@ -37,7 +37,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 		return zanzana.NewNoopClient(), nil
 	}
 
-	logger := log.New("zanzana")
+	logger := log.New("zanzana.server")
 
 	var client zanzana.Client
 	switch cfg.ZanzanaClient.Mode {
@@ -83,7 +83,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features 
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store, logger)
+		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -131,7 +131,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	s := &Zanzana{
 		cfg:      cfg,
 		features: features,
-		logger:   log.New("zanzana"),
+		logger:   log.New("zanzana.server"),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -167,7 +167,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store, z.logger)
+	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
