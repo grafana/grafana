@@ -179,4 +179,23 @@ describe('DataFrame to CSV', () => {
       1589455688623,1234"
     `);
   });
+
+  it('should handle null values', () => {
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'Time', values: [1589455688623] },
+        {
+          name: 'Value',
+          type: FieldType.other,
+          values: [null],
+        },
+      ],
+    });
+
+    const csv = toCSV([dataFrame]);
+    expect(csv).toMatchInlineSnapshot(`
+      ""Time","Value"
+      1589455688623,null"
+    `);
+  });
 });
