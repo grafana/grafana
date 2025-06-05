@@ -6,39 +6,17 @@ import type { ContactPoint } from '../../../api/v0alpha1/types';
 import { useListContactPointsv0alpha1 } from '../../hooks/useContactPoints';
 import { getContactPointDescription } from '../../utils';
 
+import { CustomComboBoxProps } from './ComboBox.types';
+
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-interface BaseContactPointSelectorProps {
-  id?: string;
-  placeholder?: string;
-  width?: number | 'auto';
-  value?: string;
-}
-
-type ClearableProps = {
-  isClearable: true;
-  onChange: (contactPoint: ContactPoint | null) => void;
-};
-
-type NonClearableProps = {
-  isClearable?: false;
-  onChange: (contactPoint: ContactPoint) => void;
-};
-
-type ContactPointSelectorProps = BaseContactPointSelectorProps & (ClearableProps | NonClearableProps);
+export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint>;
 
 /**
  * Contact Point Combobox which lists all available contact points
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
-function ContactPointSelector({
-  onChange,
-  id,
-  width = 'auto',
-  isClearable = false,
-  value,
-  placeholder,
-}: ContactPointSelectorProps) {
+function ContactPointSelector(props: ContactPointSelectorProps) {
   const { currentData: contactPoints, isLoading } = useListContactPointsv0alpha1();
 
   // Create a mapping of options with their corresponding contact points
@@ -58,31 +36,22 @@ function ContactPointSelector({
   const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
 
   const handleChange = (selectedOption: ComboboxOption<string> | null) => {
-    if (!selectedOption) {
-      onChange(null as any); // sadly yes, we need this type-cast for TypeScript to not complain here
+    if (selectedOption == null && props.isClearable) {
+      props.onChange(null);
       return;
     }
 
-    const selectedItem = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
-    if (!selectedItem) {
-      return;
-    }
+    if (selectedOption) {
+      const selectedItem = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
+      if (!selectedItem) {
+        return;
+      }
 
-    onChange(selectedItem.contactPoint);
+      props.onChange(selectedItem.contactPoint);
+    }
   };
 
-  return (
-    <Combobox
-      placeholder={placeholder}
-      loading={isLoading}
-      onChange={handleChange}
-      options={options}
-      isClearable={isClearable}
-      id={id}
-      width={width === 'auto' ? undefined : width}
-      value={value}
-    />
-  );
+  return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { ContactPointSelector };
