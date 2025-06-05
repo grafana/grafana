@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/Bose/minisentinel"
 	"os"
 	"testing"
 	"time"
@@ -46,28 +47,21 @@ func TestNewRedisPeerClusterMode(t *testing.T) {
 }
 
 func TestNewRedisPeerSentinelMode(t *testing.T) {
-	// Write client and server certificates/keys to tempDir, both issued by the same CA
-	certPaths := createX509TestDir(t)
-
-	// Set up tls.Config and start miniredis with server-side TLS
-	x509Cert, err := tls.LoadX509KeyPair(certPaths.serverCert, certPaths.serverKey)
-	require.NoError(t, err)
-
-	mr, err := miniredis.RunTLS(&tls.Config{
-		Certificates: []tls.Certificate{x509Cert},
-		ClientAuth:   tls.NoClientCert,
-	})
+	// Can't use RunTLS here because minisentinel does not support TLS.
+	mr, err := miniredis.Run()
 	require.NoError(t, err)
 	defer mr.Close()
 
+	ms := minisentinel.NewSentinel(mr, minisentinel.WithReplica(mr))
+	err = ms.Start()
+	require.NoError(t, err)
+	defer ms.Close()
+
 	redisPeer, err := newRedisPeer(redisConfig{
 		sentinelMode: true,
-		addr:         mr.Addr(),
-		tlsEnabled:   true,
-		tls: dstls.ClientConfig{
-			CAPath:     certPaths.ca,
-			ServerName: "localhost",
-		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
+		masterName:   ms.MasterInfo().Name,
+		addr:         ms.Addr(),
+	}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
 	ping := redisPeer.redis.Ping(context.Background())
