@@ -110,7 +110,7 @@ export const TimePickerFooter = (props: Props) => {
               aria-controls={fiscalYearSettingsId}
             />
           </TabsBar>
-          <TabContent>
+          <TabContent className={style.noBackground}>
             {editMode === 'tz' ? (
               <section
                 role="tabpanel"
@@ -182,6 +182,9 @@ const getStyle = (theme: GrafanaTheme2) => ({
   }),
   timeSettingContainer: css({
     paddingTop: theme.spacing(1),
+  }),
+  noBackground: css({
+    background: 'inherit',
   }),
   fiscalYearField: css({
     marginBottom: 0,
