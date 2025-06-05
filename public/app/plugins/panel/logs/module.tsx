@@ -57,21 +57,28 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       });
 
     if (config.featureToggles.newLogsPanel) {
-      builder.addRadio({
-        path: 'fontSize',
-        name: 'Font size',
-        description: '',
-        settings: {
-          options: [
-            { value: 'default', label: 'Default' },
-            {
-              value: 'small',
-              label: 'Small',
-            },
-          ],
-        },
-        defaultValue: 'default',
-      });
+      builder
+        .addBooleanSwitch({
+          path: 'showControls',
+          name: 'Show controls',
+          description: 'Display controls to jump to the last or first log line, and filters by log level',
+          defaultValue: false,
+        })
+        .addRadio({
+          path: 'fontSize',
+          name: 'Font size',
+          description: '',
+          settings: {
+            options: [
+              { value: 'default', label: 'Default' },
+              {
+                value: 'small',
+                label: 'Small',
+              },
+            ],
+          },
+          defaultValue: 'default',
+        });
     }
 
     builder
