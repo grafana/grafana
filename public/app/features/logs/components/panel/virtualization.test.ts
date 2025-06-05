@@ -4,7 +4,14 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../__mocks__/logRow';
 
 import { LogListModel } from './processing';
-import { getLineHeight, getLogLineSize, init, measureTextWidth, getTruncationLineCount, DisplayOptions } from './virtualization';
+import {
+  getLineHeight,
+  getLogLineSize,
+  init,
+  measureTextWidth,
+  getTruncationLineCount,
+  DisplayOptions,
+} from './virtualization';
 
 const PADDING_BOTTOM = 6;
 const LINE_HEIGHT = getLineHeight();
@@ -61,13 +68,7 @@ describe('Virtualization', () => {
     });
 
     test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
-      const size = getLogLineSize(
-        [log],
-        container,
-        [],
-        { wrap: true, showTime, showDuplicates: false, hasLogsWithErrors: false, hasSampledLogs: false },
-        0
-      );
+      const size = getLogLineSize([log], container, [], { ...defaultOptions, wrap: true, showTime }, 0);
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
@@ -146,6 +147,35 @@ describe('Virtualization', () => {
       log.collapsed = false;
       const size = getLogLineSize([log], container, [], { ...defaultOptions, wrap: true }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
+    });
+  });
+
+  describe('With small font size', () => {
+    beforeEach(() => {
+      init(createTheme(), 'small');
+      LETTER_WIDTH = measureTextWidth('e');
+      TWO_LINES_OF_CHARACTERS = (CONTAINER_SIZE / LETTER_WIDTH) * 1.5;
+    });
+
+    test('Measures a multi-line log line with displayed fields', () => {
+      const SMALL_LINE_HEIGHT = getLineHeight();
+      const SMALL_THREE_LINES_HEIGHT = 3 * SMALL_LINE_HEIGHT + PADDING_BOTTOM;
+
+      log = createLogLine({
+        labels: { place: 'very very long value for the displayed field that causes a new line' },
+        entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
+        logLevel: undefined,
+      });
+
+      const size = getLogLineSize(
+        [log],
+        container,
+        ['place', LOG_LINE_BODY_FIELD_NAME],
+        { ...defaultOptions, wrap: true },
+        0
+      );
+      // Two lines for the log and one extra for the displayed fields
+      expect(size).toBe(SMALL_THREE_LINES_HEIGHT);
     });
   });
 });
