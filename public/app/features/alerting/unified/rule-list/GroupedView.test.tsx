@@ -20,6 +20,9 @@ grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 setupMswServer();
 
+// increase timeout for this test file, it's a rather slow one since we're testing with a _lot_ of DOM data
+jest.setTimeout(60 * 1000);
+
 const mimirGroups = alertingFactory.prometheus.group.buildList(500, { file: 'test-mimir-namespace' });
 alertingFactory.prometheus.group.rewindSequence();
 const prometheusGroups = alertingFactory.prometheus.group.buildList(130, { file: 'test-prometheus-namespace' });
@@ -64,7 +67,7 @@ describe('RuleList - GroupedView', () => {
     const mimirNamespace = await ui.namespace(/test-mimir-namespace/).find(mimirSection);
     const firstPageGroups = await ui.group(/test-group-([1-9]|[1-3][0-9]|40)/).findAll(mimirNamespace);
 
-    expect(firstPageGroups).toHaveLength(40);
+    expect(firstPageGroups).toHaveLength(DATA_SOURCE_GROUP_PAGE_SIZE);
     expect(firstPageGroups[0]).toHaveTextContent('test-group-1');
     expect(firstPageGroups[24]).toHaveTextContent('test-group-25');
     expect(firstPageGroups[39]).toHaveTextContent('test-group-40');
