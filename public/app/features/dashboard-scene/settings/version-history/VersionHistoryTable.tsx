@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,7 +22,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
   const { t } = useTranslate();
   return (
     <div className={styles.margin}>
-      <table className="filter-table">
+      <table className={cx('filter-table', styles.table)}>
         <thead>
           <tr>
             <th className="width-4"></th>
@@ -105,6 +105,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     margin: css({
       marginBottom: theme.spacing(4),
+    }),
+    table: css({
+      td: {
+        whiteSpace: 'normal !important',
+      },
     }),
   };
 }
