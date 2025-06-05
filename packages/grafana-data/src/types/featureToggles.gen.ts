@@ -802,11 +802,6 @@ export interface FeatureToggles {
   */
   unifiedHistory?: boolean;
   /**
-  * Defaults to using the Loki `/labels` API instead of `/series`
-  * @default true
-  */
-  lokiLabelNamesQueryApi?: boolean;
-  /**
   * Enable the investigations backend API
   * @default false
   */

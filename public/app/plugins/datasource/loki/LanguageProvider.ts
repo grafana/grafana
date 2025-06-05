@@ -149,7 +149,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
     // We'll default to use `/labels`. If the flag is disabled, and there's a streamSelector, we'll use the series endpoint.
-    if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
+    if (!options?.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
       const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });

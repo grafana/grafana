@@ -1984,7 +1984,8 @@
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-12-13T14:31:41Z"
+        "creationTimestamp": "2024-12-13T14:31:41Z",
+        "deletionTimestamp": "2025-06-05T07:41:51Z"
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
