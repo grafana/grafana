@@ -57,7 +57,6 @@
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.8.0",
     "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
@@ -84,6 +83,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.8.0",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21"
   }
