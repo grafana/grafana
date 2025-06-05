@@ -5,7 +5,7 @@ import * as React from 'react';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
-import { PopoverContent } from '../Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

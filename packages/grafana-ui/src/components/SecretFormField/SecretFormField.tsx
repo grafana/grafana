@@ -8,7 +8,7 @@ import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Field } from '../Forms/Field';
 import { SecretInput } from '../SecretInput';
-import { PopoverContent } from '../Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
