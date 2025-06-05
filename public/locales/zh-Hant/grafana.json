@@ -2354,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "設定",
       "draft-new-rule": "撰寫新規則",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "檢查資料來源設定。資料來源是否支援 Prometheus API？",
         "title": "無法從此資料來源載入規則"
       },
       "empty-data-source": "",
+      "error-button": "錯誤",
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -2370,6 +2374,7 @@
         "new-badge": "全新！",
         "text": "匯入至 Grafana 管理的規則"
       },
+      "loading-more-groups": "",
       "more": "更多",
       "new-alert-rule": "新的警報規則",
       "new-datasource-recording-rule": "新的資料來源錄製規則",

@@ -2354,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurasikan",
       "draft-new-rule": "Buat draf aturan baru",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Periksa konfigurasi sumber data. Apakah sumber data mendukung API Prometheus?",
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
       "empty-data-source": "",
+      "error-button": "Kesalahan",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -2370,6 +2374,7 @@
         "new-badge": "Baru!",
         "text": "Impor ke aturan yang dikelola Grafana"
       },
+      "loading-more-groups": "",
       "more": "Lebih banyak",
       "new-alert-rule": "Aturan peringatan baru",
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",

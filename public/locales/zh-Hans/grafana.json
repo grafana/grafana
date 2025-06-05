@@ -2354,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "配置",
       "draft-new-rule": "起草新规则",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "检查数据源配置。数据源是否支持 Prometheus API？",
         "title": "无法从此数据源加载规则"
       },
       "empty-data-source": "",
+      "error-button": "错误",
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -2370,6 +2374,7 @@
         "new-badge": "全新！",
         "text": "导入到 Grafana 管理的规则"
       },
+      "loading-more-groups": "",
       "more": "更多",
       "new-alert-rule": "新建警报规则",
       "new-datasource-recording-rule": "新的数据源录制规则",

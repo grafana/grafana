@@ -2354,11 +2354,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "構成",
       "draft-new-rule": "新しいルールの下書きを作成",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "データソースの設定を確認してください。データソースはPrometheus APIをサポートしていますか？",
         "title": "このデータソースからルールを読み込めません"
       },
       "empty-data-source": "",
+      "error-button": "エラー",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -2370,6 +2374,7 @@
         "new-badge": "新登場！",
         "text": "Grafana管理ルールにインポート"
       },
+      "loading-more-groups": "",
       "more": "その他",
       "new-alert-rule": "新しいアラートルール",
       "new-datasource-recording-rule": "新しいデータソース記録ルール",

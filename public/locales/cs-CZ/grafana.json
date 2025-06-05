@@ -2384,11 +2384,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurovat",
       "draft-new-rule": "Navrhnout nové pravidlo",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Zkontrolujte konfiguraci zdroje dat. Podporuje zdroj dat Prometheus API?",
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
       },
       "empty-data-source": "",
+      "error-button": "Chyba",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -2400,6 +2404,7 @@
         "new-badge": "Nové!",
         "text": "Importovat do pravidel spravovaných Grafanou"
       },
+      "loading-more-groups": "",
       "more": "Další",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
