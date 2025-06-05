@@ -27,7 +27,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
-		s.logger.Error("failed to authorize request", "error", err)
 		return nil, fmt.Errorf("failed to authorize request: %w", err)
 	}
 
