@@ -8,8 +8,6 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/Condi
 import { AutoGridItem } from './AutoGridItem';
 
 export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[] {
-  const repeatByVariableSelectId = 'repeat-by-variable-select';
-
   const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.auto-grid.item-options.repeat.title', 'Repeat options'),
     id: 'repeat-options',
@@ -17,12 +15,12 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
   }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.auto-grid.item-options.repeat.variable.title', 'Repeat by variable'),
-      id: repeatByVariableSelectId,
+      id: 'repeat-by-variable-select',
       description: t(
         'dashboard.auto-grid.item-options.repeat.variable.description',
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
       ),
-      render: () => <RepeatByOption id={repeatByVariableSelectId} item={model} />,
+      render: (descriptor) => <RepeatByOption id={descriptor.props.id} item={model} />,
     })
   );
 

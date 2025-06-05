@@ -10,7 +10,6 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { DashboardGridItem } from './DashboardGridItem';
 
 export function getDashboardGridItemOptions(gridItem: DashboardGridItem): OptionsPaneCategoryDescriptor[] {
-  const repeatByVariableSelectId = 'repeat-by-variable-select';
   const repeatCategory = new OptionsPaneCategoryDescriptor({
     title: t('dashboard.default-layout.item-options.repeat.title', 'Repeat options'),
     id: 'Repeat options',
@@ -19,12 +18,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
-        id: repeatByVariableSelectId,
+        id: 'repeat-by-variable-select',
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
         ),
-        render: () => <RepeatByOption id={repeatByVariableSelectId} gridItem={gridItem} />,
+        render: (descriptor) => <RepeatByOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     )
     .addItem(

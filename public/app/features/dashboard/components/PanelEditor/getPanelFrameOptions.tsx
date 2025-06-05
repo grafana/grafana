@@ -36,23 +36,18 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }
   };
 
-  const panelTitleInputId = 'PanelFrameTitle';
-  const panelDescriptionTextAreaId = 'description-text-area';
-  const panelTransparentToggleId = 'transparent-background';
-  const repeatByVariableSelectId = 'repeat-by-variable-select';
-
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-panel-frame-category.title.title', 'Title'),
-        id: panelTitleInputId,
+        id: 'PanelFrameTitle',
         value: panel.title,
         popularRank: 1,
-        render: function renderTitle() {
+        render: function renderTitle(descriptor) {
           return (
             <Input
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-              id={panelTitleInputId}
+              id={descriptor.props.id}
               defaultValue={panel.title}
               onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
             />
@@ -70,14 +65,14 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-panel-frame-category.title.description', 'Description'),
-        id: panelDescriptionTextAreaId,
+        id: 'description-text-area',
         description: panel.description,
         value: panel.description,
-        render: function renderDescription() {
+        render: function renderDescription(descriptor) {
           return (
             <TextArea
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
-              id={panelDescriptionTextAreaId}
+              id={descriptor.props.id}
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
@@ -91,13 +86,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.get-panel-frame-category.title.transparent-background', 'Transparent background'),
-        id: panelTransparentToggleId,
-        render: function renderTransparent() {
+        id: 'transparent-background',
+        render: function renderTransparent(descriptor) {
           return (
             <Switch
               data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Transparent background')}
               value={panel.transparent}
-              id={panelTransparentToggleId}
+              id={descriptor.props.id}
               onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
             />
           );
@@ -135,13 +130,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.get-panel-frame-category.title.repeat-by-variable', 'Repeat by variable'),
-            id: repeatByVariableSelectId,
+            id: 'repeat-by-variable-select',
             description:
               'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-            render: function renderRepeatOptions() {
+            render: function renderRepeatOptions(descriptor) {
               return (
                 <RepeatRowSelect
-                  id={repeatByVariableSelectId}
+                  id={descriptor.props.id}
                   repeat={panel.repeat}
                   onChange={(value?: string) => {
                     onPanelConfigChange('repeat', value);

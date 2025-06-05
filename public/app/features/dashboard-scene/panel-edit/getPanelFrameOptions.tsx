@@ -32,19 +32,16 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
   const links = panelLinksObject?.state.rawLinks ?? [];
   const dashboard = getDashboardSceneFor(panel);
   const layoutElement = panel.parent!;
-  const panelTitleInputId = 'PanelFrameTitle';
-  const panelDescriptionTextAreaId = 'description-text-area';
-  const panelTransparentToggleId = 'transparent-background';
 
   descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.title', 'Title'),
-        id: panelTitleInputId,
+        id: 'PanelFrameTitle',
         value: panel.state.title,
         popularRank: 1,
-        render: function renderTitle() {
-          return <PanelFrameTitleInput id={panelTitleInputId} panel={panel} />;
+        render: function renderTitle(descriptor) {
+          return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
@@ -58,10 +55,10 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
-        id: panelDescriptionTextAreaId,
+        id: 'description-text-area',
         value: panel.state.description,
-        render: function renderDescription() {
-          return <PanelDescriptionTextArea id={panelDescriptionTextAreaId} panel={panel} />;
+        render: function renderDescription(descriptor) {
+          return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
@@ -74,9 +71,9 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
-        id: panelTransparentToggleId,
-        render: function renderTransparent() {
-          return <PanelBackgroundSwitch id={panelTransparentToggleId} panel={panel} />;
+        id: 'transparent-background',
+        render: function renderTransparent(descriptor) {
+          return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
       })
     )
