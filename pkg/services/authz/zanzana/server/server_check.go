@@ -16,6 +16,16 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
 
+	res, err := s.check(ctx, r)
+	if err != nil {
+		s.logger.Error("failed to perform check request", "error", err, "namespace", r.GetNamespace())
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
 		s.logger.Error("failed to authorize request", "error", err)
 		return nil, fmt.Errorf("failed to authorize request: %w", err)
@@ -23,7 +33,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
 	if err != nil {
-		s.logger.Error("failed to get openfga store", "error", err)
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
@@ -31,14 +40,12 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	contextuals, err := s.getContextuals(r.GetSubject())
 	if err != nil {
-		s.logger.Error("failed to get contextual tuples", "error", err, "namespace", r.GetNamespace())
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
 
 	resource := common.NewResourceInfoFromCheck(r)
 	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	if err != nil {
-		s.logger.Error("failed to check group resource", "error", err, "namespace", r.GetNamespace())
 		return nil, fmt.Errorf("failed to check group resource: %w", err)
 	}
 
@@ -49,7 +56,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	if resource.IsGeneric() {
 		res, err = s.checkGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 		if err != nil {
-			s.logger.Error("failed to check generic resource", "error", err, "namespace", r.GetNamespace())
 			return nil, fmt.Errorf("failed to check generic resource: %w", err)
 		}
 		return res, nil
@@ -57,7 +63,6 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	res, err = s.checkTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	if err != nil {
-		s.logger.Error("failed to check typed resource", "error", err, "namespace", r.GetNamespace())
 		return nil, fmt.Errorf("failed to check typed resource: %w", err)
 	}
 	return res, nil
