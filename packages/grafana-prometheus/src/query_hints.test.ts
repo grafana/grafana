@@ -55,7 +55,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'counter' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'counter' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
@@ -213,7 +213,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'histogram' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
@@ -234,7 +234,7 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const mock: unknown = { languageProvider: { retrieveMetricsMetadata: () => ({ foo: { type: 'histogram' } }) } };
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints(queryWithNativeHistogramFunction, series, datasource);

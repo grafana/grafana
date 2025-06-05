@@ -38,10 +38,10 @@ export interface DataProviderParams {
 export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
-  readonly getSeriesLabels: typeof this.languageProvider.getSeriesLabels;
-  readonly getSeriesValues: typeof this.languageProvider.getSeriesValues;
-  readonly getAllLabelNames: typeof this.languageProvider.getLabelKeys;
-  readonly getLabelValues: typeof this.languageProvider.getLabelValues;
+  readonly getSeriesLabels: typeof this.languageProvider.queryLabelKeys;
+  readonly getSeriesValues: typeof this.languageProvider.queryLabelValues;
+  readonly getAllLabelNames: typeof this.languageProvider.retrieveLabelKeys;
+  readonly getLabelValues: typeof this.languageProvider.queryLabelValues;
   readonly metricNamesSuggestionLimit: number;
   /**
    * The text that's been typed so far within the current {@link Monaco.Range | Range}.
@@ -58,10 +58,10 @@ export class DataProvider {
     this.inputInRange = '';
     this.metricNamesSuggestionLimit = this.languageProvider.datasource.metricNamesAutocompleteSuggestionLimit;
     this.suggestionsIncomplete = false;
-    this.getSeriesLabels = this.languageProvider.getSeriesLabels.bind(this.languageProvider);
-    this.getSeriesValues = this.languageProvider.getSeriesValues.bind(this.languageProvider);
-    this.getAllLabelNames = this.languageProvider.getLabelKeys.bind(this.languageProvider);
-    this.getLabelValues = this.languageProvider.getLabelValues.bind(this.languageProvider);
+    this.getSeriesLabels = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
+    this.getSeriesValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
+    this.getAllLabelNames = this.languageProvider.retrieveLabelKeys.bind(this.languageProvider);
+    this.getLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
   }
 
   getHistory(): string[] {
@@ -69,11 +69,11 @@ export class DataProvider {
   }
 
   getAllMetricNames(): string[] {
-    return this.languageProvider.metrics;
+    return this.languageProvider.retrieveMetrics();
   }
 
   metricNamesToMetrics(metricNames: string[]): Metric[] {
-    const { metricsMetadata } = this.languageProvider;
+    const metricsMetadata = this.languageProvider.retrieveMetricsMetadata();
     const result: Metric[] = metricNames.map((m) => {
       const metaItem = metricsMetadata?.[m];
       return {
