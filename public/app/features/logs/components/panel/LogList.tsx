@@ -10,6 +10,7 @@ import {
   DataFrame,
   EventBus,
   EventBusSrv,
+  GrafanaTheme2,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -242,7 +243,7 @@ const LogListComponent = ({
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
-  const styles = getStyles(dimensions, { showTime });
+  const styles = getStyles(dimensions, { showTime }, theme);
   const widthContainer = wrapperRef.current ?? containerElement;
 
   const debouncedResetAfterIndex = useMemo(() => {
@@ -407,7 +408,7 @@ const LogListComponent = ({
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
+function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }, theme: GrafanaTheme2) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
@@ -418,6 +419,8 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
     }),
     logListContainer: css({
       display: 'flex',
+      // Minimum width to prevent rendering issues and a sausage-like logs panel.
+      minWidth: theme.spacing(35),
     }),
     logListWrapper: css({
       width: '100%',
