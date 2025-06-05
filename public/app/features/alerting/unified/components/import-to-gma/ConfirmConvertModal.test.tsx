@@ -2,7 +2,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 
-import { filterRulerRulesConfig } from './ConfirmConvertModal';
+import { SYNTHETICS_RULE_NAMES, filterRulerRulesConfig } from './ConfirmConvertModal';
 
 describe('filterRulerRulesConfig', () => {
   const mockRulesConfig: RulerRulesConfigDTO = {
@@ -32,6 +32,13 @@ describe('filterRulerRulesConfig', () => {
           {
             alert: 'Alert3',
             expr: 'error == 1',
+          },
+          {
+            alert: SYNTHETICS_RULE_NAMES[0],
+            expr: 'error == 1',
+            labels: {
+              namespace: 'synthetic_monitoring',
+            },
           },
         ],
       },
@@ -183,5 +190,47 @@ describe('filterRulerRulesConfig', () => {
 
     expect(filteredConfig).toEqual({});
     expect(someRulesAreSkipped).toBe(false);
+  });
+
+  it('should filter out synthetics rules', () => {
+    const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig);
+
+    expect(filteredConfig).toEqual({
+      namespace1: [
+        {
+          name: 'group1',
+          rules: [
+            {
+              alert: 'Alert1',
+              expr: 'up == 0',
+              labels: {
+                severity: 'warning',
+              },
+            },
+          ],
+        },
+        {
+          name: 'group2',
+          rules: [
+            {
+              alert: 'Alert3',
+              expr: 'error == 1',
+            },
+          ],
+        },
+      ],
+      namespace2: [
+        {
+          name: 'group3',
+          rules: [
+            {
+              alert: 'Alert4',
+              expr: 'test == 0',
+            },
+          ],
+        },
+      ],
+    });
+    expect(someRulesAreSkipped).toBe(true);
   });
 });
