@@ -2384,11 +2384,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfiguruj",
       "draft-new-rule": "Zaprojektuj nową regułę",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
       "empty-data-source": "",
+      "error-button": "Błąd",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -2400,6 +2404,7 @@
         "new-badge": "Nowość!",
         "text": "Importuj do reguł zarządzanych przez usługę Grafana"
       },
+      "loading-more-groups": "",
       "more": "Więcej",
       "new-alert-rule": "Nowa reguła alertu",
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
