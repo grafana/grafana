@@ -1,6 +1,6 @@
 import { FormEvent } from 'react';
 
-import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n/internal';
 
 import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
@@ -21,7 +21,7 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
     keeper: subject.spec.keeper,
     uid: subject.metadata.uid,
     status: subject.status?.phase ?? SecretStatusPhase.Succeeded,
-    created: dateTimeFormatTimeAgo(subject.metadata.creationTimestamp),
+    created: dateTimeFormat(subject.metadata.creationTimestamp),
     createdBy: subject.metadata.annotations?.['grafana.app/createdBy'],
     modified: dateTimeFormat(subject.metadata.creationTimestamp),
     modifiedBy: subject.metadata.annotations?.['grafana.app/updatedBy'],

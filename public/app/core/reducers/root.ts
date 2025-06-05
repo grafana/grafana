@@ -34,7 +34,7 @@ import { playlistAPI } from '../../api/clients/playlist';
 import { provisioningAPI } from '../../api/clients/provisioning';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { userPreferencesAPI } from '../../features/preferences/api';
-import { secretsManagementApi } from '../../features/secrets-management/api/secretsManagementApi';
+import { secretsManagementApi } from '../../features/secrets-management/api';
 import { cleanUpAction } from '../actions/cleanUp';
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
