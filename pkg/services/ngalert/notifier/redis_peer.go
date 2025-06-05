@@ -23,14 +23,18 @@ import (
 )
 
 type redisConfig struct {
-	addr        string
-	username    string
-	password    string
-	db          int
-	name        string
-	prefix      string
-	maxConns    int
-	clusterMode bool
+	addr             string
+	username         string
+	password         string
+	db               int
+	name             string
+	prefix           string
+	maxConns         int
+	clusterMode      bool
+	sentinelMode     bool
+	masterName       string
+	sentinelUsername string
+	sentinelPassword string
 
 	tlsEnabled bool
 	tls        dstls.ClientConfig
@@ -111,21 +115,19 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		}
 	}
 
-	opts := &redis.UniversalOptions{
+	rdb := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs:     addrs,
 		Username:  cfg.username,
 		Password:  cfg.password,
 		DB:        cfg.db,
 		PoolSize:  poolSize,
 		TLSConfig: tlsClientConfig,
-	}
 
-	var rdb redis.UniversalClient
-	if cfg.clusterMode {
-		rdb = redis.NewClusterClient(opts.Cluster())
-	} else {
-		rdb = redis.NewClient(opts.Simple())
-	}
+		// Options specific to Sentinel mode.
+		MasterName:       cfg.masterName,
+		SentinelUsername: cfg.sentinelUsername,
+		SentinelPassword: cfg.sentinelPassword,
+	})
 
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
