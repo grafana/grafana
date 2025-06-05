@@ -12,6 +12,7 @@ import { getLogRowStyles } from '../getLogRowStyles';
 
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
+import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 interface Props {
   containerElement: HTMLDivElement;
@@ -51,13 +52,17 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
     onResize();
   }, [onResize, setDetailsWidth]);
 
+  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
   return (
     <Resizable
       onResize={handleResize}
       handleClasses={{ left: dragStyles.dragHandleVertical }}
       defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
+      size={{ width: detailsWidth }}
       enable={{ left: true }}
       minWidth={40}
+      maxWidth={maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
         <IconButton

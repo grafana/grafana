@@ -14,6 +14,8 @@ let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
 const iconWidth = 24;
 
+export const LOG_LIST_MIN_WIDTH = 35 * gridSize;
+
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;
 

@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -28,6 +29,7 @@ import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as downl
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
+import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
@@ -225,6 +227,7 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -290,6 +293,17 @@ export const LogListContextProvider = ({
       setShowDetails(newShowDetails);
     }
   }, [logs, showDetails]);
+
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
+    }, 50);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [containerElement, logOptionsStorageKey]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -436,18 +450,23 @@ export const LogListContextProvider = ({
 
   const setDetailsWidth = useCallback(
     (width: number) => {
-      if (!logOptionsStorageKey) {
+      if (!logOptionsStorageKey || !containerElement) {
         return;
       }
+
+      const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+      if (width > maxWidth) {
+        return;
+      }
+
       store.set(`${logOptionsStorageKey}.detailsWidth`, width);
+      setDetailsWidthState(width);
     },
-    [logOptionsStorageKey]
+    [containerElement, logOptionsStorageKey]
   );
 
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
-
-  const detailsWidth = getDetailsWidth(containerElement, logOptionsStorageKey);
 
   return (
     <LogListContext.Provider
@@ -526,18 +545,24 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
-function getDetailsWidth(containerElement: HTMLDivElement | undefined, logOptionsStorageKey?: string) {
+function getDetailsWidth(
+  containerElement: HTMLDivElement | undefined,
+  logOptionsStorageKey?: string,
+  currentWidth?: number
+) {
   if (!containerElement) {
     return 0;
   }
   const defaultWidth = containerElement.clientWidth * 0.4;
-  const detailsWidth = logOptionsStorageKey
-    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
-    : defaultWidth;
+  const detailsWidth =
+    currentWidth ||
+    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+
+  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
   // The user might have resized the screen.
-  if (detailsWidth >= containerElement.clientWidth) {
-    return defaultWidth;
+  if (detailsWidth >= containerElement.clientWidth || detailsWidth > maxWidth) {
+    return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
 }
