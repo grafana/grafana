@@ -287,11 +287,9 @@ Finally, as part of the alerting process, you should receive notifications at th
 
 Clicking either button opens Grafana with a pre-applied time range relevant to the alert.
 
-By default, this URL includes `from` and `to` query parameters that reflect the time window around the alert event. This helps you land directly in the time window where the alert occurred, making it easier to analyze what happened.
+By default, this URL includes `from` and `to` query [parameters](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/#alert) that reflect the time window around the alert event (one hour before and after the alert). This helps you land directly in the time window where the alert occurred, making it easier to analyze what happened.
 
-If you want to define a more intentional time range, for example, one hour before and after the alert, you can customize your notifications using a [notification template](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). With a template, you can explicitly set `from` and `to` values for more precise control over what users see when they follow the dashboard link.
-
-The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the `from` and `to` parameters, which are calculated in the notification template.
+If you want to define a more intentional time range, you can customize your notifications using a [notification template](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). With a template, you can explicitly set `from` and `to` values for more precise control over what users see when they follow the dashboard link. The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the `from` and `to` parameters, which are calculated in the notification template.
 
 <!-- INTERACTIVE page step7.md END -->
 <!-- INTERACTIVE page finish.md START -->
