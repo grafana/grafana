@@ -39,4 +39,8 @@ func addLoginAttemptMigrations(mg *Migrator) {
 		"username":   "username",
 		"ip_address": "ip_address",
 	})
+	mg.AddMigration("alter table login_attempt alter column created type to bigint", NewRawSQLMigration("").
+		Mysql("ALTER TABLE login_attempt MODIFY created BIGINT;").
+		Postgres("ALTER TABLE login_attempt ALTER COLUMN created TYPE BIGINT;"))
+
 }
