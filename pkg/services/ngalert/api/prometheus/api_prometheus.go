@@ -34,7 +34,7 @@ type RuleStoreReader interface {
 }
 
 type RuleGroupAccessControlService interface {
-	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules ngmodels.RulesGroup) (bool, error)
+	HasAccessInFolder(ctx context.Context, user identity.Requester, folder ngmodels.Namespaced) (bool, error)
 }
 
 type StatusReader interface {
@@ -215,11 +215,10 @@ func getStatesFromQuery(v url.Values) ([]eval.State, error) {
 }
 
 type RuleGroupStatusesOptions struct {
-	Ctx                context.Context
-	OrgID              int64
-	Query              url.Values
-	Namespaces         map[string]string
-	AuthorizeRuleGroup func(rules []*ngmodels.AlertRule) (bool, error)
+	Ctx               context.Context
+	OrgID             int64
+	Query             url.Values
+	AllowedNamespaces map[string]string
 }
 
 type ListAlertRulesStore interface {
@@ -247,19 +246,26 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
-	namespaces := map[string]string{}
+	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
-		namespaces[namespaceUID] = folder.Fullpath
+		// only add namespaces that the user has access to rules in
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		if err != nil {
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		}
+		if hasAccess {
+			allowedNamespaces[namespaceUID] = folder.Fullpath
+		}
 	}
 
 	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.store, RuleGroupStatusesOptions{
-		Ctx:        c.Req.Context(),
-		OrgID:      c.OrgID,
-		Query:      c.Req.Form,
-		Namespaces: namespaces,
-		AuthorizeRuleGroup: func(rules []*ngmodels.AlertRule) (bool, error) {
-			return srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
-		},
+		Ctx:               c.Req.Context(),
+		OrgID:             c.OrgID,
+		Query:             c.Req.Form,
+		AllowedNamespaces: allowedNamespaces,
 	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager))
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
@@ -411,19 +417,19 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	if len(opts.Namespaces) == 0 {
+	if len(opts.AllowedNamespaces) == 0 {
 		log.Debug("User does not have access to any namespaces")
 		return ruleResponse
 	}
 
-	namespaceUIDs := make([]string, 0, len(opts.Namespaces))
+	namespaceUIDs := make([]string, 0, len(opts.AllowedNamespaces))
 
 	folderUID := opts.Query.Get("folder_uid")
-	_, exists := opts.Namespaces[folderUID]
+	_, exists := opts.AllowedNamespaces[folderUID]
 	if folderUID != "" && exists {
 		namespaceUIDs = append(namespaceUIDs, folderUID)
 	} else {
-		for k := range opts.Namespaces {
+		for k := range opts.AllowedNamespaces {
 			namespaceUIDs = append(namespaceUIDs, k)
 		}
 	}
@@ -459,22 +465,11 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 	}
 
-	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.Namespaces)
+	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	var newToken string
 	foundToken := false
 	for _, rg := range groupedRules {
-		ok, err := opts.AuthorizeRuleGroup(rg.Rules)
-		if err != nil {
-			ruleResponse.Status = "error"
-			ruleResponse.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
-			ruleResponse.ErrorType = apiv1.ErrServer
-			return ruleResponse
-		}
-		if !ok {
-			continue
-		}
-
 		if nextToken != "" && !foundToken {
 			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
 				continue
