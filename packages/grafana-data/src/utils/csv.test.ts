@@ -164,11 +164,11 @@ describe('DataFrame to CSV', () => {
   it('should handle field type frame', () => {
     const dataFrame = new MutableDataFrame({
       fields: [
-        { name: 'Time', values: [1589455688623] },
+        { name: 'Time', values: [1589455688623, 1589455692345] },
         {
           name: 'Value',
           type: FieldType.frame,
-          values: [{ value: '1234' }],
+          values: [{ value: '1234' }, { value: '0' }],
         },
       ],
     });
@@ -176,7 +176,8 @@ describe('DataFrame to CSV', () => {
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
       ""Time","Value"
-      1589455688623,1234"
+      1589455688623,1234
+      1589455692345,0"
     `);
   });
 
@@ -195,7 +196,7 @@ describe('DataFrame to CSV', () => {
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
       ""Time","Value"
-      1589455688623,null"
+      1589455688623,"
     `);
   });
 });
