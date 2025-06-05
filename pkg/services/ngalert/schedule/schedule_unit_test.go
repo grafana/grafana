@@ -730,7 +730,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		})
 
 		// The metric includes alert rules with either internal ConvertedPrometheusRuleLabel label,
-		// or when AlertRule.ImportedFromPrometheus() returns true.
+		// or when AlertRule.HasPrometheusRuleDefinition() returns true.
 		alertRule1 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
 			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
