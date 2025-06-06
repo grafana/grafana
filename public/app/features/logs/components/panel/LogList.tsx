@@ -308,6 +308,9 @@ const LogListComponent = ({
       if (height !== undefined) {
         storeLogLineSize(id, widthContainer, height, fontSize);
       }
+      if (index === overflowIndexRef.current) {
+        return;
+      }
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
       debouncedResetAfterIndex(overflowIndexRef.current);
     },
