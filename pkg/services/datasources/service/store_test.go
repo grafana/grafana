@@ -138,6 +138,77 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, int64(10), created.OrgID)
 			require.Equal(t, "nisse", created.Name)
 		})
+
+		t.Run("can add datasource with description", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+			description := "Test datasource description"
+
+			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:       10,
+				Name:        "test-with-description",
+				Description: description,
+				Type:        datasources.DS_GRAPHITE,
+				Access:      datasources.DS_ACCESS_DIRECT,
+				URL:         "http://test",
+			})
+			require.NoError(t, err)
+			require.Equal(t, description, ds.Description)
+			require.Equal(t, "test-with-description", ds.Name)
+
+			// Verify description persists in database
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: ds.OrgID}
+			persistedDs, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, description, persistedDs.Description)
+		})
+
+		t.Run("can add datasource with empty description", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+
+			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:       10,
+				Name:        "test-empty-description",
+				Description: "",
+				Type:        datasources.DS_GRAPHITE,
+				Access:      datasources.DS_ACCESS_DIRECT,
+				URL:         "http://test",
+			})
+			require.NoError(t, err)
+			require.Equal(t, "", ds.Description)
+			require.Equal(t, "test-empty-description", ds.Name)
+
+			// Verify empty description persists in database
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: ds.OrgID}
+			persistedDs, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "", persistedDs.Description)
+		})
+
+		t.Run("can add datasource without description field", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+
+			// Test that not setting Description field works (should default to empty)
+			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				OrgID:  10,
+				Name:   "test-no-description",
+				Type:   datasources.DS_GRAPHITE,
+				Access: datasources.DS_ACCESS_DIRECT,
+				URL:    "http://test",
+				// Description intentionally omitted
+			})
+			require.NoError(t, err)
+			require.Equal(t, "", ds.Description) // Should default to empty string
+			require.Equal(t, "test-no-description", ds.Name)
+
+			// Verify in database
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: ds.OrgID}
+			persistedDs, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "", persistedDs.Description)
+		})
 	})
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
@@ -152,6 +223,70 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 			require.Equal(t, "v0alpha1", ds.APIVersion)
+		})
+
+		t.Run("updates datasource with description", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			description := "Updated datasource description"
+
+			cmd := defaultUpdateDatasourceCommand
+			cmd.ID = ds.ID
+			cmd.Version = ds.Version
+			cmd.Description = description
+
+			ss := SqlStore{db: db}
+			updatedDs, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.Equal(t, description, updatedDs.Description)
+			require.Equal(t, cmd.Name, updatedDs.Name)
+
+			// Verify description persists in database
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: ds.OrgID}
+			persistedDs, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, description, persistedDs.Description)
+		})
+
+		t.Run("updates datasource description from non-empty to empty", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{db: db}
+
+			// First create a datasource with description
+			addCmd := datasources.AddDataSourceCommand{
+				OrgID:       10,
+				Name:        "test-desc-update",
+				Description: "Initial description",
+				Type:        datasources.DS_GRAPHITE,
+				Access:      datasources.DS_ACCESS_DIRECT,
+				URL:         "http://test",
+			}
+			ds, err := ss.AddDataSource(context.Background(), &addCmd)
+			require.NoError(t, err)
+			require.Equal(t, "Initial description", ds.Description)
+
+			// Update to empty description
+			updateCmd := datasources.UpdateDataSourceCommand{
+				ID:          ds.ID,
+				OrgID:       ds.OrgID,
+				Name:        "test-desc-update-modified",
+				Description: "",
+				Type:        datasources.DS_GRAPHITE,
+				Access:      datasources.DS_ACCESS_DIRECT,
+				URL:         "http://test",
+				Version:     ds.Version,
+			}
+
+			updatedDs, err := ss.UpdateDataSource(context.Background(), &updateCmd)
+			require.NoError(t, err)
+			require.Equal(t, "", updatedDs.Description)
+			require.Equal(t, "test-desc-update-modified", updatedDs.Name)
+
+			// Verify empty description persists in database
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: ds.OrgID}
+			persistedDs, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "", persistedDs.Description)
 		})
 
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {

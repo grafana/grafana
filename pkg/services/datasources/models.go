@@ -47,10 +47,11 @@ type DataSource struct {
 	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
 	Version int   `json:"version,omitempty"`
 
-	Name   string   `json:"name"`
-	Type   string   `json:"type"`
-	Access DsAccess `json:"access"`
-	URL    string   `json:"url" xorm:"url"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Type        string   `json:"type"`
+	Access      DsAccess `json:"access"`
+	URL         string   `json:"url" xorm:"url"`
 	// swagger:ignore
 	Password      string `json:"-"`
 	User          string `json:"user"`
@@ -153,6 +154,7 @@ func (ds DataSource) AllowedCookies() []string {
 // Also acts as api DTO
 type AddDataSourceCommand struct {
 	Name            string            `json:"name"`
+	Description     string            `json:"description"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
@@ -180,6 +182,7 @@ type AddDataSourceCommand struct {
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
+	Description     string            `json:"description"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`

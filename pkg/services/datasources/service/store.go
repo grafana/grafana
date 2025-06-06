@@ -260,6 +260,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 		ds = &datasources.DataSource{
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
+			Description:     cmd.Description,
 			Type:            cmd.Type,
 			Access:          cmd.Access,
 			URL:             cmd.URL,
@@ -339,6 +340,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
+			Description:     cmd.Description,
 			Type:            cmd.Type,
 			Access:          cmd.Access,
 			URL:             cmd.URL,
@@ -374,6 +376,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
 		sess.MustCols("api_version")
+		sess.MustCols("description")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {
