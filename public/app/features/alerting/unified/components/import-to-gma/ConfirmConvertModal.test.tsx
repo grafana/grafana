@@ -1,5 +1,8 @@
+import { config } from '@grafana/runtime';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 
 import { SYNTHETICS_RULE_NAMES, filterRulerRulesConfig } from './ConfirmConvertModal';
@@ -21,7 +24,7 @@ describe('filterRulerRulesConfig', () => {
             alert: 'Alert2',
             expr: 'down == 1',
             labels: {
-              [GRAFANA_ORIGIN_LABEL]: 'true',
+              [GRAFANA_ORIGIN_LABEL]: `plugin/${SupportedPlugin.Slo}`,
             },
           },
         ],
@@ -57,6 +60,7 @@ describe('filterRulerRulesConfig', () => {
   };
 
   it('should filter by namespace', () => {
+    config.apps = { [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) };
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig, 'namespace1');
 
     expect(filteredConfig).toEqual({

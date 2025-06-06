@@ -12,9 +12,8 @@ import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dt
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
-import { rulerRuleType } from '../../utils/rules';
+import { getRuleName, isPluginProvidedRule } from '../../utils/rules';
 
 import { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
@@ -289,25 +288,20 @@ If the rule is from synthetics, it is skipped.
 */
 function shouldSkipRule(rule: RulerRuleDTO): boolean {
   // check if the rule has the '__grafana_origin' label
-  const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
+  const hasGrafanaOriginLabel = isPluginProvidedRule(rule);
   if (hasGrafanaOriginLabel) {
     return true;
   }
   // check if the rule is from synthetics
   const hasSyntheticsLabels = rule.labels?.namespace === 'synthetic_monitoring';
-  if (rulerRuleType.dataSource.rule(rule)) {
-    let hasSyntheticsRuleName = false;
-    if (rulerRuleType.dataSource.alertingRule(rule)) {
-      hasSyntheticsRuleName = SYNTHETICS_RULE_NAMES.some((name) => rule.alert?.includes(name));
-    } else {
-      // recording rule
-      hasSyntheticsRuleName = SYNTHETICS_RULE_NAMES.some((name) => rule.record?.includes(name));
-    }
-    if (hasSyntheticsRuleName && hasSyntheticsLabels) {
-      return true;
-    }
+
+  if (!hasSyntheticsLabels) {
+    return false;
   }
-  return false;
+
+  const ruleName = getRuleName(rule);
+
+  return SYNTHETICS_RULE_NAMES.some((name) => name === ruleName);
 }
 
 function RulesPreview({ rules }: { rules: RulerRulesConfigDTO }) {
