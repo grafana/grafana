@@ -131,7 +131,7 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    Pausing stops alert rule evaluation behavior for the newly created Grafana-managed alert rules.
 
-9. In the **Target data source** of the **Recording rules** section, select the data source that the imported recording rules will query.
+9. (Optional) In the **Target data source** of the **Recording rules** section, you can select the data source that the imported recording rules will query. By default, it is the data source selected in the **Data source** dropdown.
 
 10. Click **Import**.
 
