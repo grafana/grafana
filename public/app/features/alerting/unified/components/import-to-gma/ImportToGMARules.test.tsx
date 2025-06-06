@@ -22,7 +22,7 @@ const ui = {
     yaml: byRole('radio', { name: /Import rules from a Prometheus YAML file./ }),
   },
   dsImport: {
-    dsPicker: byLabelText('Data source'),
+    dsPicker: byLabelText(/data source/i, { selector: '#datasource-picker' }),
     mimirDsOption: byRole('button', { name: /Mimir Prometheus$/ }),
   },
   yamlImport: {
