@@ -4,9 +4,9 @@ import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
 
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
