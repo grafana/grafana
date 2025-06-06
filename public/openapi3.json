@@ -2186,6 +2186,9 @@
           "database": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "isDefault": {
             "type": "boolean"
           },
@@ -4861,6 +4864,9 @@
           "database": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -4927,6 +4933,9 @@
             "type": "boolean"
           },
           "database": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "id": {
@@ -12159,6 +12168,9 @@
             "type": "string"
           },
           "database": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "isDefault": {
