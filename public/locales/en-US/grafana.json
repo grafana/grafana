@@ -1518,6 +1518,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
