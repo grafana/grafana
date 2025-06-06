@@ -248,7 +248,7 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 
 	// we take the path and the query-string only
 	lokiUrl.RawQuery = resourceUrl.RawQuery
-	lokiUrl.Path = path.Join(lokiUrl.Path, resourceUrl.Path)
+	lokiUrl.Path = path.Join(lokiUrl.Path, resourceUrl.EscapedPath())
 
 	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
 
