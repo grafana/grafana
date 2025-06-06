@@ -418,25 +418,52 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
-			s.log.Error("Error getting auth info", "error", err)
+			s.log.Error("Error getting auth info for provisioned user", "error", err)
 			return err
 		}
 
 		if id.ExternalUID == "" {
-			s.log.Error("externalUID is empty", "id", id.UID)
+			s.log.Error("externalUID is empty for provisioned user", "id", id.UID)
 			return errEmptyExternalUID.Errorf("externalUID is empty")
 		}
 
 		if id.ExternalUID != authInfo.ExternalUID {
-			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
-			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
+			s.log.Error("mismatched externalUID for provisioned user", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			return errMismatchedExternalUID.Errorf("externalUID mismatch")
 		}
 	}
 
-	if needsUpdate && !usr.IsProvisioned {
-		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
-		if err := s.userService.Update(ctx, updateCmd); err != nil {
-			return err
+	if needsUpdate {
+		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID}
+		shouldExecuteUpdate := false
+
+		if !usr.IsProvisioned {
+			finalCmdToExecute = updateCmd
+			shouldExecuteUpdate = true
+			s.log.FromContext(ctx).Debug("Syncing all differing attributes for non-provisioned user", "id", id.ID,
+				"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
+				"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
+		} else {
+			if updateCmd.IsGrafanaAdmin != nil {
+				finalCmdToExecute.IsGrafanaAdmin = updateCmd.IsGrafanaAdmin
+				shouldExecuteUpdate = true
+				s.log.FromContext(ctx).Debug("Syncing IsGrafanaAdmin for provisioned user", "id", id.ID, "isAdmin", fmt.Sprintf("%v", *updateCmd.IsGrafanaAdmin))
+			}
+
+			if !shouldExecuteUpdate {
+				s.log.FromContext(ctx).Debug("SAML attributes differed, but no SCIM-overridable attributes changed for provisioned user", "id", id.ID,
+					"login", updateCmd.Login, "email", updateCmd.Email, "name", updateCmd.Name,
+					"isGrafanaAdmin", updateCmd.IsGrafanaAdmin, "emailVerified", updateCmd.EmailVerified)
+			}
+		}
+
+		if shouldExecuteUpdate {
+			if err := s.userService.Update(ctx, finalCmdToExecute); err != nil {
+				s.log.FromContext(ctx).Error("Failed to update user attributes", "error", err, "id", id.ID, "isProvisioned", usr.IsProvisioned,
+					"login", finalCmdToExecute.Login, "email", finalCmdToExecute.Email, "name", finalCmdToExecute.Name,
+					"isGrafanaAdmin", finalCmdToExecute.IsGrafanaAdmin, "emailVerified", finalCmdToExecute.EmailVerified)
+				return err
+			}
 		}
 	}
 
