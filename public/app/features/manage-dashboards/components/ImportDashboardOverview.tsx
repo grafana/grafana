@@ -71,8 +71,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
 
     const uid = form.uid;
 
-    console.log(window.location.search);
-
     setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       console.log(window.location.search);
@@ -81,7 +79,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
       console.log({ uid, assetId });
 
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
-    }, 1000);
+    }, 2000);
   };
 
   onCancel = () => {
