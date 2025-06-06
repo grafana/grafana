@@ -33,14 +33,13 @@ export type RuleHealth = 'nodata' | 'error' | 'err' | string;
 
 interface RuleBase {
   // GMA Only
-  uid: string;
+  uid?: string;
   health: RuleHealth;
   name: string;
   query: string;
   lastEvaluation?: string;
   evaluationTime?: number;
   lastError?: string;
-  uid?: string;
   folderUid?: string;
 }
 

@@ -1,39 +1,42 @@
 import { css } from '@emotion/css';
-import { format, formatDistanceToNow, min, parseISO } from 'date-fns';
+import { formatDistanceToNow, min, parseISO } from 'date-fns';
 import pluralize from 'pluralize';
-import React, { memo, useState } from 'react';
+import { memo, useState } from 'react';
 
-import { findCommonLabels, GrafanaTheme2, matchAllLabels, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, findCommonLabels, matchAllLabels } from '@grafana/data';
 import {
-  Stack,
-  useStyles2,
-  withErrorBoundary,
-  Text,
+  Button,
   Drawer,
   Icon,
   IconButton,
-  ButtonGroup,
   RadioButtonGroup,
+  Stack,
+  Text,
+  TextLink,
+  useStyles2,
+  withErrorBoundary,
 } from '@grafana/ui';
-import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Alert, AlertingRule } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
+  GrafanaPromAlertingRuleDTO,
   Labels,
-  mapStateWithReasonToBaseState,
   PromAlertingRuleState,
+  mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { prometheusApi } from '../api/prometheusApi';
 import { AlertLabels } from '../components/AlertLabels';
 import { AlertStateDot } from '../components/AlertStateDot';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { StateBadge } from '../components/rule-viewer/StateBadges';
 import { isPrivateLabelKey } from '../utils/labels';
-import { isAlertingRule } from '../utils/rules';
+import { prometheusRuleType } from '../utils/rules';
 
-const { usePrometheusRuleNamespacesQuery } = alertRuleApi;
+const { useGetGrafanaGroupsQuery } = prometheusApi;
 const { useGetAlertmanagerAlertsQuery } = alertmanagerApi;
 
 const alertStateOptions: Array<SelectableValue<GrafanaAlertState>> = Object.values(GrafanaAlertState).map((state) => ({
@@ -41,25 +44,24 @@ const alertStateOptions: Array<SelectableValue<GrafanaAlertState>> = Object.valu
   value: state,
 }));
 
-interface PromRuleWithOrigin extends AlertingRule {
+interface PromRuleWithOrigin extends GrafanaPromAlertingRuleDTO {
   namespace: string;
   group: string;
 }
 
 function Overview() {
-  const { data: namespaces = [] } = usePrometheusRuleNamespacesQuery({
-    ruleSourceName: 'grafana',
-  });
+  const { data: promRespose } = useGetGrafanaGroupsQuery({});
+
   const { data: amAlerts = [] } = useGetAlertmanagerAlertsQuery({
     amSourceName: 'grafana',
   });
 
   const [details, setDetails] = useState<{ rule: AlertingRule; amAlerts: AlertmanagerAlert[] } | null>(null);
 
-  const promRules: PromRuleWithOrigin[] = namespaces
-    .flatMap((ns) => ns.groups.map((g) => [ns, g] as const))
-    .flatMap(([ns, g]) => g.rules.filter(isAlertingRule).map((r) => [ns, g, r] as const))
-    .map(([ns, g, r]) => ({ ...r, namespace: ns.name, group: g.name }));
+  const promGroups = promRespose?.data?.groups ?? [];
+  const promRules: PromRuleWithOrigin[] = promGroups
+    .flatMap((group) => group.rules.filter(prometheusRuleType.grafana.alertingRule).map((r) => [group, r] as const))
+    .map(([group, r]) => ({ ...r, namespace: group.file, group: group.name }));
 
   const alertsByRule = new Map<string, AlertmanagerAlert[]>();
 
@@ -110,38 +112,52 @@ const RuleRow = memo(function RuleRow({ rule, amAlerts, onDetailsClick }: RuleRo
   const styles = useStyles2(getStyles);
 
   const startDates = amAlerts.map((alert) => parseISO(alert.startsAt));
-  const earliestDate = startDates.length > 0 ? min(startDates) : null;
 
   const commonLabels = findCommonLabels(amAlerts.map((alert) => alert.labels));
+
+  const { namespace, group } = rule;
 
   return (
     <>
       <div className={styles.stateCell}>
-        <StateBadge state={rule.state} />
+        <AlertStateDot color={rulerAlertStateToColor(rule.state)} />
       </div>
       <div>
         <Text element="h2" variant="body" weight="bold">
           {rule.name}
         </Text>
-        <div className={styles.namespace}>
-          <Icon name="folder" /> {rule.namespace}/{rule.group}
-        </div>
+        <Stack direction="row" gap={0.5}>
+          <Text color="secondary" variant="bodySmall">
+            <RuleLocation namespace={namespace} group={group} />
+          </Text>
+          <TextLink
+            href={`/alerting/unified/rules/${rule.uid}?tab=instances`}
+            variant="bodySmall"
+            color="primary"
+            inline={false}
+          >
+            {pluralize('instance', rule.alerts?.length ?? 0, true)}
+          </TextLink>
+        </Stack>
       </div>
       <div className={styles.labelsCell}>
-        <AlertLabels labels={commonLabels} size="sm" />
+        <AlertLabels labels={commonLabels} size="xs" />
       </div>
-      <div>{pluralize('instance', amAlerts.length, true)}</div>
-      <div>{earliestDate ? `${formatDistanceToNow(earliestDate)} ago` : '-'}</div>
-      <div>
+      {/* <div>{pluralize('instance', amAlerts.length, true)}</div> */}
+      {/* <div>{earliestDate ? `${formatDistanceToNow(earliestDate)} ago` : '-'}</div> */}
+      {/* <div>
         {amAlerts.flatMap((alert) => alert.receivers).length} <Icon name="envelope" title="Notifications sent" />
-      </div>
-      <div>
-        <IconButton
-          name="eye"
+      </div> */}
+      <div className={styles.detailsButton}>
+        <Button
+          variant="secondary"
+          size="sm"
           title="Details"
           aria-label="Details"
           onClick={() => onDetailsClick({ rule, amAlerts })}
-        />
+        >
+          Details
+        </Button>
       </div>
       <div className={styles.separator} />
     </>
@@ -151,15 +167,16 @@ const RuleRow = memo(function RuleRow({ rule, amAlerts, onDetailsClick }: RuleRo
 const getStyles = (theme: GrafanaTheme2) => ({
   rulesGrid: css({
     display: 'grid',
-    gridTemplateColumns: 'max-content auto 1fr 1fr 2fr 1fr',
+    gridTemplateColumns: 'max-content auto 1fr 1fr 1fr',
     gap: theme.spacing(1),
   }),
   stateCell: css({
-    gridRow: 'span 2',
+    // gridRow: 'span 2',
     alignContent: 'center',
+    padding: theme.spacing(0, 1),
   }),
   labelsCell: css({
-    gridColumn: '3 / -1',
+    // gridColumn: '3 / -3',
   }),
   namespace: css({
     width: '200px',
@@ -168,8 +185,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   separator: css({
-    gridColumn: '1 / -1',
+    // gridColumn: '1 / -1',
     borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  detailsButton: css({
+    // gridColumn: '6 / -1',
+    // gridRow: 'span 2',
   }),
 });
 
@@ -296,6 +317,19 @@ function DeliverySection({ amAlert }: { amAlert?: AlertmanagerAlert }) {
     </Stack>
   );
 }
+
+export const RuleLocation = ({ namespace, group }: { namespace: string; group: string }) => {
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <Icon size="xs" name="folder" />
+      <Stack direction="row" alignItems="center" gap={0}>
+        {namespace}
+        <Icon size="sm" name="angle-right" />
+        {group}
+      </Stack>
+    </Stack>
+  );
+};
 
 function DeliveryStatusBadge({ amAlert }: { amAlert?: AlertmanagerAlert }) {
   const color = amAlert ? amStateToColor(amAlert.status.state) : 'none';

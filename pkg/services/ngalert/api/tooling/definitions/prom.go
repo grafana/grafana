@@ -146,7 +146,6 @@ func (s RuleGroupsSorter) Less(i, j int) bool { return s.by(&s.groups[i], &s.gro
 // adapted from cortex
 // swagger:model
 type AlertingRule struct {
-	UID string `json:"uid"`
 	// State can be "pending", "firing", "inactive".
 	// required: true
 	State string `json:"state,omitempty"`
