@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"testing"
 	"time"
@@ -1140,4 +1141,67 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 	t.Run("with the cortextool Loki paths", func(t *testing.T) {
 		runTest(t, true)
 	})
+}
+
+func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableRecordingRules:  true,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, gpath)
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	ds := apiClient.CreateDatasource(t, datasources.DS_PROMETHEUS)
+
+	testGroup := apimodels.PrometheusRuleGroup{
+		Name:     "test-group-with-labels",
+		Interval: prommodel.Duration(60 * time.Second),
+		Labels: map[string]string{
+			"group_label": "value-1",
+		},
+		Rules: []apimodels.PrometheusRule{
+			{
+				Alert: "TestAlert",
+				Expr:  "up == 0",
+				For:   util.Pointer(prommodel.Duration(2 * time.Minute)),
+				Labels: map[string]string{
+					"rule_label": "value-2",
+				},
+				Annotations: map[string]string{
+					"annotation-1": "annotation-value",
+				},
+			},
+		},
+	}
+
+	namespace := "test-namespace-1"
+	namespaceUID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, namespaceUID, namespace)
+
+	apiClient.ConvertPrometheusPostRuleGroup(t, namespace, ds.Body.Datasource.UID, testGroup, nil)
+
+	expectedLabels := make(map[string]string)
+	maps.Copy(expectedLabels, testGroup.Labels)
+	maps.Copy(expectedLabels, testGroup.Rules[0].Labels)
+
+	// Verify the Import API returns the expected merged format
+	group := apiClient.ConvertPrometheusGetRuleGroupRules(t, namespace, testGroup.Name, nil)
+	testGroup.Labels = nil
+	testGroup.Rules[0].Labels = expectedLabels
+	require.Equal(t, testGroup, group)
+
+	// Grafana should return the additional internal label
+	expectedLabels[models.ConvertedPrometheusRuleLabel] = "true"
+	ruleGroup, _, _ := apiClient.GetRulesGroupWithStatus(t, namespaceUID, testGroup.Name)
+	require.Len(t, ruleGroup.Rules, 1)
+
+	rule := ruleGroup.Rules[0]
+
+	require.Equal(t, expectedLabels, rule.Labels)
 }
