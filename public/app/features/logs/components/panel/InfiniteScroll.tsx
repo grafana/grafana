@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
@@ -26,7 +26,7 @@ interface Props {
   handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
-  onClick: (log: LogListModel) => void;
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;

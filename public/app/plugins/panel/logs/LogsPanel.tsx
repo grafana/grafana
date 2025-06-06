@@ -553,6 +553,10 @@ export const LogsPanel = ({
               onClickFilterOutLabel={
                 isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
               }
+              onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+              onClickFilterOutString={
+                isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+              }
               onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
               onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               onLogLineHover={onLogRowHover}
