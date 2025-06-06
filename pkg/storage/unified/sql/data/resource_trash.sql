@@ -40,8 +40,15 @@ WHERE 1 = 1
   AND h.{{ .Ident "group" }}     = {{ .Arg .Key.Group }}
   AND h.{{ .Ident "resource" }}  = {{ .Arg .Key.Resource }}
   AND h.{{ .Ident "action" }} = 3
+  AND NOT EXISTS (
+    SELECT 1 FROM {{ .Ident "resource" }} r
+    WHERE r.{{ .Ident "namespace" }} = h.{{ .Ident "namespace" }}
+      AND r.{{ .Ident "group" }} = h.{{ .Ident "group" }}
+      AND r.{{ .Ident "resource" }} = h.{{ .Ident "resource" }}
+      AND r.{{ .Ident "name" }} = h.{{ .Ident "name" }}
+  )
 {{ if .SortAscending }}
-ORDER BY resource_version ASC
+ORDER BY h.{{ .Ident "resource_version" }} ASC
 {{ else }}
-ORDER BY resource_version DESC
+ORDER BY h.{{ .Ident "resource_version" }} DESC
 {{ end }}
