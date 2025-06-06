@@ -71,8 +71,11 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
 
     const uid = form.uid;
 
+    console.log(window.location.search);
+
     setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
+      console.log(window.location.search);
       const assetId = params.get('assetId');
 
       console.log({ uid, assetId });
