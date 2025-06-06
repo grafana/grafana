@@ -715,6 +715,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		UID:              ds.UID,
 		OrgId:            ds.OrgID,
 		Name:             ds.Name,
+		Description:      ds.Description,
 		Url:              ds.URL,
 		Type:             ds.Type,
 		Access:           ds.Access,

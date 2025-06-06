@@ -446,6 +446,177 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
+func TestAddDataSource_WithDescription(t *testing.T) {
+	const name = "Test"
+	const description = "Test datasource description"
+	const url = "http://localhost:5432"
+
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{
+				Name:        name,
+				Description: description,
+				URL:         url,
+			},
+		},
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accesscontrolService: actest.FakeService{},
+		dsGuardian:           guardian.ProvideGuardian(),
+		Live:                 newTestLive(t, nil),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources")
+
+	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+			Name:        name,
+			Description: description,
+			Type:        "postgres",
+			URL:         url,
+			Access:      "proxy",
+		})
+		return hs.AddDataSource(c)
+	}))
+
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+	require.Equal(t, 200, sc.resp.Code)
+
+	var resp struct {
+		Datasource *datasources.DataSource `json:"datasource"`
+	}
+	require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &resp))
+	require.NotNil(t, resp.Datasource)
+	assert.Equal(t, name, resp.Datasource.Name)
+	assert.Equal(t, description, resp.Datasource.Description)
+	assert.Equal(t, url, resp.Datasource.URL)
+}
+
+func TestUpdateDataSource_WithDescription(t *testing.T) {
+	const name = "Test Updated"
+	const description = "Updated test datasource description"
+	const url = "http://localhost:5433"
+
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{
+				ID:          1,
+				Name:        name,
+				Description: description,
+				URL:         url,
+				Type:        "postgres",
+			},
+			mockUpdateDataSource: func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+				// Verify the description is passed through
+				assert.Equal(t, description, cmd.Description)
+				return &datasources.DataSource{
+					ID:          cmd.ID,
+					Name:        cmd.Name,
+					Description: cmd.Description,
+					URL:         cmd.URL,
+					Type:        cmd.Type,
+				}, nil
+			},
+		},
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accesscontrolService: actest.FakeService{},
+		dsGuardian:           guardian.ProvideGuardian(),
+		Live:                 newTestLive(t, nil),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources/1")
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "1"})
+		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
+			ID:          1,
+			Name:        name,
+			Description: description,
+			Type:        "postgres",
+			URL:         url,
+			Access:      "proxy",
+		})
+		return hs.UpdateDataSourceByID(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+
+	require.Equal(t, 200, sc.resp.Code)
+
+	var resp struct {
+		Datasource *datasources.DataSource `json:"datasource"`
+	}
+	require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &resp))
+	require.NotNil(t, resp.Datasource)
+	assert.Equal(t, name, resp.Datasource.Name)
+	assert.Equal(t, description, resp.Datasource.Description)
+	assert.Equal(t, url, resp.Datasource.URL)
+}
+
+func TestUpdateDataSource_WithEmptyDescription(t *testing.T) {
+	const name = "Test Empty Description"
+	const description = ""
+	const url = "http://localhost:5434"
+
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{
+				ID:          1,
+				Name:        name,
+				Description: description,
+				URL:         url,
+				Type:        "postgres",
+			},
+			mockUpdateDataSource: func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+				// Verify empty description is handled correctly
+				assert.Equal(t, description, cmd.Description)
+				return &datasources.DataSource{
+					ID:          cmd.ID,
+					Name:        cmd.Name,
+					Description: cmd.Description,
+					URL:         cmd.URL,
+					Type:        cmd.Type,
+				}, nil
+			},
+		},
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accesscontrolService: actest.FakeService{},
+		dsGuardian:           guardian.ProvideGuardian(),
+		Live:                 newTestLive(t, nil),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources/1")
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "1"})
+		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
+			ID:          1,
+			Name:        name,
+			Description: description,
+			Type:        "postgres",
+			URL:         url,
+			Access:      "proxy",
+		})
+		return hs.UpdateDataSourceByID(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+
+	require.Equal(t, 200, sc.resp.Code)
+
+	var resp struct {
+		Datasource *datasources.DataSource `json:"datasource"`
+	}
+	require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &resp))
+	require.NotNil(t, resp.Datasource)
+	assert.Equal(t, name, resp.Datasource.Name)
+	assert.Equal(t, description, resp.Datasource.Description) // Should be empty string
+	assert.Equal(t, url, resp.Datasource.URL)
+}
+
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 
