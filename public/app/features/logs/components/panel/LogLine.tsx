@@ -93,7 +93,7 @@ export const LogLine = ({
 
   const { t } = useTranslate();
   const handleClick = useCallback(
-    (e: Event) => {
+    (e: MouseEvent<HTMLElement>) => {
       onClick(e, log);
     },
     [log, onClick]

@@ -90,8 +90,9 @@ export const usePopoverMenu = (containerElement: HTMLDivElement | null) => {
   );
 
   const onDisablePopoverMenu = useCallback(() => {
+    closePopoverMenu();
     setShowDisablePopoverOptions(true);
-  }, []);
+  }, [closePopoverMenu]);
 
   const onDisableCancel = useCallback(() => {
     setShowDisablePopoverOptions(false);
