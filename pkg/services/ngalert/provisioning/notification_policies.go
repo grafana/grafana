@@ -111,6 +111,11 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 
 	revision.Config.AlertmanagerConfig.Route = &tree
 
+	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return definitions.Route{}, "", fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
+	}
+
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
