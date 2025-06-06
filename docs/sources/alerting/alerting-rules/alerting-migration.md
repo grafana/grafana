@@ -69,9 +69,17 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The [Missing series evaluations to resolve](ref_missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
 
+- **Rule group labels**
+
+  Labels defined at the rule group level are added as labels to each imported rule within the group.
+
 - **Sequential evaluation**
 
   Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](ref:evaluation-strategies).
+
+- **Feature compatibility**
+
+  The rule group `limit` option and the `query` function within alert rule templates are not currently supported in Grafana-managed rules. If the `limit` option is present, the import fails. However, rules with `query` in templates are imported.
 
 {{< admonition type="note" >}}
 Rules with the label `__grafana_origin` are not included in rule imports. These rules are typically created by apps such as **Kubernetes Monitoring**, **Synthetic Monitoring**, and other **Grafana plugins**.
