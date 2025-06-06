@@ -32,7 +32,14 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
         />
       </DataSourceErrorBoundary>
       {externalRuleSources.map((ruleSource) => {
-        return <DataSourceLoader key={ruleSource.uid} rulesSourceIdentifier={ruleSource} />;
+        return (
+          <DataSourceLoader
+            key={ruleSource.uid}
+            rulesSourceIdentifier={ruleSource}
+            groupFilter={groupFilter}
+            namespaceFilter={namespaceFilter}
+          />
+        );
       })}
     </Stack>
   );
@@ -40,13 +47,15 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
 
 interface DataSourceLoaderProps {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
+  groupFilter?: string;
+  namespaceFilter?: string;
 }
 
 export function GrafanaDataSourceLoader() {
   return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
 }
 
-function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
+function DataSourceLoader({ rulesSourceIdentifier, groupFilter, namespaceFilter }: DataSourceLoaderProps) {
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
@@ -64,9 +73,10 @@ function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
     return (
       <DataSourceErrorBoundary rulesSourceIdentifier={rulesSourceIdentifier}>
         <PaginatedDataSourceLoader
-          key={rulesSourceIdentifier.uid}
           rulesSourceIdentifier={rulesSourceIdentifier}
           application={dataSourceInfo.application}
+          groupFilter={groupFilter}
+          namespaceFilter={namespaceFilter}
         />
       </DataSourceErrorBoundary>
     );
