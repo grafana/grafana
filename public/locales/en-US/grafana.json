@@ -901,6 +901,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are deliverd to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
