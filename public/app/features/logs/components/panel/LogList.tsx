@@ -350,7 +350,7 @@ const LogListComponent = ({
 
   const handleLogLineClick = useCallback(
     (e: MouseEvent<HTMLElement>, log: LogListModel) => {
-      if (handleTextSelection?.(e, log)) {
+      if (handleTextSelection(e, log)) {
         // Event handled by the parent.
         return;
       }
