@@ -659,8 +659,8 @@ func (c ExtraConfiguration) Validate() error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
 	}
-	if c.MergeMatchers == nil {
-		return errors.New("identifier is required")
+	if len(c.MergeMatchers) == 0 {
+		return errors.New("at least one matcher is required")
 	}
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
@@ -683,19 +683,21 @@ type PostableUserConfig struct {
 }
 
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
-	for _, mimirCfg := range c.ExtraConfigs {
-		opts := definition.MergeOpts{
-			DedupSuffix:     mimirCfg.Identifier,
-			SubtreeMatchers: mimirCfg.MergeMatchers,
-		}
-		if err := opts.Validate(); err != nil {
-			return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
-		}
-		return definition.Merge(c.AlertmanagerConfig, mimirCfg.AlertmanagerConfig, opts) // for now support only the first extra config
+	if len(c.ExtraConfigs) == 0 {
+		return MergeResult{
+			Config: c.AlertmanagerConfig,
+		}, nil
 	}
-	return MergeResult{
-		Config: c.AlertmanagerConfig,
-	}, nil
+	// support only one config for now
+	mimirCfg := c.ExtraConfigs[0]
+	opts := definition.MergeOpts{
+		DedupSuffix:     mimirCfg.Identifier,
+		SubtreeMatchers: mimirCfg.MergeMatchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+	return definition.Merge(c.AlertmanagerConfig, mimirCfg.AlertmanagerConfig, opts) // for now support only the first extra config
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
@@ -708,15 +710,16 @@ func (c *PostableUserConfig) GetMergedTemplateDefinitions() []alertingTemplates.
 			Kind:     alertingTemplates.GrafanaKind,
 		})
 	}
-	for _, cfg := range c.ExtraConfigs {
-		for name, tmpl := range cfg.TemplateFiles {
-			out = append(out, alertingTemplates.TemplateDefinition{
-				Name:     name,
-				Template: tmpl,
-				Kind:     alertingTemplates.MimirKind,
-			})
-		}
-		break // support only one extra config for now
+	if len(c.ExtraConfigs) == 0 {
+		return out
+	}
+	// support only one config for now
+	for name, tmpl := range c.ExtraConfigs[0].TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+			Kind:     alertingTemplates.MimirKind,
+		})
 	}
 	return out
 }
