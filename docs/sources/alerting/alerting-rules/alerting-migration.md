@@ -67,7 +67,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
 - **Missing series evaluations to resolve**
 
-  The [Missing series evaluations to resolve](ref_missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
+  The [Missing series evaluations to resolve](ref:missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
 
 - **Rule group labels**
 
