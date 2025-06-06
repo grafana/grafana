@@ -32,26 +32,6 @@ function getAssetIdFromIframe() {
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-type Target = {
-  asset: string;
-  assetId: number;
-};
-
-type Panel = {
-  id: number;
-  targets: Target[];
-};
-
-type Dashboard = {
-  id: number;
-  uid?: string;
-  title?: string;
-  tags?: string[];
-  schemaVersion?: number;
-  version?: number;
-  panels?: Panel[];
-};
-
 const mapStateToProps = (state: StoreState) => {
   const searchObj = locationService.getSearchObject();
 
@@ -86,13 +66,10 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     this.props.importDashboard(form);
-
     const uid = form.uid;
 
     setTimeout(() => {
       const assetId = getAssetIdFromIframe();
-      console.log('Asset ID:', assetId);
-
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
     }, 1000);
   };
