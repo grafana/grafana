@@ -2951,51 +2951,6 @@
       "title-query-result": "쿼리 결과"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "키 검색"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "만료된 키 포함"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API 키 삭제",
-      "content-this-api-key-has-expired": "",
-      "expires": "만료",
-      "last-used-at": "마지막 사용 시간",
-      "migrate-to-service-account": "서비스 계정으로 마이그레이션",
-      "name": "이름",
-      "role": "역할"
-    },
-    "empty-state": {
-      "message": "찾은 API 키 없음"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "API 키를 찾을 수 없습니다. 브라우저를 다시 로딩하면 이 페이지를 더 이상 사용할 수 없습니다.",
-      "body-switch-service-accounts": "API 키는 사용 중단되었으며 2025년 1월 31일에 Grafana에서 제거됩니다. 각 API 키는 토큰이 있는 서비스 계정으로 마이그레이션되며 기존과 동일하게 계속 작동합니다. 지금 API 키를 서비스 계정으로 마이그레이션하는 것이 좋습니다. <docsLink />",
-      "docs-link": {
-        "about-migration": "여기에서 마이그레이션에 대해 자세히 알아보세요."
-      },
-      "migrate-all-service-accounts": "모든 서비스 계정 마이그레이션",
-      "migration-box-desc": {
-        "migrating": "모든 API 키를 마이그레이션하면 API 키 탭이 숨겨집니다."
-      },
-      "modal-title": "API 키를 서비스 계정으로 마이그레이션",
-      "title-no-api-keys-found": "API 키를 찾을 수 없습니다",
-      "title-switch-service-accounts": "API 키에서 서비스 계정으로 전환"
-    },
-    "migration-summary": {
-      "close": "닫기",
-      "failed": "<0>실패: </0>{{failed}}",
-      "failed-details": "<0>실패 항목 세부 정보: </0>{{details}}",
-      "failed-ids": "<0>실패한 API 키 ID: </0>{{ids}}",
-      "migrated": "<0>마이그레이션됨: </0>{{migrated}}",
-      "migration-complete": "마이그레이션 완료! '마이그레이션 실패'로 표시된 API 키가 몇 개 있을 수 있지만, 모든 API 키가 완전히 작동하고 운영 가능하므로 안심하셔도 됩니다. 다시 시도하거나 지원 팀에 문의하세요.",
-      "migration-successful": "마이그레이션 성공!",
-      "title-migration-summary": "마이그레이션 요약",
-      "total": "<0>총계: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "주요 콘텐츠로 건너뛰기",
     "top-bar": {
@@ -8135,10 +8090,6 @@
     "alerts-recently-deleted": {
       "subtitle": "최근에 삭제된 경고 규칙 보기",
       "title": "최근에 삭제됨"
-    },
-    "api-keys": {
-      "subtitle": "Grafana HTTP API와 상호 작용하는 데 사용되는 API 키의 관리 및 생성",
-      "title": "API 키"
     },
     "application": {
       "title": "애플리케이션"

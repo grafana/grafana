@@ -2990,51 +2990,6 @@
       "title-query-result": "Výsledek dotazu"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Hledat klíče"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Zahrnout klíče po platnosti"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Odstranit API klíč",
-      "content-this-api-key-has-expired": "",
-      "expires": "Vyprší",
-      "last-used-at": "Naposledy použito v",
-      "migrate-to-service-account": "Migrovat na účet služby",
-      "name": "Název",
-      "role": "Role"
-    },
-    "empty-state": {
-      "message": "Nebyly nalezeny žádné API klíče"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nebyly nalezeny žádné API klíče. Pokud znovu načtete prohlížeč, tato stránka už nebude k dispozici.",
-      "body-switch-service-accounts": "API klíče jsou zastaralé a 31. ledna 2025 budou z Grafany odstraněny. Každý API klíč bude migrován do účtu služby s tokenem a nadále bude plnit svou funkci. Doporučujeme migrovat API klíče na účty služeb teď. <docsLink />",
-      "docs-link": {
-        "about-migration": "Další informace o migraci najdete tady."
-      },
-      "migrate-all-service-accounts": "Migrovat všechny účty služeb",
-      "migration-box-desc": {
-        "migrating": "Migrací všech API klíčů skryjete záložku API klíčů."
-      },
-      "modal-title": "Migrovat API klíče na účty služeb",
-      "title-no-api-keys-found": "Nebyly nalezeny žádné API klíče",
-      "title-switch-service-accounts": "Přepnout z API klíčů na účty služeb"
-    },
-    "migration-summary": {
-      "close": "Zavřít",
-      "failed": "<0>Nezdařilo se: </0>{{failed}}",
-      "failed-details": "<0>Podrobnosti o nezdařilé migraci: </0>{{details}}",
-      "failed-ids": "<0>ID neúspěšných API klíčů: </0>{{ids}}",
-      "migrated": "<0>Migrováno: </0>{{migrated}}",
-      "migration-complete": "Migrace dokončena! Upozorňujeme, že i když může existovat několik API klíčů označených jako „migrace se nezdařila“, ujišťujeme vás, že všechny API klíče jsou plně funkční. Zkuste to znovu nebo kontaktujte podporu.",
-      "migration-successful": "Migrace proběhla úspěšně!",
-      "title-migration-summary": "Shrnutí migrace",
-      "total": "<0>Celkem: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Přejít na hlavní obsah",
     "top-bar": {
@@ -8213,10 +8168,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Zobrazit nedávno odstraněná pravidla výstrah",
       "title": "Nedávno odstraněné"
-    },
-    "api-keys": {
-      "subtitle": "Spravujte a vytvářejte API klíče, které se používají k interakci s Grafana HTTP API",
-      "title": "API klíče"
     },
     "application": {
       "title": "Použití"
