@@ -197,8 +197,9 @@ Missing data isn’t always a failure. It’s a common scenario in dynamic envir
 
 Grafana Alerting handles distinct scenarios automatically. Here’s how to think about it:
 
-- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
 - Understand `DatasourceNoData` and `MissingSeries` notifications, since they don’t behave like regular alerts.
+- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
+- When _NoData_ is not an issue, consider rewriting the query to always return data — for example, in Prometheus, use `your_metric_query OR on() vector(0)` to return `0` when `your_metric_query` returns nothing.
 - Use `absent()` or `absent_over_time()` in Prometheus for fine-grained detection when a metric or label disappears entirely.
 - Don’t alert on every instance by default. In dynamic environments, it’s better to aggregate and alert on symptoms — unless a missing individual instance directly impacts users.
 - If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State`, or routing those alerts differently.
