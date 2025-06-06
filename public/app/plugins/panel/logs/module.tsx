@@ -47,7 +47,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         path: 'enableLogDetails',
         name: 'Enable log details',
         description: '',
-        defaultValue: false,
+        defaultValue: true,
       })
       .addBooleanSwitch({
         path: 'enableInfiniteScrolling',
@@ -62,7 +62,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           path: 'showControls',
           name: 'Show controls',
           description: 'Display controls to jump to the last or first log line, and filters by log level',
-          defaultValue: true,
+          defaultValue: false,
         })
         .addRadio({
           path: 'fontSize',
