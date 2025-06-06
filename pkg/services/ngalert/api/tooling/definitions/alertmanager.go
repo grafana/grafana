@@ -678,7 +678,7 @@ func (c ExtraConfiguration) Validate() error {
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config" json:"extra_config"`
+	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
 
