@@ -8,6 +8,7 @@ import { PlotConfigBuilder } from '../types';
 export interface ScaleProps {
   scaleKey: string;
   isTime?: boolean;
+  auto?: boolean;
   min?: number | null;
   max?: number | null;
   softMin?: number | null;
@@ -32,6 +33,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   getConfig(): Scale {
     let {
       isTime,
+      auto,
       scaleKey,
       min: hardMin,
       max: hardMax,
@@ -256,7 +258,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       return minMax;
     };
 
-    let auto = !isTime && !hasFixedRange;
+    auto ??= !isTime && !hasFixedRange;
 
     if (isBooleanUnit(scaleKey)) {
       auto = false;
