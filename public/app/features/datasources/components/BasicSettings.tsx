@@ -4,17 +4,27 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useTranslate } from '@grafana/i18n';
-import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineSwitch, Input, TextArea, Badge, useStyles2 } from '@grafana/ui';
 
 export interface Props {
   dataSourceName: string;
+  description?: string;
   isDefault: boolean;
   onNameChange: (name: string) => void;
+  onDescriptionChange: (description: string) => void;
   onDefaultChange: (value: boolean) => void;
   disabled?: boolean;
 }
 
-export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange, disabled }: Props) {
+export function BasicSettings({
+  dataSourceName,
+  description,
+  isDefault,
+  onDefaultChange,
+  onNameChange,
+  onDescriptionChange,
+  disabled,
+}: Props) {
   const { t } = useTranslate();
 
   return (
@@ -63,6 +73,29 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               onChange={(event: React.FormEvent<HTMLInputElement>) => {
                 onDefaultChange(event.currentTarget.checked);
               }}
+            />
+          </InlineField>
+        </div>
+
+        {/* Description */}
+        <div className="gf-form max-width-30">
+          <InlineField
+            label={t('datasources.basic-settings.label-description', 'Description')}
+            tooltip={t(
+              'datasources.basic-settings.tooltip-description',
+              'Optional description to help identify and organize your data sources.'
+            )}
+            grow
+            disabled={disabled}
+            labelWidth={14}
+          >
+            <TextArea
+              id="basic-settings-description"
+              value={description || ''}
+              placeholder={t('datasources.basic-settings.placeholder-description', 'Description (optional)')}
+              onChange={(event) => onDescriptionChange(event.currentTarget.value)}
+              rows={3}
+              data-testid={selectors.pages.DataSource.description}
             />
           </InlineField>
         </div>
