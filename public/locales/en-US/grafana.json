@@ -5612,7 +5612,10 @@
       "aria-label-datasource-settings-page-basic": "Datasource settings page basic settings",
       "basic-settings-name-placeholder-name": "Name",
       "label-default": "Default",
-      "label-name": "Name"
+      "label-description": "Description",
+      "label-name": "Name",
+      "placeholder-description": "Description (optional)",
+      "tooltip-description": "Optional description to help identify and organize your data sources."
     },
     "build-categories": {
       "categories": {
