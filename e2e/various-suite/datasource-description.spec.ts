@@ -207,7 +207,7 @@ describe('Datasource Description Field', () => {
 
     // Test tab navigation between name and description
     e2e.pages.DataSource.name().focus();
-    e2e.pages.DataSource.name().tab();
+    e2e.pages.DataSource.name().type('{tab}');
     e2e.pages.DataSource.description().should('be.focused');
   });
 

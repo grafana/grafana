@@ -63,7 +63,7 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: 'Data source settings page name input field',
     },
     description: {
-      [MIN_GRAFANA_VERSION]: 'Data source settings page description input field',
+      '12.1.0': 'Data source settings page description input field',
     },
     delete: {
       [MIN_GRAFANA_VERSION]: 'Data source settings page Delete button',
