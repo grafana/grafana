@@ -420,7 +420,7 @@ export function GrafanaEvaluationBehaviorStep({
                       </>
                     }
                     externalLink={
-                      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/state-alert-instances/'
+                      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/'
                     }
                     linkText={t(
                       'alerting.alert-missing-evaluations-to-stale.help-info.link-text',
