@@ -62,7 +62,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
           path: 'showControls',
           name: 'Show controls',
           description: 'Display controls to jump to the last or first log line, and filters by log level',
-          defaultValue: false,
+          defaultValue: true,
         })
         .addRadio({
           path: 'fontSize',
