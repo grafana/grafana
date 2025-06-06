@@ -253,8 +253,8 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 
 	// Since this is a health check mechanism and we only care about whether the
 	// request succeeded or failed, we set the window to be small.
-	start := time.Now().Add(-5 * time.Minute).UnixMilli()
-	end := time.Now().UnixMilli()
+	start := time.Unix(1, 0).UnixMilli()
+	end := time.Unix(4, 0).UnixMilli()
 	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
