@@ -70,10 +70,13 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     this.props.importDashboard(form);
 
     const uid = form.uid;
-    const params = new URLSearchParams(window.location.search);
-    const assetId = params.get('assetId');
 
     setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const assetId = params.get('assetId');
+
+      console.log({ uid, assetId });
+
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
     }, 1000);
   };
