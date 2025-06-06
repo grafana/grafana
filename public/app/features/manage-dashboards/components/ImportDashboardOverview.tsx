@@ -79,7 +79,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
       console.log({ uid, assetId });
 
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
-    }, 2000);
+    }, 5000);
   };
 
   onCancel = () => {
