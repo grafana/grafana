@@ -2951,51 +2951,6 @@
       "title-query-result": "查詢結果"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "搜尋鍵"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "包含到期的金鑰"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "刪除 API 金鑰",
-      "content-this-api-key-has-expired": "",
-      "expires": "到期",
-      "last-used-at": "上次使用時間",
-      "migrate-to-service-account": "移轉至服務帳戶",
-      "name": "名稱",
-      "role": "角色"
-    },
-    "empty-state": {
-      "message": "沒有找到 API 金鑰。"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "沒有找到 API 金鑰。若重新載入瀏覽器，此頁面將無法再使用。",
-      "body-switch-service-accounts": "API 金鑰已被取代，並將於 2025 年 1 月 31 日從 Grafana 中移除。每個 API 金鑰都將使用權杖移轉至服務帳戶，並將繼續照常運作。建議您立即將 API 金鑰移轉至服務帳戶。<docsLink />",
-      "docs-link": {
-        "about-migration": "在此處了解更多關於移轉的資訊。"
-      },
-      "migrate-all-service-accounts": "移轉所有服務帳戶",
-      "migration-box-desc": {
-        "migrating": "移轉所有 API 金鑰將隱藏「API 金鑰」分頁。"
-      },
-      "modal-title": "將 API 金鑰移轉至服務帳戶",
-      "title-no-api-keys-found": "沒有找到 API 金鑰。",
-      "title-switch-service-accounts": "從 API 金鑰切換至服務帳戶"
-    },
-    "migration-summary": {
-      "close": "關閉",
-      "failed": "<0>失敗：{{failed}}</0>",
-      "failed-details": "<0>失敗詳細資料：</0>{{details}}",
-      "failed-ids": "<0>失敗的 API 金鑰識別碼：{{ids}}</0>",
-      "migrated": "<0>已移轉：{{migrated}}</0>",
-      "migration-complete": "移轉完成！請注意，雖然可能有一些 API 金鑰被標記為「移轉失敗」，但請放心，您的所有 API 金鑰都完全正常運作。請再試一次或聯絡支援部門。",
-      "migration-successful": "移轉成功！",
-      "title-migration-summary": "移轉摘要",
-      "total": "<0>總計：{{total}}</0>"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "跳至主要內容",
     "top-bar": {
@@ -8135,10 +8090,6 @@
     "alerts-recently-deleted": {
       "subtitle": "查看最近刪除的警報規則",
       "title": "最近刪除"
-    },
-    "api-keys": {
-      "subtitle": "管理並建立用於與 Grafana HTTP API 互動的 API 金鑰",
-      "title": "API 金鑰"
     },
     "application": {
       "title": "應用程式"

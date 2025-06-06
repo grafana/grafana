@@ -2951,51 +2951,6 @@
       "title-query-result": "Hasil kueri"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Kunci pencarian"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Sertakan kunci kedaluwarsa"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Hapus kunci API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Kedaluwarsa",
-      "last-used-at": "Terakhir digunakan pada",
-      "migrate-to-service-account": "Migrasi ke akun layanan",
-      "name": "Nama",
-      "role": "Peran"
-    },
-    "empty-state": {
-      "message": "Tidak ada kunci API yang ditemukan"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Tidak ada kunci API yang ditemukan. Jika Anda memuat ulang browser, halaman ini tidak akan tersedia lagi.",
-      "body-switch-service-accounts": "Kunci API sudah usang dan akan dihapus dari Grafana pada 31 Jan 2025. Setiap kunci API akan dimigrasikan ke akun layanan dengan token dan akan terus berfungsi sebagaimana adanya. Kami mendorong Anda untuk memigrasikan kunci API Anda ke akun layanan sekarang. <docsLink />",
-      "docs-link": {
-        "about-migration": "Cari tahu lebih lanjut tentang migrasi di sini."
-      },
-      "migrate-all-service-accounts": "Migrasikan semua akun layanan",
-      "migration-box-desc": {
-        "migrating": "Memigrasikan semua kunci API akan menyembunyikan tab kunci API."
-      },
-      "modal-title": "Migrasi kunci API ke akun layanan",
-      "title-no-api-keys-found": "Tidak ada kunci API yang ditemukan",
-      "title-switch-service-accounts": "Beralih dari kunci API ke akun layanan"
-    },
-    "migration-summary": {
-      "close": "Tutup",
-      "failed": "<0>Gagal: </0>{{failed}}",
-      "failed-details": "<0>Detail gagal: </0>{{details}}",
-      "failed-ids": "<0> ID kunci API gagal: </0>{{ids}}",
-      "migrated": "<0>Dimigrasikan: </0>{{migrated}}",
-      "migration-complete": "Migrasi selesai! Harap diperhatikan, meskipun mungkin ada beberapa kunci API yang ditandai sebagai 'migrasi gagal', jangan khawatir, semua kunci API Anda berfungsi dan beroperasi xecara penuh. Silakan coba lagi atau hubungi dukungan pelanggan.",
-      "migration-successful": "Migrasi Berhasil!",
-      "title-migration-summary": "Ringkasan migrasi",
-      "total": "<0>Total: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Lewati ke konten utama",
     "top-bar": {
@@ -8135,10 +8090,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Lihat aturan peringatan yang baru dihapus",
       "title": "Baru dihapus"
-    },
-    "api-keys": {
-      "subtitle": "Kelola dan buat kunci API yang digunakan untuk berinteraksi dengan API HTTP Grafana",
-      "title": "Kunci API"
     },
     "application": {
       "title": "Aplikasi"

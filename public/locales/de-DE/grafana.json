@@ -2964,51 +2964,6 @@
       "title-query-result": "Ergebnis der Abfrage"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Suchbegriffe"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Abgelaufene Keys einschließen"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API-Key löschen",
-      "content-this-api-key-has-expired": "",
-      "expires": "Läuft ab",
-      "last-used-at": "Zuletzt verwendet am",
-      "migrate-to-service-account": "Zum Dienstkonto migrieren",
-      "name": "Name",
-      "role": "Rolle"
-    },
-    "empty-state": {
-      "message": "Keine API-Keys gefunden"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Keine API-Keys gefunden. Wenn Sie den Browser neu laden, ist diese Seite nicht mehr verfügbar.",
-      "body-switch-service-accounts": "Die API-Keys sind veraltet und werden am 31. Jan. 2025 aus Grafana entfernt. Jeder API-Key wird mit einem Token in ein Dienstkonto migriert und auch weiterhin wie bisher funktionieren. Wir empfehlen Ihnen, Ihre API-Keys jetzt zu Dienstkonten zu migrieren. <docsLink />",
-      "docs-link": {
-        "about-migration": "Erfahren Sie hier mehr über die Migration."
-      },
-      "migrate-all-service-accounts": "Alle Dienstkonten migrieren",
-      "migration-box-desc": {
-        "migrating": "Durch die Migration aller API-Keys wird die Registerkarte API-Keys ausgeblendet."
-      },
-      "modal-title": "API-Keys zu Dienstkonten migrieren",
-      "title-no-api-keys-found": "Keine API-Keys gefunden",
-      "title-switch-service-accounts": "Von API-Keys zu Dienstkonten wechseln"
-    },
-    "migration-summary": {
-      "close": "Schließen",
-      "failed": "<0>Fehlgeschlagen: </0>{{failed}}",
-      "failed-details": "<0>Fehlgeschlagene Details: </0>{{details}}",
-      "failed-ids": "<0>Fehlgeschlagene API-Key-IDs: </0>{{ids}}",
-      "migrated": "<0>Migriert: </0>{{migrated}}",
-      "migration-complete": "Migration abgeschlossen! Bitte beachten Sie, dass es einige API-Keys geben kann, die als „fehlgeschlagene Migrationen“ gekennzeichnet sind. Sie können sich jedoch darauf verlassen, dass Ihre gesamten API-Keys voll funktionsfähig und einsatzbereit sind. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
-      "migration-successful": "Migration erfolgreich!",
-      "title-migration-summary": "Migrationsübersicht",
-      "total": "<0>Gesamt: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Weiter zum Hauptinhalt",
     "top-bar": {
@@ -8161,10 +8116,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Kürzlich gelöschte Warnregeln anzeigen",
       "title": "Kürzlich gelöscht"
-    },
-    "api-keys": {
-      "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
-      "title": "API-Schlüssel"
     },
     "application": {
       "title": "Anwendung"

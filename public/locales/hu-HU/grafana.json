@@ -2964,51 +2964,6 @@
       "title-query-result": "A lekérdezés eredménye"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Kulcsok keresése"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Lejárt kulcsokkal együtt"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API-kulcs törlése",
-      "content-this-api-key-has-expired": "",
-      "expires": "Lejárat",
-      "last-used-at": "Legutóbbi használat",
-      "migrate-to-service-account": "Áttelepítés a szolgáltatási fiókba",
-      "name": "Név",
-      "role": "Szerepkör"
-    },
-    "empty-state": {
-      "message": "Nem találhatóak API-kulcsok"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nem találhatók API-kulcsok. Ha újra betölti a böngészőt, ez az oldal a továbbiakban nem lesz elérhető.",
-      "body-switch-service-accounts": "Az API-kulcsok elavultak, és 2025. január 31-én megtörténik az eltávolításuk a Grafanából. Minden API-kulcs átkerül egy tokennel ellátott szolgáltatási fiókba, és továbbra is ugyanúgy működik, mint korábban. Javasoljuk, hogy most telepítse át API-kulcsait szolgáltatási fiókokba. <docsLink />",
-      "docs-link": {
-        "about-migration": "Tudjon meg többet az áttelepítésről itt."
-      },
-      "migrate-all-service-accounts": "Összes szolgáltatási fiók áttelepítése",
-      "migration-box-desc": {
-        "migrating": "Az összes API-kulcs áttelepítése elrejti az API-kulcsok lapot."
-      },
-      "modal-title": "API-kulcsok áttelepítése szolgáltatási fiókokba",
-      "title-no-api-keys-found": "Nem találhatók API-kulcsok",
-      "title-switch-service-accounts": "Váltás API-kulcsokról szolgáltatási fiókokra"
-    },
-    "migration-summary": {
-      "close": "Bezárás",
-      "failed": "<0>Sikertelen: </0>{{failed}}",
-      "failed-details": "<0>Sikertelenség részletei: </0>{{details}}",
-      "failed-ids": "<0>Sikertelen API-kulcs-azonosítók: </0>{{ids}}",
-      "migrated": "<0>Áttelepítve: </0>{{migrated}}",
-      "migration-complete": "Az áttelepítés befejeződött! Felhívjuk figyelmét, hogy bár előfordulhat, hogy néhány API-kulcs „sikertelen áttelepítés” jelöléssel rendelkezik, biztos lehet benne, hogy az összes API-kulcs teljes funkcionalitású és működőképes. Próbálkozzon újra, vagy vegye fel a kapcsolatot az ügyfélszolgálattal.",
-      "migration-successful": "Sikeres áttelepítés!",
-      "title-migration-summary": "Az áttelepítés összefoglalója",
-      "total": "<0>Összesen: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Ugrás a fő tartalomra",
     "top-bar": {
@@ -8161,10 +8116,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Nemrég törölt riasztási szabályok megtekintése",
       "title": "Nemrég törölt"
-    },
-    "api-keys": {
-      "subtitle": "A Grafana HTTP API-kkal való interakcióhoz használt API-kulcsok kezelése és létrehozása",
-      "title": "API-kulcsok"
     },
     "application": {
       "title": "Alkalmazás"
