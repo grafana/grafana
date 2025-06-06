@@ -22409,6 +22409,9 @@
         "Email": {
           "type": "string"
         },
+        "ExternalUID": {
+          "type": "string"
+        },
         "ID": {
           "type": "integer",
           "format": "int64"
