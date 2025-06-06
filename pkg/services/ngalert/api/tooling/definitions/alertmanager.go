@@ -650,7 +650,7 @@ type DatasourceUIDReference struct {
 
 type ExtraConfiguration struct {
 	Identifier         string                    `yaml:"identifier" json:"identifier"`
-	MergeMatcher       config.Matchers           `yaml:"merge_matcher" json:"merge_matcher"`
+	MergeMatchers      config.Matchers           `yaml:"merge_matchers" json:"merge_matchers"`
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
@@ -659,10 +659,10 @@ func (c ExtraConfiguration) Validate() error {
 	if c.Identifier == "" {
 		return errors.New("identifier is required")
 	}
-	if c.MergeMatcher == nil {
+	if c.MergeMatchers == nil {
 		return errors.New("identifier is required")
 	}
-	for _, m := range c.MergeMatcher {
+	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
 			return errors.New("only matchers with type equal are supported")
 		}
@@ -686,7 +686,7 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	for _, mimirCfg := range c.ExtraConfigs {
 		opts := definition.MergeOpts{
 			DedupSuffix:     mimirCfg.Identifier,
-			SubtreeMatchers: mimirCfg.MergeMatcher,
+			SubtreeMatchers: mimirCfg.MergeMatchers,
 		}
 		if err := opts.Validate(); err != nil {
 			return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
