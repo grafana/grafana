@@ -59,7 +59,7 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
       onResize={handleResize}
       handleClasses={{ left: dragStyles.dragHandleVertical }}
       defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
-      size={{ width: detailsWidth }}
+      size={{ width: detailsWidth, height: containerElement.clientHeight }}
       enable={{ left: true }}
       minWidth={40}
       maxWidth={maxWidth}
@@ -71,29 +71,31 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
           aria-label={t('logs.log-details.close', 'Close log details')}
           onClick={closeDetails}
         />
-        <table width="100%">
-          <tbody>
-            <LogDetails
-              getRows={getRows}
-              mode="sidebar"
-              row={showDetails[0]}
-              showDuplicates={false}
-              styles={logRowsStyles}
-              wrapLogMessage={wrapLogMessage}
-              onPinLine={onPinLine}
-              getFieldLinks={getFieldLinks}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              onClickShowField={onClickShowField}
-              onClickHideField={onClickHideField}
-              hasError={showDetails[0].hasError}
-              displayedFields={displayedFields}
-              app={app}
-              isFilterLabelActive={isLabelFilterActive}
-              pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-            />
-          </tbody>
-        </table>
+        <div className={styles.scrollContainer}>
+          <table width="100%">
+            <tbody>
+              <LogDetails
+                getRows={getRows}
+                mode="sidebar"
+                row={showDetails[0]}
+                showDuplicates={false}
+                styles={logRowsStyles}
+                wrapLogMessage={wrapLogMessage}
+                onPinLine={onPinLine}
+                getFieldLinks={getFieldLinks}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
+                hasError={showDetails[0].hasError}
+                displayedFields={displayedFields}
+                app={app}
+                isFilterLabelActive={isLabelFilterActive}
+                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+              />
+            </tbody>
+          </table>
+        </div>
       </div>
     </Resizable>
   );
@@ -105,9 +107,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     height: '100%',
   }),
+  scrollContainer: css({
+    overflow: 'auto',
+    height: '100%',
+  }),
   closeIcon: css({
     position: 'absolute',
     top: theme.spacing(1),
-    right: theme.spacing(1.5),
+    right: theme.spacing(3),
   }),
 });
