@@ -47,7 +47,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         path: 'enableLogDetails',
         name: 'Enable log details',
         description: '',
-        defaultValue: true,
+        defaultValue: false,
       })
       .addBooleanSwitch({
         path: 'enableInfiniteScrolling',
