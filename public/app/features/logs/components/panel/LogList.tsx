@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { Grammar } from 'prismjs';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, MouseEvent } from 'react';
 import { VariableSizeList } from 'react-window';
 
 import {
@@ -19,7 +19,9 @@ import {
   store,
   TimeRange,
 } from '@grafana/data';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
@@ -29,6 +31,7 @@ import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { preProcessLogs, LogListModel } from './processing';
+import { usePopoverMenu } from './usePopoverMenu';
 import {
   calculateFieldDimensions,
   getLogLineSize,
@@ -221,6 +224,8 @@ const LogListComponent = ({
     forceEscape,
     hasLogsWithErrors,
     hasSampledLogs,
+    onClickFilterString,
+    onClickFilterOutString,
     permalinkedLogId,
     showDetails,
     showTime,
@@ -245,6 +250,16 @@ const LogListComponent = ({
   );
   const styles = getStyles(dimensions, { showTime }, theme);
   const widthContainer = wrapperRef.current ?? containerElement;
+  const {
+    closePopoverMenu,
+    handleTextSelection,
+    onDisableCancel,
+    onDisableConfirm,
+    onDisablePopoverMenu,
+    popoverState,
+    showDisablePopoverOptions,
+  } = usePopoverMenu(wrapperRef.current);
+  const { t } = useTranslate();
 
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
@@ -334,14 +349,14 @@ const LogListComponent = ({
   }
 
   const handleLogLineClick = useCallback(
-    (log: LogListModel) => {
-      // Let people select text
-      if (document.getSelection()?.toString()) {
+    (e: MouseEvent<HTMLElement>, log: LogListModel) => {
+      if (handleTextSelection?.(e, log)) {
+        // Event handled by the parent.
         return;
       }
       toggleDetails(log);
     },
-    [toggleDetails]
+    [handleTextSelection, toggleDetails]
   );
 
   const handleLogDetailsResize = useCallback(() => {
@@ -357,6 +372,39 @@ const LogListComponent = ({
   return (
     <div className={styles.logListContainer}>
       <div className={styles.logListWrapper} ref={wrapperRef}>
+        {popoverState.selection && popoverState.selectedRow && (
+          <PopoverMenu
+            close={closePopoverMenu}
+            row={popoverState.selectedRow}
+            selection={popoverState.selection}
+            {...popoverState.popoverMenuCoordinates}
+            onClickFilterString={onClickFilterString}
+            onClickFilterOutString={onClickFilterOutString}
+            onDisable={onDisablePopoverMenu}
+          />
+        )}
+        {showDisablePopoverOptions && (
+          <ConfirmModal
+            isOpen
+            title={t('logs.log-rows.disable-popover.title', 'Disable menu')}
+            body={
+              <>
+                <Trans i18nKey="logs.log-rows.disable-popover.message">
+                  You are about to disable the logs filter menu. To re-enable it, select text in a log line while
+                  holding the alt key.
+                </Trans>
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" />
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">alt+select to enable again</Trans>
+                </div>
+              </>
+            }
+            confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
+            icon="exclamation-triangle"
+            onConfirm={onDisableConfirm}
+            onDismiss={onDisableCancel}
+          />
+        )}
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
@@ -427,6 +475,16 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
     }),
     logListWrapper: css({
       width: '100%',
+      position: 'relative',
+    }),
+    shortcut: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      color: theme.colors.text.secondary,
+      opacity: 0.7,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginTop: theme.spacing(1),
     }),
   };
 }
