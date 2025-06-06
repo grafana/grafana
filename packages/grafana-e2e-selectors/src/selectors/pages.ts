@@ -62,6 +62,9 @@ export const versionedPages = {
       '10.3.0': 'data-testid Data source settings page name input field',
       [MIN_GRAFANA_VERSION]: 'Data source settings page name input field',
     },
+    description: {
+      [MIN_GRAFANA_VERSION]: 'Data source settings page description input field',
+    },
     delete: {
       [MIN_GRAFANA_VERSION]: 'Data source settings page Delete button',
     },
