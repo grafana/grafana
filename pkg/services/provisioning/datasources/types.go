@@ -34,6 +34,7 @@ type upsertDataSourceFromConfig struct {
 	Version int
 
 	Name            string
+	Description     string
 	Type            string
 	Access          string
 	URL             string
@@ -81,6 +82,7 @@ type upsertDataSourceFromConfigV0 struct {
 	OrgID           int64             `json:"org_id" yaml:"org_id"`
 	Version         int               `json:"version" yaml:"version"`
 	Name            string            `json:"name" yaml:"name"`
+	Description     string            `json:"description" yaml:"description"`
 	Type            string            `json:"type" yaml:"type"`
 	Access          string            `json:"access" yaml:"access"`
 	URL             string            `json:"url" yaml:"url"`
@@ -100,6 +102,7 @@ type upsertDataSourceFromConfigV1 struct {
 	OrgID           values.Int64Value     `json:"orgId" yaml:"orgId"`
 	Version         values.IntValue       `json:"version" yaml:"version"`
 	Name            values.StringValue    `json:"name" yaml:"name"`
+	Description     values.StringValue    `json:"description" yaml:"description"`
 	Type            values.StringValue    `json:"type" yaml:"type"`
 	Access          values.StringValue    `json:"access" yaml:"access"`
 	URL             values.StringValue    `json:"url" yaml:"url"`
@@ -130,6 +133,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID.Value(),
 			Name:            ds.Name.Value(),
+			Description:     ds.Description.Value(),
 			Type:            ds.Type.Value(),
 			Access:          ds.Access.Value(),
 			URL:             ds.URL.Value(),
@@ -172,6 +176,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 		r.Datasources = append(r.Datasources, &upsertDataSourceFromConfig{
 			OrgID:           ds.OrgID,
 			Name:            ds.Name,
+			Description:     ds.Description,
 			Type:            ds.Type,
 			Access:          ds.Access,
 			URL:             ds.URL,
@@ -210,6 +215,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 	cmd := &datasources.AddDataSourceCommand{
 		OrgID:           ds.OrgID,
 		Name:            ds.Name,
+		Description:     ds.Description,
 		Type:            ds.Type,
 		Access:          datasources.DsAccess(ds.Access),
 		URL:             ds.URL,
@@ -253,6 +259,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		UID:                     ds.UID,
 		OrgID:                   ds.OrgID,
 		Name:                    ds.Name,
+		Description:             ds.Description,
 		Type:                    ds.Type,
 		Access:                  datasources.DsAccess(ds.Access),
 		URL:                     ds.URL,

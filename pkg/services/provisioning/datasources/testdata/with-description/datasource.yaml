@@ -1,0 +1,48 @@
+apiVersion: 1
+
+datasources:
+  - name: prometheus-with-description
+    description: "This is a Prometheus datasource with a detailed description for monitoring metrics"
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prometheus:9090
+    isDefault: false
+    editable: true
+    uid: prometheus_desc_test
+
+  - name: loki-with-empty-description
+    description: ""
+    type: loki
+    access: proxy
+    orgId: 1
+    url: http://loki:3100
+    isDefault: false
+    editable: true
+    uid: loki_empty_desc_test
+
+  - name: testdata-no-description
+    type: grafana-testdata-datasource
+    access: proxy
+    orgId: 1
+    isDefault: false
+    editable: true
+    uid: testdata_no_desc_test
+
+  - name: postgres-long-description
+    description: "This is a very long description that tests how the provisioning system handles lengthy description text. It contains multiple sentences and should demonstrate that the description field can handle substantial amounts of text without issues. This helps ensure that users can provide comprehensive documentation for their datasources through the provisioning configuration files."
+    type: grafana-postgresql-datasource
+    access: proxy
+    orgId: 1
+    url: postgres://localhost:5432/mydb
+    user: postgres
+    database: grafana
+    basicAuth: false
+    isDefault: false
+    editable: true
+    uid: postgres_long_desc_test
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 2
+      maxIdleConnsAuto: true
