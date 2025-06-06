@@ -236,6 +236,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
 
+	// Save the merged group-level + rule-level labels to the original rule,
+	// to ensure that they are saved to the original YAML rule definition.
+	if rule.Labels == nil {
+		rule.Labels = make(map[string]string)
+	}
+	maps.Copy(rule.Labels, labels)
+
 	// Add a special label to indicate that this rule was converted from a Prometheus rule.
 	labels[models.ConvertedPrometheusRuleLabel] = "true"
 

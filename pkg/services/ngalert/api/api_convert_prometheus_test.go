@@ -1084,12 +1084,17 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		Name:     "TestGroup1",
 		Interval: prommodel.Duration(1 * time.Minute),
 		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Labels: map[string]string{
+			"group_label": "group_value",
+		},
 	}
 
+	queryOffset := prommodel.Duration(5 * time.Minute)
 	promGroup2 := apimodels.PrometheusRuleGroup{
-		Name:     "TestGroup2",
-		Interval: prommodel.Duration(1 * time.Minute),
-		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Name:        "TestGroup2",
+		Interval:    prommodel.Duration(1 * time.Minute),
+		Rules:       []apimodels.PrometheusRule{promAlertRule},
+		QueryOffset: &queryOffset,
 	}
 
 	promGroup3 := apimodels.PrometheusRuleGroup{
@@ -1125,10 +1130,12 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, "group_value", rule.Labels["group_label"])
 			case "TestGroup2":
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, models.Duration(queryOffset), rule.Data[0].RelativeTimeRange.To)
 			case "TestGroup3":
 				switch rule.Title {
 				case "TestAlert":
