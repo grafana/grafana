@@ -60,7 +60,6 @@ export const LogLine = ({
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
   const permalinked = useLogIsPermalinked(log);
-  const actualHeightRef = useRef(0);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -68,8 +67,7 @@ export const LogLine = ({
     }
     const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
     const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight, log.collapsed);
-    if (actualHeight && actualHeight !== actualHeightRef.current) {
-      actualHeightRef.current = actualHeight;
+    if (actualHeight) {
       onOverflow(index, log.uid, actualHeight);
     }
   });
