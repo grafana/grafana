@@ -12,6 +12,24 @@ import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
 
 import { ImportDashboardForm } from './ImportDashboardForm';
 
+function getAssetIdFromIframe() {
+  const iframe = window.parent.document.querySelector('iframe');
+
+  if (!iframe) {
+    console.warn('No iframe found.');
+    return null;
+  }
+
+  const src = iframe.src;
+  if (!src) {
+    console.warn('The iframe has no src attribute.');
+    return null;
+  }
+
+  const params = new URLSearchParams(new URL(src).search);
+  return params.get('assetId');
+}
+
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 type Target = {
@@ -72,24 +90,11 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     const uid = form.uid;
 
     setTimeout(() => {
-      const params = new URLSearchParams(window.location.search);
-      console.log(window.location.search);
-      const assetId = params.get('assetId');
-
-      console.log({ uid, assetId });
-
-      const queryParams = locationService.getSearch();
-      const searchObj = locationService.getSearchObject();
-
-      console.log({ queryParams, searchObj });
+      const assetId = getAssetIdFromIframe();
+      console.log('Asset ID:', assetId);
 
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
-    }, 5000);
-
-    const queryParams = locationService.getSearch();
-    const searchObj = locationService.getSearchObject();
-
-    console.log({ queryParams, searchObj });
+    }, 1000);
   };
 
   onCancel = () => {
