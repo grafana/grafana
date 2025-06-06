@@ -2964,51 +2964,6 @@
       "title-query-result": "Resultat av fråga"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Söknycklar"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Inkludera utgångna nycklar"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Radera API-nyckel",
-      "content-this-api-key-has-expired": "",
-      "expires": "Löper ut",
-      "last-used-at": "Användes senast",
-      "migrate-to-service-account": "Migrera till servicekonto",
-      "name": "Namn",
-      "role": "Roll"
-    },
-    "empty-state": {
-      "message": "Inga API-nycklar hittades"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Inga API-nycklar hittades. Om du laddar om webbläsaren kommer den här sidan inte att vara tillgänglig längre.",
-      "body-switch-service-accounts": "API-nycklar är föråldrade och kommer att tas bort från Grafana den 31 januari 2025. Varje API-nyckel kommer att migreras till ett servicekonto med en token och kommer att fortsätta att fungera som de fungerade tidigare. Vi uppmuntrar dig att migrera dina API-nycklar till servicekonton nu. <docsLink />",
-      "docs-link": {
-        "about-migration": "Läs mer om migreringen här."
-      },
-      "migrate-all-service-accounts": "Migrera alla servicekonton",
-      "migration-box-desc": {
-        "migrating": "Migrering av alla API-nycklar kommer att dölja fliken API-nycklar."
-      },
-      "modal-title": "Migrera API-nycklar till servicekonton",
-      "title-no-api-keys-found": "Inga API-nycklar hittades",
-      "title-switch-service-accounts": "Växla från API-nycklar till servicekonton"
-    },
-    "migration-summary": {
-      "close": "Stäng",
-      "failed": "<0>Misslyckades: </0>{{failed}}",
-      "failed-details": "<0>Information om misslyckande: </0>{{details}}",
-      "failed-ids": "<0>ID för misslyckade API-nycklar: </0>{{ids}}",
-      "migrated": "<0>Migrerade: </0>{{migrated}}",
-      "migration-complete": "Migrering slutförd! Observera att även om det kan finnas några API-nycklar som flaggats som ”misslyckade migreringar” kan du vara säker på att alla dina API-nycklar är fullt funktionella och fungerar som de ska. Försök igen eller kontakta supporten.",
-      "migration-successful": "Migreringen lyckades!",
-      "title-migration-summary": "Migreringssammanfattning",
-      "total": "<0>Totalt: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Hoppa till huvudinnehåll",
     "top-bar": {
@@ -8161,10 +8116,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Se nyligen raderade larmregler",
       "title": "Nyligen raderat"
-    },
-    "api-keys": {
-      "subtitle": "Hantera och skapa API-nycklar som används för att interagera med Grafana HTTP API:er",
-      "title": "API-nycklar"
     },
     "application": {
       "title": "Applikation"

@@ -2990,51 +2990,6 @@
       "title-query-result": "Wynik zapytania"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Szukaj kluczy"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Uwzględnij nieważne klucze"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Usuń klucz API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Wygasa",
-      "last-used-at": "Ostatnio używane",
-      "migrate-to-service-account": "Przeprowadź migrację do konta usługi",
-      "name": "Nazwa",
-      "role": "Rola"
-    },
-    "empty-state": {
-      "message": "Nie znaleziono kluczy API"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nie znaleziono kluczy API. Jeśli odświeżysz przeglądarkę, ta strona nie będzie już dostępna.",
-      "body-switch-service-accounts": "Klucze API są przestarzałe i 31 stycznia 2025 roku zostaną usunięte z usługi Grafana. Każdy klucz API zostanie przeniesiony na konto usługi z tokenem i będzie nadal działał bez zmian. Zachęcamy do przeprowadzenia migracji kluczy API na konta usług już teraz. <docsLink />",
-      "docs-link": {
-        "about-migration": "Więcej informacji na temat migracji znajdziesz tutaj."
-      },
-      "migrate-all-service-accounts": "Migracja wszystkich kont usług",
-      "migration-box-desc": {
-        "migrating": "Migracja wszystkich kluczy API spowoduje ukrycie karty kluczy API."
-      },
-      "modal-title": "Migracja kluczy API na konta usług",
-      "title-no-api-keys-found": "Nie znaleziono kluczy API",
-      "title-switch-service-accounts": "Przełącz z kluczy API na konta usług"
-    },
-    "migration-summary": {
-      "close": "Zamknij",
-      "failed": "<0>Niepowodzenie: </0>{{failed}}",
-      "failed-details": "<0>Szczegóły niepowodzenia: </0>{{details}}",
-      "failed-ids": "<0>Identyfikatory nieprawidłowych kluczy API: </0>{{ids}}",
-      "migrated": "<0>Przeniesiono: </0>{{migrated}}",
-      "migration-complete": "Migracja ukończona. Chociaż niektóre klucze API mogą być oznaczone jako „nieudane migracje”, zapewniamy, że wszystkie są w pełni funkcjonalne i sprawne. Spróbuj ponownie lub skontaktuj się z zespołem pomocy.",
-      "migration-successful": "Migracja ukończona!",
-      "title-migration-summary": "Podsumowanie migracji",
-      "total": "<0>Łącznie: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Przejdź do głównej treści",
     "top-bar": {
@@ -8213,10 +8168,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Zobacz niedawno usunięte reguły alertów",
       "title": "Ostatnio usunięte"
-    },
-    "api-keys": {
-      "subtitle": "Zarządzaj kluczami API używanymi do interakcji z interfejsami HTTP API serwisu Grafana i je twórz",
-      "title": "Klucze API"
     },
     "application": {
       "title": "Aplikacja"

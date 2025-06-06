@@ -2951,51 +2951,6 @@
       "title-query-result": "查询结果"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "搜索键"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "包括过期的密钥"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "删除 API 密钥",
-      "content-this-api-key-has-expired": "",
-      "expires": "过期",
-      "last-used-at": "上次使用时间",
-      "migrate-to-service-account": "迁移到服务账户",
-      "name": "名称",
-      "role": "角色"
-    },
-    "empty-state": {
-      "message": "没有找到 API 密钥"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "找不到 API 密钥。如果重新加载浏览器，此页面将不再可用。",
-      "body-switch-service-accounts": "API 密钥已弃用，并将于 2025 年 1 月 31 日从 Grafana 中移除。每个 API 密钥都将迁移到具有令牌的服务账户中，并将继续照常工作。我们建议您立即将 API 密钥迁移到服务账户。<docsLink />",
-      "docs-link": {
-        "about-migration": "在此了解有关迁移的更多信息。"
-      },
-      "migrate-all-service-accounts": "迁移所有服务账户",
-      "migration-box-desc": {
-        "migrating": "迁移所有 API 密钥将隐藏 API 密钥选项卡。"
-      },
-      "modal-title": "将 API 密钥迁移到服务账户",
-      "title-no-api-keys-found": "没有找到 API 密钥",
-      "title-switch-service-accounts": "从 API 密钥切换到服务账户"
-    },
-    "migration-summary": {
-      "close": "关闭",
-      "failed": "<0>失败：</0>{{failed}}",
-      "failed-details": "<0>失败详情：</0>{{details}}",
-      "failed-ids": "<0>失败的 API 密钥 ID：</0>{{ids}}",
-      "migrated": "<0>已迁移：</0>{{migrated}}",
-      "migration-complete": "迁移完成！请注意，虽然可能有一些 API 密钥被标记为“迁移失败”，但请放心，您的所有 API 密钥都完全正常并可使用。请重试或联系支持人员。",
-      "migration-successful": "迁移成功！",
-      "title-migration-summary": "迁移摘要",
-      "total": "<0>总计：</0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "跳至主要内容",
     "top-bar": {
@@ -8135,10 +8090,6 @@
     "alerts-recently-deleted": {
       "subtitle": "查看最近删除的警报规则",
       "title": "最近删除"
-    },
-    "api-keys": {
-      "subtitle": "管理和创建用于与 Grafana HTTP API 交互的 API 密钥",
-      "title": "API 密钥"
     },
     "application": {
       "title": "应用程序"

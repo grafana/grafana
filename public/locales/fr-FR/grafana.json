@@ -2964,51 +2964,6 @@
       "title-query-result": "Résultat de la requête"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Rechercher les clés"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Inclure les clés expirées"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Supprimer la clé de l’API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Expire",
-      "last-used-at": "Dernière utilisation le",
-      "migrate-to-service-account": "Migrer vers un compte de service",
-      "name": "Nom",
-      "role": "Rôle"
-    },
-    "empty-state": {
-      "message": "Aucune clé API trouvée"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Aucune clé API trouvée. Si vous actualisez le navigateur, cette page ne sera plus disponible.",
-      "body-switch-service-accounts": "Les clés API sont obsolètes et seront supprimées de Grafana le 31 janvier 2025. Chaque clé API sera migrée vers un compte de service avec un jeton et continuera à fonctionner comme avant. Nous vous encourageons à migrer vos clés API vers des comptes de service dès maintenant. <docsLink />",
-      "docs-link": {
-        "about-migration": "Pour en savoir plus sur la migration, cliquez ici."
-      },
-      "migrate-all-service-accounts": "Migrer tous les comptes de service",
-      "migration-box-desc": {
-        "migrating": "La migration de toutes les clés API masquera l’onglet des clés API."
-      },
-      "modal-title": "Migrer les clés API vers les comptes de service",
-      "title-no-api-keys-found": "Aucune clé API trouvée",
-      "title-switch-service-accounts": "Passer des clés API aux comptes de service"
-    },
-    "migration-summary": {
-      "close": "Fermer",
-      "failed": "<0>Échec : </0>{{failed}}",
-      "failed-details": "<0>Détails de l’échec : </0>{{details}}",
-      "failed-ids": "<0>Identifiants de clé API ayant échoué : </0>{{ids}}",
-      "migrated": "<0>Migré : </0>{{migrated}}",
-      "migration-complete": "La migration est terminée ! Veuillez noter que même s’il peut y avoir quelques clés API signalées comme « échec des migrations », toutes vos clés API sont pleinement fonctionnelles et opérationnelles. Veuillez réessayer ou contacter le service d’assistance.",
-      "migration-successful": "Migration réussie !",
-      "title-migration-summary": "Résumé de la migration",
-      "total": "<0>Total : </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Passer au contenu principal",
     "top-bar": {
@@ -8161,10 +8116,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Afficher les règles d’alerte récemment supprimées",
       "title": "Récemment supprimé"
-    },
-    "api-keys": {
-      "subtitle": "Gérer et créer des clés API utilisées pour interagir avec les API HTTP de Grafana",
-      "title": "Clés API"
     },
     "application": {
       "title": "Application"

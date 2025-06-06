@@ -2951,51 +2951,6 @@
       "title-query-result": "クエリ結果"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "キーを検索"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "期限切れのキーを含める"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "APIキーを削除",
-      "content-this-api-key-has-expired": "",
-      "expires": "有効期限",
-      "last-used-at": "最終使用日時",
-      "migrate-to-service-account": "サービスアカウントに移行",
-      "name": "名前",
-      "role": "ロール"
-    },
-    "empty-state": {
-      "message": "キーが見つかりませんでした。"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "APIキーが見つかりませんでした。ブラウザを再読み込みすると、このページは利用できなくなります。",
-      "body-switch-service-accounts": "APIキーは非推奨化されており、2025年1月31日付でGrafanaから削除されます。各APIキーはトークンを使用してサービスアカウントに移行され、引き続き同様に機能します。今すぐAPIキーをサービスアカウントに移行することをお勧めします。<docsLink /> ",
-      "docs-link": {
-        "about-migration": "移行の詳細については、こちらをご覧ください。"
-      },
-      "migrate-all-service-accounts": "すべてのサービスアカウントを移行",
-      "migration-box-desc": {
-        "migrating": "すべてのAPIキーを移行すると、APIキータブが非表示になります。"
-      },
-      "modal-title": "APIキーをサービスアカウントに移行",
-      "title-no-api-keys-found": "APIキーが見つかりませんでした",
-      "title-switch-service-accounts": "APIキーからサービスアカウントへ切り替え"
-    },
-    "migration-summary": {
-      "close": "閉じる",
-      "failed": "<0>失敗：</0>{{failed}}",
-      "failed-details": "<0>失敗の詳細：</0>{{details}}",
-      "failed-ids": "<0>失敗したAPIキーID：</0>{{ids}}",
-      "migrated": "<0>移行済み：</0>{{migrated}}",
-      "migration-complete": "移行が完了しました！なお、「移行に失敗」とマークされたAPIキーがいくつかあるかもしれませんが、すべてのAPIキーは完全に機能し動作しています。再試行するか、サポートにお問い合わせください。",
-      "migration-successful": "移行が成功しました！",
-      "title-migration-summary": "移行の概要",
-      "total": "<0>合計：</0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "メインコンテンツへスキップ",
     "top-bar": {
@@ -8135,10 +8090,6 @@
     "alerts-recently-deleted": {
       "subtitle": "最近削除されたアラートルールを表示",
       "title": "最近削除された"
-    },
-    "api-keys": {
-      "subtitle": "Grafana HTTP APIとのやり取りに使用されるAPIキーを管理および作成します",
-      "title": "APIキー"
     },
     "application": {
       "title": "アプリケーション"

@@ -2990,51 +2990,6 @@
       "title-query-result": "Результат запроса"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Поиск ключей"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Включить ключи с истекшим сроком действия"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Удалить ключ API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Срок действия",
-      "last-used-at": "Время последнего использования",
-      "migrate-to-service-account": "Перенести в служебную учетную запись",
-      "name": "Имя",
-      "role": "Роль"
-    },
-    "empty-state": {
-      "message": "Ключи API не найдены"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Ключи API не найдены. Если перезагрузить браузер, страница больше не будет доступна.",
-      "body-switch-service-accounts": "Ключи API устарели и будут удалены из Grafana 31 января 2025 года. Каждый ключ API будет перенесен в служебную учетную запись с токеном и будет продолжать работать, как и раньше. Рекомендуем перенести ключи API в служебные учетные записи уже сейчас. <docsLink />",
-      "docs-link": {
-        "about-migration": "Подробнее о переносе здесь."
-      },
-      "migrate-all-service-accounts": "Перенести все служебные учетные записи",
-      "migration-box-desc": {
-        "migrating": "После переноса всех ключей API вкладка ключей API будет скрыта."
-      },
-      "modal-title": "Перенос ключей API в служебные учетные записи",
-      "title-no-api-keys-found": "Ключи API не найдены",
-      "title-switch-service-accounts": "Переключение с ключей API на служебные учетные записи"
-    },
-    "migration-summary": {
-      "close": "Закрыть",
-      "failed": "<0>Ошибки: </0>{{failed}}",
-      "failed-details": "<0>Сведения об ошибках: </0>{{details}}",
-      "failed-ids": "<0>Недействительные идентификаторы ключей API: </0>{{ids}}",
-      "migrated": "<0>Перенесено: </0>{{migrated}}",
-      "migration-complete": "Перенос завершен Обратите внимание: хотя несколько ключей API могут быть помечены как «не прошедшие перенос», все ваши ключи API полностью функциональны и работоспособны. Повторите попытку или обратитесь в службу поддержки.",
-      "migration-successful": "Перенос выполнен",
-      "title-migration-summary": "Сводка переноса",
-      "total": "<0>Всего: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Перейти к основному контенту",
     "top-bar": {
@@ -8213,10 +8168,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Просмотр недавно удаленных правил оповещения",
       "title": "Последние удаленные"
-    },
-    "api-keys": {
-      "subtitle": "Создание ключей API, используемых для взаимодействия с Grafana HTTP API, и управление ими",
-      "title": "Ключи API"
     },
     "application": {
       "title": "Приложение"
