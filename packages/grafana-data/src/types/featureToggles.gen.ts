@@ -1019,4 +1019,9 @@ export interface FeatureToggles {
   * @default false
   */
   skipTokenRotationIfRecent?: boolean;
+  /**
+  * Enable configuration of alert enrichments in Grafana Cloud.
+  * @default false
+  */
+  alertEnrichment?: boolean;
 }
