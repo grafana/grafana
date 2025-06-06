@@ -45,6 +45,12 @@ export const DashboardInteractions = {
   embedSnippetCopy: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_embed_copy_clicked', properties);
   },
+  generatePanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_generate_image_clicked', properties);
+  },
+  downloadPanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_download_image_clicked', properties);
+  },
   publishSnapshotClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_snapshot_publish_clicked', properties);
   },
@@ -109,6 +115,14 @@ export const DashboardInteractions = {
     return () => {
       isScenesContextSet = false;
     };
+  },
+
+  // Dashboards versions interactions
+  versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean; version_date?: Date }) => {
+    reportDashboardInteraction('version_restore_clicked', properties);
+  },
+  showMoreVersionsClicked: () => {
+    reportDashboardInteraction('show_more_versions_clicked');
   },
 };
 

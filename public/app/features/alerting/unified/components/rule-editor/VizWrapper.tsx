@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, isTimeSeriesFrames, PanelData, ThresholdsConfig } from '@grafana/data';
+import { GrafanaTheme2, PanelData, ThresholdsConfig, isTimeSeriesFrames } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -46,7 +47,9 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
               />
             ) : (
               <div className={styles.instantVectorResultWrapper}>
-                <header className={styles.title}>Table</header>
+                <header className={styles.title}>
+                  <Trans i18nKey="alerting.viz-wrapper.table">Table</Trans>
+                </header>
                 <ExpressionResult series={data.series} />
               </div>
             )}

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
-import { locationService } from '@grafana/runtime/src';
+import { locationService } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -85,6 +85,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.setBackgroundCallback = this.openSetBackground;
     this.scene.tooltipCallback = this.tooltipCallback;
     this.scene.moveableActionCallback = this.moveableActionCallback;
+    this.scene.actionConfirmationCallback = this.actionConfirmationCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -299,6 +300,10 @@ export class CanvasPanel extends Component<Props, State> {
 
   moveableActionCallback = (updated: boolean) => {
     this.setState({ moveableAction: updated });
+    this.forceUpdate();
+  };
+
+  actionConfirmationCallback = () => {
     this.forceUpdate();
   };
 

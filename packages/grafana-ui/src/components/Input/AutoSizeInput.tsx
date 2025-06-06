@@ -11,8 +11,13 @@ export interface Props extends InputProps {
   minWidth?: number;
   /** Sets the max-width to a multiple of 8px.*/
   maxWidth?: number;
-  /** onChange function that will be run on onBlur and onKeyPress with enter*/
+  /** onChange function that will be run on onBlur and onKeyPress with enter
+   * @deprecated Use `onChange` instead and manage the value in the parent as a controlled input
+   */
   onCommitChange?: (event: React.FormEvent<HTMLInputElement>) => void;
+
+  /** @deprecated Use `value` and `onChange` instead to manage the value in the parent as a controlled input */
+  defaultValue?: string | number | readonly string[];
 }
 
 export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
@@ -29,7 +34,10 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     ...restProps
   } = props;
   const [inputState, setInputValue] = useControlledState(controlledValue, onChange);
-  const inputValue = inputState || defaultValue;
+
+  // This must use ?? instead of || so the default value is not used when the value is an empty string
+  // typically from the user clearing the input
+  const inputValue = inputState ?? defaultValue;
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
   const inputWidth = useMemo(() => {
@@ -42,6 +50,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   return (
     <AutoSizeInputContext.Provider value={true}>
       <Input
+        data-testid="autosize-input" // consumer should override default testid
         {...restProps}
         placeholder={placeholder}
         ref={ref}
@@ -68,7 +77,6 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
             onCommitChange(event);
           }
         }}
-        data-testid={'autosize-input'}
       />
     </AutoSizeInputContext.Provider>
   );

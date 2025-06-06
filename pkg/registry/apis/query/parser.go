@@ -43,6 +43,9 @@ type parsedRequestInfo struct {
 
 	// Hidden queries used as dependencies
 	HideBeforeReturn []string `json:"hide,omitempty"`
+
+	// SQL Inputs
+	SqlInputs map[string]struct{} `json:"sqlInputs,omitempty"`
 }
 
 type queryParser struct {
@@ -71,6 +74,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 	index := make(map[string]int) // index lookup
 	rsp := parsedRequestInfo{
 		RefIDTypes: make(map[string]string, len(input.Queries)),
+		SqlInputs:  make(map[string]struct{}),
 	}
 
 	for _, q := range input.Queries {
@@ -90,6 +94,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		}
 
 		// Process each query
+		// check if ds is expression
 		if expr.IsDataSource(ds.UID) {
 			// In order to process the query as a typed expression query, we
 			// are writing it back to JSON and parsing again.  Alternatively we
@@ -149,20 +154,40 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		// Build the graph for a request
 		dg := simple.NewDirectedGraph()
 		dg.AddNode(queryNode)
+
 		for _, exp := range expressions {
 			dg.AddNode(exp)
 		}
+
 		for _, exp := range expressions {
 			vars := exp.Command.NeedsVars()
+
 			for _, refId := range vars {
 				target := queryNode
 				q, ok := queryRefIDs[refId]
+
 				if !ok {
-					target, ok = expressions[refId]
-					if !ok {
-						return rsp, makeDependencyError(exp.RefID, refId)
+					_, isSQLCMD := target.Command.(*expr.SQLCommand)
+					if isSQLCMD {
+						continue
+					} else {
+						target, ok = expressions[refId]
+						if !ok {
+							return rsp, makeDependencyError(exp.RefID, refId)
+						}
 					}
 				}
+
+				// If the input is SQL, conversion is handled differently
+				if _, isSqlExp := exp.Command.(*expr.SQLCommand); isSqlExp {
+					if _, ifDepIsAlsoExpression := expressions[refId]; ifDepIsAlsoExpression {
+						// Only allow data source nodes as SQL expression inputs for now
+						return rsp, fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", refId, exp.RefID)
+					} else {
+						rsp.SqlInputs[refId] = struct{}{}
+					}
+				}
+
 				// Do not hide queries used in variables
 				if q != nil && q.Hide {
 					q.Hide = false
@@ -212,6 +237,18 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSo
 		}
 		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, "", id)
 	}
+
+	// we need to special-case the "grafana" data source
+	if ds.UID == "grafana" {
+		return &data.DataSourceRef{
+			// it does not really matter what `type` we set here,
+			// we will always detect this case by `uid` later.
+			// here we go with what the data source's plugin.json says.
+			Type: "grafana",
+			UID:  "grafana",
+		}, nil
+	}
+
 	if ds.Type == "" {
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")

@@ -15,6 +15,8 @@ import {
   DataQueryRequest,
   getTimeZone,
   PluginMetaInfo,
+  DataLink,
+  NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -66,7 +68,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
@@ -170,16 +171,6 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
-        groupBy: [
-          {
-            id: 'groupBy1',
-            tag: '$interpolationVar',
-          },
-          {
-            id: 'groupBy2',
-            tag: '$interpolationVar',
-          },
-        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -212,8 +203,6 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
-      expect(queries[0].groupBy?.[0].tag).toBe(text);
-      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -226,8 +215,6 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
-      expect(resp.groupBy?.[0].tag).toBe(scopedText);
-      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -316,7 +303,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('000000000000000060ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -348,18 +335,6 @@ describe('Tempo data source', () => {
     const edgesFrame = response.data[1];
     expect(edgesFrame.name).toBe('Edges');
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
-  });
-
-  it('should format metrics summary query correctly', () => {
-    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
-    const queryGroupBy = [
-      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
-      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
-      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
-      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
-    ];
-    const groupBy = ds.formatGroupBy(queryGroupBy);
-    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   describe('test the testDatasource function', () => {
@@ -544,6 +519,32 @@ describe('Tempo service graph view', () => {
     expect(response.data[1].fields[0]?.config?.links?.length).toBeGreaterThan(0);
     expect(response.data[1].fields[0]?.config?.links).toEqual(serviceGraphLinks);
 
+    const viewServicesLink = response.data[1].fields[0]?.config?.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-service',
+          valueType: 'string',
+        },
+      ],
+    });
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesUninstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceql',
+      filters: [],
+      query:
+        '{span.db.name="my-service" || span.db.system="my-service" || span.peer.service="my-service" || span.messaging.system="my-service" || span.net.peer.name="my-service"}',
+    });
+
     expect(response.data[2].name).toBe('Edges');
     expect(response.data[2].fields[0].values.length).toBe(2);
   });
@@ -584,13 +585,25 @@ describe('Tempo service graph view', () => {
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{ foo="bar" }[$__range]))'
     );
     expect(nthQuery(0).targets[1].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range]))'
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{ foo="bar" })'
     );
     expect(nthQuery(0).targets[2].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range]))'
+      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range]))'
     );
     expect(nthQuery(0).targets[3].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_total{ foo="bar" })'
+    );
+    expect(nthQuery(0).targets[4].expr).toBe(
+      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range]))'
+    );
+    expect(nthQuery(0).targets[5].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_failed_total{ foo="bar" })'
+    );
+    expect(nthQuery(0).targets[6].expr).toBe(
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{ foo="bar" }[$__range]))'
+    );
+    expect(nthQuery(0).targets[7].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{ foo="bar" })'
     );
   });
 
@@ -632,13 +645,25 @@ describe('Tempo service graph view', () => {
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{baz="bad"}[$__range]))'
     );
     expect(nthQuery(0).targets[1].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_total{baz="bad"}[$__range]))'
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{baz="bad"})'
     );
     expect(nthQuery(0).targets[2].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_failed_total{baz="bad"}[$__range]))'
+      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_total{baz="bad"}[$__range]))'
     );
     expect(nthQuery(0).targets[3].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_total{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_total{baz="bad"})'
+    );
+    expect(nthQuery(0).targets[4].expr).toBe(
+      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_failed_total{baz="bad"}[$__range]))'
+    );
+    expect(nthQuery(0).targets[5].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_failed_total{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_failed_total{baz="bad"})'
+    );
+    expect(nthQuery(0).targets[6].expr).toBe(
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{baz="bad"}[$__range]))'
+    );
+    expect(nthQuery(0).targets[7].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{baz="bad"})'
     );
   });
 
@@ -723,6 +748,20 @@ describe('Tempo service graph view', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
     );
+
+    targets = {
+      targets: [
+        { queryType: 'serviceMap', serviceMapQuery: '{client="app",client_deployment_environment="production"}' },
+      ],
+    } as DataQueryRequest<TempoQuery>;
+    builtQuery = buildExpr(
+      { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",deployment_environment="production"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -803,27 +842,33 @@ describe('Tempo service graph view', () => {
           url: '',
           title: 'View traces',
           internal: {
-            query: {
-              refId: 'A',
-              queryType: 'traceqlSearch',
-              filters: [
-                {
-                  id: 'service-name',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.name',
-                  value: '${__data.fields.target}',
-                  valueType: 'string',
-                },
-              ],
-            },
-            datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
           },
         },
       ],
     };
     expect(fieldConfig).toStrictEqual(resultObj);
+
+    const viewServicesLink: DataLink | undefined = fieldConfig.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-target-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get field config correctly when namespaces are present', () => {
@@ -894,35 +939,41 @@ describe('Tempo service graph view', () => {
           url: '',
           title: 'View traces',
           internal: {
-            query: {
-              queryType: 'traceqlSearch',
-              refId: 'A',
-              filters: [
-                {
-                  id: 'service-namespace',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.namespace',
-                  value: '${__data.fields.targetNamespace}',
-                  valueType: 'string',
-                },
-                {
-                  id: 'service-name',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.name',
-                  value: '${__data.fields.targetName}',
-                  valueType: 'string',
-                },
-              ],
-            },
-            datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
           },
         },
       ],
     };
     expect(fieldConfig).toStrictEqual(resultObj);
+
+    const viewServicesLink: DataLink | undefined = fieldConfig.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-namespace',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.namespace',
+          value: 'my-target-namespace-service',
+          valueType: 'string',
+        },
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-target-name-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get rate aligned values correctly', () => {
@@ -1435,25 +1486,33 @@ const serviceGraphLinks = [
     url: '',
     title: 'View traces',
     internal: {
-      query: {
-        refId: 'A',
-        queryType: 'traceqlSearch',
-        filters: [
-          {
-            id: 'service-name',
-            operator: '=',
-            scope: 'resource',
-            tag: 'service.name',
-            value: '${__data.fields.id}',
-            valueType: 'string',
-          },
-        ],
-      } as TempoQuery,
+      query: expect.any(Function),
       datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },
 ];
+
+const replaceVariablesInstrumented = (variable: string): string => {
+  const variables: Record<string, string> = {
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.target}}`]: 'my-target-service',
+    [`\${__data.fields.targetName}`]: 'my-target-name-service',
+    [`\${__data.fields.targetNamespace}`]: 'my-target-namespace-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'true',
+  };
+  return variables[variable];
+};
+
+const replaceVariablesUninstrumented = (variable: string): string => {
+  const variables: Record<string, string> = {
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'false',
+  };
+  return variables[variable];
+};
 
 interface PromQuery extends DataQuery {
   expr: string;

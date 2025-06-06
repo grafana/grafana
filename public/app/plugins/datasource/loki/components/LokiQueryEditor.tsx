@@ -11,7 +11,7 @@ import {
   QueryEditorModeToggle,
   QueryHeaderSwitch,
   QueryEditorMode,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
@@ -213,8 +213,8 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
           onChange={onChange}
           onRunQuery={onRunQuery}
           app={app}
-          maxLines={datasource.maxLines}
           queryStats={queryStats}
+          datasource={props.datasource}
         />
       </EditorRows>
     </>

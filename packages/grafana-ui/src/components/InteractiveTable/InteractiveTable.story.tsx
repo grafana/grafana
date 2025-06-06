@@ -1,12 +1,12 @@
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
+import { CellProps } from 'react-table';
 
-import { InteractiveTable, CellProps, LinkButton } from '@grafana/ui';
-
+import { LinkButton } from '../Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];

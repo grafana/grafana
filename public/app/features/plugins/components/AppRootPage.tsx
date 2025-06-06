@@ -14,6 +14,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -29,6 +30,7 @@ import {
   useAddedLinksRegistry,
   useAddedComponentsRegistry,
   useExposedComponentsRegistry,
+  useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -60,6 +62,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedLinksRegistry = useAddedLinksRegistry();
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
+  const addedFunctionsRegistry = useAddedFunctionsRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -78,6 +81,8 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     []
   );
 
+  const { t } = useTranslate();
+
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
@@ -92,7 +97,11 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin.root) {
     return (
       <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
-        <div>No root app page component found</div>
+        <div>
+          <Trans i18nKey="plugins.app-root-page.no-root-app-page-component-found">
+            No root app page component found
+          </Trans>
+        </div>
       </Page>
     );
   }
@@ -104,6 +113,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
           addedLinksRegistry: addedLinksRegistry.readOnly(),
           addedComponentsRegistry: addedComponentsRegistry.readOnly(),
           exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+          addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
         }}
       >
         <plugin.root
@@ -132,7 +142,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     }
 
     // Check if action exists and give access if user has the required permission.
-    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+    if (pluginInclude?.action) {
       return contextSrv.hasPermission(pluginInclude.action);
     }
 
@@ -150,8 +160,10 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const AccessDenied = () => {
     return (
-      <Alert severity="warning" title="Access denied">
-        You do not have permission to see this page.
+      <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
+        <Trans i18nKey="plugins.app-root-page.access-denied.permission">
+          You do not have permission to see this page.
+        </Trans>
       </Alert>
     );
   };

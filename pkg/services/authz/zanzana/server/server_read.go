@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -10,25 +12,45 @@ import (
 )
 
 func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.Read")
+	ctx, span := s.tracer.Start(ctx, "server.Read")
 	defer span.End()
 
-	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
+	res, err := s.read(ctx, req)
 	if err != nil {
+		s.logger.Error("failed to perform read request", "error", err, "namespace", req.GetNamespace())
+		return nil, errors.New("failed to perform read request")
+	}
+
+	return res, nil
+}
+
+func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	if err := authorize(ctx, req.GetNamespace()); err != nil {
 		return nil, err
 	}
 
-	res, err := s.openfga.Read(ctx, &openfgav1.ReadRequest{
-		StoreId: storeInf.ID,
-		TupleKey: &openfgav1.ReadRequestTupleKey{
+	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get openfga store: %w", err)
+	}
+
+	readReq := &openfgav1.ReadRequest{
+		StoreId:           storeInf.ID,
+		PageSize:          req.GetPageSize(),
+		ContinuationToken: req.GetContinuationToken(),
+	}
+
+	if req.TupleKey != nil {
+		readReq.TupleKey = &openfgav1.ReadRequestTupleKey{
 			User:     req.GetTupleKey().GetUser(),
 			Relation: req.GetTupleKey().GetRelation(),
 			Object:   req.GetTupleKey().GetObject(),
-		},
-		PageSize:          req.GetPageSize(),
-		ContinuationToken: req.GetContinuationToken(),
-	})
+		}
+	}
+
+	res, err := s.openfga.Read(ctx, readReq)
 	if err != nil {
+		s.logger.Error("failed to perform openfga Read request", "error", errors.Unwrap(err))
 		return nil, err
 	}
 

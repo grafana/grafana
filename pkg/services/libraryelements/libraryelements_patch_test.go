@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestPatchLibraryElement(t *testing.T) {
+func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
@@ -24,7 +25,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -67,7 +68,7 @@ func TestPatchLibraryElement(t *testing.T) {
 					Version: 2,
 					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "NewFolder",
-						FolderUID:           "NewFolder",
+						FolderUID:           "uid_for_NewFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -91,7 +92,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -111,7 +112,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			sc.initialResult.Result.Meta.FolderName = "NewFolder"
-			sc.initialResult.Result.Meta.FolderUID = "NewFolder"
+			sc.initialResult.Result.Meta.FolderUID = "uid_for_NewFolder"
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -323,9 +324,10 @@ func TestPatchLibraryElement(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := model.PatchLibraryElementCommand{
-				Name:    "Text - Library Panel",
-				Version: 1,
-				Kind:    int64(model.PanelElement),
+				Name:      "Text - Library Panel",
+				Version:   1,
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -335,7 +337,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)

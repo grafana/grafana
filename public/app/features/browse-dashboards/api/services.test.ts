@@ -1,5 +1,6 @@
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
 import { listDashboards } from './services';
 

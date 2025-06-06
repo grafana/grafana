@@ -3,7 +3,8 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { useTranslate } from '@grafana/i18n';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -39,6 +40,7 @@ const TracesQueryEditor = ({
   setError,
   range,
 }: TracesQueryEditorProps) => {
+  const { t } = useTranslate();
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -88,37 +90,35 @@ const TracesQueryEditor = ({
   return (
     <span data-testid={selectors.components.queryEditor.tracesQueryEditor.container.input}>
       <EditorRows>
-        {query.queryType !== AzureQueryType.TraceExemplar && (
-          <EditorRow>
-            <EditorFieldGroup>
-              <ResourceField
-                query={query}
-                datasource={datasource}
-                subscriptionId={subscriptionId}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-                selectableEntryTypes={[
-                  ResourceRowType.Subscription,
-                  ResourceRowType.ResourceGroup,
-                  ResourceRowType.Resource,
-                  ResourceRowType.Variable,
-                ]}
-                resources={query.azureTraces?.resources ?? []}
-                queryType="traces"
-                disableRow={disableRow}
-                renderAdvanced={(resources, onChange) => (
-                  // It's required to cast resources because the resource picker
-                  // specifies the type to string | AzureMonitorResource.
-                  // eslint-disable-next-line
-                  <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
-                )}
-                selectionNotice={() => 'You may only choose items of the same resource type.'}
-                range={range}
-              />
-            </EditorFieldGroup>
-          </EditorRow>
-        )}
+        <EditorRow>
+          <EditorFieldGroup>
+            <ResourceField
+              query={query}
+              datasource={datasource}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+              selectableEntryTypes={[
+                ResourceRowType.Subscription,
+                ResourceRowType.ResourceGroup,
+                ResourceRowType.Resource,
+                ResourceRowType.Variable,
+              ]}
+              resources={query.azureTraces?.resources ?? []}
+              queryType="traces"
+              disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMonitorResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+              )}
+              selectionNotice={() => 'You may only choose items of the same resource type.'}
+              range={range}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
         <EditorRow>
           <EditorFieldGroup>
             <TraceTypeField
@@ -129,7 +129,7 @@ const TracesQueryEditor = ({
               variableOptionGroup={variableOptionGroup}
               range={range}
             />
-            <Field label="Operation ID">
+            <Field label={t('components.traces-query-editor.label-operation-id', 'Operation ID')}>
               <Input
                 id="azure-monitor-traces-operation-id-field"
                 value={operationId}

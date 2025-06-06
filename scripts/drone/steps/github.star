@@ -37,4 +37,6 @@ def github_app_generate_token_step():
             "echo $(/usr/bin/github-app-external-token) > /github-app/token",
         ],
         "volumes": github_app_step_volumes(),
+        # forks or those without access would cause it to fail, but we can safely ignore it since there'll be no token.
+        "failure": "ignore",
     }

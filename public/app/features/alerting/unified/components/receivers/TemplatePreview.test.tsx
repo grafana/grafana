@@ -1,7 +1,7 @@
 import { default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { screen, render, waitFor } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Components } from '@grafana/e2e-selectors';
@@ -10,13 +10,20 @@ import { configureStore } from 'app/store/configureStore';
 
 import { TemplatePreviewResponse } from '../../api/templateApi';
 import {
+  REJECTED_PREVIEW_RESPONSE,
   mockPreviewTemplateResponse,
   mockPreviewTemplateResponseRejected,
-  REJECTED_PREVIEW_RESPONSE,
 } from '../../mocks/templatesApi';
 
-import { defaults, TemplateFormValues } from './TemplateForm';
+import { TemplateFormValues, defaults } from './TemplateForm';
 import { TemplatePreview } from './TemplatePreview';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value, onBlur }: { value: string; onBlur: (newValue: string) => void }) {
+    return <input data-testid="mockeditor" value={value} onChange={(e) => onBlur(e.currentTarget.value)} />;
+  },
+}));
 
 jest.mock(
   'react-virtualized-auto-sizer',
@@ -50,6 +57,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'bla bla bla'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={'Unexpected token b in JSON at position 0'}
         setPayloadFormatError={jest.fn()}
       />,
@@ -66,6 +74,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'{"a":"b"}'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={'Unexpected token b in JSON at position 0'}
         setPayloadFormatError={setError}
       />,
@@ -81,6 +90,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'potatos and cherries'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={'Unexpected token b in JSON at position 0'}
         setPayloadFormatError={jest.fn()}
       />,
@@ -100,6 +110,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'[{"a":"b"}]'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
       />,
@@ -123,6 +134,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'[{"a":"b"}]'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
       />,
@@ -133,8 +145,11 @@ describe('TemplatePreview component', () => {
     await waitFor(() => {
       expect(previews()).toHaveLength(2);
     });
-    expect(previews()[0]).toHaveTextContent('This is the template result bla bla bla');
-    expect(previews()[1]).toHaveTextContent('This is the template2 result bla bla bla');
+    const previewItems = previews();
+    expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('template1');
+    expect(within(previewItems[0]).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
+    expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('template2');
+    expect(within(previewItems[1]).getByTestId('mockeditor')).toHaveValue('This is the template2 result bla bla bla');
   });
 
   it('Should render preview response with some errors,  if payload has correct format ', async () => {
@@ -151,6 +166,7 @@ describe('TemplatePreview component', () => {
       <TemplatePreview
         payload={'[{"a":"b"}]'}
         templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
         payloadFormatError={null}
         setPayloadFormatError={jest.fn()}
       />,
@@ -165,6 +181,39 @@ describe('TemplatePreview component', () => {
     expect(alerts()[1]).toHaveTextContent(/Unexpected "{" in operand/i);
 
     const previewContent = screen.getByRole('listitem');
-    expect(previewContent).toHaveTextContent('This is the template result bla bla bla');
+    expect(within(previewContent).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
   });
+});
+
+it('Should render preview type , if response contains valid json ', async () => {
+  const response: TemplatePreviewResponse = {
+    results: [
+      { name: 'template_text', text: 'This is the template result bla bla bla' },
+      { name: 'template_valid', text: '{"test":"value","test2":"value2"}' },
+      { name: 'template_invalid', text: '{"test":"value","test2":"value2",}' },
+    ],
+  };
+  mockPreviewTemplateResponse(server, response);
+  render(
+    <TemplatePreview
+      payload={'[{"a":"b"}]'}
+      templateName="potato"
+      templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
+      payloadFormatError={null}
+      setPayloadFormatError={jest.fn()}
+    />,
+    { wrapper: getProviderWraper() }
+  );
+
+  const previews = ui.resultItems.getAll;
+  await waitFor(() => {
+    expect(previews()).toHaveLength(3);
+  });
+  const previewItems = previews();
+  expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('template_text');
+  expect(within(previewItems[0]).getByRole('banner')).toHaveTextContent('plaintext');
+  expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('template_valid');
+  expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('json');
+  expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('template_invalid');
+  expect(within(previewItems[2]).getByRole('banner')).toHaveTextContent('plaintext');
 });

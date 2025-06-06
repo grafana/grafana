@@ -37,11 +37,13 @@ func NewAdmissionFromBuilders(builders []APIGroupBuilder) *builderAdmission {
 	mutators := make(map[schema.GroupVersion]APIGroupMutation)
 	validators := make(map[schema.GroupVersion]APIGroupValidation)
 	for _, builder := range builders {
-		if m, ok := builder.(APIGroupMutation); ok {
-			mutators[builder.GetGroupVersion()] = m
-		}
-		if v, ok := builder.(APIGroupValidation); ok {
-			validators[builder.GetGroupVersion()] = v
+		for _, gv := range GetGroupVersions(builder) {
+			if m, ok := builder.(APIGroupMutation); ok {
+				mutators[gv] = m
+			}
+			if v, ok := builder.(APIGroupValidation); ok {
+				validators[gv] = v
+			}
 		}
 	}
 	return NewAdmission(mutators, validators)

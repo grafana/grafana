@@ -108,7 +108,34 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, numTransitions)
 		})
 
-		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
+		t.Run("can query history by alert uid", func(t *testing.T) {
+			rule := dashboardRules[dashboard1.UID][0]
+
+			fakeLokiClient.rangeQueryRes = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:    1,
+				AlertUID: rule.UID,
+				From:     start.UnixMilli(),
+				To:       start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Len(t, res, numTransitions)
+		})
+
+		t.Run("should return ErrLokiStoreNotFound if rule is not found by ID", func(t *testing.T) {
 			var rules = slices.Concat(maps.Values(dashboardRules)...)
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
@@ -135,6 +162,27 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				},
 			)
 			require.ErrorIs(t, err, ErrLokiStoreNotFound)
+		})
+
+		t.Run("should return empty response if rule is not found by UID", func(t *testing.T) {
+			query := annotations.ItemQuery{
+				OrgID:    1,
+				AlertUID: "not-found-uid",
+				From:     start.UnixMilli(),
+				To:       start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.NoError(t, err)
+			require.Empty(t, res)
 		})
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
@@ -348,7 +396,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
-					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					Time:         transition.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
 				if i > 0 {
@@ -636,7 +684,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 	rule.PanelID = nil
 
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)
@@ -668,7 +716,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title st
 		rule.PanelID = panelID
 	}
 	ruleStore := store.SetupStoreForTesting(t, sql)
-	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
+	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
 	require.NoError(t, err)
@@ -824,7 +872,7 @@ func TestUseStore(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -834,7 +882,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -844,7 +892,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "invalid-backend",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -855,7 +903,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"annotations", "invalid-backend"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -865,7 +913,7 @@ func TestUseStore(t *testing.T) {
 			Enabled: true,
 			Backend: "annotations",
 		}
-		use := useStore(cfg, featuremgmt.WithFeatures())
+		use := useStore(cfg)
 		require.False(t, use)
 	})
 
@@ -876,7 +924,7 @@ func TestUseStore(t *testing.T) {
 				Backend:      "multiple",
 				MultiPrimary: "loki",
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 
@@ -887,7 +935,7 @@ func TestUseStore(t *testing.T) {
 				MultiPrimary:     "annotations",
 				MultiSecondaries: []string{"loki"},
 			}
-			use := useStore(cfg, featuremgmt.WithFeatures())
+			use := useStore(cfg)
 			require.False(t, use)
 		})
 	})
@@ -898,12 +946,7 @@ func TestUseStore(t *testing.T) {
 				Enabled: true,
 				Backend: "loki",
 			}
-			features := featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertStateHistoryLokiOnly,
-				featuremgmt.FlagAlertStateHistoryLokiPrimary,
-				featuremgmt.FlagAlertStateHistoryLokiSecondary,
-			)
-			use := useStore(cfg, features)
+			use := useStore(cfg)
 			require.True(t, use)
 		})
 	})

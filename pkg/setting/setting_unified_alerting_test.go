@@ -120,14 +120,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "1",
+				"max_attempts":               "1", // Note: Ignored, setting does not exist.
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "true",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
@@ -168,14 +168,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout": "invalid",
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "1",
+				"max_attempts":               "1", // Note: Ignored, setting does not exist.
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "false",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
@@ -349,4 +349,73 @@ func TestHARedisTLSSettings(t *testing.T) {
 	require.Equal(t, insecureSkipVerify, cfg.UnifiedAlerting.HARedisTLSConfig.InsecureSkipVerify)
 	require.Equal(t, cipherSuites, cfg.UnifiedAlerting.HARedisTLSConfig.CipherSuites)
 	require.Equal(t, minVersion, cfg.UnifiedAlerting.HARedisTLSConfig.MinVersion)
+}
+
+func TestHARedisSentinelModeSettings(t *testing.T) {
+	testCases := []struct {
+		desc                       string
+		haRedisSentinelModeEnabled bool
+		haRedisClusterModeEnabled  bool
+		haRedisSentinelMasterName  string
+		haRedisSentinelUsername    string
+		haRedisSentinelPassword    string
+		expectedErr                error
+	}{
+		{
+			desc:                       "should not fail when Sentinel mode is enabled and master name is set",
+			haRedisSentinelModeEnabled: true,
+			haRedisSentinelMasterName:  "exampleMasterName",
+		},
+		{
+			desc:                       "should not fail when Sentinel mode is enabled, master name is set, and Sentinel username and password are provided",
+			haRedisSentinelModeEnabled: true,
+			haRedisSentinelMasterName:  "exampleMasterName",
+			haRedisSentinelUsername:    "exampleSentinelUsername",
+			haRedisSentinelPassword:    "exampleSentinelPassword",
+		},
+		{
+			desc:                       "should fail when Sentinel mode is enabled but master name is not set",
+			haRedisSentinelModeEnabled: true,
+			expectedErr:                errHARedisSentinelMasterNameRequired,
+		},
+		{
+			desc:                       "should fail when both Sentinel mode and Cluster mode are enabled",
+			haRedisSentinelModeEnabled: true,
+			haRedisClusterModeEnabled:  true,
+			expectedErr:                errHARedisBothClusterAndSentinel,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+
+			_, err = section.NewKey("ha_redis_sentinel_mode_enabled", strconv.FormatBool(tc.haRedisSentinelModeEnabled))
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_cluster_mode_enabled", strconv.FormatBool(tc.haRedisClusterModeEnabled))
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_master_name", tc.haRedisSentinelMasterName)
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_username", tc.haRedisSentinelUsername)
+			require.NoError(t, err)
+			_, err = section.NewKey("ha_redis_sentinel_password", tc.haRedisSentinelPassword)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tc.expectedErr)
+				return
+			}
+
+			require.Equal(t, tc.haRedisSentinelModeEnabled, cfg.UnifiedAlerting.HARedisSentinelModeEnabled)
+			require.Equal(t, tc.haRedisSentinelMasterName, cfg.UnifiedAlerting.HARedisSentinelMasterName)
+			require.Equal(t, tc.haRedisSentinelUsername, cfg.UnifiedAlerting.HARedisSentinelUsername)
+			require.Equal(t, tc.haRedisSentinelPassword, cfg.UnifiedAlerting.HARedisSentinelPassword)
+		})
+	}
 }

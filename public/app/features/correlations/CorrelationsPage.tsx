@@ -3,7 +3,8 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { isFetchError, reportInteraction } from '@grafana/runtime';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -21,14 +22,13 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import type { Correlation, RemoveCorrelationParams } from './types';
-import { CorrelationData, useCorrelations } from './useCorrelations';
+import { useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
   a.values[column].name.localeCompare(b.values[column].name);
@@ -86,6 +86,7 @@ export default function CorrelationsPage() {
   useEffect(() => {
     fetchCorrelations({ page: page.current });
   }, [fetchCorrelations]);
+  const { t } = useTranslate();
 
   const RowActions = useCallback(
     ({
@@ -111,7 +112,7 @@ export default function CorrelationsPage() {
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleDelete]
+    [handleDelete, t]
   );
 
   const columns = useMemo<Array<Column<CorrelationData>>>(
@@ -142,7 +143,7 @@ export default function CorrelationsPage() {
         visible: (data) => canWriteCorrelations && data.some(negate(isCorrelationsReadOnly)),
       },
     ],
-    [RowActions, canWriteCorrelations]
+    [RowActions, canWriteCorrelations, t]
   );
 
   const data = useMemo(() => get.value, [get.value]);
@@ -292,6 +293,7 @@ const noWrap = css({
 
 const InfoCell = memo(
   function InfoCell({ ...props }: CellProps<CorrelationData, void>) {
+    const { t } = useTranslate();
     const readOnly = props.row.original.provisioned;
 
     if (readOnly) {

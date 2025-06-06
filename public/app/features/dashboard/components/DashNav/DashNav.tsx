@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
@@ -22,13 +23,12 @@ import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
-import { t, Trans } from 'app/core/internationalization';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -93,6 +93,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const notifyApp = useAppNotification();
+  const { t } = useTranslate();
   const onOpenSnapshotOriginal = () => {
     try {
       const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
@@ -102,7 +103,10 @@ export const DashNav = memo<Props>((props) => {
           new ShowModalReactEvent({
             component: ConfirmModal,
             props: {
-              title: 'Proceed to external site?',
+              title: t(
+                'dashboard.dash-nav.on-open-snapshot-original.title.proceed-to-external-site',
+                'Proceed to external site?'
+              ),
               modalClass: modalStyles,
               body: (
                 <>
@@ -216,7 +220,7 @@ export const DashNav = memo<Props>((props) => {
       buttons.push(
         <Badge
           color="blue"
-          text="Public"
+          text={t('dashboard.dash-nav.render-left-actions.text-public', 'Public')}
           key="public-dashboard-button-badge"
           className={publicBadgeStyle}
           data-testid={selectors.publicDashboardTag}
@@ -228,7 +232,7 @@ export const DashNav = memo<Props>((props) => {
       buttons.push(
         <DashNavButton
           key="button-scenes"
-          tooltip={'View as Scene'}
+          tooltip={t('dashboard.dash-nav.render-left-actions.tooltip-view-as-scene', 'View as Scene')}
           icon="apps"
           onClick={() => {
             locationService.partial({ scenes: true });
@@ -275,7 +279,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, isFullscreen, kioskMode, hideTimePicker } = props;
+    const { dashboard, isFullscreen, hideTimePicker } = props;
     const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -283,10 +287,6 @@ export const DashNav = memo<Props>((props) => {
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];
-    }
-
-    if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls()];
     }
 
     if (snapshotUrl) {

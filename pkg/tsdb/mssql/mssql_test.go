@@ -35,7 +35,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !(db.IsTestDBMSSQL() || runMssqlTests) {
+	if !db.IsTestDBMSSQL() && !runMssqlTests {
 		t.Skip()
 	}
 
@@ -1360,8 +1360,9 @@ func TestGenerateConnectionString(t *testing.T) {
 		{
 			desc: "Use Kerberos Credential Cache",
 			kerberosCfg: kerberos.KerberosAuth{
-				CredentialCache: "/tmp/krb5cc_1000",
-				ConfigFilePath:  "/etc/krb5.conf",
+				CredentialCache:    "/tmp/krb5cc_1000",
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
 			},
 			dataSource: sqleng.DataSourceInfo{
 				URL:      "localhost",
@@ -1377,6 +1378,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			kerberosCfg: kerberos.KerberosAuth{
 				CredentialCacheLookupFile: tmpFile,
 				ConfigFilePath:            "/etc/krb5.conf",
+				UDPConnectionLimit:        1,
 			},
 			dataSource: sqleng.DataSourceInfo{
 				URL:      "example.host",
@@ -1391,8 +1393,9 @@ func TestGenerateConnectionString(t *testing.T) {
 		{
 			desc: "Use Kerberos Keytab",
 			kerberosCfg: kerberos.KerberosAuth{
-				KeytabFilePath: "/foo/bar.keytab",
-				ConfigFilePath: "/etc/krb5.conf",
+				KeytabFilePath:     "/foo/bar.keytab",
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
 			},
 			dataSource: sqleng.DataSourceInfo{
 				URL:      "localhost",
@@ -1407,7 +1410,8 @@ func TestGenerateConnectionString(t *testing.T) {
 		{
 			desc: "Use Kerberos Username and Password",
 			kerberosCfg: kerberos.KerberosAuth{
-				ConfigFilePath: "/etc/krb5.conf",
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 1,
 			},
 			dataSource: sqleng.DataSourceInfo{
 				URL:      "localhost",
@@ -1421,6 +1425,25 @@ func TestGenerateConnectionString(t *testing.T) {
 				},
 			},
 			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;password=foo;",
+		},
+		{
+			desc: "Use non-default UDP connection limit",
+			kerberosCfg: kerberos.KerberosAuth{
+				ConfigFilePath:     "/etc/krb5.conf",
+				UDPConnectionLimit: 0,
+			},
+			dataSource: sqleng.DataSourceInfo{
+				URL:      "localhost",
+				Database: "database",
+				User:     "foo@test.lab",
+				DecryptedSecureJSONData: map[string]string{
+					"password": "foo",
+				},
+				JsonData: sqleng.JsonData{
+					AuthenticationType: "Windows AD: Username + password",
+				},
+			},
+			expConnStr: "authenticator=krb5;krb5-configfile=/etc/krb5.conf;server=localhost;database=database;user id=foo@test.lab;password=foo;krb5-udppreferencelimit=0;",
 		},
 
 		{

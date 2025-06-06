@@ -13,6 +13,7 @@ import {
   parseQueryParamMatchers,
   quoteWithEscape,
   quoteWithEscapeIfRequired,
+  unquoteIfRequired,
   unquoteWithUnescape,
 } from './matchers';
 
@@ -47,6 +48,14 @@ describe('Unified Alerting matchers', () => {
       expect(matchers).toHaveLength(1);
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
+    });
+
+    it('should not crash when matcher is not valid', () => {
+      expect(() => {
+        parseQueryParamMatchers(['alertname']);
+      }).not.toThrow();
+
+      expect(parseQueryParamMatchers(['alertname'])).toHaveLength(0);
     });
   });
 
@@ -126,6 +135,16 @@ describe('unquoteWithUnescape', () => {
   it('should not unescape unquoted string', () => {
     const unquoted = unquoteWithUnescape('un\\"quo\\\\ted');
     expect(unquoted).toBe('un\\"quo\\\\ted');
+  });
+});
+
+describe('unquoteIfRequired', () => {
+  it('should unquote strings with no special character', () => {
+    expect(unquoteIfRequired('"test"')).toBe('test');
+  });
+
+  it('should not unquote strings with special character', () => {
+    expect(unquoteIfRequired('"test this"')).toBe('"test this"');
   });
 });
 

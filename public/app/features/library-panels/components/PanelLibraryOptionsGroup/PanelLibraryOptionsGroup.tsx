@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { PanelPluginMeta } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
 import { useDispatch } from 'app/types';
 
@@ -48,7 +49,9 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
       {!panel.libraryPanel && (
         <VerticalGroup align="center">
           <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
-            Create new library panel
+            <Trans i18nKey="library-panels.panel-library-options-group.create-new-library-panel">
+              Create new library panel
+            </Trans>
           </Button>
         </VerticalGroup>
       )}

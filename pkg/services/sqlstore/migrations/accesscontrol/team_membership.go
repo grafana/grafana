@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -18,14 +18,13 @@ const (
 )
 
 func AddTeamMembershipMigrations(mg *migrator.Migrator) {
-	mg.AddMigration(TeamsMigrationID, &teamPermissionMigrator{editorsCanAdmin: mg.Cfg.EditorsCanAdmin})
+	mg.AddMigration(TeamsMigrationID, &teamPermissionMigrator{})
 }
 
 var _ migrator.CodeMigration = new(teamPermissionMigrator)
 
 type teamPermissionMigrator struct {
 	permissionMigrator
-	editorsCanAdmin bool
 }
 
 func (p *teamPermissionMigrator) SQL(dialect migrator.Dialect) string {
@@ -210,7 +209,7 @@ func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships [
 		// only admins or editors (when editorsCanAdmin option is enabled)
 		// can access team administration endpoints
 		if m.Permission == team.PermissionTypeAdmin {
-			if userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleViewer) || (userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleEditor) && !p.editorsCanAdmin) {
+			if userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleViewer) || (userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleEditor)) {
 				m.Permission = 0
 
 				if _, err := p.sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgID, m.TeamID, m.UserID).Update(m); err != nil {

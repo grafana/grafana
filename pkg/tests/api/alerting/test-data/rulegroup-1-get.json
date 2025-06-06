@@ -5,6 +5,7 @@
     {
       "expr": "",
       "for": "5m",
+      "keep_firing_for": "0s",
       "labels": {
         "label1": "test-label"
       },
@@ -12,8 +13,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 1,
-        "orgId": 1,
         "title": "Rule1",
         "condition": "A",
         "data": [
@@ -47,12 +46,14 @@
             "simplified_query_and_expressions_section": false,
             "simplified_notifications_section": false
           }
-        }
+        },
+        "missing_series_evals_to_resolve": 1
       }
     },
     {
       "expr": "",
       "for": "5m",
+      "keep_firing_for": "0s",
       "labels": {
         "label1": "test-label"
       },
@@ -60,8 +61,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 2,
-        "orgId": 1,
         "title": "Rule2",
         "condition": "A",
         "data": [
@@ -95,7 +94,8 @@
             "simplified_query_and_expressions_section": false,
             "simplified_notifications_section": false
           }
-        }
+        },
+        "missing_series_evals_to_resolve": 2
       }
     }
   ]

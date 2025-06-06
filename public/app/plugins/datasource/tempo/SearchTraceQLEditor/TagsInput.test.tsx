@@ -8,7 +8,7 @@ import { initTemplateSrv } from '../test/test_utils';
 import { Scope } from '../types';
 
 import TagsInput from './TagsInput';
-import { v1Tags, v2Tags } from './utils.test';
+import { v1Tags, v2Tags } from './mocks';
 
 describe('TagsInput', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -126,7 +126,7 @@ describe('TagsInput', () => {
         setError={() => {}}
         staticTags={[]}
         isTagsLoading={false}
-        query={''}
+        generateQueryWithoutFilter={() => ''}
         addVariablesToOptions={true}
       />
     );

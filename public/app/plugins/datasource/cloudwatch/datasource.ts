@@ -18,6 +18,14 @@ import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
+import {
+  LogsSQLCompletionItemProvider,
+  LogsSQLCompletionItemProviderFunc,
+} from './language/cloudwatch-logs-sql/completion/CompletionItemProvider';
+import {
+  PPLCompletionItemProvider,
+  PPLCompletionItemProviderFunc,
+} from './language/cloudwatch-ppl/completion/PPLCompletionItemProvider';
 import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
 import {
   LogsCompletionItemProvider,
@@ -46,8 +54,10 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
-  logsCompletionItemProviderFunc: (queryContext: queryContext) => LogsCompletionItemProvider;
   defaultLogGroups?: string[];
+  logsSqlCompletionItemProviderFunc: (queryContext: queryContext) => LogsSQLCompletionItemProvider;
+  logsCompletionItemProviderFunc: (queryContext: queryContext) => LogsCompletionItemProvider;
+  pplCompletionItemProviderFunc: (queryContext: queryContext) => PPLCompletionItemProvider;
 
   type = 'cloudwatch';
 
@@ -65,14 +75,17 @@ export class CloudWatchDatasource
     this.resources = new ResourcesAPI(instanceSettings, templateSrv);
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
-    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
-    this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
+
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
+    this.logsCompletionItemProviderFunc = LogsCompletionItemProviderFunc(this.resources, this.templateSrv);
+    this.logsSqlCompletionItemProviderFunc = LogsSQLCompletionItemProviderFunc(this.resources, templateSrv);
+    this.pplCompletionItemProviderFunc = PPLCompletionItemProviderFunc(this.resources, this.templateSrv);
   }
 
   filterQuery(query: CloudWatchQuery) {
@@ -143,6 +156,7 @@ export class CloudWatchDatasource
       ),
       ...(isCloudWatchMetricsQuery(query) &&
         this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars)),
+      ...(isCloudWatchLogsQuery(query) && this.logsQueryRunner.interpolateLogsQueryVariables(query, scopedVars)),
     }));
   }
 

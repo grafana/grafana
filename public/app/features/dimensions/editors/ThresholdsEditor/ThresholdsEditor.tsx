@@ -12,6 +12,8 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -145,8 +147,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
+    const thresholdNumber = idx + 1;
 
-    const ariaLabel = `Threshold ${idx + 1}`;
+    const ariaLabel = t('dimensions.thresholds-editor.aria-label-threshold', 'Threshold {{thresholdNumber}}', {
+      thresholdNumber,
+    });
     if (!isFinite(threshold.value)) {
       return (
         <Input
@@ -194,7 +199,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             className={styles.trashIcon}
             name="trash-alt"
             onClick={() => this.onRemoveThreshold(threshold)}
-            tooltip={`Remove ${ariaLabel}`}
+            tooltip={t('dimensions.threshold-editor.tooltip-remove-threshold', 'Remove threshold {{thresholdNumber}}', {
+              thresholdNumber,
+            })}
           />
         }
       />
@@ -219,7 +226,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 className={styles.addButton}
                 fullWidth
               >
-                Add threshold
+                <Trans i18nKey="dimensions.thresholds-editor.add-threshold">Add threshold</Trans>
               </Button>
               <div className={styles.thresholds}>
                 {steps
@@ -233,7 +240,14 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               </div>
 
               <div>
-                <Label description="Percentage means thresholds relative to min & max">Thresholds mode</Label>
+                <Label
+                  description={t(
+                    'dimensions.thresholds-editor.description-percentage-means-thresholds-relative',
+                    'Percentage means thresholds relative to min & max'
+                  )}
+                >
+                  <Trans i18nKey="dimensions.thresholds-editor.thresholds-mode">Thresholds mode</Trans>
+                </Label>
                 <RadioButtonGroup options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
               </div>
             </div>

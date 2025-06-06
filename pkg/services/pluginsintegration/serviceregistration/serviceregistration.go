@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,7 +42,7 @@ func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *auth.IAM) (*auth.ExternalService, error) {
 	ctxLogger := s.log.FromContext(ctx)
 
 	if !s.featureEnabled {
@@ -53,7 +53,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 	// Datasource plugins can only be enabled
 	enabled := true
 	// App plugins can be disabled
-	if pType == pfs.TypeApp {
+	if pType == string(plugins.TypeApp) {
 		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: pluginID})
 		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return nil, err
@@ -89,16 +89,12 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 		PrivateKey:   privateKey}, nil
 }
 
-func toAccessControlPermissions(ps []pfs.Permission) []accesscontrol.Permission {
+func toAccessControlPermissions(ps []auth.Permission) []accesscontrol.Permission {
 	res := make([]accesscontrol.Permission, 0, len(ps))
 	for _, p := range ps {
-		scope := ""
-		if p.Scope != nil {
-			scope = *p.Scope
-		}
 		res = append(res, accesscontrol.Permission{
 			Action: p.Action,
-			Scope:  scope,
+			Scope:  p.Scope,
 		})
 	}
 	return res

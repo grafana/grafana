@@ -16,6 +16,11 @@ title: Labels and annotations template examples
 menuTitle: Examples
 weight: 102
 refs:
+  shared-dynamic-label-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-labels/
   labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
@@ -115,7 +120,9 @@ CPU usage has exceeded 80% (81.2345) for the last 5 minutes.
 
 ### Include labels for extra details
 
-To provide additional context, you can include labels from the query. For instance, access the [`$labels`](ref:reference-labels) variable to display a label that informs about the affected instance:
+To provide additional context, you can include labels from the query using the [`$labels`](ref:reference-labels) variable.
+
+For instance, the previous case could also include the affected `instance`.
 
 ```
 CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
@@ -125,14 +132,14 @@ CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) fo
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like:
+You can incorporate any labels returned by the query into the template. For instance, the following template includes information about the environment and region where the alert occurred.
 
 ```
-Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
+Alert triggered in {{ $labels.environment }} on {{ $labels.region }} region.
 ```
 
 ```template_output
-Alert triggered in production with severity critical.
+Alert triggered in production on AMER region.
 ```
 
 ### Print a range query
@@ -191,15 +198,11 @@ For additional functions to display or format data, refer to:
 Here’s an example of creating a `severity` label based on a query value:
 
 ```go
-{{ if (gt $values.A.Value 90.0) -}}
-critical
-{{ else if (gt $values.A.Value 80.0) -}}
-high
-{{ else if (gt $values.A.Value 60.0) -}}
-medium
-{{ else -}}
-low
-{{- end }}
+{{- if (gt $values.A.Value 90.0) -}}critical
+{{- else if (gt $values.A.Value 80.0) -}}high
+{{- else if (gt $values.A.Value 60.0) -}}medium
+{{- else -}}low
+{{- end -}}
 ```
 
 In this example, the `severity` label is determined by the query value:
@@ -211,19 +214,25 @@ In this example, the `severity` label is determined by the query value:
 
 You can then use the `severity` label to control how alerts are handled. For instance, you could send `critical` alerts immediately, while routing `low` severity alerts to a team for further investigation.
 
-{{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create many alert instances—one for each distinct label value. Instead, use annotations to convey query values.
-{{% /admonition %}}
+> **Note:** An alert instance is uniquely identified by its set of labels.
+>
+> - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
+> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](ref:shared-dynamic-label-example).
+
+[//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Based on query label
 
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
 ```go
-{{ if eq $labels.instance "prod-server-1" }}production
-{{ else if eq $labels.instance "staging-server-1" }}staging
-{{ else }}development
-{{ end }}
+{{- if eq $labels.instance "prod-server-1" -}}
+production
+{{- else if eq $labels.instance "staging-server-1" -}}
+staging
+{{- else -}}
+development
+{{- end -}}
 ```
 
 This would print:
@@ -235,10 +244,13 @@ This would print:
 To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](ref:reference-match) function:
 
 ```go
-{{ if match "^prod-server-.*" $labels.instance }}production
-{{ else if match "^staging-server-.*" $labels.instance}}staging
-{{ else }}development
-{{ end }}
+{{- if match "^prod-server-.*" $labels.instance -}}
+production
+{{- else if match "^staging-server-.*" $labels.instance -}}
+staging
+{{- else -}}
+development
+{{- end -}}
 ```
 
 {{< collapse title="Legacy Alerting templates" >}}

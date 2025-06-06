@@ -3,7 +3,7 @@ package dtos
 import (
 	"time"
 
-	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -26,6 +26,7 @@ type DashboardMeta struct {
 	Version    int       `json:"version"`
 	HasACL     bool      `json:"hasAcl" xorm:"has_acl"`
 	IsFolder   bool      `json:"isFolder"`
+	APIVersion string    `json:"apiVersion,omitempty"` // v0alpha1, v1, v2beta1 etc -- the version things were *saved* at
 	// Deprecated: use FolderUID instead
 	FolderId               int64                              `json:"folderId"`
 	FolderUid              string                             `json:"folderUid"`
@@ -33,7 +34,7 @@ type DashboardMeta struct {
 	FolderUrl              string                             `json:"folderUrl"`
 	Provisioned            bool                               `json:"provisioned"`
 	ProvisionedExternalId  string                             `json:"provisionedExternalId"`
-	AnnotationsPermissions *dashboardsV0.AnnotationPermission `json:"annotationsPermissions"`
+	AnnotationsPermissions *dashboardsV1.AnnotationPermission `json:"annotationsPermissions"`
 	PublicDashboardEnabled bool                               `json:"publicDashboardEnabled,omitempty"`
 }
 
@@ -54,10 +55,10 @@ type CalculateDiffOptions struct {
 
 type CalculateDiffTarget struct {
 	DashboardId      int64            `json:"dashboardId"`
-	Version          int              `json:"version"`
+	Version          int64            `json:"version"`
 	UnsavedDashboard *simplejson.Json `json:"unsavedDashboard"`
 }
 
 type RestoreDashboardVersionCommand struct {
-	Version int `json:"version" binding:"Required"`
+	Version int64 `json:"version" binding:"Required"`
 }

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"runtime/debug"
 	"time"
 
-	"github.com/apache/arrow/go/v15/arrow"
-	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/scalar"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/scalar"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -265,7 +266,8 @@ func copyData(field *data.Field, col arrow.Array) error {
 	case arrow.DURATION:
 		copyBasic[int64](field, array.NewInt64Data(colData))
 	default:
-		fmt.Printf("datatype %s is unhandled", col.DataType().ID())
+		// FIXME: Should this return an error instead?
+		slog.Error("datatype is unhandled", "type", col.DataType().ID())
 	}
 
 	return nil

@@ -13,7 +13,9 @@ import {
   LogsDedupStrategy,
   EventBusSrv,
   DataFrameType,
+  LogSortOrderChangeEvent,
 } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -39,7 +41,9 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
 const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(),
   getDataSourceSrv: () => getDataSourceSrvMock(),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const hasLogsContextSupport = jest.fn().mockImplementation((ds) => {
@@ -69,7 +73,35 @@ const defaultProps = {
       scopedVars: {},
       startTime: 1,
     },
-    series: [],
+    series: [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            values: ['logline text'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
+          },
+        ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
+      }),
+    ],
     state: LoadingState.Done,
     timeRange: getDefaultTimeRange(),
   },
@@ -103,7 +135,32 @@ const defaultProps = {
   onChangeTimeRange: jest.fn(),
 };
 
-describe('LogsPanel', () => {
+const publishMock = jest.fn();
+beforeAll(() => {
+  jest.mocked(getAppEvents).mockReturnValue({
+    publish: publishMock,
+    getStream: jest.fn(),
+    subscribe: jest.fn(),
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  });
+});
+
+describe.each([false, true])('LogsPanel with controls = %s', (showControls: boolean) => {
+  it('publishes an event with the current sort order', async () => {
+    publishMock.mockClear();
+    setup({}, showControls);
+
+    await screen.findByText('logline text');
+
+    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(publishMock).toHaveBeenCalledWith(
+      new LogSortOrderChangeEvent({
+        order: LogsSortOrder.Descending,
+      })
+    );
+  });
+
   describe('when returned series include common labels', () => {
     const seriesWithCommonLabels = [
       createDataFrame({
@@ -143,36 +200,52 @@ describe('LogsPanel', () => {
     ];
 
     it('shows common labels when showCommonLabels is set to true', async () => {
-      setup({
-        data: { ...defaultProps.data, series: seriesWithCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: true },
-      });
+      setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: true },
+        },
+        showControls
+      );
 
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(await screen.findByText(/common_app/i)).toBeInTheDocument();
       expect(await screen.findByText(/common_job/i)).toBeInTheDocument();
     });
     it('shows common labels on top when descending sort order', async () => {
-      const { container } = setup({
-        data: { ...defaultProps.data, series: seriesWithCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
-      });
+      const { container } = setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
+        },
+        showControls
+      );
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:app=common_appjob=common_job/);
     });
     it('shows common labels on bottom when ascending sort order', async () => {
-      const { container } = setup({
-        data: { ...defaultProps.data, series: seriesWithCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
-      });
+      const { container } = setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
+        },
+        showControls
+      );
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
+      if (!showControls) {
+        expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
+      } else {
+        expect(container.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
+      }
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup({
-        data: { ...defaultProps.data, series: seriesWithCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: false },
-      });
+      setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: false },
+        },
+        showControls
+      );
 
       await waitFor(async () => {
         expect(screen.queryByText(/common labels:/i)).toBeNull();
@@ -205,19 +278,25 @@ describe('LogsPanel', () => {
       }),
     ];
     it('shows (no common labels) when showCommonLabels is set to true', async () => {
-      setup({
-        data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: true },
-      });
+      setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: true },
+        },
+        showControls
+      );
 
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
       expect(await screen.findByText(/(no common labels)/i)).toBeInTheDocument();
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup({
-        data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
-        options: { ...defaultProps.options, showCommonLabels: false },
-      });
+      setup(
+        {
+          data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
+          options: { ...defaultProps.options, showCommonLabels: false },
+        },
+        showControls
+      );
       await waitFor(async () => {
         expect(screen.queryByText(/common labels:/i)).toBeNull();
         expect(screen.queryByText(/(no common labels)/i)).toBeNull();
@@ -266,17 +345,20 @@ describe('LogsPanel', () => {
     });
 
     it('should not show the toggle if the datasource does not support show context', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
-          request: {
-            ...defaultProps.data.request,
-            app: CoreApp.Dashboard,
-            targets: [{ refId: 'A', datasource: { uid: 'no-show-context' } }],
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.Dashboard,
+              targets: [{ refId: 'A', datasource: { uid: 'no-show-context' } }],
+            },
           },
         },
-      });
+        showControls
+      );
 
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
@@ -285,17 +367,20 @@ describe('LogsPanel', () => {
     });
 
     it('should show the toggle if the datasource does support show context', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
-          request: {
-            ...defaultProps.data.request,
-            app: CoreApp.Dashboard,
-            targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.Dashboard,
+              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+            },
           },
         },
-      });
+        showControls
+      );
 
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
@@ -304,17 +389,20 @@ describe('LogsPanel', () => {
     });
 
     it('should not show the toggle if the datasource does support show context but the app is not Dashboard', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
-          request: {
-            ...defaultProps.data.request,
-            app: CoreApp.CloudAlerting,
-            targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.CloudAlerting,
+              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+            },
           },
         },
-      });
+        showControls
+      );
 
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
@@ -323,17 +411,20 @@ describe('LogsPanel', () => {
     });
 
     it('should render the mocked `LogRowContextModal` after click', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
-          request: {
-            ...defaultProps.data.request,
-            app: CoreApp.Dashboard,
-            targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.Dashboard,
+              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+            },
           },
         },
-      });
+        showControls
+      );
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
         await userEvent.click(screen.getByLabelText(/show context/i));
@@ -342,23 +433,26 @@ describe('LogsPanel', () => {
     });
 
     it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
-          request: {
-            ...defaultProps.data.request,
-            app: CoreApp.Dashboard,
-            targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.Dashboard,
+              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+            },
           },
         },
-      });
+        showControls
+      );
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
         await userEvent.click(screen.getByLabelText(/show context/i));
 
         const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
-        getRowContextCb();
+        getRowContextCb({}, {});
         expect(showContextDs.getLogRowContext).toBeCalled();
       });
     });
@@ -371,17 +465,20 @@ describe('LogsPanel', () => {
         <grafanaUI.IconButton name="rss" tooltip="Addon after" aria-label="Addon after" key={1} />,
       ];
 
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            logRowMenuIconsBefore,
+            logRowMenuIconsAfter,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          logRowMenuIconsBefore,
-          logRowMenuIconsAfter,
-        },
-      });
+        showControls
+      );
 
       await waitFor(async () => {
         await userEvent.hover(screen.getByText(/logline text/i));
@@ -432,12 +529,15 @@ describe('LogsPanel', () => {
     });
 
     it('does not rerender without changes', async () => {
-      const { rerender, props } = setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      const { rerender, props } = setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
         },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -448,12 +548,15 @@ describe('LogsPanel', () => {
     });
 
     it('rerenders when prop changes', async () => {
-      const { rerender, props } = setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      const { rerender, props } = setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
         },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -461,6 +564,25 @@ describe('LogsPanel', () => {
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+    });
+
+    it('does not re-render when data is loading', async () => {
+      const { rerender, props } = setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+        },
+        showControls
+      );
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} data={{ ...props.data, state: LoadingState.Loading }} />);
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -499,26 +621,29 @@ describe('LogsPanel', () => {
       const filterForMock = jest.fn();
       const filterOutMock = jest.fn();
       const isFilterLabelActiveMock = jest.fn();
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            onClickFilterLabel: filterForMock,
+            onClickFilterOutLabel: filterOutMock,
+            isFilterLabelActive: isFilterLabelActiveMock,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          onClickFilterLabel: filterForMock,
-          onClickFilterOutLabel: filterOutMock,
-          isFilterLabelActive: isFilterLabelActiveMock,
-        },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -538,16 +663,19 @@ describe('LogsPanel', () => {
           eventBus: new EventBusSrv(),
         });
 
-        setup({
-          data: {
-            ...defaultProps.data,
-            series,
+        setup(
+          {
+            data: {
+              ...defaultProps.data,
+              series,
+            },
+            options: {
+              ...defaultProps.options,
+              enableLogDetails: true,
+            },
           },
-          options: {
-            ...defaultProps.options,
-            enableLogDetails: true,
-          },
-        });
+          showControls
+        );
 
         expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -563,16 +691,19 @@ describe('LogsPanel', () => {
           onAddAdHocFilter: jest.fn(),
         });
 
-        setup({
-          data: {
-            ...defaultProps.data,
-            series,
+        setup(
+          {
+            data: {
+              ...defaultProps.data,
+              series,
+            },
+            options: {
+              ...defaultProps.options,
+              enableLogDetails: true,
+            },
           },
-          options: {
-            ...defaultProps.options,
-            enableLogDetails: true,
-          },
-        });
+          showControls
+        );
 
         expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -618,26 +749,29 @@ describe('LogsPanel', () => {
     ];
 
     it('displays the provided fields instead of the log line', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: ['app'],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          displayedFields: ['app'],
-          onClickHideField: undefined,
-          onClickShowField: undefined,
-        },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(screen.queryByText('logline text')).not.toBeInTheDocument();
@@ -652,25 +786,28 @@ describe('LogsPanel', () => {
     });
 
     it('updates the provided fields instead of the log line', async () => {
-      const { rerender, props } = setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      const { rerender, props } = setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          onClickHideField: undefined,
-          onClickShowField: undefined,
-        },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(screen.getByText('logline text')).toBeInTheDocument();
@@ -681,26 +818,29 @@ describe('LogsPanel', () => {
     });
 
     it('enables the behavior with a default implementation', async () => {
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: [],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          displayedFields: [],
-          onClickHideField: undefined,
-          onClickShowField: undefined,
-        },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -717,25 +857,28 @@ describe('LogsPanel', () => {
     it('overrides the default implementation when the callbacks are provided', async () => {
       const onClickShowFieldMock = jest.fn();
 
-      setup({
-        data: {
-          ...defaultProps.data,
-          series,
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            onClickHideField: jest.fn(),
+            onClickShowField: onClickShowFieldMock,
+          },
         },
-        options: {
-          ...defaultProps.options,
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          onClickHideField: jest.fn(),
-          onClickShowField: onClickShowFieldMock,
-        },
-      });
+        showControls
+      );
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
@@ -747,7 +890,7 @@ describe('LogsPanel', () => {
   });
 });
 
-const setup = (propsOverrides?: Partial<LogsPanelProps>) => {
+const setup = (propsOverrides?: Partial<LogsPanelProps>, showControls = false) => {
   const props: LogsPanelProps = {
     ...defaultProps,
     data: {
@@ -755,6 +898,7 @@ const setup = (propsOverrides?: Partial<LogsPanelProps>) => {
     },
     options: {
       ...(propsOverrides?.options || defaultProps.options),
+      showControls,
     },
   };
 

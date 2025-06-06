@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -107,6 +107,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeLive,
 		Name:    "Grafana Live",
+		handler: s.handleClientSideScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeSteps,
+		Name:    "Steps",
 		handler: s.handleClientSideScenario,
 	})
 
@@ -715,7 +721,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 		max = *model.Max
 	}
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	walker := startValue
@@ -737,7 +743,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			// skip value
 		} else {
 			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-			timeVec = append(timeVec, &t)
+			timeVec = append(timeVec, t)
 			floatVec = append(floatVec, &nextValue)
 		}
 
@@ -758,6 +764,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			"customStat": 10,
 		},
 	})
+	frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 	return frame
 }
@@ -889,6 +896,7 @@ func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
+		setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 		frames = append(frames, frame)
 	}
 	return frames, nil
@@ -902,7 +910,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	wavePeriod := timeStep * length
 	maxPoints := 10000 // Don't return too many points
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	for i := 0; i < maxPoints && timeCursor < to; i++ {
@@ -912,7 +920,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 		}
 
 		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
-		timeVec = append(timeVec, &t)
+		timeVec = append(timeVec, t)
 		floatVec = append(floatVec, val)
 
 		timeCursor += timeStep
@@ -966,6 +974,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model, 0)
+	setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 
 	return frame, nil
 }

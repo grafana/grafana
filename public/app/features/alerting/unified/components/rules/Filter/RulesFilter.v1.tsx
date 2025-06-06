@@ -3,11 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -15,12 +14,10 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import {
   LogMessages,
   logInfo,
-  trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
@@ -29,33 +26,11 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-const ViewOptions: SelectableValue[] = [
-  {
-    icon: 'folder',
-    label: 'Grouped',
-    value: 'grouped',
-  },
-  {
-    icon: 'list-ul',
-    label: 'List',
-    value: 'list',
-  },
-  {
-    icon: 'heart-rate',
-    label: 'State',
-    value: 'state',
-  },
-];
+import { RulesViewModeSelector } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
-  {
-    label: 'Alert ',
-    value: PromRuleType.Alerting,
-  },
-  {
-    label: 'Recording ',
-    value: PromRuleType.Recording,
-  },
+  { label: 'Alert ', value: PromRuleType.Alerting },
+  { label: 'Recording ', value: PromRuleType.Recording },
 ];
 
 const RuleHealthOptions: SelectableValue[] = [
@@ -63,6 +38,9 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'No Data', value: RuleHealth.NoData },
   { label: 'Error', value: RuleHealth.Error },
 ];
+
+// Contact point selector is not supported in Alerting ListView V2 yet
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 interface RulesFilerProps {
   onClear?: () => void;
@@ -75,7 +53,6 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const [queryParams, updateQueryParams] = useURLSearchParams();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
@@ -93,6 +70,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   useEffect(() => {
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
+  const { t } = useTranslate();
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
     const dataSourceNames =
@@ -142,20 +120,11 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
-  const handleViewChange = (view: string) => {
-    updateQueryParams({ view });
-    trackRulesListViewChange({ view });
-  };
-
   const handleContactPointChange = (contactPoint: string) => {
     updateFilters({ ...filterState, contactPoint });
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const canRenderContactPointSelector =
-    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-      config.featureToggles.alertingSimplifiedRouting) ??
-    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (
@@ -166,17 +135,23 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           label={
             <Label htmlFor="data-source-picker">
               <Stack gap={0.5} alignItems="center">
-                <span>Search by data sources</span>
+                <span>
+                  <Trans i18nKey="alerting.rules-filter.search-by-data-sources">Search by data sources</Trans>
+                </span>
                 <Tooltip
                   content={
                     <div>
                       <p>
-                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
-                        are stored and evaluated in the data source itself.
+                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </Trans>
                       </p>
                       <p>
-                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                        alert rules in the Grafana UI as well as in the data source where they were configured.
+                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </Trans>
                       </p>
                     </div>
                   }
@@ -185,7 +160,10 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
                     id="data-source-picker-inline-help"
                     name="info-circle"
                     size="sm"
-                    title="Search by data sources help"
+                    title={t(
+                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                      'Search by data sources help'
+                    )}
                   />
                 </Tooltip>
               </Stack>
@@ -196,7 +174,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             key={dataSourceKey}
             alerting
             noDefault
-            placeholder="All data sources"
+            placeholder={t('alerting.rules-filter.placeholder-all-data-sources', 'All data sources')}
             current={filterState.dataSourceNames}
             onChange={handleDataSourceChange}
             onClear={clearDataSource}
@@ -205,7 +183,11 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
 
         <Field
           className={styles.dashboardPickerContainer}
-          label={<Label htmlFor="filters-dashboard-picker">Dashboard</Label>}
+          label={
+            <Label htmlFor="filters-dashboard-picker">
+              <Trans i18nKey="alerting.rules-filter.dashboard">Dashboard</Trans>
+            </Label>
+          }
         >
           {/* The key prop is to clear the picker value */}
           {/* DashboardPicker doesn't do that itself when value is undefined */}
@@ -220,7 +202,9 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
         </Field>
 
         <div>
-          <Label>State</Label>
+          <Label>
+            <Trans i18nKey="alerting.rules-filter.state">State</Trans>
+          </Label>
           <RadioButtonGroup
             options={RuleStateOptions}
             value={filterState.ruleState}
@@ -228,11 +212,15 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           />
         </div>
         <div>
-          <Label>Rule type</Label>
+          <Label>
+            <Trans i18nKey="alerting.rules-filter.rule-type">Rule type</Trans>
+          </Label>
           <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
         </div>
         <div>
-          <Label>Health</Label>
+          <Label>
+            <Trans i18nKey="alerting.rules-filter.health">Health</Trans>
+          </Label>
           <RadioButtonGroup
             options={RuleHealthOptions}
             value={filterState.ruleHealth}
@@ -266,11 +254,13 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
         )}
         {pluginsFilterEnabled && (
           <div>
-            <Label>Plugin rules</Label>
+            <Label>
+              <Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>
+            </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -293,9 +283,16 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
               label={
                 <Label htmlFor="rulesSearchInput">
                   <Stack gap={0.5} alignItems="center">
-                    <span>Search</span>
+                    <span>
+                      <Trans i18nKey="alerting.rules-filter.search">Search</Trans>
+                    </span>
                     <PopupCard content={<SearchQueryHelp />}>
-                      <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
+                      <Icon
+                        name="info-circle"
+                        size="sm"
+                        tabIndex={0}
+                        title={t('alerting.rules-filter.title-search-help', 'Search help')}
+                      />
                     </PopupCard>
                   </Stack>
                 </Label>
@@ -310,25 +307,23 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
                   searchQueryRef.current = e;
                 }}
                 {...rest}
-                placeholder="Search"
+                placeholder={t('alerting.rules-filter.rulesSearchInput-placeholder-search', 'Search')}
                 data-testid="search-query-input"
               />
             </Field>
             <input type="submit" hidden />
           </form>
           <div>
-            <Label>View as</Label>
-            <RadioButtonGroup
-              options={ViewOptions}
-              value={queryParams.get('view') ?? ViewOptions[0].value}
-              onChange={handleViewChange}
-            />
+            <Label>
+              <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
+            </Label>
+            <RulesViewModeSelector />
           </div>
         </Stack>
         {hasActiveFilters && (
           <div>
             <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
-              Clear filters
+              <Trans i18nKey="alerting.rules-filter.clear-filters">Clear filters</Trans>
             </Button>
           </div>
         )}
@@ -356,24 +351,44 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function SearchQueryHelp() {
   const styles = useStyles2(helpStyles);
-
+  const { t } = useTranslate();
   return (
     <div>
-      <div>Search syntax allows to query alert rules by the parameters defined below.</div>
+      <div>
+        <Trans i18nKey="alerting.search-query-help.search-syntax">
+          Search syntax allows to query alert rules by the parameters defined below.
+        </Trans>
+      </div>
       <hr />
       <div className={styles.grid}>
-        <div>Filter type</div>
-        <div>Expression</div>
-        <HelpRow title="Datasources" expr="datasource:mimir datasource:prometheus" />
-        <HelpRow title="Folder/Namespace" expr="namespace:global" />
-        <HelpRow title="Group" expr="group:cpu-usage" />
-        <HelpRow title="Rule" expr='rule:"cpu 80%"' />
-        <HelpRow title="Labels" expr="label:team=A label:cluster=a1" />
-        <HelpRow title="State" expr="state:firing|normal|pending" />
-        <HelpRow title="Type" expr="type:alerting|recording" />
-        <HelpRow title="Health" expr="health:ok|nodata|error" />
-        <HelpRow title="Dashboard UID" expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04" />
-        <HelpRow title="Contact point" expr="contactPoint:slack" />
+        <div>
+          <Trans i18nKey="alerting.search-query-help.filter-type">Filter type</Trans>
+        </div>
+        <div>
+          <Trans i18nKey="alerting.search-query-help.expression">Expression</Trans>
+        </div>
+        <HelpRow
+          title={t('alerting.search-query-help.title-datasources', 'Datasources')}
+          expr="datasource:mimir datasource:prometheus"
+        />
+        <HelpRow
+          title={t('alerting.search-query-help.title-folder-namespace', 'Folder/Namespace')}
+          expr="namespace:global"
+        />
+        <HelpRow title={t('alerting.search-query-help.title-group', 'Group')} expr="group:cpu-usage" />
+        <HelpRow title={t('alerting.search-query-help.title-rule', 'Rule')} expr='rule:"cpu 80%"' />
+        <HelpRow title={t('alerting.search-query-help.title-labels', 'Labels')} expr="label:team=A label:cluster=a1" />
+        <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
+        <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
+        <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-dashboard-uid', 'Dashboard UID')}
+          expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04"
+        />
+        <HelpRow
+          title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
+          expr="contactPoint:slack"
+        />
       </div>
     </div>
   );

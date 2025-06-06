@@ -15,8 +15,9 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
+
+export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -323,7 +324,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
-    type: 'counter',
+    type: 'gauge',
     help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
@@ -478,7 +479,10 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
 export function getRangeSnapInterval(
   cacheLevel: PrometheusCacheLevel,
   range: TimeRange
-): { start: string; end: string } {
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {

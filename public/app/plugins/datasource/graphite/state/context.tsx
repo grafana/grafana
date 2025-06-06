@@ -88,7 +88,7 @@ export const GraphiteQueryEditorContext = ({
   if (!state) {
     dispatch(
       actions.init({
-        target: query,
+        target: { ...query },
         datasource: datasource,
         range: range,
         templateSrv: getTemplateSrv(),

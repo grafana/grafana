@@ -51,15 +51,14 @@ const setupTestContext = async (options: Partial<Props>) => {
   return { rerender, props };
 };
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: async () => ds,
-      getList: () => [mockDS],
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: async () => ds,
+    getList: () => [mockDS],
+    getInstanceSettings: () => mockDS,
+  }),
+}));
 
 const defaultIdentifier: KeyedVariableIdentifier = { type: 'query', rootStateKey: 'key', id: NEW_VARIABLE_ID };
 
@@ -79,12 +78,11 @@ describe('QueryVariableEditor', () => {
     });
 
     it('should pass down the query with default values if the datasource config defines it', async () => {
-      ds.variables!.getDefaultQuery = jest.fn().mockImplementationOnce(() => 'some default query');
-
       await setupTestContext({});
       expect(ds.variables?.getDefaultQuery).toBeDefined();
-      expect(ds.variables?.getDefaultQuery).toHaveBeenCalledTimes(1);
-      expect(editor.mock.calls[0][0].query).toBe('some default query');
+      // getDefaultQuery is called twice: once in QueryEditor to account for old arch
+      //   and once in QueryVariableForm for new scenes arch logic
+      expect(ds.variables?.getDefaultQuery).toHaveBeenCalledTimes(2);
     });
   });
 

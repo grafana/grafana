@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DashboardModel } from '../../dashboard/state';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 
 interface ComponentProps {
   dashboard: DashboardModel;

@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
 import { PopupCard } from './HoverCard';
-import { keywords as KEYWORDS, builtinFunctions as FUNCTIONS } from './receivers/editor/language';
+import { builtinFunctions as FUNCTIONS, keywords as KEYWORDS } from './receivers/editor/language';
 
 const VARIABLES = ['$', '.', '"'];
 

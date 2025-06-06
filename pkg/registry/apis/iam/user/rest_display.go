@@ -1,122 +1,153 @@
 package user
 
 import (
-	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
-	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 type LegacyDisplayREST struct {
 	store legacy.LegacyIdentityStore
 }
 
-var (
-	_ rest.Storage              = (*LegacyDisplayREST)(nil)
-	_ rest.SingularNameProvider = (*LegacyDisplayREST)(nil)
-	_ rest.Connecter            = (*LegacyDisplayREST)(nil)
-	_ rest.Scoper               = (*LegacyDisplayREST)(nil)
-	_ rest.StorageMetadata      = (*LegacyDisplayREST)(nil)
-)
-
 func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 	return &LegacyDisplayREST{store}
 }
 
-func (r *LegacyDisplayREST) New() runtime.Object {
-	return &iamv0.DisplayList{}
-}
-
-func (r *LegacyDisplayREST) Destroy() {}
-
-func (r *LegacyDisplayREST) NamespaceScoped() bool {
-	return true
-}
-
-func (r *LegacyDisplayREST) GetSingularName() string {
-	return "display"
-}
-
-func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
-	return []string{"application/json"}
-}
-
-func (r *LegacyDisplayREST) ProducesObject(verb string) any {
-	return &iamv0.DisplayList{}
-}
-
-func (r *LegacyDisplayREST) ConnectMethods() []string {
-	return []string{http.MethodGet}
-}
-
-func (r *LegacyDisplayREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, "" // true means you can use the trailing path as a variable
+func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+	return &builder.APIRoutes{
+		Namespace: []builder.APIRouteHandler{
+			{
+				Path: "display",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							OperationId: "getDisplayMapping", // This is used by RTK client generator
+							Tags:        []string{"Display"},
+							Description: "Show user display information",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "key",
+										In:          "query",
+										Description: "Display keys",
+										Required:    true,
+										Example:     "user:u000000001",
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+										//	Style:       "form",
+										Explode: true,
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.DisplayList"),
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: r.handleDisplay,
+			},
+		},
+	}
 }
 
 // This will always have an empty app url
 var fakeCfgForGravatar = &setting.Cfg{}
 
-func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// See: /pkg/services/apiserver/builder/helper.go#L34
-	// The name is set with a rewriter hack
-	if name != "name" {
-		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
+func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	user, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
+		return
 	}
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+
+	ns, err := authlib.ParseNamespace(user.GetNamespace())
 	if err != nil {
-		return nil, err
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	keys := parseKeys(req.URL.Query()["key"])
+	users, err := r.store.ListDisplay(ctx, ns, legacy.ListDisplayQuery{
+		OrgID: ns.OrgID,
+		UIDs:  keys.uids,
+		IDs:   keys.ids,
+	})
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		keys := parseKeys(req.URL.Query()["key"])
-		users, err := r.store.ListDisplay(ctx, ns, legacy.ListDisplayQuery{
-			OrgID: ns.OrgID,
-			UIDs:  keys.uids,
-			IDs:   keys.ids,
-		})
-		if err != nil {
-			responder.Error(err)
-			return
+	rsp := &iam.DisplayList{
+		Keys:        keys.keys,
+		InvalidKeys: keys.invalid,
+		Items:       make([]iam.Display, 0, len(users.Users)+len(keys.disp)+1),
+	}
+	for _, user := range users.Users {
+		disp := iam.Display{
+			Identity: iam.IdentityRef{
+				Type: authlib.TypeUser,
+				Name: user.UID,
+			},
+			DisplayName: user.NameOrFallback(),
+			InternalID:  user.ID, // nolint:staticcheck
 		}
+		if user.IsServiceAccount {
+			disp.Identity.Type = authlib.TypeServiceAccount
+		}
+		disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.DisplayName)
+		rsp.Items = append(rsp.Items, disp)
+	}
 
-		rsp := &iamv0.DisplayList{
-			Keys:        keys.keys,
-			InvalidKeys: keys.invalid,
-			Items:       make([]iamv0.Display, 0, len(users.Users)+len(keys.disp)+1),
-		}
-		for _, user := range users.Users {
-			disp := iamv0.Display{
-				Identity: iamv0.IdentityRef{
-					Type: claims.TypeUser,
-					Name: user.UID,
-				},
-				DisplayName: user.NameOrFallback(),
-				InternalID:  user.ID,
-			}
-			if user.IsServiceAccount {
-				disp.Identity.Type = claims.TypeServiceAccount
-			}
-			disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.DisplayName)
-			rsp.Items = append(rsp.Items, disp)
-		}
+	// Append the constants here
+	if len(keys.disp) > 0 {
+		rsp.Items = append(rsp.Items, keys.disp...)
+	}
 
-		// Append the constants here
-		if len(keys.disp) > 0 {
-			rsp.Items = append(rsp.Items, keys.disp...)
-		}
-		responder.Object(200, rsp)
-	}), nil
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(rsp)
 }
 
 type dispKeys struct {
@@ -126,7 +157,7 @@ type dispKeys struct {
 	invalid []string
 
 	// For terminal keys, this is a constant
-	disp []iamv0.Display
+	disp []iam.Display
 }
 
 func parseKeys(req []string) dispKeys {
@@ -138,7 +169,7 @@ func parseKeys(req []string) dispKeys {
 	for _, key := range req {
 		idx := strings.Index(key, ":")
 		if idx > 0 {
-			t, err := claims.ParseType(key[0:idx])
+			t, err := authlib.ParseType(key[0:idx])
 			if err != nil {
 				keys.invalid = append(keys.invalid, key)
 				continue
@@ -146,18 +177,18 @@ func parseKeys(req []string) dispKeys {
 			key = key[idx+1:]
 
 			switch t {
-			case claims.TypeAnonymous:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+			case authlib.TypeAnonymous:
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 					},
 					DisplayName: "Anonymous",
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
-			case claims.TypeAPIKey:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+			case authlib.TypeAPIKey:
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 						Name: key,
 					},
@@ -165,9 +196,9 @@ func parseKeys(req []string) dispKeys {
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
-			case claims.TypeProvisioning:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+			case authlib.TypeProvisioning:
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 					},
 					DisplayName: "Provisioning",
@@ -183,9 +214,9 @@ func parseKeys(req []string) dispKeys {
 		id, err := strconv.ParseInt(key, 10, 64)
 		if err == nil {
 			if id == 0 {
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
-						Type: claims.TypeUser,
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
+						Type: authlib.TypeUser,
 						Name: key,
 					},
 					DisplayName: "System admin",

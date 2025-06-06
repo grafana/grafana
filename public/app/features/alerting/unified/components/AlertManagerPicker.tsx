@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, ComponentProps } from 'react';
+import { ComponentProps, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';

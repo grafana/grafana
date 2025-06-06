@@ -1,11 +1,10 @@
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
-import { MockDataSourceSrv } from '../../mocks';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './Filter/RulesFilter';
@@ -17,11 +16,9 @@ jest.mock('./MultipleDataSourcePicker', () => {
   const original = jest.requireActual('./MultipleDataSourcePicker');
   return {
     ...original,
-    MultipleDataSourcePicker: () => <></>,
+    MultipleDataSourcePicker: () => null,
   };
 });
-
-setDataSourceSrv(new MockDataSourceSrv({}));
 
 setupPluginsExtensionsHook();
 

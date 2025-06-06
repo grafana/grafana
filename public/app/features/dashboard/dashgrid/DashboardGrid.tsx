@@ -13,8 +13,8 @@ import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
-import { DashboardModel, PanelModel } from '../state';
-import { GridPos } from '../state/PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
+import { GridPos, PanelModel } from '../state/PanelModel';
 
 import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
@@ -111,6 +111,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       if (!panel.key) {
         panel.key = `panel-${panel.id}-${Date.now()}`;
       }
+      panel.title = panel.title?.substring(0, 5000);
       this.panelMap[panel.key] = panel;
 
       if (!panel.gridPos) {

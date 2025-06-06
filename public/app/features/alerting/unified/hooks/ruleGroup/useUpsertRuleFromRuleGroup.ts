@@ -1,13 +1,13 @@
 import { produce } from 'immer';
 import { isEqual } from 'lodash';
 
-import { t } from 'app/core/internationalization';
-import { RuleGroupIdentifier, EditableRuleIdentifier } from 'app/types/unified-alerting';
+import { useTranslate } from '@grafana/i18n';
+import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { addRuleAction, updateRuleAction } from '../../reducers/ruler/ruleGroups';
-import { isGrafanaRuleIdentifier, isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 import { useAsync } from '../useAsync';
 
 import { useDeleteRuleFromGroup } from './useDeleteRuleFromGroup';
@@ -19,6 +19,7 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 export function useAddRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+  const { t } = useTranslate();
 
   const successMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
 
@@ -27,7 +28,7 @@ export function useAddRuleToRuleGroup() {
 
     // the new rule might have to be created in a new group, pass name and interval (optional) to the action
     const action = addRuleAction({ rule, interval, groupName: ruleGroup.groupName });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     const result = upsertRuleGroup({
       rulerConfig,
@@ -47,7 +48,7 @@ export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [moveRuleToGroup] = useMoveRuleToRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-
+  const { t } = useTranslate();
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
   return useAsync(
@@ -69,7 +70,7 @@ export function useUpdateRuleInRuleGroup() {
       }
 
       const action = updateRuleAction({ identifier: ruleIdentifier, rule: finalRuleDefinition });
-      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+      const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
       return upsertRuleGroup({
         rulerConfig,
@@ -89,6 +90,7 @@ export function useMoveRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+  const { t } = useTranslate();
 
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
@@ -106,7 +108,7 @@ export function useMoveRuleToRuleGroup() {
       const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition, interval });
       const { newRuleGroupDefinition: newTargetGroup, rulerConfig: targetGroupRulerConfig } = await produceNewRuleGroup(
         targetRuleGroup,
-        addRuleToGroup
+        [addRuleToGroup]
       );
 
       const result = await upsertRuleGroup({
@@ -132,7 +134,7 @@ function copyGrafanaUID(ruleIdentifier: EditableRuleIdentifier, ruleDefinition: 
   // by copying over the rule UID the backend will perform an atomic move operation
   // so there is no need for us to manually remove it from the previous group
   return produce(ruleDefinition, (draft) => {
-    const isGrafanaManagedRuleDefinition = isGrafanaRulerRule(draft);
+    const isGrafanaManagedRuleDefinition = rulerRuleType.grafana.rule(draft);
 
     if (isGrafanaManagedRuleIdentifier && isGrafanaManagedRuleDefinition) {
       draft.grafana_alert.uid = ruleIdentifier.uid;

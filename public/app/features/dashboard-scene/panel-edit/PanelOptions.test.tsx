@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -177,7 +177,6 @@ describe('PanelOptions', () => {
 
     const libraryPanel = new LibraryPanelBehavior({
       isLoaded: true,
-      title: libraryPanelModel.title,
       uid: libraryPanelModel.uid,
       name: libraryPanelModel.name,
       _loadedPanel: libraryPanelModel,

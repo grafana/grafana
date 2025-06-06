@@ -33,7 +33,7 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "admin", cfg.AdminUser)
-		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
+		require.Equal(t, "", cfg.RendererCallbackUrl)
 		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
 	})
 
@@ -76,6 +76,18 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "superduper", cfg.AdminUser)
 		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
 		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
+	})
+
+	t.Run("Should be able to override via plugins.preinstall with GF_INSTALL_PLUGINS env var when GF_PLUGINS_PREINSTALL and cfg.plugins.preinstall are not set", func(t *testing.T) {
+		t.Setenv("GF_INSTALL_PLUGINS", "https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
+		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
+		require.Equal(t, cfg.PreinstallPluginsSync, []InstallPlugin{{ID: "grafana-piechart-panel", Version: "", URL: "https://grafana.com/grafana/plugins/grafana-piechart-panel/"}})
 	})
 
 	t.Run("Should be able to expand parameter from environment variables", func(t *testing.T) {
@@ -253,17 +265,6 @@ func TestLoadingSettings(t *testing.T) {
 		hostname, err := os.Hostname()
 		require.Nil(t, err)
 		require.Equal(t, hostname, cfg.InstanceName)
-	})
-
-	t.Run("Reading callback_url should add trailing slash", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, "http://myserver/renderer/", cfg.RendererCallbackUrl)
 	})
 
 	t.Run("Only sync_ttl should return the value sync_ttl", func(t *testing.T) {
@@ -527,6 +528,18 @@ func TestRedactedValue(t *testing.T) {
 			key:      "private_key_path",
 			value:    "",
 			expected: "",
+		},
+		{
+			desc:     "authentication_token",
+			key:      "my_authentication_token",
+			value:    "test",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "client token",
+			key:      "token",
+			value:    "test",
+			expected: RedactedPassword,
 		},
 	}
 

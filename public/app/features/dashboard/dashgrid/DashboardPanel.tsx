@@ -5,10 +5,10 @@ import { StoreState } from 'app/types';
 
 import { initPanelState } from '../../panel/state/actions';
 import { setPanelInstanceState } from '../../panel/state/reducers';
-import { DashboardModel, PanelModel } from '../state';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 import { LazyLoader } from './LazyLoader';
-import { PanelChromeAngular } from './PanelChromeAngular';
 import { PanelStateWrapper } from './PanelStateWrapper';
 
 export interface OwnProps {
@@ -88,22 +88,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
 
     if (!plugin) {
       return null;
-    }
-
-    if (plugin && plugin.angularPanelCtrl) {
-      return (
-        <PanelChromeAngular
-          plugin={plugin}
-          panel={panel}
-          dashboard={dashboard}
-          isViewing={isViewing}
-          isEditing={isEditing}
-          isInView={isInView}
-          isDraggable={isDraggable}
-          width={width}
-          height={height}
-        />
-      );
     }
 
     return (

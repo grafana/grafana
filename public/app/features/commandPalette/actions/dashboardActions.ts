@@ -1,11 +1,11 @@
 import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
@@ -79,6 +79,11 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   return goToSearchResultActions;
 }
 
+/**
+ * Implements actual search logic for dashboards and folders.
+ * @param searchQuery
+ * @param isShowing
+ */
 export function useSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);

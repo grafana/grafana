@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
-import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { GrafanaTheme2, dateMath, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import SilencedAlertsTable from './SilencedAlertsTable';
@@ -20,17 +21,27 @@ export const SilenceDetails = ({ silence }: Props) => {
   const duration = intervalToAbbreviatedDurationString({ start: new Date(startsAt), end: new Date(endsAt) });
   return (
     <div className={styles.container}>
-      <div className={styles.title}>Comment</div>
+      <div className={styles.title}>
+        <Trans i18nKey="alerting.silence-details.comment">Comment</Trans>
+      </div>
       <div>{comment}</div>
-      <div className={styles.title}>Schedule</div>
+      <div className={styles.title}>
+        <Trans i18nKey="alerting.silence-details.schedule">Schedule</Trans>
+      </div>
       <div>{`${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(dateDisplayFormat)}`}</div>
-      <div className={styles.title}>Duration</div>
+      <div className={styles.title}>
+        <Trans i18nKey="alerting.silence-details.duration">Duration</Trans>
+      </div>
       <div>{duration}</div>
-      <div className={styles.title}>Created by</div>
+      <div className={styles.title}>
+        <Trans i18nKey="alerting.silence-details.created-by">Created by</Trans>
+      </div>
       <div>{createdBy}</div>
       {Array.isArray(silencedAlerts) && (
         <>
-          <div className={styles.title}>Affected alerts</div>
+          <div className={styles.title}>
+            <Trans i18nKey="alerting.silence-details.affected-alerts">Affected alerts</Trans>
+          </div>
           <SilencedAlertsTable silencedAlerts={silencedAlerts} />
         </>
       )}

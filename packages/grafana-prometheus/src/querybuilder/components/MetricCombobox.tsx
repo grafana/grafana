@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow } from '@grafana/ui';
-import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
+import { selectors } from '@grafana/e2e-selectors';
+import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
+import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
@@ -84,8 +83,6 @@ export function MetricCombobox({
     return metrics;
   }, [onGetMetrics]);
 
-  const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
-
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -97,29 +94,25 @@ export function MetricCombobox({
           value={query.metric}
           onChange={onComboboxChange}
           createCustomValue
+          data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
         />
-
-        {metricsExplorerEnabled ? (
-          <Button
-            tooltip="Open metrics explorer"
-            aria-label="Open metrics explorer"
-            variant="secondary"
-            icon="book-open"
-            onClick={() => {
-              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-              setMetricsModalOpen(true);
-            }}
-          />
-        ) : (
-          <></>
-        )}
+        <Button
+          tooltip="Open metrics explorer"
+          aria-label="Open metrics explorer"
+          variant="secondary"
+          icon="book-open"
+          onClick={() => {
+            tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+            setMetricsModalOpen(true);
+          }}
+        />
       </InputGroup>
     );
   };
 
   return (
     <>
-      {metricsExplorerEnabled && !datasource.lookupsDisabled && metricsModalOpen && (
+      {!datasource.lookupsDisabled && metricsModalOpen && (
         <MetricsModal
           datasource={datasource}
           isOpen={metricsModalOpen}

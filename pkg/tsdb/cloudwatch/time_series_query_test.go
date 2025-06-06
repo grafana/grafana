@@ -118,18 +118,26 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
-			From: now.Add(time.Hour * -1),
-			To:   now.Add(time.Hour * -2),
-		}}}})
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+				From: now.Add(time.Hour * -1),
+				To:   now.Add(time.Hour * -2),
+			}}}})
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
 
 	t.Run("End time equals start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
-			From: now.Add(time.Hour * -1),
-			To:   now.Add(time.Hour * -1),
-		}}}})
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+				From: now.Add(time.Hour * -1),
+				To:   now.Add(time.Hour * -1),
+			}}}})
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
 }
@@ -270,6 +278,72 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		// AssertExpectations will fail if those methods were not called Once(), so expected number of calls is asserted by this line
 		mockMetricClient.AssertNumberOfCalls(t, "GetMetricDataWithContext", 2)
 		// GetMetricData is asserted to have been called 2 times, presumably once for each group of regions (2 regions total)
+	})
+
+	t.Run("3 queries with 2 time ranges calls GetSessionWithAuthSettings 2 times and calls GetMetricDataWithContext 2 times", func(t *testing.T) {
+		sessionCache := &mockSessionCache{}
+		sessionCache.On("GetSessionWithAuthSettings", mock.MatchedBy(
+			func(config awsds.GetSessionConfig) bool {
+				return config.Settings.Region == "us-east-2"
+			})).
+			Return(&session.Session{Config: &aws.Config{}}, nil).Times(2)
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: sessionCache}, nil
+		})
+
+		mockMetricClient = mocks.MetricsAPI{}
+		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+		executor := newExecutor(im, log.NewNullLogger())
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now()},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"region": "us-east-2",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+				{
+					RefID:     "A2",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now()},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkOut",
+						"region": "us-east-2",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+				{
+					RefID:     "B",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"namespace": "AWS/EC2",
+						"metricName": "NetworkIn",
+						"region": "us-east-2",
+						"statistic": "Maximum",
+						"period": "300"
+					}`),
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		sessionCache.AssertExpectations(t) // method is defined to return twice (once for each batch)
+		mockMetricClient.AssertNumberOfCalls(t, "GetMetricDataWithContext", 2)
+		// GetMetricData is asserted to have been called 2 times, presumably once for each time range (2 time ranges total)
 	})
 }
 

@@ -1,0 +1,9 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: test-v1
+spec:
+  title: Test dashboard. Created at v1
+  uid: test-v1 # will be removed by mutation hook
+  version: 1234567 # will be removed by mutation hook
+  schemaVersion: 41

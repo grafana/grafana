@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
@@ -37,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -49,6 +52,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -68,7 +74,9 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	validations.ProvideValidator,
-	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
+	validations.ProvideURLValidator,
+	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
@@ -106,6 +114,15 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	search2.ProvideDashboardStats,
+	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	search2.ProvideDocumentBuilders,
+	sandbox.ProvideService,
+	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
+	wire.Struct(new(unified.Options), "*"),
+	unified.ProvideUnifiedStorageClient,
+	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
+	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -132,6 +149,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	metrics.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	featuremgmt.ProvideOpenFeatureService,
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
@@ -141,6 +159,9 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Unified storage
+	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

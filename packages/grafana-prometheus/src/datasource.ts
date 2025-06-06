@@ -1,17 +1,15 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
+import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import semver from 'semver/preload';
+import { gte } from 'semver';
 
 import {
   AbstractQuery,
   AdHocVariableFilter,
-  AnnotationEvent,
-  AnnotationQueryRequest,
   CoreApp,
   CustomVariableModel,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceGetTagKeysOptions,
@@ -26,14 +24,12 @@ import {
   QueryFixAction,
   QueryVariableModel,
   rangeUtil,
-  renderLegendFormat,
   ScopedVars,
   scopeFilterOperatorMap,
   ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import {
-  BackendDataSourceResponse,
   BackendSrvRequest,
   config,
   DataSourceWithBackend,
@@ -42,11 +38,10 @@ import {
   getTemplateSrv,
   isFetchError,
   TemplateSrv,
-  toDataQueryResponse,
 } from '@grafana/runtime';
 
 import { addLabelToQuery } from './add_label_to_query';
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { PrometheusAnnotationSupport } from './annotations';
 import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
@@ -55,11 +50,11 @@ import {
   getRangeSnapInterval,
 } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
-import { getInitHints, getQueryHints } from './query_hints';
+import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
-import { getOriginalMetricName, transformV2 } from './result_transformer';
+import { transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
@@ -71,9 +66,9 @@ import {
   RawRecordingRules,
   RuleQueryMapping,
 } from './types';
+import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
-const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = [
   'api/v1/query',
   'api/v1/query_range',
@@ -150,13 +145,7 @@ export class PrometheusDatasource
       applyInterpolation: this.interpolateString.bind(this),
     });
 
-    // This needs to be here and cannot be static because of how annotations typing affects casting of data source
-    // objects to DataSourceApi types.
-    // We don't use the default processing for prometheus.
-    // See standardAnnotationSupport.ts/[shouldUseMappingUI|shouldUseLegacyRunner]
-    this.annotations = {
-      QueryEditor: AnnotationQueryEditor,
-    };
+    this.annotations = PrometheusAnnotationSupport(this);
   }
 
   init = async () => {
@@ -212,7 +201,7 @@ export class PrometheusDatasource
       return false;
     }
 
-    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
+    return gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
@@ -372,13 +361,39 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    // The `utcOffsetSec` parameter is required by the backend to correctly align time ranges.
+    // This alignment ensures that relative time ranges (e.g., "Last N hours/days/years") are adjusted
+    // according to the user's selected time zone, rather than defaulting to UTC.
+    //
+    // Example: If the user selects "Last 5 days," each day should begin at 00:00 in the chosen time zone,
+    // rather than at 00:00 UTC, ensuring an accurate breakdown.
+    //
+    // This adjustment does not apply to absolute time ranges, where users explicitly set
+    // the start and end timestamps.
+    //
+    // Handling `utcOffsetSec`:
+    // - When using the browser's time zone, the UTC offset is derived from the request range object.
+    // - When the user selects a custom time zone, the UTC offset must be calculated accordingly.
+    // More details:
+    // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
+    // - Implementation PR: https://github.com/grafana/grafana/pull/17477
+    let utcOffset = request.range.to.utcOffset();
+    if (request.timezone === 'browser') {
+      // we need to check if the request is a relative or absolute range.
+      // if it is absolute time range then utcOffset must be 0. we don't care the offset
+      // because we are already sending the from and to values in utc. we don't need to adjust them again
+      // for relative ranges we need utcOffset to adjust query range.
+      utcOffset = this.isUsingRelativeTimeRange(request.range) ? utcOffset : 0;
+    } else {
+      utcOffset = tz(request.timezone).utcOffset();
+    }
+
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
-      // We need to pass utcOffsetSec to backend to calculate aligned range
-      utcOffsetSec: request.range.to.utcOffset() * 60,
+      utcOffsetSec: utcOffset * 60,
     };
 
     if (config.featureToggles.promQLScope) {
@@ -455,13 +470,15 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? getDefaultTimeRange();
+
     const scopedVars = {
       ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
+      ...this.getRangeScopedVars(timeRange),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+    return metricFindQuery.process(timeRange);
   }
 
   getIntervalVars() {
@@ -481,146 +498,16 @@ export class PrometheusDatasource
     };
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
-    if (this.access === 'direct') {
-      const error = new Error(
-        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
-      );
-      return Promise.reject(error);
-    }
-
-    const annotation = options.annotation;
-    const { expr = '' } = annotation;
-
-    if (!expr) {
-      return Promise.resolve([]);
-    }
-
-    const step = options.annotation.step || ANNOTATION_QUERY_STEP_DEFAULT;
-    const queryModel = {
-      expr,
-      range: true,
-      instant: false,
-      exemplar: false,
-      interval: step,
-      refId: 'X',
-      datasource: this.getRef(),
-    };
-
-    return await lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          headers: this.getRequestHeaders(),
-          data: {
-            from: (getPrometheusTime(options.range.from, false) * 1000).toString(),
-            to: (getPrometheusTime(options.range.to, true) * 1000).toString(),
-            queries: [this.applyTemplateVariables(queryModel, {})],
-          },
-          requestId: `prom-query-${annotation.name}`,
-        })
-        .pipe(
-          map((rsp: FetchResponse<BackendDataSourceResponse>) => {
-            return this.processAnnotationResponse(options, rsp.data);
-          })
-        )
-    );
-  }
-
-  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
-    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
-    if (!frames || !frames.length) {
-      return [];
-    }
-
-    const annotation = options.annotation;
-    const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
-
-    const step = rangeUtil.intervalToSeconds(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
-    const tagKeysArray = tagKeys.split(',');
-
-    const eventList: AnnotationEvent[] = [];
-
-    for (const frame of frames) {
-      if (frame.fields.length === 0) {
-        continue;
-      }
-      const timeField = frame.fields[0];
-      const valueField = frame.fields[1];
-      const labels = valueField?.labels || {};
-
-      const tags = Object.keys(labels)
-        .filter((label) => tagKeysArray.includes(label))
-        .map((label) => labels[label]);
-
-      const timeValueTuple: Array<[number, number]> = [];
-
-      let idx = 0;
-      valueField.values.forEach((value: string) => {
-        let timeStampValue: number;
-        let valueValue: number;
-        const time = timeField.values[idx];
-
-        // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
-        if (options.annotation.useValueForTime) {
-          timeStampValue = Math.floor(parseFloat(value));
-          valueValue = 1;
-        } else {
-          timeStampValue = Math.floor(parseFloat(time));
-          valueValue = parseFloat(value);
-        }
-
-        idx++;
-        timeValueTuple.push([timeStampValue, valueValue]);
-      });
-
-      const activeValues = timeValueTuple.filter((value) => value[1] > 0);
-      const activeValuesTimestamps = activeValues.map((value) => value[0]);
-
-      // Instead of creating singular annotation for each active event we group events into region if they are less
-      // or equal to `step` apart.
-      let latestEvent: AnnotationEvent | null = null;
-
-      for (const timestamp of activeValuesTimestamps) {
-        // We already have event `open` and we have new event that is inside the `step` so we just update the end.
-        if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
-          latestEvent.timeEnd = timestamp;
-          continue;
-        }
-
-        // Event exists but new one is outside of the `step` so we add it to eventList.
-        if (latestEvent) {
-          eventList.push(latestEvent);
-        }
-
-        // We start a new region.
-        latestEvent = {
-          time: timestamp,
-          timeEnd: timestamp,
-          annotation,
-          title: renderLegendFormat(titleFormat, labels),
-          tags,
-          text: renderLegendFormat(textFormat, labels),
-        };
-      }
-
-      if (latestEvent) {
-        // Finish up last point if we have one
-        latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
-        eventList.push(latestEvent);
-      }
-    }
-
-    return eventList;
-  };
-
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
-    if (config.featureToggles.promQLScope && !!options) {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
         options.queries,
@@ -646,7 +533,10 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
+      options.timeRange,
+      expr
+    );
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -655,9 +545,13 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,
@@ -681,7 +575,7 @@ export class PrometheusDatasource
 
     if (this.hasLabelsMatchAPISupport()) {
       return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
       ).map((v) => ({
         value: v,
         text: v,
@@ -701,7 +595,11 @@ export class PrometheusDatasource
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
-        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const interpolatedQuery = this.templateSrv.replace(
+          query.expr,
+          scopedVars,
+          this.interpolateExploreMetrics(query.fromExploreMetrics)
+        );
         const replacedInterpolatedQuery = config.featureToggles.promQLScope
           ? interpolatedQuery
           : this.templateSrv.replace(
@@ -726,10 +624,6 @@ export class PrometheusDatasource
 
   getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
-  }
-
-  getInitHints() {
-    return getInitHints(this);
   }
 
   async loadRules() {
@@ -859,10 +753,6 @@ export class PrometheusDatasource
     };
   }
 
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    return getOriginalMetricName(labelData);
-  }
-
   /**
    * This converts the adhocVariableFilter array and converts it to scopeFilter array
    * @param filters
@@ -921,7 +811,11 @@ export class PrometheusDatasource
 
     // We need a first replace to evaluate variables before applying adhoc filters
     // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
-    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+    const expr = this.templateSrv.replace(
+      target.expr,
+      variables,
+      this.interpolateExploreMetrics(target.fromExploreMetrics)
+    );
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
@@ -944,6 +838,28 @@ export class PrometheusDatasource
 
   interpolateString(string: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
+  }
+
+  interpolateExploreMetrics(fromExploreMetrics?: boolean) {
+    return (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+      if (typeof value === 'string' && fromExploreMetrics) {
+        if (variable.name === 'filters') {
+          return wrapUtf8Filters(value);
+        }
+        if (variable.name === 'groupby') {
+          return utf8Support(value);
+        }
+      }
+      return this.interpolateQueryExpr(value, variable);
+    };
+  }
+
+  isUsingRelativeTimeRange(range: TimeRange): boolean {
+    if (typeof range.raw.from !== 'string' || typeof range.raw.to !== 'string') {
+      return false;
+    }
+
+    return range.raw.from.includes('now') || range.raw.to.includes('now');
   }
 
   getDebounceTimeInMilliseconds(): number {
@@ -1000,28 +916,6 @@ export class PrometheusDatasource
   }
 }
 
-/**
- * Align query range to step.
- * Rounds start and end down to a multiple of step.
- * @param start Timestamp marking the beginning of the range.
- * @param end Timestamp marking the end of the range.
- * @param step Interval to align start and end with.
- * @param utcOffsetSec Number of seconds current timezone is offset from UTC
- */
-export function alignRange(
-  start: number,
-  end: number,
-  step: number,
-  utcOffsetSec: number
-): { end: number; start: number } {
-  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
-  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
-}
-
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
   return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
@@ -1042,13 +936,46 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
+// NOTE: these two functions are similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+    // don't escape the encapsulating quotes
+    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+      return value;
+    }
+
+    return value
+      .replace(/\\/g, '\\\\') // escape backslashes
+      .replace(/"/g, '\\"'); // escape double quotes
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\') // escape backslashes
+    .replace(/'/g, "\\\\'"); // escape single quotes
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    return value
+      .replace(/\\/g, '\\\\\\\\') // escape backslashes
+      .replace(/"/g, '\\\\\\"') // escape double quotes
+      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\\\\\') // escape backslashes
+    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }

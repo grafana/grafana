@@ -19,7 +19,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
@@ -116,7 +115,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -230,7 +229,7 @@ func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+		Features:             featuremgmt.WithFeatures(),
 		accesscontrolService: actest.FakeService{},
 		AccessControl: actest.FakeAccessControl{
 			ExpectedEvaluate: true,
@@ -287,7 +286,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -320,7 +319,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 			},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 		Live:                 newTestLive(t, nil),
 	}

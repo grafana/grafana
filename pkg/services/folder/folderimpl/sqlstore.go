@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,9 +35,30 @@ func ProvideStore(db db.DB) *FolderStoreImpl {
 	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
 }
 
+func (ss *FolderStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.SQL("SELECT COUNT(*) AS count FROM folder WHERE org_id=?", orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	return r.Count, nil
+}
+
 func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+
+	if cmd.UID == cmd.ParentUID {
+		return nil, folder.ErrFolderCannotBeParentOfItself
 	}
 
 	var foldr *folder.Folder
@@ -299,8 +321,8 @@ func (ss *FolderStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQu
 	return util.Reverse(folders[1:]), nil
 }
 
-func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	var folders []*folder.Folder
+func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	var folders []*folder.FolderReference
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
@@ -346,12 +368,6 @@ func (ss *FolderStoreImpl) GetChildren(ctx context.Context, q folder.GetChildren
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
-			folders[idx].WithURL()
-			return nil
-		}); err != nil {
-			ss.log.Debug("failed to set URL to folders", "err", err)
-		}
 		return nil
 	})
 	return folders, err
@@ -494,7 +510,11 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 			}
 
 			if len(q.AncestorUIDs) == 0 {
-				if q.OrderByTitle {
+				if q.Limit > 0 {
+					s.WriteString(` ORDER BY f0.title ASC`)
+					s.WriteString(` LIMIT ? OFFSET ?`)
+					args = append(args, q.Limit, (q.Page-1)*q.Limit)
+				} else if q.OrderByTitle {
 					s.WriteString(` ORDER BY f0.title ASC`)
 				}
 
@@ -599,9 +619,9 @@ func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ance
 }
 
 func getFullpathSQL(dialect migrator.Dialect) string {
-	escaped := "\\/"
+	escaped := `\/`
 	if dialect.DriverName() == migrator.MySQL {
-		escaped = "\\\\/"
+		escaped = `\\/`
 	}
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
 	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))

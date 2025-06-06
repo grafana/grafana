@@ -1,9 +1,9 @@
-import { VariableRefresh } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { isInCloneChain } from '../../utils/clone';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -41,6 +41,9 @@ describe('PanelRepeaterGridItem', () => {
     expect(panel1.state.$variables?.state.variables[0].getValue()).toBe('1');
     expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
+
+    expect(isInCloneChain(panel1.state.key!)).toBe(false);
+    expect(isInCloneChain(panel2.state.key!)).toBe(true);
   });
 
   it('Should wait for variable to load', async () => {
@@ -55,30 +58,25 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
-  it('Should update panels on refresh if variables load on time range change', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      variableRefresh: VariableRefresh.onTimeRangeChanged,
-    });
-
-    const notifyPanelsSpy = jest.spyOn(repeater, 'notifyRepeatedPanelsWaitingForVariables');
+  it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
 
     activateFullSceneTree(scene);
 
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 10));
+
     expect(repeater.state.repeatedPanels?.length).toBe(5);
 
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
+    // LocalValueVariableState is not exposed, so we build this type casting
+    const variableState = repeater.state.repeatedPanels![0].state.$variables?.state.variables[0].state as {
+      isMulti?: boolean;
+      includeAll?: boolean;
+    };
 
-    scene.state.$timeRange?.onRefresh();
-
-    //make sure notifier is called
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
-
-    //make sure getQueryRunner is called for each repeated panel
-    expect(mockGetQueryRunnerFor).toHaveBeenCalledTimes(5);
-
-    notifyPanelsSpy.mockRestore();
-    mockGetQueryRunnerFor.mockClear();
+    expect(variableState.isMulti).toBe(true);
+    expect(variableState.includeAll).toBe(true);
   });
 
   it('Should display a panel when there are no options', async () => {

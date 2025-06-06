@@ -181,6 +181,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
         repeaterStyle.flexDirection = 'column';
         repeaterStyle.height = `${height}px`;
         repeaterStyle.overflowX = 'hidden';
+        repeaterStyle.scrollbarWidth = 'thin';
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
         vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);

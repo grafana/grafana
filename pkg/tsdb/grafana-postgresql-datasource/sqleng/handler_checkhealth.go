@@ -16,7 +16,7 @@ import (
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.Ping()
 	if err != nil {
-		logCheckHealthError(ctx, e.dsInfo, err, e.log)
+		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
 			return ErrToHealthCheckResult(err)
 		}
@@ -44,7 +44,23 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	if errors.As(err, &opErr) {
 		res.Message = "Network error: Failed to connect to the server"
 		if opErr != nil && opErr.Err != nil {
-			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
+			errMessage := opErr.Err.Error()
+			if strings.HasSuffix(opErr.Err.Error(), "no such host") {
+				errMessage = "no such host"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "unknown port") {
+				errMessage = "unknown port"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "invalid port") {
+				errMessage = "invalid port"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "missing port in address") {
+				errMessage = "missing port in address"
+			}
+			if strings.HasSuffix(opErr.Err.Error(), "invalid syntax") {
+				errMessage = "invalid syntax found in the address"
+			}
+			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 	}
 	if errors.Is(err, pq.ErrSSLNotSupported) {
@@ -65,6 +81,12 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			details["verboseMessage"] = pqErr.Message
 		}
 	}
+	if errors.Is(err, ErrParsingPostgresURL) {
+		res.Message = fmt.Sprintf("Connection string error: %s", ErrParsingPostgresURL.Error())
+		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
+			details["verboseMessage"] = unwrappedErr.Error()
+		}
+	}
 	detailBytes, marshalErr := json.Marshal(details)
 	if marshalErr != nil {
 		return res, nil
@@ -73,7 +95,8 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	return res, nil
 }
 
-func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
+func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) {
+	logger := log.DefaultLogger.FromContext(ctx)
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),
 		"config_user_length":                len(dsInfo.User),
@@ -104,8 +127,8 @@ func logCheckHealthError(_ context.Context, dsInfo DataSourceInfo, err error, lo
 	}
 	configSummaryJson, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
-		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error", "plugin_id", "grafana-postgresql-datasource")
+		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "plugin_id", "grafana-postgresql-datasource", "details", string(configSummaryJson))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJson))
 }

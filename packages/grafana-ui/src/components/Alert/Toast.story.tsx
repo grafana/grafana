@@ -1,10 +1,10 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
 
-import { Alert, AlertVariant, Stack } from '@grafana/ui';
-
 import { StoryExample } from '../../utils/storybook/StoryExample';
+import { Stack } from '../Layout/Stack/Stack';
 
+import { Alert, AlertVariant } from './Alert';
 import mdx from './Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];

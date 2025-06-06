@@ -6,8 +6,8 @@ import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { grafanaRulerGroupName2, grafanaRulerGroupName, grafanaRulerNamespace } from '../../mocks/grafanaRulerApi';
-import { NAMESPACE_2, namespace2, GROUP_1, NAMESPACE_1 } from '../../mocks/mimirRulerApi';
+import { grafanaRulerGroupName, grafanaRulerGroupName2, grafanaRulerNamespace } from '../../mocks/grafanaRulerApi';
+import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';

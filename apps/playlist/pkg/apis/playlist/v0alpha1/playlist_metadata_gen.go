@@ -1,32 +1,31 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package v0alpha1
 
 import (
-	"time"
+	time "time"
 )
 
-// PlaylistMetadata defines model for PlaylistMetadata.
+// metadata contains embedded CommonMetadata and can be extended with custom string fields
+// TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
+// without external reference as using the CommonMetadata reference breaks thema codegen.
 type PlaylistMetadata struct {
+	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
 	CreatedBy         string            `json:"createdBy"`
+	Uid               string            `json:"uid"`
 	CreationTimestamp time.Time         `json:"creationTimestamp"`
 	DeletionTimestamp *time.Time        `json:"deletionTimestamp,omitempty"`
 	Finalizers        []string          `json:"finalizers"`
-	Generation        int64             `json:"generation"`
-	Labels            map[string]string `json:"labels"`
 	ResourceVersion   string            `json:"resourceVersion"`
-	Uid               string            `json:"uid"`
-	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
+	Generation        int64             `json:"generation"`
 	UpdatedBy         string            `json:"updatedBy"`
+	Labels            map[string]string `json:"labels"`
 }
 
-// _kubeObjectMetadata is metadata found in a kubernetes object's metadata field.
-// It is not exhaustive and only includes fields which may be relevant to a kind's implementation,
-// As it is also intended to be generic enough to function with any API Server.
-type PlaylistKubeObjectMetadata struct {
-	CreationTimestamp time.Time         `json:"creationTimestamp"`
-	DeletionTimestamp *time.Time        `json:"deletionTimestamp,omitempty"`
-	Finalizers        []string          `json:"finalizers"`
-	Generation        int64             `json:"generation"`
-	Labels            map[string]string `json:"labels"`
-	ResourceVersion   string            `json:"resourceVersion"`
-	Uid               string            `json:"uid"`
+// NewPlaylistMetadata creates a new PlaylistMetadata object.
+func NewPlaylistMetadata() *PlaylistMetadata {
+	return &PlaylistMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

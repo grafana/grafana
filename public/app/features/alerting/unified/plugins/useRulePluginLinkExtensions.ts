@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { CombinedRule, Rule, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -21,14 +21,21 @@ export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
 
 export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: Rule, groupIdentifier: RuleGroupIdentifier) {
+export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
+  // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
+  const emptyResponse = useRef<PluginExtensionLink[]>([]);
+
   const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
   const { links } = usePluginLinks(ruleExtensionPoint);
+
+  if (!rule) {
+    return emptyResponse.current;
+  }
 
   const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.type;
   if (!ruleOrigin || !ruleType) {
-    return [];
+    return emptyResponse.current;
   }
 
   const { pluginId } = ruleOrigin;
@@ -57,9 +64,15 @@ interface EmptyExtensionPoint {
 
 type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
 
-function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier): RuleExtensionPoint {
+function useRuleExtensionPoint(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
   return useMemo<RuleExtensionPoint>(() => {
+    if (!rule) {
+      return { extensionPointId: '' };
+    }
+
     const ruleType = rule.type;
+    const { namespace, groupName } = groupIdentifier;
+    const namespaceIdentifier = 'uid' in namespace ? namespace.uid : namespace.name;
 
     switch (ruleType) {
       case PromRuleType.Alerting:
@@ -67,8 +80,8 @@ function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier)
           extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction,
           context: {
             name: rule.name,
-            namespace: groupIdentifier.namespaceName,
-            group: groupIdentifier.groupName,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
             labels: rule.labels ?? {},
             annotations: rule.annotations ?? {},
@@ -79,8 +92,8 @@ function useRuleExtensionPoint(rule: Rule, groupIdentifier: RuleGroupIdentifier)
           extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction,
           context: {
             name: rule.name,
-            namespace: groupIdentifier.namespaceName,
-            group: groupIdentifier.groupName,
+            namespace: namespaceIdentifier,
+            group: groupName,
             expression: rule.query,
             labels: rule.labels ?? {},
           },

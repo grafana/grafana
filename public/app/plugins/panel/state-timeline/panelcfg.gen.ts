@@ -41,7 +41,7 @@ export const defaultOptions: Partial<Options> = {
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface FieldConfig extends ui.HideableFieldConfig {
+export interface FieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }

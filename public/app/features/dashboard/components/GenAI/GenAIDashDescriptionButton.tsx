@@ -1,5 +1,5 @@
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';

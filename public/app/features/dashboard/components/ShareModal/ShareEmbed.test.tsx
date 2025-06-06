@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 
 import { BootData } from '@grafana/data';
-import { setEchoSrv } from '@grafana/runtime/src';
+import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { Echo } from '../../../../core/services/echo/Echo';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { ShareEmbed } from './ShareEmbed';

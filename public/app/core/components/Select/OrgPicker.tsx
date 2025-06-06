@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { Organization, UserOrg } from 'app/types';
@@ -48,6 +49,7 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
       return allOrgs;
     }
   });
+  const { t } = useTranslate();
 
   return (
     <AsyncSelect
@@ -65,7 +67,7 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
         setSelected(item);
       }}
       value={selected}
-      placeholder="Select organization"
+      placeholder={t('org-picker.select-placeholder', 'Select organization')}
       noOptionsMessage="No organizations found"
     />
   );

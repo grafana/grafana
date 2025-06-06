@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, Select, useStyles2 } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -13,8 +13,8 @@ import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
+import { AggregateByAlert } from './AggregateByAlert';
 import DurationInput from './DurationInput';
-import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
@@ -64,7 +64,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
 
   const templateVariables = getTemplateSrv().getVariables();
   useEffect(() => {
-    setTraceQlQuery(datasource.languageProvider.generateQueryFromFilters(interpolateFilters(query.filters || [])));
+    setTraceQlQuery(
+      datasource.languageProvider.generateQueryFromFilters({ traceqlFilters: interpolateFilters(query.filters || []) })
+    );
   }, [datasource.languageProvider, query, templateVariables]);
 
   const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
@@ -113,6 +115,21 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
       f.id !== 'duration-type'
   );
 
+  // We use this function to generate queries without a specfic filter.
+  // This is useful because we're sending the query to Tempo so it can return the attributes and values filtered down.
+  // However, if we send the full query then we won't see more values for the filter we're trying to edit.
+  // For example, if we already have a service.name value selected and try to add another one, we won't see the other
+  // values if we send the full query since Tempo will only return the service.name that's already selected.
+  const generateQueryWithoutFilter = (filter?: TraceqlFilter) => {
+    if (!filter) {
+      return traceQlQuery;
+    }
+    const filtersAfterRemoval = query.filters?.filter((f) => f.id !== filter.id) || [];
+    return datasource.languageProvider.generateQueryFromFilters({
+      traceqlFilters: interpolateFilters(filtersAfterRemoval || []),
+    });
+  };
+
   return (
     <>
       <div className={styles.container}>
@@ -136,7 +153,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                     tags={[]}
                     hideScope={true}
                     hideTag={true}
-                    query={traceQlQuery}
+                    query={generateQueryWithoutFilter(findFilter(f.id))}
                     addVariablesToOptions={addVariablesToOptions}
                   />
                 </InlineSearchField>
@@ -158,7 +175,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               tags={[]}
               hideScope={true}
               hideTag={true}
-              query={traceQlQuery}
+              query={generateQueryWithoutFilter(findFilter('status'))}
               isMulti={false}
               allowCustomValue={false}
               addVariablesToOptions={addVariablesToOptions}
@@ -168,8 +185,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
             label={'Duration'}
             tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
-            <HorizontalGroup spacing={'none'}>
+            <Stack gap={0}>
               <Select
+                width="auto"
                 options={[
                   { label: 'span', value: 'span' },
                   { label: 'trace', value: 'trace' },
@@ -208,7 +226,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                 operators={['<', '<=']}
                 updateFilter={updateFilter}
               />
-            </HorizontalGroup>
+            </Stack>
           </InlineSearchField>
           <InlineSearchField label={'Tags'}>
             <TagsInput
@@ -219,20 +237,20 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               deleteFilter={deleteFilter}
               staticTags={staticTags}
               isTagsLoading={isTagsLoading}
-              query={traceQlQuery}
+              generateQueryWithoutFilter={generateQueryWithoutFilter}
               requireTagAndValue={true}
               addVariablesToOptions={addVariablesToOptions}
             />
           </InlineSearchField>
-          {config.featureToggles.metricsSummary && (
-            <GroupByField
-              datasource={datasource}
-              onChange={onChange}
-              query={query}
-              isTagsLoading={isTagsLoading}
-              addVariablesToOptions={addVariablesToOptions}
-            />
-          )}
+          <AggregateByAlert
+            query={query}
+            onChange={() => {
+              delete query.groupBy;
+              onChange({
+                ...query,
+              });
+            }}
+          />
         </div>
         <div className={styles.rawQueryContainer}>
           <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
@@ -247,7 +265,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               });
 
               onClearResults();
-              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters(query.filters || []);
+              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters({
+                traceqlFilters: query.filters || [],
+              });
               onChange({
                 ...query,
                 query: traceQlQuery,
@@ -261,7 +281,9 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
         <TempoQueryBuilderOptions
           onChange={onChange}
           query={query}
-          isStreaming={datasource.isStreamingSearchEnabled() ?? false}
+          searchStreaming={datasource.isStreamingSearchEnabled() ?? false}
+          metricsStreaming={datasource.isStreamingMetricsEnabled() ?? false}
+          app={app}
         />
       </div>
       {error ? (

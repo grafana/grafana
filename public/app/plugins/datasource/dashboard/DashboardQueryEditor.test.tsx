@@ -2,19 +2,20 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import {
   createDashboardModelFixture,
   createPanelSaveModel,
 } from '../../../features/dashboard/state/__fixtures__/dashboardFixtures';
+import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
-import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
+import { SHARED_DASHBOARD_QUERY } from './constants';
 import { DashboardDatasource } from './datasource';
-import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -29,11 +30,7 @@ jest.mock('app/core/config', () => ({
   },
 }));
 
-setDataSourceSrv(
-  new MockDataSourceSrv({
-    test: mockDataSource({ isDefault: true }),
-  })
-);
+setupDataSources(mockDataSource({ isDefault: true }));
 
 describe('DashboardQueryEditor', () => {
   const mockOnChange = jest.fn();
@@ -60,6 +57,21 @@ describe('DashboardQueryEditor', () => {
           id: 2,
           type: 'timeseries',
           title: 'Another panel',
+        }),
+        createPanelSaveModel({
+          datasource: {
+            uid: MIXED_DATASOURCE_NAME,
+          },
+          targets: [
+            {
+              datasource: {
+                uid: SHARED_DASHBOARD_QUERY,
+              },
+            },
+          ],
+          id: 3,
+          type: 'timeseries',
+          title: 'A mixed DS with dashboard DS query panel',
         }),
         createPanelSaveModel({
           datasource: {
@@ -95,7 +107,37 @@ describe('DashboardQueryEditor', () => {
     const anotherPanel = await screen.findByText('Another panel');
     expect(anotherPanel).toBeInTheDocument();
 
-    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
+  });
+
+  it('does not show a panel with either SHARED_DASHBOARD_QUERY datasource or MixedDS with SHARED_DASHBOARD_QUERY as an option in the dropdown', async () => {
+    render(
+      <DashboardQueryEditor
+        datasource={{} as DashboardDatasource}
+        query={mockQueries[0]}
+        data={mockPanelData}
+        onChange={mockOnChange}
+        onRunQuery={mockOnRunQueries}
+      />
+    );
+    const select = screen.getByText('Choose panel');
+
+    await userEvent.click(select);
+
+    const myFirstPanel = await screen.findByText('My first panel');
+    expect(myFirstPanel).toBeInTheDocument();
+
+    const anotherPanel = await screen.findByText('Another panel');
+    expect(anotherPanel).toBeInTheDocument();
+
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
+    expect(screen.queryByText('A mixed DS with dashboard DS query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
   });
 
   it('does not show the current panelInEdit as an option in the dropdown', async () => {
@@ -118,6 +160,8 @@ describe('DashboardQueryEditor', () => {
     const anotherPanel = await screen.findByText('Another panel');
     expect(anotherPanel).toBeInTheDocument();
 
-    expect(screen.queryByText('A dashboard query panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('A dashboard query panel')?.nextElementSibling).toHaveTextContent(
+      INVALID_PANEL_DESCRIPTION
+    );
   });
 });

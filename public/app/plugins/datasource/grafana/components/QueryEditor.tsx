@@ -34,7 +34,7 @@ import {
 import { hasAlphaPanels } from 'app/core/config';
 import * as DFImport from 'app/features/dataframe-import';
 import { getManagedChannelInfo } from 'app/features/live/info';
-import { SearchQuery } from 'app/features/search/service';
+import { SearchQuery } from 'app/features/search/service/types';
 
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -82,7 +82,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         description: 'Search for grafana resources',
       });
     }
-    if (config.featureToggles.unifiedStorageSearch) {
+    if (config.featureToggles.unifiedStorageSearchUI) {
       this.queryTypes.push({
         label: 'Search (experimental)',
         value: GrafanaQueryType.SearchNext,

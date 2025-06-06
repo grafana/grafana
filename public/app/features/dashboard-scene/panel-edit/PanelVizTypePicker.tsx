@@ -5,6 +5,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, Field, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -72,10 +73,17 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       setListMode(defaultTab);
     }
   }, [defaultTab, listMode, setListMode, supportedListModes]);
+  const { t } = useTranslate();
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
-    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
+    {
+      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.visualizations', 'Visualizations'),
+      value: VisualizationSelectPaneTab.Visualizations,
+    },
+    {
+      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions'),
+      value: VisualizationSelectPaneTab.Suggestions,
+    },
   ];
 
   return (
@@ -86,10 +94,10 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
           value={searchQuery}
           onChange={handleSearchChange}
           autoFocus={true}
-          placeholder="Search for..."
+          placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
         />
         <Button
-          title="Close"
+          title={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
           variant="secondary"
           icon="angle-up"
           className={styles.closeButton}

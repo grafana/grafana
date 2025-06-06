@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,11 +13,13 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -134,9 +138,13 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*Pu
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindDashboard")
 	defer span.End()
-	dash, err := pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+
+	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
+	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
+		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
+	})
 	if err != nil {
-		var dashboardErr dashboards.DashboardErr
+		var dashboardErr dashboardaccess.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
 			if dashboardErr.StatusCode == 404 {
 				return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
@@ -363,10 +371,63 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindAllWithPagination")
 	defer span.End()
 	query.Offset = query.Limit * (query.Page - 1)
-	resp, err := pd.store.FindAllWithPagination(ctx, query)
+	resp, err := pd.store.FindAll(ctx, query)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetPublicDashboards: %w", err)
 	}
+
+	// join in the dashboard data
+	dashUIDs := make([]string, len(resp.PublicDashboards))
+	for i, pubdash := range resp.PublicDashboards {
+		dashUIDs[i] = pubdash.DashboardUid
+	}
+
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:         query.OrgID,
+		DashboardUIDs: dashUIDs,
+		SignedInUser:  query.User,
+		Limit:         int64(len(dashUIDs)),
+		Type:          searchstore.TypeDashboard,
+	})
+	if err != nil {
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
+	}
+
+	dashMap := make(map[string]dashboards.DashboardSearchProjection)
+	for _, dash := range dashboardsFound {
+		dashMap[dash.UID] = dash
+	}
+
+	// add dashboard title & slug to response, and
+	// remove any public dashboards that don't have a corresponding active dashboard that the user has access to
+	idx := 0
+	for _, pubdash := range resp.PublicDashboards {
+		if dash, exists := dashMap[pubdash.DashboardUid]; exists {
+			pubdash.Title = dash.Title
+			pubdash.Slug = dash.Slug
+			resp.PublicDashboards[idx] = pubdash
+			idx++
+		} else {
+			resp.TotalCount--
+		}
+	}
+	resp.PublicDashboards = resp.PublicDashboards[:idx]
+
+	//  sort by title
+	sort.Slice(resp.PublicDashboards, func(i, j int) bool {
+		return resp.PublicDashboards[i].Title < resp.PublicDashboards[j].Title
+	})
+
+	// and now paginate
+	start := query.Offset
+	end := start + query.Limit
+	if start > len(resp.PublicDashboards) {
+		start = len(resp.PublicDashboards)
+	}
+	if end > len(resp.PublicDashboards) {
+		end = len(resp.PublicDashboards)
+	}
+	resp.PublicDashboards = resp.PublicDashboards[start:end]
 
 	resp.Page = query.Page
 	resp.PerPage = query.Limit
@@ -409,37 +470,6 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 		return ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
 	}
 	return pd.serviceWrapper.Delete(ctx, uid)
-}
-
-func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
-	ctx, span := tracer.Start(ctx, "publicdashboards.DeleteByDashboard")
-	defer span.End()
-	if dashboard.IsFolder {
-		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
-		if err != nil {
-			return err
-		}
-		// delete each pubdash
-		for _, pubdash := range pubdashes {
-			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	pubdash, err := pd.store.FindByDashboardUid(ctx, dashboard.OrgID, dashboard.UID)
-	if err != nil {
-		return ErrInternalServerError.Errorf("DeleteByDashboard: error finding a public dashboard by dashboard orgId: %d and Uid: %s %w", dashboard.OrgID, dashboard.UID, err)
-	}
-	if pubdash == nil {
-		return nil
-	}
-
-	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

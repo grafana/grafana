@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, useStyles2 } from '@grafana/ui';
 
@@ -35,11 +36,18 @@ export const LogContextButtons = (props: Props) => {
     [onChangeWrapLines]
   );
 
+  const { t } = useTranslate();
+
   return (
     <div className={styles.buttons}>
-      <InlineSwitch showLabel value={wrapLines} onChange={internalOnChangeWrapLines} label="Wrap lines" />
+      <InlineSwitch
+        showLabel
+        value={wrapLines}
+        onChange={internalOnChangeWrapLines}
+        label={t('logs.log-context-buttons.label-wrap-lines', 'Wrap lines')}
+      />
       <Button variant="secondary" onClick={onScrollCenterClick}>
-        Center matched line
+        <Trans i18nKey="logs.log-context-buttons.center-matched-line">Center matched line</Trans>
       </Button>
     </div>
   );

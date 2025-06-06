@@ -1,9 +1,7 @@
 import { StoryFn, Meta } from '@storybook/react';
 import { useState } from 'react';
 
-import { Cascader } from '@grafana/ui';
-
-import { CascaderOption } from './Cascader';
+import { Cascader, CascaderOption } from './Cascader';
 import mdx from './Cascader.mdx';
 
 const onSelect = (val: string) => console.log(val);

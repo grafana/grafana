@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -8,27 +10,29 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestTableFormat(t *testing.T) {
-	columns := []*ResourceTableColumnDefinition{
+	columns := []*resourcepb.ResourceTableColumnDefinition{
 		{
 			Name: "title",
-			Type: ResourceTableColumnDefinition_STRING,
+			Type: resourcepb.ResourceTableColumnDefinition_STRING,
 		},
 		{
 			Name: "stats.count",
-			Type: ResourceTableColumnDefinition_INT64,
+			Type: resourcepb.ResourceTableColumnDefinition_INT64,
 		},
 		{
 			Name: "number",
-			Type: ResourceTableColumnDefinition_DOUBLE,
+			Type: resourcepb.ResourceTableColumnDefinition_DOUBLE,
 
 			Description: "float64 value",
 		},
 		{
 			Name:    "tags",
-			Type:    ResourceTableColumnDefinition_STRING,
+			Type:    resourcepb.ResourceTableColumnDefinition_STRING,
 			IsArray: true,
 		},
 	}
@@ -37,7 +41,7 @@ func TestTableFormat(t *testing.T) {
 	builder, err := NewTableBuilder(columns)
 	require.NoError(t, err)
 
-	err = builder.AddRow(&ResourceKey{
+	err = builder.AddRow(&resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "ggg",
 		Resource:  "xyz", // does not have a home in table!
@@ -49,7 +53,7 @@ func TestTableFormat(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = builder.AddRow(&ResourceKey{
+	err = builder.AddRow(&resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "ggg",
 		Resource:  "xyz", // does not have a home in table!
@@ -68,7 +72,7 @@ func TestTableFormat(t *testing.T) {
 func TestColumnEncoding(t *testing.T) {
 	tests := []struct {
 		// The table definition
-		def *ResourceTableColumnDefinition
+		def *resourcepb.ResourceTableColumnDefinition
 
 		// Passed to the encode function
 		input any
@@ -86,101 +90,101 @@ func TestColumnEncoding(t *testing.T) {
 		output_err error
 	}{
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_STRING,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
 			},
 			input: "aaa", // expects output to match
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_STRING,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_STRING,
 				IsArray: true,
 			},
 			input:  "bbb",
 			output: []any{"bbb"},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_INT64,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
 			},
 			input:  12345,
 			output: int64(12345),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_INT64,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_INT64,
 				IsArray: true,
 			},
 			input:  12345,
 			output: []any{int64(12345)},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_DOUBLE,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_DOUBLE,
 			},
 			input:  12345,
 			output: float64(12345),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_DOUBLE,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_DOUBLE,
 				IsArray: true,
 			},
 			input:  12345,
 			output: []any{float64(12345)},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_BOOLEAN,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN,
 			},
 			input: true,
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_BOOLEAN,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_BOOLEAN,
 				IsArray: true,
 			},
 			input: []any{true, false, true},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_FLOAT,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_FLOAT,
 			},
 			input:  23.4,
 			output: float32(23.4),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_FLOAT,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_FLOAT,
 				IsArray: true,
 			},
 			input:  23.4,
 			output: []any{float32(23.4)},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_INT32,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_INT32,
 			},
 			input:  56,
 			output: int32(56),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_INT32,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_INT32,
 				IsArray: true,
 			},
 			input:  56,
 			output: []any{int32(56)},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_DATE_TIME,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_DATE_TIME,
 			},
 			input: time.UnixMilli(946674000000).UTC(),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_DATE_TIME,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_DATE_TIME,
 				IsArray: true,
 			},
 			input: time.UnixMilli(946674000000).UTC(),
@@ -189,14 +193,14 @@ func TestColumnEncoding(t *testing.T) {
 			},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_DATE,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_DATE,
 			},
 			input: time.UnixMilli(946674000000).UTC(),
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_DATE,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_DATE,
 				IsArray: true,
 			},
 			input: time.UnixMilli(946674000000).UTC(),
@@ -205,14 +209,14 @@ func TestColumnEncoding(t *testing.T) {
 			},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_BINARY,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_BINARY,
 			},
 			input: []byte{1, 2, 3, 4},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_BINARY,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_BINARY,
 				IsArray: true,
 			},
 			input: []any{
@@ -220,16 +224,16 @@ func TestColumnEncoding(t *testing.T) {
 			},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type: ResourceTableColumnDefinition_OBJECT,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type: resourcepb.ResourceTableColumnDefinition_OBJECT,
 			},
 			input: map[string]any{
 				"hello": "world",
 			},
 		},
 		{
-			def: &ResourceTableColumnDefinition{
-				Type:    ResourceTableColumnDefinition_OBJECT,
+			def: &resourcepb.ResourceTableColumnDefinition{
+				Type:    resourcepb.ResourceTableColumnDefinition_OBJECT,
 				IsArray: true,
 			},
 			input: map[string]any{
@@ -244,8 +248,8 @@ func TestColumnEncoding(t *testing.T) {
 	}
 
 	// Keep track of the types that have tests
-	testedTypes := make(map[ResourceTableColumnDefinition_ColumnType]bool)
-	testedArrays := make(map[ResourceTableColumnDefinition_ColumnType]bool)
+	testedTypes := make(map[resourcepb.ResourceTableColumnDefinition_ColumnType]bool)
+	testedArrays := make(map[resourcepb.ResourceTableColumnDefinition_ColumnType]bool)
 	for _, test := range tests {
 		var sb strings.Builder
 		if test.def.IsArray {
@@ -299,7 +303,7 @@ func TestColumnEncoding(t *testing.T) {
 		missingArrays := []string{}
 
 		// Make sure we have at least one test for each type
-		for i := ResourceTableColumnDefinition_STRING; i <= ResourceTableColumnDefinition_OBJECT; i++ {
+		for i := resourcepb.ResourceTableColumnDefinition_STRING; i <= resourcepb.ResourceTableColumnDefinition_OBJECT; i++ {
 			if !testedTypes[i] {
 				missingTypes = append(missingTypes, i.String())
 			}
@@ -311,4 +315,16 @@ func TestColumnEncoding(t *testing.T) {
 		require.Empty(t, missingTypes, "missing tests for types")
 		require.Empty(t, missingArrays, "missing array tests for types")
 	})
+}
+
+func TestDecodeCell(t *testing.T) {
+	colDef := &resourcepb.ResourceTableColumnDefinition{Type: resourcepb.ResourceTableColumnDefinition_INT64}
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, int64(123))
+	require.NoError(t, err)
+
+	res, err := DecodeCell(colDef, 0, buf.Bytes())
+
+	require.NoError(t, err)
+	require.Equal(t, int64(123), res)
 }

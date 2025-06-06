@@ -9,14 +9,14 @@
         "annotations": {
             "grafana.app/createdBy": "user:ABC",
             "grafana.app/updatedBy": "user:XYZ",
-            "grafana.app/repoName": "SQL",
-            "grafana.app/repoPath": "15",
+            "grafana.app/repoName": "something",
+            "grafana.app/repoPath": "path/in/system.json",
             "grafana.app/repoHash": "xyz",
             "grafana.app/updatedTimestamp": "2024-07-01T10:11:12Z"
         }
     },
     "spec": {
-        "title": "test playlist unified storage",
+        "title": "Test Playlist from Unified Storage",
         "description": "description for the test playlist"
     }
 }

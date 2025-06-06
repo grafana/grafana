@@ -11,11 +11,13 @@
 import * as common from '@grafana/schema';
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
+  logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
   /**
@@ -27,9 +29,11 @@ export interface Options {
   onClickFilterString?: unknown;
   onClickHideField?: unknown;
   onClickShowField?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
+  showControls?: boolean;
   showLabels: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;

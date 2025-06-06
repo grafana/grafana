@@ -16,10 +16,13 @@ import (
 
 // +k8s:openapi-gen=true
 type Playlist struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata"`
-	Spec              PlaylistSpec   `json:"spec"`
-	PlaylistStatus    PlaylistStatus `json:"status"`
+	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+
+	// Spec is the spec of the Playlist
+	Spec PlaylistSpec `json:"spec" yaml:"spec"`
+
+	Status PlaylistStatus `json:"status" yaml:"status"`
 }
 
 func (o *Playlist) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *Playlist) SetSpec(spec any) error {
 
 func (o *Playlist) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.PlaylistStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Playlist) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.PlaylistStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *Playlist) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type PlaylistStatus", value)
 		}
-		o.PlaylistStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -219,14 +222,28 @@ func (o *Playlist) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *Playlist) DeepCopy() *Playlist {
+	cpy := &Playlist{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *Playlist) DeepCopyInto(dst *Playlist) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Playlist{}
 
 // +k8s:openapi-gen=true
 type PlaylistList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
-	Items           []Playlist `json:"items"`
+	metav1.TypeMeta `json:",inline" yaml:",inline"`
+	metav1.ListMeta `json:"metadata" yaml:"metadata"`
+	Items           []Playlist `json:"items" yaml:"items"`
 }
 
 func (o *PlaylistList) DeepCopyObject() runtime.Object {
@@ -262,5 +279,41 @@ func (o *PlaylistList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *PlaylistList) DeepCopy() *PlaylistList {
+	cpy := &PlaylistList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *PlaylistList) DeepCopyInto(dst *PlaylistList) {
+	resource.CopyObjectInto(dst, o)
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &PlaylistList{}
+
+// Copy methods for all subresource types
+
+// DeepCopy creates a full deep copy of Spec
+func (s *PlaylistSpec) DeepCopy() *PlaylistSpec {
+	cpy := &PlaylistSpec{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies Spec into another Spec object
+func (s *PlaylistSpec) DeepCopyInto(dst *PlaylistSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of PlaylistStatus
+func (s *PlaylistStatus) DeepCopy() *PlaylistStatus {
+	cpy := &PlaylistStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies PlaylistStatus into another PlaylistStatus object
+func (s *PlaylistStatus) DeepCopyInto(dst *PlaylistStatus) {
+	resource.CopyObjectInto(dst, s)
+}

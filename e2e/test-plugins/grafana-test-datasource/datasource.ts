@@ -11,6 +11,7 @@ import {
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, DataSourceResponse } from './types';
 import { lastValueFrom } from 'rxjs';
+import { VariableSupport } from './variables';
 
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   baseUrl: string;
@@ -18,6 +19,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     this.baseUrl = instanceSettings.url!;
+    this.variables = new VariableSupport();
   }
 
   getDefaultQuery(_: CoreApp): Partial<MyQuery> {
@@ -34,18 +36,17 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
 
-    // Return a constant for each query.
-    const data = options.targets.map((target) => {
-      return createDataFrame({
-        refId: target.refId,
-        fields: [
-          { name: 'Time', values: [from, to], type: FieldType.time },
-          { name: 'Value', values: [target.constant, target.constant], type: FieldType.number },
-        ],
-      });
-    });
-
-    return { data };
+    return {
+      data: [
+        createDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'Time', values: [from, to], type: FieldType.time },
+            { name: 'Value', values: ['A', 'B'], type: FieldType.string },
+          ],
+        }),
+      ],
+    };
   }
 
   async request(url: string, params?: string) {

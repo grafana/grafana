@@ -10,7 +10,7 @@ describe('Snapshots', () => {
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');
-    e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
+    e2e.flows.openDashboard({ uid: 'ZqZnVvFZz', queryParams: { '__feature.newDashboardSharingComponent': false } });
     cy.wait('@query');
 
     const panelsToCheck = [

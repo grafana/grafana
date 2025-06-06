@@ -67,7 +67,7 @@ function escape(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-module.exports = function (doc, styleFile) {
+export default function jsonMarkup(doc, styleFile) {
   let indent = '';
   const style = Stylize(styleFile);
 
@@ -130,4 +130,4 @@ module.exports = function (doc, styleFile) {
   }
 
   return '<div ' + style('json-markup') + '>' + visit(doc) + '</div>';
-};
+}

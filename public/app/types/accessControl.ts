@@ -164,12 +164,16 @@ export enum AccessControlAction {
   // GroupSync
   GroupSyncMappingsRead = 'groupsync.mappings:read',
   GroupSyncMappingsWrite = 'groupsync.mappings:write',
+
+  // Migration Assistant
+  MigrationAssistantMigrate = 'migrationassistant:migrate',
 }
 
 export interface Role {
   uid: string;
   name: string;
   displayName: string;
+  filteredDisplayName: string; // name to be shown in filtered role list
   description: string;
   group: string;
   global: boolean;

@@ -3,7 +3,7 @@ package ualert
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -195,6 +195,8 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 	}))
 }
 
+var titleUniqueIndex = &migrator.Index{Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex}
+
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
 	// DO NOT EDIT
 	alertRule := migrator.Table{
@@ -245,9 +247,7 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 		Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex,
 	}))
 
-	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
-		Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex,
-	}))
+	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, titleUniqueIndex))
 
 	mg.AddMigration("add dashboard_uid column to alert_rule", migrator.NewAddColumnMigration(
 		migrator.Table{Name: "alert_rule"},
@@ -302,6 +302,8 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 UPDATE alert_rule SET is_paused = false;`))
 }
 
+var alertRuleVersionUDX_OrgIdRuleUIDVersion = &migrator.Index{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex}
+
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	// DO NOT EDIT
 	alertRuleVersion := migrator.Table{
@@ -325,12 +327,12 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
+			alertRuleVersionUDX_OrgIdRuleUIDVersion,
 			{Cols: []string{"rule_org_id", "rule_namespace_uid", "rule_group"}, Type: migrator.IndexType},
 		},
 	}
 	mg.AddMigration("create alert_rule_version table", migrator.NewAddTableMigration(alertRuleVersion))
-	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[0]))
+	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersionUDX_OrgIdRuleUIDVersion))
 	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[1]))
 
 	mg.AddMigration("alter alert_rule_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
@@ -568,4 +570,9 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		}
 	}
 	return nil
+}
+
+func DropTitleUniqueIndexMigration(mg *migrator.Migrator) {
+	mg.AddMigration("remove title in folder unique index",
+		migrator.NewDropIndexMigration(migrator.Table{Name: "alert_rule"}, titleUniqueIndex))
 }

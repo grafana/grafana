@@ -1,19 +1,21 @@
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
-  DataQuery,
   DataSourceInstanceSettings,
-  getDataSourceRef,
   LoadingState,
   PanelData,
-  rangeUtil,
   RelativeTimeRange,
+  getDataSourceRef,
+  rangeUtil,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -236,8 +238,10 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
-  const isInstant = getInstantFromDataQuery(item.model, settings.type);
-  return {
+  const isExpression = isExpressionQuery(item);
+  const isInstant = isExpression ? false : getInstantFromDataQuery(item);
+
+  const newQuery: Omit<AlertQuery, 'datasource'> = {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
@@ -246,9 +250,14 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
       refId: item.refId,
       hide: false,
       datasource: getDataSourceRef(settings),
-      instant: isInstant,
     },
   };
+
+  if (isInstant && !isExpressionQuery(item)) {
+    (newQuery as AlertQuery<AlertDataQuery>).model.instant = isInstant;
+  }
+
+  return newQuery;
 }
 
 interface DatasourceNotFoundProps {
@@ -275,19 +284,25 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
     <EmptyQueryWrapper>
       <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
         <Card>
-          <Card.Heading>This datasource has been removed</Card.Heading>
+          <Card.Heading>
+            <Trans i18nKey="alerting.datasource-not-found.this-datasource-has-been-removed">
+              This datasource has been removed
+            </Trans>
+          </Card.Heading>
           <Card.Description>
-            The datasource for this query was not found, it was either removed or is not installed correctly.
+            <Trans i18nKey="alerting.datasource-not-found.card-description">
+              The datasource for this query was not found, it was either removed or is not installed correctly.
+            </Trans>
           </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />
           </Card.Figure>
           <Card.Actions>
             <Button key="update" variant="secondary" onClick={handleUpdateDatasource}>
-              Update datasource
+              <Trans i18nKey="alerting.datasource-not-found.update-datasource">Update datasource</Trans>
             </Button>
             <Button key="remove" variant="destructive" onClick={onRemoveQuery}>
-              Remove query
+              <Trans i18nKey="alerting.datasource-not-found.remove-query">Remove query</Trans>
             </Button>
           </Card.Actions>
           <Card.SecondaryActions>
@@ -298,7 +313,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
               fill="text"
               size="sm"
             >
-              Show details
+              <Trans i18nKey="alerting.datasource-not-found.show-details">Show details</Trans>
             </Button>
           </Card.SecondaryActions>
         </Card>

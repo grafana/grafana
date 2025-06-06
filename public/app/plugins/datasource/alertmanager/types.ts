@@ -2,6 +2,8 @@
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
@@ -67,11 +69,16 @@ export type WebhookConfig = {
 };
 
 type GrafanaManagedReceiverConfigSettings<T = any> = Record<string, T>;
+export type GrafanaManagedReceiverSecureFields = Record<string, boolean>;
+
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage?: boolean;
-  secureFields?: Record<string, boolean>;
-  secureSettings?: GrafanaManagedReceiverConfigSettings;
+  /**
+   * Secure fields keys values should be true if they are already configured in the database
+   * To reset the secure field, omit the key from the object when updating the receiver
+   */
+  secureFields?: GrafanaManagedReceiverSecureFields;
   /** If retrieved from k8s API, SecureSettings property name is different */
   // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
   settings: GrafanaManagedReceiverConfigSettings;
@@ -133,7 +140,8 @@ export type Route = {
   active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
-  _metadata?: {
+  /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
+  [ROUTES_META_SYMBOL]?: {
     provisioned?: boolean;
     resourceVersion?: string;
     name?: string;

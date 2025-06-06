@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
@@ -24,15 +25,21 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges } = changeInfo;
+  const { hasChanges, hasMigratedToV2, changedSaveModel } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
+    // we need to set the uid here in order to save the dashboard
+    // in schema v2 we don't have the uid in the spec
+    k8s: {
+      ...dashboard.serializer.getK8SMetadata(),
+    },
   });
+  const { t } = useTranslate();
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, changedSaveModel, { ...options, overwrite });
+    const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
     if (result.status === 'success') {
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
@@ -41,7 +48,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
   const cancelButton = (
     <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
-      Cancel
+      <Trans i18nKey="dashboard-scene.save-dashboard-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
@@ -49,11 +56,40 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
+  const isMessageTooLongError = (message?: string) => {
+    return message && message.length > 500;
+  };
+
   function renderFooter(error?: Error) {
+    if (isMessageTooLongError(options.message)) {
+      const messageLength = options.message?.length ?? 0;
+
+      return (
+        <Alert title={t('save-dashboards.message-length.title', 'Message too long')} severity="error">
+          <p>
+            <Trans i18nKey="save-dashboards.message-length.info">
+              The message is {{ messageLength }} characters, which exceeds the maximum length of 500 characters. Please
+              shorten it before saving.
+            </Trans>
+          </p>
+        </Alert>
+      );
+    }
+
     if (isVersionMismatchError(error)) {
       return (
-        <Alert title="Someone else has updated this dashboard" severity="error">
-          <p>Would you still like to save this dashboard?</p>
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.render-footer.title-someone-else-has-updated-this-dashboard',
+            'Someone else has updated this dashboard'
+          )}
+          severity="error"
+        >
+          <p>
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.would-still-dashboard">
+              Would you still like to save this dashboard?
+            </Trans>
+          </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
@@ -70,9 +106,15 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
     if (isPluginDashboardError(error)) {
       return (
-        <Alert title="Plugin dashboard" severity="error">
+        <Alert
+          title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard')}
+          severity="error"
+        >
           <p>
-            Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom version.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.body-plugin-dashboard">
+              Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+              version.
+            </Trans>
           </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
@@ -87,14 +129,26 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     return (
       <>
         {error && (
-          <Alert title="Failed to save dashboard" severity="error">
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
+              'Failed to save dashboard'
+            )}
+            severity="error"
+          >
             <p>{error.message}</p>
           </Alert>
         )}
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}
-          {!hasChanges && <div>No changes to save</div>}
+          {!hasChanges && (
+            <div>
+              <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.no-changes-to-save">
+                No changes to save
+              </Trans>
+            </div>
+          )}
         </Stack>
       </>
     );
@@ -103,9 +157,26 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   return (
     <Stack gap={2} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
-      <Field label="Message">
+      {hasMigratedToV2 && (
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.title-dashboard-drastically-changed',
+            'Dashboard drastically changed'
+          )}
+          severity="warning"
+        >
+          <p>
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
+              Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
+              dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer
+              to save the dashboard as a new copy.
+            </Trans>
+          </p>
+        </Alert>
+      )}
+      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')}>
         <TextArea
-          aria-label="message"
+          aria-label={t('dashboard-scene.save-dashboard-form.aria-label-message', 'message')}
           value={options.message ?? ''}
           onChange={(e) => {
             setOptions({
@@ -113,7 +184,10 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
               message: e.currentTarget.value,
             });
           }}
-          placeholder="Add a note to describe your changes (optional)."
+          placeholder={t(
+            'dashboard-scene.save-dashboard-form.placeholder-describe-changes-optional',
+            'Add a note to describe your changes (optional).'
+          )}
           autoFocus
           rows={5}
         />
@@ -129,6 +203,7 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
+  const { t } = useTranslate();
   const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
   const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
@@ -139,16 +214,28 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
           id="save-timerange"
           checked={saveTimeRange}
           onChange={drawer.onToggleSaveTimeRange}
-          label="Update default time range"
-          description={'Will make current time range the new default'}
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-label-update-default-time-range',
+            'Update default time range'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-description-current-range-default',
+            'Will make current time range the new default'
+          )}
           data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
         />
       )}
       {hasRefreshChange && (
         <Checkbox
           id="save-refresh"
-          label="Update default refresh value"
-          description="Will make the current refresh the new default"
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-refresh-label-update-default-refresh-value',
+            'Update default refresh value'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-refresh-description-current-refresh-default',
+            'Will make the current refresh the new default'
+          )}
           checked={saveRefresh}
           onChange={drawer.onToggleSaveRefresh}
           data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
@@ -157,8 +244,14 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
       {hasVariableValueChanges && (
         <Checkbox
           id="save-variables"
-          label="Update default variable values"
-          description="Will make the current values the new default"
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-variables-label-update-default-variable-values',
+            'Update default variable values'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-variables-description-current-values-default',
+            'Will make the current values the new default'
+          )}
           checked={saveVariables}
           onChange={drawer.onToggleSaveVariables}
           data-testid={selectors.pages.SaveDashboardModal.saveVariables}

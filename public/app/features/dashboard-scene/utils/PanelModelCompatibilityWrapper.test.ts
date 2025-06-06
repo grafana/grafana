@@ -17,7 +17,6 @@ describe('PanelModelCompatibilityWrapper', () => {
     const libPanel = new LibraryPanelBehavior({
       uid: 'a',
       name: 'aa',
-      title: 'a',
     });
 
     panel.setState({

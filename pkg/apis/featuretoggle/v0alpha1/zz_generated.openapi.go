@@ -105,6 +105,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureList(ref common.ReferenceCall
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -192,7 +193,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureSpec(ref common.ReferenceCall
 					},
 					"expression": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Expression to determine if the flag is enabled by default",
+							Description: "Expression to determine if the flag is enabled by default -- can only be \"true\" for toggles that are public preview, generally available, or deprecated",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -296,6 +297,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureTogglesList(ref common.Refere
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

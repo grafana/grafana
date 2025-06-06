@@ -17,7 +17,7 @@ import (
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {
-	return runTimeSeriesRequest(ctx, req, s, dsInfo, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil, logger)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil, logger, timeSeriesFilter.timeRange)
 }
 
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
@@ -50,7 +50,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	if len(response.TimeSeries) > 0 {
 		dl := query.buildDeepLink()
 		aggregationAlignmentString := params.Get("aggregation.alignmentPeriod")
-		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString, logger)
+		frames = addConfigData(frames, dl, response.Unit, aggregationAlignmentString, logger)
 	}
 
 	queryRes.Frames = frames

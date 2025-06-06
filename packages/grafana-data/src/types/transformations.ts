@@ -115,4 +115,5 @@ export enum SpecialValue {
   False = 'false',
   Null = 'null',
   Empty = 'empty',
+  Zero = 'zero',
 }

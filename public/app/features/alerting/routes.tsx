@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom-v5-compat';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
@@ -13,6 +15,7 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from './unified/components/notification-policies/permissions';
 import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permissions';
+import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -53,7 +56,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
+        () =>
+          import(
+            /* webpackChunkName: "NotificationPoliciesPage" */ 'app/features/alerting/unified/NotificationPoliciesPage'
+          )
       ),
     },
     {
@@ -213,11 +219,35 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/recently-deleted/',
+      roles: () => ['Admin'],
+      component: shouldAllowRecoveringDeletedRules()
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
+      path: '/alerting/import-datasource-managed-rules',
+      roles: () => ['Admin'],
+      component: config.featureToggles.alertingMigrationUI
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/rule-editor/RuleEditor')
       ),
     },
     {
@@ -225,7 +255,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/rule-editor/RuleEditor')
       ),
     },
     {
@@ -265,6 +295,28 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () =>
           import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
+      ),
+    },
+    {
+      path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view',
+      pageClass: 'page-alerting',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingGroupDetails" */ 'app/features/alerting/unified/group-details/GroupDetailsPage'
+          )
+      ),
+    },
+    {
+      path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit',
+      pageClass: 'page-alerting',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingGroupEdit" */ 'app/features/alerting/unified/group-details/GroupEditPage'
+          )
       ),
     },
     {

@@ -1,26 +1,22 @@
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RulerDataSourceConfig, RulesSourceUid } from 'app/types/unified-alerting';
 
 import {
   AlertmanagerApiFeatures,
   PromApplication,
   RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
-import {
-  getDataSourceUID,
-  getRulesDataSourceByUID,
-  GRAFANA_RULES_SOURCE_NAME,
-  isGrafanaRulesSource,
-} from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceUID, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
 import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo';
 
 export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   dataSourceName: 'grafana',
+  dataSourceUid: 'grafana',
   apiVersion: 'legacy',
 };
 
-interface RulesSourceFeatures {
+export interface RulesSourceFeatures {
   name: string;
   uid: string;
   application: RulesSourceApplication;
@@ -40,14 +36,14 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       },
     }),
 
-    discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: string }>({
+    discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: RulesSourceUid }>({
       queryFn: async (rulesSourceIdentifier) => {
         const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
         if (!dataSourceUID) {
-          return { error: new Error(`Unable to find data source for ${rulesSourceIdentifier}`) };
+          return { error: new Error(`Unable to find data source for ${JSON.stringify(rulesSourceIdentifier)}`) };
         }
 
-        if (isGrafanaRulesSource(dataSourceUID)) {
+        if (dataSourceUID === GrafanaRulesSourceSymbol) {
           return {
             data: {
               name: GRAFANA_RULES_SOURCE_NAME,
@@ -63,23 +59,28 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
         }
 
-        const features = await discoverFeaturesByUid(dataSourceSettings.uid);
+        try {
+          const features = await discoverFeaturesByUid(dataSourceSettings.uid);
 
-        const rulerConfig = features.features.rulerApiEnabled
-          ? ({
-              dataSourceName: dataSourceSettings.name,
-              apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
-            } satisfies RulerDataSourceConfig)
-          : undefined;
+          const rulerConfig = features.features.rulerApiEnabled
+            ? ({
+                dataSourceName: dataSourceSettings.name,
+                dataSourceUid: dataSourceSettings.uid,
+                apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
+              } satisfies RulerDataSourceConfig)
+            : undefined;
 
-        return {
-          data: {
-            name: dataSourceSettings.name,
-            uid: dataSourceSettings.uid,
-            application: features.application,
-            rulerConfig,
-          } satisfies RulesSourceFeatures,
-        };
+          return {
+            data: {
+              name: dataSourceSettings.name,
+              uid: dataSourceSettings.uid,
+              application: features.application,
+              rulerConfig,
+            } satisfies RulesSourceFeatures,
+          };
+        } catch (error) {
+          return { error: error };
+        }
       },
     }),
   }),

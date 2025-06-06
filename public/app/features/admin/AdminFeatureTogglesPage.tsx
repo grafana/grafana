@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 
 import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
@@ -15,7 +15,7 @@ export default function AdminFeatureTogglesPage() {
   const togglesApi = getTogglesAPI();
   const featureState = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const handleUpdateSuccess = () => {
     setReload(reload + 1);
   };
@@ -28,8 +28,14 @@ export default function AdminFeatureTogglesPage() {
         </div>
         <span className={styles.message}>
           {featureState.value?.restartRequired
-            ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
-            : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
+            ? t(
+                'admin.feature-toggles.restart-pending',
+                'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
+              )
+            : t(
+                'admin.feature-toggles.restart-required',
+                'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'
+              )}
         </span>
       </div>
     );
@@ -55,7 +61,7 @@ export default function AdminFeatureTogglesPage() {
     <Page navId="feature-toggles" subTitle={subTitle}>
       <Page.Contents isLoading={featureState.loading}>
         <>
-          {featureState.error}
+          {featureState.error?.message}
           {featureState.loading && 'Fetching feature toggles'}
 
           <EditingAlert />

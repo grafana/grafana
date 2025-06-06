@@ -103,28 +103,27 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
 };
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({}),
-      getList: () => [],
-      getInstanceSettings: () => {},
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
+}));
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -180,7 +179,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinksMock.mockReturnValueOnce({
+    usePluginLinksMock.mockReturnValue({
       links: [
         {
           id: '1',

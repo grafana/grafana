@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,7 +120,7 @@ func TestErrorTooManyDateHistogramBuckets(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, dataResponse.Frames, 0)
 	require.ErrorContains(t, dataResponse.Error, "Trying to create too many buckets. Must be less than or equal to: [65536].")
-	var sourceErr errorsource.Error
+	var sourceErr backend.ErrorWithSource
 	ok = errors.As(dataResponse.Error, &sourceErr)
 	require.True(t, ok)
 	require.Equal(t, sourceErr.ErrorSource().String(), "downstream")

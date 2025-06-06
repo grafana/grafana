@@ -1,14 +1,17 @@
 package runner
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -18,7 +21,7 @@ import (
 
 var _ AppBuilder = (*appBuilder)(nil)
 
-type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.LegacyStorage
+type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.Storage
 
 type AppBuilderConfig struct {
 	Authorizer          authorizer.Authorizer
@@ -74,6 +77,29 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
 			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
+			if len(kind.SelectableFields()) == 0 {
+				continue
+			}
+			gvk := gv.WithKind(kind.Kind())
+			err := scheme.AddFieldLabelConversionFunc(
+				gvk,
+				func(label, value string) (string, string, error) {
+					if label == "metadata.name" || label == "metadata.namespace" {
+						return label, value, nil
+					}
+					fields := kind.SelectableFields()
+					for _, field := range fields {
+						if field.FieldSelector == label {
+							return label, value, nil
+						}
+					}
+					return "", "", fmt.Errorf("field label not supported for %s: %s", gvk, label)
+				},
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return scheme.SetVersionPriority(gv)
@@ -114,12 +140,6 @@ func (b *appBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.AP
 // GetOpenAPIDefinitions implements APIGroupBuilder.GetOpenAPIDefinitions
 func (b *appBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return b.config.OpenAPIDefGetter
-}
-
-// GetAPIRoutes implements APIGroupBuilder.GetAPIRoutes
-func (b *appBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: The API routes are not yet exposed by the app.App interface.
-	return nil
 }
 
 // GetAuthorizer implements APIGroupBuilder.GetAuthorizer

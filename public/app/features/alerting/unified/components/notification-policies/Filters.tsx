@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -12,6 +14,7 @@ import {
   normalizeMatchers,
   parsePromQLStyleMatcherLoose,
   parsePromQLStyleMatcherLooseSafe,
+  unquoteIfRequired,
 } from '../../utils/matchers';
 
 interface NotificationPoliciesFilterProps {
@@ -25,6 +28,7 @@ const NotificationPoliciesFilter = ({
   onChangeMatchers,
   matchingCount,
 }: NotificationPoliciesFilterProps) => {
+  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -47,6 +51,7 @@ const NotificationPoliciesFilter = ({
     }
     setSearchParams({ contactPoint: '', queryString: undefined });
   }, [setSearchParams]);
+  const { t } = useTranslate();
 
   const hasFilters = queryString || contactPoint;
 
@@ -68,13 +73,13 @@ const NotificationPoliciesFilter = ({
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Search by matchers</span>
+              <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
+                  <Trans i18nKey="alerting.policies.filter-description">
                     Filter notification policies by using a comma separated list of matchers, e.g.:
                     <pre>severity=critical, region=EMEA</pre>
-                  </div>
+                  </Trans>
                 }
               >
                 <Icon name="info-circle" size="sm" />
@@ -88,7 +93,7 @@ const NotificationPoliciesFilter = ({
         <Input
           ref={searchInputRef}
           data-testid="search-query-input"
-          placeholder="Search"
+          placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
@@ -97,24 +102,29 @@ const NotificationPoliciesFilter = ({
           defaultValue={queryString}
         />
       </Field>
-      <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-        <ContactPointSelector
-          selectProps={{
-            id: 'receiver',
-            'aria-label': 'Search by contact point',
-            onChange: (option) => {
-              setSearchParams({ contactPoint: option?.value?.name });
-            },
-            width: 28,
-            isClearable: true,
-          }}
-          selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
-        />
-      </Field>
+      {contactPointsSupported && canSeeContactPoints && (
+        <Field
+          label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Search by contact point')}
+          style={{ marginBottom: 0 }}
+        >
+          <ContactPointSelector
+            selectProps={{
+              id: 'receiver',
+              'aria-label': 'Search by contact point',
+              onChange: (option) => {
+                setSearchParams({ contactPoint: option?.value?.name });
+              },
+              width: 28,
+              isClearable: true,
+            }}
+            selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
+          />
+        </Field>
+      )}
       {hasFilters && (
         <Stack alignItems="center">
           <Button variant="secondary" icon="times" onClick={clearFilters}>
-            Clear filters
+            <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
           <Text variant="bodySmall" color="secondary">
             {matchingCount === 0 && 'No policies matching filters.'}
@@ -169,10 +179,19 @@ export function findRoutesMatchingPredicate(
 }
 
 export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: ObjectMatcher[]): boolean {
-  const routeMatchers = normalizeMatchers(route);
-
-  return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
+  const filters = labelMatchersFilter.map(unquoteMatchersIfRequired);
+  const routeMatchers = normalizeMatchers(route).map(unquoteMatchersIfRequired);
+  return filters.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
 }
+
+/**
+ * This function is mostly used for decoding matchers like "test"="test" into test=test to remove quotes when they're not needed.
+ * This mimicks the behaviour in Alertmanager where it decodes the label matchers in the same way and makes searching for policies
+ * easier in case the label keys or values are quoted when they shouldn't really be.
+ */
+const unquoteMatchersIfRequired = ([key, operator, value]: ObjectMatcher): ObjectMatcher => {
+  return [unquoteIfRequired(key), operator, unquoteIfRequired(value)];
+};
 
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,

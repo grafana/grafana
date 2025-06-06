@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -34,7 +34,7 @@ var (
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
-	ErrCouldntRefreshToken = errors.New("could not refresh token")
+	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
 type Service struct {
@@ -149,6 +149,8 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		if errors.Is(err, ErrNoRefreshTokenFound) {
 			return persistedToken
 		}
+
+		ctxLogger.Error("Failed to refresh OAuth token", "error", err)
 
 		return nil
 	}
@@ -270,7 +272,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 		if attempts < 5 {
 			return nil
 		}
-		return ErrCouldntRefreshToken
+		return ErrRetriesExhausted
 	}
 
 	var newToken *oauth2.Token
@@ -352,7 +354,6 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 		}
 	}
 
-	// TODO: Should this run regardless of the feature flag?
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthModule: usr.GetAuthenticatedBy(),
@@ -393,13 +394,13 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", authProvider, "error", err)
-		return persistedToken, err
+		return nil, err
 	}
 
 	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
-		return persistedToken, err
+		return nil, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
@@ -410,6 +411,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
 
 	if err != nil {
+		span.SetAttributes(attribute.Bool("token_refreshed", false))
 		ctxLogger.Error("Failed to retrieve oauth access token",
 			"provider", usr.GetAuthenticatedBy(), "error", err)
 
@@ -420,6 +422,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 		return nil, err
 	}
+
+	span.SetAttributes(attribute.Bool("token_refreshed", true))
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
@@ -439,18 +443,18 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
-		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
-				Token: token,
-			}); err != nil {
-				ctxLogger.Error("Failed to update external session during token refresh", "error", err)
-				return token, err
-			}
-		} else {
+		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
 				ctxLogger.Error("Failed to update auth info during token refresh", "authID", usr.GetAuthID(), "error", err)
-				return token, err
+				return nil, err
 			}
+		}
+
+		if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
+			Token: token,
+		}); err != nil {
+			ctxLogger.Error("Failed to update external session during token refresh", "error", err)
+			return nil, err
 		}
 
 		ctxLogger.Debug("Updated oauth info for user")

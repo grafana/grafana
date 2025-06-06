@@ -31,28 +31,28 @@ Grafana relies on other open source software to operate. For a list of open sour
 
 Grafana supports the following operating systems:
 
-- [Debian or Ubuntu]({{< relref "./debian" >}})
-- [Red Hat, RHEL, or Fedora]({{< relref "./redhat-rhel-fedora" >}})
-- [SUSE or openSUSE]({{< relref "./suse-opensuse" >}})
-- [macOS]({{< relref "./mac" >}})
-- [Windows]({{< relref "./windows" >}})
+- [Debian or Ubuntu](debian/)
+- [RHEL or Fedora](redhat-rhel-fedora/)
+- [SUSE or openSUSE](suse-opensuse/)
+- [macOS](mac/)
+- [Windows](windows/)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Installation of Grafana on other operating systems is possible, but is not recommended or supported.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Hardware recommendations
 
 Grafana requires the minimum system resources:
 
 - Minimum recommended memory: 512 MB
-- Minimum recommended CPU: 1
+- Minimum recommended CPU: 1 core
 
 Some features might require more memory or CPUs, including:
 
 - [Server side rendering of images](/grafana/plugins/grafana-image-renderer#requirements)
-- [Alerting]({{< relref "../../alerting" >}})
-- [Data source proxy]({{< relref "../../developers/http_api/data_source" >}})
+- [Alerting](../../alerting/)
+- [Data source proxy](../../developers/http_api/data_source/)
 
 ## Supported databases
 
@@ -66,20 +66,20 @@ Grafana supports the following databases:
 
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 PostgreSQL versions 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana binaries and images might not work with unsupported databases, even if they claim to be drop-in or replicate the API to their best.
 Binaries and images built with [BoringCrypto](https://pkg.go.dev/crypto/internal/boring) may have different problems than other distributions of Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 > Grafana can report errors when relying on read-only MySQL servers, such as in high-availability failover scenarios or serverless AWS Aurora MySQL. This is a known issue; for more information, see [issue #13399](https://github.com/grafana/grafana/issues/13399).
 
@@ -87,9 +87,9 @@ Binaries and images built with [BoringCrypto](https://pkg.go.dev/crypto/internal
 
 Grafana supports the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest browser version when using Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.
-{{% /admonition %}}
+{{< /admonition >}}
 
 - Chrome/Chromium
 - Firefox

@@ -72,7 +72,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultOptions;
     const info = prepareCandlestickFields(context.data, opts, config.theme2);
-
     builder
       .addRadio({
         path: 'mode',
@@ -137,7 +136,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, opts);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })

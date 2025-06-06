@@ -1,8 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { COMMON_FNS, DB, FuncParameter, MACRO_FUNCTIONS, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
@@ -89,17 +88,14 @@ export class MySqlDatasource extends SqlDatasource {
 
   getFunctions = (): ReturnType<DB['functions']> => {
     const fns = [...COMMON_FNS, { name: 'VARIANCE' }, { name: 'STDDEV' }];
-    if (config.featureToggles.sqlQuerybuilderFunctionParameters) {
-      const columnParam: FuncParameter = {
-        name: 'Column',
-        required: true,
-        options: (query) => this.fetchFields(query),
-      };
 
-      return [...MACRO_FUNCTIONS(columnParam), ...fns.map((fn) => ({ ...fn, parameters: [columnParam] }))];
-    } else {
-      return fns;
-    }
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
+
+    return [...MACRO_FUNCTIONS(columnParam), ...fns.map((fn) => ({ ...fn, parameters: [columnParam] }))];
   };
 
   getDB(): DB {

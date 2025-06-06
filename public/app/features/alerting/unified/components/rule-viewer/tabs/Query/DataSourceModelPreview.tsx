@@ -4,10 +4,10 @@ import * as React from 'react';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { AlertDataQuery } from 'app/types/unified-alerting-dto';
 
-import { DataSourceType } from '../../../../utils/datasource';
+import { DataSourceType, isSupportedExternalPrometheusFlavoredRulesSourceType } from '../../../../utils/datasource';
 import { isPromOrLokiQuery } from '../../../../utils/rule-form';
 
-import { isSQLLikeQuery, SQLQueryPreview } from './SQLQueryPreview';
+import { SQLQueryPreview, isSQLLikeQuery } from './SQLQueryPreview';
 
 const PrometheusQueryPreview = React.lazy(() => import('./PrometheusQueryPreview'));
 const LokiQueryPreview = React.lazy(() => import('./LokiQueryPreview'));
@@ -18,7 +18,7 @@ interface DatasourceModelPreviewProps {
 }
 
 function DatasourceModelPreview({ model, dataSource: datasource }: DatasourceModelPreviewProps): React.ReactNode {
-  if (datasource.type === DataSourceType.Prometheus && isPromOrLokiQuery(model)) {
+  if (isSupportedExternalPrometheusFlavoredRulesSourceType(datasource.type) && isPromOrLokiQuery(model)) {
     return <PrometheusQueryPreview query={model.expr} />;
   }
 

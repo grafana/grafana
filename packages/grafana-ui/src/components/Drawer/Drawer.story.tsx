@@ -1,8 +1,11 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Button } from '../Button/Button';
+import { Tab } from '../Tabs/Tab';
+import { TabsBar } from '../Tabs/TabsBar';
 
+import { Drawer } from './Drawer';
 import mdx from './Drawer.mdx';
 
 const meta: Meta<typeof Drawer> = {

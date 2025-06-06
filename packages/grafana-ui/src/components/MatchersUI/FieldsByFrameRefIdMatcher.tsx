@@ -1,6 +1,13 @@
 import { useMemo, useState, useCallback } from 'react';
 
-import { DataFrame, getFrameDisplayName, FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  getFrameDisplayName,
+  FieldMatcherID,
+  fieldMatchers,
+  SelectableValue,
+  toOption,
+} from '@grafana/data';
 
 import { MultiSelect, Select } from '../Select/Select';
 
@@ -129,6 +136,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
         } catch {
           extractedRefIds.add(value);
         }
+      } else if (value.includes('|')) {
+        // old format that was simply unescaped pipe-joined strings -> regexp
+        extractedRefIds = new Set(value.split('|'));
       } else {
         extractedRefIds.add(value);
       }
@@ -140,7 +150,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
       return matchedRefIds;
     }
 
-    return recoverMultiRefIdMissing(listOfRefIds, priorSelectionState.refIds, priorSelectionState.value);
+    const newRefIds = [...extractedRefIds].map(toOption);
+
+    return recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(

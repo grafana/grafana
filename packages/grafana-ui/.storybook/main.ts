@@ -43,7 +43,6 @@ const mainConfig: StorybookConfig = {
       },
     },
     getAbsolutePath('@storybook/addon-storysource'),
-    getAbsolutePath('storybook-dark-mode'),
     getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
   framework: {
@@ -85,12 +84,6 @@ const mainConfig: StorybookConfig = {
       options: {
         exposes: ['$', 'jQuery'],
       },
-    });
-
-    // use the asset module for SVGS for compatibility with grafana/ui Icon component.
-    config.module?.rules?.push({
-      test: /(unicons|mono|custom)[\\/].*\.svg$/,
-      type: 'asset/source',
     });
 
     return config;

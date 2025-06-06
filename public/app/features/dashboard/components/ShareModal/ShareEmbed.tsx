@@ -1,10 +1,9 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Label, Modal, Stack, Switch, TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
@@ -24,14 +23,12 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
   const [selectedTheme, setSelectedTheme] = useState('current');
   const [iframeHtml, setIframeHtml] = useState('');
 
-  useEffectOnce(() => {
-    reportInteraction('grafana_dashboards_embed_share_viewed', { shareResource: getTrackingSource(panel) });
-  });
-
   useEffect(() => {
     const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, range);
     setIframeHtml(newIframeHtml);
   }, [selectedTheme, useCurrentTimeRange, dashboard, panel, range, buildIframe]);
+
+  const { t } = useTranslate();
 
   const onIframeHtmlChange = (event: FormEvent<HTMLTextAreaElement>) => {
     setIframeHtml(event.currentTarget.value);

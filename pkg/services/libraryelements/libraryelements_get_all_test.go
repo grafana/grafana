@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 )
 
-func TestGetAllLibraryElements(t *testing.T) {
+func TestIntegration_GetAllLibraryElements(t *testing.T) {
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
@@ -281,7 +281,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("sortDirection", search.SortAlphaDesc.Name)
+			sc.reqContext.Req.Form.Add("sortDirection", sort.SortAlphaDesc.Name)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -539,7 +539,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -608,7 +608,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, sc.folder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -964,13 +964,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "1")
-			sc.reqContext.Req.Form.Add("searchString", "description")
+			sc.reqContext.Req.Form.Add("searchString", "DeScRiPtIoN") // mixed case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(1), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 1,
@@ -1039,13 +1040,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("searchString", "Library Panel")
+			sc.reqContext.Req.Form.Add("searchString", "library PANEL") // mixed-case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 2,
@@ -1278,8 +1280,8 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, int64(1), result.Result.Elements[0].FolderID)
 			require.Equal(t, "Text - Library Panel", result.Result.Elements[0].Name)
 
-			sc.reqContext.SignedInUser.OrgID = 2
-			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
+			sc.reqContext.OrgID = 2
+			sc.reqContext.OrgRole = org.RoleAdmin
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 

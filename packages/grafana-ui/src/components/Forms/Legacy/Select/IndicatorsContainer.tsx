@@ -1,10 +1,12 @@
 import { components, IndicatorsContainerProps } from 'react-select';
 
+import { SelectableValue } from '@grafana/data';
+
 import { Icon } from '../../../Icon/Icon';
 import { Select } from '../../../Select/Select';
 
 /** @deprecated Please use the {@link Select} component*/
-export const IndicatorsContainer = (props: IndicatorsContainerProps) => {
+export const IndicatorsContainer = <T,>(props: IndicatorsContainerProps<SelectableValue<T>>) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
     <components.IndicatorsContainer {...props}>

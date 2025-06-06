@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -22,7 +22,7 @@ function NotificationPreviewByAlertManager({
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
     potentialInstances
@@ -40,7 +40,14 @@ function NotificationPreviewByAlertManager({
   }
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading routing preview..." />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.notification-preview-by-alert-manager.text-loading-routing-preview',
+          'Loading routing preview...'
+        )}
+      />
+    );
   }
 
   const matchingPoliciesFound = matchingMap.size > 0;
@@ -49,13 +56,13 @@ function NotificationPreviewByAlertManager({
     <div className={styles.alertManagerRow}>
       {!onlyOneAM && (
         <Stack direction="row" alignItems="center">
-          <div className={styles.firstAlertManagerLine}></div>
+          <div className={styles.firstAlertManagerLine} />
           <div className={styles.alertManagerName}>
             <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
             <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
-          <div className={styles.secondAlertManagerLine}></div>
+          <div className={styles.secondAlertManagerLine} />
         </Stack>
       )}
       <Stack gap={1} direction="column">
@@ -66,14 +73,13 @@ function NotificationPreviewByAlertManager({
           if (!route) {
             return null;
           }
-          if (!receiver) {
-            throw new Error('Receiver not found');
-          }
           return (
             <NotificationRoute
               instanceMatches={instanceMatches}
               route={route}
-              receiver={receiver}
+              // If we can't find a receiver, it might just be because the user doesn't have access
+              receiver={receiver ? receiver : undefined}
+              receiverNameFromRoute={route?.receiver ? route.receiver : undefined}
               key={routeId}
               routesByIdMap={routesByIdMap}
               alertManagerSourceName={alertManagerSource.name}

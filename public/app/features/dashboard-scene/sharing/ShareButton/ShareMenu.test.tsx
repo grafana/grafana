@@ -31,10 +31,11 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    grantUserPermissions([AccessControlAction.SnapshotsCreate]);
+    grantUserPermissions([AccessControlAction.SnapshotsCreate, AccessControlAction.OrgUsersAdd]);
 
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
+    config.externalUserMngLinkUrl = 'http://localhost:3000';
     setup({ meta: { canEdit: true } });
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();

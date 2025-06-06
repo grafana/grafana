@@ -4,8 +4,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorField } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { EditorField } from '@grafana/plugin-ui';
 import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
@@ -13,7 +12,6 @@ import { DB, QueryFormat, SQLExpression, SQLQuery } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
 import { useSqlChange } from '../../utils/useSqlChange';
 
-import { SelectColumn } from './SelectColumn';
 import { SelectFunctionParameters } from './SelectFunctionParameters';
 
 interface SelectRowProps {
@@ -34,27 +32,6 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
     timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
     timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
   }
-
-  const onColumnChange = useCallback(
-    (item: QueryEditorFunctionExpression, index: number) => (column?: string) => {
-      let modifiedItem = { ...item };
-      if (!item.parameters?.length) {
-        modifiedItem.parameters = [{ type: QueryEditorExpressionType.FunctionParameter, name: column } as const];
-      } else {
-        modifiedItem.parameters = item.parameters.map((p) =>
-          p.type === QueryEditorExpressionType.FunctionParameter ? { ...p, name: column } : p
-        );
-      }
-
-      const newSql: SQLExpression = {
-        ...query.sql,
-        columns: query.sql?.columns?.map((c, i) => (i === index ? modifiedItem : c)),
-      };
-
-      onSqlChange(newSql);
-    },
-    [onSqlChange, query.sql]
-  );
 
   const onAggregationChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (aggregation: SelectableValue<string>) => {
@@ -134,18 +111,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
       {query.sql?.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
-            {!config.featureToggles.sqlQuerybuilderFunctionParameters && (
-              <SelectColumn
-                columns={columns}
-                onParameterChange={(v) => onColumnChange(item, index)(v)}
-                value={getColumnValue(item)}
-              />
-            )}
-            <EditorField
-              label={config.featureToggles.sqlQuerybuilderFunctionParameters ? 'Data operations' : 'Aggregation'}
-              optional
-              width={25}
-            >
+            <EditorField label="Data operations" optional width={25}>
               <Select
                 value={item.name ? toOption(item.name) : null}
                 inputId={`select-aggregation-${index}-${uniqueId()}`}
@@ -157,15 +123,14 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
                 onChange={onAggregationChange(item, index)}
               />
             </EditorField>
-            {config.featureToggles.sqlQuerybuilderFunctionParameters && (
-              <SelectFunctionParameters
-                currentColumnIndex={index}
-                columns={columns}
-                onSqlChange={onSqlChange}
-                query={query}
-                db={db}
-              />
-            )}
+
+            <SelectFunctionParameters
+              currentColumnIndex={index}
+              columns={columns}
+              onSqlChange={onSqlChange}
+              query={query}
+              db={db}
+            />
 
             <EditorField label="Alias" optional width={15}>
               <Select
@@ -213,11 +178,3 @@ const getStyles = () => {
     }),
   };
 };
-
-function getColumnValue({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | null {
-  const column = parameters?.find((p) => p.type === QueryEditorExpressionType.FunctionParameter);
-  if (column?.name) {
-    return toOption(column.name);
-  }
-  return null;
-}

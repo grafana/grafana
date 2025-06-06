@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -77,7 +77,7 @@ func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options
 			list.Items = append(list.Items, mapToTeamMember(m))
 		}
 
-		list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+		list.Continue = common.OptionalFormatInt(res.Continue)
 
 		responder.Object(http.StatusOK, list)
 	}), nil

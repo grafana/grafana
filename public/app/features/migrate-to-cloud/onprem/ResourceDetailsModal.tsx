@@ -1,5 +1,5 @@
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MigrateDataResponseItemDto } from '../api';
 
@@ -11,7 +11,7 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
+function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode'], t: TFunction): string {
   switch (errorCode) {
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
@@ -53,11 +53,6 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.resource-conflict',
         'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.'
       );
-    case 'ONLY_CORE_DATA_SOURCES':
-      return t(
-        'migrate-to-cloud.resource-details.error-messages.only-core-data-sources',
-        'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.'
-      );
     case 'UNEXPECTED_STATUS_CODE':
       return t(
         'migrate-to-cloud.resource-details.error-messages.unexpected-error',
@@ -80,10 +75,11 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
 }
 
 export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
+  const { t } = useTranslate();
   const { resource, onClose } = props;
 
   const refId = resource?.refId;
-  const typeName = resource && prettyTypeName(resource.type);
+  const typeName = resource && prettyTypeName(resource.type, t);
   const hasError = resource?.errorCode || resource?.message;
 
   let msgTitle = t('migrate-to-cloud.resource-details.generic-title', 'Resource migration details:');
@@ -111,7 +107,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode) ||
+                {getTMessage(resource?.errorCode, t) ||
                   resource?.message ||
                   'There has been an error while migrating. Please check the cloud migration logs for more information.'}
               </Text>

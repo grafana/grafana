@@ -1,4 +1,5 @@
-import { dashboardReloadSpy } from './mocks';
+import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
+
 import {
   getDashboard,
   getDashboardsContainer,
@@ -8,6 +9,8 @@ import {
   getNotFoundForScope,
   getNotFoundNoScopes,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
@@ -24,6 +27,8 @@ import {
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaSelect,
   queryPersistedApplicationsMimirSelect,
+  queryRecentScopeSet,
+  queryRecentScopesSection,
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
@@ -39,7 +44,12 @@ const expectValue = (selector: () => HTMLInputElement, value: string) => expect(
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
 
+export const expectRecentScopeNotPresent = (scope: string) => expectNotInDocument(() => queryRecentScopeSet(scope));
+export const expectRecentScope = (scope: string) => expectInDocument(() => getRecentScopeSet(scope));
+export const expectRecentScopeNotPresentInDocument = () => expectNotInDocument(queryRecentScopesSection);
+export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
+export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
 export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);
 export const expectScopesHeadline = (value: string) => expectTextContent(getTreeHeadline, value);
 export const expectPersistedApplicationsGrafanaNotPresent = () =>
@@ -77,10 +87,7 @@ export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
 
-export const expectNotDashboardReload = () => expect(dashboardReloadSpy).not.toHaveBeenCalled();
-export const expectDashboardReload = () => expect(dashboardReloadSpy).toHaveBeenCalled();
-
-export const expectSelectedScopePath = (name: string, path: string[] | undefined) =>
-  expect(getSelectedScope(name)?.path).toEqual(path);
-export const expectTreeScopePath = (name: string, path: string[] | undefined) =>
-  expect(getTreeScope(name)?.path).toEqual(path);
+export const expectSelectedScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
+  expect(getSelectedScope(service, name)?.path).toEqual(path);
+export const expectTreeScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
+  expect(getTreeScope(service, name)?.path).toEqual(path);

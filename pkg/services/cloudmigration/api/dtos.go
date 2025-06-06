@@ -127,10 +127,12 @@ const (
 	FolderDataType           MigrateDataType = "FOLDER"
 	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
 	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	AlertRuleGroupType       MigrateDataType = "ALERT_RULE_GROUP"
 	ContactPointType         MigrateDataType = "CONTACT_POINT"
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 // swagger:enum ItemStatus
@@ -158,7 +160,6 @@ const (
 	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ItemErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
 )
 
@@ -268,6 +269,14 @@ type CreateSnapshotRequest struct {
 	// UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// in:body
+	// required:true
+	Body CreateSnapshotRequestDTO `json:"body"`
+}
+
+type CreateSnapshotRequestDTO struct {
+	ResourceTypes []MigrateDataType `json:"resourceTypes"`
 }
 
 // swagger:response createSnapshotResponse
@@ -293,6 +302,24 @@ type GetSnapshotParams struct {
 	// required:false
 	// default: 100
 	ResultLimit int `json:"resultLimit"`
+
+	// ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status".
+	// in:query
+	// required:false
+	// default: default
+	ResultSortColumn string `json:"resultSortColumn"`
+
+	// ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC.
+	// in:query
+	// required:false
+	// default: ASC
+	ResultSortOrder string `json:"resultSortOrder"`
+
+	// ErrorsOnly is used to only return resources with error statuses
+	// in:query
+	// required:false
+	// default: false
+	ErrorsOnly bool `json:"errorsOnly"`
 
 	// Session UID of a session
 	// in: path
@@ -375,4 +402,21 @@ type CancelSnapshotParams struct {
 	// UID of a snapshot
 	// in: path
 	SnapshotUID string `json:"snapshotUid"`
+}
+
+// swagger:response resourceDependenciesResponse
+type ResourceDependenciesResponse struct {
+	// in: body
+	Body ResourceDependenciesResponseDTO
+}
+
+// swagger:model ResourceDependenciesResponseDTO
+type ResourceDependenciesResponseDTO struct {
+	ResourceDependencies []ResourceDependencyDTO `json:"resourceDependencies"`
+}
+
+// swagger:model ResourceDependencyDTO
+type ResourceDependencyDTO struct {
+	ResourceType MigrateDataType   `json:"resourceType"`
+	Dependencies []MigrateDataType `json:"dependencies"`
 }

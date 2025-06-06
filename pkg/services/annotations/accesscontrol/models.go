@@ -11,8 +11,3 @@ type AccessResources struct {
 	// Skip filtering
 	SkipAccessControlFilter bool
 }
-
-type dashboardProjection struct {
-	ID  int64  `xorm:"id"`
-	UID string `xorm:"uid"`
-}

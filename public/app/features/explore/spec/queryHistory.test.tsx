@@ -7,6 +7,7 @@ import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
+import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import {
   assertDataSourceFilterVisibility,
@@ -46,6 +47,7 @@ jest.mock('@grafana/runtime', () => ({
     reportInteractionMock(...args);
   },
   getAppEvents: () => testEventBus,
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 jest.mock('app/core/core', () => ({
@@ -53,6 +55,9 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     isSignedIn: true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+    user: {
+      isSignedIn: true,
+    },
   },
 }));
 
@@ -96,7 +101,9 @@ describe('Explore: Query History', () => {
 
   it('adds new query history items after the query is run.', async () => {
     // when Explore is opened
-    const { datasources, unmount } = setupExplore();
+    const { datasources, unmount } = setupExplore({
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
 
@@ -112,7 +119,7 @@ describe('Explore: Query History', () => {
     unmount();
 
     tearDown({ clearLocalStorage: false });
-    setupExplore({ clearLocalStorage: false });
+    setupExplore({ clearLocalStorage: false, withAppChrome: true });
     await waitForExplore();
 
     // previously added query is in query history
@@ -121,6 +128,7 @@ describe('Explore: Query History', () => {
 
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
+      selectedTab: Tabs.RichHistory,
     });
   });
 
@@ -133,7 +141,10 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({
+      urlParams,
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -152,7 +163,10 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({
+      urlParams,
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -178,7 +192,10 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({
+      urlParams,
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -201,7 +218,10 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({
+      urlParams,
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -219,7 +239,10 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({
+      urlParams,
+      withAppChrome: true,
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
 
     await waitForExplore();
@@ -237,7 +260,9 @@ describe('Explore: Query History', () => {
 
   it('updates query history settings', async () => {
     // open settings page
-    setupExplore();
+    setupExplore({
+      withAppChrome: true,
+    });
     await waitForExplore();
     await openQueryHistory();
 
@@ -266,6 +291,7 @@ describe('Explore: Query History', () => {
         queryHistory: [{ datasourceUid: 'loki', queries: [mockQuery] }],
         totalCount: 2,
       },
+      withAppChrome: true,
     });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();

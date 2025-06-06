@@ -14,6 +14,7 @@ var (
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 	ErrSnapshotNotFound            = errutil.NotFound("cloudmigrations.snapshotNotFound").Errorf("Snapshot not found")
+	ErrEmptyResourceTypes          = errutil.BadRequest("cloudmigrations.emptyResourceTypes").Errorf("Resource types cannot be empty")
 )
 
 // CloudMigration domain structs
@@ -67,7 +68,7 @@ const (
 
 type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
-	UID string `xorm:"uid"`
+	UID string `xorm:"uid" json:"uid"`
 
 	Name      string            `xorm:"name" json:"name"`
 	Type      MigrateDataType   `xorm:"resource_type" json:"type"`
@@ -88,18 +89,21 @@ const (
 	FolderDataType           MigrateDataType = "FOLDER"
 	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
 	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	AlertRuleGroupType       MigrateDataType = "ALERT_RULE_GROUP"
 	ContactPointType         MigrateDataType = "CONTACT_POINT"
 	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
 	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
 	MuteTimingType           MigrateDataType = "MUTE_TIMING"
+	PluginDataType           MigrateDataType = "PLUGIN"
 )
 
 type ItemStatus string
 
 const (
-	ItemStatusOK      ItemStatus = "OK"
-	ItemStatusWarning ItemStatus = "WARNING"
-	ItemStatusError   ItemStatus = "ERROR"
+	// Returned by GMS
+	ItemStatusOK    ItemStatus = "OK"
+	ItemStatusError ItemStatus = "ERROR"
+	// Used by default while awaiting GMS results
 	ItemStatusPending ItemStatus = "PENDING"
 )
 
@@ -116,7 +120,6 @@ const (
 	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
@@ -160,12 +163,53 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ResultSortColumn string
+
+const (
+	SortColumnID     ResultSortColumn = "id"
+	SortColumnName   ResultSortColumn = "name"
+	SortColumnType   ResultSortColumn = "resource_type"
+	SortColumnStatus ResultSortColumn = "status"
+)
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+// ResultPage should be in the range [1, 10000]
+type ResultPage int
+
+// ResultLimit should be in the rage [1, 10000]
+type ResultLimit int
+
+type SnapshotResultQueryParams struct {
+	ResultPage  ResultPage
+	ResultLimit ResultLimit
+	SortColumn  ResultSortColumn
+	SortOrder   SortOrder
+	ErrorsOnly  bool
+}
+
+type ResourceTypes map[MigrateDataType]struct{}
+
+func (r ResourceTypes) Has(t MigrateDataType) bool {
+	_, ok := r[t]
+	return ok
+}
+
+type CreateSnapshotCommand struct {
+	SessionUID    string
+	ResourceTypes ResourceTypes
+}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
 	SessionUID  string
-	ResultPage  int
-	ResultLimit int
+	SnapshotResultQueryParams
 }
 
 type ListSnapshotsQuery struct {
@@ -180,7 +224,11 @@ type UpdateSnapshotCmd struct {
 	UID       string
 	SessionID string
 	Status    SnapshotStatus
-	Resources []CloudMigrationResource
+
+	// LocalResourcesToCreate represents the local state of a resource before it has been uploaded to GMS
+	LocalResourcesToCreate []CloudMigrationResource
+	// CloudResourcesToUpdate represents resource state from GMS, to be merged with the local state
+	CloudResourcesToUpdate []CloudMigrationResource
 }
 
 // access token

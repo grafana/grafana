@@ -36,10 +36,10 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     buildInfo: {},
     panels: {},
+    apps: {},
     featureToggles: {
       newVariables: false,
     },
-    angularSupportEnabled: true,
   },
 }));
 
@@ -443,13 +443,6 @@ describe('given dashboard with repeated panels', () => {
   it('should add datasources used in mixed mode', () => {
     const require = find(exported.__requires, { name: 'OtherDB' });
     expect(require).not.toBe(undefined);
-  });
-
-  it('should add graph panel to required', () => {
-    const require = find(exported.__requires, { name: 'Graph' });
-    expect(require.name).toBe('Graph');
-    expect(require.id).toBe('graph');
-    expect(require.version).toBe('1.1.0');
   });
 
   it('should add table panel to required', () => {

@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
@@ -19,7 +19,7 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
@@ -223,15 +223,13 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
       <Stack direction="row" gap={1}>
         {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
-          <>
-            <MetaText color="error" icon="exclamation-circle">
-              <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-                <span>
-                  <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
-                </span>
-              </Tooltip>
-            </MetaText>
-          </>
+          <MetaText color="error" icon="exclamation-circle">
+            <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+              <span>
+                <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
+              </span>
+            </Tooltip>
+          </MetaText>
         ) : (
           <>
             {/* this is shown when we have a last delivery attempt */}
@@ -275,7 +273,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
-    borderRadius: `${theme.shape.radius.default}`,
+    borderRadius: theme.shape.radius.default,
     border: `solid 1px ${theme.colors.border.weak}`,
     borderBottom: 'none',
   }),

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, allGrafanaExportProviders } from './providers';
 interface GrafanaPoliciesPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
@@ -16,11 +17,12 @@ const GrafanaPoliciesExporterPreview = ({ exportFormat, onClose }: GrafanaPolici
   const { currentData: policiesDefinition = '', isFetching } = alertRuleApi.useExportPoliciesQuery({
     format: exportFormat,
   });
+  const { t } = useTranslate();
 
   const downloadFileName = `policies-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-policies-exporter-preview.text-loading', 'Loading....')} />;
   }
 
   return (

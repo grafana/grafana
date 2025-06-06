@@ -14,6 +14,10 @@ RuleTester.setDefaultConfig({
   },
 });
 
+const expectedError = {
+  messageId: 'borderRadiusId',
+};
+
 const ruleTester = new RuleTester();
 
 ruleTester.run('eslint no-border-radius-literal', noBorderRadiusLiteral, {
@@ -32,27 +36,27 @@ ruleTester.run('eslint no-border-radius-literal', noBorderRadiusLiteral, {
   invalid: [
     {
       code: `css({ borderRadius: '2px' })`,
-      errors: [
-        {
-          message: 'Prefer using theme.shape.radius tokens instead of literal values.',
-        },
-      ],
+      errors: [expectedError],
     },
     {
       code: `css({ lineHeight: 1 }, { borderRadius: '2px' })`,
-      errors: [
-        {
-          message: 'Prefer using theme.shape.radius tokens instead of literal values.',
-        },
-      ],
+      errors: [expectedError],
     },
     {
       code: `css([{ lineHeight: 1 }, { borderRadius: '2px' }])`,
-      errors: [
-        {
-          message: 'Prefer using theme.shape.radius tokens instead of literal values.',
-        },
-      ],
+      errors: [expectedError],
+    },
+    {
+      name: 'nested classes',
+      code: `
+css({
+  foo: {
+    nested: {
+      borderRadius: '100px',
+    },
+  },
+})`,
+      errors: [expectedError],
     },
   ],
 });

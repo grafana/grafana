@@ -1,16 +1,16 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES, overrideToFixedColor } from '../../../home/Insights';
 import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getRuleGroupEvaluationsScene(datasource: DataSourceRef, panelTitle: string) {
   const exprA = INSTANCE_ID
-    ? `grafanacloud_instance_rule_evaluations_total:rate5m{rule_group="$rule_group", id="${INSTANCE_ID}} - grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group", id="${INSTANCE_ID}}`
+    ? `grafanacloud_instance_rule_evaluations_total:rate5m{rule_group="$rule_group", stack_id="${INSTANCE_ID}"} - grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group", stack_id="${INSTANCE_ID}"}`
     : `grafanacloud_instance_rule_evaluations_total:rate5m{rule_group="$rule_group"} - grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group"}`;
 
   const exprB = INSTANCE_ID
-    ? `grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group", id="${INSTANCE_ID}}`
+    ? `grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group", stack_id="${INSTANCE_ID}"}`
     : `grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group"}`;
 
   const query = new SceneQueryRunner({

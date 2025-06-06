@@ -1,9 +1,10 @@
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
@@ -27,6 +28,7 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
     }
     return vals;
   }, [getSortOptions, filter]);
+  const { t } = useTranslate();
 
   if (options.loading) {
     return null;
@@ -40,7 +42,7 @@ export function SortPicker({ onChange, value, placeholder, filter, getSortOption
       onChange={onChange}
       value={options.value?.find((opt) => opt.value === value) ?? null}
       options={options.value}
-      aria-label="Sort"
+      aria-label={t('sort-picker.select-aria-label', 'Sort')}
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
       isClearable={isClearable}

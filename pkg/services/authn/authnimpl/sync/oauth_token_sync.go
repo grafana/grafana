@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -96,6 +97,11 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
+			}
+
+			if errors.Is(refreshErr, oauthtoken.ErrRetriesExhausted) {
+				ctxLogger.Warn("Retries have been exhausted for locking the DB for OAuth token refresh", "id", id.ID, "error", refreshErr)
+				return nil, refreshErr
 			}
 
 			ctxLogger.Error("Failed to refresh OAuth access token", "id", id.ID, "error", refreshErr)

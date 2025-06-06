@@ -3,7 +3,7 @@ import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime'
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { PanelModel } from '../../../state';
+import { PanelModel } from '../../../state/PanelModel';
 import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';

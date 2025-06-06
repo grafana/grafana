@@ -3,18 +3,36 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 // AlertRuleFieldsToIgnoreInDiff contains fields that are ignored when calculating the RuleDelta.Diff.
-var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated"}
+var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
+
+// AlertRuleFieldsWhichAffectQuery contains fields which affect the rule's query(s)
+var AlertRuleFieldsWhichAffectQuery = [...]string{"Data", "IntervalSeconds"}
 
 type RuleDelta struct {
 	Existing *models.AlertRule
 	New      *models.AlertRule
 	Diff     cmputil.DiffReport
+}
+
+func (d *RuleDelta) AffectsQuery() bool {
+	if len(d.Diff) == 0 {
+		return false
+	}
+	for _, path := range d.Diff.Paths() {
+		for _, field := range AlertRuleFieldsWhichAffectQuery {
+			if strings.HasPrefix(path, field) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type GroupDelta struct {
@@ -113,10 +131,9 @@ func calculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 					}
 					loadedRulesByUID[rule.UID] = rule
 				}
-				if existing == nil {
-					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, models.ErrAlertRuleNotFound)
+				if existing != nil {
+					affectedGroups[existing.GetGroupKey()] = ruleList
 				}
-				affectedGroups[existing.GetGroupKey()] = ruleList
 			}
 		}
 
@@ -126,18 +143,14 @@ func calculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		}
 
 		models.PatchPartialAlertRule(existing, r)
-
 		diff := existing.Diff(&r.AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
-		if len(diff) == 0 {
-			continue
+		if len(diff) > 0 {
+			toUpdate = append(toUpdate, RuleDelta{
+				Existing: existing,
+				New:      &r.AlertRule,
+				Diff:     diff,
+			})
 		}
-
-		toUpdate = append(toUpdate, RuleDelta{
-			Existing: existing,
-			New:      &r.AlertRule,
-			Diff:     diff,
-		})
-		continue
 	}
 
 	toDelete := make([]*models.AlertRule, 0, len(existingGroupRulesUIDs))
@@ -180,7 +193,7 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 			}
 			if groupKey != ch.GroupKey {
 				if rule.RuleGroupIndex != idx {
-					upd.New = models.CopyRule(rule)
+					upd.New = rule.Copy()
 					upd.New.RuleGroupIndex = idx
 					upd.Diff = rule.Diff(upd.New, AlertRuleFieldsToIgnoreInDiff[:]...)
 				}
@@ -226,15 +239,13 @@ func CalculateRuleUpdate(ctx context.Context, ruleReader RuleReader, rule *model
 	return calculateChanges(ctx, ruleReader, rule.GetGroupKey(), existingGroupRules, newGroup)
 }
 
-// CalculateRuleGroupDelete calculates GroupDelta that reflects an operation of removing entire group
-func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey) (*GroupDelta, error) {
-	// List all rules in the group.
-	q := models.ListAlertRulesQuery{
-		OrgID:         groupKey.OrgID,
-		NamespaceUIDs: []string{groupKey.NamespaceUID},
-		RuleGroups:    []string{groupKey.RuleGroup},
+// CalculateRuleGroupsDelete calculates []*GroupDelta that reflects an operation of removing multiple groups
+func CalculateRuleGroupsDelete(ctx context.Context, ruleReader RuleReader, orgID int64, query *models.ListAlertRulesQuery) ([]*GroupDelta, error) {
+	if query == nil {
+		query = &models.ListAlertRulesQuery{}
 	}
-	ruleList, err := ruleReader.ListAlertRules(ctx, &q)
+	query.OrgID = orgID
+	ruleList, err := ruleReader.ListAlertRules(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -242,14 +253,40 @@ func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupK
 		return nil, models.ErrAlertRuleGroupNotFound.Errorf("")
 	}
 
-	delta := &GroupDelta{
-		GroupKey: groupKey,
-		Delete:   ruleList,
-		AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-			groupKey: ruleList,
-		},
+	groups := models.GroupByAlertRuleGroupKey(ruleList)
+	deltas := make([]*GroupDelta, 0, len(groups))
+	for groupKey := range groups {
+		delta := &GroupDelta{
+			GroupKey: groupKey,
+			Delete:   groups[groupKey],
+			AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+				groupKey: groups[groupKey],
+			},
+		}
+		if err != nil {
+			return nil, err
+		}
+		deltas = append(deltas, delta)
 	}
-	return delta, nil
+
+	return deltas, nil
+}
+
+// CalculateRuleGroupDelete calculates GroupDelta that reflects an operation of removing entire group
+func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey) (*GroupDelta, error) {
+	q := &models.ListAlertRulesQuery{
+		NamespaceUIDs: []string{groupKey.NamespaceUID},
+		RuleGroups:    []string{groupKey.RuleGroup},
+	}
+	deltas, err := CalculateRuleGroupsDelete(ctx, ruleReader, groupKey.OrgID, q)
+	if err != nil {
+		return nil, err
+	}
+	if len(deltas) != 1 {
+		return nil, fmt.Errorf("expected to get a single group delta, got %d", len(deltas))
+	}
+
+	return deltas[0], nil
 }
 
 // CalculateRuleDelete calculates GroupDelta that reflects an operation of removing a rule from the group.

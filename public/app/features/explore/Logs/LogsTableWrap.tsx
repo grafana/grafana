@@ -13,8 +13,9 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
-import { InlineField, Select, Themeable2 } from '@grafana/ui/';
+import { useTranslate } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { InlineField, Select, Themeable2 } from '@grafana/ui';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -266,6 +267,7 @@ export function LogsTableWrap(props: Props) {
 
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
+  const { t } = useTranslate();
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const tableWidth = props.width - sidebarWidth;
@@ -492,14 +494,17 @@ export function LogsTableWrap(props: Props) {
         {logsFrames.length > 1 && (
           <div>
             <InlineField
-              label="Select query"
+              label={t('explore.logs-table-wrap.label-select-query', 'Select query')}
               htmlFor="explore_logs_table_frame_selector"
               labelWidth={22}
-              tooltip="Select a query to visualize in the table."
+              tooltip={t(
+                'explore.logs-table-wrap.tooltip-select-query-visualize-table',
+                'Select a query to visualize in the table'
+              )}
             >
               <Select
                 inputId={'explore_logs_table_frame_selector'}
-                aria-label={'Select query by name'}
+                aria-label={t('explore.logs-table-wrap.aria-label-select-query-by-name', 'Select query by name')}
                 value={currentDataFrame.refId}
                 options={logsFrames.map((frame) => {
                   return {

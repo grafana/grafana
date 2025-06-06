@@ -1,14 +1,17 @@
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { PermissionLevelString } from 'app/types';
 
-import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
+import {
+  GRAFANA_DATASOURCE_NAME,
+  SUPPORTED_RULE_SOURCE_TYPES,
+} from '../../../features/alerting/unified/utils/datasource';
 
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { UnifiedAlertListOptions, ViewMode, GroupMode, SortOrder } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel).setPanelOptions((builder) => {
   builder
@@ -112,13 +115,20 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
           <Stack gap={1}>
             <DataSourcePicker
               {...props}
-              type={['prometheus', 'loki', 'grafana']}
+              type={SUPPORTED_RULE_SOURCE_TYPES}
               noDefault
               current={props.value}
-              onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
+              onChange={(ds: DataSourceInstanceSettings) => {
+                // If we're changing the datasource, clear the folder selection
+                // as otherwise we might still be accidentally filtering out alerts
+                if (ds.uid !== 'grafana') {
+                  props.context.options.folder = null;
+                }
+                return props.onChange(ds.name);
+              }}
             />
             <Button variant="secondary" onClick={() => props.onChange(null)}>
-              Clear
+              <Trans i18nKey="alertlist.unified-alert-list.clear">Clear</Trans>
             </Button>
           </Stack>
         );
@@ -129,23 +139,29 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       showIf: (options) => options.datasource === GRAFANA_DATASOURCE_NAME || !Boolean(options.datasource),
       path: 'folder',
       name: 'Folder',
-      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
+      description: 'Filter for alerts in the selected folder (for Grafana-managed alert rules only)',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
         return (
-          <OldFolderPicker
-            enableReset={true}
-            showRoot={false}
-            allowEmpty={true}
-            initialTitle={props.value?.title}
-            initialFolderUid={props.value?.uid}
-            permissionLevel={PermissionLevelString.View}
-            onClear={() => props.onChange('')}
+          <NestedFolderPicker
+            clearable
+            showRootFolder={false}
             {...props}
+            onChange={(uid, title) => props.onChange({ uid, title })}
+            value={props.value?.uid}
+            permission="view"
           />
         );
       },
+      category: ['Filter'],
+    })
+    .addBooleanSwitch({
+      path: 'showInactiveAlerts',
+      name: 'Show alerts with 0 instances',
+      description:
+        'Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.',
+      defaultValue: false,
       category: ['Filter'],
     })
     .addBooleanSwitch({
@@ -157,6 +173,12 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addBooleanSwitch({
       path: 'stateFilter.pending',
       name: 'Pending',
+      defaultValue: true,
+      category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.recovering',
+      name: 'Recovering',
       defaultValue: true,
       category: ['Alert state filter'],
     })

@@ -105,4 +105,14 @@ export interface ParserAndLabelKeysResult {
   unwrapLabelKeys: string[];
 }
 
+export interface DetectedFieldsResult {
+  fields: Array<{
+    label: string;
+    type: 'bytes' | 'float' | 'int' | 'string' | 'duration';
+    cardinality: number;
+    parsers: Array<'logfmt' | 'json'> | null;
+  }>;
+  limit: number;
+}
+
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
-import { getDefaultFormValues } from '../../utils/rule-form';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 

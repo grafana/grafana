@@ -10,14 +10,16 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.4.0-pre";
+export const pluginVersion = "12.1.0-pre";
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
+  logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
   /**
@@ -29,9 +31,11 @@ export interface Options {
   onClickFilterString?: unknown;
   onClickHideField?: unknown;
   onClickShowField?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
+  showControls?: boolean;
   showLabels: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
