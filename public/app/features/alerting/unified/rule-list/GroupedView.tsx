@@ -14,13 +14,22 @@ import { DataSourceSection } from './components/DataSourceSection';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-export function GroupedView() {
+interface GroupedViewProps {
+  groupFilter?: string;
+  namespaceFilter?: string;
+}
+
+export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 
   return (
     <Stack direction="column" gap={1} role="list">
       <DataSourceErrorBoundary rulesSourceIdentifier={GrafanaRulesSource}>
-        <PaginatedGrafanaLoader />
+        <PaginatedGrafanaLoader
+          groupFilter={groupFilter}
+          namespaceFilter={namespaceFilter}
+          key={`${groupFilter}-${namespaceFilter}`}
+        />
       </DataSourceErrorBoundary>
       {externalRuleSources.map((ruleSource) => {
         return <DataSourceLoader key={ruleSource.uid} rulesSourceIdentifier={ruleSource} />;

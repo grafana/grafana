@@ -18,15 +18,21 @@ import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
   const [queryParams] = useURLSearchParams();
-  const { filterState, hasActiveFilters } = useRulesFilter();
+  const { filterState, activeFilters } = useRulesFilter();
 
   const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
-  const showListView = hasActiveFilters || view === 'list';
+
+  const hasOnlyGroupedViewFilters = activeFilters.every((filter) => filter === 'groupName' || filter === 'namespace');
+  const showListView = hasOnlyGroupedViewFilters === false || view === 'list';
 
   return (
     <>
       <RulesFilter onClear={() => {}} />
-      {showListView ? <FilterView filterState={filterState} /> : <GroupedView />}
+      {showListView ? (
+        <FilterView filterState={filterState} />
+      ) : (
+        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+      )}
     </>
   );
 }
