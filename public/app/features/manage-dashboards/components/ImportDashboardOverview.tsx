@@ -78,8 +78,18 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
 
       console.log({ uid, assetId });
 
+      const queryParams = locationService.getSearch();
+      const searchObj = locationService.getSearchObject();
+
+      console.log({ queryParams, searchObj });
+
       window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetId } }, '*');
     }, 5000);
+
+    const queryParams = locationService.getSearch();
+    const searchObj = locationService.getSearchObject();
+
+    console.log({ queryParams, searchObj });
   };
 
   onCancel = () => {
