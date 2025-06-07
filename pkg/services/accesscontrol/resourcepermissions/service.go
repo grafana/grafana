@@ -37,6 +37,13 @@ type Store interface {
 		hook UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
+	// SetUsersResourcePermission sets permission for multiple managed user roles on a resource
+	SetUsersResourcePermission(
+		ctx context.Context, orgID int64,
+		users []accesscontrol.User,
+		cmd SetResourcePermissionCommand,
+	) ([]accesscontrol.ResourcePermission, error)
+
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
 		ctx context.Context, orgID, teamID int64,
@@ -226,6 +233,33 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetUser)
+}
+
+// SetUsersPermission sets the same permission for multiple users on a resource
+func (s *Service) SetUsersPermission(ctx context.Context, orgID int64, users []accesscontrol.User, resourceID, permission string) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUsersPermission")
+	defer span.End()
+
+	if len(users) == 0 {
+		return nil, nil
+	}
+
+	actions, err := s.mapPermission(permission)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
+		return nil, err
+	}
+
+	return s.store.SetUsersResourcePermission(ctx, orgID, users, SetResourcePermissionCommand{
+		Actions:           actions,
+		Permission:        permission,
+		Resource:          s.options.Resource,
+		ResourceID:        resourceID,
+		ResourceAttribute: s.options.ResourceAttribute,
+	})
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {

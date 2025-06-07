@@ -416,6 +416,78 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 	return err
 }
 
+func AddOrUpdateTeamMembersHook(sess *db.Session, users []ac.User, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
+	if len(users) == 0 {
+		return nil
+	}
+
+	if _, err := teamExists(orgID, teamID, sess); err != nil {
+		return err
+	}
+
+	var existingMembers []team.TeamMember
+	args := make([]any, 0, len(users)+2)
+	args = append(args, orgID, teamID)
+	for _, user := range users {
+		args = append(args, user.ID)
+	}
+	placeholders := strings.Repeat("?,", len(users)-1) + "?"
+	if err := sess.Where("org_id=? AND team_id=? AND user_id IN ("+placeholders+")", args...).Find(&existingMembers); err != nil {
+		return err
+	}
+
+	// Create a map of existing members for quick lookup
+	existingMembersMap := make(map[int64]team.TeamMember, len(existingMembers))
+	for _, member := range existingMembers {
+		existingMembersMap[member.UserID] = member
+	}
+
+	// Prepare slices for batch operations
+	var toUpdate []team.TeamMember
+	var toInsert []team.TeamMember
+	now := time.Now()
+
+	// Sort users into update and insert operations
+	for _, user := range users {
+		if member, exists := existingMembersMap[user.ID]; exists {
+			// Only update if permission has changed
+			if member.Permission != permission {
+				member.Permission = permission
+				member.Updated = now
+				toUpdate = append(toUpdate, member)
+			}
+		} else {
+			toInsert = append(toInsert, team.TeamMember{
+				OrgID:      orgID,
+				TeamID:     teamID,
+				UserID:     user.ID,
+				External:   isExternal,
+				Created:    now,
+				Updated:    now,
+				Permission: permission,
+			})
+		}
+	}
+
+	// Perform batch insert if needed
+	if len(toInsert) > 0 {
+		if _, err := sess.InsertMulti(&toInsert); err != nil {
+			return err
+		}
+	}
+
+	// Perform batch update if needed
+	if len(toUpdate) > 0 {
+		for _, member := range toUpdate {
+			if _, err := sess.Cols("permission", "updated").Where("org_id=? AND team_id=? AND user_id=?", orgID, teamID, member.UserID).Update(&member); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission team.PermissionType) error {
 	if _, err := teamExists(orgID, teamID, sess); err != nil {
 		return err
