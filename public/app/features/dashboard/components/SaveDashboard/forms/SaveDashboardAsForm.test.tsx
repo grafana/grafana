@@ -1,5 +1,5 @@
-import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render, screen } from 'test/test-utils';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import * as api from 'app/features/manage-dashboards/state/actions';
