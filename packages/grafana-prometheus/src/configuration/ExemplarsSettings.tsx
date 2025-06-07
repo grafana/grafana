@@ -2,6 +2,7 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { Button, useTheme2 } from '@grafana/ui';
 
@@ -17,11 +18,15 @@ type Props = {
 };
 
 export function ExemplarsSettings({ options, onChange, disabled }: Props) {
+  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
   return (
     <div className={styles.sectionBottomPadding}>
-      <ConfigSubSection title="Exemplars" className={styles.container}>
+      <ConfigSubSection
+        title={t('configuration.exemplars-settings.title-exemplars', 'Exemplars')}
+        className={styles.container}
+      >
         {options &&
           options.map((option, index) => {
             return (
@@ -57,10 +62,16 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
               onChange(newOptions);
             }}
           >
-            Add
+            <Trans i18nKey="configuration.exemplars-settings.add">Add</Trans>
           </Button>
         )}
-        {disabled && !options && <i>No exemplars configurations</i>}
+        {disabled && !options && (
+          <i>
+            <Trans i18nKey="configuration.exemplars-settings.no-exemplars-configurations">
+              No exemplars configurations
+            </Trans>
+          </i>
+        )}
       </ConfigSubSection>
     </div>
   );

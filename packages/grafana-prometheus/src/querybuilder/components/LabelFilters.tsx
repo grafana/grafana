@@ -4,6 +4,7 @@ import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/plugin-ui';
 import { InlineFieldRow, InlineLabel } from '@grafana/ui';
 
@@ -35,6 +36,7 @@ export function LabelFilters({
   debounceDuration,
   variableEditor,
 }: LabelFiltersProps) {
+  const { t } = useTranslate();
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
 
@@ -94,9 +96,15 @@ export function LabelFilters({
           >
             <InlineLabel
               width={20}
-              tooltip={<div>Optional: used to filter the metric select for this query type.</div>}
+              tooltip={
+                <div>
+                  <Trans i18nKey="querybuilder.label-filters.tooltip-label-filters">
+                    Optional: used to filter the metric select for this query type.
+                  </Trans>
+                </div>
+              }
             >
-              Label filters
+              <Trans i18nKey="querybuilder.label-filters.label-filters">Label filters</Trans>
             </InlineLabel>
             {editorList()}
           </div>
@@ -104,7 +112,7 @@ export function LabelFilters({
       ) : (
         <EditorFieldGroup>
           <EditorField
-            label="Label filters"
+            label={t('querybuilder.label-filters.label-label-filters', 'Label filters')}
             error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
             invalid={labelFilterRequired && !hasLabelFilter}
           >
